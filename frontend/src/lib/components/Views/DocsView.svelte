@@ -3,112 +3,21 @@
   import { goto } from '$app/navigation';
   import { page } from '$app/stores';
   import { browser } from '$app/environment';
-  import { marked } from 'marked';
-  import { sanitizeRenderedHtml } from '$lib/security/safe-markdown';
   import { Archive, BookOpen, Compass, ExternalLink, FileText, Menu, Search, Shield, Wrench, X } from 'lucide-svelte';
-  import { readJsonUnknown, requireBoolean, rejectExtraKeys, requireFiniteNumber, requireString, requireUnknownRecord } from '$lib/utils/boundary';
-
-  interface DocEntry {
-    id: string;
-    path: string;
-    title: string;
-    summary: string;
-    role: string;
-    status: string;
-    audience: string;
-    kind: 'live' | 'archive';
-    sectionId: string;
-    sectionTitle: string;
-    featured: boolean;
-    order: number;
-    sectionOrder: number;
-    url: string;
-  }
-
-  interface DocSection {
-    id: string;
-    title: string;
-    description: string;
-    kind: 'live' | 'archive';
-    order: number;
-    items: DocEntry[];
-  }
-
-  interface ReadingPath {
-    id: string;
-    title: string;
-    description: string;
-    items: DocEntry[];
-  }
-
-  interface DocsManifest {
-    generatedAt: string;
-    counts: {
-      total: number;
-      live: number;
-      archive: number;
-    };
-    featured: DocEntry[];
-    readingPaths: ReadingPath[];
-    sections: DocSection[];
-    items: DocEntry[];
-  }
-
-  interface TocHeading {
-    level: number;
-    title: string;
-    id: string;
-  }
-
-  const decodeDocEntry = (value: unknown): DocEntry => {
-    const record = requireUnknownRecord(value, 'DOCS_ENTRY_INVALID');
-    rejectExtraKeys(record, ['id', 'path', 'title', 'summary', 'role', 'status', 'audience', 'kind', 'sectionId', 'sectionTitle', 'featured', 'order', 'sectionOrder', 'url'], 'DOCS_ENTRY_EXTRA_FIELD');
-    if (record['kind'] !== 'live' && record['kind'] !== 'archive') throw new Error('DOCS_ENTRY_KIND_INVALID');
-    const kind = record['kind'];
-    return {
-      id: requireString(record['id'], 'DOCS_ENTRY_ID_INVALID'),
-      path: requireString(record['path'], 'DOCS_ENTRY_PATH_INVALID'),
-      title: requireString(record['title'], 'DOCS_ENTRY_TITLE_INVALID'),
-      summary: requireString(record['summary'], 'DOCS_ENTRY_SUMMARY_INVALID'),
-      role: requireString(record['role'], 'DOCS_ENTRY_ROLE_INVALID'),
-      status: requireString(record['status'], 'DOCS_ENTRY_STATUS_INVALID'),
-      audience: requireString(record['audience'], 'DOCS_ENTRY_AUDIENCE_INVALID'),
-      kind,
-      sectionId: requireString(record['sectionId'], 'DOCS_ENTRY_SECTION_ID_INVALID'),
-      sectionTitle: requireString(record['sectionTitle'], 'DOCS_ENTRY_SECTION_TITLE_INVALID'),
-      featured: requireBoolean(record['featured'], 'DOCS_ENTRY_FEATURED_INVALID'),
-      order: requireFiniteNumber(record['order'], 'DOCS_ENTRY_ORDER_INVALID'),
-      sectionOrder: requireFiniteNumber(record['sectionOrder'], 'DOCS_ENTRY_SECTION_ORDER_INVALID'),
-      url: requireString(record['url'], 'DOCS_ENTRY_URL_INVALID'),
-    };
-  };
-
-  const decodeDocsManifest = (value: unknown): DocsManifest => {
-    const record = requireUnknownRecord(value, 'DOCS_MANIFEST_INVALID');
-    rejectExtraKeys(record, ['generatedAt', 'counts', 'featured', 'readingPaths', 'sections', 'items'], 'DOCS_MANIFEST_EXTRA_FIELD');
-    const counts = requireUnknownRecord(record['counts'], 'DOCS_MANIFEST_COUNTS_INVALID');
-    rejectExtraKeys(counts, ['total', 'live', 'archive'], 'DOCS_MANIFEST_COUNTS_EXTRA_FIELD');
-    const generatedAt = requireString(record['generatedAt'], 'DOCS_MANIFEST_GENERATED_AT_INVALID');
-    const total = requireFiniteNumber(counts['total'], 'DOCS_MANIFEST_TOTAL_INVALID');
-    const live = requireFiniteNumber(counts['live'], 'DOCS_MANIFEST_LIVE_INVALID');
-    const archive = requireFiniteNumber(counts['archive'], 'DOCS_MANIFEST_ARCHIVE_INVALID');
-    if (!Array.isArray(record['featured']) || !Array.isArray(record['readingPaths']) || !Array.isArray(record['sections']) || !Array.isArray(record['items'])) throw new Error('DOCS_MANIFEST_FIELD_INVALID');
-    const sections: DocSection[] = record['sections'].map((value): DocSection => {
-      const section = requireUnknownRecord(value, 'DOCS_SECTION_INVALID');
-      rejectExtraKeys(section, ['id', 'title', 'description', 'kind', 'order', 'items'], 'DOCS_SECTION_EXTRA_FIELD');
-      if (section['kind'] !== 'live' && section['kind'] !== 'archive') throw new Error('DOCS_SECTION_KIND_INVALID');
-      if (!Array.isArray(section['items'])) throw new Error('DOCS_SECTION_ITEMS_INVALID');
-      const kind: DocSection['kind'] = section['kind'] === 'live' ? 'live' : 'archive';
-      return { id: requireString(section['id'], 'DOCS_SECTION_ID_INVALID'), title: requireString(section['title'], 'DOCS_SECTION_TITLE_INVALID'), description: requireString(section['description'], 'DOCS_SECTION_DESCRIPTION_INVALID'), kind, order: requireFiniteNumber(section['order'], 'DOCS_SECTION_ORDER_INVALID'), items: section['items'].map(decodeDocEntry) };
-    });
-    const readingPaths = record['readingPaths'].map((value) => {
-      const path = requireUnknownRecord(value, 'DOCS_READING_PATH_INVALID');
-      rejectExtraKeys(path, ['id', 'title', 'description', 'items'], 'DOCS_READING_PATH_EXTRA_FIELD');
-      if (!Array.isArray(path['items'])) throw new Error('DOCS_READING_PATH_ITEMS_INVALID');
-      return { id: requireString(path['id'], 'DOCS_READING_PATH_ID_INVALID'), title: requireString(path['title'], 'DOCS_READING_PATH_TITLE_INVALID'), description: requireString(path['description'], 'DOCS_READING_PATH_DESCRIPTION_INVALID'), items: path['items'].map(decodeDocEntry) };
-    });
-    return { generatedAt, counts: { total, live, archive }, featured: record['featured'].map(decodeDocEntry), readingPaths, sections, items: record['items'].map(decodeDocEntry) };
-  };
+  import {
+    extractDocsHeadings,
+    fetchDocsDocument,
+    fetchDocsManifest,
+    filterDocsSections,
+    getDocById as findManifestDocById,
+    normalizeDocId,
+    renderDocsMarkdown,
+    type DocEntry,
+    type DocSection,
+    type DocsManifest,
+    type ReadingPath,
+    type TocHeading,
+  } from '$lib/docs/docs-page-model';
 
   let manifest = $state<DocsManifest | null>(null);
   let searchQuery = $state('');
@@ -125,175 +34,20 @@
 
   const requestedDocId = $derived(normalizeDocId($page.url.searchParams.get('doc') || 'readme'));
 
-  function normalizeDocId(value: string): string {
-    return String(value || '')
-      .trim()
-      .replace(/^\/+/, '')
-      .replace(/^docs\//, '')
-      .replace(/\.md$/i, '') || 'readme';
-  }
-
-  function slugify(value: string): string {
-    return String(value || '')
-      .toLowerCase()
-      .replace(/<[^>]+>/g, '')
-      .replace(/[`*_]/g, '')
-      .replace(/[^\p{L}\p{N}\s-]/gu, '')
-      .trim()
-      .replace(/\s+/g, '-');
-  }
-
-  function stripMarkdown(value: string): string {
-    return String(value || '')
-      .replace(/`([^`]+)`/g, '$1')
-      .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '$1')
-      .replace(/\*\*([^*]+)\*\*/g, '$1')
-      .replace(/\*([^*]+)\*/g, '$1')
-      .replace(/<[^>]+>/g, '')
-      .trim();
-  }
-
   function errorMessage(error: unknown): string {
     return error instanceof Error ? error.message : String(error || 'Unknown error');
   }
 
   function getDocById(docId: string): DocEntry | null {
     if (!manifest) return null;
-    return manifest.items.find((item) => item.id === docId) || null;
-  }
-
-  function resolveDocLink(currentPath: string, href: string) {
-    const rawHref = String(href || '').trim();
-    if (!rawHref) return { type: 'external', href: '#' } as const;
-    if (rawHref.startsWith('#')) return { type: 'anchor', href: rawHref } as const;
-    if (/^https?:\/\//i.test(rawHref) || /^mailto:/i.test(rawHref)) {
-      return { type: 'external', href: rawHref } as const;
-    }
-    if (rawHref.startsWith('/Users/')) {
-      return { type: 'local-path', href: rawHref } as const;
-    }
-
-    const [hrefWithoutHashRaw = '', hashPart = ''] = rawHref.split('#');
-    const hrefWithoutHash = hrefWithoutHashRaw || '';
-    const hash = hashPart ? `#${hashPart}` : '';
-
-    let resolvedDocId = '';
-    if (hrefWithoutHash.endsWith('.md')) {
-      if (hrefWithoutHash.startsWith('/docs-static/')) {
-        resolvedDocId = normalizeDocId(hrefWithoutHash.slice('/docs-static/'.length));
-      } else if (hrefWithoutHash.startsWith('/docs-catalog/')) {
-        resolvedDocId = normalizeDocId(hrefWithoutHash.slice('/docs-catalog/'.length));
-      } else if (hrefWithoutHash.startsWith('/docs/')) {
-        resolvedDocId = normalizeDocId(hrefWithoutHash.slice('/docs/'.length));
-      } else if (hrefWithoutHash.startsWith('/')) {
-        resolvedDocId = normalizeDocId(hrefWithoutHash);
-      } else {
-        const resolvedUrl = new URL(hrefWithoutHash, `https://xln.local/${currentPath}`);
-        resolvedDocId = normalizeDocId(resolvedUrl.pathname);
-      }
-    }
-
-    if (resolvedDocId && getDocById(resolvedDocId)) {
-      return {
-        type: 'internal-doc',
-        href: `/docs?doc=${encodeURIComponent(resolvedDocId)}${hash}`,
-        docId: resolvedDocId,
-      } as const;
-    }
-
-    if (rawHref.startsWith('/')) {
-      return { type: 'site-route', href: rawHref } as const;
-    }
-
-    return { type: 'external', href: rawHref } as const;
-  }
-
-  function resolveImageSrc(currentPath: string, href: string): string {
-    const rawHref = String(href || '').trim();
-    if (!rawHref || rawHref.startsWith('/Users/')) return '';
-    if (/^https?:\/\//i.test(rawHref) || rawHref.startsWith('/')) {
-      return rawHref.includes('/frontend/static/')
-        ? rawHref.slice(rawHref.indexOf('/frontend/static/') + '/frontend/static'.length)
-        : rawHref;
-    }
-
-    const resolvedUrl = new URL(rawHref, `https://xln.local/${currentPath}`);
-    if (resolvedUrl.pathname.includes('/frontend/static/')) {
-      return resolvedUrl.pathname.slice(resolvedUrl.pathname.indexOf('/frontend/static/') + '/frontend/static'.length);
-    }
-    return `/docs-catalog/${resolvedUrl.pathname.replace(/^\/+/, '')}`;
-  }
-
-  function extractHeadings(markdown: string): TocHeading[] {
-    return markdown
-      .split(/\r?\n/)
-      .map((line) => line.match(/^(#{2,4})\s+(.+)$/))
-      .filter((match): match is RegExpMatchArray => Boolean(match))
-      .map((match) => {
-        const level = match[1]?.length || 2;
-        const title = stripMarkdown(match[2] || '');
-        return {
-          level,
-          title,
-          id: slugify(title),
-        };
-      });
-  }
-
-  async function renderMarkdown(doc: DocEntry, markdown: string): Promise<string> {
-    const preparedMarkdown = markdown.replace(
-      /((?:\.\.\/)+)frontend\/static\//g,
-      '/',
-    );
-
-    const renderer = new marked.Renderer();
-
-    renderer.heading = function (token) {
-      const textHtml = this.parser.parseInline(token.tokens);
-      const id = slugify(stripMarkdown(token.text));
-      return `<h${token.depth} id="${id}">${textHtml}</h${token.depth}>`;
-    };
-
-    renderer.link = function (token) {
-      const textHtml = this.parser.parseInline(token.tokens);
-      const resolved = resolveDocLink(doc.path, token.href || '');
-      if (resolved.type === 'internal-doc') {
-        return `<a href="${resolved.href}" data-doc-link="1">${textHtml}</a>`;
-      }
-      if (resolved.type === 'site-route') {
-        return `<a href="${resolved.href}">${textHtml}</a>`;
-      }
-      if (resolved.type === 'anchor') {
-        return `<a href="${resolved.href}">${textHtml}</a>`;
-      }
-      if (resolved.type === 'local-path') {
-        return `<code>${textHtml}</code>`;
-      }
-      return `<a href="${resolved.href}" target="_blank" rel="noreferrer">${textHtml}</a>`;
-    };
-
-    renderer.image = function (token) {
-      const src = resolveImageSrc(doc.path, token.href || '');
-      if (!src) return `<span class="docs-image-missing">${stripMarkdown(token.text || 'image')}</span>`;
-      const alt = stripMarkdown(token.text || '');
-      const title = token.title ? ` title="${token.title}"` : '';
-      return `<img src="${src}" alt="${alt}" loading="lazy"${title}>`;
-    };
-
-    return sanitizeRenderedHtml(marked.parse(preparedMarkdown, {
-      renderer,
-      gfm: true,
-      breaks: false,
-    }) as string);
+    return findManifestDocById(manifest, docId);
   }
 
   async function loadManifest() {
     isLoadingManifest = true;
     loadError = '';
     try {
-      const response = await fetch('/docs-catalog/manifest.json', { cache: 'no-store' });
-      if (!response.ok) throw new Error(`manifest request failed: ${response.status}`);
-      manifest = decodeDocsManifest(await readJsonUnknown(response));
+      manifest = await fetchDocsManifest();
     } catch (error) {
       loadError = `Failed to load docs catalog: ${errorMessage(error)}`;
     } finally {
@@ -303,6 +57,7 @@
 
   async function loadDoc(docId: string) {
     if (!manifest) return;
+    const activeManifest = manifest;
     const doc = getDocById(docId);
     if (!doc) {
       loadError = `Unknown document: ${docId}`;
@@ -313,13 +68,11 @@
     loadError = '';
 
     try {
-      const response = await fetch(`/docs-catalog/${doc.path}`, { cache: 'no-store' });
-      if (!response.ok) throw new Error(`document request failed: ${response.status}`);
-      const markdown = await response.text();
+      const markdown = await fetchDocsDocument(doc);
       currentDoc = doc;
       currentDocId = doc.id;
-      headings = extractHeadings(markdown);
-      renderedHtml = await renderMarkdown(doc, markdown);
+      headings = extractDocsHeadings(markdown);
+      renderedHtml = renderDocsMarkdown(activeManifest, doc, markdown);
     } catch (error) {
       loadError = `Failed to load document: ${errorMessage(error)}`;
       renderedHtml = '';
@@ -360,26 +113,7 @@
 
   const visibleSections = $derived.by(() => {
     if (!manifest) return [] as DocSection[];
-    const baseSections = manifest.sections.filter((section) => showArchive || section.kind === 'live');
-
-    if (!searchQuery.trim()) return baseSections;
-
-    const query = searchQuery.trim().toLowerCase();
-    return baseSections
-      .map((section) => ({
-        ...section,
-        items: section.items.filter((item) =>
-          [
-            item.title,
-            item.summary,
-            item.path,
-            item.sectionTitle,
-            item.role,
-            item.status,
-          ].join(' ').toLowerCase().includes(query),
-        ),
-      }))
-      .filter((section) => section.items.length > 0);
+    return filterDocsSections(manifest, showArchive, searchQuery);
   });
 
   const featuredDocs = $derived.by<DocEntry[]>(() => manifest?.featured || []);
