@@ -68,6 +68,10 @@
     WalletDeployVersionCoordinator,
     walletDeployVersionRecoveryMessage,
   } from '../../../packages/browser/src/wallet-deploy-version';
+  import {
+    WalletRuntimeBootstrapCoordinator,
+    hasWalletRuntimeBootstrapInput,
+  } from '../../../packages/browser/src/wallet-runtime-bootstrap';
   import { resolveWalletShellPhase } from '../../../packages/browser/src/wallet-shell-state';
 
   let { children } = $props();
@@ -98,6 +102,16 @@
       }),
     })
     : null;
+  const walletRuntimeBootstrap = new WalletRuntimeBootstrapCoordinator({
+    pairLocalRuntime: pairLocalRuntimeIntoApp,
+    importRemoteRuntimes: importRemoteRuntimesIntoApp,
+    requiresRemoteConsent: remoteRuntimeRequiresConsent,
+    publishPendingConsent: (request) => {
+      pendingRemoteRuntime = request;
+    },
+    persistRemoteRequest: persistRemoteRuntimeRequest,
+    stripRemoteRuntimeParams,
+  });
   const pageSearch = $derived(browser ? $page.url.search : '');
   const storageSchemaMismatch = $derived(parseStorageSchemaMismatch($error));
   const walletShellPhase = $derived(resolveWalletShellPhase({
@@ -256,24 +270,15 @@
   async function processRemoteRuntimeBootstrapFromLocation(
     parsedRemoteRequest?: ReturnType<typeof readRemoteRuntimeRequestFromUrl>,
   ): Promise<RemoteRuntimeBootstrapResult> {
-    const pairingToken = readLocalRuntimePairingToken();
-    const importPayload = readRemoteRuntimeImportPayloadFromHash();
-    const importSource = readRemoteRuntimeImportSourceFromHash();
-    const remoteRequest = parsedRemoteRequest ?? readRemoteRuntimeRequestFromUrl();
-    await pairLocalRuntimeIntoApp(pairingToken);
-    await importRemoteRuntimesIntoApp({
-      payload: importPayload,
-      source: importSource,
+    const result = await walletRuntimeBootstrap.process({
+      pairingToken: readLocalRuntimePairingToken(),
+      importPayload: readRemoteRuntimeImportPayloadFromHash(),
+      importSource: readRemoteRuntimeImportSourceFromHash(),
+      remoteRequest: parsedRemoteRequest ?? readRemoteRuntimeRequestFromUrl(),
     });
-    if (remoteRequest && remoteRuntimeRequiresConsent(remoteRequest)) {
-      pendingRemoteRuntime = remoteRequest;
-      stripRemoteRuntimeParams();
+    if (result.status === 'pending-consent') {
       showInactiveTabStandby();
       return 'pending-auth';
-    }
-    if (remoteRequest) {
-      persistRemoteRuntimeRequest(remoteRequest);
-      stripRemoteRuntimeParams();
     }
     return 'continue';
   }
@@ -283,14 +288,16 @@
     const pairingToken = readLocalRuntimePairingToken();
     const importPayload = readRemoteRuntimeImportPayloadFromHash();
     const importSource = readRemoteRuntimeImportSourceFromHash();
-    if (!pairingToken && !importPayload && !importSource) return;
+    const bootstrapInput = {
+      pairingToken,
+      importPayload,
+      importSource,
+      remoteRequest: null,
+    };
+    if (!hasWalletRuntimeBootstrapInput(bootstrapInput)) return;
     runtimeImportLocationInFlight = true;
     try {
-      await pairLocalRuntimeIntoApp(pairingToken);
-      await importRemoteRuntimesIntoApp({
-        payload: importPayload,
-        source: importSource,
-      });
+      await walletRuntimeBootstrap.process(bootstrapInput);
       await activateAppAfterRuntimeChoice();
     } catch (err) {
       logAppShellDiagnostic('Remote runtime import failed', err);
@@ -514,7 +521,12 @@
       const importSource = readRemoteRuntimeImportSourceFromHash();
       const remoteRequest = readRemoteRuntimeRequestFromUrl();
       if (await maybeHandleResetHash()) return;
-      const hasExplicitRemoteRuntimeBootstrap = Boolean(pairingToken || importPayload || importSource || remoteRequest);
+      const hasExplicitRemoteRuntimeBootstrap = hasWalletRuntimeBootstrapInput({
+        pairingToken,
+        importPayload,
+        importSource,
+        remoteRequest,
+      });
       if (isInactiveTabStandby()) {
         showInactiveTabStandby();
         return;
