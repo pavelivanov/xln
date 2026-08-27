@@ -131,6 +131,7 @@ test('selected embedded runtime never falls back to a mismatched bootstrap env',
   expect(storeSource).not.toContain('export function setXlnEnvironment');
   expect(embeddedSource).toContain('const bootstrapEnvironment = writable<RuntimeReplica | null>(null);');
   expect(derivedSource).toContain('if (selectedRuntimeId) return $runtimes.get(selectedRuntimeId)?.env ?? null;');
+  expect(derivedSource).toContain('return $bootstrapEnvironment;');
   expect(derivedSource).not.toContain('if (runtimeEntry) return runtimeEntry.env ?? null;');
   expect(embeddedSource).toContain("import { errorLog } from '../errorLogStore';");
   expect(setEnvSource).toContain('const canPublishActiveEnv = !selectedRuntimeId || (envRuntimeId !== \'\' && envRuntimeId === selectedRuntimeId);');
@@ -320,6 +321,7 @@ test('remote RuntimeInput command waits for its observed frontier before project
   expect(source).toContain('latestHeight = view.runtimeId === get(runtimeControllerHandle).id ? Number(view.frame?.height ?? 0) : 0;');
   expect(source).toContain("if (!isCurrent()) throw new Error('REMOTE_RUNTIME_COMMAND_OBSERVATION_SUPERSEDED');");
   expect(source).not.toContain('waitForRemoteRuntimeProjectionAtHeight(accepted.height + 1)');
+  expect(source).not.toContain('waitForRemoteRuntimeReceiptObserved');
 });
 
 test('remote runtime refresh ignores unchanged ticks and debounces projection reads', () => {
