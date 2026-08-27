@@ -18,6 +18,7 @@
     DEFAULT_VAULT_UNLOCK_DURATION_MS,
     type RuntimeRecoveryCandidate,
     type RuntimeRecoveryDiscoveryFailure,
+    type RuntimeRecoveryDiscoveryResult,
   } from '$lib/stores/vault/vaultStore';
   import type { VaultUnlockDurationMs } from '$lib/security/vaultProtection';
   import { deriveRequestSignal, vaultUiOperations } from '$lib/stores/vault/vaultUiStore';
@@ -76,6 +77,10 @@
     resolveWalletRecoveryContinuation,
     summarizeWalletRecoveryCandidates,
   } from '../../../../packages/browser/src/wallet-recovery-choice';
+  import {
+    WalletRecoveryDiscoveryCoordinator,
+    type WalletRecoveryDiscoveryRequest,
+  } from '../../../../packages/browser/src/wallet-recovery-discovery';
   import {
     resolveWalletRuntimeOpeningPlan,
     walletRuntimeOpeningNeedsLocalLookup,
@@ -343,7 +348,14 @@
   let selectedRecoveryCandidateId = '';
   let localRuntimeAvailable = false;
   let backupFileInput: HTMLInputElement | null = null;
-  let recoveryRunToken = 0;
+  const walletRecoveryDiscovery = new WalletRecoveryDiscoveryCoordinator<
+    WalletRecoveryDiscoveryRequest,
+    RuntimeRecoveryDiscoveryResult
+  >({
+    discover: ({ seed, runtimeId }) => discoverRuntimeRecoveryCandidates(seed, {
+      peers: buildRemoteRuntimeRecoveryPeerSources({ runtimeId }),
+    }),
+  });
 
   // ============================================================================
   // LIFECYCLE - Load vault on mount
@@ -398,7 +410,7 @@
   };
 
   function resetRecoveryDecision(): void {
-    recoveryRunToken += 1;
+    walletRecoveryDiscovery.invalidate();
     recoveryChecking = false;
     recoveryRuntimeId = '';
     recoveryLabel = '';
@@ -421,8 +433,6 @@
       return false;
     }
 
-    const runToken = ++recoveryRunToken;
-
     derivationError = '';
     recoveryChecking = true;
     recoveryRuntimeId = ethereumAddress.toLowerCase();
@@ -436,11 +446,18 @@
     selectedRecoveryCandidateId = '';
     localRuntimeAvailable = vaultOperations.runtimeExists(recoveryRuntimeId);
 
+    const outcome = await walletRecoveryDiscovery.run({
+      seed: mnemonic24,
+      runtimeId: recoveryRuntimeId,
+    });
+    if (outcome.status === 'cancelled') return false;
     try {
-      const discovery = await discoverRuntimeRecoveryCandidates(mnemonic24, {
-        peers: buildRemoteRuntimeRecoveryPeerSources({ runtimeId: recoveryRuntimeId }),
-      });
-      if (runToken !== recoveryRunToken) return false;
+      if (outcome.status === 'failed') {
+        recoveryErrors = [outcome.message];
+        recoveryFailures = [];
+        return true;
+      }
+      const { discovery } = outcome;
       recoveryCandidates = discovery.candidates;
       recoveryErrors = discovery.errors;
       recoveryFailures = discovery.failures;
@@ -453,13 +470,8 @@
         phase = 'recovery';
       }
       return true;
-    } catch (err) {
-      if (runToken !== recoveryRunToken) return false;
-      recoveryErrors = [err instanceof Error ? err.message : String(err)];
-      recoveryFailures = [];
-      return true;
     } finally {
-      if (runToken === recoveryRunToken) recoveryChecking = false;
+      recoveryChecking = false;
     }
   }
 
@@ -1381,7 +1393,7 @@
   }
 
   onDestroy(() => {
-    recoveryRunToken += 1;
+    walletRecoveryDiscovery.invalidate();
     nodeDerivationAbort?.abort();
     nodeDerivationAbort = null;
     clearSensitiveWalletMaterial();
