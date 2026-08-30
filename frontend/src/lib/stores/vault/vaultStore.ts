@@ -1,4 +1,4 @@
-import { closeRuntimeSession, suspendRuntimeActivity } from '$lib/security/runtimeSession';
+import { closeRuntimeSession } from '$lib/security/runtimeSession';
 import { hasPasswordVault, removePasswordVault } from '$lib/security/passwordVault';
 import { derived, get, writable } from 'svelte/store';
 import { parseJsonUnknown } from '$lib/utils/boundary';
@@ -14,6 +14,8 @@ import type {
   TowerReceiptV1,
   XLNModule,
 } from '@xln/core/api/public/runtime-module';
+import { safeStringify } from '@xln/core/protocol/serialization';
+import { suspendWalletRuntimeActivity } from '../../../../packages/browser/src/wallet-runtime-suspension';
 
 import {
   activeRuntimeId,
@@ -882,7 +884,14 @@ async function stopRuntimeEnv(env: RuntimeReplica): Promise<void> {
 }
 
 async function suspendRuntimeEnvActivity(env: RuntimeReplica, loadedXln?: XLNModule): Promise<void> {
-  await suspendRuntimeActivity(env, loadedXln ?? await getXLN());
+  const xln = loadedXln ?? (await getXLN());
+  await suspendWalletRuntimeActivity(env, {
+    stopWatchers: target => xln.stopJurisdictionWatchersAndWait(target),
+    waitForWorkDrained: (target, timeoutMs) => xln.waitForRuntimeWorkDrained(target, timeoutMs),
+    stopRuntimeLoop: (target, timeoutMs) => xln.stopRuntimeLoopAndWait(target, timeoutMs),
+    stopP2P: (target, timeoutMs) => xln.stopP2PAndWait(target, timeoutMs),
+    describeTarget: target => safeStringify(runtimeQuiesceWorkSummary(target)),
+  }, { p2pShutdownTimeoutMs: RUNTIME_P2P_SHUTDOWN_TIMEOUT_MS });
 }
 
 async function suspendInactiveRuntimeActivity(activeRuntimeId: string): Promise<void> {
