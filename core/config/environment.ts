@@ -1,3 +1,12 @@
+type EnvironmentMap = Readonly<Record<string, string | undefined>>;
+
+const readDefaultEnvironment = (): EnvironmentMap => {
+  const host = globalThis as typeof globalThis & {
+    process?: Readonly<{ env?: EnvironmentMap }>;
+  };
+  return host.process?.env ?? {};
+};
+
 /**
  * Read one positive integer from an environment map.
  *
@@ -5,13 +14,10 @@
  * so malformed, fractional, zero or negative values fail startup instead of
  * silently changing production limits.
  */
-const readProcessEnvironment = (): Readonly<Record<string, string | undefined>> =>
-  typeof process === 'undefined' ? {} : process.env;
-
 export const readPositiveIntegerEnv = (
   name: string,
   defaultValue: number,
-  environment: Readonly<Record<string, string | undefined>> = readProcessEnvironment(),
+  environment: EnvironmentMap = readDefaultEnvironment(),
 ): number => {
   if (!Number.isSafeInteger(defaultValue) || defaultValue <= 0) {
     throw new Error(`ENV_POSITIVE_INTEGER_DEFAULT_INVALID:${name}:${defaultValue}`);
@@ -37,7 +43,7 @@ export const readPositiveIntegerEnv = (
 export const readBooleanEnv = (
   name: string,
   defaultValue: boolean,
-  environment: Readonly<Record<string, string | undefined>> = readProcessEnvironment(),
+  environment: EnvironmentMap = readDefaultEnvironment(),
 ): boolean => {
   const raw = environment[name];
   if (raw === undefined) return defaultValue;
