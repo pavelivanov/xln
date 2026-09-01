@@ -40,6 +40,9 @@ export const recordRuntimeScenario = async (
   const trace = startRuntimeTraceForTesting(env);
   try {
     const result = await run(env);
+    if (result !== undefined && result !== env) {
+      throw new Error('RUNTIME_SCENARIO_REPLICA_REPLACED');
+    }
     return { frames: [...trace.snapshots], env: result ?? env };
   } finally {
     trace.stop();
@@ -75,6 +78,7 @@ export const recordScenario = async (
   const trace = startRuntimeTraceForTesting(env);
   try {
     const result = await run(env);
+    if (result !== env) throw new Error('RUNTIME_SCENARIO_REPLICA_REPLACED');
     return { key, frames: [...trace.snapshots], env: result };
   } finally {
     trace.stop();

@@ -46,6 +46,12 @@ export async function runDisputeLifecycle(runtimeReplica: RuntimeReplica): Promi
     name: 'dispute-lifecycle',
     signerIds: ['2', '3'],
     runtimeReplica,
+    ...(runtimeReplica?.scenarioJAdapterMode
+      ? { mode: runtimeReplica.scenarioJAdapterMode }
+      : {}),
+    ...(runtimeReplica?.runtimeConfig?.storage?.enabled !== undefined
+      ? { storageEnabled: runtimeReplica.runtimeConfig.storage.enabled }
+      : {}),
   });
   env.quietRuntimeLogs = true;
   const scenarioDebug = (globalThis as { process?: { env?: Record<string, string | undefined> } })
