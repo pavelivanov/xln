@@ -94,6 +94,7 @@ test('solvency projection fails loud on malformed amounts', () => {
 
 test('SolvencyPanel reads adapter solvency-summary with the injected environment', () => {
   const source = readFileSync('frontend/src/lib/view/panels/solvency/SolvencyPanel.svelte', 'utf8');
+  const sharedView = readFileSync('frontend/packages/runtime-client/src/solvency-panel-view.ts', 'utf8');
   const dockRoot = readFileSync('frontend/src/lib/view/DockRoot.svelte', 'utf8');
   const architect = readFileSync('frontend/src/lib/view/panels/ArchitectPanel.svelte', 'utf8');
 
@@ -102,7 +103,8 @@ test('SolvencyPanel reads adapter solvency-summary with the injected environment
   expect(source).toContain('$solvencyStore.data ?? buildSolvencyProjection($runtimeFrameEnv)');
   expect(source).toContain('Solvency projection failed');
   expect(source).toContain('buildSolvencyProjection($runtimeFrameEnv)');
-  expect(source).toContain('ASSET CONSERVATION OK');
+  expect(source).toContain('getSolvencyStatusView');
+  expect(sharedView).toContain('ASSET CONSERVATION OK');
   expect(source).not.toContain('SYSTEM SOLVENT');
   expect(source).not.toContain("return `$${");
   expect(source).not.toContain('xlnEnvironment');
