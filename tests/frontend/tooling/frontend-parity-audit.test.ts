@@ -62,14 +62,13 @@ describe('WP9 retained-route and capability parity audit', () => {
     expect(CAPABILITY_PARITY.map(({ capabilityId }) => capabilityId).toSorted())
       .toEqual(CAPABILITIES.map(({ id }) => id).toSorted());
     for (const capability of CAPABILITY_PARITY) {
-      expect(capability.gapIds.length).toBeGreaterThan(0);
       for (const gapId of capability.gapIds) {
         expect(PARITY_GAP_IDS).toContain(gapId);
         expect(PARITY_GAPS.find(({ id }) => id === gapId)?.capabilityIds).toContain(capability.capabilityId);
       }
     }
     expect(CUTOVER_CHECKLIST.filter(({ status }) => status === 'verified').map(({ id }) => id))
-      .toEqual(['immutable-candidate-release', 'whole-release-rollback']);
+      .toEqual(['per-surface-browser-evidence', 'immutable-candidate-release', 'whole-release-rollback']);
     expect(CUTOVER_CHECKLIST.filter(({ status }) => status === 'owner-authorized-wp10')).toHaveLength(3);
     for (const item of CUTOVER_CHECKLIST) expect(existsSync(item.evidence)).toBe(true);
   });

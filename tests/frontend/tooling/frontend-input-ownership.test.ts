@@ -7,6 +7,7 @@ import {
   COPY_GENERATED_INPUTS,
   GENERATED_INPUTS,
   PREPARED_GENERATED_INPUTS,
+  getGeneratedInputDevelopmentConsumers,
 } from '../../../frontend/config/generated-inputs';
 import { SURFACE_IDS } from '../../../frontend/config/surfaces';
 
@@ -23,6 +24,19 @@ describe('frontend generated input ownership', () => {
   test('assigns at least one input family to every application', () => {
     for (const surfaceId of SURFACE_IDS) {
       expect(GENERATED_INPUTS.some(({ owner }) => owner === surfaceId)).toBe(true);
+    }
+  });
+
+  test('publishes cross-surface development inputs only to declared consumers', () => {
+    const docsCatalog = GENERATED_INPUTS.find(({ id }) => id === 'docs-catalog');
+    const runtimeBundle = GENERATED_INPUTS.find(({ id }) => id === 'wallet-runtime-bundle');
+    if (docsCatalog === undefined) throw new Error('TEST_DOCS_CATALOG_MISSING');
+    if (runtimeBundle === undefined) throw new Error('TEST_RUNTIME_BUNDLE_MISSING');
+    expect(getGeneratedInputDevelopmentConsumers(docsCatalog)).toEqual(['docs', 'site']);
+    expect(getGeneratedInputDevelopmentConsumers(runtimeBundle)).toEqual(['wallet', 'ops']);
+    for (const input of GENERATED_INPUTS.filter(({ id }) =>
+      id !== 'docs-catalog' && id !== 'wallet-runtime-bundle')) {
+      expect(getGeneratedInputDevelopmentConsumers(input)).toEqual([input.owner]);
     }
   });
 
