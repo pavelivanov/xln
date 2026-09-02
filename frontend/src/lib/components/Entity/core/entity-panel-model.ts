@@ -8,6 +8,7 @@ import type {
 } from '@xln/core/api/public/runtime-module';
 import type { AccountReadView, EntityReadState, EntityReadView } from './entity-panel-types';
 import { unwrapLiveRuntimeEnv } from '$lib/utils/runtime/liveRuntimeEnv';
+import { projectEntityWorkspaceContext } from '../../../../../packages/runtime-client/src/entity-workspace-context';
 
 export function materializeReplicaView<T extends EntityReadView>(candidate: T | null | undefined): T | null {
   if (!candidate) return null;
@@ -206,8 +207,10 @@ function buildEntityPanelViewFromRuntimeProjection(
   sourceEnv: RuntimeReplica | EnvSnapshot | null | undefined,
 ): EntityPanelView | null {
   if (!frame?.activeEntity) return null;
+  const context = projectEntityWorkspaceContext({ runtimeId: getRuntimeId(sourceEnv), frame });
+  if (context.status !== 'selected') return null;
   const requestedEntityId = normalizeEntityId(entityId || frame.activeEntityId || frame.activeEntity.summary.entityId);
-  const activeEntityId = normalizeEntityId(frame.activeEntity.summary.entityId || frame.activeEntity.core.entityId);
+  const activeEntityId = context.entityId;
   if (requestedEntityId && activeEntityId && requestedEntityId !== activeEntityId) return null;
 
   const replicas = new Map<string, EntityReadView>();
@@ -235,10 +238,10 @@ function buildEntityPanelViewFromRuntimeProjection(
 
   const jurisdictions = collectRuntimeProjectionJurisdictions(frame, activeReplica);
   return {
-    runtimeId: getRuntimeId(sourceEnv),
-    height: Math.max(0, Math.floor(Number(frame.height || 0))),
+    runtimeId: context.runtimeId,
+    height: context.height,
     timestamp: Math.max(0, Math.floor(Number(activeReplica.state?.timestamp ?? sourceEnv?.state.timestamp ?? 0))),
-    activeJurisdictionName: getCurrentEntityJurisdictionName(sourceEnv, activeReplica),
+    activeJurisdictionName: context.jurisdictionName || getCurrentEntityJurisdictionName(sourceEnv, activeReplica),
     replicas,
     replica: findReplicaForEntityTab(replicas, activeReplica.entityId, activeReplica.signerId || signerId),
     profiles,
