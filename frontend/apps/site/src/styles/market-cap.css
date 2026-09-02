@@ -8,6 +8,8 @@
 .market-eyebrow { display: flex; align-items: center; gap: 9px; margin: 0; color: #899087; font: 500 9px/1 "SFMono-Regular", Consolas, monospace; letter-spacing: .12em; text-transform: uppercase; }
 .market-eyebrow i { width: 7px; height: 7px; border-radius: 50%; background: var(--market-green); box-shadow: 0 0 16px var(--market-green); animation: market-pulse 1.8s ease-in-out infinite; }
 .market-eyebrow span { margin-left: 8px; color: var(--market-green); }
+.market-eyebrow.is-error i { background: var(--market-amber); box-shadow: 0 0 16px var(--market-amber); animation: none; }
+.market-eyebrow.is-error span { color: var(--market-amber); }
 .market-hero aside { min-width: 300px; padding: 8px 0 8px clamp(28px, 4vw, 68px); border-left: 1px solid var(--line); }
 .market-hero aside span, .market-hero aside small { display: block; color: #747b73; font: 500 9px/1.5 "SFMono-Regular", Consolas, monospace; letter-spacing: .09em; text-transform: uppercase; }
 .market-hero aside strong { display: block; margin: 18px 0 14px; color: var(--paper); font: 500 clamp(34px, 4vw, 64px)/.9 "SFMono-Regular", Consolas, monospace; letter-spacing: -.07em; }
