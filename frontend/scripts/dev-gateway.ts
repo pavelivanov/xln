@@ -18,12 +18,20 @@ import {
   type DevelopmentGatewayDecision,
   type GatewayProxyOwner,
 } from '../config/development-gateway';
+import { SURFACE_IDS, type SurfaceId } from '../config/surfaces';
 
 type GatewayTargets = Readonly<Record<GatewayProxyOwner, string>>;
+type GatewayProxyOwners = Readonly<Partial<Record<SurfaceId, SurfaceId>>>;
 
 export type DevelopmentGatewayOptions = Readonly<{
   targets: GatewayTargets;
+  proxyOwners?: GatewayProxyOwners;
 }>;
+
+export const resolveDevelopmentProxyOwner = (
+  owner: GatewayProxyOwner,
+  proxyOwners: GatewayProxyOwners = {},
+): GatewayProxyOwner => owner === 'edge' ? owner : proxyOwners[owner] ?? owner;
 
 const writeLocalResponse = (
   response: ServerResponse,
@@ -95,7 +103,7 @@ const forwardWebSocketUpgrade = (
   socket.once('error', (error) => upstreamSocket.destroy(error));
 };
 
-export const createDevelopmentGateway = ({ targets }: DevelopmentGatewayOptions) => {
+export const createDevelopmentGateway = ({ targets, proxyOwners = {} }: DevelopmentGatewayOptions) => {
   const proxy = createProxyServer({ xfwd: true, changeOrigin: false });
   const server = createServer((request: IncomingMessage, response: ServerResponse) => {
     const rawUrl = request.url ?? '/';
@@ -116,9 +124,11 @@ export const createDevelopmentGateway = ({ targets }: DevelopmentGatewayOptions)
       return;
     }
 
-    request.url = rewriteDevelopmentGatewayUrl(rawUrl, decision);
-    proxy.web(request, response, { target: targets[decision.owner], changeOrigin: false }, (error) => {
-      writeProxyFailure(response, decision.owner, error);
+    const proxyOwner = resolveDevelopmentProxyOwner(decision.owner, proxyOwners);
+    const routedDecision = proxyOwner === decision.owner ? decision : { ...decision, owner: proxyOwner };
+    request.url = rewriteDevelopmentGatewayUrl(rawUrl, routedDecision);
+    proxy.web(request, response, { target: targets[proxyOwner], changeOrigin: false }, (error) => {
+      writeProxyFailure(response, proxyOwner, error);
     });
   });
 
@@ -135,8 +145,10 @@ export const createDevelopmentGateway = ({ targets }: DevelopmentGatewayOptions)
       rejectUpgrade(socket, 400, 'DEVELOPMENT_GATEWAY_UPGRADE_REJECTED');
       return;
     }
-    request.url = rewriteDevelopmentGatewayUrl(rawUrl, decision);
-    forwardWebSocketUpgrade(request, socket, head, targets[decision.owner]);
+    const proxyOwner = resolveDevelopmentProxyOwner(decision.owner, proxyOwners);
+    const routedDecision = proxyOwner === decision.owner ? decision : { ...decision, owner: proxyOwner };
+    request.url = rewriteDevelopmentGatewayUrl(rawUrl, routedDecision);
+    forwardWebSocketUpgrade(request, socket, head, targets[proxyOwner]);
   });
 
   server.on('clientError', (error: Error, socket: Socket) => {
@@ -158,7 +170,27 @@ const run = (): void => {
     wallet: process.env['XLN_REACT_WALLET_TARGET'] ?? defaults.wallet,
     ops: process.env['XLN_REACT_OPS_TARGET'] ?? defaults.ops,
   };
-  const server = createDevelopmentGateway({ targets });
+  const docsProxyOwnerRaw = process.env['XLN_REACT_DOCS_PROXY_OWNER'];
+  const docsProxyOwner = docsProxyOwnerRaw === undefined
+    ? undefined
+    : SURFACE_IDS.find((surfaceId) => surfaceId === docsProxyOwnerRaw);
+  if (docsProxyOwnerRaw !== undefined && docsProxyOwner === undefined) {
+    throw new Error(`DEVELOPMENT_GATEWAY_DOCS_PROXY_OWNER_INVALID:${docsProxyOwnerRaw}`);
+  }
+  const walletProxyOwnerRaw = process.env['XLN_REACT_WALLET_PROXY_OWNER'];
+  const walletProxyOwner = walletProxyOwnerRaw === undefined
+    ? undefined
+    : SURFACE_IDS.find((surfaceId) => surfaceId === walletProxyOwnerRaw);
+  if (walletProxyOwnerRaw !== undefined && walletProxyOwner === undefined) {
+    throw new Error(`DEVELOPMENT_GATEWAY_WALLET_PROXY_OWNER_INVALID:${walletProxyOwnerRaw}`);
+  }
+  const server = createDevelopmentGateway({
+    targets,
+    proxyOwners: {
+      ...(docsProxyOwner === undefined ? {} : { docs: docsProxyOwner }),
+      ...(walletProxyOwner === undefined ? {} : { wallet: walletProxyOwner }),
+    },
+  });
   server.listen(parseDevelopmentGatewayPort(process.env['XLN_REACT_GATEWAY_PORT']), host, () => {
     const address = server.address();
     if (address === null || typeof address === 'string') throw new Error('DEVELOPMENT_GATEWAY_ADDRESS_INVALID');

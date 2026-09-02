@@ -14,6 +14,7 @@ import { dirname, join, relative } from 'node:path';
 import { safeStringify } from '../../core/protocol/serialization';
 import {
   PREPARED_GENERATED_INPUTS,
+  getGeneratedInputDevelopmentConsumers,
   isCommandGeneratedInput,
   type CommandGeneratedInputDefinition,
   type GeneratedInputCopy,
@@ -222,20 +223,23 @@ const publishDevelopmentPublicDirectory = async (
 export const prepareGeneratedInputs = async (
   repositoryRoot: string,
   frontendRoot: string,
-  owners: readonly GeneratedInputOwner[],
+  consumers: readonly GeneratedInputOwner[],
   definitions: readonly PreparedGeneratedInputDefinition[] = PREPARED_GENERATED_INPUTS,
 ): Promise<readonly PreparedGeneratedInputManifest[]> => {
-  const selected = definitions.filter(({ owner }) => owners.includes(owner));
+  const selected = definitions.filter((definition) =>
+    getGeneratedInputDevelopmentConsumers(definition).some((consumer) => consumers.includes(consumer)));
   const ids = selected.map(({ id }) => id);
   if (new Set(ids).size !== ids.length) throw new Error('GENERATED_INPUT_DEFINITION_DUPLICATE');
   const manifests: PreparedGeneratedInputManifest[] = [];
   for (const definition of selected) manifests.push(await prepareOne(repositoryRoot, frontendRoot, definition));
-  const surfaceOwners = [...new Set(selected.map(({ owner }) => owner))];
-  for (const owner of surfaceOwners) {
+  for (const consumer of consumers) {
+    const consumedDefinitions = selected.filter((definition) =>
+      getGeneratedInputDevelopmentConsumers(definition).includes(consumer));
+    if (consumedDefinitions.length === 0) continue;
     await publishDevelopmentPublicDirectory(
       frontendRoot,
-      owner,
-      selected.filter((definition) => definition.owner === owner),
+      consumer,
+      consumedDefinitions,
     );
   }
   return manifests;

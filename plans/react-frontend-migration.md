@@ -1,6 +1,6 @@
 # React frontend migration work plan
 
-**Status:** `IN PROGRESS — WP0–WP6 COMPLETE; WP7 HEALTH + QA + HLT + RUNS + SCENARIOS + AI IMPLEMENTED, WORKSPACE STATE LAYER SVELTE-FREE, PANEL PORTS THROUGH ARCHITECT, REACT DOCKVIEW WRAPPER READY, GRAPH3D LIFECYCLE + RENDERER/PRIMITIVES/EFFECTS/ENTITY/ACCOUNT VISUAL FACTORY/INTERACTION/SELECTION/CAMERA/POINTER+XR DRAG + HOVER MECHANICS + VIEW/SCENE INPUT MODELS EXTRACTED, ENTITY WORKSPACE REACT SHELL/TABS + LIVE RUNTIME CONTEXT + READ-ONLY OWNERSHIP/ACCOUNTS/PROFILE READY; WP8 COMPLETE; WP9 SITE DIRECT ROUTE EVIDENCE COMPLETE, PER-SURFACE BROWSER ISOLATION NEXT`
+**Status:** `IN PROGRESS — WP0–WP6 COMPLETE; WP7 HEALTH + QA + HLT + RUNS + SCENARIOS + AI IMPLEMENTED, WORKSPACE STATE LAYER SVELTE-FREE, PANEL PORTS THROUGH ARCHITECT, REACT DOCKVIEW WRAPPER READY, GRAPH3D LIFECYCLE + RENDERER/PRIMITIVES/EFFECTS/ENTITY/ACCOUNT VISUAL FACTORY/INTERACTION/SELECTION/CAMERA/POINTER+XR DRAG + HOVER MECHANICS + VIEW/SCENE INPUT MODELS EXTRACTED, ENTITY WORKSPACE REACT SHELL/TABS + LIVE RUNTIME CONTEXT + READ-ONLY OWNERSHIP/ACCOUNTS/PROFILE READY; WP8 COMPLETE; WP9 SITE DIRECT ROUTE EVIDENCE + PER-SURFACE BROWSER ISOLATION COMPLETE, WALLET ADDRESS NEXT`
 
 This is the executable work plan for splitting the Svelte frontend into React
 applications. It is intentionally lightweight and should be updated as live
@@ -2152,7 +2152,7 @@ tests can activate, reject invalid candidates, and roll back.
 
 ### WP9 — Close parity and prepare cutover
 
-**Status:** `IN PROGRESS — PARITY AUDIT + SITE DIRECT ROUTE EVIDENCE COMPLETE; PER-SURFACE BROWSER ISOLATION NEXT`
+**Status:** `IN PROGRESS — PARITY AUDIT + SITE DIRECT ROUTE EVIDENCE + PER-SURFACE BROWSER ISOLATION COMPLETE; WALLET ADDRESS NEXT`
 
 - Confirm all retained routes and capabilities have React owners and tests.
 - Run all-frontend checks and representative browser flows at required
@@ -2174,7 +2174,7 @@ model projects the versioned audit registry, current verified history, filters,
 score summaries, explicit review chains, and selected evidence for both React
 and the retained Svelte route. The registry boundary rejects malformed required
 fields, unsupported versions, duplicate IDs, unknown reviewers, invalid scores,
-and invalid run dates instead of inventing fallback evidence. Seven typed gaps
+and invalid run dates instead of inventing fallback evidence. Six typed gaps
 remain; `/embed` stays behind the explicit Entity-workspace owner decision and
 canonical command/routing, artifact-consumer, and Svelte retirement work stays
 WP10-only.
@@ -2237,6 +2237,31 @@ established missing-`cargo` environment stop. File-size policy still reports
 only `core/qa/report.ts` at 3,001 / 3,000 lines; both new browser evidence files
 are below 60 lines.
 
+Candidate browser preparation and execution are now independently scoped per
+surface. `test:react:site`, `test:react:docs`, `test:react:wallet`, and
+`test:react:ops` start only the selected Vite root plus the same-origin gateway;
+the full command remains an explicit four-surface mode. Generated release
+catalog and Runtime bundle inputs declare their real development consumers, so
+site `/releases` and ops `/scenarios` keep their public URLs without launching
+the docs or wallet applications. Production input ownership, assembly, and the
+canonical Svelte route remain unchanged. The four isolated browser runs pass
+21 / 21, 3 / 3, 6 / 6, and 30 / 30 respectively, and the complete candidate
+matrix passes 63 / 63. Six new direct `/app` and isolated `/scenarios`
+screenshots were inspected across 390×844, 1366×900, and 1920×1080; there are
+zero page errors, console errors, or horizontal-overflow failures. The focused
+tooling batch passes 45 / 45 with 498 expectations. All four React surfaces
+pass the local integration gate with 651 files and zero unsafe findings; the
+canonical frontend check remains at zero errors/warnings and builds 4,674 SSR
+plus 6,425 client modules. Production builds transform 401 site, 35 docs, 1,669
+wallet, and 1,614 ops modules. The full frontend suite preserves the exact known
+13-name baseline with 1,254 passes, 14 reported failures, one error, and 7,129
+expectations across 1,268 tests / 208 files. The repository gate repeats 26
+deterministic tests / 100,156 expectations, 28 Solidity files, 92 TypeChain
+files, four immutable metadata checks, and all ten soundchecks before the
+established missing-`cargo` environment stop. File-size policy still reports
+only `core/qa/report.ts` at 3,001 / 3,000 lines; every new handwritten file is
+below 150 lines.
+
 **Done:** the four React apps form a complete candidate and no known retained
 capability depends on Svelte.
 
@@ -2266,7 +2291,7 @@ any mismatch. Never compile on production.
 
 - [x] Four independent React/Vite/TypeScript application roots exist.
 - [ ] Every retained browser route and capability has one application owner.
-- [ ] Each app checks, tests, builds, and runs targeted browser flows without
+- [x] Each app checks, tests, builds, and runs targeted browser flows without
       building unrelated apps.
 - [x] Shared packages preserve storage/lifecycle and Runtime-client boundaries.
 - [x] Generated inputs have deterministic producers and collision-free outputs.
@@ -2281,15 +2306,15 @@ any mismatch. Never compile on production.
 
 ## Current next actions
 
-1. Split candidate browser commands per surface so no targeted flow prepares
-   or launches unrelated applications.
+1. Implement `/address` and `/address/:entityId` as the next wallet parity
+   slice without changing canonical Svelte routing.
 2. Owner to assign: two `network-timeline-source` failures
    (`NETWORK_TRAIL_FRAME_INVALID:1` in the JSON-safe-frame and trail
    round-trip tests) appeared with the in-flight `core/scenarios` runner
    changes in the working tree and are collateral from that stream, not the
    frontend migration.
-3. Close the wallet address, irreversible identity/recovery, external-provider,
-   and deep browser-flow gaps as separate slices.
+3. Close the irreversible identity/recovery, external-provider, and remaining
+   deep browser-flow gaps as separate slices.
 4. Keep the sized Entity workspace expansion behind its explicit owner decision
    while `/embed` remains canonical.
 5. When WP9 evidence is complete, request explicit WP10 cutover authority and
