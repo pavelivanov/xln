@@ -193,7 +193,15 @@ const decodeDisputes = (
   }];
 });
 
-const decodeHistory = (value: unknown, math: WalletPortfolioMath) => {
+export type WalletActivityHistoryProjection = Readonly<{
+  events: readonly WalletHistoryEvent[];
+  nextBeforeHeight: number | null;
+}>;
+
+export const decodeWalletActivityHistory = (
+  value: unknown,
+  math: WalletPortfolioMath,
+): WalletActivityHistoryProjection => {
   if (value === null) return { events: [] as WalletHistoryEvent[], nextBeforeHeight: null };
   const root = requireRuntimeRecord(value, 'WALLET_HEALTH_ACTIVITY');
   if (root['ok'] !== true || !Array.isArray(root['events'])) throw new Error('WALLET_HEALTH_ACTIVITY_INVALID');
@@ -235,7 +243,7 @@ export const decodeWalletFinancialHealthProjection = (
   if (!Array.isArray(frame['entities'])) throw new Error('WALLET_HEALTH_ENTITIES_INVALID');
   const entities = frame['entities'].map(entityFromPayload);
   const activeEntityId = readWalletFrameActiveEntityId(frame);
-  const history = decodeHistory(payload.activity, math);
+  const history = decodeWalletActivityHistory(payload.activity, math);
   if (!activeEntityId && frame['activeEntity'] === null) return {
     height, entities, activeEntityId: '', activeEntityLabel: '', debtGroups: [], disputes: [],
     accountsPage: 0, accountsPageCount: 0, accountsTotal: 0,

@@ -45,9 +45,9 @@ to finish, not a reason to block unrelated scaffolding or migration slices.
 
 | Artifact | Status | Next action |
 |---|---|---|
-| [Migration work plan](react-frontend-migration.md) | `IN PROGRESS — WP0–WP6 + WP8 COMPLETE; WP7 WORKSPACE PARTIAL; WP9 HAS 16 COVERED / 2 PARTIAL / 2 MISSING ROUTES AND 6 EXACT GAPS` | Implement wallet `/address` routes without canonical route cutover. |
+| [Migration work plan](react-frontend-migration.md) | `IN PROGRESS — WP0–WP6 + WP8 COMPLETE; WP7 WORKSPACE PARTIAL; WP9 HAS 16 COVERED / 4 PARTIAL / 0 MISSING ROUTES AND 6 EXACT GAPS` | Connect imported Runtime selection and populated address-route evidence. |
 | [Technical decisions](react-frontend-migration-decisions.md) | `ACTIVE` | Use the recorded application, route, build, and coexistence decisions. |
-| Frontend implementation | `IN PROGRESS — SITE DIRECT ROUTE EVIDENCE + PER-SURFACE BROWSER ISOLATION COMPLETE; WALLET ADDRESS NEXT` | Implement wallet `/address` and `/address/:entityId` while canonical Svelte remains unchanged. |
+| Frontend implementation | `IN PROGRESS — ALL RETAINED ROUTES HAVE REACT OWNERS; WALLET ADDRESS RUNTIME AFFINITY NEXT` | Finish live imported-Runtime affinity for `/address/:entityId` while canonical Svelte remains unchanged. |
 
 WP9 parity follows application completion; WP10 cutover and WP11 production
 activation remain separately owner-authorized.
