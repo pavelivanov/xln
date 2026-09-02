@@ -11,12 +11,16 @@ import {
   rewriteDevelopmentGatewayUrl,
   type GatewayProxyOwner,
 } from '../../../frontend/config/development-gateway';
+import { SURFACE_IDS } from '../../../frontend/config/surfaces';
 import {
   getReactAppBase,
   getReactPublicDirectory,
   getReactViteCacheDirectory,
 } from '../../../frontend/config/create-react-app-config';
-import { createDevelopmentGateway } from '../../../frontend/scripts/dev-gateway';
+import {
+  createDevelopmentGateway,
+  resolveDevelopmentProxyOwner,
+} from '../../../frontend/scripts/dev-gateway';
 import {
   createDevelopmentProcessSpecs,
   getDevelopmentExitFailure,
@@ -260,7 +264,7 @@ describe('React development gateway', () => {
   });
 
   test('launches four gateway-aware Vite roots plus one public gateway', () => {
-    const specs = createDevelopmentProcessSpecs();
+    const specs = createDevelopmentProcessSpecs(SURFACE_IDS);
     expect(specs).toHaveLength(5);
     expect(specs.filter(({ gatewayAware }) => gatewayAware)).toHaveLength(4);
     expect(specs.at(-1)).toEqual({
@@ -274,7 +278,29 @@ describe('React development gateway', () => {
     expect(getDevelopmentExitFailure(false, 'vite-site', 0)?.message).toBe(
       'FRONTEND_DEV_PROCESS_EXITED:vite-site:0',
     );
+    expect(createDevelopmentProcessSpecs(['site'])).toEqual([
+      {
+        label: 'vite-site',
+        argv: ['bunx', 'vite', '--config', 'apps/site/vite.config.ts'],
+        gatewayAware: true,
+      },
+      {
+        label: 'same-origin-gateway',
+        argv: ['bun', 'scripts/run-dev-gateway.ts'],
+        gatewayAware: false,
+        environment: { XLN_REACT_DOCS_PROXY_OWNER: 'site' },
+      },
+    ]);
+    expect(createDevelopmentProcessSpecs(['ops']).at(-1)).toEqual({
+      label: 'same-origin-gateway',
+      argv: ['bun', 'scripts/run-dev-gateway.ts'],
+      gatewayAware: false,
+      environment: { XLN_REACT_WALLET_PROXY_OWNER: 'ops' },
+    });
     expect(getGatewayExitFailure(true, 130)).toBeUndefined();
     expect(getGatewayExitFailure(false, 1)?.message).toBe('FRONTEND_GATEWAY_EXITED:1');
+    expect(resolveDevelopmentProxyOwner('docs', { docs: 'site' })).toBe('site');
+    expect(resolveDevelopmentProxyOwner('wallet', { wallet: 'ops' })).toBe('ops');
+    expect(resolveDevelopmentProxyOwner('edge', { docs: 'site' })).toBe('edge');
   });
 });
