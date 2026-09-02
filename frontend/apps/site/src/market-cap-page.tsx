@@ -42,10 +42,18 @@ function useMarketCapFeed(request: MarketCapRequest, refreshToken: number): Mark
   return state;
 }
 
-function MarketHero({ loading }: Readonly<{ loading: boolean }>) {
+type MarketFeedStatus = 'loading' | 'ready' | 'error';
+
+const marketFeedStatusLabel = (status: MarketFeedStatus): string => {
+  if (status === 'loading') return 'Synchronizing';
+  if (status === 'error') return 'Feed unavailable';
+  return 'Feed verified';
+};
+
+function MarketHero({ status }: Readonly<{ status: MarketFeedStatus }>) {
   return (
     <header className="market-hero">
-      <div><p className="market-eyebrow"><i /> Verified relay markets <span>{loading ? 'Synchronizing' : 'Feed verified'}</span></p><h1>xln Market Cap</h1><p>Numbered Entities ranked by combined <strong>CONTROL</strong> + <strong>DIVIDEND</strong> market value.</p></div>
+      <div><p className={`market-eyebrow is-${status}`}><i /> Verified relay markets <span>{marketFeedStatusLabel(status)}</span></p><h1>xln Market Cap</h1><p>Numbered Entities ranked by combined <strong>CONTROL</strong> + <strong>DIVIDEND</strong> market value.</p></div>
       <aside><span>Valuation basis</span><strong>100B <i>+</i> 100B</strong><small>Latest verified USDT trades<br />Stale after 5 minutes</small></aside>
     </header>
   );
@@ -122,11 +130,12 @@ export function MarketCapPage() {
     setRefreshToken((current) => current + 1);
   };
   const showLeaders = ranking !== 'jurisdictions' && Boolean(state.data?.entries.length) && controls.direction === 'desc' && controls.status === 'all' && !query;
+  const feedStatus: MarketFeedStatus = state.loading ? 'loading' : state.error ? 'error' : 'ready';
 
   return (
     <SiteShell activeRoute="/market-cap">
       <main className="market-page">
-        <MarketHero loading={state.loading} />
+        <MarketHero status={feedStatus} />
         <MarketMetrics data={state.data} />
         <MarketRankingNav ranking={ranking} onSelect={selectRanking} />
         {showLeaders && state.data ? <MarketLeaders data={state.data} controls={controls} /> : null}

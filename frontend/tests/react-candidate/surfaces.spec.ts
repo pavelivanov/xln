@@ -1,29 +1,17 @@
-import { expect, test, type Page, type TestInfo } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
+
+import {
+  expectNoBrowserErrors,
+  expectOnlyProxyFailures,
+  observeBrowserErrors,
+  screenshotEvidence,
+} from './browser-evidence';
 
 type SurfaceEvidence = Readonly<{
   id: 'site' | 'docs' | 'wallet' | 'ops';
   pathname: string;
   ready: (page: Page) => Promise<void>;
 }>;
-
-type BrowserErrors = Readonly<{
-  consoleErrors: string[];
-  pageErrors: string[];
-}>;
-
-const observeBrowserErrors = (page: Page): BrowserErrors => {
-  const consoleErrors: string[] = [];
-  const pageErrors: string[] = [];
-  page.on('console', message => { if (message.type() === 'error') consoleErrors.push(message.text()); });
-  page.on('pageerror', error => pageErrors.push(error.message));
-  return { consoleErrors, pageErrors };
-};
-
-const expectOnlyProxyFailures = (errors: BrowserErrors): void => {
-  expect(errors.pageErrors).toEqual([]);
-  expect(errors.consoleErrors.length).toBeGreaterThan(0);
-  for (const error of errors.consoleErrors) expect(error).toContain('status of 502');
-};
 
 const surfaces: readonly SurfaceEvidence[] = [
   {
@@ -48,20 +36,9 @@ const surfaces: readonly SurfaceEvidence[] = [
   },
 ];
 
-const screenshotEvidence = async (page: Page, testInfo: TestInfo, surfaceId: string): Promise<void> => {
-  const path = testInfo.outputPath(`${surfaceId}.png`);
-  await page.screenshot({ animations: 'disabled', fullPage: true, path });
-  await testInfo.attach(`${surfaceId}-${testInfo.project.name}`, { contentType: 'image/png', path });
-};
-
 for (const surface of surfaces) {
   test(`${surface.id} candidate renders without browser errors`, async ({ page }, testInfo) => {
-    const consoleErrors: string[] = [];
-    const pageErrors: string[] = [];
-    page.on('console', message => {
-      if (message.type() === 'error') consoleErrors.push(message.text());
-    });
-    page.on('pageerror', error => pageErrors.push(error.message));
+    const errors = observeBrowserErrors(page);
 
     const response = await page.goto(surface.pathname, { waitUntil: 'networkidle' });
     expect(response?.ok(), `document response for ${surface.pathname}`).toBe(true);
@@ -69,8 +46,7 @@ for (const surface of surfaces) {
     await expect.poll(() => page.evaluate(() => document.body.scrollWidth <= window.innerWidth)).toBe(true);
     await screenshotEvidence(page, testInfo, surface.id);
 
-    expect(pageErrors, `page errors for ${surface.pathname}`).toEqual([]);
-    expect(consoleErrors, `console errors for ${surface.pathname}`).toEqual([]);
+    expectNoBrowserErrors(errors);
   });
 }
 
