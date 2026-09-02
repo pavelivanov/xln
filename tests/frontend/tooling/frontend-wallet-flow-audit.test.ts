@@ -47,6 +47,6 @@ describe('React wallet WP6 flow audit', () => {
       expect(readFileSync(deferral.evidenceSource, 'utf8')).toContain(deferral.evidenceMarker);
       expect(deferral.reason.length).toBeGreaterThan(20);
     }
-    expect(resolveWalletPage('/address').kind).toBe('pending');
+    expect(resolveWalletPage('/address').kind).toBe('address-directory');
   });
 });

@@ -78,10 +78,12 @@ describe('WP9 retained-route and capability parity audit', () => {
       schemaVersion: 1,
       routes: {
         total: 20,
-        implementation: { complete: 16, partial: 2, missing: 2 },
-        browserEvidence: { covered: 16, partial: 2, missing: 2 },
+        implementation: { complete: 16, partial: 4 },
+        browserEvidence: { covered: 16, partial: 4 },
       },
       capabilities: { total: 12, accounted: 12 },
     });
+    expect(buildParityAuditReport().routes.implementation.missing).toBeUndefined();
+    expect(buildParityAuditReport().routes.browserEvidence.missing).toBeUndefined();
   });
 });

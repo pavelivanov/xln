@@ -2152,7 +2152,7 @@ tests can activate, reject invalid candidates, and roll back.
 
 ### WP9 — Close parity and prepare cutover
 
-**Status:** `IN PROGRESS — PARITY AUDIT + SITE DIRECT ROUTE EVIDENCE + PER-SURFACE BROWSER ISOLATION COMPLETE; WALLET ADDRESS NEXT`
+**Status:** `IN PROGRESS — ALL RETAINED ROUTES HAVE REACT OWNERS; WALLET ADDRESS RUNTIME AFFINITY NEXT`
 
 - Confirm all retained routes and capabilities have React owners and tests.
 - Run all-frontend checks and representative browser flows at required
@@ -2163,11 +2163,11 @@ tests can activate, reject invalid candidates, and roll back.
 
 The deterministic `frontend:parity:audit` command now accounts for all 20
 retained Svelte page routes and all 12 capability groups. Sixteen routes have a
-complete React implementation, `/app` and `/embed` are partial, and only
-`/address` plus `/address/:entityId` are missing. Sixteen routes have direct
-candidate-browser evidence, two have partial evidence, and two have no direct
-route evidence yet. The capability ledger remains truthful at three
-implemented, eight in progress, and one unstarted.
+complete React implementation; `/app`, `/address`, `/address/:entityId`, and
+`/embed` are partial; no retained route is missing a React owner. Sixteen routes
+have covered candidate-browser evidence and four have partial evidence. The
+capability ledger remains truthful at three implemented, eight in progress,
+and one unstarted.
 
 `/qa/quorum` is now owned by the React ops candidate. A framework-neutral pure
 model projects the versioned audit registry, current verified history, filters,
@@ -2262,8 +2262,32 @@ established missing-`cargo` environment stop. File-size policy still reports
 only `core/qa/report.ts` at 3,001 / 3,000 lines; every new handwritten file is
 below 150 lines.
 
-**Done:** the four React apps form a complete candidate and no known retained
-capability depends on Svelte.
+The React wallet now owns `/address` and `/address/:entityId` without changing
+canonical Svelte routing. Strict pure decoders validate directory and detail
+projections, preserve Runtime affinity, sort hubs deterministically, reject
+malformed or duplicate Entity evidence, and reuse the certified activity
+decoder. The read source stays behind the existing selected-Runtime adapter,
+refreshes at committed heights, releases its adapter boundary, surfaces detail
+and history failures separately, and refuses to fake a cross-Runtime detail
+read. The polished directory and explicit not-found states pass 12 / 12 wallet
+browser cases across 390x844, 1366x900, and 1920x1080; all six new screenshots
+were inspected with zero page, console, or overflow failures. The focused
+address/parity batch passes 17 / 17 with 385 expectations, the wallet local gate
+checks 654 files with zero unsafe findings, and the isolated production build
+transforms 1,674 modules with a 32.02 kB / 12.76 kB gzip address chunk. The full
+frontend suite preserves the exact 13-name baseline with 1,259 passes, 14
+reported failures, one error, and 7,174 expectations across 1,273 tests / 209
+files. The repository gate passes 26 deterministic tests / 100,156
+expectations, compiles 28 Solidity files, publishes 92 TypeChain files,
+confirms immutable metadata parity for four contracts, and passes all ten
+soundchecks before the established missing-`cargo` environment stop. Imported
+local Runtime selection and populated live directory/detail/history browser
+evidence remain explicit work under `wallet-address-route`. Production function
+size passes across 1,047 files; file-size policy reports only the known
+`core/qa/report.ts` 3,001 / 3,000 overage.
+
+**Current checkpoint:** all retained routes have React application owners; four
+routes and six typed gaps remain partial before cutover readiness.
 
 ### WP10 — Authorized canonical cutover
 
@@ -2290,7 +2314,7 @@ any mismatch. Never compile on production.
 ## Done criteria
 
 - [x] Four independent React/Vite/TypeScript application roots exist.
-- [ ] Every retained browser route and capability has one application owner.
+- [x] Every retained browser route and capability has one application owner.
 - [x] Each app checks, tests, builds, and runs targeted browser flows without
       building unrelated apps.
 - [x] Shared packages preserve storage/lifecycle and Runtime-client boundaries.
@@ -2306,8 +2330,9 @@ any mismatch. Never compile on production.
 
 ## Current next actions
 
-1. Implement `/address` and `/address/:entityId` as the next wallet parity
-   slice without changing canonical Svelte routing.
+1. Connect imported Runtime selection for `/address/:entityId` and prove
+   populated directory, detail, and history states in a real browser without
+   changing canonical Svelte routing.
 2. Owner to assign: two `network-timeline-source` failures
    (`NETWORK_TRAIL_FRAME_INVALID:1` in the JSON-safe-frame and trail
    round-trip tests) appeared with the in-flight `core/scenarios` runner
