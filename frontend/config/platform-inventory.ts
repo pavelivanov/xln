@@ -367,7 +367,7 @@ export const PLATFORM_INVENTORY = [
     ],
     evidence: [
       'tests/frontend/ops/frontend-ops-quorum.test.ts',
-      'frontend/tests/react-candidate/surfaces.spec.ts',
+      'frontend/tests/react-candidate/ops.spec.ts',
     ],
   },
   {
@@ -507,7 +507,7 @@ export const PLATFORM_INVENTORY = [
       'tests/frontend/ops/frontend-ops-entity-workspace.test.ts',
       'tests/frontend/ops/frontend-ops-entity-runtime-read.test.ts',
       'tests/e2e/runtime/e2e-react-entity-workspace.spec.ts',
-      'frontend/tests/react-candidate/surfaces.spec.ts',
+      'frontend/tests/react-candidate/ops.spec.ts',
     ],
   },
   {

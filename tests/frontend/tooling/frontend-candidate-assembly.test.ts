@@ -175,7 +175,12 @@ describe('React candidate release assembly', () => {
     const before = await planTestCandidate(frontendRoot);
 
     await writeFile(join(frontendRoot, 'static/install.sh'), 'changed install input\n');
-    await prepareGeneratedInputs(join(frontendRoot, '..'), frontendRoot, ['site']);
+    await prepareGeneratedInputs(
+      join(frontendRoot, '..'),
+      frontendRoot,
+      ['site'],
+      COPY_GENERATED_INPUTS,
+    );
     const after = await planTestCandidate(frontendRoot);
 
     expect(after.releaseId).not.toBe(before.releaseId);

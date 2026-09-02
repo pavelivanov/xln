@@ -10,6 +10,7 @@ export type GeneratedInputCopy = Readonly<{
 type GeneratedInputBase = Readonly<{
   id: string;
   owner: GeneratedInputOwner;
+  developmentConsumers?: readonly SurfaceId[];
   sourcePaths: readonly string[];
   outputNamespace: string;
 }>;
@@ -41,6 +42,7 @@ export const GENERATED_INPUTS: readonly GeneratedInputDefinition[] = [
   {
     id: 'docs-catalog',
     owner: 'docs',
+    developmentConsumers: ['docs', 'site'],
     sourcePaths: [
       'frontend/copy-static-files.js',
       'frontend/docs-catalog.js',
@@ -120,6 +122,7 @@ export const GENERATED_INPUTS: readonly GeneratedInputDefinition[] = [
   {
     id: 'wallet-runtime-bundle',
     owner: 'wallet',
+    developmentConsumers: ['wallet', 'ops'],
     sourcePaths: [
       'scripts/build-runtime.sh',
       'core/api/public',
@@ -202,5 +205,10 @@ export type PreparedGeneratedInputDefinition = GeneratedInputDefinition;
 
 export const PREPARED_GENERATED_INPUTS = GENERATED_INPUTS;
 
+export const getGeneratedInputDevelopmentConsumers = (
+  input: GeneratedInputDefinition,
+): readonly SurfaceId[] => input.developmentConsumers ?? [input.owner];
+
 export const hasPreparedGeneratedInputs = (surfaceId: SurfaceId): boolean =>
-  PREPARED_GENERATED_INPUTS.some(({ owner }) => owner === surfaceId);
+  PREPARED_GENERATED_INPUTS.some((input) =>
+    getGeneratedInputDevelopmentConsumers(input).includes(surfaceId));

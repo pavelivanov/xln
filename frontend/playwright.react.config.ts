@@ -1,11 +1,19 @@
 import { defineConfig, devices } from '@playwright/test';
 
+import {
+  CANDIDATE_BROWSER_READY_PATHS,
+  parseCandidateBrowserSurface,
+} from './scripts/test-react-candidate';
+
 delete process.env['NO_COLOR'];
 
 const host = process.env['PLAYWRIGHT_REACT_HOST'] ?? '127.0.0.1';
 const gatewayPort = Number(process.env['PLAYWRIGHT_REACT_PORT'] ?? '19080');
 const portOffset = Number(process.env['PLAYWRIGHT_REACT_PORT_OFFSET'] ?? '12000');
 const baseURL = `http://${host}:${gatewayPort}`;
+const selectedSurface = parseCandidateBrowserSurface(process.env['PLAYWRIGHT_REACT_SURFACE']);
+const evidenceScope = selectedSurface ?? 'candidate';
+const readinessPath = selectedSurface === null ? '/' : CANDIDATE_BROWSER_READY_PATHS[selectedSurface];
 
 const viewportProjects = [
   { name: 'mobile-390x844', viewport: { width: 390, height: 844 } },
@@ -15,14 +23,14 @@ const viewportProjects = [
 
 export default defineConfig({
   testDir: './tests/react-candidate',
-  outputDir: '../output/playwright/react-candidate/test-results',
+  outputDir: `../output/playwright/react-${evidenceScope}/test-results`,
   fullyParallel: false,
   forbidOnly: Boolean(process.env['CI']),
   retries: process.env['CI'] ? 1 : 0,
   workers: 1,
   reporter: [
     ['line'],
-    ['html', { open: 'never', outputFolder: '../output/playwright/react-candidate/report' }],
+    ['html', { open: 'never', outputFolder: `../output/playwright/react-${evidenceScope}/report` }],
   ],
   use: {
     baseURL,
@@ -37,8 +45,8 @@ export default defineConfig({
     },
   })),
   webServer: {
-    command: 'bun run dev:react',
-    url: baseURL,
+    command: `bun scripts/dev.ts ${selectedSurface === null ? '--all' : `--surface=${selectedSurface}`}`,
+    url: `${baseURL}${readinessPath}`,
     reuseExistingServer: false,
     timeout: 120_000,
     env: {
