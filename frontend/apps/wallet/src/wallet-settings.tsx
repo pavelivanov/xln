@@ -8,13 +8,19 @@ import {
   walletPreferenceStorageErrorMessage,
   type WalletWorkerCapChoice,
 } from './wallet-settings-model';
+import type { WalletRuntimeSummary } from './app-shell-model';
+import { WalletRecoveryServices } from './wallet-recovery-services';
 import './styles/wallet-settings.css';
 
 const WORKER_CAPS = [1, 2, 3, 4, 5, 6, 7, 8] as const;
 
 export function WalletSettings({
   onAuthSchemeChange,
-}: Readonly<{ onAuthSchemeChange: (scheme: WalletAuthScheme) => void }>) {
+  runtimeState,
+}: Readonly<{
+  onAuthSchemeChange: (scheme: WalletAuthScheme) => void;
+  runtimeState: WalletRuntimeSummary['state'];
+}>) {
   const [preferences, setPreferences] = useState(() => readWalletPreferences(localStorage));
   const [status, setStatus] = useState('');
   const [error, setError] = useState('');
@@ -54,7 +60,7 @@ export function WalletSettings({
       <header>
         <p className="wallet-shell-eyebrow">Browser preferences</p>
         <h1 id="wallet-settings-title">Wallet settings</h1>
-        <p>Device-local choices for identity entry and memory-hard recovery work.</p>
+        <p>Device-local preferences and recovery services for the active Runtime.</p>
       </header>
 
       <div className="wallet-settings-list">
@@ -97,6 +103,7 @@ export function WalletSettings({
       </p>
       {status ? <p className="wallet-settings-status" aria-live="polite">{status}</p> : null}
       {error ? <p className="wallet-settings-error" role="alert">{error}</p> : null}
+      <WalletRecoveryServices runtimeState={runtimeState} />
     </section>
   );
 }
