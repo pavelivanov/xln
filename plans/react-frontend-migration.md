@@ -1,6 +1,6 @@
 # React frontend migration work plan
 
-**Status:** `IN PROGRESS — WP0–WP6 COMPLETE; WP7 HEALTH + QA + HLT + RUNS + SCENARIOS + AI IMPLEMENTED, WORKSPACE STATE LAYER SVELTE-FREE, PANEL PORTS THROUGH ARCHITECT, REACT DOCKVIEW WRAPPER READY, GRAPH3D LIFECYCLE + RENDERER/PRIMITIVES/EFFECTS/ENTITY/ACCOUNT VISUAL FACTORY/INTERACTION/SELECTION/CAMERA/POINTER+XR DRAG + HOVER MECHANICS + VIEW/SCENE INPUT MODELS EXTRACTED, ENTITY WORKSPACE REACT SHELL/TABS + LIVE RUNTIME CONTEXT + READ-ONLY OWNERSHIP/ACCOUNTS/PROFILE READY; WP8 COMPLETE; WP9 HAS 19 COVERED / 1 PARTIAL BROWSER ROUTE AND 3 EXACT GAPS, PUSH-WAKE CONTROLS NEXT`
+**Status:** `IN PROGRESS — WP0–WP6 COMPLETE; WP7 HEALTH + QA + HLT + RUNS + SCENARIOS + AI IMPLEMENTED, WORKSPACE STATE LAYER SVELTE-FREE, PANEL PORTS THROUGH ARCHITECT, REACT DOCKVIEW WRAPPER READY, GRAPH3D LIFECYCLE + RENDERER/PRIMITIVES/EFFECTS/ENTITY/ACCOUNT VISUAL FACTORY/INTERACTION/SELECTION/CAMERA/POINTER+XR DRAG + HOVER MECHANICS + VIEW/SCENE INPUT MODELS EXTRACTED, ENTITY WORKSPACE REACT SHELL/TABS + LIVE RUNTIME CONTEXT + READ-ONLY OWNERSHIP/ACCOUNTS/PROFILE READY; WP8 COMPLETE; WP9 HAS 19 COVERED / 1 PARTIAL BROWSER ROUTE AND 2 EXACT GAPS, PUSH WAKE COMPLETE, EXTERNAL PROVIDER NEXT`
 
 This is the executable work plan for splitting the Svelte frontend into React
 applications. It is intentionally lightweight and should be updated as live
@@ -2561,8 +2561,41 @@ local `cargo`, and file-size checking reaches only the existing
 contract, persistence schema, or artifact. Push-wake controls are next; the
 typed inventory remains at three exact gaps.
 
-**Current checkpoint:** all retained routes have React application owners; two
-implementations, one browser route, and three typed gaps remain partial before
+React Wallet Settings now provides canonical device push-wake registration and
+disable controls beside the saved recovery-service configuration. React owns
+only redacted Runtime, Entity, service, platform, and status projections; the
+migration bridge keeps raw device tokens, owner signatures, live Runtime state,
+and watchtower requests outside React. Each operation binds the unchanged
+Runtime, Entity, authority lease, and recovery-service set across asynchronous
+token/signing boundaries, surfaces partial failures loudly, and persists only
+the token hash after server acceptance. Native Capacitor dependencies are
+loaded only after the desktop provider declines, preventing runtime dependency
+rediscovery and keeping the desktop path split. The real browser fixture
+restores an Entity-bearing signed Runtime backup, serves BrowserVM's canonical
+block hashes, receipt roots, blooms, receipts, and logs through an isolated RPC
+boundary, and proves signed register, redacted local status, health count, and
+signed unregister against the production standalone watchtower. That flow
+passes 3 / 3 in 20.1 seconds and the complete wallet matrix passes 36 / 36 in
+1.1 minutes across 390×844, 1366×900, and 1920×1080; every registered-state
+screenshot was inspected without clipping or horizontal overflow. The focused
+push-wake/inventory batch passes 15 / 15 with 150 expectations and the four
+typed inventories pass 21 / 21 with 667 expectations. The authoritative
+215-file frontend suite improves the previous 17-failure baseline to 1,286
+passes, 16 known or environmental failures, one error, and 7,366 expectations
+across 1,302 tests. The wallet-local gate scans 670 files with zero unsafe-type
+findings, the production wallet build transforms 1,847 modules in 2.09 seconds,
+and the canonical frontend gate has zero errors/warnings while transforming
+4,677 SSR plus 6,428 client modules. Root evidence passes 26 / 26
+BrainVault/runtime tests with 100,156 expectations before the documented
+60-second Hardhat compiler-cache mutex; downstream soundcheck passes all ten
+gates before the documented missing local `cargo`, and file-size checking
+reaches only the existing `core/qa/report.ts` 3001/3000 violation. This slice
+changes no Runtime protocol, contract, persistence schema, or artifact. Wallet
+recovery and push wake are complete; the typed parity audit now reports two
+exact gaps and external-provider integration is next.
+
+**Current checkpoint:** all retained routes have React application owners; one
+implementation, one browser route, and two typed gaps remain partial before
 cutover readiness.
 
 ### WP10 — Authorized canonical cutover
@@ -2606,20 +2639,18 @@ any mismatch. Never compile on production.
 
 ## Current next actions
 
-1. Add React push-wake registration and disable controls over the existing
-   recovery-service configuration and canonical signed request boundary.
+1. Connect the React payment surface to the existing external-wallet provider
+   and native authority boundary without moving authority into React.
 2. Owner to assign: two `network-timeline-source` failures
    (`NETWORK_TRAIL_FRAME_INVALID:1` in the JSON-safe-frame and trail
    round-trip tests) appeared with the in-flight `core/scenarios` runner
    changes in the working tree and are collateral from that stream, not the
    frontend migration.
-3. Close the remaining push-wake and external-provider gaps as
-   separate slices.
-4. Keep the sized Entity workspace expansion behind its explicit owner decision
+3. Keep the sized Entity workspace expansion behind its explicit owner decision
    while `/embed` remains canonical.
-5. When WP9 evidence is complete, request explicit WP10 cutover authority and
+4. When WP9 evidence is complete, request explicit WP10 cutover authority and
    prepare the canonical-consumer change separately.
-6. Keep WP11 as a separately authorized production operation using immutable
+5. Keep WP11 as a separately authorized production operation using immutable
    prebuilt artifacts.
 
 ## WP5 closure record

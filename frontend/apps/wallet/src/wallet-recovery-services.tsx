@@ -13,6 +13,7 @@ import {
   readWalletRecoveryServices,
   saveWalletRecoveryServices,
 } from './wallet-recovery-services-source';
+import { WalletPushWake } from './wallet-push-wake';
 import './styles/wallet-recovery-services.css';
 
 const RECOVERY_MODES = [
@@ -40,6 +41,7 @@ export function WalletRecoveryServices({
   const [manualUrl, setManualUrl] = useState('');
   const [manualRole, setManualRole] = useState<WalletRecoveryServiceRole>('blind_backup');
   const [busy, setBusy] = useState(false);
+  const [savedRevision, setSavedRevision] = useState(0);
   const [status, setStatus] = useState('');
   const [error, setError] = useState('');
 
@@ -126,6 +128,7 @@ export function WalletRecoveryServices({
     setError('');
     try {
       setView(await saveWalletRecoveryServices(mutationFromView(view)));
+      setSavedRevision((revision) => revision + 1);
       setStatus('Recovery services saved to the active Runtime.');
     } catch (failure: unknown) {
       setError(recoveryErrorMessage(failure));
@@ -135,62 +138,65 @@ export function WalletRecoveryServices({
   };
 
   return (
-    <section className="wallet-recovery-services" aria-labelledby="wallet-recovery-services-title">
-      <header>
-        <div>
-          <p className="wallet-shell-eyebrow">Runtime protection</p>
-          <h2 id="wallet-recovery-services-title">Recovery services</h2>
-        </div>
-        <code>{view.runtimeId}</code>
-      </header>
-
-      <div className="wallet-recovery-mode-grid" role="radiogroup" aria-label="Runtime recovery mode">
-        {RECOVERY_MODES.map(([mode, title, copy]) => (
-          <button
-            aria-checked={view.mode === mode}
-            disabled={disabled || (mode !== 'local_only' && !view.officialAvailable)}
-            key={mode}
-            onClick={() => void preview(mutationFromView(view, { mode: mode as WalletRecoverySetupMode }))}
-            role="radio"
-            type="button"
-          >
-            <strong>{title}</strong>
-            <span>{mode !== 'local_only' && !view.officialAvailable ? 'No official tower is available here.' : copy}</span>
-          </button>
-        ))}
-      </div>
-
-      <div className="wallet-recovery-service-list" aria-label="Configured recovery services">
-        {view.services.length === 0 ? <p>No remote recovery service configured.</p> : null}
-        {view.services.map((service) => (
-          <div className="wallet-recovery-service-row" key={service.url}>
-            <span><strong>{service.official ? 'Official xln tower' : 'Manual service'}</strong><code>{service.url}</code></span>
-            <span>
-              <select
-                aria-label={`Role for ${service.url}`}
-                disabled={disabled || service.official}
-                onChange={(event) => updateRole(service.url, event.target.value as WalletRecoveryServiceRole)}
-                value={service.role}
-              >
-                <option value="blind_backup">Backup service</option>
-                <option value="delayed_last_resort">Last-resort disputer</option>
-              </select>
-              {!service.official ? <button disabled={disabled} onClick={() => removeService(service.url)} type="button">Remove</button> : null}
-            </span>
+    <>
+      <section className="wallet-recovery-services" aria-labelledby="wallet-recovery-services-title">
+        <header>
+          <div>
+            <p className="wallet-shell-eyebrow">Runtime protection</p>
+            <h2 id="wallet-recovery-services-title">Recovery services</h2>
           </div>
-        ))}
-      </div>
+          <code>{view.runtimeId}</code>
+        </header>
 
-      <div className="wallet-recovery-manual-editor">
-        <label><span>Service URL</span><input disabled={disabled} onChange={(event) => setManualUrl(event.target.value)} placeholder="https://tower.example.com" type="url" value={manualUrl} /></label>
-        <label><span>Role</span><select aria-label="Manual recovery service role" disabled={disabled} onChange={(event) => setManualRole(event.target.value as WalletRecoveryServiceRole)} value={manualRole}><option value="blind_backup">Backup service</option><option value="delayed_last_resort">Last-resort disputer</option></select></label>
-        <button disabled={disabled} onClick={addService} type="button">Add service</button>
-      </div>
+        <div className="wallet-recovery-mode-grid" role="radiogroup" aria-label="Runtime recovery mode">
+          {RECOVERY_MODES.map(([mode, title, copy]) => (
+            <button
+              aria-checked={view.mode === mode}
+              disabled={disabled || (mode !== 'local_only' && !view.officialAvailable)}
+              key={mode}
+              onClick={() => void preview(mutationFromView(view, { mode: mode as WalletRecoverySetupMode }))}
+              role="radio"
+              type="button"
+            >
+              <strong>{title}</strong>
+              <span>{mode !== 'local_only' && !view.officialAvailable ? 'No official tower is available here.' : copy}</span>
+            </button>
+          ))}
+        </div>
 
-      <button className="wallet-recovery-save" disabled={disabled} onClick={() => void save()} type="button">{busy ? 'Saving…' : 'Save recovery services'}</button>
-      {!view.writable ? <p className="wallet-settings-error" role="alert">{view.blockedReason}</p> : null}
-      {status ? <p className="wallet-settings-status" aria-live="polite">{status}</p> : null}
-      {error ? <p className="wallet-settings-error" role="alert">{error}</p> : null}
-    </section>
+        <div className="wallet-recovery-service-list" aria-label="Configured recovery services">
+          {view.services.length === 0 ? <p>No remote recovery service configured.</p> : null}
+          {view.services.map((service) => (
+            <div className="wallet-recovery-service-row" key={service.url}>
+              <span><strong>{service.official ? 'Official xln tower' : 'Manual service'}</strong><code>{service.url}</code></span>
+              <span>
+                <select
+                  aria-label={`Role for ${service.url}`}
+                  disabled={disabled || service.official}
+                  onChange={(event) => updateRole(service.url, event.target.value as WalletRecoveryServiceRole)}
+                  value={service.role}
+                >
+                  <option value="blind_backup">Backup service</option>
+                  <option value="delayed_last_resort">Last-resort disputer</option>
+                </select>
+                {!service.official ? <button disabled={disabled} onClick={() => removeService(service.url)} type="button">Remove</button> : null}
+              </span>
+            </div>
+          ))}
+        </div>
+
+        <div className="wallet-recovery-manual-editor">
+          <label><span>Service URL</span><input disabled={disabled} onChange={(event) => setManualUrl(event.target.value)} placeholder="https://tower.example.com" type="url" value={manualUrl} /></label>
+          <label><span>Role</span><select aria-label="Manual recovery service role" disabled={disabled} onChange={(event) => setManualRole(event.target.value as WalletRecoveryServiceRole)} value={manualRole}><option value="blind_backup">Backup service</option><option value="delayed_last_resort">Last-resort disputer</option></select></label>
+          <button disabled={disabled} onClick={addService} type="button">Add service</button>
+        </div>
+
+        <button className="wallet-recovery-save" disabled={disabled} onClick={() => void save()} type="button">{busy ? 'Saving…' : 'Save recovery services'}</button>
+        {!view.writable ? <p className="wallet-settings-error" role="alert">{view.blockedReason}</p> : null}
+        {status ? <p className="wallet-settings-status" aria-live="polite">{status}</p> : null}
+        {error ? <p className="wallet-settings-error" role="alert">{error}</p> : null}
+      </section>
+      <WalletPushWake refreshKey={savedRevision} runtimeState={runtimeState} />
+    </>
   );
 }
