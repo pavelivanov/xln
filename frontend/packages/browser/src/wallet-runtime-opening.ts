@@ -53,6 +53,36 @@ export type WalletRuntimeOpeningPlan<
     }>;
   }>;
 
+export type WalletRuntimeOpeningExecutionInput<
+  RecoveryCandidate,
+  UnlockDuration extends number | null,
+> = Omit<WalletRuntimeOpeningInput<RecoveryCandidate, UnlockDuration>, 'localRuntimeExists'>;
+
+export type WalletRuntimeOpeningDependencies<
+  RecoveryCandidate,
+  UnlockDuration extends number | null,
+  Runtime,
+> = Readonly<{
+  runtimeExists: (runtimeId: string) => boolean;
+  unlockRuntime: (
+    runtimeId: string,
+    seed: string,
+    unlockDurationMs: UnlockDuration,
+  ) => Promise<void>;
+  createRuntime: (
+    label: string,
+    seed: string,
+    options: Extract<
+      WalletRuntimeOpeningPlan<RecoveryCandidate, UnlockDuration>,
+      { action: 'create-runtime' }
+    >['options'],
+  ) => Promise<Runtime>;
+}>;
+
+export type WalletRuntimeOpeningExecution<Runtime> =
+  | Readonly<{ action: 'unlock-local'; runtime: null }>
+  | Readonly<{ action: 'create-runtime'; runtime: Runtime }>;
+
 const normalizeOptionalMnemonic = (mnemonic: string): string | undefined =>
   mnemonic.trim().split(/\s+/).join(' ') || undefined;
 
@@ -89,4 +119,31 @@ export const resolveWalletRuntimeOpeningPlan = <
       unlockDurationMs: input.unlockDurationMs,
     },
   };
+};
+
+export const executeWalletRuntimeOpening = async <
+  RecoveryCandidate,
+  UnlockDuration extends number | null,
+  Runtime,
+>(
+  input: WalletRuntimeOpeningExecutionInput<RecoveryCandidate, UnlockDuration>,
+  dependencies: WalletRuntimeOpeningDependencies<RecoveryCandidate, UnlockDuration, Runtime>,
+): Promise<WalletRuntimeOpeningExecution<Runtime>> => {
+  const openingChoice = {
+    openLocal: input.openLocal,
+    forceFresh: input.forceFresh,
+    hasRecoveryCandidate: input.recoveryCandidate !== undefined,
+  };
+  const plan = resolveWalletRuntimeOpeningPlan({
+    ...input,
+    localRuntimeExists: walletRuntimeOpeningNeedsLocalLookup(openingChoice)
+      ? dependencies.runtimeExists(input.runtimeId)
+      : false,
+  });
+  if (plan.action === 'unlock-local') {
+    await dependencies.unlockRuntime(plan.runtimeId, plan.seed, plan.unlockDurationMs);
+    return { action: 'unlock-local', runtime: null };
+  }
+  const runtime = await dependencies.createRuntime(plan.label, plan.seed, plan.options);
+  return { action: 'create-runtime', runtime };
 };

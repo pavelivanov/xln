@@ -141,7 +141,7 @@ describe('browser wallet Runtime opening', () => {
     }
   });
 
-  test('keeps vault mutation and sensitive cleanup in the Svelte event flow', () => {
+  test('shares Runtime opening execution while Svelte retains concrete vault effects and cleanup', () => {
     const boundary = readFileSync(
       'frontend/packages/browser/src/wallet-runtime-opening.ts',
       'utf8',
@@ -154,11 +154,14 @@ describe('browser wallet Runtime opening', () => {
     expect(boundary).not.toContain('svelte');
     expect(boundary).not.toContain('vaultOperations');
     expect(boundary).not.toContain('../../../../core');
-    expect(view).toContain('walletRuntimeOpeningNeedsLocalLookup(openingChoice)');
-    expect(view).toContain('resolveWalletRuntimeOpeningPlan({');
-    expect(view).toContain('await vaultOperations.unlockRuntime(');
-    expect(view).toContain('await vaultOperations.createRuntime(');
+    expect(boundary).toContain('export const executeWalletRuntimeOpening = async');
+    expect(boundary).toContain('dependencies.runtimeExists(input.runtimeId)');
+    expect(boundary).toContain('await dependencies.unlockRuntime(');
+    expect(boundary).toContain('await dependencies.createRuntime(');
+    expect(view).toContain('await executeWalletRuntimeOpening({');
+    expect(view).toContain('vaultOperations.unlockRuntime(candidateId, candidateSeed, durationMs)');
+    expect(view).toContain('vaultOperations.createRuntime(label, candidateSeed, creationOptions)');
     expect(view).toContain('clearSensitiveWalletMaterial();');
-    expect(view).toContain("openingPlan.action === 'unlock-local'");
+    expect(view).not.toContain("openingPlan.action === 'unlock-local'");
   });
 });

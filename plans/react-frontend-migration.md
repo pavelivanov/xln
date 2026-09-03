@@ -2386,6 +2386,25 @@ root attempt and one focused retry; Rust checks remain unavailable because
 while file-size policy reports only the known out-of-scope `core/qa/report.ts`
 3,001 / 3,000 overage.
 
+Canonical local-unlock and Runtime-creation execution now lives behind the
+framework-neutral `wallet-runtime-opening` boundary. The executor owns the
+conditional existing-Runtime lookup, the already-reviewed opening plan, and
+the single unlock-or-create effect choice; it imports neither Svelte nor the
+Runtime/protocol implementation. `RuntimeCreation.svelte` supplies the existing
+`vaultOperations` effects and retains recovery discovery, sensitive-material
+cleanup, navigation, diagnostics, and failure publication. The complete
+onboarding suite passes 177 / 177 with 704 expectations, and the wallet local
+gate covers 656 files with zero unsafe findings. This nonvisual extraction
+changes no markup, copy, styling, or user interaction, so screenshot evidence
+is not required. The irreversible-identity gap remains open until React invokes
+this shared executor through the canonical vault adapter. The authoritative
+frontend baseline remains exact at 1,261 pass / 14 fail / 1 error across 1,275
+tests; all 14 failures are the previously recorded unrelated baseline. Root
+verification passed 26 / 26 BrainVault/runtime tests with 100,156 expectations
+and all 10 soundchecks, then reproduced only the shared Hardhat compiler-cache
+mutex, missing local `cargo`, and known `core/qa/report.ts` 3,001 / 3,000
+file-size environment/baseline stops.
+
 **Current checkpoint:** all retained routes have React application owners; two
 implementations, one browser route, and four typed gaps remain partial before
 cutover readiness.
@@ -2431,8 +2450,8 @@ any mismatch. Never compile on production.
 
 ## Current next actions
 
-1. Exercise the payment and market surfaces against committed Runtime state at
-   all required viewports without broadening their existing authority boundary.
+1. Wire the React identity review through the shared Runtime-opening executor
+   and canonical vault adapter without duplicating recovery or persistence.
 2. Owner to assign: two `network-timeline-source` failures
    (`NETWORK_TRAIL_FRAME_INVALID:1` in the JSON-safe-frame and trail
    round-trip tests) appeared with the in-flight `core/scenarios` runner
