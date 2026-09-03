@@ -3,6 +3,7 @@ import { describe, expect, test } from 'bun:test';
 import {
   DEFAULT_DISPLAY_PREFERENCES,
   parseDisplayPreferences,
+  serializeTimeMachinePreferenceUpdate,
   serializeThemePreferenceUpdate,
 } from '../../../frontend/packages/browser/src/display-preferences';
 import { buildThemeCoreCssVariables } from '../../../frontend/packages/browser/src/theme-document';
@@ -49,6 +50,18 @@ describe('React Entity workspace display preferences', () => {
     });
   });
 
+  test('updates Time Machine visibility without replacing unrelated persisted settings', () => {
+    const serialized = serializeTimeMachinePreferenceUpdate(
+      JSON.stringify({ futureSetting: 'keep', showTimeMachine: false, theme: 'arctic' }),
+      true,
+    );
+    expect(JSON.parse(serialized)).toEqual({
+      futureSetting: 'keep',
+      showTimeMachine: true,
+      theme: 'arctic',
+    });
+  });
+
   test('keeps every option and document token on one canonical palette', () => {
     expect(getThemeOptions().map(option => option.value)).toEqual(THEME_NAMES);
     for (const themeName of THEME_NAMES) {
@@ -78,7 +91,8 @@ describe('React Entity workspace display preferences', () => {
     expect(page).toContain('useSyncExternalStore');
     expect(source).toContain('writeThemePreference(localStorage, theme)');
     expect(source).toContain("window.addEventListener('storage', handleStorage)");
-    expect(panel).toContain('theme write only');
+    expect(source).toContain('writeTimeMachinePreference(localStorage, showTimeMachine)');
+    expect(panel).toContain('field-scoped writes');
     expect(panel).not.toContain('localStorage');
     expect(panel).not.toContain('frontend/src');
   });

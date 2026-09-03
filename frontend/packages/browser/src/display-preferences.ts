@@ -47,6 +47,11 @@ export const serializeThemePreferenceUpdate = (
   theme: ThemeName,
 ): string => JSON.stringify({ ...parseSettingsRecord(raw), theme });
 
+export const serializeTimeMachinePreferenceUpdate = (
+  raw: string | null,
+  showTimeMachine: boolean,
+): string => JSON.stringify({ ...parseSettingsRecord(raw), showTimeMachine });
+
 export function writeThemePreference(
   storage: DisplayPreferencesStorage,
   theme: ThemeName,
@@ -54,5 +59,18 @@ export function writeThemePreference(
   storage.setItem(
     DISPLAY_PREFERENCES_STORAGE_KEY,
     serializeThemePreferenceUpdate(storage.getItem(DISPLAY_PREFERENCES_STORAGE_KEY), theme),
+  );
+}
+
+export function writeTimeMachinePreference(
+  storage: DisplayPreferencesStorage,
+  showTimeMachine: boolean,
+): void {
+  storage.setItem(
+    DISPLAY_PREFERENCES_STORAGE_KEY,
+    serializeTimeMachinePreferenceUpdate(
+      storage.getItem(DISPLAY_PREFERENCES_STORAGE_KEY),
+      showTimeMachine,
+    ),
   );
 }

@@ -10,16 +10,20 @@
 
 .entity-workspace-display > header,
 .entity-workspace-display-theme,
+.entity-workspace-display-toggle,
 .entity-workspace-display > footer { padding: 1.35rem; }
 .entity-workspace-display > header,
-.entity-workspace-display-theme { border-bottom: 1px solid var(--entity-line); }
+.entity-workspace-display-theme,
+.entity-workspace-display-toggle { border-bottom: 1px solid var(--entity-line); }
 .entity-workspace-display > header,
 .entity-workspace-display-theme,
+.entity-workspace-display-toggle,
 .entity-workspace-display > footer,
 .entity-workspace-display-boundaries dd { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
 
 .entity-workspace-display > header span,
 .entity-workspace-display-theme > span > strong,
+.entity-workspace-display-toggle > span > strong,
 .entity-workspace-display-boundaries dt,
 .entity-workspace-display > footer {
   color: var(--theme-text-muted);
@@ -32,9 +36,12 @@
 .entity-workspace-display > header strong { display: block; margin-top: 0.55rem; color: var(--theme-text-primary); font-size: 1.05rem; }
 .entity-workspace-display-swatches { display: flex; gap: 0.3rem; }
 .entity-workspace-display-swatches i { width: 1.15rem; height: 2.3rem; border: 1px solid var(--theme-border); }
-.entity-workspace-display-theme > span { display: grid; gap: 0.35rem; }
-.entity-workspace-display-theme > span > strong { color: var(--theme-text-primary); }
-.entity-workspace-display-theme small { max-width: 18rem; color: var(--theme-text-muted); font-size: 0.68rem; line-height: 1.45; }
+.entity-workspace-display-theme > span,
+.entity-workspace-display-toggle > span { display: grid; gap: 0.35rem; }
+.entity-workspace-display-theme > span > strong,
+.entity-workspace-display-toggle > span > strong { color: var(--theme-text-primary); }
+.entity-workspace-display-theme small,
+.entity-workspace-display-toggle small { max-width: 18rem; color: var(--theme-text-muted); font-size: 0.68rem; line-height: 1.45; }
 
 .entity-workspace-display-theme select {
   min-width: 8.5rem;
@@ -46,6 +53,8 @@
   font: 600 0.68rem/1 "SFMono-Regular", Consolas, monospace;
 }
 .entity-workspace-display-theme select:focus-visible { outline: 2px solid var(--entity-accent); outline-offset: 3px; }
+.entity-workspace-display-toggle input { width: 1.1rem; height: 1.1rem; accent-color: var(--entity-accent); }
+.entity-workspace-display-toggle input:focus-visible { outline: 2px solid var(--entity-accent); outline-offset: 3px; }
 
 .entity-workspace-display-boundaries { align-content: start; display: grid; margin: 0; }
 .entity-workspace-display-boundaries > div { display: grid; grid-template-columns: minmax(0, 0.7fr) minmax(0, 1.3fr); align-items: center; gap: 1rem; padding: 1rem 1.35rem; border-bottom: 1px solid var(--entity-line); }

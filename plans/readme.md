@@ -45,9 +45,9 @@ to finish, not a reason to block unrelated scaffolding or migration slices.
 
 | Artifact | Status | Next action |
 |---|---|---|
-| [Migration work plan](react-frontend-migration.md) | `IN PROGRESS — WP0–WP6 + WP8 COMPLETE; WP7 WORKSPACE PARTIAL; WP9 HAS 19 COVERED / 1 PARTIAL / 0 MISSING BROWSER ROUTES AND 4 EXACT GAPS` | Add React recovery-candidate selection and Brain Vault derivation through the canonical adapters. |
+| [Migration work plan](react-frontend-migration.md) | `IN PROGRESS — WP0–WP6 + WP8 COMPLETE; WP7 WORKSPACE PARTIAL; WP9 HAS 19 COMPLETE / 1 PARTIAL IMPLEMENTATION, 19 COVERED / 1 PARTIAL BROWSER ROUTE, AND 1 AUTHORIZED GAP` | Continue authorized Entity workspace parity behind the internal candidate route; display theme and exact Time Machine parity are complete. |
 | [Technical decisions](react-frontend-migration-decisions.md) | `ACTIVE` | Use the recorded application, route, build, and coexistence decisions. |
-| Frontend implementation | `IN PROGRESS — 18 COMPLETE / 2 PARTIAL IMPLEMENTATIONS; 19 COVERED / 1 PARTIAL BROWSER ROUTE` | Continue `/app` parity without crossing the existing identity, recovery, or provider authority boundaries. |
+| Frontend implementation | `IN PROGRESS — 19 COMPLETE / 1 PARTIAL IMPLEMENTATION; 19 COVERED / 1 PARTIAL BROWSER ROUTE` | Continue `/embed` parity without crossing Runtime, consensus, contract, or financial authority boundaries. |
 
 WP9 parity follows application completion; WP10 cutover and WP11 production
 activation remain separately owner-authorized.

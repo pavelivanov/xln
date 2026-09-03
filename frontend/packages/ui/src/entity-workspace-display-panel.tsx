@@ -16,12 +16,14 @@ export type EntityWorkspaceDisplayPreferences = Readonly<{
 type EntityWorkspaceDisplayPanelProps = Readonly<{
   issue: string | null;
   onSelectTheme: (theme: ThemeName) => void;
+  onToggleTimeMachine: (show: boolean) => void;
   preferences: EntityWorkspaceDisplayPreferences;
 }>;
 
 export function EntityWorkspaceDisplayPanel({
   issue,
   onSelectTheme,
+  onToggleTimeMachine,
   preferences,
 }: EntityWorkspaceDisplayPanelProps) {
   const theme = getThemeCoreColors(preferences.theme);
@@ -54,11 +56,19 @@ export function EntityWorkspaceDisplayPanel({
           ))}
         </select>
       </label>
+      <label className="entity-workspace-display-toggle">
+        <span>
+          <strong>Time Machine</strong>
+          <small>Show exact committed Runtime history below the workspace.</small>
+        </span>
+        <input
+          checked={preferences.showTimeMachine}
+          data-testid="settings-time-machine-toggle"
+          onChange={event => onToggleTimeMachine(event.currentTarget.checked)}
+          type="checkbox"
+        />
+      </label>
       <dl className="entity-workspace-display-boundaries">
-        <div>
-          <dt>Time Machine</dt>
-          <dd><b>{preferences.showTimeMachine ? 'Shown' : 'Hidden'}</b><span>Canonical workspace control</span></dd>
-        </div>
         <div>
           <dt>xln guide</dt>
           <dd><b>{preferences.showXlnMascot ? 'Shown' : 'Hidden'}</b><span>Canonical workspace control</span></dd>
@@ -67,7 +77,7 @@ export function EntityWorkspaceDisplayPanel({
       {issue ? <p className="entity-workspace-display-issue" role="alert">{issue}</p> : null}
       <footer>
         <span>Shared storage</span>
-        <strong>xln-settings · theme write only</strong>
+        <strong>xln-settings · field-scoped writes</strong>
       </footer>
     </section>
   );

@@ -32,6 +32,7 @@ import {
   emptyEntityWorkspaceReserves,
   projectEntityWorkspaceReserves,
 } from '../../../frontend/packages/runtime-client/src/entity-workspace-reserves';
+import { createEntityWorkspaceLiveState } from '../../../frontend/packages/runtime-client/src/entity-workspace-time-machine';
 
 const REMOTE_SESSION = {
   mode: 'remote',
@@ -110,6 +111,8 @@ const SELECTED_PROJECTION = {
   reserves: SELECTED_RESERVES,
 };
 
+const LIVE_TIME_MACHINE = createEntityWorkspaceLiveState(18);
+
 describe('React Entity workspace Runtime read boundary', () => {
   test('requires a complete tab-confined remote admin session', () => {
     expect(requireOpsEntityRemoteSession(REMOTE_SESSION)).toEqual({
@@ -143,6 +146,7 @@ describe('React Entity workspace Runtime read boundary', () => {
     })).toEqual({
       ...SELECTED_PROJECTION,
       readState: { status: 'loading', message: 'Reading the committed Entity context…' },
+      timeMachine: LIVE_TIME_MACHINE,
     });
     expect(projectOpsEntityWorkspaceObserverSnapshot('runtime-a', {
       accounts: emptyEntityWorkspaceAccounts(),
@@ -152,7 +156,11 @@ describe('React Entity workspace Runtime read boundary', () => {
       reserves: emptyEntityWorkspaceReserves(),
     }, {
       loading: false, data: SELECTED_PROJECTION, error: null, height: 18,
-    })).toEqual({ ...SELECTED_PROJECTION, readState: { status: 'ready', message: '' } });
+    })).toEqual({
+      ...SELECTED_PROJECTION,
+      readState: { status: 'ready', message: '' },
+      timeMachine: LIVE_TIME_MACHINE,
+    });
     expect(projectOpsEntityWorkspaceObserverSnapshot('runtime-a', SELECTED_PROJECTION, {
       loading: false, data: null, error: 'ENTITY_WORKSPACE_FRAME_INVALID', height: 18,
     })).toMatchObject({
@@ -163,6 +171,7 @@ describe('React Entity workspace Runtime read boundary', () => {
       profile: { status: 'empty' },
       reserves: { status: 'empty' },
       readState: { status: 'error', message: 'ENTITY_WORKSPACE_FRAME_INVALID' },
+      timeMachine: LIVE_TIME_MACHINE,
     });
   });
 

@@ -30,6 +30,10 @@ import {
   projectEntityWorkspaceReserves,
   type EntityWorkspaceReserves,
 } from '../../../packages/runtime-client/src/entity-workspace-reserves';
+import {
+  createEntityWorkspaceLiveState,
+  type EntityWorkspaceTimeMachineState,
+} from '../../../packages/runtime-client/src/entity-workspace-time-machine';
 
 export type OpsEntityWorkspaceProjection = Readonly<{
   accounts: EntityWorkspaceAccounts;
@@ -42,6 +46,7 @@ export type OpsEntityWorkspaceProjection = Readonly<{
 
 export type OpsEntityWorkspaceSourceSnapshot = OpsEntityWorkspaceProjection & Readonly<{
   readState: EntityWorkspaceReadState;
+  timeMachine: EntityWorkspaceTimeMachineState;
 }>;
 
 export const emptyOpsEntityWorkspaceProjection = (
@@ -76,24 +81,28 @@ export const projectOpsEntityWorkspaceObserverSnapshot = (
   runtimeId: string,
   currentProjection: OpsEntityWorkspaceProjection,
   snapshot: RuntimeQuerySnapshot<OpsEntityWorkspaceProjection>,
+  timeMachine: EntityWorkspaceTimeMachineState = createEntityWorkspaceLiveState(snapshot.height),
 ): OpsEntityWorkspaceSourceSnapshot => {
   if (snapshot.loading) {
     return {
       ...(snapshot.data ?? currentProjection),
       readState: { status: 'loading', message: 'Reading the committed Entity context…' },
+      timeMachine,
     };
   }
   if (snapshot.error) {
     return {
       ...emptyOpsEntityWorkspaceProjection(runtimeId),
       readState: { status: 'error', message: snapshot.error },
+      timeMachine,
     };
   }
   if (!snapshot.data) {
     return {
       ...emptyOpsEntityWorkspaceProjection(runtimeId),
       readState: { status: 'error', message: 'Runtime returned no Entity workspace context.' },
+      timeMachine,
     };
   }
-  return { ...snapshot.data, readState: { status: 'ready', message: '' } };
+  return { ...snapshot.data, readState: { status: 'ready', message: '' }, timeMachine };
 };

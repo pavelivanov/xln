@@ -3,7 +3,8 @@
   import { type Writable, type Readable } from 'svelte/store';
   import type { RuntimeReplica, EnvSnapshot, JReplica, RuntimeAdapterViewFrame, XLNModule } from '@xln/core/api/public/runtime-module';
   import type { JAdapter } from '@xln/core/jurisdiction/adapter';
-  import { DISPLAY, TIME_MACHINE } from '@xln/core/config/constants';
+  import { DISPLAY } from '@xln/core/config/constants';
+  import { ENTITY_WORKSPACE_TIME_MACHINE_HASH } from '../../../../packages/runtime-client/src/entity-workspace-time-machine';
   import FrameSubtitle from '../../components/TimeMachine/FrameSubtitle.svelte';
   import NetworkMachineTimeline from './NetworkMachineTimeline.svelte';
   import { runtimeGraphScope } from '$lib/stores/network/runtimeGraphControlStore';
@@ -445,13 +446,13 @@
 
   function readTimeMachineDeepLink(): { height: number; entityId: string; runtimeId: string } | null {
     const { params } = parseHashParams();
-    const rawHeight = Number(params.get(TIME_MACHINE.HASH_HEIGHT_PARAM) || '');
+    const rawHeight = Number(params.get(ENTITY_WORKSPACE_TIME_MACHINE_HASH.height) || '');
     const height = Math.max(1, Math.floor(rawHeight));
     if (!Number.isFinite(height) || height < 1) return null;
     return {
       height,
-      entityId: String(params.get(TIME_MACHINE.HASH_ENTITY_PARAM) || '').trim().toLowerCase(),
-      runtimeId: String(params.get(TIME_MACHINE.HASH_RUNTIME_PARAM) || '').trim().toLowerCase(),
+      entityId: String(params.get(ENTITY_WORKSPACE_TIME_MACHINE_HASH.entity) || '').trim().toLowerCase(),
+      runtimeId: String(params.get(ENTITY_WORKSPACE_TIME_MACHINE_HASH.runtime) || '').trim().toLowerCase(),
     };
   }
 
@@ -460,12 +461,12 @@
     const safeHeight = Math.max(1, Math.floor(Number(height || 0)));
     if (!Number.isFinite(safeHeight)) return;
     const { route, params } = parseHashParams();
-    params.set(TIME_MACHINE.HASH_HEIGHT_PARAM, String(safeHeight));
+    params.set(ENTITY_WORKSPACE_TIME_MACHINE_HASH.height, String(safeHeight));
     const normalizedEntity = entityId.trim().toLowerCase();
-    if (normalizedEntity) params.set(TIME_MACHINE.HASH_ENTITY_PARAM, normalizedEntity);
-    else params.delete(TIME_MACHINE.HASH_ENTITY_PARAM);
+    if (normalizedEntity) params.set(ENTITY_WORKSPACE_TIME_MACHINE_HASH.entity, normalizedEntity);
+    else params.delete(ENTITY_WORKSPACE_TIME_MACHINE_HASH.entity);
     const runtimeId = String($activeRuntimeId || $runtimeControllerHandle.id || '').trim().toLowerCase();
-    if (runtimeId) params.set(TIME_MACHINE.HASH_RUNTIME_PARAM, runtimeId);
+    if (runtimeId) params.set(ENTITY_WORKSPACE_TIME_MACHINE_HASH.runtime, runtimeId);
     const query = params.toString();
     const nextHash = route ? `${route}?${query}` : `?${query}`;
     const url = new URL(window.location.href);

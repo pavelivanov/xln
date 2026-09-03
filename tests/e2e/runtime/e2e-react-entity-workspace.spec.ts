@@ -164,7 +164,7 @@ const installRemoteSession = async (
     localStorage.removeItem(keys.auth);
     localStorage.setItem(keys.display, JSON.stringify({
       futureSetting: 'preserve-me',
-      showTimeMachine: true,
+      showTimeMachine: false,
       showXlnMascot: false,
       theme: 'dark',
     }));
@@ -244,6 +244,32 @@ test('React Entity workspace reads selected context from a real H1 Runtime', { t
       await candidatePage.getByTestId('settings-theme-select').selectOption('light');
       await expect.poll(() => candidatePage.evaluate(() => document.documentElement.dataset.theme)).toBe('light');
       await expect(display.getByText('Light palette')).toBeVisible();
+      await expect(candidatePage.getByTestId('entity-workspace-time-machine')).toHaveCount(0);
+      await candidatePage.getByTestId('settings-time-machine-toggle').check();
+      const timeMachine = candidatePage.getByTestId('entity-workspace-time-machine');
+      await expect(timeMachine).toBeVisible();
+      const liveLabel = await candidatePage.getByTestId('time-machine-mode').innerText();
+      const latestHeight = Number(liveLabel.match(/h(\d+)/)?.[1] || 0);
+      expect(latestHeight).toBeGreaterThan(1);
+      const historicalHeight = latestHeight - 1;
+      await candidatePage.getByTestId('time-machine-remote-height').fill(String(historicalHeight));
+      await candidatePage.getByTestId('time-machine-remote-scan-button').click();
+      const timeMachineMode = candidatePage.getByTestId('time-machine-mode');
+      await expect.poll(() => timeMachineMode.innerText()).not.toMatch(/^Reading /);
+      expect(await timeMachineMode.innerText(), await timeMachine.innerText()).toBe(`History · h${historicalHeight}`);
+      await expect(candidatePage).toHaveURL(new RegExp(`tmHeight=${historicalHeight}`));
+      await capturePageScreenshot(candidatePage, testInfo, `react-entity-workspace-time-machine-history-${viewport.name}.png`);
+      await candidatePage.getByTestId('time-machine-return-live').click();
+      await expect(candidatePage.getByTestId('time-machine-mode')).toHaveText(/Live · h\d+/);
+      await expect(candidatePage).not.toHaveURL(/tmHeight=/);
+      await candidatePage.getByTestId('time-machine-remote-height').fill(String(historicalHeight));
+      await candidatePage.getByTestId('time-machine-remote-scan-button').click();
+      await expect(candidatePage.getByTestId('time-machine-mode')).toHaveText(`History · h${historicalHeight}`);
+      await candidatePage.getByTestId('settings-time-machine-toggle').uncheck();
+      await expect(timeMachine).toHaveCount(0);
+      await expect(candidatePage).not.toHaveURL(/tmHeight=/);
+      await candidatePage.getByTestId('settings-time-machine-toggle').check();
+      await expect(candidatePage.getByTestId('time-machine-mode')).toHaveText(/Live · h\d+/);
       const storedDisplay = await candidatePage.evaluate((key) => JSON.parse(localStorage.getItem(key) || '{}'), DISPLAY_PREFERENCES_STORAGE_KEY) as Record<string, unknown>;
       expect(storedDisplay['futureSetting']).toBe('preserve-me');
       expect(storedDisplay['showTimeMachine']).toBe(true);
