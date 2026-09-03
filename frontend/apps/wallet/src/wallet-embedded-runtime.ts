@@ -4,6 +4,7 @@ import {
   createWalletEmbeddedRuntimeSession,
   type WalletEmbeddedRuntimeSessionSnapshot,
 } from '../../../packages/browser/src/wallet-embedded-runtime-session';
+import type { WalletCanonicalRuntimeOpeningRequest } from '../../../packages/browser/src/wallet-runtime-opening';
 
 const activeTabLock = createActiveTabLockController({ publishState: () => {} });
 let pageUnloadFence: () => void = () => {};
@@ -34,6 +35,18 @@ const installPagehideFence = (): void => {
 export const startWalletEmbeddedRuntime = async (): Promise<RuntimeAdapter> => {
   installPagehideFence();
   return session.start();
+};
+
+export const openWalletRuntimeWithCanonicalVault = async (
+  request: WalletCanonicalRuntimeOpeningRequest,
+): Promise<string> => {
+  installPagehideFence();
+  await session.start();
+  const adapter = await session.replace(async () => {
+    const canonical = await import('../../../bridges/wallet-canonical-vault-runtime');
+    return canonical.openCanonicalWalletRuntime(request, setPageUnloadFence);
+  });
+  return adapter.runtimeId;
 };
 
 export const stopWalletEmbeddedRuntime = (): Promise<void> => session.stop();

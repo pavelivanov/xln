@@ -6,6 +6,7 @@ import {
   deriveWalletIdentityMnemonicAddress,
   validateWalletIdentityDraft,
   walletIdentityMnemonicErrorMessage,
+  walletRuntimeOpeningErrorMessage,
 } from '../../../frontend/apps/wallet/src/identity-onboarding-model';
 import { resolveWalletAppView } from '../../../frontend/apps/wallet/src/app-shell-model';
 
@@ -84,5 +85,14 @@ describe('React wallet identity onboarding', () => {
       .toBeLessThan(source.indexOf('setReviewing(true)'));
     expect(source).toContain('No wallet is created or persisted here.');
     expect(source).not.toContain('Set up identity');
+  });
+
+  test('keeps recovery-required and canonical opening failures explicit', () => {
+    expect(walletRuntimeOpeningErrorMessage(
+      new Error('WALLET_RECOVERY_SELECTION_REQUIRED:1'),
+    )).toBe('1 recovery backup found. Fresh creation was blocked; select a backup before opening this wallet.');
+    expect(walletRuntimeOpeningErrorMessage(
+      new Error('VAULT_STORAGE_CORRUPT'),
+    )).toBe('Wallet opening failed: VAULT_STORAGE_CORRUPT');
   });
 });

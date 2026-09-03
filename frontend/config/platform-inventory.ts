@@ -156,9 +156,11 @@ export const PLATFORM_INVENTORY = [
       'frontend/packages/browser/src/runtime-module-loader.ts',
       'frontend/packages/browser/src/wallet-embedded-runtime-session.ts',
       'frontend/packages/browser/src/wallet-runtime-suspension.ts',
+      'frontend/packages/browser/src/wallet-vault-storage.ts',
       'frontend/apps/wallet/src/wallet-embedded-runtime-adapter.ts',
       'frontend/apps/wallet/src/wallet-embedded-runtime-bootstrap.ts',
       'frontend/apps/wallet/src/wallet-embedded-runtime.ts',
+      'frontend/bridges/wallet-canonical-vault-runtime.ts',
     ],
     consumers: [
       'frontend/apps/wallet/src/app-shell.tsx',

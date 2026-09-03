@@ -50,25 +50,51 @@ export function IdentityReview({
 
 export function IdentityRecoveryVerified({
   address,
+  openedRuntimeId,
+  opening,
+  openingError,
+  onOpen,
   onReset,
-}: Readonly<{ address: string; onReset: () => void }>) {
+}: Readonly<{
+  address: string;
+  openedRuntimeId: string;
+  opening: boolean;
+  openingError: string;
+  onOpen: () => void;
+  onReset: () => void;
+}>) {
+  const opened = openedRuntimeId !== '';
   return (
     <section className="identity-review" aria-labelledby="identity-verified-title">
-      <p className="wallet-shell-eyebrow">Recovery verified</p>
-      <h1 id="identity-verified-title">The same wallet returned</h1>
-      <p>The second seed phrase reproduced the first public address.</p>
+      <p className="wallet-shell-eyebrow">{opened ? 'Runtime ready' : 'Recovery verified'}</p>
+      <h1 id="identity-verified-title">{opened ? 'Wallet opened' : 'The same wallet returned'}</h1>
+      <p>{opened
+        ? 'The canonical vault persisted this identity and attached its local Runtime.'
+        : 'The second seed phrase reproduced the first public address.'}</p>
       <dl className="identity-verified-facts">
         <div><dt>Method</dt><dd>Mnemonic</dd></div>
         <div><dt>Public address</dt><dd>{address}</dd></div>
-        <div><dt>Status</dt><dd>Recovery match</dd></div>
+        <div><dt>Status</dt><dd>{opened ? 'Runtime persisted' : 'Recovery match'}</dd></div>
       </dl>
       <div className="identity-verified-note">
-        <strong>Both seed entries were cleared.</strong>
-        <span>No wallet has been created or persisted by this rehearsal.</span>
+        <strong>{opened ? 'The verified phrase was released from the form.' : 'Both seed entries were cleared.'}</strong>
+        <span>{opened
+          ? `Active Runtime ${openedRuntimeId}. Recovery discovery completed before opening.`
+          : 'The verified phrase remains only in this tab until you open the wallet or reset.'}</span>
       </div>
-      <button className="identity-secondary-action" onClick={onReset} type="button">
-        Start over
-      </button>
+      {openingError ? <p className="identity-opening-error" role="alert">{openingError}</p> : null}
+      <div className="identity-review-actions">
+        {opened ? (
+          <a className="identity-primary-action" href="/app?portfolio=1">Continue to assets</a>
+        ) : openingError ? null : (
+          <button className="identity-primary-action" disabled={opening} onClick={onOpen} type="button">
+            {opening ? 'Checking recovery…' : 'Check recovery and open wallet'}
+          </button>
+        )}
+        <button className="identity-secondary-action" disabled={opening} onClick={onReset} type="button">
+          {openingError ? 'Re-enter seed' : 'Start over'}
+        </button>
+      </div>
     </section>
   );
 }
