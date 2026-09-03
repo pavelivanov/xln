@@ -12,13 +12,15 @@ import type { EntityWorkspaceConsensusEvidence } from '../../runtime-client/src/
 import type { EntityWorkspaceOwnership } from '../../runtime-client/src/entity-workspace-ownership';
 import type { EntityWorkspaceProfile } from '../../runtime-client/src/entity-workspace-profile';
 import type { EntityWorkspaceReserves } from '../../runtime-client/src/entity-workspace-reserves';
+import type { ThemeName } from './theme-model';
 import { EntityWorkspaceAccountsPanel } from './entity-workspace-accounts-panel';
 import { EntityWorkspaceConsensusPanel } from './entity-workspace-consensus-panel';
+import { EntityWorkspaceDisplayPanel, type EntityWorkspaceDisplayPreferences } from './entity-workspace-display-panel';
 import { formatAddress } from './entity-workspace-display';
 import { EntityWorkspaceProfilePanel } from './entity-workspace-profile-panel';
 import { EntityWorkspaceReservesPanel } from './entity-workspace-reserves-panel';
+import { EntityWorkspaceSettingsStage } from './entity-workspace-settings-stage';
 import './entity-workspace-shell.css';
-
 type SectionCopy = Readonly<{
   eyebrow: string;
   title: string;
@@ -52,7 +54,6 @@ const SECTION_COPY: Readonly<Record<ViewTab, SectionCopy>> = {
     nextBoundary: 'Profile edits and all Settings commands remain on the canonical workspace.',
   },
 };
-
 const contextEntityLabel = (context: EntityWorkspaceContext): string =>
   context.entityName || formatAddress(context.entityId || '') || 'Not selected';
 
@@ -156,6 +157,9 @@ function OwnershipProjection({ ownership }: Readonly<{ ownership: EntityWorkspac
 type EntityWorkspaceStageWithOwnershipProps = EntityWorkspaceStageProps & Readonly<{
   accounts: EntityWorkspaceAccounts;
   consensus: EntityWorkspaceConsensusEvidence;
+  displayIssue: string | null;
+  displayPreferences: EntityWorkspaceDisplayPreferences;
+  onSelectTheme: (theme: ThemeName) => void;
   onSelectAccountsPage: (page: number) => void;
   ownership: EntityWorkspaceOwnership;
   profile: EntityWorkspaceProfile;
@@ -175,7 +179,7 @@ const readFooterLabel = (
   return 'Unavailable — no remote Runtime selected';
 };
 
-function EntityWorkspaceStage({ accounts, activeTab, consensus, context, onRefresh, onSelectAccountsPage, ownership, profile, readState, reserves, settingsSubview }: EntityWorkspaceStageWithOwnershipProps) {
+function EntityWorkspaceStage({ accounts, activeTab, consensus, context, displayIssue, displayPreferences, onRefresh, onSelectAccountsPage, onSelectTheme, ownership, profile, readState, reserves, settingsSubview }: EntityWorkspaceStageWithOwnershipProps) {
   const copy = SECTION_COPY[activeTab];
   return (
     <section className="entity-workspace-stage" data-testid="entity-workspace-stage">
@@ -190,10 +194,16 @@ function EntityWorkspaceStage({ accounts, activeTab, consensus, context, onRefre
           ? <EntityWorkspaceAccountsPanel accounts={accounts} onSelectPage={onSelectAccountsPage} />
           : readState.status === 'ready' && context.status === 'selected' && activeTab === 'ownership'
           ? <OwnershipProjection ownership={ownership} />
-          : readState.status === 'ready' && context.status === 'selected' && activeTab === 'settings' && settingsSubview === 'consensus'
-            ? <EntityWorkspaceConsensusPanel evidence={consensus} />
-          : readState.status === 'ready' && context.status === 'selected' && activeTab === 'settings' && (settingsSubview === 'wallet' || settingsSubview === 'entity')
-            ? <EntityWorkspaceProfilePanel profile={profile} />
+          : readState.status === 'ready' && context.status === 'selected' && activeTab === 'settings'
+            ? <EntityWorkspaceSettingsStage settingsSubview={settingsSubview}>
+                {settingsSubview === 'consensus'
+                  ? <EntityWorkspaceConsensusPanel evidence={consensus} />
+                  : settingsSubview === 'display'
+                    ? <EntityWorkspaceDisplayPanel issue={displayIssue} onSelectTheme={onSelectTheme} preferences={displayPreferences} />
+                    : settingsSubview === 'wallet' || settingsSubview === 'entity'
+                      ? <EntityWorkspaceProfilePanel profile={profile} />
+                      : <ProjectionBoundary context={context} emptyMessage={copy.nextBoundary} onRefresh={onRefresh} readState={readState} />}
+              </EntityWorkspaceSettingsStage>
           : <ProjectionBoundary
             context={context}
             emptyMessage={copy.nextBoundary}
@@ -210,7 +220,10 @@ type EntityWorkspaceShellProps = Readonly<{
   activeTab: ViewTab;
   consensus: EntityWorkspaceConsensusEvidence;
   context: EntityWorkspaceContext;
+  displayIssue: string | null;
+  displayPreferences: EntityWorkspaceDisplayPreferences;
   onRefresh: () => void;
+  onSelectTheme: (theme: ThemeName) => void;
   onSelectAccountsPage: (page: number) => void;
   ownership: EntityWorkspaceOwnership;
   profile: EntityWorkspaceProfile;
@@ -230,7 +243,7 @@ const readModeLabel = (
   return 'Read boundary';
 };
 
-export function EntityWorkspaceShell({ accounts, activeTab, consensus, context, onRefresh, onSelectAccountsPage, ownership, profile, readState, reserves, settingsSubview }: EntityWorkspaceShellProps) {
+export function EntityWorkspaceShell({ accounts, activeTab, consensus, context, displayIssue, displayPreferences, onRefresh, onSelectAccountsPage, onSelectTheme, ownership, profile, readState, reserves, settingsSubview }: EntityWorkspaceShellProps) {
   return (
     <section
       className="entity-workspace"
@@ -269,8 +282,11 @@ export function EntityWorkspaceShell({ accounts, activeTab, consensus, context, 
         activeTab={activeTab}
         consensus={consensus}
         context={context}
+        displayIssue={displayIssue}
+        displayPreferences={displayPreferences}
         onRefresh={onRefresh}
         onSelectAccountsPage={onSelectAccountsPage}
+        onSelectTheme={onSelectTheme}
         ownership={ownership}
         profile={profile}
         readState={readState}

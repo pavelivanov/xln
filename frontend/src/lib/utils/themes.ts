@@ -1,4 +1,9 @@
-import type { ThemeName } from '$lib/types/ui';
+import { applyThemeCoreToDocument } from '../../../packages/browser/src/theme-document';
+import {
+  getThemeCoreColors,
+  getThemeOptions,
+  type ThemeName,
+} from '../../../packages/ui/src/theme-model';
 
 export interface ThemeColors {
   name: string;
@@ -94,24 +99,13 @@ function withDefaults(
 
 export const THEME_DEFINITIONS: Record<ThemeName, ThemeColors> = {
   dark: withDefaults({
-    name: 'Dark',
-    background: '#09090b',
-    backgroundGradient: 'linear-gradient(135deg, #09090b 0%, #18181b 50%, #0c0c0e 100%)',
-    surface: '#18181b',
-    surfaceHover: '#1c1c20',
-    surfaceBorder: '#27272a',
+    ...getThemeCoreColors('dark'),
     entityColor: '#007acc',
     entityEmissive: '#003d66',
     connectionColor: '#00ccff',
     creditColor: '#4ade80',
     debitColor: '#f43f5e',
     collateralColor: '#10b981',
-    textPrimary: '#e4e4e7',
-    textSecondary: '#a1a1aa',
-    textMuted: '#71717a',
-    accentColor: '#fbbf24',
-    accentHover: '#f59e0b',
-    borderColor: '#27272a',
     glassBackground: 'rgba(24, 24, 27, 0.85)',
     glassBorder: 'rgba(255, 255, 255, 0.06)',
     inputBackground: '#09090b',
@@ -135,24 +129,13 @@ export const THEME_DEFINITIONS: Record<ThemeName, ThemeColors> = {
   }),
 
   editor: withDefaults({
-    name: 'Editor',
-    background: '#1e1e2e',
-    backgroundGradient: 'linear-gradient(180deg, #1e1e2e 0%, #181825 100%)',
-    surface: '#252536',
-    surfaceHover: '#2a2a3c',
-    surfaceBorder: '#313145',
+    ...getThemeCoreColors('editor'),
     entityColor: '#89b4fa',
     entityEmissive: '#1e66f5',
     connectionColor: '#74c7ec',
     creditColor: '#a6e3a1',
     debitColor: '#f38ba8',
     collateralColor: '#94e2d5',
-    textPrimary: '#cdd6f4',
-    textSecondary: '#a6adc8',
-    textMuted: '#6c7086',
-    accentColor: '#89b4fa',
-    accentHover: '#b4d0fb',
-    borderColor: '#313145',
     glassBackground: 'rgba(30, 30, 46, 0.9)',
     glassBorder: 'rgba(137, 180, 250, 0.08)',
     inputBackground: '#181825',
@@ -176,24 +159,13 @@ export const THEME_DEFINITIONS: Record<ThemeName, ThemeColors> = {
   }),
 
   light: withDefaults({
-    name: 'Light',
-    background: '#edf2f7',
-    backgroundGradient: 'linear-gradient(180deg, #f8fbff 0%, #edf2f7 56%, #e7edf5 100%)',
-    surface: '#fbfdff',
-    surfaceHover: '#f4f8fc',
-    surfaceBorder: '#dbe4ee',
+    ...getThemeCoreColors('light'),
     entityColor: '#2563eb',
     entityEmissive: '#1d4ed8',
     connectionColor: '#3b82f6',
     creditColor: '#16a34a',
     debitColor: '#dc2626',
     collateralColor: '#0d9488',
-    textPrimary: '#0f172a',
-    textSecondary: '#475569',
-    textMuted: '#94a3b8',
-    accentColor: '#2563eb',
-    accentHover: '#1d4ed8',
-    borderColor: '#dbe4ee',
     glassBackground: 'rgba(251, 253, 255, 0.88)',
     glassBorder: 'rgba(0, 0, 0, 0.06)',
     inputBackground: '#f7fbfe',
@@ -217,24 +189,13 @@ export const THEME_DEFINITIONS: Record<ThemeName, ThemeColors> = {
   }),
 
   merchant: withDefaults({
-    name: 'Merchant',
-    background: '#f2ede5',
-    backgroundGradient: 'linear-gradient(180deg, #fbf8f3 0%, #f2ede5 58%, #ece3d6 100%)',
-    surface: '#fffdfa',
-    surfaceHover: '#f8f3ec',
-    surfaceBorder: '#ddd5ca',
+    ...getThemeCoreColors('merchant'),
     entityColor: '#0c4a6e',
     entityEmissive: '#075985',
     connectionColor: '#0284c7',
     creditColor: '#15803d',
     debitColor: '#b91c1c',
     collateralColor: '#0f766e',
-    textPrimary: '#1c1917',
-    textSecondary: '#57534e',
-    textMuted: '#a8a29e',
-    accentColor: '#0c4a6e',
-    accentHover: '#0369a1',
-    borderColor: '#ddd5ca',
     glassBackground: 'rgba(255, 253, 250, 0.9)',
     glassBorder: 'rgba(0, 0, 0, 0.05)',
     inputBackground: '#f7f1e9',
@@ -258,24 +219,13 @@ export const THEME_DEFINITIONS: Record<ThemeName, ThemeColors> = {
   }),
 
   'gold-luxe': withDefaults({
-    name: 'Gold Luxe',
-    background: '#1a1410',
-    backgroundGradient: 'linear-gradient(135deg, #1a1410 0%, #2a2218 50%, #1f1814 100%)',
-    surface: '#2a2218',
-    surfaceHover: '#342c20',
-    surfaceBorder: 'rgba(255, 215, 0, 0.12)',
+    ...getThemeCoreColors('gold-luxe'),
     entityColor: '#ffd700',
     entityEmissive: '#b8860b',
     connectionColor: '#ffaa00',
     creditColor: '#32cd32',
     debitColor: '#dc143c',
     collateralColor: '#daa520',
-    textPrimary: '#f5e6d3',
-    textSecondary: '#b8a992',
-    textMuted: '#8a7a66',
-    accentColor: '#ffd700',
-    accentHover: '#ffe44d',
-    borderColor: 'rgba(255, 215, 0, 0.12)',
     glassBackground: 'rgba(42, 34, 24, 0.85)',
     glassBorder: 'rgba(255, 215, 0, 0.1)',
     inputBackground: '#1a1410',
@@ -295,24 +245,13 @@ export const THEME_DEFINITIONS: Record<ThemeName, ThemeColors> = {
   }),
 
   matrix: withDefaults({
-    name: 'Matrix',
-    background: '#000000',
-    backgroundGradient: 'linear-gradient(135deg, #000000 0%, #001a00 50%, #000000 100%)',
-    surface: '#0a1a0a',
-    surfaceHover: '#0f240f',
-    surfaceBorder: 'rgba(0, 255, 65, 0.12)',
+    ...getThemeCoreColors('matrix'),
     entityColor: '#00ff00',
     entityEmissive: '#003300',
     connectionColor: '#00ff41',
     creditColor: '#39ff14',
     debitColor: '#ff0033',
     collateralColor: '#00ff88',
-    textPrimary: '#00ff41',
-    textSecondary: '#008f11',
-    textMuted: '#005500',
-    accentColor: '#00ff00',
-    accentHover: '#33ff33',
-    borderColor: 'rgba(0, 255, 65, 0.12)',
     glassBackground: 'rgba(0, 20, 0, 0.85)',
     glassBorder: 'rgba(0, 255, 65, 0.1)',
     inputBackground: '#000a00',
@@ -332,24 +271,13 @@ export const THEME_DEFINITIONS: Record<ThemeName, ThemeColors> = {
   }),
 
   arctic: withDefaults({
-    name: 'Arctic',
-    background: '#0d1117',
-    backgroundGradient: 'linear-gradient(135deg, #0d1117 0%, #161b22 50%, #0d1117 100%)',
-    surface: '#161b22',
-    surfaceHover: '#1c2129',
-    surfaceBorder: '#30363d',
+    ...getThemeCoreColors('arctic'),
     entityColor: '#58a6ff',
     entityEmissive: '#1f6feb',
     connectionColor: '#79c0ff',
     creditColor: '#56d364',
     debitColor: '#f85149',
     collateralColor: '#3fb950',
-    textPrimary: '#c9d1d9',
-    textSecondary: '#8b949e',
-    textMuted: '#484f58',
-    accentColor: '#58a6ff',
-    accentHover: '#79c0ff',
-    borderColor: '#30363d',
     glassBackground: 'rgba(22, 27, 34, 0.85)',
     glassBorder: 'rgba(88, 166, 255, 0.08)',
     inputBackground: '#0d1117',
@@ -375,10 +303,7 @@ export function getThemeColors(themeName: ThemeName): ThemeColors {
 
 /** Get all available theme names with display labels */
 export function getAvailableThemes(): Array<{ id: ThemeName; name: string }> {
-  return (Object.entries(THEME_DEFINITIONS) as [ThemeName, ThemeColors][]).map(([id, theme]) => ({
-    id,
-    name: theme.name,
-  }));
+  return getThemeOptions().map(({ value, label }) => ({ id: value, name: label }));
 }
 
 export function applyThemeToDocument(themeName: ThemeName): void {
@@ -387,29 +312,17 @@ export function applyThemeToDocument(themeName: ThemeName): void {
   if (typeof document === 'undefined') return;
 
   const root = document.documentElement;
+  applyThemeCoreToDocument(themeName, document);
 
-  // Core colors
-  root.style.setProperty('--theme-background', theme.background);
-  root.style.setProperty('--theme-bg-gradient', theme.backgroundGradient);
+  // Extended graph and product colors
   root.style.setProperty('--theme-entity', theme.entityColor);
   root.style.setProperty('--theme-entity-emissive', theme.entityEmissive);
   root.style.setProperty('--theme-connection', theme.connectionColor);
   root.style.setProperty('--theme-credit', theme.creditColor);
   root.style.setProperty('--theme-debit', theme.debitColor);
   root.style.setProperty('--theme-collateral', theme.collateralColor);
-  root.style.setProperty('--theme-text-primary', theme.textPrimary);
-  root.style.setProperty('--theme-text-secondary', theme.textSecondary);
-  root.style.setProperty('--theme-text-muted', theme.textMuted);
-  root.style.setProperty('--theme-accent', theme.accentColor);
-  root.style.setProperty('--theme-accent-hover', theme.accentHover);
-  root.style.setProperty('--theme-border', theme.borderColor);
   root.style.setProperty('--theme-glass-bg', theme.glassBackground);
   root.style.setProperty('--theme-glass-border', theme.glassBorder);
-
-  // Surfaces
-  root.style.setProperty('--theme-surface', theme.surface);
-  root.style.setProperty('--theme-surface-hover', theme.surfaceHover);
-  root.style.setProperty('--theme-surface-border', theme.surfaceBorder);
 
   // Inputs
   root.style.setProperty('--theme-input-bg', theme.inputBackground);
@@ -441,14 +354,4 @@ export function applyThemeToDocument(themeName: ThemeName): void {
   root.style.setProperty('--theme-header-bg', theme.headerBackground);
   root.style.setProperty('--theme-scrollbar-thumb', theme.scrollbarThumb);
 
-  // Set data attribute for theme-specific selectors
-  root.setAttribute('data-theme', themeName);
-
-  const themeColorMeta = document.querySelector('meta[name="theme-color"]');
-  if (themeColorMeta) {
-    themeColorMeta.setAttribute('content', theme.background);
-  }
-
-  document.body?.style.setProperty('background', theme.backgroundGradient);
-  document.body?.style.setProperty('color', theme.textPrimary);
 }

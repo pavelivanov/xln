@@ -1,6 +1,6 @@
 # React frontend migration work plan
 
-**Status:** `IN PROGRESS — WP0–WP6 COMPLETE; WP7 HEALTH + QA + HLT + RUNS + SCENARIOS + AI IMPLEMENTED, WORKSPACE STATE LAYER SVELTE-FREE, PANEL PORTS THROUGH ARCHITECT, REACT DOCKVIEW WRAPPER READY, GRAPH3D LIFECYCLE + RENDERER/PRIMITIVES/EFFECTS/ENTITY/ACCOUNT VISUAL FACTORY/INTERACTION/SELECTION/CAMERA/POINTER+XR DRAG + HOVER MECHANICS + VIEW/SCENE INPUT MODELS EXTRACTED, ENTITY WORKSPACE REACT SHELL/TABS + LIVE RUNTIME CONTEXT + READ-ONLY ASSETS/OWNERSHIP/ACCOUNTS/CONSENSUS/PROFILE READY; WP8 COMPLETE; WP9 HAS 19 COMPLETE / 1 PARTIAL IMPLEMENTATION, 19 COVERED / 1 PARTIAL BROWSER ROUTE, AND 1 AUTHORIZED IMPLEMENTATION GAP; ENTITY ASSETS + CONSENSUS EVIDENCE COMPLETE`
+**Status:** `IN PROGRESS — WP0–WP6 COMPLETE; WP7 HEALTH + QA + HLT + RUNS + SCENARIOS + AI IMPLEMENTED, WORKSPACE STATE LAYER SVELTE-FREE, PANEL PORTS THROUGH ARCHITECT, REACT DOCKVIEW WRAPPER READY, GRAPH3D LIFECYCLE + RENDERER/PRIMITIVES/EFFECTS/ENTITY/ACCOUNT VISUAL FACTORY/INTERACTION/SELECTION/CAMERA/POINTER+XR DRAG + HOVER MECHANICS + VIEW/SCENE INPUT MODELS EXTRACTED, ENTITY WORKSPACE REACT SHELL/TABS + LIVE RUNTIME CONTEXT + READ-ONLY ASSETS/OWNERSHIP/ACCOUNTS/CONSENSUS/PROFILE READY; WP8 COMPLETE; WP9 HAS 19 COMPLETE / 1 PARTIAL IMPLEMENTATION, 19 COVERED / 1 PARTIAL BROWSER ROUTE, AND 1 AUTHORIZED IMPLEMENTATION GAP; ENTITY ASSETS + CONSENSUS EVIDENCE + DISPLAY THEME COMPLETE`
 
 This is the executable work plan for splitting the Svelte frontend into React
 applications. It is intentionally lightweight and should be updated as live
@@ -2686,10 +2686,45 @@ the documented missing local `cargo`; production function-size policy passes
 `core/qa/report.ts` 3001/3000 violation. This slice changes no Runtime protocol,
 contract, persistence schema, or artifact.
 
+The Entity Settings stage now shares the canonical seven-theme model and
+`xln-settings` storage boundary between Svelte and React. The React Display
+panel applies the selected palette immediately and writes only the `theme`
+field, preserving concurrent and unknown settings; malformed persisted data is
+removed with a visible, logged error. Time Machine and mascot controls remain
+read-only projections of their canonical Svelte-owned values, and the shared
+Settings navigation maps the historical `settings/entity` alias to Wallet.
+Theme-aware workspace CSS keeps Assets, Consensus, Accounts, Profile, and
+Display readable across dark and light palettes without changing product
+authority.
+
+Focused display/source/shell coverage passes 12 / 12 with 89 expectations;
+the inventory-focused batch passes 25 / 25 with 552 expectations. The final
+isolated real-H1 flow passes in 22.4 seconds (23.7 seconds total) with candidate
+`6231a6458b15`, preserves unrelated storage fields, and renders all five key
+workspace states at 390×844, 1366×900, and 1920×1080. All 15 named screenshots
+were inspected without clipping or horizontal overflow; review caught and
+corrected the settings-alias highlight before the final run. The complete ops
+candidate matrix passes 30 / 30. The React-local gate scans 686 files with zero
+unsafe findings, all four React production surfaces build, and ops transforms
+1,629 modules with 25.08 / 18.74 / 25.68 kB workspace CSS/runtime/view chunks.
+The canonical frontend check reports zero errors/warnings while transforming
+4,680 SSR plus 6,431 client modules.
+
+The 219-file frontend suite reports 1,302 passes, 16 restricted-sandbox
+failures, one error, and 7,462 expectations across 1,318 tests; the three
+network-binding fixtures pass 6 / 6 with host networking, leaving the unchanged
+13-name repository baseline and no slice-owned failure. Root evidence passes
+26 / 26 deterministic tests with 100,156 expectations before the documented
+60-second Hardhat compiler-cache mutex. Downstream soundcheck passes all ten
+gates before the documented missing local `cargo`; production function-size
+policy passes 1,047 files with zero overage, and file-size checking reaches only
+the existing `core/qa/report.ts` 3001/3000 violation. This slice changes no
+Runtime protocol, contract, persistence schema, or artifact.
+
 **Current checkpoint:** all retained routes have React application owners;
 wallet parity is complete. `/embed` is the sole partial implementation/browser
 route, and its authorized Entity workspace is the sole remaining WP9
-implementation gap before WP10.
+implementation gap before WP10; display-theme parity is now complete.
 
 ### WP10 — Authorized canonical cutover
 

@@ -17,6 +17,7 @@ import type {
   UITabStyle,
   UITypographyScale,
 } from '$lib/types/ui';
+import { THEME_NAMES } from '../../../packages/ui/src/theme-model';
 import {
   DEFAULT_XLN_MASCOT_DOCK,
   normalizeXlnMascotDock,
@@ -49,7 +50,7 @@ export const DEFAULT_UI_STYLE: UIStyleSettings = {
 const VALID_BAR_COLOR_MODE: readonly BarColorMode[] = ['rgy', 'theme', 'token'] as const;
 const VALID_BAR_LAYOUT: readonly BarLayoutMode[] = ['center', 'sides'] as const;
 const VALID_ACCOUNT_DELTA_VIEW: readonly AccountDeltaViewMode[] = ['per-token', 'aggregated'] as const;
-const VALID_THEME: readonly ThemeName[] = ['dark', 'editor', 'light', 'merchant', 'gold-luxe', 'matrix', 'arctic'] as const;
+const VALID_THEME: readonly ThemeName[] = THEME_NAMES;
 
 function pickOption<T extends string>(value: unknown, valid: readonly T[], defaultValue: T): T {
   return typeof value === 'string' && valid.includes(value as T) ? (value as T) : defaultValue;

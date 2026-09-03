@@ -23,13 +23,15 @@ describe('React Entity workspace shell', () => {
   });
 
   test('uses shared navigation and a cleaned-up browser subscription without legacy imports', async () => {
-    const [page, shell, accounts, consensus, profile, reserves] = await Promise.all([
+    const [page, shell, accounts, consensus, display, profile, reserves, settingsStage] = await Promise.all([
       Bun.file('frontend/apps/ops/src/ops-entity-workspace.tsx').text(),
       Bun.file('frontend/packages/ui/src/entity-workspace-shell.tsx').text(),
       Bun.file('frontend/packages/ui/src/entity-workspace-accounts-panel.tsx').text(),
       Bun.file('frontend/packages/ui/src/entity-workspace-consensus-panel.tsx').text(),
+      Bun.file('frontend/packages/ui/src/entity-workspace-display-panel.tsx').text(),
       Bun.file('frontend/packages/ui/src/entity-workspace-profile-panel.tsx').text(),
       Bun.file('frontend/packages/ui/src/entity-workspace-reserves-panel.tsx').text(),
+      Bun.file('frontend/packages/ui/src/entity-workspace-settings-stage.tsx').text(),
     ]);
     expect(page).toContain('useSyncExternalStore');
     expect(page).toContain("removeEventListener('hashchange'");
@@ -42,6 +44,7 @@ describe('React Entity workspace shell', () => {
     expect(shell).toContain('EntityWorkspaceProfilePanel');
     expect(shell).toContain('EntityWorkspaceReservesPanel');
     expect(shell).toContain("settingsSubview === 'wallet' || settingsSubview === 'entity'");
+    expect(shell).toContain("settingsSubview === 'display'");
     expect(page).toContain("route.settingsSubview ?? 'wallet'");
     expect(accounts).toContain('Committed frame headers only');
     expect(accounts).not.toContain('deriveDelta');
@@ -49,6 +52,10 @@ describe('React Entity workspace shell', () => {
     expect(consensus).toContain('Validator-local proposals, votes, locks, and certificates are not exposed');
     expect(consensus).not.toContain('pendingLeaderCertificate');
     expect(consensus).not.toContain('leaderVotes');
+    expect(display).toContain('settings-theme-select');
+    expect(display).toContain('Canonical workspace control');
+    expect(settingsStage).toContain('ENTITY_SETTINGS_SECTIONS.map');
+    expect(settingsStage).toContain("settingsSubview === 'entity' ? 'wallet' : settingsSubview");
     expect(profile).toContain('Profile edits stay on the canonical workspace');
     expect(profile).not.toContain('onSave');
     expect(profile).not.toContain('runtimeController');
@@ -56,7 +63,7 @@ describe('React Entity workspace shell', () => {
     expect(reserves).toContain('raw units');
     expect(reserves).not.toContain('formatUnits');
     expect(reserves).not.toContain('getAssetValue');
-    for (const source of [page, shell, accounts, consensus, profile, reserves]) {
+    for (const source of [page, shell, accounts, consensus, display, profile, reserves, settingsStage]) {
       expect(source).not.toContain('frontend/src');
       expect(source).not.toContain('$lib');
     }

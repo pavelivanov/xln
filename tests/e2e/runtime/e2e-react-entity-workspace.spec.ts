@@ -12,6 +12,7 @@ import {
   RUNTIME_ADAPTER_MODE_KEY,
   RUNTIME_ADAPTER_WS_KEY,
 } from '../../../frontend/packages/browser/src/runtime-adapter-session';
+import { DISPLAY_PREFERENCES_STORAGE_KEY } from '../../../frontend/packages/browser/src/display-preferences';
 import { capturePageScreenshot } from '../../utils/e2e-screenshots';
 
 type RuntimeImportCapability = Readonly<{
@@ -161,6 +162,12 @@ const installRemoteSession = async (
     localStorage.setItem(keys.ws, session.wsUrl);
     localStorage.setItem(keys.access, session.access);
     localStorage.removeItem(keys.auth);
+    localStorage.setItem(keys.display, JSON.stringify({
+      futureSetting: 'preserve-me',
+      showTimeMachine: true,
+      showXlnMascot: false,
+      theme: 'dark',
+    }));
     sessionStorage.setItem(keys.auth, session.token);
   }, {
     keys: {
@@ -168,6 +175,7 @@ const installRemoteSession = async (
       ws: RUNTIME_ADAPTER_WS_KEY,
       access: RUNTIME_ADAPTER_ACCESS_KEY,
       auth: RUNTIME_ADAPTER_AUTH_KEY,
+      display: DISPLAY_PREFERENCES_STORAGE_KEY,
     },
     session: capability,
   });
@@ -206,6 +214,11 @@ test('React Entity workspace reads selected context from a real H1 Runtime', { t
     try {
       await installRemoteSession(context, capability);
       const candidatePage = await context.newPage();
+      const consoleProblems: string[] = [];
+      candidatePage.on('console', message => {
+        if (message.type() === 'error') consoleProblems.push(`console:${message.text()}`);
+      });
+      candidatePage.on('pageerror', error => consoleProblems.push(`pageerror:${error.message}`));
       const response = await candidatePage.goto(
         `${candidateServer.baseUrl}/__app/ops/entity-workspace#assets`,
         { waitUntil: 'domcontentloaded' },
@@ -224,6 +237,19 @@ test('React Entity workspace reads selected context from a real H1 Runtime', { t
       await expect(candidatePage.getByTestId('consensus-account-count')).not.toHaveText('0');
       await expect(consensus.getByText('Committed only')).toBeVisible();
       await capturePageScreenshot(candidatePage, testInfo, `react-entity-workspace-consensus-${viewport.name}.png`);
+      await candidatePage.getByRole('link', { name: 'Display', exact: true }).click();
+      const display = candidatePage.getByTestId('settings-display-panel');
+      await expect(display).toBeVisible();
+      await expect(candidatePage).toHaveURL(/#settings\/display$/);
+      await candidatePage.getByTestId('settings-theme-select').selectOption('light');
+      await expect.poll(() => candidatePage.evaluate(() => document.documentElement.dataset.theme)).toBe('light');
+      await expect(display.getByText('Light palette')).toBeVisible();
+      const storedDisplay = await candidatePage.evaluate((key) => JSON.parse(localStorage.getItem(key) || '{}'), DISPLAY_PREFERENCES_STORAGE_KEY) as Record<string, unknown>;
+      expect(storedDisplay['futureSetting']).toBe('preserve-me');
+      expect(storedDisplay['showTimeMachine']).toBe(true);
+      expect(storedDisplay['showXlnMascot']).toBe(false);
+      expect(storedDisplay['theme']).toBe('light');
+      await capturePageScreenshot(candidatePage, testInfo, `react-entity-workspace-display-light-${viewport.name}.png`);
       await candidatePage.evaluate(() => { window.location.hash = 'accounts'; });
       const accounts = candidatePage.getByTestId('accounts-page-projection');
       await expect(accounts).toBeVisible();
@@ -236,8 +262,10 @@ test('React Entity workspace reads selected context from a real H1 Runtime', { t
       await expect(profile).toBeVisible();
       await expect(candidatePage.getByTestId('settings-profile-name')).not.toHaveText('');
       await expect(candidatePage.getByTestId('settings-profile-role')).toHaveText('Hub entity');
+      await expect(candidatePage.getByRole('link', { name: 'Wallet', exact: true })).toHaveAttribute('aria-current', 'page');
       await expect(candidatePage.getByText('Profile edits and all Settings commands remain on the canonical workspace.')).toBeVisible();
       await capturePageScreenshot(candidatePage, testInfo, `react-entity-workspace-settings-profile-${viewport.name}.png`);
+      expect(consoleProblems).toEqual([]);
     } finally {
       await context.close();
     }
