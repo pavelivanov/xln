@@ -55,6 +55,9 @@
 .entity-workspace-activity-empty { align-self: center; padding: 2rem clamp(1.5rem, 4vw, 3.5rem); color: var(--theme-text-secondary, #777871); font-size: 0.78rem; line-height: 1.6; border-top: 1px solid var(--entity-line); }
 .entity-workspace-activity-panel > footer { display: grid; grid-template-columns: auto 1fr auto; gap: 1rem; padding: 0.8rem clamp(1.5rem, 4vw, 3.5rem); color: var(--theme-text-muted, #5c5d57); border-top: 1px solid var(--entity-line); }
 .entity-workspace-activity-panel > footer strong { color: var(--theme-text-secondary, #8e8c84); text-align: center; }
+.entity-workspace-activity-panel > footer button { padding: 0; color: var(--entity-accent-soft); border: 0; background: transparent; font: inherit; cursor: pointer; text-transform: uppercase; }
+.entity-workspace-activity-panel > footer button:disabled { color: var(--theme-text-muted, #4f504b); cursor: default; }
+.entity-workspace-activity-panel > footer button:focus-visible { outline: 2px solid var(--entity-accent-soft); outline-offset: 4px; }
 
 @media (max-width: 760px) {
   .entity-workspace-activity-panel > header { align-items: start; flex-direction: column; padding-inline: 1rem; }

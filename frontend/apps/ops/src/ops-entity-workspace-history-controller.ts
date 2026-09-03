@@ -13,6 +13,7 @@ import type { OpsEntityWorkspaceSourceSnapshot } from './ops-entity-workspace-pr
 
 type HistoryControllerDependencies = Readonly<{
   publish(snapshot: OpsEntityWorkspaceSourceSnapshot): void;
+  readActivityBeforeHeight(): number | null;
   readAccountsPage(): number;
   readAdapter(): RuntimeAdapter | null;
   readClient(): OpsEntityWorkspaceHistoryReader | null;
@@ -88,9 +89,11 @@ export class OpsEntityWorkspaceHistoryController {
       timeMachine: createEntityWorkspaceHistoryState({ latestHeight, loading: true, selectedHeight: requestedHeight }),
     });
     try {
+      const activityBeforeHeight = this.dependencies.readActivityBeforeHeight();
       const projection = await readOpsEntityWorkspaceHistory({
         accountsPage: this.dependencies.readAccountsPage(), client,
         entityId: context.entityId, latestHeight, requestedHeight, runtimeId: adapter.runtimeId,
+        ...(activityBeforeHeight === null ? {} : { activityBeforeHeight }),
       });
       if (!this.isCurrent(request, requestedHeight, client)) return false;
       const next: OpsEntityWorkspaceSourceSnapshot = {

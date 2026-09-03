@@ -19,6 +19,7 @@ import type { RuntimeQueryResultSchema } from '../../../packages/runtime-client/
 import { RuntimeQueryObserver } from '../../../packages/runtime-client/src/runtime-query-observer';
 import { buildEntityWorkspaceActivityQuery } from '../../../packages/runtime-client/src/entity-workspace-activity';
 import { createEntityWorkspaceLiveState } from '../../../packages/runtime-client/src/entity-workspace-time-machine';
+import { OpsEntityWorkspaceActivityController } from './ops-entity-workspace-activity-controller';
 import { OpsEntityWorkspaceHistoryController } from './ops-entity-workspace-history-controller';
 
 type RuntimeReadSession = Readonly<{
@@ -47,11 +48,13 @@ const readEntityWorkspaceProjection = async (
   client: OpsRuntimeQueryClient,
   runtimeId: string,
   frame: RuntimeAdapterViewFrame,
+  activityBeforeHeight?: number,
 ): Promise<OpsEntityWorkspaceProjection> => {
   const projection = projectOpsEntityWorkspaceFrame(runtimeId, frame);
   if (projection.context.status === 'empty') return projection;
-  const activity = await client.readActivity(buildEntityWorkspaceActivityQuery(projection.context));
-  return projectOpsEntityWorkspaceActivityPage(projection, activity);
+  const activityQuery = buildEntityWorkspaceActivityQuery(projection.context, activityBeforeHeight);
+  const activity = await client.readActivity(activityQuery);
+  return projectOpsEntityWorkspaceActivityPage(projection, activity, activityQuery.beforeHeight);
 };
 
 export const requireOpsEntityRemoteSession = (
@@ -109,6 +112,7 @@ export class OpsEntityWorkspaceSource {
   private observerTeardown: (() => void) | null = null;
   private queryClient: OpsRuntimeQueryClient | null = null;
   private readonly historyController: OpsEntityWorkspaceHistoryController;
+  private readonly activityController: OpsEntityWorkspaceActivityController;
   private generation = 0;
   private accountsPage = 0;
   private started = false;
@@ -122,10 +126,16 @@ export class OpsEntityWorkspaceSource {
     this.snapshot = initialOpsEntityWorkspaceSnapshot(config);
     this.historyController = new OpsEntityWorkspaceHistoryController({
       publish: (snapshot) => this.publish(snapshot),
+      readActivityBeforeHeight: () => this.activityController.readBeforeHeight(),
       readAccountsPage: () => this.accountsPage,
       readAdapter: () => this.session?.adapter ?? null,
       readClient: () => this.queryClient,
       readSnapshot: () => this.snapshot,
+      refreshLive: () => { void this.observer?.refresh(); },
+    });
+    this.activityController = new OpsEntityWorkspaceActivityController({
+      isHistoryActive: () => this.historyController.isActive(),
+      refreshHistory: () => this.historyController.reload(),
       refreshLive: () => { void this.observer?.refresh(); },
     });
   }
@@ -185,14 +195,24 @@ export class OpsEntityWorkspaceSource {
     }
   };
 
-  readonly selectHistoryHeight = (height: number): Promise<boolean> =>
-    this.historyController.select(height);
+  readonly selectActivityPage = (beforeHeight: number | null): void => {
+    this.activityController.select(this.snapshot.activity, beforeHeight);
+  };
 
-  readonly returnLive = (): void => this.historyController.returnLive();
+  readonly selectHistoryHeight = (height: number): Promise<boolean> => {
+    this.activityController.reset();
+    return this.historyController.select(height);
+  };
+
+  readonly returnLive = (): void => {
+    this.activityController.reset();
+    this.historyController.returnLive();
+  };
 
   readonly stop = (): void => {
     this.started = false;
     this.accountsPage = 0;
+    this.activityController.reset();
     this.historyController.reset();
     this.generation += 1;
     this.releaseRuntimeConnection();
@@ -219,7 +239,12 @@ export class OpsEntityWorkspaceSource {
           accountsPage: this.accountsPage,
           booksLimit: 1,
         });
-        return readEntityWorkspaceProjection(client, adapter.runtimeId, frame);
+        return readEntityWorkspaceProjection(
+          client,
+          adapter.runtimeId,
+          frame,
+          this.activityController.readBeforeHeight() ?? undefined,
+        );
       },
       {
         readHeight: () => adapter.currentHeight,
@@ -264,6 +289,7 @@ export class OpsEntityWorkspaceSource {
   };
 
   private releaseRuntimeConnection(): void {
+    this.activityController.reset();
     this.observerTeardown?.();
     this.observerTeardown = null;
     this.observer?.destroy();
