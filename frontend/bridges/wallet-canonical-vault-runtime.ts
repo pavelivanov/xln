@@ -1,7 +1,10 @@
 import { get } from 'svelte/store';
 
 import type { RuntimeAdapter } from '../../core/api/public/runtime-module';
-import { summarizeWalletRecoveryCandidates } from '../packages/browser/src/wallet-recovery-choice';
+import {
+  mergeWalletRecoveryCandidate,
+  summarizeWalletRecoveryCandidates,
+} from '../packages/browser/src/wallet-recovery-choice';
 import type { WalletEmbeddedRuntimeResource } from '../packages/browser/src/wallet-embedded-runtime-session';
 import { WalletRecoverySelectionSession } from '../packages/browser/src/wallet-recovery-selection-session';
 import { WalletBrainVaultMaterialSession } from '../packages/browser/src/wallet-brainvault-material-session';
@@ -14,12 +17,14 @@ import type {
 import type {
   WalletCanonicalRecoveryCandidateView,
   WalletCanonicalRecoveryDiscoveryView,
+  WalletCanonicalRecoveryFile,
   WalletCanonicalRuntimeOpeningRequest,
 } from '../packages/browser/src/wallet-runtime-opening';
 import {
   discoverCanonicalWalletRuntimeRecovery,
   executeCanonicalWalletRuntimeOpening,
 } from '../src/lib/stores/vault/walletRuntimeOpeningAdapter';
+import { parseRuntimeRecoveryCandidateFile } from '../src/lib/stores/vault/vault-recovery';
 import {
   disconnectRuntimeAdapter,
   getRuntimeControllerAdapter,
@@ -153,6 +158,25 @@ export const discoverCanonicalWalletRuntimeRecoveryView = async (
   };
 };
 
+export const importCanonicalWalletRuntimeRecoveryFile = async (
+  request: WalletCanonicalRuntimeOpeningRequest,
+  token: string,
+  file: WalletCanonicalRecoveryFile,
+): Promise<WalletCanonicalRecoveryCandidateView> => {
+  const runtimeId = request.runtimeId.trim().toLowerCase();
+  recoverySelection.read(token, runtimeId);
+  const candidate = await parseRuntimeRecoveryCandidateFile(request.seed, file.contents, {
+    sourceLabel: file.sourceLabel || 'Local backup file',
+  });
+  if (candidate.runtimeId !== runtimeId) {
+    throw new Error(`RECOVERY_BACKUP_FILE_RUNTIME_MISMATCH:${runtimeId}:${candidate.runtimeId}`);
+  }
+  recoverySelection.update(token, runtimeId, candidates => (
+    mergeWalletRecoveryCandidate(candidates, candidate)
+  ));
+  return projectRecoveryCandidate(candidate);
+};
+
 export const openCanonicalWalletRuntime = async (
   request: WalletCanonicalRuntimeOpeningRequest,
   token: string,
@@ -225,4 +249,18 @@ export const openCanonicalWalletBrainVault = async (
   const material = brainVaultMaterials.consume(token, runtimeId);
   const request = brainVaultOpeningRequest(material);
   return openCanonicalWalletRuntime(request, recoveryToken, candidateId, setPageUnloadFence);
+};
+
+export const importCanonicalWalletBrainVaultRecoveryFile = (
+  token: string,
+  runtimeId: string,
+  recoveryToken: string,
+  file: WalletCanonicalRecoveryFile,
+): Promise<WalletCanonicalRecoveryCandidateView> => {
+  const material = brainVaultMaterials.read(token, runtimeId);
+  return importCanonicalWalletRuntimeRecoveryFile(
+    brainVaultOpeningRequest(material),
+    recoveryToken,
+    file,
+  );
 };

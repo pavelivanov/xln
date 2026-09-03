@@ -165,6 +165,25 @@ export const WALLET_FLOW_AUDIT = [
     ],
   },
   {
+    id: 'encrypted-recovery-file',
+    pathname: '/app',
+    search: '?setup=1',
+    page: 'app',
+    view: 'identity',
+    sources: [
+      'frontend/apps/wallet/src/identity-recovery.tsx',
+      'frontend/apps/wallet/src/wallet-identity-opening.ts',
+      'frontend/apps/wallet/src/wallet-embedded-runtime.ts',
+      'frontend/bridges/wallet-canonical-vault-runtime.ts',
+      'frontend/packages/browser/src/wallet-recovery-selection-session.ts',
+    ],
+    tests: [
+      'tests/frontend/onboarding/frontend-wallet-recovery-file.test.ts',
+      'tests/frontend/onboarding/wallet-recovery-selection-session.test.ts',
+      'frontend/tests/react-candidate/wallet.spec.ts',
+    ],
+  },
+  {
     id: 'preferences',
     pathname: '/app',
     search: '?settings=1',
@@ -260,14 +279,14 @@ export const WALLET_FLOW_DEFERRALS = [
     destination: 'WP9',
     evidenceSource: 'frontend/apps/wallet/src/identity-recovery.tsx',
     evidenceMarker: 'No wallet has been created and no secret has left this form.',
-    reason: 'React mnemonic opening now uses canonical persistence; Brain Vault derivation remains in WP9.',
+    reason: 'Canonical identity creation is live; post-creation profile, jurisdiction, hub-join, and recovery-service onboarding remain in WP9.',
   },
   {
     id: 'full-recovery',
     destination: 'WP9',
     evidenceSource: 'frontend/apps/wallet/src/identity-recovery.tsx',
     evidenceMarker: 'Selecting a backup never authorizes fresh creation.',
-    reason: 'Tower and peer selection is implemented; backup-file import, tower enrollment, and push wake remain in WP9.',
+    reason: 'Tower, peer, and encrypted backup-file restore are implemented; recovery-service enrollment and push wake remain in WP9.',
   },
   {
     id: 'external-wallet-provider',

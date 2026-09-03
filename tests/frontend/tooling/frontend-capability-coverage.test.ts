@@ -54,6 +54,7 @@ describe('frontend capability inventory', () => {
       'wallet-finance',
       'wallet-payments-and-markets',
       'wallet-native-and-offline',
+      'wallet-recovery',
       'ops-health-and-qa',
       'ops-runs-scenarios-and-ai',
       'ops-workspace',
@@ -62,6 +63,7 @@ describe('frontend capability inventory', () => {
     )).toBe(true);
     expect(CAPABILITIES.find(({ id }) => id === 'ops-workspace')?.status).toBe('in_progress');
     expect(CAPABILITIES.find(({ id }) => id === 'wallet-shell-and-identity')?.status).toBe('implemented');
+    expect(CAPABILITIES.find(({ id }) => id === 'wallet-recovery')?.status).toBe('in_progress');
     expect(CAPABILITIES.find(({ id }) => id === 'wallet-shell-and-identity')?.currentSources)
       .toContain('frontend/packages/browser/src/wallet-boot-lifecycle.ts');
     expect(CAPABILITIES.find(({ id }) => id === 'wallet-shell-and-identity')?.currentSources)

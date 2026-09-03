@@ -23,6 +23,26 @@ describe('wallet recovery selection session', () => {
     expect(session.consume(token, 'runtime-a', '')).toBeUndefined();
   });
 
+  test('atomically merges a file candidate into the active discovery', () => {
+    const session = new WalletRecoverySelectionSession<Candidate>();
+    const token = session.commit(session.begin(), 'runtime-a', [{ id: 'tower', height: 4 }]);
+
+    expect(session.read(token, 'runtime-a')).toEqual([{ id: 'tower', height: 4 }]);
+    expect(session.update(token, 'runtime-a', candidates => [
+      { id: 'file', height: 7 }, ...candidates,
+    ])).toEqual([{ id: 'file', height: 7 }, { id: 'tower', height: 4 }]);
+    expect(session.consume(token, 'runtime-a', 'file')).toEqual({ id: 'file', height: 7 });
+  });
+
+  test('rejects stale file updates without replacing the active discovery', () => {
+    const session = new WalletRecoverySelectionSession<Candidate>();
+    const token = session.commit(session.begin(), 'runtime-a', []);
+
+    expect(() => session.update('stale-token', 'runtime-a', () => [{ id: 'file', height: 7 }]))
+      .toThrow('WALLET_RECOVERY_DISCOVERY_STALE');
+    expect(session.consume(token, 'runtime-a', '')).toBeUndefined();
+  });
+
   test('rejects missing selection, cross-Runtime use, and stale discovery', () => {
     const session = new WalletRecoverySelectionSession<Candidate>();
     const firstRevision = session.begin();

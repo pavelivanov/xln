@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
-
 import { DEMO_ACCOUNTS } from '../../../packages/ui/src/demo-accounts';
-import type { WalletCanonicalRecoveryDiscoveryView, WalletCanonicalRuntimeOpeningRequest } from '../../../packages/browser/src/wallet-runtime-opening';
+import type { WalletCanonicalRecoveryDiscoveryView } from '../../../packages/browser/src/wallet-runtime-opening';
 import type { WalletBrainVaultDerivationProgress, WalletBrainVaultPreparedView } from '../../../packages/browser/src/wallet-brainvault-opening';
 import { selectWalletIdentityMode, type WalletIdentityMode } from '../../../packages/browser/src/wallet-identity-entry';
 import {
@@ -19,6 +18,7 @@ import {
 import { IdentityRecoveryVerified, IdentityReview } from './identity-recovery';
 import { IdentityBrainVaultProgress } from './identity-brainvault-progress';
 import { IdentityEntryForm } from './identity-entry-form';
+import { createMnemonicWalletOpeningRequest, importWalletIdentityRecoveryFile } from './wallet-identity-opening';
 import { resetWalletRecoveryRehearsal, type WalletRecoveryRehearsalState } from '../../../packages/browser/src/wallet-recovery-rehearsal';
 import {
   discardWalletBrainVault,
@@ -52,7 +52,6 @@ export function IdentityOnboarding() {
   const brainVaultRunRef = useRef(0);
   const [rehearsal, setRehearsal] = useState<WalletRecoveryRehearsalState>(resetWalletRecoveryRehearsal);
   const validation = validateWalletIdentityDraft(draft);
-
   useEffect(() => () => {
     verifiedMnemonicRef.current = '';
     discardWalletRuntimeRecovery(recoveryTokenRef.current);
@@ -197,16 +196,16 @@ export function IdentityOnboarding() {
     }
   };
 
-  const runtimeOpeningRequest = (seed: string): WalletCanonicalRuntimeOpeningRequest => ({
-    runtimeId: derivedAddress,
-    name: `Mnemonic ${derivedAddress.slice(0, 6)}`,
-    labelOverride: undefined,
-    seed,
-    mnemonic12: '',
-    devicePassphrase: '',
-    loginType: 'manual',
-    unlockDurationMs: 600_000,
-  });
+  const importRecoveryFile = async (file: File): Promise<void> => {
+    const outcome = await importWalletIdentityRecoveryFile({
+      brainVault: brainVaultPrepared, discovery: recoveryDiscovery, file,
+      mnemonicSeed: verifiedMnemonicRef.current,
+      runtimeId: derivedAddress,
+    });
+    recoveryTokenRef.current = outcome.discovery.token;
+    setRecoveryDiscovery(outcome.discovery);
+    setSelectedRecoveryCandidateId(outcome.candidateId);
+  };
 
   const openVerifiedIdentity = async (): Promise<void> => {
     const seed = verifiedMnemonicRef.current;
@@ -220,7 +219,7 @@ export function IdentityOnboarding() {
       if (brainVaultPrepared) {
         outcome = await openPreparedWalletBrainVault(brainVaultPrepared, selectedRecoveryCandidateId);
       } else {
-        const request = runtimeOpeningRequest(seed);
+        const request = createMnemonicWalletOpeningRequest(derivedAddress, seed);
         outcome = recoveryDiscovery
           ? await restoreWalletRuntimeFromCanonicalRecovery(
               request, recoveryDiscovery, selectedRecoveryCandidateId,
@@ -263,6 +262,7 @@ export function IdentityOnboarding() {
       openingError={openingError}
       recoveryDiscovery={recoveryDiscovery}
       selectedRecoveryCandidateId={selectedRecoveryCandidateId}
+      onImportRecoveryFile={importRecoveryFile}
       onOpen={() => { void openVerifiedIdentity(); }}
       onReset={resetIdentity}
       onSelectRecoveryCandidate={setSelectedRecoveryCandidateId}
