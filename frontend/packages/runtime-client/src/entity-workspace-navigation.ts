@@ -36,6 +36,14 @@ export const ENTITY_WORKSPACE_SECTIONS = [
   { id: 'settings', label: 'Settings' },
 ] as const satisfies readonly Readonly<{ id: ViewTab; label: string }>[];
 
+export const ENTITY_SETTINGS_SECTIONS = [
+  { id: 'wallet', label: 'Wallet' },
+  { id: 'consensus', label: 'Consensus' },
+  { id: 'display', label: 'Display' },
+  { id: 'recovery', label: 'Recovery' },
+  { id: 'stack-manager', label: 'Stack Manager' },
+] as const satisfies readonly Readonly<{ id: SettingsSubview; label: string }>[];
+
 export type EntityPanelRouteState = {
   activeTab: ViewTab;
   assetWorkspaceTab: AssetWorkspaceTab;
