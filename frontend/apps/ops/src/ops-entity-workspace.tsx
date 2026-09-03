@@ -133,6 +133,7 @@ export function OpsEntityWorkspacePage() {
         onSelectActivityBeforeHeight={opsEntityWorkspaceSource.selectActivityPage}
         onSelectActivityKind={opsEntityWorkspaceSource.selectActivityKind}
         onSelectTheme={opsDisplayPreferencesSource.setTheme}
+        onToggleActivityType={opsEntityWorkspaceSource.toggleActivityType}
         onToggleTimeMachine={toggleTimeMachine}
         onToggleXlnGuide={opsDisplayPreferencesSource.setXlnGuideVisibility}
         ownership={runtimeSnapshot.ownership}

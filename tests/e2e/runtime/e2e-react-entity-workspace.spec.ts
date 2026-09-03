@@ -310,6 +310,15 @@ test('React Entity workspace reads selected context from a real H1 Runtime', { t
       await allActivity.click();
       await expect(allActivity).toHaveAttribute('aria-pressed', 'true');
       await expect(activityCount).toHaveText(String(allActivityCount));
+      const jEventActivity = candidatePage.getByTestId('entity-activity-type-j_event');
+      await jEventActivity.click();
+      await expect(jEventActivity).toHaveAttribute('aria-pressed', 'true');
+      const jEventActivityCount = Number(await activityCount.innerText());
+      expect(jEventActivityCount).toBeGreaterThan(0);
+      await expect(activity.locator('li[data-type="j_event"]')).toHaveCount(jEventActivityCount);
+      await jEventActivity.click();
+      await expect(jEventActivity).toHaveAttribute('aria-pressed', 'false');
+      await expect(activityCount).toHaveText(String(allActivityCount));
       const latestActivityHeight = Number((await activityThrough.innerText()).replace(/^h/, ''));
       const earlierActivity = candidatePage.getByTestId('entity-activity-earlier');
       await expect(earlierActivity).toBeEnabled();

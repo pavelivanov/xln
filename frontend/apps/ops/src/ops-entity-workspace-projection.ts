@@ -3,6 +3,7 @@ import {
   emptyEntityWorkspaceActivity,
   projectEntityWorkspaceActivity,
   type EntityWorkspaceActivity,
+  type EntityWorkspaceActivityFilterType,
   type EntityWorkspaceActivityKind,
 } from '../../../packages/runtime-client/src/entity-workspace-activity';
 import {
@@ -99,6 +100,7 @@ export const projectOpsEntityWorkspaceActivityPage = (
   page: unknown,
   beforeHeight?: number,
   kind?: EntityWorkspaceActivityKind,
+  types?: readonly EntityWorkspaceActivityFilterType[],
 ): OpsEntityWorkspaceProjection => ({
   ...projection,
   activity: projectEntityWorkspaceActivity({
@@ -106,6 +108,7 @@ export const projectOpsEntityWorkspaceActivityPage = (
     page,
     ...(beforeHeight === undefined ? {} : { beforeHeight }),
     ...(kind === undefined ? {} : { kind }),
+    ...(types === undefined ? {} : { types }),
   }),
 });
 

@@ -50,18 +50,26 @@ describe('React Entity persisted activity ledger', () => {
     expect(buildEntityWorkspaceActivityQuery(context, 13, 'offchain')).toEqual({
       beforeHeight: 13, entityId: '0xaaaa', kind: 'offchain', limit: 8, scanLimit: 160,
     });
+    expect(buildEntityWorkspaceActivityQuery(context, 13, 'offchain', ['payment', 'swap'])).toEqual({
+      beforeHeight: 13, entityId: '0xaaaa', kind: 'offchain', limit: 8,
+      scanLimit: 160, types: ['payment', 'swap'],
+    });
     expect(() => buildEntityWorkspaceActivityQuery(context, 0))
       .toThrow('ENTITY_WORKSPACE_ACTIVITY_BEFORE_HEIGHT_INVALID');
     expect(() => buildEntityWorkspaceActivityQuery(context, 45))
       .toThrow('ENTITY_WORKSPACE_ACTIVITY_BEFORE_HEIGHT_INVALID');
     expect(() => buildEntityWorkspaceActivityQuery(context, 13, 'system' as never))
       .toThrow('ENTITY_WORKSPACE_ACTIVITY_KIND_INVALID');
+    expect(() => buildEntityWorkspaceActivityQuery(context, 13, 'all', ['system' as never]))
+      .toThrow('ENTITY_WORKSPACE_ACTIVITY_TYPE_INVALID');
+    expect(() => buildEntityWorkspaceActivityQuery(context, 13, 'all', ['payment', 'payment']))
+      .toThrow('ENTITY_WORKSPACE_ACTIVITY_TYPES_INVALID');
   });
 
   test('preserves adapter event order and exact persisted evidence', () => {
     expect(projectEntityWorkspaceActivity({ context, page: page() })).toEqual({
       status: 'selected', entityId: '0xaaaa', requestedBeforeHeight: 44,
-      isLatestPage: true, kind: 'all', latestHeight: 50,
+      isLatestPage: true, kind: 'all', types: [], latestHeight: 50,
       fromHeight: 42, toHeight: 44, scannedFrames: 3, nextBeforeHeight: 41,
       events: [
         {
@@ -106,6 +114,25 @@ describe('React Entity persisted activity ledger', () => {
     }) })).toThrow('ENTITY_WORKSPACE_ACTIVITY_EVENT_KIND_MISMATCH');
   });
 
+  test('projects only exact requested event types', () => {
+    const payments = page({
+      filters: {
+        entityId: '0xaaaa', kind: 'all', types: ['payment'],
+        beforeHeight: 44, limit: 8, scanLimit: 160,
+      },
+    });
+    expect(projectEntityWorkspaceActivity({ context, page: payments, types: ['payment'] }))
+      .toMatchObject({ types: ['payment'], events: [{ type: 'payment' }, { type: 'payment' }] });
+    expect(() => projectEntityWorkspaceActivity({ context, page: payments }))
+      .toThrow('ENTITY_WORKSPACE_ACTIVITY_FILTER_TYPES_MISMATCH');
+    expect(() => projectEntityWorkspaceActivity({ context, page: page({
+      filters: {
+        entityId: '0xaaaa', kind: 'all', types: ['swap'],
+        beforeHeight: 44, limit: 8, scanLimit: 160,
+      },
+    }), types: ['swap'] })).toThrow('ENTITY_WORKSPACE_ACTIVITY_EVENT_TYPE_MISMATCH');
+  });
+
   test('rejects drift, malformed event facts, duplicates, and incoherent metadata', () => {
     expect(() => projectEntityWorkspaceActivity({ context, page: page({
       filters: { entityId: '0xcccc', kind: 'all', beforeHeight: 44, limit: 8, scanLimit: 160 },
@@ -143,6 +170,11 @@ describe('React Entity persisted activity ledger', () => {
     expect({ historyRefreshes, liveRefreshes }).toEqual({ historyRefreshes: 0, liveRefreshes: 2 });
     controller.selectKind(latest, 'offchain');
     expect({ historyRefreshes, liveRefreshes }).toEqual({ historyRefreshes: 0, liveRefreshes: 2 });
+    controller.toggleType(latest, 'payment');
+    controller.toggleType(latest, 'swap');
+    controller.toggleType(latest, 'payment');
+    expect(controller.readTypes()).toEqual(['swap']);
+    expect({ historyRefreshes, liveRefreshes }).toEqual({ historyRefreshes: 0, liveRefreshes: 5 });
 
     const earlier = projectEntityWorkspaceActivity({
       beforeHeight: 13,
@@ -157,15 +189,20 @@ describe('React Entity persisted activity ledger', () => {
     historyActive = true;
     controller.select(earlier, null);
     expect(controller.readBeforeHeight()).toBeNull();
-    expect({ historyRefreshes, liveRefreshes }).toEqual({ historyRefreshes: 1, liveRefreshes: 2 });
+    expect({ historyRefreshes, liveRefreshes }).toEqual({ historyRefreshes: 1, liveRefreshes: 5 });
     controller.selectKind(earlier, 'onchain');
     expect(controller.readKind()).toBe('onchain');
-    expect({ historyRefreshes, liveRefreshes }).toEqual({ historyRefreshes: 2, liveRefreshes: 2 });
+    expect({ historyRefreshes, liveRefreshes }).toEqual({ historyRefreshes: 2, liveRefreshes: 5 });
+    controller.toggleType(earlier, 'error');
+    expect(controller.readTypes()).toEqual(['swap', 'error']);
+    expect({ historyRefreshes, liveRefreshes }).toEqual({ historyRefreshes: 3, liveRefreshes: 5 });
     controller.resetPage();
     expect(controller.readKind()).toBe('onchain');
+    expect(controller.readTypes()).toEqual(['swap', 'error']);
     controller.reset();
     expect(controller.readBeforeHeight()).toBeNull();
     expect(controller.readKind()).toBe('all');
+    expect(controller.readTypes()).toEqual([]);
   });
 
   test('keeps the visible ledger read-only and attached to live plus historical reads', async () => {
@@ -179,9 +216,11 @@ describe('React Entity persisted activity ledger', () => {
     expect(panel).toContain('data-testid="entity-activity-earlier"');
     expect(panel).toContain('data-testid="entity-activity-latest"');
     expect(panel).toContain('data-testid={`entity-activity-kind-${kind}`}');
+    expect(panel).toContain('data-testid={`entity-activity-type-${type}`}');
     expect(source).toContain('client.readActivity(activityQuery)');
     expect(source).toContain('readonly selectActivityPage');
     expect(source).toContain('readonly selectActivityKind');
+    expect(source).toContain('readonly toggleActivityType');
     expect(history).toContain('input.client.readActivity(activityQuery)');
     expect([panel, source, history].join('\n')).not.toContain('.send(');
   });

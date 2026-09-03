@@ -6,6 +6,7 @@ import {
 import type { EntityWorkspaceAccounts } from '../../runtime-client/src/entity-workspace-accounts';
 import type {
   EntityWorkspaceActivity,
+  EntityWorkspaceActivityFilterType,
   EntityWorkspaceActivityKind,
 } from '../../runtime-client/src/entity-workspace-activity';
 import type {
@@ -168,6 +169,7 @@ type EntityWorkspaceStageWithOwnershipProps = EntityWorkspaceStageProps & Readon
   onSelectTheme: (theme: ThemeName) => void;
   onSelectActivityBeforeHeight: (beforeHeight: number | null) => void;
   onSelectActivityKind: (kind: EntityWorkspaceActivityKind) => void;
+  onToggleActivityType: (type: EntityWorkspaceActivityFilterType) => void;
   onToggleTimeMachine: (show: boolean) => void;
   onToggleXlnGuide: (show: boolean) => void;
   onSelectAccountsPage: (page: number) => void;
@@ -190,13 +192,13 @@ const readFooterLabel = (
   return 'Unavailable — no remote Runtime selected';
 };
 
-function EntityWorkspaceStage({ activity, accounts, activeTab, consensus, context, displayIssue, displayPreferences, hubPolicy, onRefresh, onSelectAccountsPage, onSelectActivityBeforeHeight, onSelectActivityKind, onSelectTheme, onToggleTimeMachine, onToggleXlnGuide, ownership, profile, readState, reserves, settingsSubview, timeMachine }: EntityWorkspaceStageWithOwnershipProps) {
+function EntityWorkspaceStage({ activity, accounts, activeTab, consensus, context, displayIssue, displayPreferences, hubPolicy, onRefresh, onSelectAccountsPage, onSelectActivityBeforeHeight, onSelectActivityKind, onSelectTheme, onToggleActivityType, onToggleTimeMachine, onToggleXlnGuide, ownership, profile, readState, reserves, settingsSubview, timeMachine }: EntityWorkspaceStageWithOwnershipProps) {
   const copy = SECTION_COPY[activeTab];
   const showsActivity = readState.status === 'ready' && context.status === 'selected' && activeTab === 'accounts';
   return (
     <section className="entity-workspace-stage" data-testid="entity-workspace-stage">
       {showsActivity
-        ? <EntityWorkspaceActivityPanel activity={activity} onSelectBeforeHeight={onSelectActivityBeforeHeight} onSelectKind={onSelectActivityKind} />
+        ? <EntityWorkspaceActivityPanel activity={activity} onSelectBeforeHeight={onSelectActivityBeforeHeight} onSelectKind={onSelectActivityKind} onToggleType={onToggleActivityType} />
         : <header>
             <span>{copy.eyebrow}</span>
             <h2>{copy.title}</h2>
@@ -241,6 +243,7 @@ type EntityWorkspaceShellProps = Readonly<{
   onRefresh: () => void;
   onSelectActivityBeforeHeight: (beforeHeight: number | null) => void;
   onSelectActivityKind: (kind: EntityWorkspaceActivityKind) => void;
+  onToggleActivityType: (type: EntityWorkspaceActivityFilterType) => void;
   onSelectTheme: (theme: ThemeName) => void;
   onToggleTimeMachine: (show: boolean) => void;
   onToggleXlnGuide: (show: boolean) => void;
@@ -264,7 +267,7 @@ const readModeLabel = (
   return 'Read boundary';
 };
 
-export function EntityWorkspaceShell({ activity, accounts, activeTab, consensus, context, displayIssue, displayPreferences, hubPolicy, onRefresh, onSelectAccountsPage, onSelectActivityBeforeHeight, onSelectActivityKind, onSelectTheme, onToggleTimeMachine, onToggleXlnGuide, ownership, profile, readState, reserves, settingsSubview, timeMachine }: EntityWorkspaceShellProps) {
+export function EntityWorkspaceShell({ activity, accounts, activeTab, consensus, context, displayIssue, displayPreferences, hubPolicy, onRefresh, onSelectAccountsPage, onSelectActivityBeforeHeight, onSelectActivityKind, onSelectTheme, onToggleActivityType, onToggleTimeMachine, onToggleXlnGuide, ownership, profile, readState, reserves, settingsSubview, timeMachine }: EntityWorkspaceShellProps) {
   return (
     <section
       className="entity-workspace"
@@ -312,6 +315,7 @@ export function EntityWorkspaceShell({ activity, accounts, activeTab, consensus,
         onSelectActivityBeforeHeight={onSelectActivityBeforeHeight}
         onSelectActivityKind={onSelectActivityKind}
         onSelectTheme={onSelectTheme}
+        onToggleActivityType={onToggleActivityType}
         onToggleTimeMachine={onToggleTimeMachine}
         onToggleXlnGuide={onToggleXlnGuide}
         ownership={ownership}

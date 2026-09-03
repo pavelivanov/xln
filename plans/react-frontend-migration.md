@@ -2960,7 +2960,7 @@ Downstream soundcheck passes all ten gates; frozen core remains unchanged,
 production function sizing passes 1,047 files, and file-size checking reaches
 only the existing out-of-scope `core/qa/report.ts` 3001/3000 violation.
 
-The next persisted Activity slice adds the adapter's canonical All, Off-chain,
+The following persisted Activity slice adds the adapter's canonical All, Off-chain,
 and On-chain filters. The selected kind is part of the strict page projection:
 returned filter metadata and every event kind must match the request. Changing
 kind resets only the activity page cursor, preserves the displayed live or
@@ -2991,12 +2991,43 @@ Downstream soundcheck passes all ten gates; frozen core remains at
 production function sizing passes 1,047 files, and file-size checking reaches
 only the existing out-of-scope `core/qa/report.ts` 3001/3000 violation.
 
+The following Activity filter slice adds the canonical legacy event-type
+choices: Payments, Swaps, Cross-j, HTLC, Settlement, Accounts, J-events,
+Batches, and Errors. Multi-selection order is preserved in the exact adapter
+query. The strict boundary rejects unknown or duplicate requested types,
+returned filter drift, and events outside the selected types. Toggling a type
+resets only the Activity cursor and preserves the active kind and displayed
+live or historical frame.
+
+Focused Entity workspace coverage passes 87 / 87 with 897 expectations. The
+all-surface React-local gate scans 695 files with zero unsafe findings. All four
+React production surfaces build; site/docs/wallet/ops transform 401 / 35 /
+1,860 / 1,642 modules, and the ops workspace CSS/view/Runtime chunks are 35.07 /
+35.32 / 40.66 kB. The canonical frontend check reports zero errors/warnings
+while transforming 4,681 SSR plus 6,432 client modules. The complete ops
+candidate matrix passes 30 / 30 across the required viewports.
+
+The isolated real-H1 event-type flow passes in 27.9 seconds (30.3 seconds
+total) with candidate `93f9eebf2592`. It verifies the J-events selection returns
+only `j_event` rows, restores the unfiltered page, and emits no browser-console
+error. Mobile 390x844, laptop 1366x900, and wide 1920x1080 screenshots show all
+nine controls with no clipping or horizontal overflow. The 224-file frontend
+suite reports 1,329 passes, the unchanged 16-failure plus one-error repository
+baseline, and 7,605 expectations across 1,345 tests; no slice-owned test fails.
+
+Root evidence again passes 26 / 26 deterministic tests with 100,156
+expectations before the documented 60-second Hardhat compiler-cache mutex.
+Downstream soundcheck passes all ten gates; frozen core remains at
+`0x4eccf4492e5d085b24162f86d327e003c36b7e2a90ad527db1653fde391946a7`,
+production function sizing passes 1,047 files, and file-size checking reaches
+only the existing out-of-scope `core/qa/report.ts` 3001/3000 violation.
+
 **Current checkpoint:** all retained routes have React application owners;
 wallet parity is complete. `/embed` is the sole partial implementation/browser
 route, and its authorized Entity workspace is the sole remaining WP9
 implementation gap before WP10; display-theme, exact Time Machine, and shared
 xln-guide preference, exact Account commitment evidence, persisted Activity
-with strict pagination and All / Off-chain / On-chain filtering, committed
+with strict pagination, kind filters, and nine event-type filters, committed
 Hub-policy, and committed Settings-summary parity are now complete.
 
 ### WP10 — Authorized canonical cutover
