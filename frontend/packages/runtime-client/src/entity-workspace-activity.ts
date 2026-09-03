@@ -9,6 +9,7 @@ import type { EntityWorkspaceContext } from './entity-workspace-context';
 
 const ACTIVITY_LIMIT = 8;
 const ACTIVITY_SCAN_LIMIT = 160;
+const ACTIVITY_FILTER_KINDS = ['all', 'onchain', 'offchain'] as const;
 const ACTIVITY_KINDS = ['onchain', 'offchain'] as const;
 const ACTIVITY_TYPES = [
   'payment', 'swap', 'cross_swap', 'htlc', 'settlement',
@@ -18,6 +19,7 @@ const ACTIVITY_SOURCES = ['runtime_input', 'runtime_log', 'j_input'] as const;
 const ACTIVITY_DIRECTIONS = ['in', 'out', 'neutral'] as const;
 
 type ActivityKind = typeof ACTIVITY_KINDS[number];
+export type EntityWorkspaceActivityKind = typeof ACTIVITY_FILTER_KINDS[number];
 type ActivityType = typeof ACTIVITY_TYPES[number];
 type ActivitySource = typeof ACTIVITY_SOURCES[number];
 type ActivityDirection = typeof ACTIVITY_DIRECTIONS[number];
@@ -42,6 +44,7 @@ type EmptyEntityWorkspaceActivity = Readonly<{ status: 'empty' }>;
 type SelectedEntityWorkspaceActivity = Readonly<{
   status: 'selected';
   entityId: string;
+  kind: EntityWorkspaceActivityKind;
   requestedBeforeHeight: number;
   isLatestPage: boolean;
   latestHeight: number;
@@ -95,6 +98,7 @@ const projectEvent = (
   context: Extract<EntityWorkspaceContext, { status: 'selected' }>,
   fromHeight: number,
   toHeight: number,
+  requestedKind: EntityWorkspaceActivityKind,
 ): EntityWorkspaceActivityEvent => {
   const event = requireUnknownRecord(value, 'ENTITY_WORKSPACE_ACTIVITY_EVENT_INVALID');
   const height = integer(event['height'], 'ENTITY_WORKSPACE_ACTIVITY_EVENT_HEIGHT_INVALID');
@@ -107,11 +111,15 @@ const projectEvent = (
   ).toLowerCase();
   if (entityId !== context.entityId) throw new Error('ENTITY_WORKSPACE_ACTIVITY_EVENT_ENTITY_MISMATCH');
   matchingRuntimeId(event['runtimeId'], context, 'ENTITY_WORKSPACE_ACTIVITY_EVENT_RUNTIME_MISMATCH');
+  const kind = enumValue(event['kind'], ACTIVITY_KINDS, 'ENTITY_WORKSPACE_ACTIVITY_EVENT_KIND_INVALID');
+  if (requestedKind !== 'all' && kind !== requestedKind) {
+    throw new Error('ENTITY_WORKSPACE_ACTIVITY_EVENT_KIND_MISMATCH');
+  }
   return {
     id: nonemptyText(event['id'], 'ENTITY_WORKSPACE_ACTIVITY_EVENT_ID_INVALID'),
     height,
     timestamp: integer(event['timestamp'], 'ENTITY_WORKSPACE_ACTIVITY_EVENT_TIMESTAMP_INVALID'),
-    kind: enumValue(event['kind'], ACTIVITY_KINDS, 'ENTITY_WORKSPACE_ACTIVITY_EVENT_KIND_INVALID'),
+    kind,
     type: enumValue(event['type'], ACTIVITY_TYPES, 'ENTITY_WORKSPACE_ACTIVITY_EVENT_TYPE_INVALID'),
     source: enumValue(event['source'], ACTIVITY_SOURCES, 'ENTITY_WORKSPACE_ACTIVITY_EVENT_SOURCE_INVALID'),
     direction: enumValue(event['direction'], ACTIVITY_DIRECTIONS, 'ENTITY_WORKSPACE_ACTIVITY_EVENT_DIRECTION_INVALID'),
@@ -137,12 +145,13 @@ const requireFilters = (
   value: unknown,
   context: Extract<EntityWorkspaceContext, { status: 'selected' }>,
   beforeHeight: number,
+  kind: EntityWorkspaceActivityKind,
 ): void => {
   const filters = requireUnknownRecord(value, 'ENTITY_WORKSPACE_ACTIVITY_FILTERS_INVALID');
   if (optionalString(filters['entityId'], 'ENTITY_WORKSPACE_ACTIVITY_FILTER_ENTITY_INVALID')?.trim().toLowerCase() !== context.entityId) {
     throw new Error('ENTITY_WORKSPACE_ACTIVITY_FILTER_ENTITY_MISMATCH');
   }
-  if (filters['kind'] !== 'all') throw new Error('ENTITY_WORKSPACE_ACTIVITY_FILTER_KIND_MISMATCH');
+  if (filters['kind'] !== kind) throw new Error('ENTITY_WORKSPACE_ACTIVITY_FILTER_KIND_MISMATCH');
   if (filters['beforeHeight'] !== beforeHeight) throw new Error('ENTITY_WORKSPACE_ACTIVITY_FILTER_HEIGHT_MISMATCH');
   if (filters['limit'] !== ACTIVITY_LIMIT || filters['scanLimit'] !== ACTIVITY_SCAN_LIMIT) {
     throw new Error('ENTITY_WORKSPACE_ACTIVITY_FILTER_BOUNDS_MISMATCH');
@@ -155,18 +164,25 @@ const requireBeforeHeight = (value: unknown, contextHeight: number): number => {
   return beforeHeight;
 };
 
+export const requireEntityWorkspaceActivityKind = (
+  value: unknown,
+): EntityWorkspaceActivityKind =>
+  enumValue(value, ACTIVITY_FILTER_KINDS, 'ENTITY_WORKSPACE_ACTIVITY_KIND_INVALID');
+
 export const buildEntityWorkspaceActivityQuery = (
   context: EntityWorkspaceContext,
   beforeHeight: number = context.height,
+  kind: EntityWorkspaceActivityKind = 'all',
 ): RuntimeAdapterReadQuery => {
   if (context.status !== 'selected' || context.height < 1) {
     throw new Error('ENTITY_WORKSPACE_ACTIVITY_CONTEXT_REQUIRED');
   }
   const requestedBeforeHeight = requireBeforeHeight(beforeHeight, context.height);
+  const requestedKind = requireEntityWorkspaceActivityKind(kind);
   return {
     beforeHeight: requestedBeforeHeight,
     entityId: context.entityId,
-    kind: 'all',
+    kind: requestedKind,
     limit: ACTIVITY_LIMIT,
     scanLimit: ACTIVITY_SCAN_LIMIT,
   };
@@ -175,15 +191,17 @@ export const buildEntityWorkspaceActivityQuery = (
 export function projectEntityWorkspaceActivity(input: Readonly<{
   beforeHeight?: number;
   context: EntityWorkspaceContext;
+  kind?: EntityWorkspaceActivityKind;
   page?: unknown;
 }>): EntityWorkspaceActivity {
   if (input.context.status === 'empty') return emptyEntityWorkspaceActivity();
   const context = input.context;
   const requestedBeforeHeight = requireBeforeHeight(input.beforeHeight ?? context.height, context.height);
+  const requestedKind = requireEntityWorkspaceActivityKind(input.kind ?? 'all');
   const page = requireUnknownRecord(input.page, 'ENTITY_WORKSPACE_ACTIVITY_PAGE_INVALID');
   if (page['ok'] !== true) throw new Error('ENTITY_WORKSPACE_ACTIVITY_READ_FAILED');
   matchingRuntimeId(page['runtimeId'], context, 'ENTITY_WORKSPACE_ACTIVITY_RUNTIME_MISMATCH');
-  requireFilters(page['filters'], context, requestedBeforeHeight);
+  requireFilters(page['filters'], context, requestedBeforeHeight, requestedKind);
 
   const latestHeight = integer(page['latestHeight'], 'ENTITY_WORKSPACE_ACTIVITY_LATEST_HEIGHT_INVALID');
   const fromHeight = integer(page['fromHeight'], 'ENTITY_WORKSPACE_ACTIVITY_FROM_HEIGHT_INVALID');
@@ -204,7 +222,7 @@ export function projectEntityWorkspaceActivity(input: Readonly<{
       throw new Error('ENTITY_WORKSPACE_ACTIVITY_EMPTY_METADATA_MISMATCH');
     }
     return {
-      status: 'selected', entityId: context.entityId, requestedBeforeHeight,
+      status: 'selected', entityId: context.entityId, kind: requestedKind, requestedBeforeHeight,
       isLatestPage: requestedBeforeHeight === context.height, latestHeight,
       fromHeight, toHeight, scannedFrames, nextBeforeHeight: null, events: [],
     };
@@ -217,12 +235,13 @@ export function projectEntityWorkspaceActivity(input: Readonly<{
   if (scannedFrames !== toHeight - fromHeight + 1 || scannedFrames > scanLimit) {
     throw new Error('ENTITY_WORKSPACE_ACTIVITY_SCAN_RANGE_MISMATCH');
   }
-  const events = page['events'].map((event) => projectEvent(event, context, fromHeight, toHeight));
+  const events = page['events'].map((event) =>
+    projectEvent(event, context, fromHeight, toHeight, requestedKind));
   if (new Set(events.map(({ id }) => id)).size !== events.length) {
     throw new Error('ENTITY_WORKSPACE_ACTIVITY_EVENT_ID_DUPLICATE');
   }
   return {
-    status: 'selected', entityId: context.entityId, requestedBeforeHeight,
+    status: 'selected', entityId: context.entityId, kind: requestedKind, requestedBeforeHeight,
     isLatestPage: requestedBeforeHeight === context.height, latestHeight,
     fromHeight, toHeight, scannedFrames,
     nextBeforeHeight: requireCursor(page['nextBeforeHeight'], fromHeight),
