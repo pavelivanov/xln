@@ -7,6 +7,11 @@ import type { EntityWorkspaceContext } from './entity-workspace-context';
 export type EntityWorkspaceAccountItem = Readonly<{
   counterpartyId: string;
   frameHeight: number;
+  frameTimestamp: number;
+  jurisdictionHeight: number;
+  transactionCount: number;
+  previousFrameHash: string;
+  accountStateRoot: string;
   stateHash: string;
 }>;
 
@@ -54,6 +59,42 @@ const positiveInteger = (value: unknown, code: string): number => {
   return parsed;
 };
 
+const frameLink = (value: unknown): string => {
+  if (typeof value !== 'string') throw new Error('ENTITY_WORKSPACE_ACCOUNT_PREVIOUS_FRAME_HASH_INVALID');
+  return value.trim();
+};
+
+const frameTransactionCount = (value: unknown): number => {
+  if (!Array.isArray(value) || value.length > 20) {
+    throw new Error('ENTITY_WORKSPACE_ACCOUNT_FRAME_TXS_INVALID');
+  }
+  return value.length;
+};
+
+const accountFrameEvidence = (
+  frame: Record<string, unknown>,
+): Omit<EntityWorkspaceAccountItem, 'counterpartyId'> => ({
+  frameHeight: nonnegativeInteger(
+    frame['height'],
+    'ENTITY_WORKSPACE_ACCOUNT_FRAME_HEIGHT_INVALID',
+  ),
+  frameTimestamp: nonnegativeInteger(
+    frame['timestamp'],
+    'ENTITY_WORKSPACE_ACCOUNT_FRAME_TIMESTAMP_INVALID',
+  ),
+  jurisdictionHeight: nonnegativeInteger(
+    frame['jHeight'],
+    'ENTITY_WORKSPACE_ACCOUNT_JURISDICTION_HEIGHT_INVALID',
+  ),
+  transactionCount: frameTransactionCount(frame['accountTxs']),
+  previousFrameHash: frameLink(frame['prevFrameHash']),
+  accountStateRoot: requiredText(
+    frame['accountStateRoot'],
+    'ENTITY_WORKSPACE_ACCOUNT_STATE_ROOT_INVALID',
+  ),
+  stateHash: requiredText(frame['stateHash'], 'ENTITY_WORKSPACE_ACCOUNT_STATE_HASH_INVALID'),
+});
+
 const accountItem = (
   value: unknown,
   entityId: string,
@@ -69,17 +110,9 @@ const accountItem = (
     account['currentFrame'],
     'ENTITY_WORKSPACE_ACCOUNT_FRAME_INVALID',
   );
-  const stateHash = requiredText(
-    currentFrame['stateHash'],
-    'ENTITY_WORKSPACE_ACCOUNT_STATE_HASH_INVALID',
-  );
   return {
     counterpartyId: leftEntity === entityId ? rightEntity : leftEntity,
-    frameHeight: nonnegativeInteger(
-      currentFrame['height'],
-      'ENTITY_WORKSPACE_ACCOUNT_FRAME_HEIGHT_INVALID',
-    ),
-    stateHash,
+    ...accountFrameEvidence(currentFrame),
   };
 };
 

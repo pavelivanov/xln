@@ -563,6 +563,7 @@ export const PLATFORM_INVENTORY = [
       'tests/frontend/workspace/entity-workspace-ownership.test.ts',
       'tests/frontend/workspace/entity-workspace-profile.test.ts',
       'tests/frontend/workspace/entity-workspace-reserves.test.ts',
+      'tests/frontend/ops/frontend-ops-entity-account-commitments.test.ts',
       'tests/frontend/ops/frontend-ops-entity-hub-policy.test.ts',
       'tests/frontend/ops/frontend-ops-entity-settings-summary.test.ts',
       'tests/frontend/ops/frontend-ops-entity-workspace.test.ts',

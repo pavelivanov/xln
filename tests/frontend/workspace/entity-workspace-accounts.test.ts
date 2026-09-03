@@ -8,9 +8,24 @@ import {
   projectEntityWorkspaceContext,
 } from '../../../frontend/packages/runtime-client/src/entity-workspace-context';
 
-const account = (leftEntity: string, rightEntity: string, frameHeight: number, stateHash: string) => ({
+const account = (
+  leftEntity: string,
+  rightEntity: string,
+  frameHeight: number,
+  stateHash: string,
+  frameOverrides: Record<string, unknown> = {},
+) => ({
   state: { leftEntity, rightEntity },
-  currentFrame: { height: frameHeight, stateHash },
+  currentFrame: {
+    height: frameHeight,
+    timestamp: 1_700_000_000 + frameHeight,
+    jHeight: frameHeight + 10,
+    accountTxs: [{ type: 'test' }],
+    prevFrameHash: frameHeight === 0 ? '' : 'genesis',
+    accountStateRoot: `0xroot${frameHeight}`,
+    stateHash,
+    ...frameOverrides,
+  },
 });
 
 const frameWithAccounts = (items: unknown[], overrides: Record<string, unknown> = {}) => ({
@@ -43,8 +58,16 @@ describe('Entity workspace Accounts page projection', () => {
       status: 'selected',
       entityId: '0xaaaa',
       items: [
-        { counterpartyId: '0xbbbb', frameHeight: 4, stateHash: '0xSTATEB' },
-        { counterpartyId: '0xcccc', frameHeight: 7, stateHash: '0xSTATEC' },
+        {
+          counterpartyId: '0xbbbb', frameHeight: 4, frameTimestamp: 1_700_000_004,
+          jurisdictionHeight: 14, transactionCount: 1, previousFrameHash: 'genesis',
+          accountStateRoot: '0xroot4', stateHash: '0xSTATEB',
+        },
+        {
+          counterpartyId: '0xcccc', frameHeight: 7, frameTimestamp: 1_700_000_007,
+          jurisdictionHeight: 17, transactionCount: 1, previousFrameHash: 'genesis',
+          accountStateRoot: '0xroot7', stateHash: '0xSTATEC',
+        },
       ],
       pageIndex: 0,
       pageCount: 1,
@@ -82,6 +105,29 @@ describe('Entity workspace Accounts page projection', () => {
       context: CONTEXT,
       frame: frameWithAccounts([account('0xaaaa', '0xbbbb', 1, '')]),
     })).toThrow('ENTITY_WORKSPACE_ACCOUNT_STATE_HASH_INVALID');
+  });
+
+  test('rejects malformed committed Account frame evidence', () => {
+    expect(() => projectEntityWorkspaceAccounts({
+      context: CONTEXT,
+      frame: frameWithAccounts([account('0xaaaa', '0xbbbb', 1, '0xhash', { timestamp: -1 })]),
+    })).toThrow('ENTITY_WORKSPACE_ACCOUNT_FRAME_TIMESTAMP_INVALID');
+    expect(() => projectEntityWorkspaceAccounts({
+      context: CONTEXT,
+      frame: frameWithAccounts([account('0xaaaa', '0xbbbb', 1, '0xhash', { jHeight: 1.5 })]),
+    })).toThrow('ENTITY_WORKSPACE_ACCOUNT_JURISDICTION_HEIGHT_INVALID');
+    expect(() => projectEntityWorkspaceAccounts({
+      context: CONTEXT,
+      frame: frameWithAccounts([account('0xaaaa', '0xbbbb', 1, '0xhash', { accountTxs: new Array(21) })]),
+    })).toThrow('ENTITY_WORKSPACE_ACCOUNT_FRAME_TXS_INVALID');
+    expect(() => projectEntityWorkspaceAccounts({
+      context: CONTEXT,
+      frame: frameWithAccounts([account('0xaaaa', '0xbbbb', 1, '0xhash', { accountStateRoot: '' })]),
+    })).toThrow('ENTITY_WORKSPACE_ACCOUNT_STATE_ROOT_INVALID');
+    expect(() => projectEntityWorkspaceAccounts({
+      context: CONTEXT,
+      frame: frameWithAccounts([account('0xaaaa', '0xbbbb', 1, '0xhash', { prevFrameHash: null })]),
+    })).toThrow('ENTITY_WORKSPACE_ACCOUNT_PREVIOUS_FRAME_HASH_INVALID');
   });
 
   test('rejects foreign, self, or duplicate bilateral Accounts', () => {
