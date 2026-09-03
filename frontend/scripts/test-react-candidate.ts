@@ -6,7 +6,7 @@ import { parseSurfaceSelection } from './surface-selection';
 export const CANDIDATE_BROWSER_TEST_FILES = {
   site: ['tests/react-candidate/site.spec.ts', 'tests/react-candidate/site-routes.spec.ts'],
   docs: ['tests/react-candidate/docs.spec.ts'],
-  wallet: ['tests/react-candidate/wallet.spec.ts'],
+  wallet: ['tests/react-candidate/wallet.spec.ts', 'tests/react-candidate/wallet-financial.spec.ts'],
   ops: ['tests/react-candidate/ops.spec.ts'],
 } as const satisfies Readonly<Record<SurfaceId, readonly string[]>>;
 

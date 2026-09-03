@@ -20,6 +20,8 @@ process.env['XLN_DISABLE_RUNTIME_RESTORE'] = '1';
 process.env['XLN_RADAPTER_AUTH_SEED'] = authSeed;
 
 const runtime = await import('../../../core/runtime');
+const crypto = await import('../../../core/account/crypto');
+const accountConfig = await import('../../../core/account/config/dispute-config');
 const codec = await import('../../../core/api/runtime-adapter/codec');
 const adapterServer = await import('../../../core/api/runtime-adapter/server');
 const auth = await import('../../../core/api/runtime-adapter/security/auth');
@@ -34,6 +36,12 @@ runtime.startRuntimeLoop(env);
 
 const runtimeId = String(env.runtimeId || '').trim().toLowerCase();
 if (!/^0x[0-9a-f]{40}$/.test(runtimeId)) throw new Error('WALLET_RUNTIME_FIXTURE_ID_INVALID');
+const counterpartySignerId = crypto.deriveSignerAddressSync(runtimeSeed, '2').toLowerCase();
+crypto.registerSignerKey(
+  env,
+  counterpartySignerId,
+  crypto.deriveSignerKeySync(runtimeSeed, '2'),
+);
 const depositoryAddress = `0x${'11'.repeat(20)}`;
 const entityProviderAddress = `0x${'22'.repeat(20)}`;
 const jurisdictionName = 'Wallet Browser Fixture';
@@ -65,6 +73,13 @@ const config = {
   jurisdiction,
 };
 const entityId = runtime.generateLazyEntityId([runtimeId], 1n);
+const peerConfig = {
+  ...config,
+  validators: [counterpartySignerId],
+  shares: { [counterpartySignerId]: 1n },
+};
+const counterpartyEntityId = runtime.generateLazyEntityId(peerConfig.validators, 1n);
+if (counterpartyEntityId === entityId) throw new Error('WALLET_RUNTIME_FIXTURE_ENTITY_COLLISION');
 
 const commit = async (submitted: Parameters<typeof runtime.enqueueRuntimeInput>[1]): Promise<void> => {
   const afterHeight = env.state.height;
@@ -78,14 +93,74 @@ const commit = async (submitted: Parameters<typeof runtime.enqueueRuntimeInput>[
   });
 };
 
+const waitForFixtureState = async (label: string, predicate: () => boolean): Promise<void> => {
+  const deadline = Date.now() + 20_000;
+  while (Date.now() < deadline) {
+    if (predicate()) return;
+    await Bun.sleep(25);
+  }
+  throw new Error(`WALLET_RUNTIME_FIXTURE_STATE_TIMEOUT:${label}`);
+};
+
+const readAccount = (ownerEntityId: string, peerEntityId: string) => {
+  const replica = [...env.state.eReplicas.values()]
+    .find((candidate) => candidate.state.entityId === ownerEntityId);
+  return replica?.state.accounts.get(peerEntityId);
+};
+
 await commit({
-  runtimeTxs: [runtime.importEntity({
-    entityId,
-    signerId: runtimeId,
-    data: { config, isProposer: true, profileName: 'Browser Alice' },
-    entitySeed: `${runtimeSeed}:entity`,
-  })],
+  runtimeTxs: [
+    runtime.importEntity({
+      entityId,
+      signerId: runtimeId,
+      data: { config, isProposer: true, profileName: 'Browser Alice' },
+      entitySeed: `${runtimeSeed}:entity`,
+    }),
+    runtime.importEntity({
+      entityId: counterpartyEntityId,
+      signerId: counterpartySignerId,
+      data: { config: peerConfig, isProposer: true, profileName: 'Browser Hub' },
+      entitySeed: `${runtimeSeed}:counterparty`,
+    }),
+  ],
   entityInputs: [],
+});
+await commit({
+  runtimeTxs: [],
+  entityInputs: [
+    {
+      entityId,
+      signerId: runtimeId,
+      entityTxs: [{
+        type: 'profile-update',
+        data: {
+          profile: {
+            entityId,
+            name: 'Browser Alice',
+            avatar: '',
+            bio: 'Committed by the isolated candidate Runtime.',
+            website: 'https://xln.finance',
+          },
+        },
+      }],
+    },
+    {
+      entityId: counterpartyEntityId,
+      signerId: counterpartySignerId,
+      entityTxs: [{
+        type: 'profile-update',
+        data: {
+          profile: {
+            entityId: counterpartyEntityId,
+            name: 'Browser Hub',
+            avatar: '',
+            bio: 'Counterparty committed by the isolated candidate Runtime.',
+            website: 'https://xln.finance',
+          },
+        },
+      }],
+    },
+  ],
 });
 await commit({
   runtimeTxs: [],
@@ -93,18 +168,49 @@ await commit({
     entityId,
     signerId: runtimeId,
     entityTxs: [{
-      type: 'profile-update',
+      type: 'openAccount',
       data: {
-        profile: {
+        targetEntityId: counterpartyEntityId,
+        disputeConfig: accountConfig.defaultAccountDisputeConfigForParties(
           entityId,
-          name: 'Browser Alice',
-          avatar: '',
-          bio: 'Committed by the isolated candidate Runtime.',
-          website: 'https://xln.finance',
-        },
+          false,
+          counterpartyEntityId,
+          false,
+        ),
       },
     }],
   }],
+});
+await waitForFixtureState('account-open', () =>
+  Boolean(readAccount(entityId, counterpartyEntityId))
+  && Boolean(readAccount(counterpartyEntityId, entityId)));
+
+const usdcTokenId = 1;
+const creditLimit = 250_000_000n;
+await commit({
+  runtimeTxs: [],
+  entityInputs: [
+    {
+      entityId,
+      signerId: runtimeId,
+      entityTxs: [{
+        type: 'extendCredit',
+        data: { counterpartyEntityId, tokenId: usdcTokenId, amount: creditLimit },
+      }],
+    },
+    {
+      entityId: counterpartyEntityId,
+      signerId: counterpartySignerId,
+      entityTxs: [{
+        type: 'extendCredit',
+        data: { counterpartyEntityId: entityId, tokenId: usdcTokenId, amount: creditLimit },
+      }],
+    },
+  ],
+});
+await waitForFixtureState('credit-extended', () => {
+  const delta = readAccount(entityId, counterpartyEntityId)?.state.deltas.get(usdcTokenId);
+  return delta?.leftCreditLimit === creditLimit && delta.rightCreditLimit === creditLimit;
 });
 
 const token = auth.deriveRuntimeAdapterCapabilityToken(
@@ -130,6 +236,8 @@ server = Bun.serve<FixtureSocketData>({
       return Response.json({
         runtimeId,
         entityId,
+        counterpartyEntityId,
+        height: env.state.height,
         wsUrl: `ws://127.0.0.1:${server.port}/rpc`,
         token,
       }, { headers: { 'access-control-allow-origin': '*' } });
