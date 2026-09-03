@@ -4,6 +4,8 @@ import type { WalletIdentityDraft, WalletIdentityDraftValidation } from './ident
 import { walletIdentityModeLabel, walletRecoveryFileErrorMessage } from './identity-onboarding-model';
 import type { WalletCanonicalRecoveryDiscoveryView } from '../../../packages/browser/src/wallet-runtime-opening';
 import type { WalletIdentityMode } from '../../../packages/browser/src/wallet-identity-entry';
+import type { WalletRuntimeSummary } from './app-shell-model';
+import { WalletRecoveryServices } from './wallet-recovery-services';
 import './styles/identity-recovery.css';
 
 type IdentityReviewProps = Readonly<{
@@ -65,6 +67,7 @@ export function IdentityRecoveryVerified({
   opening,
   openingError,
   recoveryDiscovery,
+  runtimeState,
   selectedRecoveryCandidateId,
   onOpen,
   onImportRecoveryFile,
@@ -77,6 +80,7 @@ export function IdentityRecoveryVerified({
   opening: boolean;
   openingError: string;
   recoveryDiscovery: WalletCanonicalRecoveryDiscoveryView | null;
+  runtimeState: WalletRuntimeSummary['state'];
   selectedRecoveryCandidateId: string;
   onOpen: () => void;
   onImportRecoveryFile: (file: File) => Promise<void>;
@@ -190,6 +194,7 @@ export function IdentityRecoveryVerified({
         ref={backupFileInput}
         type="file"
       />
+      {opened ? <WalletRecoveryServices runtimeState={runtimeState} /> : null}
     </section>
   );
 }

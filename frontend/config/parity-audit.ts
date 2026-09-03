@@ -72,7 +72,7 @@ export type ParityGap = Readonly<{
 }>;
 
 export const PARITY_GAPS = [
-  { id: 'wallet-recovery-tower-push', kind: 'implementation', capabilityIds: ['wallet-recovery'], routeIds: ['wallet-app'], evidenceSources: ['frontend/apps/wallet/src/wallet-identity-opening.ts', 'frontend/src/lib/utils/recovery', 'frontend/static/push-wake-sw.js'], nextSlice: 'Port recovery-service onboarding and push-wake controls without changing persistence schemas.' },
+  { id: 'wallet-recovery-tower-push', kind: 'implementation', capabilityIds: ['wallet-recovery'], routeIds: ['wallet-app'], evidenceSources: ['frontend/apps/wallet/src/wallet-recovery-services.tsx', 'frontend/bridges/wallet-canonical-recovery-services.ts', 'frontend/static/push-wake-sw.js'], nextSlice: 'Port push-wake registration and disable controls over the existing recovery-service configuration without changing persistence schemas.' },
   { id: 'wallet-external-provider', kind: 'implementation', capabilityIds: ['wallet-payments-and-markets', 'wallet-native-and-offline'], routeIds: ['wallet-app'], evidenceSources: ['frontend/apps/wallet/src/wallet-payments.tsx', 'frontend/src/lib/native'], nextSlice: 'Connect the React payment surface to the existing external-wallet provider and native authority boundary.' },
   { id: 'ops-workspace-route', kind: 'owner-decision', capabilityIds: ['ops-workspace'], routeIds: ['embed'], evidenceSources: ['frontend/apps/ops/src/ops-app.tsx', 'frontend/apps/ops/src/ops-model.ts', 'frontend/apps/ops/src/ops-entity-workspace.tsx'], nextSlice: 'Keep /embed canonical until the owner authorizes the sized Entity workspace expansion and the remaining workspace parity closes.' },
 ] as const satisfies readonly ParityGap[];
