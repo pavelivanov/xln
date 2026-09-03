@@ -28,6 +28,21 @@ export type RuntimePaymentEntityTx =
     }>
   | Readonly<{ type: 'r2r'; data: Readonly<{ toEntityId: string; tokenId: number; amount: bigint }> }>
   | Readonly<{
+      type: 'e2r';
+      data: Readonly<{
+        contractAddress: string;
+        tokenType?: number;
+        externalTokenId?: bigint;
+        internalTokenId?: number;
+        amount: bigint;
+      }>;
+    }>
+  | Readonly<{
+      type: 'r2e';
+      data: Readonly<{ receivingEntity: string; tokenId: number; amount: bigint }>;
+    }>
+  | Readonly<{ type: 'j_broadcast'; data: Readonly<Record<string, never>> }>
+  | Readonly<{
       type: 'r2c';
       data: Readonly<{ counterpartyId: string; tokenId: number; amount: bigint }>;
     }>

@@ -201,12 +201,20 @@ export const buildWalletPaymentInput = (input: Readonly<{
 export const buildWalletEntityTxInput = (
   projection: WalletPaymentProjection,
   entityTx: RuntimePaymentEntityTx,
-): RuntimePaymentInput => ({
-  runtimeTxs: [],
-  entityInputs: [{
-    entityId: projection.activeEntityId,
-    signerId: projection.signerId,
-    entityTxs: [entityTx],
-  }],
-  jInputs: [],
-});
+): RuntimePaymentInput => buildWalletEntityTxsInput(projection, [entityTx]);
+
+export const buildWalletEntityTxsInput = (
+  projection: WalletPaymentProjection,
+  entityTxs: readonly RuntimePaymentEntityTx[],
+): RuntimePaymentInput => {
+  if (entityTxs.length === 0) throw new Error('WALLET_PAYMENT_ENTITY_TX_REQUIRED');
+  return {
+    runtimeTxs: [],
+    entityInputs: [{
+      entityId: projection.activeEntityId,
+      signerId: projection.signerId,
+      entityTxs: [...entityTxs],
+    }],
+    jInputs: [],
+  };
+};

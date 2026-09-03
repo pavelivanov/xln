@@ -5,11 +5,12 @@ import type {
 import type { RuntimePaymentInput } from '../../../packages/runtime-client/src/payment-command-types';
 
 export type WalletPreparedCommand = Readonly<{
+  mode: RuntimeAdapter['mode'];
   commandId: string;
-  commandSequence: number;
+  commandSequence: number | null;
   input: RuntimePaymentInput;
   runtimeId: string;
-  serverFingerprint: string;
+  serverFingerprint: string | null;
   durable: boolean;
 }>;
 
@@ -55,8 +56,11 @@ const loadCommandDependencies = (): Promise<CommandDependencies> => {
 
 const requireCommandIdentity = (adapter: RuntimeAdapter) => {
   const runtimeId = String(adapter.runtimeId || '').trim().toLowerCase();
-  const serverFingerprint = String(adapter.serverFingerprint || '').trim().toLowerCase();
   if (!runtimeId) throw new Error('WALLET_PAYMENT_RUNTIME_ID_REQUIRED');
+  if (adapter.mode === 'embedded') {
+    return { runtimeId, serverFingerprint: null, commandSequence: null };
+  }
+  const serverFingerprint = String(adapter.serverFingerprint || '').trim().toLowerCase();
   if (!/^0x[0-9a-f]{64}$/.test(serverFingerprint)) {
     throw new Error('WALLET_PAYMENT_SERVER_IDENTITY_REQUIRED');
   }
@@ -64,7 +68,11 @@ const requireCommandIdentity = (adapter: RuntimeAdapter) => {
   if (!Number.isSafeInteger(commandSequence) || commandSequence <= 0) {
     throw new Error('WALLET_PAYMENT_COMMAND_SEQUENCE_REQUIRED');
   }
-  return { runtimeId, serverFingerprint, commandSequence };
+  return {
+    runtimeId,
+    serverFingerprint,
+    commandSequence,
+  };
 };
 
 export const prepareWalletPaymentCommand = async (
@@ -73,32 +81,37 @@ export const prepareWalletPaymentCommand = async (
 ): Promise<WalletPreparedCommand> => {
   const dependencies = await loadCommandDependencies();
   const identity = requireCommandIdentity(adapter);
-  const durable = dependencies.isJournalUnlocked(identity.runtimeId);
-  if (durable) {
+  const serverFingerprint = identity.serverFingerprint;
+  if (
+    serverFingerprint !== null
+    && dependencies.isJournalUnlocked(identity.runtimeId)
+  ) {
     await adapter.ensureOwnerCommandLane();
     if (adapter.commandLaneKind !== 'owner') throw new Error('WALLET_PAYMENT_OWNER_LANE_REQUIRED');
     const intent = await dependencies.resolveIntent({
       input,
       runtimeId: identity.runtimeId,
-      serverFingerprint: identity.serverFingerprint,
+      serverFingerprint,
       nextCommandSequence: adapter.nextCommandSequence,
     });
     return {
+      mode: adapter.mode,
       commandId: intent.commandId,
       commandSequence: intent.commandSequence,
       input,
       runtimeId: identity.runtimeId,
-      serverFingerprint: identity.serverFingerprint,
-      durable,
+      serverFingerprint,
+      durable: true,
     };
   }
   return {
+    mode: adapter.mode,
     commandId: dependencies.createCommandId(),
     commandSequence: identity.commandSequence,
     input,
     runtimeId: identity.runtimeId,
     serverFingerprint: identity.serverFingerprint,
-    durable,
+    durable: false,
   };
 };
 
@@ -109,10 +122,14 @@ export const executeWalletPaymentCommand = async (
   if (adapter.runtimeId.toLowerCase() !== command.runtimeId) {
     throw new Error('WALLET_PAYMENT_COMMAND_RUNTIME_CHANGED');
   }
-  if (adapter.serverFingerprint?.toLowerCase() !== command.serverFingerprint) {
+  if (adapter.mode !== command.mode) throw new Error('WALLET_PAYMENT_COMMAND_MODE_CHANGED');
+  if (command.serverFingerprint !== null
+    && adapter.serverFingerprint?.toLowerCase() !== command.serverFingerprint) {
     throw new Error('WALLET_PAYMENT_COMMAND_SERVER_IDENTITY_CHANGED');
   }
   const dependencies = await loadCommandDependencies();
+  if (command.mode === 'embedded') return adapter.send(command.input);
+  if (command.commandSequence === null) throw new Error('WALLET_PAYMENT_COMMAND_SEQUENCE_REQUIRED');
   const result = await adapter.send(command.input, {
     commandId: command.commandId,
     commandSequence: command.commandSequence,

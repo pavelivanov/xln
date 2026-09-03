@@ -17,6 +17,12 @@ export type WalletRecoveryFixture = Readonly<{
   runtimeHeight: number;
   towerUrl: string;
   rpcUrl: string;
+  external: Readonly<{
+    recipient: string;
+    tokenAddress: string;
+    tokenSymbol: 'USDC';
+    initialBalance: string;
+  }>;
   brainVault: Readonly<{
     backupFileContents: string;
     runtimeId: string;
@@ -145,6 +151,13 @@ export const createWalletRecoveryFixture = async (
     createAppointment(WALLET_RECOVERY_FIXTURE_MNEMONIC, 'mnemonic'),
     createAppointment(WALLET_BRAINVAULT_FIXTURE_MNEMONIC, 'brainvault'),
   ]);
+  const initialExternalBalance = 125_000_000n;
+  if (!chainAdapter.fundSignerWallet) throw new Error('WALLET_RECOVERY_FIXTURE_FAUCET_REQUIRED');
+  await chainAdapter.fundSignerWallet(mnemonic.runtimeId, initialExternalBalance, 'USDC');
+  const token = (await chainAdapter.getTokenRegistry()).find(({ symbol }) => symbol === 'USDC');
+  if (!token) throw new Error('WALLET_RECOVERY_FIXTURE_USDC_REQUIRED');
+  const fundedExternalBalance = await chainAdapter.getErc20Balance(token.address, mnemonic.runtimeId);
+  const externalRecipient = new Wallet(`0x${'77'.repeat(32)}`).address.toLowerCase();
   const closeAppointments = async (): Promise<void> => {
     for (const appointment of [mnemonic, brainVault]) {
       for (const { adapter } of liveJAdapters.getLiveJAdapterEntries(appointment.env)) {
@@ -202,6 +215,12 @@ export const createWalletRecoveryFixture = async (
     runtimeHeight: mnemonic.bundle.runtimeHeight,
     towerUrl,
     rpcUrl,
+    external: {
+      recipient: externalRecipient,
+      tokenAddress: token.address.toLowerCase(),
+      tokenSymbol: 'USDC',
+      initialBalance: fundedExternalBalance.toString(),
+    },
     brainVault: {
       backupFileContents: serialization.serializeTaggedJson({
         version: 1,

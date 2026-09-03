@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useState, useSyncExternalStore } from 'react';
+import { lazy, Suspense, useEffect, useState, useSyncExternalStore, type MouseEvent as ReactMouseEvent } from 'react';
 
 import { readRuntimeAdapterStorageSnapshot } from '../../../packages/browser/src/runtime-adapter-session';
 import type { WalletAuthScheme } from '../../../packages/browser/src/wallet-runtime-preferences';
@@ -44,7 +44,12 @@ const initializeEmbeddedRuntimeOnce = (): void => {
   });
 };
 
-function WalletOverview({ runtime }: Readonly<{ runtime: WalletRuntimeSummary }>) {
+type WalletNavigate = (event: ReactMouseEvent<HTMLAnchorElement>, href: string) => void;
+
+function WalletOverview({
+  navigate,
+  runtime,
+}: Readonly<{ navigate: WalletNavigate; runtime: WalletRuntimeSummary }>) {
   return (
     <>
       <section className="wallet-shell-intro" aria-labelledby="wallet-overview-title">
@@ -76,13 +81,13 @@ function WalletOverview({ runtime }: Readonly<{ runtime: WalletRuntimeSummary }>
           <h2 id="wallet-actions-title">Choose a wallet surface</h2>
         </div>
         <div className="wallet-shell-action-links">
-          <a href="/app?setup=1">Review identity and recovery <span aria-hidden="true">→</span></a>
-          <a href="/app?portfolio=1">Inspect assets and accounts <span aria-hidden="true">→</span></a>
-          <a href="/app?health=1">Review financial health <span aria-hidden="true">→</span></a>
-          <a href="/app?payments=1">Send or receive payments <span aria-hidden="true">→</span></a>
-          <a href="/app?markets=1">Trade committed markets <span aria-hidden="true">→</span></a>
-          <a href="/app?settings=1">Adjust wallet settings <span aria-hidden="true">→</span></a>
-          <a href="/app?diagnostics=1">Review wallet diagnostics <span aria-hidden="true">→</span></a>
+          <a href="/app?setup=1" onClick={(event) => navigate(event, '/app?setup=1')}>Review identity and recovery <span aria-hidden="true">→</span></a>
+          <a href="/app?portfolio=1" onClick={(event) => navigate(event, '/app?portfolio=1')}>Inspect assets and accounts <span aria-hidden="true">→</span></a>
+          <a href="/app?health=1" onClick={(event) => navigate(event, '/app?health=1')}>Review financial health <span aria-hidden="true">→</span></a>
+          <a href="/app?payments=1" onClick={(event) => navigate(event, '/app?payments=1')}>Send or receive payments <span aria-hidden="true">→</span></a>
+          <a href="/app?markets=1" onClick={(event) => navigate(event, '/app?markets=1')}>Trade committed markets <span aria-hidden="true">→</span></a>
+          <a href="/app?settings=1" onClick={(event) => navigate(event, '/app?settings=1')}>Adjust wallet settings <span aria-hidden="true">→</span></a>
+          <a href="/app?diagnostics=1" onClick={(event) => navigate(event, '/app?diagnostics=1')}>Review wallet diagnostics <span aria-hidden="true">→</span></a>
           <a href="/testnet">Open testnet tools <span aria-hidden="true">↗</span></a>
           <a href="/health">Inspect network health <span aria-hidden="true">↗</span></a>
           <a href="/docs">Read documentation <span aria-hidden="true">↗</span></a>
@@ -112,7 +117,7 @@ export function WalletAppShell() {
     getWalletEmbeddedRuntimeSnapshot,
     getWalletEmbeddedRuntimeSnapshot,
   );
-  const [view] = useState(() => resolveWalletAppView(window.location.search, window.location.hash));
+  const [view, setView] = useState(() => resolveWalletAppView(window.location.search, window.location.hash));
   const [authScheme, setAuthScheme] = useState<WalletAuthScheme>(() => (
     readWalletPreferences(localStorage).authScheme
   ));
@@ -132,6 +137,20 @@ export function WalletAppShell() {
     };
   }, [view]);
 
+  useEffect(() => {
+    const syncView = () => setView(resolveWalletAppView(window.location.search, window.location.hash));
+    window.addEventListener('popstate', syncView);
+    return () => window.removeEventListener('popstate', syncView);
+  }, []);
+
+  const navigate: WalletNavigate = (event, href) => {
+    if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+    event.preventDefault();
+    window.history.pushState(window.history.state, '', href);
+    setView(resolveWalletAppView(window.location.search, window.location.hash));
+    window.scrollTo({ top: 0, behavior: 'auto' });
+  };
+
   return (
     <main className={`wallet-shell${usesIdentityAppearance && authScheme === 'light' ? ' is-auth-light' : ''}`}>
       <aside className="wallet-shell-rail">
@@ -143,6 +162,7 @@ export function WalletAppShell() {
               className={link.view === view ? 'wallet-shell-link is-current' : 'wallet-shell-link'}
               href={link.href}
               key={link.href}
+              onClick={link.view ? (event) => navigate(event, link.href) : undefined}
             >
               {link.label}
             </a>
@@ -173,7 +193,7 @@ export function WalletAppShell() {
               {view === 'settings' ? <WalletSettings onAuthSchemeChange={setAuthScheme} runtimeState={runtime.state} /> : null}
               {view === 'diagnostics' ? <WalletDiagnostics runtime={runtime} /> : null}
               {view === 'scenario-preview' ? <Suspense fallback={<p>Loading scenario preview…</p>}><WalletScenarioPreview /></Suspense> : null}
-              {view === 'overview' ? <WalletOverview runtime={runtime} /> : null}
+              {view === 'overview' ? <WalletOverview navigate={navigate} runtime={runtime} /> : null}
             </>
           )}
         </div>

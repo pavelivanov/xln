@@ -18,6 +18,7 @@ import {
 } from './wallet-payment-command';
 import {
   buildWalletEntityTxInput,
+  buildWalletEntityTxsInput,
   buildWalletPaymentInput,
   decodeWalletPaymentProjection,
   decodeWalletPaymentRoutes,
@@ -43,7 +44,7 @@ type QuoteState = Readonly<{
 }>;
 
 export type WalletPaymentCommandState = Readonly<{
-  status: 'idle' | 'submitting' | 'pending' | 'observed' | 'error';
+  status: 'idle' | 'submitting' | 'accepted' | 'pending' | 'observed' | 'error';
   message: string;
   commandId: string;
   durable: boolean;
@@ -212,6 +213,10 @@ export class WalletPaymentSource {
     await this.submitInput(buildWalletEntityTxInput(this.requireProjection(), entityTx));
   };
 
+  readonly submitEntityTxs = async (entityTxs: readonly RuntimePaymentEntityTx[]): Promise<void> => {
+    await this.submitInput(buildWalletEntityTxsInput(this.requireProjection(), entityTxs));
+  };
+
   readonly submitOperation = async (draft: WalletOperationDraft): Promise<void> => {
     const projection = this.requireProjection();
     const entityTx = buildWalletOperationTx(draft, projection, this.requireMath());
@@ -268,6 +273,15 @@ export class WalletPaymentSource {
           commandId: shortId, durable: command.durable, retryable: false,
         } });
         await this.observer?.refresh();
+        return;
+      }
+      if (command.mode === 'embedded') {
+        this.pendingCommand = null;
+        this.clearQuote();
+        this.patch({ command: {
+          status: 'accepted', message: `Queued after committed Runtime height ${result.height}.`,
+          commandId: shortId, durable: false, retryable: false,
+        } });
         return;
       }
       this.patch({ command: {
