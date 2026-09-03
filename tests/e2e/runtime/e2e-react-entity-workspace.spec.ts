@@ -282,6 +282,10 @@ test('React Entity workspace reads selected context from a real H1 Runtime', { t
       await expect(accounts).toBeVisible();
       await expect(candidatePage.getByTestId('accounts-visible-count')).not.toHaveText('0');
       await expect(candidatePage.getByTestId('accounts-total-count')).not.toHaveText('0');
+      const firstCommitment = candidatePage.getByTestId('account-commitment').first();
+      await expect(firstCommitment).toBeVisible();
+      await expect(firstCommitment.getByTestId('account-commitment-j-height')).toHaveText(/^\d+$/);
+      await expect(firstCommitment.getByTestId('account-commitment-root')).not.toHaveText('');
       await expect(candidatePage.getByText('Payments, swaps, credit, and Account lifecycle commands remain on the canonical workspace.')).toBeVisible();
       await capturePageScreenshot(candidatePage, testInfo, `react-entity-workspace-accounts-${viewport.name}.png`);
       await candidatePage.evaluate(() => { window.location.hash = 'settings/entity'; });
