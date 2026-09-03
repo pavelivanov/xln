@@ -1,6 +1,6 @@
 # React frontend migration work plan
 
-**Status:** `IN PROGRESS — WP0–WP6 COMPLETE; WP7 HEALTH + QA + HLT + RUNS + SCENARIOS + AI IMPLEMENTED, WORKSPACE STATE LAYER SVELTE-FREE, PANEL PORTS THROUGH ARCHITECT, REACT DOCKVIEW WRAPPER READY, GRAPH3D LIFECYCLE + RENDERER/PRIMITIVES/EFFECTS/ENTITY/ACCOUNT VISUAL FACTORY/INTERACTION/SELECTION/CAMERA/POINTER+XR DRAG + HOVER MECHANICS + VIEW/SCENE INPUT MODELS EXTRACTED, ENTITY WORKSPACE REACT SHELL/TABS + LIVE RUNTIME CONTEXT + READ-ONLY ASSETS/OWNERSHIP/ACCOUNTS/CONSENSUS/PROFILE READY; WP8 COMPLETE; WP9 HAS 19 COMPLETE / 1 PARTIAL IMPLEMENTATION, 19 COVERED / 1 PARTIAL BROWSER ROUTE, AND 1 AUTHORIZED IMPLEMENTATION GAP; ENTITY ASSETS + CONSENSUS EVIDENCE + DISPLAY THEME COMPLETE`
+**Status:** `IN PROGRESS — WP0–WP6 COMPLETE; WP7 HEALTH + QA + HLT + RUNS + SCENARIOS + AI IMPLEMENTED, WORKSPACE STATE LAYER SVELTE-FREE, PANEL PORTS THROUGH ARCHITECT, REACT DOCKVIEW WRAPPER READY, GRAPH3D LIFECYCLE + RENDERER/PRIMITIVES/EFFECTS/ENTITY/ACCOUNT VISUAL FACTORY/INTERACTION/SELECTION/CAMERA/POINTER+XR DRAG + HOVER MECHANICS + VIEW/SCENE INPUT MODELS EXTRACTED, ENTITY WORKSPACE REACT SHELL/TABS + LIVE RUNTIME CONTEXT + READ-ONLY ASSETS/OWNERSHIP/ACCOUNTS/CONSENSUS/PROFILE READY; WP8 COMPLETE; WP9 HAS 19 COMPLETE / 1 PARTIAL IMPLEMENTATION, 19 COVERED / 1 PARTIAL BROWSER ROUTE, AND 1 AUTHORIZED IMPLEMENTATION GAP; ENTITY ASSETS + CONSENSUS EVIDENCE + DISPLAY THEME + TIME MACHINE + XLN GUIDE PREFERENCE COMPLETE`
 
 This is the executable work plan for splitting the Svelte frontend into React
 applications. It is intentionally lightweight and should be updated as live
@@ -2765,11 +2765,40 @@ boundary regression is absent.
 Root evidence passes 26 / 26 deterministic tests with 100,156 expectations
 before the documented 60-second Hardhat compiler-cache mutex.
 
+The next Display slice makes `showXlnMascot` a real React-owned preference
+write while preserving the canonical Svelte guide implementation. The React
+toggle updates only that field in the shared `xln-settings` object, preserves
+unknown and concurrent settings, and recovers loudly from malformed storage.
+It does not reproduce guide, assistant, drag, or local-model behavior; the
+canonical workspace continues to consume the same setting and owns those
+effects.
+
+Focused storage/source/shell coverage passes 13 / 13 with 93 expectations.
+The React-local gate scans 690 files with zero unsafe findings, all four React
+production surfaces build, and ops transforms 1,636 modules with 28.16 / 26.61
+/ 29.55 kB workspace CSS/view/runtime chunks. The canonical frontend check
+reports zero errors/warnings while transforming 4,681 SSR plus 6,432 client
+modules. The isolated real-H1 flow passes in 27.8 seconds (30.2 seconds total)
+with candidate `9849deba2424`, preserves an unrelated future setting, and
+proves theme, Time Machine, and guide preference round trips. The three changed
+Display screenshots at 390×844, 1366×900, and 1920×1080 were inspected with no
+clipping or horizontal overflow.
+
+The 220-file frontend suite reports 1,308 passes, the unchanged 16-failure plus
+one-error repository baseline, and 7,488 expectations across 1,324 tests. Its
+network-server failures remain restricted-sandbox behavior, and no slice-owned
+test fails. Root evidence passes 26 / 26 deterministic tests with 100,156
+expectations before the documented 60-second Hardhat compiler-cache mutex.
+Frozen core is unchanged; file-size checking reaches only the existing
+`core/qa/report.ts` 3001/3000 violation. This slice changes no canonical guide
+behavior, Runtime protocol, contract, persistence schema, financial formula,
+or artifact.
+
 **Current checkpoint:** all retained routes have React application owners;
 wallet parity is complete. `/embed` is the sole partial implementation/browser
 route, and its authorized Entity workspace is the sole remaining WP9
-implementation gap before WP10; display-theme and exact Time Machine parity are
-now complete.
+implementation gap before WP10; display-theme, exact Time Machine, and shared
+xln-guide preference parity are now complete.
 
 ### WP10 — Authorized canonical cutover
 

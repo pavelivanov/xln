@@ -270,10 +270,11 @@ test('React Entity workspace reads selected context from a real H1 Runtime', { t
       await expect(candidatePage).not.toHaveURL(/tmHeight=/);
       await candidatePage.getByTestId('settings-time-machine-toggle').check();
       await expect(candidatePage.getByTestId('time-machine-mode')).toHaveText(/Live · h\d+/);
+      await candidatePage.getByTestId('settings-xln-mascot-toggle').check();
       const storedDisplay = await candidatePage.evaluate((key) => JSON.parse(localStorage.getItem(key) || '{}'), DISPLAY_PREFERENCES_STORAGE_KEY) as Record<string, unknown>;
       expect(storedDisplay['futureSetting']).toBe('preserve-me');
       expect(storedDisplay['showTimeMachine']).toBe(true);
-      expect(storedDisplay['showXlnMascot']).toBe(false);
+      expect(storedDisplay['showXlnMascot']).toBe(true);
       expect(storedDisplay['theme']).toBe('light');
       await capturePageScreenshot(candidatePage, testInfo, `react-entity-workspace-display-light-${viewport.name}.png`);
       await candidatePage.evaluate(() => { window.location.hash = 'accounts'; });

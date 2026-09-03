@@ -17,6 +17,7 @@ type EntityWorkspaceDisplayPanelProps = Readonly<{
   issue: string | null;
   onSelectTheme: (theme: ThemeName) => void;
   onToggleTimeMachine: (show: boolean) => void;
+  onToggleXlnGuide: (show: boolean) => void;
   preferences: EntityWorkspaceDisplayPreferences;
 }>;
 
@@ -24,6 +25,7 @@ export function EntityWorkspaceDisplayPanel({
   issue,
   onSelectTheme,
   onToggleTimeMachine,
+  onToggleXlnGuide,
   preferences,
 }: EntityWorkspaceDisplayPanelProps) {
   const theme = getThemeCoreColors(preferences.theme);
@@ -68,12 +70,18 @@ export function EntityWorkspaceDisplayPanel({
           type="checkbox"
         />
       </label>
-      <dl className="entity-workspace-display-boundaries">
-        <div>
-          <dt>xln guide</dt>
-          <dd><b>{preferences.showXlnMascot ? 'Shown' : 'Hidden'}</b><span>Canonical workspace control</span></dd>
-        </div>
-      </dl>
+      <label className="entity-workspace-display-toggle">
+        <span>
+          <strong>xln guide</strong>
+          <small>Show the draggable logo and local AI mini-chat on the canonical workspace.</small>
+        </span>
+        <input
+          checked={preferences.showXlnMascot}
+          data-testid="settings-xln-mascot-toggle"
+          onChange={event => onToggleXlnGuide(event.currentTarget.checked)}
+          type="checkbox"
+        />
+      </label>
       {issue ? <p className="entity-workspace-display-issue" role="alert">{issue}</p> : null}
       <footer>
         <span>Shared storage</span>
