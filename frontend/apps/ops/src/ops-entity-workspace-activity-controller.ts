@@ -1,6 +1,7 @@
 import {
   requireEntityWorkspaceActivityKind,
   requireEntityWorkspaceActivityFilterType,
+  requireEntityWorkspaceActivitySearch,
   type EntityWorkspaceActivity,
   type EntityWorkspaceActivityFilterType,
   type EntityWorkspaceActivityKind,
@@ -17,12 +18,14 @@ export class OpsEntityWorkspaceActivityController {
   private cursorIndex = 0;
   private cursorStack: readonly (number | null)[] = [null];
   private kind: EntityWorkspaceActivityKind = 'all';
+  private search = '';
   private types: readonly EntityWorkspaceActivityFilterType[] = [];
 
   constructor(private readonly dependencies: ActivityControllerDependencies) {}
 
   readonly readBeforeHeight = (): number | null => this.beforeHeight;
   readonly readKind = (): EntityWorkspaceActivityKind => this.kind;
+  readonly readSearch = (): string => this.search;
   readonly readTypes = (): readonly EntityWorkspaceActivityFilterType[] => this.types;
 
   private readonly resetCursor = (): void => {
@@ -39,6 +42,7 @@ export class OpsEntityWorkspaceActivityController {
   readonly reset = (): void => {
     this.resetCursor();
     this.kind = 'all';
+    this.search = '';
     this.types = [];
   };
 
@@ -107,6 +111,17 @@ export class OpsEntityWorkspaceActivityController {
     this.types = this.types.includes(requestedType)
       ? this.types.filter((candidate) => candidate !== requestedType)
       : [...this.types, requestedType];
+    this.resetCursor();
+    this.refresh();
+  };
+
+  readonly selectSearch = (activity: EntityWorkspaceActivity, search: string): void => {
+    if (activity.status !== 'selected') {
+      throw new Error('OPS_ENTITY_ACTIVITY_SEARCH_CONTEXT_REQUIRED');
+    }
+    const requestedSearch = requireEntityWorkspaceActivitySearch(search);
+    if (requestedSearch === this.search) return;
+    this.search = requestedSearch;
     this.resetCursor();
     this.refresh();
   };
