@@ -37,7 +37,9 @@
 .entity-workspace-profile-panel dd { margin: 0.4rem 0 0; overflow: hidden; color: var(--theme-text-secondary, #aaa89f); font-size: 0.72rem; line-height: 1.5; overflow-wrap: anywhere; }
 .entity-workspace-profile-panel .profile-wide-field dd { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 4; }
 
+.entity-workspace-profile-subsection > header,
 .entity-workspace-profile-hub-policy > header { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 0.9rem 1.35rem; border-bottom: 1px solid var(--entity-line); }
+.entity-workspace-profile-subsection > header strong,
 .entity-workspace-profile-hub-policy > header strong { color: var(--theme-text-primary, #d8d5ca); font-size: 0.75rem; font-weight: 550; }
 .entity-workspace-profile-hub-policy > header b { color: var(--entity-accent-soft); font: inherit; }
 

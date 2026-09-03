@@ -457,6 +457,7 @@ export const CAPABILITIES = [
       'frontend/packages/runtime-client/src/entity-workspace-ownership.ts',
       'frontend/packages/runtime-client/src/entity-workspace-profile.ts',
       'frontend/packages/runtime-client/src/entity-workspace-reserves.ts',
+      'frontend/packages/runtime-client/src/entity-workspace-settings-summary.ts',
       'frontend/packages/runtime-client/src/entity-workspace-time-machine.ts',
       'frontend/packages/browser/src/display-preferences.ts',
       'frontend/packages/browser/src/theme-document.ts',

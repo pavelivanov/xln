@@ -60,6 +60,8 @@ describe('React Entity workspace shell', () => {
     expect(settingsStage).toContain('ENTITY_SETTINGS_SECTIONS.map');
     expect(settingsStage).toContain("settingsSubview === 'entity' ? 'wallet' : settingsSubview");
     expect(profile).toContain('settings-hub-policy');
+    expect(profile).toContain('settings-runtime-summary');
+    expect(profile).toContain('projectEntityWorkspaceSettingsSummary');
     expect(profile).toContain('Profile edits stay on the canonical workspace');
     expect(profile).not.toContain('onSave');
     expect(profile).not.toContain('runtimeController');
