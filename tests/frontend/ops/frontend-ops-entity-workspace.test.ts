@@ -23,9 +23,10 @@ describe('React Entity workspace shell', () => {
   });
 
   test('uses shared navigation and a cleaned-up browser subscription without legacy imports', async () => {
-    const [page, shell, accounts, consensus, display, profile, reserves, settingsStage] = await Promise.all([
+    const [page, shell, activity, accounts, consensus, display, profile, reserves, settingsStage] = await Promise.all([
       Bun.file('frontend/apps/ops/src/ops-entity-workspace.tsx').text(),
       Bun.file('frontend/packages/ui/src/entity-workspace-shell.tsx').text(),
+      Bun.file('frontend/packages/ui/src/entity-workspace-activity-panel.tsx').text(),
       Bun.file('frontend/packages/ui/src/entity-workspace-accounts-panel.tsx').text(),
       Bun.file('frontend/packages/ui/src/entity-workspace-consensus-panel.tsx').text(),
       Bun.file('frontend/packages/ui/src/entity-workspace-display-panel.tsx').text(),
@@ -40,6 +41,7 @@ describe('React Entity workspace shell', () => {
     expect(shell).toContain('aria-current={section.id === activeTab');
     expect(shell).toContain('No Runtime projection attached');
     expect(shell).toContain('EntityWorkspaceAccountsPanel');
+    expect(shell).toContain('EntityWorkspaceActivityPanel');
     expect(shell).toContain('EntityWorkspaceConsensusPanel');
     expect(shell).toContain('EntityWorkspaceProfilePanel');
     expect(shell).toContain('hubPolicy={hubPolicy}');
@@ -48,6 +50,7 @@ describe('React Entity workspace shell', () => {
     expect(shell).toContain("settingsSubview === 'display'");
     expect(page).toContain("route.settingsSubview ?? 'wallet'");
     expect(accounts).toContain('Exact committed frame evidence');
+    expect(activity).toContain('Exact Runtime activity at or before the displayed committed frame');
     expect(accounts).not.toContain('deriveDelta');
     expect(accounts).not.toContain('CreditLimit');
     expect(consensus).toContain('Validator-local proposals, votes, locks, and certificates are not exposed');
@@ -69,7 +72,7 @@ describe('React Entity workspace shell', () => {
     expect(reserves).toContain('raw units');
     expect(reserves).not.toContain('formatUnits');
     expect(reserves).not.toContain('getAssetValue');
-    for (const source of [page, shell, accounts, consensus, display, profile, reserves, settingsStage]) {
+    for (const source of [page, shell, activity, accounts, consensus, display, profile, reserves, settingsStage]) {
       expect(source).not.toContain('frontend/src');
       expect(source).not.toContain('$lib');
     }

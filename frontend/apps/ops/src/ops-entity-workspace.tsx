@@ -120,6 +120,7 @@ export function OpsEntityWorkspacePage() {
   return (
     <OpsShell activePath="/embed">
       <EntityWorkspaceShell
+        activity={runtimeSnapshot.activity}
         accounts={runtimeSnapshot.accounts}
         activeTab={activeTab}
         consensus={runtimeSnapshot.consensus}

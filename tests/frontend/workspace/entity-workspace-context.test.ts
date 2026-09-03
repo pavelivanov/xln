@@ -78,7 +78,7 @@ describe('Entity workspace context projection', () => {
     expect(legacyModel).toContain('projectEntityWorkspaceContext({ runtimeId: getRuntimeId(sourceEnv), frame })');
     expect(reactShell).toContain('context.status === \'selected\'');
     expect(reactPage).toContain('context={runtimeSnapshot.context}');
-    expect(reactSource).toContain('return projectOpsEntityWorkspaceFrame(adapter.runtimeId, frame);');
+    expect(reactSource).toContain('return readEntityWorkspaceProjection(client, adapter.runtimeId, frame);');
     expect(reactProjection).toContain('projectEntityWorkspaceContext({');
     expect(legacyModel).not.toContain('as unknown as');
   });
