@@ -137,6 +137,7 @@ export function OpsEntityWorkspacePage() {
         readState={runtimeSnapshot.readState}
         reserves={runtimeSnapshot.reserves}
         settingsSubview={settingsSubview}
+        timeMachine={runtimeSnapshot.timeMachine}
       />
       {displaySnapshot.preferences.showTimeMachine ? (
         <EntityWorkspaceTimeMachine
