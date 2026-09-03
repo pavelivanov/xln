@@ -4,12 +4,13 @@ import './entity-workspace-activity-panel.css';
 
 type EntityWorkspaceActivityPanelProps = Readonly<{
   activity: EntityWorkspaceActivity;
+  onSelectBeforeHeight: (beforeHeight: number | null) => void;
 }>;
 
 const directionLabel = (direction: 'in' | 'out' | 'neutral'): string =>
   direction === 'in' ? 'Inbound' : direction === 'out' ? 'Outbound' : 'Observed';
 
-export function EntityWorkspaceActivityPanel({ activity }: EntityWorkspaceActivityPanelProps) {
+export function EntityWorkspaceActivityPanel({ activity, onSelectBeforeHeight }: EntityWorkspaceActivityPanelProps) {
   if (activity.status !== 'selected') return null;
   return (
     <section className="entity-workspace-activity-panel" data-testid="entity-activity-ledger">
@@ -48,9 +49,19 @@ export function EntityWorkspaceActivityPanel({ activity }: EntityWorkspaceActivi
             ))}
           </ol>}
       <footer>
-        <span>Window</span>
+        <button
+          data-testid="entity-activity-latest"
+          disabled={activity.isLatestPage}
+          onClick={() => onSelectBeforeHeight(null)}
+          type="button"
+        >Latest</button>
         <strong>h{activity.fromHeight}–h{activity.toHeight}</strong>
-        <span>{activity.nextBeforeHeight === null ? 'Origin reached' : `Earlier at h${activity.nextBeforeHeight}`}</span>
+        <button
+          data-testid="entity-activity-earlier"
+          disabled={activity.nextBeforeHeight === null}
+          onClick={() => onSelectBeforeHeight(activity.nextBeforeHeight)}
+          type="button"
+        >{activity.nextBeforeHeight === null ? 'Origin reached' : `Earlier at h${activity.nextBeforeHeight}`}</button>
       </footer>
     </section>
   );

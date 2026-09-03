@@ -486,6 +486,7 @@ export const CAPABILITIES = [
       'frontend/packages/ui/src/entity-workspace-shell.css',
       'frontend/apps/ops/src/ops-entity-workspace.tsx',
       'frontend/apps/ops/src/ops-display-preferences.ts',
+      'frontend/apps/ops/src/ops-entity-workspace-activity-controller.ts',
       'frontend/apps/ops/src/ops-entity-workspace-history.ts',
       'frontend/apps/ops/src/ops-entity-workspace-history-controller.ts',
       'frontend/apps/ops/src/ops-entity-workspace-projection.ts',

@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
+import { OpsEntityWorkspaceActivityController } from '../../../frontend/apps/ops/src/ops-entity-workspace-activity-controller';
 import {
   buildEntityWorkspaceActivityQuery,
   projectEntityWorkspaceActivity,
@@ -43,11 +44,19 @@ describe('React Entity persisted activity ledger', () => {
     expect(buildEntityWorkspaceActivityQuery(context)).toEqual({
       beforeHeight: 44, entityId: '0xaaaa', kind: 'all', limit: 8, scanLimit: 160,
     });
+    expect(buildEntityWorkspaceActivityQuery(context, 13)).toEqual({
+      beforeHeight: 13, entityId: '0xaaaa', kind: 'all', limit: 8, scanLimit: 160,
+    });
+    expect(() => buildEntityWorkspaceActivityQuery(context, 0))
+      .toThrow('ENTITY_WORKSPACE_ACTIVITY_BEFORE_HEIGHT_INVALID');
+    expect(() => buildEntityWorkspaceActivityQuery(context, 45))
+      .toThrow('ENTITY_WORKSPACE_ACTIVITY_BEFORE_HEIGHT_INVALID');
   });
 
   test('preserves adapter event order and exact persisted evidence', () => {
     expect(projectEntityWorkspaceActivity({ context, page: page() })).toEqual({
-      status: 'selected', entityId: '0xaaaa', latestHeight: 50,
+      status: 'selected', entityId: '0xaaaa', requestedBeforeHeight: 44,
+      isLatestPage: true, latestHeight: 50,
       fromHeight: 42, toHeight: 44, scannedFrames: 3, nextBeforeHeight: 41,
       events: [
         {
@@ -63,6 +72,19 @@ describe('React Entity persisted activity ledger', () => {
           counterpartyId: '0xbbbb', rawType: 'directPayment',
         },
       ],
+    });
+  });
+
+  test('projects an earlier bounded page without changing adapter order', () => {
+    const earlier = page({
+      fromHeight: 10, toHeight: 13, scannedFrames: 4, nextBeforeHeight: 9,
+      filters: { entityId: '0xaaaa', kind: 'all', beforeHeight: 13, limit: 8, scanLimit: 160 },
+      events: [event({ id: 'runtime-a:13:1', height: 13 }), event({ id: 'runtime-a:12:0', height: 12 })],
+    });
+    expect(projectEntityWorkspaceActivity({ beforeHeight: 13, context, page: earlier })).toMatchObject({
+      status: 'selected', requestedBeforeHeight: 13, isLatestPage: false,
+      fromHeight: 10, toHeight: 13, nextBeforeHeight: 9,
+      events: [{ id: 'runtime-a:13:1' }, { id: 'runtime-a:12:0' }],
     });
   });
 
@@ -83,6 +105,38 @@ describe('React Entity persisted activity ledger', () => {
       .toThrow('ENTITY_WORKSPACE_ACTIVITY_RETURNED_MISMATCH');
   });
 
+  test('owns Latest/Earlier cursor state and refreshes the active transport only', () => {
+    let historyActive = false;
+    let historyRefreshes = 0;
+    let liveRefreshes = 0;
+    const controller = new OpsEntityWorkspaceActivityController({
+      isHistoryActive: () => historyActive,
+      refreshHistory: () => { historyRefreshes += 1; },
+      refreshLive: () => { liveRefreshes += 1; },
+    });
+    const latest = projectEntityWorkspaceActivity({ context, page: page() });
+    expect(() => controller.select(latest, 40)).toThrow('OPS_ENTITY_ACTIVITY_PAGE_INVALID:40');
+    controller.select(latest, 41);
+    expect(controller.readBeforeHeight()).toBe(41);
+    expect({ historyRefreshes, liveRefreshes }).toEqual({ historyRefreshes: 0, liveRefreshes: 1 });
+
+    const earlier = projectEntityWorkspaceActivity({
+      beforeHeight: 13,
+      context,
+      page: page({
+        fromHeight: 10, toHeight: 13, scannedFrames: 4, nextBeforeHeight: 9,
+        filters: { entityId: '0xaaaa', kind: 'all', beforeHeight: 13, limit: 8, scanLimit: 160 },
+        events: [event({ id: 'runtime-a:13:1', height: 13 }), event({ id: 'runtime-a:12:0', height: 12 })],
+      }),
+    });
+    historyActive = true;
+    controller.select(earlier, null);
+    expect(controller.readBeforeHeight()).toBeNull();
+    expect({ historyRefreshes, liveRefreshes }).toEqual({ historyRefreshes: 1, liveRefreshes: 1 });
+    controller.reset();
+    expect(controller.readBeforeHeight()).toBeNull();
+  });
+
   test('keeps the visible ledger read-only and attached to live plus historical reads', async () => {
     const [panel, source, history] = await Promise.all([
       Bun.file('frontend/packages/ui/src/entity-workspace-activity-panel.tsx').text(),
@@ -91,8 +145,11 @@ describe('React Entity persisted activity ledger', () => {
     ]);
     expect(panel).toContain('Adapter order is preserved');
     expect(panel).toContain('data-testid="entity-activity-ledger"');
-    expect(source).toContain('client.readActivity(buildEntityWorkspaceActivityQuery(projection.context))');
-    expect(history).toContain('input.client.readActivity(buildEntityWorkspaceActivityQuery(projection.context))');
+    expect(panel).toContain('data-testid="entity-activity-earlier"');
+    expect(panel).toContain('data-testid="entity-activity-latest"');
+    expect(source).toContain('client.readActivity(activityQuery)');
+    expect(source).toContain('readonly selectActivityPage');
+    expect(history).toContain('input.client.readActivity(activityQuery)');
     expect([panel, source, history].join('\n')).not.toContain('.send(');
   });
 });

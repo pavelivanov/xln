@@ -23,6 +23,7 @@ export type OpsEntityWorkspaceHistoryReader = Readonly<{
 }>;
 
 export async function readOpsEntityWorkspaceHistory(input: Readonly<{
+  activityBeforeHeight?: number;
   accountsPage: number;
   client: OpsEntityWorkspaceHistoryReader;
   entityId: string;
@@ -49,6 +50,10 @@ export async function readOpsEntityWorkspaceHistory(input: Readonly<{
     runtimeId: input.runtimeId,
   }), selection);
   const projection = projectOpsEntityWorkspaceFrame(input.runtimeId, frame);
-  const activity = await input.client.readActivity(buildEntityWorkspaceActivityQuery(projection.context));
-  return projectOpsEntityWorkspaceActivityPage(projection, activity);
+  const activityQuery = buildEntityWorkspaceActivityQuery(
+    projection.context,
+    input.activityBeforeHeight,
+  );
+  const activity = await input.client.readActivity(activityQuery);
+  return projectOpsEntityWorkspaceActivityPage(projection, activity, activityQuery.beforeHeight);
 }

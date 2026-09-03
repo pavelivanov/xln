@@ -212,8 +212,8 @@ describe('React Entity workspace Runtime read boundary', () => {
     expect(source).toContain("await import('../../../../core/api/runtime-adapter/remote.ts')");
     expect(source).toContain('accountsLimit: 8');
     expect(source).toContain('accountsPage: this.accountsPage');
-    expect(source).toContain('readEntityWorkspaceProjection(client, adapter.runtimeId, frame)');
-    expect(source).toContain('client.readActivity(buildEntityWorkspaceActivityQuery(projection.context))');
+    expect(source).toContain('return readEntityWorkspaceProjection(');
+    expect(source).toContain('client.readActivity(activityQuery)');
     expect(projection).toContain('projectOpsEntityWorkspaceActivityPage');
     expect(projection).toContain('projectEntityWorkspaceAccounts({ context, frame })');
     expect(projection).toContain('projectEntityWorkspaceConsensusEvidence({ accounts, context, ownership })');
@@ -234,5 +234,17 @@ describe('React Entity workspace Runtime read boundary', () => {
     const implementation = await Bun.file('frontend/apps/ops/src/ops-entity-workspace-source.ts').text();
     expect(implementation).toContain('page >= accounts.pageCount');
     expect(implementation).toContain('void this.observer?.refresh()');
+  });
+
+  test('validates persisted Activity navigation before issuing another bounded read', async () => {
+    const [source, controller] = await Promise.all([
+      Bun.file('frontend/apps/ops/src/ops-entity-workspace-source.ts').text(),
+      Bun.file('frontend/apps/ops/src/ops-entity-workspace-activity-controller.ts').text(),
+    ]);
+    expect(source).toContain('this.activityController.select(this.snapshot.activity, beforeHeight)');
+    expect(controller).toContain("activity.status !== 'selected'");
+    expect(controller).toContain('beforeHeight !== activity.nextBeforeHeight');
+    expect(controller).toContain('this.dependencies.refreshHistory()');
+    expect(controller).toContain('this.dependencies.refreshLive()');
   });
 });
