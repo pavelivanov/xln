@@ -1,4 +1,5 @@
 import type { RuntimeAdapter } from '../../../../core/api/runtime-adapter/types';
+import type { EntityWorkspaceActivityKind } from '../../../packages/runtime-client/src/entity-workspace-activity';
 import {
   createEntityWorkspaceHistoryState,
   createEntityWorkspaceLiveState,
@@ -14,6 +15,7 @@ import type { OpsEntityWorkspaceSourceSnapshot } from './ops-entity-workspace-pr
 type HistoryControllerDependencies = Readonly<{
   publish(snapshot: OpsEntityWorkspaceSourceSnapshot): void;
   readActivityBeforeHeight(): number | null;
+  readActivityKind(): EntityWorkspaceActivityKind;
   readAccountsPage(): number;
   readAdapter(): RuntimeAdapter | null;
   readClient(): OpsEntityWorkspaceHistoryReader | null;
@@ -94,6 +96,7 @@ export class OpsEntityWorkspaceHistoryController {
         accountsPage: this.dependencies.readAccountsPage(), client,
         entityId: context.entityId, latestHeight, requestedHeight, runtimeId: adapter.runtimeId,
         ...(activityBeforeHeight === null ? {} : { activityBeforeHeight }),
+        activityKind: this.dependencies.readActivityKind(),
       });
       if (!this.isCurrent(request, requestedHeight, client)) return false;
       const next: OpsEntityWorkspaceSourceSnapshot = {

@@ -131,6 +131,7 @@ export function OpsEntityWorkspacePage() {
         onRefresh={() => { void opsEntityWorkspaceSource.refresh(); }}
         onSelectAccountsPage={opsEntityWorkspaceSource.selectAccountsPage}
         onSelectActivityBeforeHeight={opsEntityWorkspaceSource.selectActivityPage}
+        onSelectActivityKind={opsEntityWorkspaceSource.selectActivityKind}
         onSelectTheme={opsDisplayPreferencesSource.setTheme}
         onToggleTimeMachine={toggleTimeMachine}
         onToggleXlnGuide={opsDisplayPreferencesSource.setXlnGuideVisibility}

@@ -1,16 +1,29 @@
-import type { EntityWorkspaceActivity } from '../../runtime-client/src/entity-workspace-activity';
+import type {
+  EntityWorkspaceActivity,
+  EntityWorkspaceActivityKind,
+} from '../../runtime-client/src/entity-workspace-activity';
 import { formatAddress } from './entity-workspace-display';
 import './entity-workspace-activity-panel.css';
 
 type EntityWorkspaceActivityPanelProps = Readonly<{
   activity: EntityWorkspaceActivity;
   onSelectBeforeHeight: (beforeHeight: number | null) => void;
+  onSelectKind: (kind: EntityWorkspaceActivityKind) => void;
 }>;
+
+const ACTIVITY_KIND_OPTIONS = [
+  { kind: 'all', label: 'All' },
+  { kind: 'offchain', label: 'Off-chain' },
+  { kind: 'onchain', label: 'On-chain' },
+] as const satisfies ReadonlyArray<Readonly<{
+  kind: EntityWorkspaceActivityKind;
+  label: string;
+}>>;
 
 const directionLabel = (direction: 'in' | 'out' | 'neutral'): string =>
   direction === 'in' ? 'Inbound' : direction === 'out' ? 'Outbound' : 'Observed';
 
-export function EntityWorkspaceActivityPanel({ activity, onSelectBeforeHeight }: EntityWorkspaceActivityPanelProps) {
+export function EntityWorkspaceActivityPanel({ activity, onSelectBeforeHeight, onSelectKind }: EntityWorkspaceActivityPanelProps) {
   if (activity.status !== 'selected') return null;
   return (
     <section className="entity-workspace-activity-panel" data-testid="entity-activity-ledger">
@@ -26,11 +39,22 @@ export function EntityWorkspaceActivityPanel({ activity, onSelectBeforeHeight }:
         </dl>
       </header>
       <p>Exact Runtime activity at or before the displayed committed frame. Adapter order is preserved.</p>
+      <nav aria-label="Activity kind" className="entity-workspace-activity-kind">
+        {ACTIVITY_KIND_OPTIONS.map(({ kind, label }) => (
+          <button
+            aria-pressed={activity.kind === kind}
+            data-testid={`entity-activity-kind-${kind}`}
+            key={kind}
+            onClick={() => onSelectKind(kind)}
+            type="button"
+          >{label}</button>
+        ))}
+      </nav>
       {activity.events.length === 0
         ? <div className="entity-workspace-activity-empty">No persisted activity in frames {activity.fromHeight}–{activity.toHeight}.</div>
         : <ol>
             {activity.events.map((event, index) => (
-              <li data-direction={event.direction} key={event.id}>
+              <li data-direction={event.direction} data-kind={event.kind} key={event.id}>
                 <span>{String(index + 1).padStart(2, '0')}</span>
                 <div className="entity-workspace-activity-copy">
                   <strong>{event.title}</strong>
