@@ -45,7 +45,7 @@ to finish, not a reason to block unrelated scaffolding or migration slices.
 
 | Artifact | Status | Next action |
 |---|---|---|
-| [Migration work plan](react-frontend-migration.md) | `IN PROGRESS — WP0–WP6 + WP8 COMPLETE; WP7 WORKSPACE PARTIAL; WP9 HAS 19 COVERED / 1 PARTIAL / 0 MISSING BROWSER ROUTES AND 4 EXACT GAPS` | Wire React identity review through the shared Runtime-opening executor and canonical vault adapter. |
+| [Migration work plan](react-frontend-migration.md) | `IN PROGRESS — WP0–WP6 + WP8 COMPLETE; WP7 WORKSPACE PARTIAL; WP9 HAS 19 COVERED / 1 PARTIAL / 0 MISSING BROWSER ROUTES AND 4 EXACT GAPS` | Load the canonical vault adapter from React only after recovery discovery authorizes Runtime opening. |
 | [Technical decisions](react-frontend-migration-decisions.md) | `ACTIVE` | Use the recorded application, route, build, and coexistence decisions. |
 | Frontend implementation | `IN PROGRESS — 18 COMPLETE / 2 PARTIAL IMPLEMENTATIONS; 19 COVERED / 1 PARTIAL BROWSER ROUTE` | Continue `/app` parity without crossing the existing identity, recovery, or provider authority boundaries. |
 

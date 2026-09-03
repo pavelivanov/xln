@@ -73,9 +73,7 @@
     WalletRecoveryDiscoveryCoordinator,
     type WalletRecoveryDiscoveryRequest,
   } from '../../../../packages/browser/src/wallet-recovery-discovery';
-  import {
-    executeWalletRuntimeOpening,
-  } from '../../../../packages/browser/src/wallet-runtime-opening';
+  import { executeCanonicalWalletRuntimeOpening } from '../../stores/vault/walletRuntimeOpeningAdapter';
   import { WalletNodeMnemonicRevealCoordinator } from '../../../../packages/browser/src/wallet-node-mnemonic-reveal';
   import {
     assertWalletNodeBrainVaultResult,
@@ -547,7 +545,7 @@
     derivationError = '';
     try {
       const runtimeId = ethereumAddress;
-      const opening = await executeWalletRuntimeOpening({
+      const opening = await executeCanonicalWalletRuntimeOpening({
         runtimeId,
         name,
         labelOverride,
@@ -559,12 +557,6 @@
         recoveryCandidate: options.recoveryCandidate,
         forceFresh: options.forceFresh === true,
         openLocal: options.openLocal === true,
-      }, {
-        runtimeExists: candidateId => vaultOperations.runtimeExists(candidateId),
-        unlockRuntime: (candidateId, candidateSeed, durationMs) =>
-          vaultOperations.unlockRuntime(candidateId, candidateSeed, durationMs),
-        createRuntime: (label, candidateSeed, creationOptions) =>
-          vaultOperations.createRuntime(label, candidateSeed, creationOptions),
       });
       if (opening.action === 'create-runtime') {
         entityId = opening.runtime.signers[0]?.entityId || entityId;
