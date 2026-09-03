@@ -198,6 +198,7 @@ describe('React wallet payments', () => {
     });
     const sends: Array<Readonly<{ commandId?: string; commandSequence?: number }>> = [];
     const adapter = {
+      mode: 'remote',
       runtimeId: 'runtime-payment-test',
       serverFingerprint: `0x${'ab'.repeat(32)}`,
       nextCommandSequence: 7,
@@ -217,6 +218,28 @@ describe('React wallet payments', () => {
       { commandId: command.commandId, commandSequence: 7 },
       { commandId: command.commandId, commandSequence: 7 },
     ]);
+  });
+
+  test('queues embedded Runtime commands without inventing remote command identity', async () => {
+    const input = { runtimeTxs: [], entityInputs: [], jInputs: [] } as const;
+    const sends: unknown[] = [];
+    const adapter = {
+      mode: 'embedded',
+      runtimeId: 'embedded-payment-test',
+      serverFingerprint: null,
+      nextCommandSequence: null,
+      send: async (_input: unknown, options?: unknown) => {
+        sends.push(options);
+        return { height: 4 };
+      },
+    } as unknown as RuntimeAdapter;
+
+    const command = await prepareWalletPaymentCommand(adapter, input);
+    expect(command).toMatchObject({
+      mode: 'embedded', commandSequence: null, serverFingerprint: null, durable: false,
+    });
+    expect(await executeWalletPaymentCommand(adapter, command)).toEqual({ height: 4 });
+    expect(sends).toEqual([undefined]);
   });
 
   test('bounds reserve, collateral, and lending operations before command submission', () => {

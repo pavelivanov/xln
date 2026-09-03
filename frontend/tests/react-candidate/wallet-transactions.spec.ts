@@ -46,7 +46,7 @@ test('wallet payments quote committed capacity and build recipient-owned tools',
   await expect(page.getByRole('heading', { name: 'Account operations' })).toBeVisible();
   await page.getByRole('radio', { name: /Lend to hub/ }).click();
   await expect(page.getByLabel('Hub Account').locator('option:checked')).toHaveText('Browser Hub');
-  await expect(page.getByText(/External-wallet moves are excluded/)).toBeVisible();
+  await expect(page.getByRole('button', { name: 'External', exact: true })).toBeVisible();
   await expectPageContained(page);
   await screenshotEvidence(page, testInfo, 'wallet-payment-operations');
   expectNoBrowserErrors(errors);

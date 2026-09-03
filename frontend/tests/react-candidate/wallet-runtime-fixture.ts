@@ -34,6 +34,7 @@ const adapterServer = await import('../../../core/api/runtime-adapter/server');
 const auth = await import('../../../core/api/runtime-adapter/security/auth');
 const rpc = await import('../../../core/api/server/network/rpc-ws');
 const loopEnvironment = await import('../../../core/runtime/loop/loop-environment');
+const relay = await import('../../../core/network/relay/standalone-server');
 const scenario = await import('../../../core/scenarios/harness/boot');
 
 await rm(databaseRoot, { recursive: true, force: true });
@@ -223,6 +224,15 @@ const token = auth.deriveRuntimeAdapterCapabilityToken(
   { audience: runtimeId, keyId: 'wallet-address-e2e', tokenId: 'wallet-address-e2e' },
 );
 const recoveryFixture = await createWalletRecoveryFixture(port);
+const gatewayPort = Math.floor(Number(process.env['XLN_REACT_GATEWAY_PORT'] || 19080));
+const relayPort = port + 3;
+if (relayPort > 65_535) throw new Error('WALLET_RUNTIME_FIXTURE_RELAY_PORT_INVALID');
+const relayServer = relay.startStandaloneRelayServer({
+  host: '127.0.0.1',
+  port: relayPort,
+  serverId: `0x${'99'.repeat(20)}`,
+  audience: `ws://localhost:${gatewayPort}/relay`,
+});
 const handleRpc = rpc.createServerRpcMessageHandler({
   validateRuntimeInputAdmission: runtime.validateRuntimeInputAdmission,
 });
@@ -250,6 +260,7 @@ server = Bun.serve<FixtureSocketData>({
           runtimeHeight: recoveryFixture.runtimeHeight,
           towerUrl: recoveryFixture.towerUrl,
           rpcUrl: recoveryFixture.rpcUrl,
+          external: recoveryFixture.external,
           brainVault: recoveryFixture.brainVault,
         },
       }, { headers: { 'access-control-allow-origin': '*' } });
@@ -282,6 +293,7 @@ const stop = async (): Promise<void> => {
   if (stopping) return;
   stopping = true;
   await server.stop(true);
+  relayServer.close();
   await runtime.stopP2PAndWait(env, 1_000);
   await runtime.stopRuntimeLoopAndWait(env).catch(() => false);
   await runtime.closeRuntimeDb(env);

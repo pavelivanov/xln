@@ -299,6 +299,12 @@ describe('React development gateway', () => {
     });
     process.env['XLN_REACT_WALLET_ADDRESS_FIXTURE'] = '1';
     try {
+      expect(createDevelopmentProcessSpecs(['wallet']).at(-2)).toEqual({
+        label: 'same-origin-gateway',
+        argv: ['bun', 'scripts/run-dev-gateway.ts'],
+        gatewayAware: false,
+        environment: { XLN_REACT_EDGE_TARGET: 'http://127.0.0.1:19095' },
+      });
       expect(createDevelopmentProcessSpecs(['wallet']).at(-1)).toEqual({
         label: 'wallet-address-runtime-fixture',
         argv: ['bun', 'tests/react-candidate/wallet-runtime-fixture.ts'],
