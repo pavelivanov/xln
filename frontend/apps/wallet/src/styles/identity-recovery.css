@@ -10,6 +10,22 @@
   margin-top: 2rem;
 }
 
+.identity-review-actions a.identity-primary-action {
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+}
+
+.identity-opening-error {
+  margin: 1.5rem 0 0;
+  padding: 1rem 0;
+  color: #f0b0aa;
+  font-size: 0.78rem;
+  line-height: 1.6;
+  border-top: 1px solid #663934;
+  border-bottom: 1px solid #452a27;
+}
+
 .identity-verified-note {
   display: grid;
   gap: 0.45rem;

@@ -14,6 +14,7 @@ import type {
 } from '@xln/core/api/public/runtime-module';
 import { safeStringify } from '@xln/core/protocol/serialization';
 import { suspendWalletRuntimeActivity } from '../../../../packages/browser/src/wallet-runtime-suspension';
+import { WALLET_VAULT_STORAGE_KEY } from '../../../../packages/browser/src/wallet-vault-storage';
 
 import {
   activeRuntimeId,
@@ -214,8 +215,6 @@ export async function restoreRuntimeEnvFromRecoveryCandidate(
 }
 
 // Storage key
-const VAULT_STORAGE_KEY = 'xln-vaults';
-
 export const DEFAULT_VAULT_UNLOCK_DURATION_MS: VaultUnlockDurationMs = 600_000;
 
 const vaultLockTimers = new Map<string, ReturnType<typeof setTimeout>>();
@@ -277,7 +276,7 @@ const runtimeRecoveryUploadMeta = new Map<
 const persistRuntimeMetadataSnapshot = (): void => {
   try {
     if (typeof localStorage === 'undefined') return;
-    localStorage.setItem(VAULT_STORAGE_KEY, serializeVaultState(get(runtimesState)));
+    localStorage.setItem(WALLET_VAULT_STORAGE_KEY, serializeVaultState(get(runtimesState)));
   } catch (error) {
     errorLog.log('Runtime metadata snapshot persistence failed', 'Runtime Recovery', error);
   }
@@ -285,12 +284,12 @@ const persistRuntimeMetadataSnapshot = (): void => {
 
 const persistVaultStateOrThrow = (): void => {
   if (typeof localStorage === 'undefined') return;
-  localStorage.setItem(VAULT_STORAGE_KEY, serializeVaultState(get(runtimesState)));
+  localStorage.setItem(WALLET_VAULT_STORAGE_KEY, serializeVaultState(get(runtimesState)));
 };
 
 const readPersistedVaultProtection = (runtimeId: string): ProtectedVaultSecrets | undefined => {
   if (typeof localStorage === 'undefined') return undefined;
-  const serialized = localStorage.getItem(VAULT_STORAGE_KEY);
+  const serialized = localStorage.getItem(WALLET_VAULT_STORAGE_KEY);
   if (!serialized) return undefined;
   const state = decodePersistedVaultState(parseJsonUnknown(serialized, 'VAULT_STORAGE_JSON_INVALID'));
   return state.runtimes[runtimeId]?.protectedSecrets;
@@ -1799,7 +1798,7 @@ export const vaultOperations = {
     try {
       if (typeof localStorage === 'undefined') return;
 
-      const saved = localStorage.getItem(VAULT_STORAGE_KEY);
+      const saved = localStorage.getItem(WALLET_VAULT_STORAGE_KEY);
       if (saved) {
         runtimesState.set(decodePersistedVaultState(parseJsonUnknown(saved, 'VAULT_STORAGE_JSON_INVALID')));
       }
@@ -2797,7 +2796,7 @@ export const vaultOperations = {
     runtimesState.set(defaultState);
     vaultStorageLoaded.set(true);
     if (typeof localStorage !== 'undefined') {
-      localStorage.removeItem(VAULT_STORAGE_KEY);
+      localStorage.removeItem(WALLET_VAULT_STORAGE_KEY);
     }
 
     runtimes.set(new Map());

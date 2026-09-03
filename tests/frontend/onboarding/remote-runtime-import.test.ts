@@ -626,6 +626,10 @@ describe('remote runtime import manager utilities', () => {
   test('app boot hydrates remote runtime handles from the import source through validation', () => {
     const xlnStore = readFileSync('frontend/src/lib/stores/xlnStore.ts', 'utf8');
     const runtimeCreation = readFileSync('frontend/src/lib/components/Views/RuntimeCreation.svelte', 'utf8');
+    const runtimeOpeningAdapter = readFileSync(
+      'frontend/src/lib/stores/vault/walletRuntimeOpeningAdapter.ts',
+      'utf8',
+    );
     const runtimeStore = readFileSync('frontend/src/lib/stores/runtimeStore.ts', 'utf8');
     const vaultStore = readFileSync('frontend/src/lib/stores/vault/vaultStore.ts', 'utf8');
     const appLayout = readFileSync('frontend/src/routes/app/+layout.svelte', 'utf8');
@@ -638,8 +642,9 @@ describe('remote runtime import manager utilities', () => {
     expect(xlnStore).toContain('runtimeOperations.hydrateRemoteRuntimeImportSource(importSource.toString(), { optional: true })');
     expect(runtimeCreation).not.toContain('live-runtime-section');
     expect(runtimeCreation).not.toContain('hydrateRemoteRuntimeImportSource');
-    expect(runtimeCreation).toContain('discover: ({ seed, runtimeId }) => discoverRuntimeRecoveryCandidates(seed, {');
-    expect(runtimeCreation).toContain('peers: buildRemoteRuntimeRecoveryPeerSources({ runtimeId })');
+    expect(runtimeCreation).toContain('discover: ({ seed, runtimeId }) => discoverCanonicalWalletRuntimeRecovery(seed, runtimeId)');
+    expect(runtimeOpeningAdapter).toContain('await discoverRuntimeRecoveryCandidates(seed, {');
+    expect(runtimeOpeningAdapter).toContain('peers: buildRemoteRuntimeRecoveryPeerSources({ runtimeId: expectedRuntimeId })');
     expect(runtimeCreation).toContain('const outcome = await walletRecoveryDiscovery.run({');
     expect(runtimeCreation).toContain('recoveryCheckedPeers = discovery.checkedPeers');
     expect(runtimeCreation).toContain("import { errorLog } from '$lib/stores/errorLogStore';");
