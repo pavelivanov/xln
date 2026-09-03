@@ -1,6 +1,6 @@
 # React frontend migration work plan
 
-**Status:** `IN PROGRESS — WP0–WP6 COMPLETE; WP7 HEALTH + QA + HLT + RUNS + SCENARIOS + AI IMPLEMENTED, WORKSPACE STATE LAYER SVELTE-FREE, PANEL PORTS THROUGH ARCHITECT, REACT DOCKVIEW WRAPPER READY, GRAPH3D LIFECYCLE + RENDERER/PRIMITIVES/EFFECTS/ENTITY/ACCOUNT VISUAL FACTORY/INTERACTION/SELECTION/CAMERA/POINTER+XR DRAG + HOVER MECHANICS + VIEW/SCENE INPUT MODELS EXTRACTED, ENTITY WORKSPACE REACT SHELL/TABS + LIVE RUNTIME CONTEXT + READ-ONLY OWNERSHIP/ACCOUNTS/PROFILE READY; WP8 COMPLETE; WP9 HAS 19 COVERED / 1 PARTIAL BROWSER ROUTE AND 3 EXACT GAPS, RECOVERY-SERVICE ONBOARDING NEXT`
+**Status:** `IN PROGRESS — WP0–WP6 COMPLETE; WP7 HEALTH + QA + HLT + RUNS + SCENARIOS + AI IMPLEMENTED, WORKSPACE STATE LAYER SVELTE-FREE, PANEL PORTS THROUGH ARCHITECT, REACT DOCKVIEW WRAPPER READY, GRAPH3D LIFECYCLE + RENDERER/PRIMITIVES/EFFECTS/ENTITY/ACCOUNT VISUAL FACTORY/INTERACTION/SELECTION/CAMERA/POINTER+XR DRAG + HOVER MECHANICS + VIEW/SCENE INPUT MODELS EXTRACTED, ENTITY WORKSPACE REACT SHELL/TABS + LIVE RUNTIME CONTEXT + READ-ONLY OWNERSHIP/ACCOUNTS/PROFILE READY; WP8 COMPLETE; WP9 HAS 19 COVERED / 1 PARTIAL BROWSER ROUTE AND 3 EXACT GAPS, PUSH-WAKE CONTROLS NEXT`
 
 This is the executable work plan for splitting the Svelte frontend into React
 applications. It is intentionally lightweight and should be updated as live
@@ -2530,6 +2530,37 @@ slice changes no contract source or artifact. The recovery capability moves
 from unstarted to in progress; recovery-service enrollment and push wake are
 the next slice while the typed inventory remains at three exact gaps.
 
+React identity completion and Wallet Settings now provide canonical recovery-
+service onboarding. React owns only public mode and service drafts; a dedicated
+migration bridge resolves the official tower, validates every URL and role,
+binds preview/save calls to the exact active Runtime id, checks the live vault
+authority lease, and persists through the existing
+`vaultOperations.updateRuntimeRecovery` path. The shared recovery utility now
+owns mode inference for both frameworks, preventing Svelte/React drift without
+changing the persisted recovery schema. The real signed-backup browser path
+restores a Runtime, rejects an invalid service URL, selects backup-only mode,
+adds a last-resort manual service, saves it, and proves the exact normalized
+configuration reached canonical vault storage. Focused recovery, shell, and
+inventory evidence passes 45 / 45 with 748 expectations. The targeted browser
+flow passes 3 / 3 in 19.3 seconds and the complete wallet matrix passes 36 / 36
+in 1.1 minutes across 390×844, 1366×900, and 1920×1080; every saved-state
+screenshot was inspected with no clipping or horizontal overflow. The
+authoritative 214-file frontend suite reports 1,282 passes, 17 known or
+environmental failures, one error, and 7,337 expectations across 1,299 tests:
+the prior 14-failure baseline remains, while two development-gateway tests and
+the QA cache test independently reproduce `EADDRINUSE` because this host cannot
+allocate their ephemeral test ports. No new recovery-service test fails. The
+wallet-local gate scans 667 files with zero unsafe-type findings, the production
+wallet build transforms 1,814 modules in 2.13 seconds, and the canonical
+frontend gate has zero errors/warnings while transforming 4,677 SSR plus 6,428
+client modules. Root evidence again passes 26 / 26 BrainVault/runtime tests with
+100,156 expectations before the documented 60-second Hardhat compiler-cache
+mutex; downstream soundcheck passes all ten gates before the documented missing
+local `cargo`, and file-size checking reaches only the existing
+`core/qa/report.ts` 3001/3000 violation. This slice changes no Runtime protocol,
+contract, persistence schema, or artifact. Push-wake controls are next; the
+typed inventory remains at three exact gaps.
+
 **Current checkpoint:** all retained routes have React application owners; two
 implementations, one browser route, and three typed gaps remain partial before
 cutover readiness.
@@ -2575,14 +2606,14 @@ any mismatch. Never compile on production.
 
 ## Current next actions
 
-1. Add React backup-file recovery to the existing candidate-selection bridge,
-   preserving the same exact-once material and canonical vault boundaries.
+1. Add React push-wake registration and disable controls over the existing
+   recovery-service configuration and canonical signed request boundary.
 2. Owner to assign: two `network-timeline-source` failures
    (`NETWORK_TRAIL_FRAME_INVALID:1` in the JSON-safe-frame and trail
    round-trip tests) appeared with the in-flight `core/scenarios` runner
    changes in the working tree and are collateral from that stream, not the
    frontend migration.
-3. Close the remaining recovery/tower/push and external-provider gaps as
+3. Close the remaining push-wake and external-provider gaps as
    separate slices.
 4. Keep the sized Entity workspace expansion behind its explicit owner decision
    while `/embed` remains canonical.

@@ -1,6 +1,8 @@
 import {
   resolveDefaultRecoveryTowerUrls,
   type RecoveryTowerConfig,
+  type RuntimeRecoveryConfig,
+  type RecoveryTowerSetupMode,
 } from '$lib/stores/vault/vaultStore';
 
 export type RecoveryServiceMode = 'blind_backup' | 'delayed_last_resort';
@@ -70,4 +72,19 @@ export function getManualRecoveryTowers(
   officialUrl: string | null,
 ): RecoveryTowerConfig[] {
   return normalizeRecoveryDraft(towers).filter((tower) => !isOfficialRecoveryTower(tower, officialUrl));
+}
+
+export function inferRecoveryTowerSetupMode(
+  recovery: RuntimeRecoveryConfig | null | undefined,
+  officialUrl: string | null,
+): RecoveryTowerSetupMode {
+  const towers = normalizeRecoveryDraft(recovery?.towers);
+  const officialTower = towers.find((tower) => isOfficialRecoveryTower(tower, officialUrl));
+  if (officialTower) {
+    return normalizeTowerMode(officialTower.towerMode) === 'delayed_last_resort'
+      ? 'official'
+      : 'backup_only';
+  }
+  if (!officialUrl && towers.length === 0) return 'local_only';
+  return towers.length === 0 ? 'official' : 'local_only';
 }

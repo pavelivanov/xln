@@ -3,6 +3,7 @@ import { DEMO_ACCOUNTS } from '../../../packages/ui/src/demo-accounts';
 import type { WalletCanonicalRecoveryDiscoveryView } from '../../../packages/browser/src/wallet-runtime-opening';
 import type { WalletBrainVaultDerivationProgress, WalletBrainVaultPreparedView } from '../../../packages/browser/src/wallet-brainvault-opening';
 import { selectWalletIdentityMode, type WalletIdentityMode } from '../../../packages/browser/src/wallet-identity-entry';
+import type { WalletRuntimeSummary } from './app-shell-model';
 import {
   beginWalletMnemonicRecoveryRehearsal,
   createWalletIdentityDraft,
@@ -29,7 +30,9 @@ import {
   restoreWalletRuntimeFromCanonicalRecovery,
 } from './wallet-embedded-runtime';
 import './styles/identity-onboarding.css';
-export function IdentityOnboarding() {
+export function IdentityOnboarding({
+  runtimeState,
+}: Readonly<{ runtimeState: WalletRuntimeSummary['state'] }>) {
   const [draft, setDraft] = useState<WalletIdentityDraft>(() => (
     createWalletIdentityDraft(window.location.search, DEMO_ACCOUNTS)
   ));
@@ -261,6 +264,7 @@ export function IdentityOnboarding() {
       opening={openingRuntime}
       openingError={openingError}
       recoveryDiscovery={recoveryDiscovery}
+      runtimeState={runtimeState}
       selectedRecoveryCandidateId={selectedRecoveryCandidateId}
       onImportRecoveryFile={importRecoveryFile}
       onOpen={() => { void openVerifiedIdentity(); }}

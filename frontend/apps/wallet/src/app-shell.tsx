@@ -165,12 +165,12 @@ export function WalletAppShell() {
             <WalletRuntimeBoundary runtime={runtime} />
           ) : (
             <>
-              {view === 'identity' ? <IdentityOnboarding /> : null}
+              {view === 'identity' ? <IdentityOnboarding runtimeState={runtime.state} /> : null}
               {view === 'portfolio' ? <WalletPortfolio /> : null}
               {view === 'health' ? <WalletFinancialHealth /> : null}
               {view === 'payments' ? <WalletPayments /> : null}
               {view === 'markets' ? <WalletMarkets /> : null}
-              {view === 'settings' ? <WalletSettings onAuthSchemeChange={setAuthScheme} /> : null}
+              {view === 'settings' ? <WalletSettings onAuthSchemeChange={setAuthScheme} runtimeState={runtime.state} /> : null}
               {view === 'diagnostics' ? <WalletDiagnostics runtime={runtime} /> : null}
               {view === 'scenario-preview' ? <Suspense fallback={<p>Loading scenario preview…</p>}><WalletScenarioPreview /></Suspense> : null}
               {view === 'overview' ? <WalletOverview runtime={runtime} /> : null}
