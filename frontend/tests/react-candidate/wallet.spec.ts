@@ -6,6 +6,7 @@ import {
   RUNTIME_ADAPTER_MODE_KEY,
   RUNTIME_ADAPTER_WS_KEY,
 } from '../../packages/browser/src/runtime-adapter-session';
+import { WALLET_VAULT_STORAGE_KEY } from '../../packages/browser/src/wallet-vault-storage';
 
 import {
   expectNoBrowserErrors,
@@ -187,7 +188,7 @@ test('wallet derives and opens a canonical Brain Vault outside React state', asy
   expectOnlyUnavailableFixtureRelayErrors(errors, `ws://localhost:${new URL(page.url()).port}/relay`);
 });
 
-test('wallet restores the selected canonical watchtower backup', async ({ page }, testInfo) => {
+test('wallet restores a canonical backup and enrolls recovery services', async ({ page }, testInfo) => {
   testInfo.setTimeout(120_000);
   const errors = observeBrowserErrors(page);
   const fixture = await readWalletRuntimeFixture(page);
@@ -243,6 +244,34 @@ test('wallet restores the selected canonical watchtower backup', async ({ page }
   await expect(page.getByText(`Active Runtime ${fixture.recovery.runtimeId}.`, { exact: false })).toBeVisible();
   await expectPageContained(page);
   await screenshotEvidence(page, testInfo, 'wallet-canonical-recovery-opened');
+
+  await expect(page.getByRole('heading', { name: 'Recovery services' })).toBeVisible();
+  const officialTower = page.getByText('Official xln tower').locator('..');
+  await expect(officialTower).toContainText(fixture.recovery.towerUrl);
+  await page.getByRole('radio', { name: /Backup only/ }).click();
+  await expect(page.getByRole('radio', { name: /Backup only/ })).toHaveAttribute('aria-checked', 'true');
+
+  const serviceUrl = page.getByLabel('Service URL');
+  await serviceUrl.fill('ftp://invalid.example.com');
+  await page.getByRole('button', { name: 'Add service' }).click();
+  await expect(page.getByRole('alert')).toHaveText('Service URL must start with http:// or https://');
+  const manualUrl = `${fixture.recovery.towerUrl}/manual`;
+  await serviceUrl.fill(`${manualUrl}/`);
+  await page.getByLabel('Manual recovery service role').selectOption('delayed_last_resort');
+  await page.getByRole('button', { name: 'Add service' }).click();
+  const manualService = page.getByText('Manual service', { exact: true }).locator('..');
+  await expect(manualService).toContainText(manualUrl);
+  await expect(page.getByLabel(`Role for ${manualUrl}`)).toHaveValue('delayed_last_resort');
+  await page.getByRole('button', { name: 'Save recovery services' }).click();
+  await expect(page.getByText('Recovery services saved to the active Runtime.')).toBeVisible();
+  const persistedRecovery = await page.evaluate((storageKey) => (
+    localStorage.getItem(storageKey)
+  ), WALLET_VAULT_STORAGE_KEY);
+  expect(persistedRecovery).toContain(manualUrl);
+  expect(persistedRecovery).toContain('blind_backup');
+  expect(persistedRecovery).toContain('delayed_last_resort');
+  await expectPageContained(page);
+  await screenshotEvidence(page, testInfo, 'wallet-recovery-services-saved');
   expectOnlyUnavailableFixtureRelayErrors(
     errors,
     `ws://localhost:${new URL(page.url()).port}/relay`,

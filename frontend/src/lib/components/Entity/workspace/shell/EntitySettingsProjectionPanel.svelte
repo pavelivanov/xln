@@ -23,6 +23,7 @@
   } from '$lib/stores/vault/vaultStore';
   import {
     getManualRecoveryTowers,
+    inferRecoveryTowerSetupMode,
     isOfficialRecoveryTower,
     normalizeRecoveryDraft,
     normalizeRecoveryUrl,
@@ -204,18 +205,7 @@
   $: recoveryTowerStatusByUrl = new Map(recoveryTowerStatuses.map((status) => [status.url, status]));
 
   function inferRecoveryMode(): RecoveryTowerSetupMode {
-    const runtime = $activeRuntime;
-    const officialUrl = resolveOfficialRecoveryTowerUrl();
-    const towers = normalizeRecoveryDraft(runtime?.recovery?.towers);
-    const officialTower = towers.find((tower) => isOfficialRecoveryTower(tower, officialUrl));
-    if (officialTower) {
-      return normalizeTowerMode(officialTower.towerMode) === 'delayed_last_resort'
-        ? 'official'
-        : 'backup_only';
-    }
-    if (!officialUrl && towers.length === 0) return 'local_only';
-    if (towers.length === 0) return 'official';
-    return 'local_only';
+    return inferRecoveryTowerSetupMode($activeRuntime?.recovery, resolveOfficialRecoveryTowerUrl());
   }
 
   function syncRecoveryDraftFromRuntime(force = false): void {

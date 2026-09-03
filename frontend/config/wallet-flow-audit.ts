@@ -184,6 +184,23 @@ export const WALLET_FLOW_AUDIT = [
     ],
   },
   {
+    id: 'recovery-service-onboarding',
+    pathname: '/app',
+    search: '?settings=1',
+    page: 'app',
+    view: 'settings',
+    sources: [
+      'frontend/apps/wallet/src/wallet-recovery-services.tsx',
+      'frontend/apps/wallet/src/wallet-recovery-services-source.ts',
+      'frontend/bridges/wallet-canonical-recovery-services.ts',
+      'frontend/packages/browser/src/wallet-recovery-services.ts',
+    ],
+    tests: [
+      'tests/frontend/onboarding/frontend-wallet-recovery-services.test.ts',
+      'frontend/tests/react-candidate/wallet.spec.ts',
+    ],
+  },
+  {
     id: 'preferences',
     pathname: '/app',
     search: '?settings=1',
@@ -279,14 +296,14 @@ export const WALLET_FLOW_DEFERRALS = [
     destination: 'WP9',
     evidenceSource: 'frontend/apps/wallet/src/identity-recovery.tsx',
     evidenceMarker: 'No wallet has been created and no secret has left this form.',
-    reason: 'Canonical identity creation is live; post-creation profile, jurisdiction, hub-join, and recovery-service onboarding remain in WP9.',
+    reason: 'Canonical identity creation and recovery-service onboarding are live; post-creation profile, jurisdiction, and hub-join remain in WP9.',
   },
   {
     id: 'full-recovery',
     destination: 'WP9',
     evidenceSource: 'frontend/apps/wallet/src/identity-recovery.tsx',
     evidenceMarker: 'Selecting a backup never authorizes fresh creation.',
-    reason: 'Tower, peer, and encrypted backup-file restore are implemented; recovery-service enrollment and push wake remain in WP9.',
+    reason: 'Tower, peer, encrypted backup-file restore, and recovery-service enrollment are implemented; push wake remains in WP9.',
   },
   {
     id: 'external-wallet-provider',
