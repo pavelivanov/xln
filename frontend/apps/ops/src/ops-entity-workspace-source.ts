@@ -187,6 +187,7 @@ export class OpsEntityWorkspaceSource {
       adapter.runtimeId,
       {
         accounts: this.snapshot.accounts,
+        consensus: this.snapshot.consensus,
         context: this.snapshot.context,
         ownership: this.snapshot.ownership,
         profile: this.snapshot.profile,
