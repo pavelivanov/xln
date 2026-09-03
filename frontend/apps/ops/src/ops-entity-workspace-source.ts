@@ -218,6 +218,10 @@ export class OpsEntityWorkspaceSource {
     this.activityController.select(this.snapshot.activity, beforeHeight);
   };
 
+  readonly selectNewerActivityPage = (): void => {
+    this.activityController.selectNewer(this.snapshot.activity);
+  };
+
   readonly selectActivityKind = (kind: EntityWorkspaceActivityKind): void => {
     this.activityController.selectKind(this.snapshot.activity, kind);
   };

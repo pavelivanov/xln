@@ -169,6 +169,7 @@ type EntityWorkspaceStageWithOwnershipProps = EntityWorkspaceStageProps & Readon
   onSelectTheme: (theme: ThemeName) => void;
   onSelectActivityBeforeHeight: (beforeHeight: number | null) => void;
   onSelectActivityKind: (kind: EntityWorkspaceActivityKind) => void;
+  onSelectNewerActivityPage: () => void;
   onToggleActivityType: (type: EntityWorkspaceActivityFilterType) => void;
   onToggleTimeMachine: (show: boolean) => void;
   onToggleXlnGuide: (show: boolean) => void;
@@ -192,13 +193,13 @@ const readFooterLabel = (
   return 'Unavailable — no remote Runtime selected';
 };
 
-function EntityWorkspaceStage({ activity, accounts, activeTab, consensus, context, displayIssue, displayPreferences, hubPolicy, onRefresh, onSelectAccountsPage, onSelectActivityBeforeHeight, onSelectActivityKind, onSelectTheme, onToggleActivityType, onToggleTimeMachine, onToggleXlnGuide, ownership, profile, readState, reserves, settingsSubview, timeMachine }: EntityWorkspaceStageWithOwnershipProps) {
+function EntityWorkspaceStage({ activity, accounts, activeTab, consensus, context, displayIssue, displayPreferences, hubPolicy, onRefresh, onSelectAccountsPage, onSelectActivityBeforeHeight, onSelectActivityKind, onSelectNewerActivityPage, onSelectTheme, onToggleActivityType, onToggleTimeMachine, onToggleXlnGuide, ownership, profile, readState, reserves, settingsSubview, timeMachine }: EntityWorkspaceStageWithOwnershipProps) {
   const copy = SECTION_COPY[activeTab];
   const showsActivity = readState.status === 'ready' && context.status === 'selected' && activeTab === 'accounts';
   return (
     <section className="entity-workspace-stage" data-testid="entity-workspace-stage">
       {showsActivity
-        ? <EntityWorkspaceActivityPanel activity={activity} onSelectBeforeHeight={onSelectActivityBeforeHeight} onSelectKind={onSelectActivityKind} onToggleType={onToggleActivityType} />
+        ? <EntityWorkspaceActivityPanel activity={activity} onSelectBeforeHeight={onSelectActivityBeforeHeight} onSelectKind={onSelectActivityKind} onSelectNewerPage={onSelectNewerActivityPage} onToggleType={onToggleActivityType} />
         : <header>
             <span>{copy.eyebrow}</span>
             <h2>{copy.title}</h2>
@@ -243,6 +244,7 @@ type EntityWorkspaceShellProps = Readonly<{
   onRefresh: () => void;
   onSelectActivityBeforeHeight: (beforeHeight: number | null) => void;
   onSelectActivityKind: (kind: EntityWorkspaceActivityKind) => void;
+  onSelectNewerActivityPage: () => void;
   onToggleActivityType: (type: EntityWorkspaceActivityFilterType) => void;
   onSelectTheme: (theme: ThemeName) => void;
   onToggleTimeMachine: (show: boolean) => void;
@@ -267,7 +269,7 @@ const readModeLabel = (
   return 'Read boundary';
 };
 
-export function EntityWorkspaceShell({ activity, accounts, activeTab, consensus, context, displayIssue, displayPreferences, hubPolicy, onRefresh, onSelectAccountsPage, onSelectActivityBeforeHeight, onSelectActivityKind, onSelectTheme, onToggleActivityType, onToggleTimeMachine, onToggleXlnGuide, ownership, profile, readState, reserves, settingsSubview, timeMachine }: EntityWorkspaceShellProps) {
+export function EntityWorkspaceShell({ activity, accounts, activeTab, consensus, context, displayIssue, displayPreferences, hubPolicy, onRefresh, onSelectAccountsPage, onSelectActivityBeforeHeight, onSelectActivityKind, onSelectNewerActivityPage, onSelectTheme, onToggleActivityType, onToggleTimeMachine, onToggleXlnGuide, ownership, profile, readState, reserves, settingsSubview, timeMachine }: EntityWorkspaceShellProps) {
   return (
     <section
       className="entity-workspace"
@@ -314,6 +316,7 @@ export function EntityWorkspaceShell({ activity, accounts, activeTab, consensus,
         onSelectAccountsPage={onSelectAccountsPage}
         onSelectActivityBeforeHeight={onSelectActivityBeforeHeight}
         onSelectActivityKind={onSelectActivityKind}
+        onSelectNewerActivityPage={onSelectNewerActivityPage}
         onSelectTheme={onSelectTheme}
         onToggleActivityType={onToggleActivityType}
         onToggleTimeMachine={onToggleTimeMachine}

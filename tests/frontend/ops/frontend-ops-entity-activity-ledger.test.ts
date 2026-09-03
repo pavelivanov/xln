@@ -205,6 +205,44 @@ describe('React Entity persisted activity ledger', () => {
     expect(controller.readTypes()).toEqual([]);
   });
 
+  test('walks back through only adapter-certified page cursors', () => {
+    let historyActive = false;
+    let historyRefreshes = 0;
+    let liveRefreshes = 0;
+    const controller = new OpsEntityWorkspaceActivityController({
+      isHistoryActive: () => historyActive,
+      refreshHistory: () => { historyRefreshes += 1; },
+      refreshLive: () => { liveRefreshes += 1; },
+    });
+    const latest = projectEntityWorkspaceActivity({ context, page: page() });
+    const middle = projectEntityWorkspaceActivity({
+      beforeHeight: 41, context, page: page({
+        fromHeight: 30, toHeight: 41, scannedFrames: 12, nextBeforeHeight: 29,
+        filters: { entityId: '0xaaaa', kind: 'all', beforeHeight: 41, limit: 8, scanLimit: 160 },
+        events: [event({ id: 'runtime-a:41:0', height: 41 })], returned: 1,
+      }),
+    });
+    const oldest = projectEntityWorkspaceActivity({
+      beforeHeight: 29, context, page: page({
+        fromHeight: 20, toHeight: 29, scannedFrames: 10, nextBeforeHeight: 19,
+        filters: { entityId: '0xaaaa', kind: 'all', beforeHeight: 29, limit: 8, scanLimit: 160 },
+        events: [event({ id: 'runtime-a:29:0', height: 29 })], returned: 1,
+      }),
+    });
+
+    controller.select(latest, 41);
+    controller.select(middle, 29);
+    expect(controller.readBeforeHeight()).toBe(29);
+    historyActive = true;
+    controller.selectNewer(oldest);
+    expect(controller.readBeforeHeight()).toBe(41);
+    controller.selectNewer(middle);
+    expect(controller.readBeforeHeight()).toBeNull();
+    controller.selectNewer(latest);
+    expect({ beforeHeight: controller.readBeforeHeight(), historyRefreshes, liveRefreshes })
+      .toEqual({ beforeHeight: null, historyRefreshes: 2, liveRefreshes: 2 });
+  });
+
   test('keeps the visible ledger read-only and attached to live plus historical reads', async () => {
     const [panel, source, history] = await Promise.all([
       Bun.file('frontend/packages/ui/src/entity-workspace-activity-panel.tsx').text(),
@@ -215,10 +253,12 @@ describe('React Entity persisted activity ledger', () => {
     expect(panel).toContain('data-testid="entity-activity-ledger"');
     expect(panel).toContain('data-testid="entity-activity-earlier"');
     expect(panel).toContain('data-testid="entity-activity-latest"');
+    expect(panel).toContain('data-testid="entity-activity-newer"');
     expect(panel).toContain('data-testid={`entity-activity-kind-${kind}`}');
     expect(panel).toContain('data-testid={`entity-activity-type-${type}`}');
     expect(source).toContain('client.readActivity(activityQuery)');
     expect(source).toContain('readonly selectActivityPage');
+    expect(source).toContain('readonly selectNewerActivityPage');
     expect(source).toContain('readonly selectActivityKind');
     expect(source).toContain('readonly toggleActivityType');
     expect(history).toContain('input.client.readActivity(activityQuery)');

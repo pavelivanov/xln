@@ -325,6 +325,13 @@ test('React Entity workspace reads selected context from a real H1 Runtime', { t
       await earlierActivity.click();
       await expect.poll(async () => Number((await activityThrough.innerText()).replace(/^h/, '')))
         .toBeLessThan(latestActivityHeight);
+      const newerActivity = candidatePage.getByTestId('entity-activity-newer');
+      await expect(newerActivity).toBeEnabled();
+      await newerActivity.click();
+      await expect(activityThrough).toHaveText(`h${latestActivityHeight}`);
+      await earlierActivity.click();
+      await expect.poll(async () => Number((await activityThrough.innerText()).replace(/^h/, '')))
+        .toBeLessThan(latestActivityHeight);
       const latestActivity = candidatePage.getByTestId('entity-activity-latest');
       await expect(latestActivity).toBeEnabled();
       await latestActivity.click();

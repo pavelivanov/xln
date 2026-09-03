@@ -14,6 +14,8 @@ type ActivityControllerDependencies = Readonly<{
 
 export class OpsEntityWorkspaceActivityController {
   private beforeHeight: number | null = null;
+  private cursorIndex = 0;
+  private cursorStack: readonly (number | null)[] = [null];
   private kind: EntityWorkspaceActivityKind = 'all';
   private types: readonly EntityWorkspaceActivityFilterType[] = [];
 
@@ -23,14 +25,25 @@ export class OpsEntityWorkspaceActivityController {
   readonly readKind = (): EntityWorkspaceActivityKind => this.kind;
   readonly readTypes = (): readonly EntityWorkspaceActivityFilterType[] => this.types;
 
-  readonly reset = (): void => {
+  private readonly resetCursor = (): void => {
     this.beforeHeight = null;
+    this.cursorIndex = 0;
+    this.cursorStack = [null];
+  };
+
+  private readonly refresh = (): void => {
+    if (this.dependencies.isHistoryActive()) this.dependencies.refreshHistory();
+    else this.dependencies.refreshLive();
+  };
+
+  readonly reset = (): void => {
+    this.resetCursor();
     this.kind = 'all';
     this.types = [];
   };
 
   readonly resetPage = (): void => {
-    this.beforeHeight = null;
+    this.resetCursor();
   };
 
   readonly select = (
@@ -44,9 +57,29 @@ export class OpsEntityWorkspaceActivityController {
       throw new Error(`OPS_ENTITY_ACTIVITY_PAGE_INVALID:${String(beforeHeight)}`);
     }
     if (beforeHeight === null && activity.isLatestPage) return;
+    if (beforeHeight === null) {
+      this.resetCursor();
+      this.refresh();
+      return;
+    }
+    if (beforeHeight === this.beforeHeight) return;
+    const nextIndex = this.cursorIndex + 1;
+    if (this.cursorStack[nextIndex] !== beforeHeight) {
+      this.cursorStack = [...this.cursorStack.slice(0, nextIndex), beforeHeight];
+    }
+    this.cursorIndex = nextIndex;
     this.beforeHeight = beforeHeight;
-    if (this.dependencies.isHistoryActive()) this.dependencies.refreshHistory();
-    else this.dependencies.refreshLive();
+    this.refresh();
+  };
+
+  readonly selectNewer = (activity: EntityWorkspaceActivity): void => {
+    if (activity.status !== 'selected') {
+      throw new Error('OPS_ENTITY_ACTIVITY_PAGE_CONTEXT_REQUIRED');
+    }
+    if (this.cursorIndex === 0) return;
+    this.cursorIndex -= 1;
+    this.beforeHeight = this.cursorStack[this.cursorIndex] ?? null;
+    this.refresh();
   };
 
   readonly selectKind = (
@@ -59,9 +92,8 @@ export class OpsEntityWorkspaceActivityController {
     const requestedKind = requireEntityWorkspaceActivityKind(kind);
     if (requestedKind === this.kind) return;
     this.kind = requestedKind;
-    this.beforeHeight = null;
-    if (this.dependencies.isHistoryActive()) this.dependencies.refreshHistory();
-    else this.dependencies.refreshLive();
+    this.resetCursor();
+    this.refresh();
   };
 
   readonly toggleType = (
@@ -75,8 +107,7 @@ export class OpsEntityWorkspaceActivityController {
     this.types = this.types.includes(requestedType)
       ? this.types.filter((candidate) => candidate !== requestedType)
       : [...this.types, requestedType];
-    this.beforeHeight = null;
-    if (this.dependencies.isHistoryActive()) this.dependencies.refreshHistory();
-    else this.dependencies.refreshLive();
+    this.resetCursor();
+    this.refresh();
   };
 }
