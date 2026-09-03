@@ -27,6 +27,7 @@ export function OpsEntityWorkspacePage() {
       <EntityWorkspaceShell
         accounts={snapshot.accounts}
         activeTab={activeTab}
+        consensus={snapshot.consensus}
         context={snapshot.context}
         onRefresh={() => { void opsEntityWorkspaceSource.refresh(); }}
         onSelectAccountsPage={opsEntityWorkspaceSource.selectAccountsPage}

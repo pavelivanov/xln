@@ -70,7 +70,7 @@ export type ParityGap = Readonly<{
 }>;
 
 export const PARITY_GAPS = [
-  { id: 'ops-workspace-route', kind: 'implementation', capabilityIds: ['ops-workspace'], routeIds: ['embed'], evidenceSources: ['frontend/apps/ops/src/ops-app.tsx', 'frontend/apps/ops/src/ops-model.ts', 'frontend/apps/ops/src/ops-entity-workspace.tsx', 'frontend/apps/ops/src/ops-entity-workspace-projection.ts'], nextSlice: 'Continue the authorized Entity workspace subprogram behind the internal candidate route; keep /embed canonical until parity and WP10 cutover authority are complete.' },
+  { id: 'ops-workspace-route', kind: 'implementation', capabilityIds: ['ops-workspace'], routeIds: ['embed'], evidenceSources: ['frontend/apps/ops/src/ops-app.tsx', 'frontend/apps/ops/src/ops-model.ts', 'frontend/apps/ops/src/ops-entity-workspace.tsx', 'frontend/apps/ops/src/ops-entity-workspace-projection.ts', 'frontend/packages/runtime-client/src/entity-workspace-consensus-evidence.ts', 'frontend/packages/ui/src/entity-workspace-consensus-panel.tsx'], nextSlice: 'Continue the authorized Entity workspace subprogram behind the internal candidate route; keep /embed canonical until parity and WP10 cutover authority are complete.' },
 ] as const satisfies readonly ParityGap[];
 
 export const CAPABILITY_PARITY = [
