@@ -31,6 +31,16 @@ export type WalletCanonicalRecoveryDiscoveryView = Readonly<{
   peerBackupCount: number;
 }>;
 
+export type WalletCanonicalRecoveryFile = Readonly<{
+  contents: string;
+  sourceLabel: string;
+}>;
+
+export type WalletCanonicalRecoveryFileImport = Readonly<{
+  candidateId: string;
+  discovery: WalletCanonicalRecoveryDiscoveryView;
+}>;
+
 export type WalletCanonicalRuntimeOpeningOutcome =
   | Readonly<{ status: 'opened'; runtimeId: string }>
   | Readonly<{ status: 'recovery-required'; discovery: WalletCanonicalRecoveryDiscoveryView }>;

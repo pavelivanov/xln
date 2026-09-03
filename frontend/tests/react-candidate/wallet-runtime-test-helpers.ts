@@ -16,10 +16,15 @@ export type WalletRuntimeFixtureInfo = Readonly<{
   wsUrl: string;
   token: string;
   recovery: Readonly<{
+    backupFileContents: string;
     runtimeId: string;
     runtimeHeight: number;
     towerUrl: string;
-    brainVault: Readonly<{ runtimeId: string; runtimeHeight: number }>;
+    brainVault: Readonly<{
+      backupFileContents: string;
+      runtimeId: string;
+      runtimeHeight: number;
+    }>;
   }>;
 }>;
 
@@ -53,6 +58,7 @@ export const readWalletRuntimeFixture = async (page: Page): Promise<WalletRuntim
   const recoveryInfo = recovery as Record<string, unknown>;
   const recoveryRuntimeId = String(recoveryInfo['runtimeId'] || '').trim().toLowerCase();
   const recoveryRuntimeHeight = Number(recoveryInfo['runtimeHeight']);
+  const recoveryBackupFileContents = String(recoveryInfo['backupFileContents'] || '');
   const towerUrl = String(recoveryInfo['towerUrl'] || '').trim();
   const brainVault = recoveryInfo['brainVault'];
   if (!brainVault || typeof brainVault !== 'object' || Array.isArray(brainVault)) {
@@ -61,6 +67,7 @@ export const readWalletRuntimeFixture = async (page: Page): Promise<WalletRuntim
   const brainVaultInfo = brainVault as Record<string, unknown>;
   const brainVaultRuntimeId = String(brainVaultInfo['runtimeId'] || '').trim().toLowerCase();
   const brainVaultRuntimeHeight = Number(brainVaultInfo['runtimeHeight']);
+  const brainVaultBackupFileContents = String(brainVaultInfo['backupFileContents'] || '');
   if (!/^0x[0-9a-f]{40}$/.test(runtimeId)
     || !/^0x[0-9a-f]{64}$/.test(entityId)
     || !/^0x[0-9a-f]{64}$/.test(counterpartyEntityId)) {
@@ -73,9 +80,11 @@ export const readWalletRuntimeFixture = async (page: Page): Promise<WalletRuntim
   if (!/^0x[0-9a-f]{40}$/.test(recoveryRuntimeId)
     || !Number.isSafeInteger(recoveryRuntimeHeight)
     || recoveryRuntimeHeight < 0
+    || !recoveryBackupFileContents.startsWith('{')
     || !/^0x[0-9a-f]{40}$/.test(brainVaultRuntimeId)
     || !Number.isSafeInteger(brainVaultRuntimeHeight)
     || brainVaultRuntimeHeight < 0
+    || !brainVaultBackupFileContents.startsWith('{')
     || !towerUrl.startsWith('http://127.0.0.1:')) {
     throw new Error('WALLET_RECOVERY_FIXTURE_INFO_INVALID');
   }
@@ -87,10 +96,12 @@ export const readWalletRuntimeFixture = async (page: Page): Promise<WalletRuntim
     wsUrl,
     token,
     recovery: {
+      backupFileContents: recoveryBackupFileContents,
       runtimeId: recoveryRuntimeId,
       runtimeHeight: recoveryRuntimeHeight,
       towerUrl,
       brainVault: {
+        backupFileContents: brainVaultBackupFileContents,
         runtimeId: brainVaultRuntimeId,
         runtimeHeight: brainVaultRuntimeHeight,
       },

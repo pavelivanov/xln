@@ -12,6 +12,14 @@ export class WalletRecoverySelectionSession<
   private revision = 0;
   private active: ActiveRecoverySelection<Candidate> | null = null;
 
+  private requireActive(token: string, runtimeId: string): ActiveRecoverySelection<Candidate> {
+    const active = this.active;
+    if (!active || active.token !== token || active.runtimeId !== runtimeId) {
+      throw new Error('WALLET_RECOVERY_DISCOVERY_STALE');
+    }
+    return active;
+  }
+
   begin(): number {
     this.revision += 1;
     this.active = null;
@@ -31,15 +39,29 @@ export class WalletRecoverySelectionSession<
     this.active = null;
   }
 
+  read(token: string, runtimeId: string): readonly Candidate[] {
+    return this.requireActive(token, runtimeId).candidates;
+  }
+
+  update(
+    token: string,
+    runtimeId: string,
+    transform: (candidates: readonly Candidate[]) => readonly Candidate[],
+  ): readonly Candidate[] {
+    const active = this.requireActive(token, runtimeId);
+    const candidates = transform(active.candidates);
+    if (this.active !== active) throw new Error('WALLET_RECOVERY_DISCOVERY_STALE');
+    this.active = { ...active, candidates: [...candidates] };
+    return this.active.candidates;
+  }
+
   consume(token: string, runtimeId: string, candidateId: string): Candidate | undefined {
-    const active = this.active;
-    if (!active || active.token !== token || active.runtimeId !== runtimeId) {
-      throw new Error('WALLET_RECOVERY_DISCOVERY_STALE');
-    }
+    const active = this.requireActive(token, runtimeId);
+    const { candidates } = active;
     const candidate = candidateId
-      ? active.candidates.find(current => current.id === candidateId)
+      ? candidates.find(current => current.id === candidateId)
       : undefined;
-    if (active.candidates.length > 0 && !candidate) {
+    if (candidates.length > 0 && !candidate) {
       throw new Error('WALLET_RECOVERY_CANDIDATE_REQUIRED');
     }
     this.discard(token);
