@@ -22,11 +22,12 @@ describe('React Entity workspace shell', () => {
   });
 
   test('uses shared navigation and a cleaned-up browser subscription without legacy imports', async () => {
-    const [page, shell, accounts, profile] = await Promise.all([
+    const [page, shell, accounts, profile, reserves] = await Promise.all([
       Bun.file('frontend/apps/ops/src/ops-entity-workspace.tsx').text(),
       Bun.file('frontend/packages/ui/src/entity-workspace-shell.tsx').text(),
       Bun.file('frontend/packages/ui/src/entity-workspace-accounts-panel.tsx').text(),
       Bun.file('frontend/packages/ui/src/entity-workspace-profile-panel.tsx').text(),
+      Bun.file('frontend/packages/ui/src/entity-workspace-reserves-panel.tsx').text(),
     ]);
     expect(page).toContain('useSyncExternalStore');
     expect(page).toContain("removeEventListener('hashchange'");
@@ -36,6 +37,7 @@ describe('React Entity workspace shell', () => {
     expect(shell).toContain('No Runtime projection attached');
     expect(shell).toContain('EntityWorkspaceAccountsPanel');
     expect(shell).toContain('EntityWorkspaceProfilePanel');
+    expect(shell).toContain('EntityWorkspaceReservesPanel');
     expect(shell).toContain("settingsSubview === 'wallet' || settingsSubview === 'entity'");
     expect(page).toContain("route.settingsSubview ?? 'wallet'");
     expect(accounts).toContain('Committed frame headers only');
@@ -44,7 +46,11 @@ describe('React Entity workspace shell', () => {
     expect(profile).toContain('Profile edits stay on the canonical workspace');
     expect(profile).not.toContain('onSave');
     expect(profile).not.toContain('runtimeController');
-    for (const source of [page, shell, accounts, profile]) {
+    expect(reserves).toContain('Exact Entity-state amounts');
+    expect(reserves).toContain('raw units');
+    expect(reserves).not.toContain('formatUnits');
+    expect(reserves).not.toContain('getAssetValue');
+    for (const source of [page, shell, accounts, profile, reserves]) {
       expect(source).not.toContain('frontend/src');
       expect(source).not.toContain('$lib');
     }

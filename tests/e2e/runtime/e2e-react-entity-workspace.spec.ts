@@ -207,11 +207,17 @@ test('React Entity workspace reads selected context from a real H1 Runtime', { t
       await installRemoteSession(context, capability);
       const candidatePage = await context.newPage();
       const response = await candidatePage.goto(
-        `${candidateServer.baseUrl}/__app/ops/entity-workspace#accounts`,
+        `${candidateServer.baseUrl}/__app/ops/entity-workspace#assets`,
         { waitUntil: 'domcontentloaded' },
       );
       expect(response?.ok()).toBe(true);
       await assertSelectedContext(candidatePage, expectedRuntimeId);
+      const reserves = candidatePage.getByTestId('assets-reserve-projection');
+      await expect(reserves).toBeVisible();
+      await expect(candidatePage.getByTestId('assets-reserve-count')).not.toHaveText('0');
+      await expect(reserves.getByText('raw units').first()).toBeVisible();
+      await capturePageScreenshot(candidatePage, testInfo, `react-entity-workspace-assets-${viewport.name}.png`);
+      await candidatePage.evaluate(() => { window.location.hash = 'accounts'; });
       const accounts = candidatePage.getByTestId('accounts-page-projection');
       await expect(accounts).toBeVisible();
       await expect(candidatePage.getByTestId('accounts-visible-count')).not.toHaveText('0');
