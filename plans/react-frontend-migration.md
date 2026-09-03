@@ -1,6 +1,6 @@
 # React frontend migration work plan
 
-**Status:** `IN PROGRESS — WP0–WP6 COMPLETE; WP7 HEALTH + QA + HLT + RUNS + SCENARIOS + AI IMPLEMENTED, WORKSPACE STATE LAYER SVELTE-FREE, PANEL PORTS THROUGH ARCHITECT, REACT DOCKVIEW WRAPPER READY, GRAPH3D LIFECYCLE + RENDERER/PRIMITIVES/EFFECTS/ENTITY/ACCOUNT VISUAL FACTORY/INTERACTION/SELECTION/CAMERA/POINTER+XR DRAG + HOVER MECHANICS + VIEW/SCENE INPUT MODELS EXTRACTED, ENTITY WORKSPACE REACT SHELL/TABS + LIVE RUNTIME CONTEXT + READ-ONLY OWNERSHIP/ACCOUNTS/PROFILE READY; WP8 COMPLETE; WP9 HAS 18 COVERED / 2 PARTIAL ROUTES AND 5 EXACT GAPS, WALLET PAYMENT + MARKET DEPTH NEXT`
+**Status:** `IN PROGRESS — WP0–WP6 COMPLETE; WP7 HEALTH + QA + HLT + RUNS + SCENARIOS + AI IMPLEMENTED, WORKSPACE STATE LAYER SVELTE-FREE, PANEL PORTS THROUGH ARCHITECT, REACT DOCKVIEW WRAPPER READY, GRAPH3D LIFECYCLE + RENDERER/PRIMITIVES/EFFECTS/ENTITY/ACCOUNT VISUAL FACTORY/INTERACTION/SELECTION/CAMERA/POINTER+XR DRAG + HOVER MECHANICS + VIEW/SCENE INPUT MODELS EXTRACTED, ENTITY WORKSPACE REACT SHELL/TABS + LIVE RUNTIME CONTEXT + READ-ONLY OWNERSHIP/ACCOUNTS/PROFILE READY; WP8 COMPLETE; WP9 HAS 19 COVERED / 1 PARTIAL BROWSER ROUTE AND 4 EXACT GAPS, IRREVERSIBLE IDENTITY NEXT`
 
 This is the executable work plan for splitting the Svelte frontend into React
 applications. It is intentionally lightweight and should be updated as live
@@ -2152,7 +2152,7 @@ tests can activate, reject invalid candidates, and roll back.
 
 ### WP9 — Close parity and prepare cutover
 
-**Status:** `IN PROGRESS — 18 COVERED / 2 PARTIAL ROUTES; WALLET PORTFOLIO + HEALTH DEPTH NEXT`
+**Status:** `IN PROGRESS — 18 COMPLETE / 2 PARTIAL IMPLEMENTATIONS; 19 COVERED / 1 PARTIAL BROWSER ROUTE; 4 EXACT GAPS`
 
 - Confirm all retained routes and capabilities have React owners and tests.
 - Run all-frontend checks and representative browser flows at required
@@ -2358,8 +2358,37 @@ the established missing-`cargo` environment stop. Production function size
 passes across 1,047 files; file-size policy reports only the known
 `core/qa/report.ts` 3,001 / 3,000 overage.
 
+Payment and market browser depth now runs against the same isolated committed
+Runtime. The fixture certifies and publishes both local profiles through a
+process-local P2P instance, enables the counterparty with canonical
+`setHubConfig` and `initOrderbookExt` transactions, and places one real resting
+order through `placeSwapOffer`; it never mutates Entity or Account state
+directly. The payment flow proves a Runtime-owned one-hop direct quote without
+submitting it, canonical invoice and QR generation, and all Account-operation
+choices. The market flow reads the committed USDC/WETH book, hub fee, live
+maker-owned order, empty cross-j lifecycle, and persisted activity. The focused
+source and browser-scope batch passes 15 / 15 with 74 expectations, and the
+complete wallet matrix passes 30 / 30 in 30.8 seconds across 390×844, 1366×900,
+and 1920×1080 with zero page errors, console errors, or horizontal overflow.
+All 15 new screenshots were inspected. The `wallet-app-browser-depth` gap is
+closed: browser parity is now 19 covered / 1 partial route, while implementation
+parity remains 18 complete / 2 partial and four exact gaps remain. All four
+React surfaces pass the local gate across 656 files with zero unsafe findings,
+and the wallet production build transforms 1,679 modules. The canonical
+frontend check remains at zero errors/warnings and builds 4,675 SSR plus 6,426
+client modules. The full 209-file frontend suite keeps the exact known 13-name
+baseline with 1,261 passes, 14 reported failures, one error, and 7,172
+expectations across 1,275 tests. Pre-push root evidence passes 26 deterministic
+tests / 100,156 expectations and all ten soundchecks. Contract synchronization
+is host-blocked by the existing Hardhat compiler-cache mutex after the required
+root attempt and one focused retry; Rust checks remain unavailable because
+`cargo` is not installed. Production function size passes across 1,047 files,
+while file-size policy reports only the known out-of-scope `core/qa/report.ts`
+3,001 / 3,000 overage.
+
 **Current checkpoint:** all retained routes have React application owners; two
-routes and five typed gaps remain partial before cutover readiness.
+implementations, one browser route, and four typed gaps remain partial before
+cutover readiness.
 
 ### WP10 — Authorized canonical cutover
 

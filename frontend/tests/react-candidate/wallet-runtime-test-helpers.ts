@@ -83,3 +83,10 @@ export const installImportedRuntime = async (
     },
   });
 };
+
+export const selectWalletFixtureRuntime = async (page: Page): Promise<WalletRuntimeFixtureInfo> => {
+  const fixture = await readWalletRuntimeFixture(page);
+  await page.goto('/testnet', { waitUntil: 'domcontentloaded' });
+  await installImportedRuntime(page, fixture);
+  return fixture;
+};
