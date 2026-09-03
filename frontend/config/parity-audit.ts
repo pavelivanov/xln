@@ -5,7 +5,6 @@ export type ParityBrowserEvidence = 'covered' | 'partial' | 'missing';
 export type ParityGapKind = 'browser' | 'implementation' | 'owner' | 'owner-decision' | 'verification';
 
 export const PARITY_GAP_IDS = [
-  'wallet-irreversible-identity',
   'wallet-recovery-tower-push',
   'wallet-external-provider',
   'ops-workspace-route',
@@ -49,7 +48,7 @@ export const RETAINED_ROUTE_PARITY = [
   { id: 'unicast', pathname: '/unicast', representativePath: '/unicast', sveltePage: 'frontend/src/routes/unicast/+page.svelte', intendedOwner: 'site', implementation: 'complete', browserEvidence: 'covered', reactSource: 'frontend/apps/site/src/unicast-page.tsx', focusedTests: ['tests/frontend/tooling/frontend-unicast-pilot.test.ts'], browserTests: siteBrowser, gapIds: [] },
   { id: 'market-cap', pathname: '/market-cap', representativePath: '/market-cap', sveltePage: 'frontend/src/routes/market-cap/+page.svelte', intendedOwner: 'site', implementation: 'complete', browserEvidence: 'covered', reactSource: 'frontend/apps/site/src/market-cap-page.tsx', focusedTests: ['tests/frontend/tooling/frontend-market-cap-pilot.test.ts'], browserTests: siteBrowser, gapIds: [] },
   { id: 'docs', pathname: '/docs', representativePath: '/docs', sveltePage: 'frontend/src/routes/docs/+page.svelte', intendedOwner: 'docs', implementation: 'complete', browserEvidence: 'covered', reactSource: 'frontend/apps/docs/src/docs-app.tsx', focusedTests: ['tests/frontend/tooling/frontend-docs-pilot.test.ts'], browserTests: docsBrowser, gapIds: [] },
-  { id: 'wallet-app', pathname: '/app', representativePath: '/app', sveltePage: 'frontend/src/routes/app/+page.svelte', intendedOwner: 'wallet', implementation: 'partial', browserEvidence: 'covered', reactSource: 'frontend/apps/wallet/src/app-shell.tsx', focusedTests: ['tests/frontend/runtime/frontend-wallet-app-shell.test.ts', 'tests/frontend/tooling/frontend-wallet-flow-audit.test.ts'], browserTests: [...walletBrowser, ...crossSurfaceBrowser], gapIds: ['wallet-irreversible-identity', 'wallet-recovery-tower-push', 'wallet-external-provider'] },
+  { id: 'wallet-app', pathname: '/app', representativePath: '/app', sveltePage: 'frontend/src/routes/app/+page.svelte', intendedOwner: 'wallet', implementation: 'partial', browserEvidence: 'covered', reactSource: 'frontend/apps/wallet/src/app-shell.tsx', focusedTests: ['tests/frontend/runtime/frontend-wallet-app-shell.test.ts', 'tests/frontend/tooling/frontend-wallet-flow-audit.test.ts'], browserTests: [...walletBrowser, ...crossSurfaceBrowser], gapIds: ['wallet-recovery-tower-push', 'wallet-external-provider'] },
   { id: 'wallet-address', pathname: '/address', representativePath: '/address', sveltePage: 'frontend/src/routes/address/+page.svelte', intendedOwner: 'wallet', implementation: 'complete', browserEvidence: 'covered', reactSource: 'frontend/apps/wallet/src/wallet-address.tsx', focusedTests: ['tests/frontend/runtime/frontend-wallet-address.test.ts'], browserTests: walletBrowser, gapIds: [] },
   { id: 'wallet-address-entity', pathname: '/address/:entityId', representativePath: '/address/0xabc', sveltePage: 'frontend/src/routes/address/[entityId]/+page.svelte', intendedOwner: 'wallet', implementation: 'complete', browserEvidence: 'covered', reactSource: 'frontend/apps/wallet/src/wallet-address.tsx', focusedTests: ['tests/frontend/runtime/frontend-wallet-address.test.ts'], browserTests: walletBrowser, gapIds: [] },
   { id: 'testnet', pathname: '/testnet', representativePath: '/testnet', sveltePage: 'frontend/src/routes/testnet/+page.svelte', intendedOwner: 'wallet', implementation: 'complete', browserEvidence: 'covered', reactSource: 'frontend/apps/wallet/src/testnet-page.tsx', focusedTests: ['tests/frontend/tooling/frontend-testnet-pilot.test.ts'], browserTests: walletBrowser, gapIds: [] },
@@ -73,7 +72,6 @@ export type ParityGap = Readonly<{
 }>;
 
 export const PARITY_GAPS = [
-  { id: 'wallet-irreversible-identity', kind: 'implementation', capabilityIds: ['wallet-shell-and-identity'], routeIds: ['wallet-app'], evidenceSources: ['frontend/apps/wallet/src/identity-recovery.tsx', 'frontend/apps/wallet/src/wallet-embedded-runtime.ts', 'frontend/bridges/wallet-canonical-vault-runtime.ts', 'frontend/packages/browser/src/wallet-runtime-opening.ts', 'frontend/packages/browser/src/wallet-recovery-selection-session.ts', 'frontend/src/lib/stores/vault/walletRuntimeOpeningAdapter.ts', 'frontend/src/lib/components/Views/RuntimeCreation.svelte', 'frontend/config/wallet-flow-audit.ts'], nextSlice: 'Add React Brain Vault derivation through the canonical worker and vault adapters, preserving exact recovery discovery before opening.' },
   { id: 'wallet-recovery-tower-push', kind: 'implementation', capabilityIds: ['wallet-recovery'], routeIds: ['wallet-app'], evidenceSources: ['frontend/src/lib/utils/recovery', 'frontend/static/push-wake-sw.js'], nextSlice: 'Port tower onboarding, full recovery, and push-wake controls without changing persistence schemas.' },
   { id: 'wallet-external-provider', kind: 'implementation', capabilityIds: ['wallet-payments-and-markets', 'wallet-native-and-offline'], routeIds: ['wallet-app'], evidenceSources: ['frontend/apps/wallet/src/wallet-payments.tsx', 'frontend/src/lib/native'], nextSlice: 'Connect the React payment surface to the existing external-wallet provider and native authority boundary.' },
   { id: 'ops-workspace-route', kind: 'owner-decision', capabilityIds: ['ops-workspace'], routeIds: ['embed'], evidenceSources: ['frontend/apps/ops/src/ops-app.tsx', 'frontend/apps/ops/src/ops-model.ts', 'frontend/apps/ops/src/ops-entity-workspace.tsx'], nextSlice: 'Keep /embed canonical until the owner authorizes the sized Entity workspace expansion and the remaining workspace parity closes.' },
@@ -82,7 +80,7 @@ export const PARITY_GAPS = [
 export const CAPABILITY_PARITY = [
   { capabilityId: 'site-public-information', gapIds: [] },
   { capabilityId: 'docs-reader', gapIds: [] },
-  { capabilityId: 'wallet-shell-and-identity', gapIds: ['wallet-irreversible-identity'] },
+  { capabilityId: 'wallet-shell-and-identity', gapIds: [] },
   { capabilityId: 'wallet-browser-lifecycle', gapIds: [] },
   { capabilityId: 'wallet-runtime-discovery', gapIds: [] },
   { capabilityId: 'wallet-recovery', gapIds: ['wallet-recovery-tower-push'] },

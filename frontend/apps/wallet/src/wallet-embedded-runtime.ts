@@ -9,11 +9,17 @@ import type {
   WalletCanonicalRuntimeOpeningOutcome,
   WalletCanonicalRuntimeOpeningRequest,
 } from '../../../packages/browser/src/wallet-runtime-opening';
+import type {
+  WalletBrainVaultDerivationInput,
+  WalletBrainVaultDerivationProgress,
+  WalletBrainVaultPreparedView,
+} from '../../../packages/browser/src/wallet-brainvault-opening';
 
 const activeTabLock = createActiveTabLockController({ publishState: () => {} });
 let pageUnloadFence: () => void = () => {};
 let pagehideInstalled = false;
 let discardCanonicalRecovery: ((token?: string) => void) | null = null;
+let discardCanonicalBrainVault: ((token?: string) => void) | null = null;
 
 const setPageUnloadFence = (fence: () => void): void => {
   pageUnloadFence = fence;
@@ -85,6 +91,41 @@ export const restoreWalletRuntimeFromCanonicalRecovery = (
 
 export const discardWalletRuntimeRecovery = (token = ''): void => {
   discardCanonicalRecovery?.(token);
+};
+
+export const prepareWalletBrainVaultWithCanonicalVault = async (
+  input: WalletBrainVaultDerivationInput,
+  onProgress: (progress: WalletBrainVaultDerivationProgress) => void,
+): Promise<WalletBrainVaultPreparedView> => {
+  installPagehideFence();
+  await session.start();
+  const canonical = await import('../../../bridges/wallet-canonical-vault-runtime');
+  discardCanonicalBrainVault = canonical.discardCanonicalWalletBrainVault;
+  return canonical.prepareCanonicalWalletBrainVault(input, onProgress);
+};
+
+export const openPreparedWalletBrainVault = async (
+  prepared: WalletBrainVaultPreparedView,
+  candidateId: string,
+): Promise<WalletCanonicalRuntimeOpeningOutcome> => {
+  const canonical = await import('../../../bridges/wallet-canonical-vault-runtime');
+  try {
+    const adapter = await session.replace(() => canonical.openCanonicalWalletBrainVault(
+      prepared.token,
+      prepared.runtimeId,
+      prepared.discovery.token,
+      candidateId,
+      setPageUnloadFence,
+    ));
+    return { status: 'opened', runtimeId: adapter.runtimeId };
+  } catch (error) {
+    canonical.discardCanonicalWalletBrainVault(prepared.token);
+    throw error;
+  }
+};
+
+export const discardWalletBrainVault = (token = ''): void => {
+  discardCanonicalBrainVault?.(token);
 };
 
 export const stopWalletEmbeddedRuntime = (): Promise<void> => session.stop();

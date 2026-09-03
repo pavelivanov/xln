@@ -19,6 +19,7 @@ export type WalletRuntimeFixtureInfo = Readonly<{
     runtimeId: string;
     runtimeHeight: number;
     towerUrl: string;
+    brainVault: Readonly<{ runtimeId: string; runtimeHeight: number }>;
   }>;
 }>;
 
@@ -53,6 +54,13 @@ export const readWalletRuntimeFixture = async (page: Page): Promise<WalletRuntim
   const recoveryRuntimeId = String(recoveryInfo['runtimeId'] || '').trim().toLowerCase();
   const recoveryRuntimeHeight = Number(recoveryInfo['runtimeHeight']);
   const towerUrl = String(recoveryInfo['towerUrl'] || '').trim();
+  const brainVault = recoveryInfo['brainVault'];
+  if (!brainVault || typeof brainVault !== 'object' || Array.isArray(brainVault)) {
+    throw new Error('WALLET_RECOVERY_FIXTURE_INFO_INVALID');
+  }
+  const brainVaultInfo = brainVault as Record<string, unknown>;
+  const brainVaultRuntimeId = String(brainVaultInfo['runtimeId'] || '').trim().toLowerCase();
+  const brainVaultRuntimeHeight = Number(brainVaultInfo['runtimeHeight']);
   if (!/^0x[0-9a-f]{40}$/.test(runtimeId)
     || !/^0x[0-9a-f]{64}$/.test(entityId)
     || !/^0x[0-9a-f]{64}$/.test(counterpartyEntityId)) {
@@ -65,6 +73,9 @@ export const readWalletRuntimeFixture = async (page: Page): Promise<WalletRuntim
   if (!/^0x[0-9a-f]{40}$/.test(recoveryRuntimeId)
     || !Number.isSafeInteger(recoveryRuntimeHeight)
     || recoveryRuntimeHeight < 0
+    || !/^0x[0-9a-f]{40}$/.test(brainVaultRuntimeId)
+    || !Number.isSafeInteger(brainVaultRuntimeHeight)
+    || brainVaultRuntimeHeight < 0
     || !towerUrl.startsWith('http://127.0.0.1:')) {
     throw new Error('WALLET_RECOVERY_FIXTURE_INFO_INVALID');
   }
@@ -79,6 +90,10 @@ export const readWalletRuntimeFixture = async (page: Page): Promise<WalletRuntim
       runtimeId: recoveryRuntimeId,
       runtimeHeight: recoveryRuntimeHeight,
       towerUrl,
+      brainVault: {
+        runtimeId: brainVaultRuntimeId,
+        runtimeHeight: brainVaultRuntimeHeight,
+      },
     },
   };
 };
