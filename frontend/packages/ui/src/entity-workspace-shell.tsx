@@ -10,9 +10,11 @@ import type {
 } from '../../runtime-client/src/entity-workspace-context';
 import type { EntityWorkspaceOwnership } from '../../runtime-client/src/entity-workspace-ownership';
 import type { EntityWorkspaceProfile } from '../../runtime-client/src/entity-workspace-profile';
+import type { EntityWorkspaceReserves } from '../../runtime-client/src/entity-workspace-reserves';
 import { EntityWorkspaceAccountsPanel } from './entity-workspace-accounts-panel';
 import { formatAddress } from './entity-workspace-display';
 import { EntityWorkspaceProfilePanel } from './entity-workspace-profile-panel';
+import { EntityWorkspaceReservesPanel } from './entity-workspace-reserves-panel';
 import './entity-workspace-shell.css';
 
 type SectionCopy = Readonly<{
@@ -154,6 +156,7 @@ type EntityWorkspaceStageWithOwnershipProps = EntityWorkspaceStageProps & Readon
   onSelectAccountsPage: (page: number) => void;
   ownership: EntityWorkspaceOwnership;
   profile: EntityWorkspaceProfile;
+  reserves: EntityWorkspaceReserves;
   settingsSubview: SettingsSubview;
 }>;
 
@@ -169,7 +172,7 @@ const readFooterLabel = (
   return 'Unavailable — no remote Runtime selected';
 };
 
-function EntityWorkspaceStage({ accounts, activeTab, context, onRefresh, onSelectAccountsPage, ownership, profile, readState, settingsSubview }: EntityWorkspaceStageWithOwnershipProps) {
+function EntityWorkspaceStage({ accounts, activeTab, context, onRefresh, onSelectAccountsPage, ownership, profile, readState, reserves, settingsSubview }: EntityWorkspaceStageWithOwnershipProps) {
   const copy = SECTION_COPY[activeTab];
   return (
     <section className="entity-workspace-stage" data-testid="entity-workspace-stage">
@@ -178,11 +181,13 @@ function EntityWorkspaceStage({ accounts, activeTab, context, onRefresh, onSelec
         <h2>{copy.title}</h2>
         <p>{copy.summary}</p>
       </header>
-      {readState.status === 'ready' && context.status === 'selected' && activeTab === 'accounts'
-        ? <EntityWorkspaceAccountsPanel accounts={accounts} onSelectPage={onSelectAccountsPage} />
-        : activeTab === 'ownership' && readState.status === 'ready' && context.status === 'selected'
+      {readState.status === 'ready' && context.status === 'selected' && activeTab === 'assets'
+        ? <EntityWorkspaceReservesPanel reserves={reserves} />
+        : readState.status === 'ready' && context.status === 'selected' && activeTab === 'accounts'
+          ? <EntityWorkspaceAccountsPanel accounts={accounts} onSelectPage={onSelectAccountsPage} />
+          : readState.status === 'ready' && context.status === 'selected' && activeTab === 'ownership'
           ? <OwnershipProjection ownership={ownership} />
-          : activeTab === 'settings' && readState.status === 'ready' && context.status === 'selected' && (settingsSubview === 'wallet' || settingsSubview === 'entity')
+          : readState.status === 'ready' && context.status === 'selected' && activeTab === 'settings' && (settingsSubview === 'wallet' || settingsSubview === 'entity')
             ? <EntityWorkspaceProfilePanel profile={profile} />
           : <ProjectionBoundary
             context={context}
@@ -204,6 +209,7 @@ type EntityWorkspaceShellProps = Readonly<{
   ownership: EntityWorkspaceOwnership;
   profile: EntityWorkspaceProfile;
   readState: EntityWorkspaceReadState;
+  reserves: EntityWorkspaceReserves;
   settingsSubview: SettingsSubview;
 }>;
 
@@ -218,7 +224,7 @@ const readModeLabel = (
   return 'Read boundary';
 };
 
-export function EntityWorkspaceShell({ accounts, activeTab, context, onRefresh, onSelectAccountsPage, ownership, profile, readState, settingsSubview }: EntityWorkspaceShellProps) {
+export function EntityWorkspaceShell({ accounts, activeTab, context, onRefresh, onSelectAccountsPage, ownership, profile, readState, reserves, settingsSubview }: EntityWorkspaceShellProps) {
   return (
     <section
       className="entity-workspace"
@@ -261,6 +267,7 @@ export function EntityWorkspaceShell({ accounts, activeTab, context, onRefresh, 
         ownership={ownership}
         profile={profile}
         readState={readState}
+        reserves={reserves}
         settingsSubview={settingsSubview}
       />
       <p className="entity-workspace-footnote">No inferred state · no hidden fallback · Svelte remains canonical</p>

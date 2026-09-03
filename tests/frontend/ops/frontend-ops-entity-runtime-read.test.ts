@@ -3,9 +3,11 @@ import { describe, expect, test } from 'bun:test';
 import {
   initialOpsEntityWorkspaceSnapshot,
   OpsEntityWorkspaceSource,
-  projectOpsEntityWorkspaceObserverSnapshot,
   requireOpsEntityRemoteSession,
 } from '../../../frontend/apps/ops/src/ops-entity-workspace-source';
+import {
+  projectOpsEntityWorkspaceObserverSnapshot,
+} from '../../../frontend/apps/ops/src/ops-entity-workspace-projection';
 import {
   emptyEntityWorkspaceAccounts,
   projectEntityWorkspaceAccounts,
@@ -22,6 +24,10 @@ import {
   emptyEntityWorkspaceProfile,
   projectEntityWorkspaceProfile,
 } from '../../../frontend/packages/runtime-client/src/entity-workspace-profile';
+import {
+  emptyEntityWorkspaceReserves,
+  projectEntityWorkspaceReserves,
+} from '../../../frontend/packages/runtime-client/src/entity-workspace-reserves';
 
 const REMOTE_SESSION = {
   mode: 'remote',
@@ -51,6 +57,7 @@ const OWNERSHIP_FRAME = {
     core: {
       entityId: '0xaaaa',
       signerId: '0xbbbb',
+      reserves: new Map([[1, 2_500_000n]]),
       config: {
         mode: 'proposer-based', threshold: 1n,
         validators: ['0xbbbb'], shares: { '0xbbbb': 1n },
@@ -79,11 +86,17 @@ const SELECTED_PROFILE = projectEntityWorkspaceProfile({
   frame: OWNERSHIP_FRAME,
 });
 
+const SELECTED_RESERVES = projectEntityWorkspaceReserves({
+  context: SELECTED_CONTEXT,
+  frame: OWNERSHIP_FRAME,
+});
+
 const SELECTED_PROJECTION = {
   accounts: SELECTED_ACCOUNTS,
   context: SELECTED_CONTEXT,
   ownership: SELECTED_OWNERSHIP,
   profile: SELECTED_PROFILE,
+  reserves: SELECTED_RESERVES,
 };
 
 describe('React Entity workspace Runtime read boundary', () => {
@@ -124,6 +137,7 @@ describe('React Entity workspace Runtime read boundary', () => {
       accounts: emptyEntityWorkspaceAccounts(),
       context: emptyEntityWorkspaceContext(), ownership: emptyEntityWorkspaceOwnership(),
       profile: emptyEntityWorkspaceProfile(),
+      reserves: emptyEntityWorkspaceReserves(),
     }, {
       loading: false, data: SELECTED_PROJECTION, error: null, height: 18,
     })).toEqual({ ...SELECTED_PROJECTION, readState: { status: 'ready', message: '' } });
@@ -134,16 +148,18 @@ describe('React Entity workspace Runtime read boundary', () => {
       accounts: { status: 'empty' },
       ownership: { status: 'empty' },
       profile: { status: 'empty' },
+      reserves: { status: 'empty' },
       readState: { status: 'error', message: 'ENTITY_WORKSPACE_FRAME_INVALID' },
     });
   });
 
   test('loads only on the workspace route and exposes bounded reads plus full cleanup', async () => {
-    const [main, page, runtime, source] = await Promise.all([
+    const [main, page, runtime, source, projection] = await Promise.all([
       Bun.file('frontend/apps/ops/src/main.tsx').text(),
       Bun.file('frontend/apps/ops/src/ops-entity-workspace.tsx').text(),
       Bun.file('frontend/apps/ops/src/ops-entity-workspace-runtime.ts').text(),
       Bun.file('frontend/apps/ops/src/ops-entity-workspace-source.ts').text(),
+      Bun.file('frontend/apps/ops/src/ops-entity-workspace-projection.ts').text(),
     ]);
     expect(main).toContain("page.kind === 'workspace'");
     expect(main).toContain("import('./ops-entity-workspace-runtime')");
@@ -153,9 +169,11 @@ describe('React Entity workspace Runtime read boundary', () => {
     expect(source).toContain("await import('../../../../core/api/runtime-adapter/remote.ts')");
     expect(source).toContain('accountsLimit: 8');
     expect(source).toContain('accountsPage: this.accountsPage');
-    expect(source).toContain('projectEntityWorkspaceAccounts({ context, frame })');
-    expect(source).toContain('projectEntityWorkspaceOwnership({ context, frame })');
-    expect(source).toContain('projectEntityWorkspaceProfile({ context, frame })');
+    expect(source).toContain('projectOpsEntityWorkspaceFrame(adapter.runtimeId, frame)');
+    expect(projection).toContain('projectEntityWorkspaceAccounts({ context, frame })');
+    expect(projection).toContain('projectEntityWorkspaceOwnership({ context, frame })');
+    expect(projection).toContain('projectEntityWorkspaceProfile({ context, frame })');
+    expect(projection).toContain('projectEntityWorkspaceReserves({ context, frame })');
     expect(source).toContain('this.observer?.destroy()');
     expect(source).toContain('this.session?.release()');
     expect(source).not.toContain('.send(');
