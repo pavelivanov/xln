@@ -53,6 +53,21 @@ const historyBatch = (frame: RuntimeAdapterViewFrame): RuntimeAdapterHistoryFram
   unavailable: [],
 });
 
+const activityPage = (height: number) => ({
+  ok: true as const,
+  runtimeId: 'runtime-a',
+  latestHeight: 18,
+  fromHeight: 1,
+  toHeight: height,
+  scannedFrames: height,
+  returned: 0,
+  limit: 8,
+  scanLimit: 160,
+  nextBeforeHeight: null,
+  filters: { entityId: '0xaaaa', kind: 'all' as const, beforeHeight: height, limit: 8, scanLimit: 160 },
+  events: [],
+});
+
 describe('React Entity workspace Time Machine', () => {
   test('keeps live and historical height state exact', () => {
     expect(createEntityWorkspaceLiveState(18)).toEqual({
@@ -83,6 +98,10 @@ describe('React Entity workspace Time Machine', () => {
     const projection = await readOpsEntityWorkspaceHistory({
       accountsPage: 0,
       client: {
+        readActivity: async (query) => {
+          queries.push(query);
+          return activityPage(7);
+        },
         readHistoryFrameBatch: async (query) => {
           queries.push(query);
           return historyBatch(historyFrame(7));
@@ -90,10 +109,13 @@ describe('React Entity workspace Time Machine', () => {
       },
       entityId: '0xaaaa', latestHeight: 18, requestedHeight: 7, runtimeId: 'runtime-a',
     });
-    expect(queries).toEqual([{
-      accountsLimit: 8, accountsPage: 0, booksLimit: 8, booksPage: 0,
-      entityId: '0xaaaa', heights: [7],
-    }]);
+    expect(queries).toEqual([
+      {
+        accountsLimit: 8, accountsPage: 0, booksLimit: 8, booksPage: 0,
+        entityId: '0xaaaa', heights: [7],
+      },
+      { beforeHeight: 7, entityId: '0xaaaa', kind: 'all', limit: 8, scanLimit: 160 },
+    ]);
     expect(projection.context).toMatchObject({ entityId: '0xaaaa', height: 7, status: 'selected' });
     expect(projection.consensus).toMatchObject({ entityId: '0xaaaa', runtimeHeight: 7, status: 'selected' });
   });
@@ -101,12 +123,18 @@ describe('React Entity workspace Time Machine', () => {
   test('rejects page and entity drift before publishing historical state', async () => {
     await expect(readOpsEntityWorkspaceHistory({
       accountsPage: 1,
-      client: { readHistoryFrameBatch: async () => historyBatch(historyFrame(7)) },
+      client: {
+        readActivity: async () => activityPage(7),
+        readHistoryFrameBatch: async () => historyBatch(historyFrame(7)),
+      },
       entityId: '0xaaaa', latestHeight: 18, requestedHeight: 7, runtimeId: 'runtime-a',
     })).rejects.toThrow('Remote Time Machine page mismatch');
     await expect(readOpsEntityWorkspaceHistory({
       accountsPage: 0,
-      client: { readHistoryFrameBatch: async () => historyBatch(historyFrame(7)) },
+      client: {
+        readActivity: async () => activityPage(7),
+        readHistoryFrameBatch: async () => historyBatch(historyFrame(7)),
+      },
       entityId: '0xcccc', latestHeight: 18, requestedHeight: 7, runtimeId: 'runtime-a',
     })).rejects.toThrow('Remote Time Machine entity mismatch');
   });

@@ -1,7 +1,9 @@
 import type {
+  RuntimeAdapterActivityPage,
   RuntimeAdapterHistoryFrameBatch,
   RuntimeAdapterReadQuery,
 } from '@xln/core/api/public/runtime-module';
+import { buildEntityWorkspaceActivityQuery } from '../../../packages/runtime-client/src/entity-workspace-activity';
 import {
   assertTimeMachineHistorySelection,
   createTimeMachineHistoryBatchQuery,
@@ -10,11 +12,13 @@ import {
 } from '../../../packages/runtime-client/src/time-machine-transport';
 import { requireEntityWorkspaceHistoryHeight } from '../../../packages/runtime-client/src/entity-workspace-time-machine';
 import {
+  projectOpsEntityWorkspaceActivityPage,
   projectOpsEntityWorkspaceFrame,
   type OpsEntityWorkspaceProjection,
 } from './ops-entity-workspace-projection';
 
 export type OpsEntityWorkspaceHistoryReader = Readonly<{
+  readActivity(query: RuntimeAdapterReadQuery): Promise<RuntimeAdapterActivityPage>;
   readHistoryFrameBatch(query: RuntimeAdapterReadQuery): Promise<RuntimeAdapterHistoryFrameBatch>;
 }>;
 
@@ -44,5 +48,7 @@ export async function readOpsEntityWorkspaceHistory(input: Readonly<{
     mode: 'remote',
     runtimeId: input.runtimeId,
   }), selection);
-  return projectOpsEntityWorkspaceFrame(input.runtimeId, frame);
+  const projection = projectOpsEntityWorkspaceFrame(input.runtimeId, frame);
+  const activity = await input.client.readActivity(buildEntityWorkspaceActivityQuery(projection.context));
+  return projectOpsEntityWorkspaceActivityPage(projection, activity);
 }

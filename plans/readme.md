@@ -45,7 +45,7 @@ to finish, not a reason to block unrelated scaffolding or migration slices.
 
 | Artifact | Status | Next action |
 |---|---|---|
-| [Migration work plan](react-frontend-migration.md) | `IN PROGRESS — WP0–WP6 + WP8 COMPLETE; WP7 WORKSPACE PARTIAL; WP9 HAS 19 COMPLETE / 1 PARTIAL IMPLEMENTATION, 19 COVERED / 1 PARTIAL BROWSER ROUTE, AND 1 AUTHORIZED GAP` | Continue authorized Entity workspace parity behind the internal candidate route; display theme, exact Time Machine, shared xln-guide preference, Account commitment evidence, committed Hub-policy, and Settings-summary parity are complete. |
+| [Migration work plan](react-frontend-migration.md) | `IN PROGRESS — WP0–WP6 + WP8 COMPLETE; WP7 WORKSPACE PARTIAL; WP9 HAS 19 COMPLETE / 1 PARTIAL IMPLEMENTATION, 19 COVERED / 1 PARTIAL BROWSER ROUTE, AND 1 AUTHORIZED GAP` | Continue authorized Entity workspace parity behind the internal candidate route; display theme, exact Time Machine, shared xln-guide preference, Account commitment evidence, persisted Activity, committed Hub-policy, and Settings-summary parity are complete. |
 | [Technical decisions](react-frontend-migration-decisions.md) | `ACTIVE` | Use the recorded application, route, build, and coexistence decisions. |
 | Frontend implementation | `IN PROGRESS — 19 COMPLETE / 1 PARTIAL IMPLEMENTATION; 19 COVERED / 1 PARTIAL BROWSER ROUTE` | Continue `/embed` parity without crossing Runtime, consensus, contract, or financial authority boundaries. |
 

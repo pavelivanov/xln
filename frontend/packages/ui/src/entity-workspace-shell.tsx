@@ -4,6 +4,7 @@ import {
   type ViewTab,
 } from '../../runtime-client/src/entity-workspace-navigation';
 import type { EntityWorkspaceAccounts } from '../../runtime-client/src/entity-workspace-accounts';
+import type { EntityWorkspaceActivity } from '../../runtime-client/src/entity-workspace-activity';
 import type {
   EntityWorkspaceContext,
   EntityWorkspaceReadState,
@@ -15,6 +16,7 @@ import type { EntityWorkspaceProfile } from '../../runtime-client/src/entity-wor
 import type { EntityWorkspaceReserves } from '../../runtime-client/src/entity-workspace-reserves';
 import type { EntityWorkspaceTimeMachineState } from '../../runtime-client/src/entity-workspace-time-machine';
 import type { ThemeName } from './theme-model';
+import { EntityWorkspaceActivityPanel } from './entity-workspace-activity-panel';
 import { EntityWorkspaceAccountsPanel } from './entity-workspace-accounts-panel';
 import { EntityWorkspaceConsensusPanel } from './entity-workspace-consensus-panel';
 import { EntityWorkspaceDisplayPanel, type EntityWorkspaceDisplayPreferences } from './entity-workspace-display-panel';
@@ -154,6 +156,7 @@ function OwnershipProjection({ ownership }: Readonly<{ ownership: EntityWorkspac
 }
 
 type EntityWorkspaceStageWithOwnershipProps = EntityWorkspaceStageProps & Readonly<{
+  activity: EntityWorkspaceActivity;
   accounts: EntityWorkspaceAccounts;
   consensus: EntityWorkspaceConsensusEvidence;
   displayIssue: string | null;
@@ -182,15 +185,18 @@ const readFooterLabel = (
   return 'Unavailable — no remote Runtime selected';
 };
 
-function EntityWorkspaceStage({ accounts, activeTab, consensus, context, displayIssue, displayPreferences, hubPolicy, onRefresh, onSelectAccountsPage, onSelectTheme, onToggleTimeMachine, onToggleXlnGuide, ownership, profile, readState, reserves, settingsSubview, timeMachine }: EntityWorkspaceStageWithOwnershipProps) {
+function EntityWorkspaceStage({ activity, accounts, activeTab, consensus, context, displayIssue, displayPreferences, hubPolicy, onRefresh, onSelectAccountsPage, onSelectTheme, onToggleTimeMachine, onToggleXlnGuide, ownership, profile, readState, reserves, settingsSubview, timeMachine }: EntityWorkspaceStageWithOwnershipProps) {
   const copy = SECTION_COPY[activeTab];
+  const showsActivity = readState.status === 'ready' && context.status === 'selected' && activeTab === 'accounts';
   return (
     <section className="entity-workspace-stage" data-testid="entity-workspace-stage">
-      <header>
-        <span>{copy.eyebrow}</span>
-        <h2>{copy.title}</h2>
-        <p>{copy.summary}</p>
-      </header>
+      {showsActivity
+        ? <EntityWorkspaceActivityPanel activity={activity} />
+        : <header>
+            <span>{copy.eyebrow}</span>
+            <h2>{copy.title}</h2>
+            <p>{copy.summary}</p>
+          </header>}
       {readState.status === 'ready' && context.status === 'selected' && activeTab === 'assets'
         ? <EntityWorkspaceReservesPanel reserves={reserves} />
         : readState.status === 'ready' && context.status === 'selected' && activeTab === 'accounts'
@@ -219,6 +225,7 @@ function EntityWorkspaceStage({ accounts, activeTab, consensus, context, display
 }
 
 type EntityWorkspaceShellProps = Readonly<{
+  activity: EntityWorkspaceActivity;
   accounts: EntityWorkspaceAccounts;
   activeTab: ViewTab;
   consensus: EntityWorkspaceConsensusEvidence;
@@ -250,7 +257,7 @@ const readModeLabel = (
   return 'Read boundary';
 };
 
-export function EntityWorkspaceShell({ accounts, activeTab, consensus, context, displayIssue, displayPreferences, hubPolicy, onRefresh, onSelectAccountsPage, onSelectTheme, onToggleTimeMachine, onToggleXlnGuide, ownership, profile, readState, reserves, settingsSubview, timeMachine }: EntityWorkspaceShellProps) {
+export function EntityWorkspaceShell({ activity, accounts, activeTab, consensus, context, displayIssue, displayPreferences, hubPolicy, onRefresh, onSelectAccountsPage, onSelectTheme, onToggleTimeMachine, onToggleXlnGuide, ownership, profile, readState, reserves, settingsSubview, timeMachine }: EntityWorkspaceShellProps) {
   return (
     <section
       className="entity-workspace"
@@ -285,6 +292,7 @@ export function EntityWorkspaceShell({ accounts, activeTab, consensus, context, 
         ))}
       </nav>
       <EntityWorkspaceStage
+        activity={activity}
         accounts={accounts}
         activeTab={activeTab}
         consensus={consensus}

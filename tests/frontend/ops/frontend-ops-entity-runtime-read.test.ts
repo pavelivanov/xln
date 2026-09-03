@@ -9,6 +9,9 @@ import {
   projectOpsEntityWorkspaceObserverSnapshot,
 } from '../../../frontend/apps/ops/src/ops-entity-workspace-projection';
 import {
+  emptyEntityWorkspaceActivity,
+} from '../../../frontend/packages/runtime-client/src/entity-workspace-activity';
+import {
   emptyEntityWorkspaceAccounts,
   projectEntityWorkspaceAccounts,
 } from '../../../frontend/packages/runtime-client/src/entity-workspace-accounts';
@@ -116,6 +119,7 @@ const SELECTED_CONSENSUS = projectEntityWorkspaceConsensusEvidence({
 });
 
 const SELECTED_PROJECTION = {
+  activity: emptyEntityWorkspaceActivity(),
   accounts: SELECTED_ACCOUNTS,
   consensus: SELECTED_CONSENSUS,
   context: SELECTED_CONTEXT,
@@ -163,6 +167,7 @@ describe('React Entity workspace Runtime read boundary', () => {
       timeMachine: LIVE_TIME_MACHINE,
     });
     expect(projectOpsEntityWorkspaceObserverSnapshot('runtime-a', {
+      activity: emptyEntityWorkspaceActivity(),
       accounts: emptyEntityWorkspaceAccounts(),
       consensus: emptyEntityWorkspaceConsensusEvidence(),
       context: emptyEntityWorkspaceContext(), ownership: emptyEntityWorkspaceOwnership(),
@@ -207,7 +212,9 @@ describe('React Entity workspace Runtime read boundary', () => {
     expect(source).toContain("await import('../../../../core/api/runtime-adapter/remote.ts')");
     expect(source).toContain('accountsLimit: 8');
     expect(source).toContain('accountsPage: this.accountsPage');
-    expect(source).toContain('projectOpsEntityWorkspaceFrame(adapter.runtimeId, frame)');
+    expect(source).toContain('readEntityWorkspaceProjection(client, adapter.runtimeId, frame)');
+    expect(source).toContain('client.readActivity(buildEntityWorkspaceActivityQuery(projection.context))');
+    expect(projection).toContain('projectOpsEntityWorkspaceActivityPage');
     expect(projection).toContain('projectEntityWorkspaceAccounts({ context, frame })');
     expect(projection).toContain('projectEntityWorkspaceConsensusEvidence({ accounts, context, ownership })');
     expect(projection).toContain('projectEntityWorkspaceHubPolicy({ context, frame })');
