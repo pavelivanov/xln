@@ -21,6 +21,11 @@ import {
   type EntityWorkspaceOwnership,
 } from '../../../packages/runtime-client/src/entity-workspace-ownership';
 import {
+  emptyEntityWorkspaceHubPolicy,
+  projectEntityWorkspaceHubPolicy,
+  type EntityWorkspaceHubPolicy,
+} from '../../../packages/runtime-client/src/entity-workspace-hub-policy';
+import {
   emptyEntityWorkspaceProfile,
   projectEntityWorkspaceProfile,
   type EntityWorkspaceProfile,
@@ -39,6 +44,7 @@ export type OpsEntityWorkspaceProjection = Readonly<{
   accounts: EntityWorkspaceAccounts;
   consensus: EntityWorkspaceConsensusEvidence;
   context: EntityWorkspaceContext;
+  hubPolicy: EntityWorkspaceHubPolicy;
   ownership: EntityWorkspaceOwnership;
   profile: EntityWorkspaceProfile;
   reserves: EntityWorkspaceReserves;
@@ -55,6 +61,7 @@ export const emptyOpsEntityWorkspaceProjection = (
   accounts: emptyEntityWorkspaceAccounts(),
   consensus: emptyEntityWorkspaceConsensusEvidence(),
   context: emptyEntityWorkspaceContext(runtimeId),
+  hubPolicy: emptyEntityWorkspaceHubPolicy(),
   ownership: emptyEntityWorkspaceOwnership(),
   profile: emptyEntityWorkspaceProfile(),
   reserves: emptyEntityWorkspaceReserves(),
@@ -71,6 +78,7 @@ export const projectOpsEntityWorkspaceFrame = (
     accounts,
     consensus: projectEntityWorkspaceConsensusEvidence({ accounts, context, ownership }),
     context,
+    hubPolicy: projectEntityWorkspaceHubPolicy({ context, frame }),
     ownership,
     profile: projectEntityWorkspaceProfile({ context, frame }),
     reserves: projectEntityWorkspaceReserves({ context, frame }),

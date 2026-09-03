@@ -1,8 +1,10 @@
+import type { EntityWorkspaceHubPolicy } from '../../runtime-client/src/entity-workspace-hub-policy';
 import type { EntityWorkspaceProfile } from '../../runtime-client/src/entity-workspace-profile';
 import { formatAddress } from './entity-workspace-display';
 import './entity-workspace-profile-panel.css';
 
 type EntityWorkspaceProfilePanelProps = Readonly<{
+  hubPolicy: EntityWorkspaceHubPolicy;
   profile: EntityWorkspaceProfile;
 }>;
 
@@ -43,12 +45,34 @@ function ProfileFields({ profile }: Readonly<{ profile: SelectedProfile }>) {
   );
 }
 
-export function EntityWorkspaceProfilePanel({ profile }: EntityWorkspaceProfilePanelProps) {
+function HubPolicyFields({ policy }: Readonly<{ policy: EntityWorkspaceHubPolicy }>) {
+  if (policy.status !== 'selected') return null;
+  return (
+    <section className="entity-workspace-profile-hub-policy" data-testid="settings-hub-policy">
+      <header>
+        <small>Committed Hub policy</small>
+        <strong>Version <b data-testid="settings-hub-policy-version">{policy.policyVersion}</b></strong>
+      </header>
+      <dl>
+        <div><dt>Strategy</dt><dd>{policy.matchingStrategy}</dd></div>
+        <div><dt>Routing fee</dt><dd>{policy.routingFeePPM} ppm</dd></div>
+        <div><dt>Base fee</dt><dd>{policy.baseFee.toString()} raw units</dd></div>
+        <div><dt>Liquidity fee</dt><dd>{policy.rebalanceLiquidityFeeBps.toString()} bps</dd></div>
+        <div className="profile-wide-field"><dt>Rebalance timeout</dt><dd>{policy.rebalanceTimeoutMs === null ? 'Not declared' : `${policy.rebalanceTimeoutMs} ms`}</dd></div>
+      </dl>
+    </section>
+  );
+}
+
+export function EntityWorkspaceProfilePanel({ hubPolicy, profile }: EntityWorkspaceProfilePanelProps) {
   if (profile.status !== 'selected') return null;
   return (
     <section className="entity-workspace-profile-panel" data-testid="settings-profile-projection">
       <ProfileHeader profile={profile} />
-      <ProfileFields profile={profile} />
+      <div className="entity-workspace-profile-content">
+        <ProfileFields profile={profile} />
+        <HubPolicyFields policy={hubPolicy} />
+      </div>
       <footer>
         <span>Read only</span>
         <strong>Profile edits stay on the canonical workspace</strong>

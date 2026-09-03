@@ -9,6 +9,7 @@ import type {
   EntityWorkspaceReadState,
 } from '../../runtime-client/src/entity-workspace-context';
 import type { EntityWorkspaceConsensusEvidence } from '../../runtime-client/src/entity-workspace-consensus-evidence';
+import type { EntityWorkspaceHubPolicy } from '../../runtime-client/src/entity-workspace-hub-policy';
 import type { EntityWorkspaceOwnership } from '../../runtime-client/src/entity-workspace-ownership';
 import type { EntityWorkspaceProfile } from '../../runtime-client/src/entity-workspace-profile';
 import type { EntityWorkspaceReserves } from '../../runtime-client/src/entity-workspace-reserves';
@@ -156,6 +157,7 @@ type EntityWorkspaceStageWithOwnershipProps = EntityWorkspaceStageProps & Readon
   consensus: EntityWorkspaceConsensusEvidence;
   displayIssue: string | null;
   displayPreferences: EntityWorkspaceDisplayPreferences;
+  hubPolicy: EntityWorkspaceHubPolicy;
   onSelectTheme: (theme: ThemeName) => void;
   onToggleTimeMachine: (show: boolean) => void;
   onToggleXlnGuide: (show: boolean) => void;
@@ -178,7 +180,7 @@ const readFooterLabel = (
   return 'Unavailable — no remote Runtime selected';
 };
 
-function EntityWorkspaceStage({ accounts, activeTab, consensus, context, displayIssue, displayPreferences, onRefresh, onSelectAccountsPage, onSelectTheme, onToggleTimeMachine, onToggleXlnGuide, ownership, profile, readState, reserves, settingsSubview }: EntityWorkspaceStageWithOwnershipProps) {
+function EntityWorkspaceStage({ accounts, activeTab, consensus, context, displayIssue, displayPreferences, hubPolicy, onRefresh, onSelectAccountsPage, onSelectTheme, onToggleTimeMachine, onToggleXlnGuide, ownership, profile, readState, reserves, settingsSubview }: EntityWorkspaceStageWithOwnershipProps) {
   const copy = SECTION_COPY[activeTab];
   return (
     <section className="entity-workspace-stage" data-testid="entity-workspace-stage">
@@ -200,7 +202,7 @@ function EntityWorkspaceStage({ accounts, activeTab, consensus, context, display
                   : settingsSubview === 'display'
                     ? <EntityWorkspaceDisplayPanel issue={displayIssue} onSelectTheme={onSelectTheme} onToggleTimeMachine={onToggleTimeMachine} onToggleXlnGuide={onToggleXlnGuide} preferences={displayPreferences} />
                     : settingsSubview === 'wallet' || settingsSubview === 'entity'
-                      ? <EntityWorkspaceProfilePanel profile={profile} />
+                      ? <EntityWorkspaceProfilePanel hubPolicy={hubPolicy} profile={profile} />
                       : <ProjectionBoundary context={context} emptyMessage={copy.nextBoundary} onRefresh={onRefresh} readState={readState} />}
               </EntityWorkspaceSettingsStage>
           : <ProjectionBoundary
@@ -221,6 +223,7 @@ type EntityWorkspaceShellProps = Readonly<{
   context: EntityWorkspaceContext;
   displayIssue: string | null;
   displayPreferences: EntityWorkspaceDisplayPreferences;
+  hubPolicy: EntityWorkspaceHubPolicy;
   onRefresh: () => void;
   onSelectTheme: (theme: ThemeName) => void;
   onToggleTimeMachine: (show: boolean) => void;
@@ -244,7 +247,7 @@ const readModeLabel = (
   return 'Read boundary';
 };
 
-export function EntityWorkspaceShell({ accounts, activeTab, consensus, context, displayIssue, displayPreferences, onRefresh, onSelectAccountsPage, onSelectTheme, onToggleTimeMachine, onToggleXlnGuide, ownership, profile, readState, reserves, settingsSubview }: EntityWorkspaceShellProps) {
+export function EntityWorkspaceShell({ accounts, activeTab, consensus, context, displayIssue, displayPreferences, hubPolicy, onRefresh, onSelectAccountsPage, onSelectTheme, onToggleTimeMachine, onToggleXlnGuide, ownership, profile, readState, reserves, settingsSubview }: EntityWorkspaceShellProps) {
   return (
     <section
       className="entity-workspace"
@@ -285,6 +288,7 @@ export function EntityWorkspaceShell({ accounts, activeTab, consensus, context, 
         context={context}
         displayIssue={displayIssue}
         displayPreferences={displayPreferences}
+        hubPolicy={hubPolicy}
         onRefresh={onRefresh}
         onSelectAccountsPage={onSelectAccountsPage}
         onSelectTheme={onSelectTheme}

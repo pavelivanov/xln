@@ -289,6 +289,13 @@ test('React Entity workspace reads selected context from a real H1 Runtime', { t
       await expect(profile).toBeVisible();
       await expect(candidatePage.getByTestId('settings-profile-name')).not.toHaveText('');
       await expect(candidatePage.getByTestId('settings-profile-role')).toHaveText('Hub entity');
+      const hubPolicy = candidatePage.getByTestId('settings-hub-policy');
+      await expect(hubPolicy).toBeVisible();
+      await expect(candidatePage.getByTestId('settings-hub-policy-version')).not.toHaveText('0');
+      await expect(hubPolicy.getByText(/ppm$/)).toBeVisible();
+      await expect(hubPolicy.getByText(/bps$/)).toBeVisible();
+      await expect(hubPolicy.getByText(/raw units$/)).toBeVisible();
+      await hubPolicy.scrollIntoViewIfNeeded();
       await expect(candidatePage.getByRole('link', { name: 'Wallet', exact: true })).toHaveAttribute('aria-current', 'page');
       await expect(candidatePage.getByText('Profile edits and all Settings commands remain on the canonical workspace.')).toBeVisible();
       await capturePageScreenshot(candidatePage, testInfo, `react-entity-workspace-settings-profile-${viewport.name}.png`);
