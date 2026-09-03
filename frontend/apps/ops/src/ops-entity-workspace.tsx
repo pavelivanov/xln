@@ -130,6 +130,7 @@ export function OpsEntityWorkspacePage() {
         onSelectAccountsPage={opsEntityWorkspaceSource.selectAccountsPage}
         onSelectTheme={opsDisplayPreferencesSource.setTheme}
         onToggleTimeMachine={toggleTimeMachine}
+        onToggleXlnGuide={opsDisplayPreferencesSource.setXlnGuideVisibility}
         ownership={runtimeSnapshot.ownership}
         profile={runtimeSnapshot.profile}
         readState={runtimeSnapshot.readState}

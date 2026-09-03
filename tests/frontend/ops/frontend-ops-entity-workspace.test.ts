@@ -53,7 +53,9 @@ describe('React Entity workspace shell', () => {
     expect(consensus).not.toContain('pendingLeaderCertificate');
     expect(consensus).not.toContain('leaderVotes');
     expect(display).toContain('settings-theme-select');
-    expect(display).toContain('Canonical workspace control');
+    expect(display).toContain('settings-xln-mascot-toggle');
+    expect(display).toContain('onToggleXlnGuide(event.currentTarget.checked)');
+    expect(page).toContain('setXlnGuideVisibility');
     expect(settingsStage).toContain('ENTITY_SETTINGS_SECTIONS.map');
     expect(settingsStage).toContain("settingsSubview === 'entity' ? 'wallet' : settingsSubview");
     expect(profile).toContain('Profile edits stay on the canonical workspace');

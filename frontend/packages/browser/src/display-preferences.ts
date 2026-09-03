@@ -52,6 +52,11 @@ export const serializeTimeMachinePreferenceUpdate = (
   showTimeMachine: boolean,
 ): string => JSON.stringify({ ...parseSettingsRecord(raw), showTimeMachine });
 
+export const serializeXlnGuidePreferenceUpdate = (
+  raw: string | null,
+  showXlnMascot: boolean,
+): string => JSON.stringify({ ...parseSettingsRecord(raw), showXlnMascot });
+
 export function writeThemePreference(
   storage: DisplayPreferencesStorage,
   theme: ThemeName,
@@ -71,6 +76,19 @@ export function writeTimeMachinePreference(
     serializeTimeMachinePreferenceUpdate(
       storage.getItem(DISPLAY_PREFERENCES_STORAGE_KEY),
       showTimeMachine,
+    ),
+  );
+}
+
+export function writeXlnGuidePreference(
+  storage: DisplayPreferencesStorage,
+  showXlnMascot: boolean,
+): void {
+  storage.setItem(
+    DISPLAY_PREFERENCES_STORAGE_KEY,
+    serializeXlnGuidePreferenceUpdate(
+      storage.getItem(DISPLAY_PREFERENCES_STORAGE_KEY),
+      showXlnMascot,
     ),
   );
 }

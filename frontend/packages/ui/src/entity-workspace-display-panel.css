@@ -18,13 +18,11 @@
 .entity-workspace-display > header,
 .entity-workspace-display-theme,
 .entity-workspace-display-toggle,
-.entity-workspace-display > footer,
-.entity-workspace-display-boundaries dd { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+.entity-workspace-display > footer { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
 
 .entity-workspace-display > header span,
 .entity-workspace-display-theme > span > strong,
 .entity-workspace-display-toggle > span > strong,
-.entity-workspace-display-boundaries dt,
 .entity-workspace-display > footer {
   color: var(--theme-text-muted);
   font-family: "SFMono-Regular", Consolas, monospace;
@@ -56,11 +54,6 @@
 .entity-workspace-display-toggle input { width: 1.1rem; height: 1.1rem; accent-color: var(--entity-accent); }
 .entity-workspace-display-toggle input:focus-visible { outline: 2px solid var(--entity-accent); outline-offset: 3px; }
 
-.entity-workspace-display-boundaries { align-content: start; display: grid; margin: 0; }
-.entity-workspace-display-boundaries > div { display: grid; grid-template-columns: minmax(0, 0.7fr) minmax(0, 1.3fr); align-items: center; gap: 1rem; padding: 1rem 1.35rem; border-bottom: 1px solid var(--entity-line); }
-.entity-workspace-display-boundaries dd { margin: 0; }
-.entity-workspace-display-boundaries b { color: var(--theme-text-primary); font: 600 0.66rem/1 "SFMono-Regular", Consolas, monospace; }
-.entity-workspace-display-boundaries dd span { color: var(--theme-text-muted); font-size: 0.62rem; text-align: right; }
 .entity-workspace-display-issue { margin: 0; padding: 0.8rem 1.35rem; color: #ef896f; border-top: 1px solid var(--entity-line); font-size: 0.68rem; }
 .entity-workspace-display > footer { border-top: 1px solid var(--entity-line); }
 .entity-workspace-display > footer strong { color: var(--theme-text-secondary); font-weight: 500; text-align: right; }
@@ -69,6 +62,4 @@
   .entity-workspace-display { border-top: 0; border-left: 0; }
   .entity-workspace-display-theme { align-items: stretch; flex-direction: column; }
   .entity-workspace-display-theme select { width: 100%; }
-  .entity-workspace-display-boundaries > div { grid-template-columns: 1fr; }
-  .entity-workspace-display-boundaries dd span { text-align: left; }
 }

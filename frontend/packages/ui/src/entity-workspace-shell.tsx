@@ -158,6 +158,7 @@ type EntityWorkspaceStageWithOwnershipProps = EntityWorkspaceStageProps & Readon
   displayPreferences: EntityWorkspaceDisplayPreferences;
   onSelectTheme: (theme: ThemeName) => void;
   onToggleTimeMachine: (show: boolean) => void;
+  onToggleXlnGuide: (show: boolean) => void;
   onSelectAccountsPage: (page: number) => void;
   ownership: EntityWorkspaceOwnership;
   profile: EntityWorkspaceProfile;
@@ -177,7 +178,7 @@ const readFooterLabel = (
   return 'Unavailable — no remote Runtime selected';
 };
 
-function EntityWorkspaceStage({ accounts, activeTab, consensus, context, displayIssue, displayPreferences, onRefresh, onSelectAccountsPage, onSelectTheme, onToggleTimeMachine, ownership, profile, readState, reserves, settingsSubview }: EntityWorkspaceStageWithOwnershipProps) {
+function EntityWorkspaceStage({ accounts, activeTab, consensus, context, displayIssue, displayPreferences, onRefresh, onSelectAccountsPage, onSelectTheme, onToggleTimeMachine, onToggleXlnGuide, ownership, profile, readState, reserves, settingsSubview }: EntityWorkspaceStageWithOwnershipProps) {
   const copy = SECTION_COPY[activeTab];
   return (
     <section className="entity-workspace-stage" data-testid="entity-workspace-stage">
@@ -197,7 +198,7 @@ function EntityWorkspaceStage({ accounts, activeTab, consensus, context, display
                 {settingsSubview === 'consensus'
                   ? <EntityWorkspaceConsensusPanel evidence={consensus} />
                   : settingsSubview === 'display'
-                    ? <EntityWorkspaceDisplayPanel issue={displayIssue} onSelectTheme={onSelectTheme} onToggleTimeMachine={onToggleTimeMachine} preferences={displayPreferences} />
+                    ? <EntityWorkspaceDisplayPanel issue={displayIssue} onSelectTheme={onSelectTheme} onToggleTimeMachine={onToggleTimeMachine} onToggleXlnGuide={onToggleXlnGuide} preferences={displayPreferences} />
                     : settingsSubview === 'wallet' || settingsSubview === 'entity'
                       ? <EntityWorkspaceProfilePanel profile={profile} />
                       : <ProjectionBoundary context={context} emptyMessage={copy.nextBoundary} onRefresh={onRefresh} readState={readState} />}
@@ -223,6 +224,7 @@ type EntityWorkspaceShellProps = Readonly<{
   onRefresh: () => void;
   onSelectTheme: (theme: ThemeName) => void;
   onToggleTimeMachine: (show: boolean) => void;
+  onToggleXlnGuide: (show: boolean) => void;
   onSelectAccountsPage: (page: number) => void;
   ownership: EntityWorkspaceOwnership;
   profile: EntityWorkspaceProfile;
@@ -242,7 +244,7 @@ const readModeLabel = (
   return 'Read boundary';
 };
 
-export function EntityWorkspaceShell({ accounts, activeTab, consensus, context, displayIssue, displayPreferences, onRefresh, onSelectAccountsPage, onSelectTheme, onToggleTimeMachine, ownership, profile, readState, reserves, settingsSubview }: EntityWorkspaceShellProps) {
+export function EntityWorkspaceShell({ accounts, activeTab, consensus, context, displayIssue, displayPreferences, onRefresh, onSelectAccountsPage, onSelectTheme, onToggleTimeMachine, onToggleXlnGuide, ownership, profile, readState, reserves, settingsSubview }: EntityWorkspaceShellProps) {
   return (
     <section
       className="entity-workspace"
@@ -287,6 +289,7 @@ export function EntityWorkspaceShell({ accounts, activeTab, consensus, context, 
         onSelectAccountsPage={onSelectAccountsPage}
         onSelectTheme={onSelectTheme}
         onToggleTimeMachine={onToggleTimeMachine}
+        onToggleXlnGuide={onToggleXlnGuide}
         ownership={ownership}
         profile={profile}
         readState={readState}
