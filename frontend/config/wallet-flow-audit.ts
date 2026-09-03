@@ -118,6 +118,7 @@ export const WALLET_FLOW_AUDIT = [
     tests: [
       'tests/frontend/onboarding/frontend-wallet-identity-onboarding.test.ts',
       'tests/frontend/onboarding/frontend-wallet-recovery-rehearsal.test.ts',
+      'frontend/tests/react-candidate/wallet.spec.ts',
     ],
   },
   {
@@ -212,13 +213,6 @@ export const WALLET_FLOW_DEFERRALS = [
     evidenceSource: 'frontend/apps/wallet/src/identity-recovery.tsx',
     evidenceMarker: 'No wallet has been created or persisted by this rehearsal.',
     reason: 'Tower and durable recovery remain canonical until complete React parity is proven.',
-  },
-  {
-    id: 'address-route',
-    destination: 'WP9',
-    evidenceSource: 'frontend/apps/wallet/src/wallet-address-source.ts',
-    evidenceMarker: 'WALLET_ADDRESS_RUNTIME_NOT_SELECTED',
-    reason: 'The React route is live, but imported Runtime selection and populated browser evidence remain before parity can close.',
   },
   {
     id: 'external-wallet-provider',

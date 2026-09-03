@@ -52,18 +52,15 @@
 }
 
 @media (max-width: 600px) {
-  .identity-review-actions,
   .identity-rehearsal-actions {
     align-items: stretch;
     flex-direction: column;
   }
 
-  .identity-review-actions button,
   .identity-rehearsal-actions button {
     width: 100%;
   }
 
-  .identity-review-actions .identity-secondary-action,
   .identity-rehearsal-actions .identity-secondary-action {
     margin-top: 0;
   }
