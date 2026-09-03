@@ -19,6 +19,7 @@ import type { RuntimeQueryResultSchema } from '../../../packages/runtime-client/
 import { RuntimeQueryObserver } from '../../../packages/runtime-client/src/runtime-query-observer';
 import {
   buildEntityWorkspaceActivityQuery,
+  type EntityWorkspaceActivityFilterType,
   type EntityWorkspaceActivityKind,
 } from '../../../packages/runtime-client/src/entity-workspace-activity';
 import { createEntityWorkspaceLiveState } from '../../../packages/runtime-client/src/entity-workspace-time-machine';
@@ -53,6 +54,7 @@ const readEntityWorkspaceProjection = async (
   frame: RuntimeAdapterViewFrame,
   activityBeforeHeight?: number,
   activityKind: EntityWorkspaceActivityKind = 'all',
+  activityTypes: readonly EntityWorkspaceActivityFilterType[] = [],
 ): Promise<OpsEntityWorkspaceProjection> => {
   const projection = projectOpsEntityWorkspaceFrame(runtimeId, frame);
   if (projection.context.status === 'empty') return projection;
@@ -60,6 +62,7 @@ const readEntityWorkspaceProjection = async (
     projection.context,
     activityBeforeHeight,
     activityKind,
+    activityTypes,
   );
   const activity = await client.readActivity(activityQuery);
   return projectOpsEntityWorkspaceActivityPage(
@@ -67,6 +70,7 @@ const readEntityWorkspaceProjection = async (
     activity,
     activityQuery.beforeHeight,
     activityQuery.kind,
+    activityTypes,
   );
 };
 
@@ -141,6 +145,7 @@ export class OpsEntityWorkspaceSource {
       publish: (snapshot) => this.publish(snapshot),
       readActivityBeforeHeight: () => this.activityController.readBeforeHeight(),
       readActivityKind: () => this.activityController.readKind(),
+      readActivityTypes: () => this.activityController.readTypes(),
       readAccountsPage: () => this.accountsPage,
       readAdapter: () => this.session?.adapter ?? null,
       readClient: () => this.queryClient,
@@ -217,6 +222,10 @@ export class OpsEntityWorkspaceSource {
     this.activityController.selectKind(this.snapshot.activity, kind);
   };
 
+  readonly toggleActivityType = (type: EntityWorkspaceActivityFilterType): void => {
+    this.activityController.toggleType(this.snapshot.activity, type);
+  };
+
   readonly selectHistoryHeight = (height: number): Promise<boolean> => {
     this.activityController.resetPage();
     return this.historyController.select(height);
@@ -263,6 +272,7 @@ export class OpsEntityWorkspaceSource {
           frame,
           this.activityController.readBeforeHeight() ?? undefined,
           this.activityController.readKind(),
+          this.activityController.readTypes(),
         );
       },
       {
