@@ -1,6 +1,10 @@
 import { useEffect, useState, useSyncExternalStore } from 'react';
 
-import { readRuntimeAdapterStorageSnapshot } from '../../../packages/browser/src/runtime-adapter-session';
+import {
+  readRuntimeAdapterStorageSnapshot,
+  writeRemoteRuntimeAdapterSession,
+} from '../../../packages/browser/src/runtime-adapter-session';
+import { readStoredRemoteRuntimeImports } from '../../../packages/browser/src/remote-runtime-import';
 import {
   filterWalletAddressDirectory,
   type WalletAddressDetail,
@@ -11,6 +15,7 @@ import {
   type WalletAddressDetailProjection,
   type WalletAddressRequest,
 } from './wallet-address-source';
+import { resolveWalletAddressRuntimeAffinity } from './wallet-address-runtime-affinity';
 import type { WalletHistoryEvent } from './wallet-financial-health-model';
 import './styles/wallet-address.css';
 
@@ -204,10 +209,25 @@ function Detail({ source }: Readonly<{ source: WalletAddressSource }>) {
 }
 
 export function WalletAddressPage({ request }: Readonly<{ request: WalletAddressRequest }>) {
-  const [source] = useState(() => new WalletAddressSource(
-    readRuntimeAdapterStorageSnapshot({ durable: localStorage, session: sessionStorage }),
-    request,
-  ));
+  const [source] = useState(() => {
+    const stores = { durable: localStorage, session: sessionStorage };
+    const config = readRuntimeAdapterStorageSnapshot(stores);
+    const requestedRuntimeId = request.kind === 'detail' ? request.requestedRuntimeId : '';
+    const affinity = resolveWalletAddressRuntimeAffinity(
+      config,
+      requestedRuntimeId,
+      readStoredRemoteRuntimeImports({ dropExpired: true, dropInvalid: true }),
+    );
+    const selected = affinity.selectedImport;
+    const commitRuntimeSelection = selected === null ? null : () => {
+      writeRemoteRuntimeAdapterSession(stores, {
+        wsUrl: selected.wsUrl,
+        access: selected.access,
+        authKey: selected.token,
+      });
+    };
+    return new WalletAddressSource(affinity.config, request, commitRuntimeSelection);
+  });
   useEffect(() => {
     void source.start();
     return source.stop;

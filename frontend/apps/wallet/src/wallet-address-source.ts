@@ -126,6 +126,7 @@ export class WalletAddressSource {
   constructor(
     private readonly config: RuntimeAdapterStorageSnapshot,
     private readonly request: WalletAddressRequest,
+    private readonly commitRuntimeSelection: (() => void) | null = null,
   ) {
     this.snapshot = {
       status: 'connecting',
@@ -160,6 +161,19 @@ export class WalletAddressSource {
       if (!this.isCurrent(generation)) {
         dependencies.release();
         return;
+      }
+      const requestedRuntimeId = this.request.kind === 'detail'
+        ? normalizeRuntimeId(this.request.requestedRuntimeId)
+        : '';
+      if (requestedRuntimeId && requestedRuntimeId !== runtimeContext(dependencies.adapter).runtimeId) {
+        dependencies.release();
+        throw new Error(`WALLET_ADDRESS_RUNTIME_NOT_SELECTED:${requestedRuntimeId}`);
+      }
+      try {
+        this.commitRuntimeSelection?.();
+      } catch (error: unknown) {
+        dependencies.release();
+        throw error;
       }
       this.dependencies = dependencies;
       this.adapter = dependencies.adapter;

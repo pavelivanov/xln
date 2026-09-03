@@ -90,12 +90,21 @@ export const PLATFORM_INVENTORY = [
     workPackage: 'WP5',
     status: 'implemented',
     interfaces: ['local-storage', 'session-storage'],
-    sources: ['frontend/packages/browser/src/runtime-adapter-session.ts'],
+    sources: [
+      'frontend/packages/browser/src/runtime-adapter-session.ts',
+      'frontend/packages/browser/src/remote-runtime-import.ts',
+    ],
     consumers: [
       'frontend/src/lib/utils/runtime/runtimeConnection.ts',
       'frontend/apps/wallet/src/app-shell.tsx',
+      'frontend/apps/wallet/src/wallet-address.tsx',
     ],
-    evidence: ['tests/frontend/runtime/runtime-adapter-session.test.ts'],
+    evidence: [
+      'tests/frontend/runtime/runtime-adapter-session.test.ts',
+      'tests/frontend/onboarding/remote-runtime-import.test.ts',
+      'tests/frontend/runtime/frontend-wallet-address.test.ts',
+      'frontend/tests/react-candidate/wallet.spec.ts',
+    ],
   },
   {
     id: 'wallet-durable-custody-storage',

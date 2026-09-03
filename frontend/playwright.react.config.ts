@@ -54,6 +54,10 @@ export default defineConfig({
       XLN_REACT_GATEWAY_HOST: host,
       XLN_REACT_GATEWAY_PORT: String(gatewayPort),
       XLN_REACT_PORT_OFFSET: String(portOffset),
+      ...(selectedSurface === 'wallet' ? {
+        XLN_REACT_WALLET_ADDRESS_FIXTURE: '1',
+        XLN_REACT_WALLET_FIXTURE_PORT: String(gatewayPort + 12),
+      } : {}),
     },
   },
 });
