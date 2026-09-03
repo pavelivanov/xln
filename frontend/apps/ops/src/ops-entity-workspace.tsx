@@ -33,6 +33,7 @@ export function OpsEntityWorkspacePage() {
         ownership={snapshot.ownership}
         profile={snapshot.profile}
         readState={snapshot.readState}
+        reserves={snapshot.reserves}
         settingsSubview={settingsSubview}
       />
     </OpsShell>
