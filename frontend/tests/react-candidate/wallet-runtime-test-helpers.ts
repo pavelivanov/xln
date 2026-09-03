@@ -22,6 +22,12 @@ export type WalletRuntimeFixtureInfo = Readonly<{
     runtimeHeight: number;
     towerUrl: string;
     rpcUrl: string;
+    external: Readonly<{
+      recipient: string;
+      tokenAddress: string;
+      tokenSymbol: 'USDC';
+      initialBalance: string;
+    }>;
     brainVault: Readonly<{
       backupFileContents: string;
       runtimeId: string;
@@ -64,6 +70,15 @@ export const readWalletRuntimeFixture = async (page: Page): Promise<WalletRuntim
   const recoveryBackupFileContents = String(recoveryInfo['backupFileContents'] || '');
   const towerUrl = String(recoveryInfo['towerUrl'] || '').trim();
   const rpcUrl = String(recoveryInfo['rpcUrl'] || '').trim();
+  const external = recoveryInfo['external'];
+  if (!external || typeof external !== 'object' || Array.isArray(external)) {
+    throw new Error('WALLET_RECOVERY_FIXTURE_INFO_INVALID');
+  }
+  const externalInfo = external as Record<string, unknown>;
+  const externalRecipient = String(externalInfo['recipient'] || '').trim().toLowerCase();
+  const externalTokenAddress = String(externalInfo['tokenAddress'] || '').trim().toLowerCase();
+  const externalTokenSymbol = String(externalInfo['tokenSymbol'] || '').trim();
+  const externalInitialBalance = String(externalInfo['initialBalance'] || '').trim();
   const brainVault = recoveryInfo['brainVault'];
   if (!brainVault || typeof brainVault !== 'object' || Array.isArray(brainVault)) {
     throw new Error('WALLET_RECOVERY_FIXTURE_INFO_INVALID');
@@ -90,7 +105,11 @@ export const readWalletRuntimeFixture = async (page: Page): Promise<WalletRuntim
     || !Number.isSafeInteger(brainVaultRuntimeHeight)
     || brainVaultRuntimeHeight < 0
     || !brainVaultBackupFileContents.startsWith('{')
-    || !towerUrl.startsWith('http://127.0.0.1:')) {
+    || !towerUrl.startsWith('http://127.0.0.1:')
+    || !/^0x[0-9a-f]{40}$/.test(externalRecipient)
+    || !/^0x[0-9a-f]{40}$/.test(externalTokenAddress)
+    || externalTokenSymbol !== 'USDC'
+    || !/^\d+$/.test(externalInitialBalance)) {
     throw new Error('WALLET_RECOVERY_FIXTURE_INFO_INVALID');
   }
   if (!rpcUrl.startsWith('http://127.0.0.1:')) {
@@ -110,6 +129,12 @@ export const readWalletRuntimeFixture = async (page: Page): Promise<WalletRuntim
       runtimeHeight: recoveryRuntimeHeight,
       towerUrl,
       rpcUrl,
+      external: {
+        recipient: externalRecipient,
+        tokenAddress: externalTokenAddress,
+        tokenSymbol: 'USDC',
+        initialBalance: externalInitialBalance,
+      },
       brainVault: {
         backupFileContents: brainVaultBackupFileContents,
         runtimeId: brainVaultRuntimeId,

@@ -1,0 +1,140 @@
+.wallet-external-provider { min-width: 0; }
+
+.wallet-external-state {
+  margin-top: 1rem;
+  padding: 1.25rem 0;
+  border-block: 1px solid var(--line);
+}
+
+.wallet-external-state strong { color: #d8ddd5; font-size: 0.82rem; }
+.wallet-external-state p { margin: 0.45rem 0 0; color: #7f8682; font-size: 0.74rem; }
+.wallet-external-state button { margin-top: 0.9rem; }
+
+.wallet-external-authority {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
+  gap: 1rem;
+  align-items: end;
+  padding: 1.1rem 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.wallet-external-authority > div { display: grid; gap: 0.25rem; min-width: 0; }
+.wallet-external-authority span,
+.wallet-external-balances small {
+  color: #666d69;
+  font: 0.61rem/1.35 "SFMono-Regular", Consolas, monospace;
+  text-transform: uppercase;
+}
+.wallet-external-authority strong {
+  overflow: hidden;
+  color: #cbd1c8;
+  font-size: 0.72rem;
+  font-weight: 560;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.wallet-external-authority button {
+  min-width: 0;
+  padding: 0.72rem 0.85rem;
+  color: #dce0d9;
+  font: 500 0.76rem/1.2 inherit;
+  background: #111314;
+  border: 1px solid #303436;
+  border-radius: 0.45rem;
+}
+
+.wallet-external-balances {
+  display: flex;
+  overflow-x: auto;
+  padding: 1rem 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.wallet-external-balances > div {
+  display: grid;
+  flex: 0 0 min(14rem, 38vw);
+  gap: 0.25rem;
+  min-width: 0;
+  padding: 0 1rem;
+  border-left: 1px solid var(--line);
+}
+.wallet-external-balances > div:first-child { padding-left: 0; border-left: 0; }
+.wallet-external-balances span { color: var(--accent); font-size: 0.67rem; font-weight: 650; }
+.wallet-external-balances strong {
+  overflow: hidden;
+  color: #e1e5de;
+  font-size: 1.05rem;
+  font-variant-numeric: tabular-nums;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.wallet-external-modes {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-top: 1.25rem;
+  border-block: 1px solid var(--line);
+}
+.wallet-external-modes button {
+  display: grid;
+  gap: 0.25rem;
+  padding: 0.8rem 0.9rem;
+  color: #858c87;
+  text-align: left;
+  background: transparent;
+  border: 0;
+  border-right: 1px solid var(--line);
+}
+.wallet-external-modes button:last-child { border-right: 0; }
+.wallet-external-modes button.is-selected { color: #dbe1d8; background: #182019; }
+.wallet-external-modes strong { font-size: 0.73rem; }
+.wallet-external-modes span { color: #666d69; font-size: 0.62rem; line-height: 1.4; }
+
+.wallet-external-form { margin-top: 1.2rem; }
+.wallet-external-recipient { grid-column: span 2; }
+.wallet-external-allowance,
+.wallet-external-boundary {
+  margin: 1rem 0 0;
+  padding: 0.75rem 0;
+  color: #7d847f;
+  font-size: 0.7rem;
+  line-height: 1.5;
+  border-block: 1px solid var(--line);
+}
+.wallet-external-allowance.needs-approval { color: #d5aa6e; border-color: #51442f; }
+
+.wallet-external-operation {
+  display: grid;
+  gap: 0.35rem;
+  margin-top: 1rem;
+  padding: 0.8rem 0;
+  color: #aeb5ad;
+  font-size: 0.72rem;
+  border-block: 1px solid #36513b;
+}
+.wallet-external-operation strong { color: var(--accent); font-size: 0.64rem; text-transform: uppercase; }
+.wallet-external-operation.is-error { border-color: #5a302d; }
+.wallet-external-operation.is-error strong { color: #ef8178; }
+.wallet-external-operation.is-submitting strong { color: #efb66e; }
+.wallet-external-operation code { overflow: hidden; color: #777f79; font-size: 0.62rem; text-overflow: ellipsis; }
+.wallet-external-actions { align-items: center; }
+
+@media (max-width: 800px) {
+  .wallet-external-authority { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .wallet-external-authority button { justify-self: start; }
+  .wallet-external-recipient { grid-column: auto; }
+}
+
+@media (max-width: 620px) {
+  .wallet-external-balances > div { flex-basis: min(18rem, 78vw); }
+  .wallet-external-authority { grid-template-columns: 1fr; }
+  .wallet-external-modes { grid-template-columns: 1fr; }
+  .wallet-external-modes button { border-top: 1px solid var(--line); border-right: 0; }
+  .wallet-external-modes button:first-child { border-top: 0; }
+  .wallet-external-actions { align-items: stretch; flex-direction: column; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wallet-external-provider * { scroll-behavior: auto; }
+}

@@ -21,24 +21,6 @@ const SECOND_MNEMONIC = 'abandon abandon abandon abandon abandon abandon abandon
 const INVALID_MNEMONIC = 'test test test test test test test test test test test test';
 const BRAINVAULT_MNEMONIC = 'milk click novel require across cousin good chair street mouse crash movie same daughter air quote total pride crop mention focus sick slice hole';
 
-const expectOnlyUnavailableFixtureRelayErrors = (
-  errors: ReturnType<typeof observeBrowserErrors>,
-  relayUrl: string,
-): void => {
-  expect(errors.pageErrors).toEqual([]);
-  expect(errors.consoleErrors.length).toBeGreaterThan(0);
-  for (const error of errors.consoleErrors) {
-    const unavailableRelayError = error.includes(relayUrl) && (
-      error.includes('Unexpected response code: 502')
-      || error.includes('WS_UNEXPECTED_ERROR')
-      || error.includes('WS_UNEXPECTED_CLOSE')
-      || error.includes('WS_RELAY_FATAL')
-    );
-    expect(unavailableRelayError, `unexpected browser error: ${error}`).toBe(true);
-  }
-};
-
-
 test('wallet candidate renders without browser errors', async ({ page }, testInfo) => {
   const errors = observeBrowserErrors(page);
   const response = await page.goto('/testnet', { waitUntil: 'networkidle' });
@@ -185,7 +167,7 @@ test('wallet derives and opens a canonical Brain Vault outside React state', asy
   await expect(page.getByText('Active Runtime 0x93bab14ed871462d414a7c0357bf1a76de741397.', { exact: false })).toBeVisible();
   await expectPageContained(page);
   await screenshotEvidence(page, testInfo, 'wallet-brainvault-opened');
-  expectOnlyUnavailableFixtureRelayErrors(errors, `ws://localhost:${new URL(page.url()).port}/relay`);
+  expectNoBrowserErrors(errors);
 });
 
 test('wallet restores a canonical backup and enrolls recovery services', async ({ page }, testInfo) => {
@@ -310,10 +292,91 @@ test('wallet restores a canonical backup and enrolls recovery services', async (
   expect(persistedRecovery).toContain('delayed_last_resort');
   await expectPageContained(page);
   await screenshotEvidence(page, testInfo, 'wallet-recovery-services-saved');
-  expectOnlyUnavailableFixtureRelayErrors(
-    errors,
-    `ws://localhost:${new URL(page.url()).port}/relay`,
-  );
+  expectNoBrowserErrors(errors);
+});
+
+test('wallet binds its recovered signer to real external transfers and reserve deposits', async ({ page }, testInfo) => {
+  testInfo.setTimeout(240_000);
+  const depositAmount = testInfo.project.name === 'mobile-390x844'
+    ? '2'
+    : testInfo.project.name === 'laptop-1366x900' ? '3' : '4';
+  const errors = observeBrowserErrors(page);
+  const fixture = await readWalletRuntimeFixture(page);
+  await page.addInitScript(({ towerUrl }: { towerUrl: string }) => {
+    localStorage.setItem('xln-watchtower-urls', JSON.stringify([towerUrl]));
+    const target = window as typeof window & {
+      __XLN_WATCHTOWERS__?: string[];
+      xlnDesktop?: { platform: 'desktop' };
+    };
+    target.__XLN_WATCHTOWERS__ = [towerUrl];
+    target.xlnDesktop = { platform: 'desktop' };
+  }, { towerUrl: fixture.recovery.towerUrl });
+  const response = await page.goto('/app?setup=1', { waitUntil: 'domcontentloaded' });
+  expect(response?.ok(), 'document response for external wallet recovery').toBe(true);
+  await expect(page.locator('.wallet-shell-runtime-state')).toHaveText('Local Runtime', { timeout: 90_000 });
+
+  await page.getByRole('tab', { name: /Mnemonic/ }).click();
+  await page.getByRole('textbox', { name: /^Seed phrase/ }).fill(FIRST_MNEMONIC);
+  await page.getByRole('button', { name: 'Review identity inputs' }).click();
+  await page.getByRole('button', { name: 'Verify recovery' }).click();
+  await page.getByRole('textbox', { name: /^Seed phrase/ }).fill(FIRST_MNEMONIC);
+  await page.getByRole('button', { name: 'Verify recovered wallet' }).click();
+  const fileChooserPromise = page.waitForEvent('filechooser');
+  await page.getByRole('button', { name: 'Import runtime backup' }).click();
+  const fileChooser = await fileChooserPromise;
+  await fileChooser.setFiles({
+    name: 'mnemonic-backup.json',
+    mimeType: 'application/json',
+    buffer: Buffer.from(fixture.recovery.backupFileContents),
+  });
+  await expect(page.getByRole('heading', { name: 'Choose a backup' })).toBeVisible({ timeout: 90_000 });
+  await page.getByRole('button', { name: 'Restore selected backup' }).click();
+  await expect(page.getByRole('heading', { name: 'Wallet opened' })).toBeVisible({ timeout: 90_000 });
+
+  await page.getByRole('link', { name: 'Payments', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Payments' })).toBeVisible({ timeout: 90_000 });
+  const committedHeight = page.getByText(/^Committed height \d+$/);
+  const heightBeforeDeposit = await committedHeight.textContent();
+  expect(heightBeforeDeposit).toBeTruthy();
+  await page.getByRole('button', { name: 'External', exact: true }).click();
+  const externalProvider = page.getByTestId('wallet-external-provider');
+  await expect(externalProvider).toBeVisible({ timeout: 90_000 });
+  await expect(externalProvider).toContainText('desktop · rpc');
+  await expect(externalProvider).toContainText('react recovery mnemonic · 31337');
+  const usdcBalance = externalProvider.locator('.wallet-external-balances > div').filter({ hasText: 'USDC' });
+  await expect(usdcBalance.locator('small')).toContainText('allowance');
+  const balanceBefore = await usdcBalance.locator('strong').textContent();
+  expect(balanceBefore).toBeTruthy();
+  await expectPageContained(page);
+  await screenshotEvidence(page, testInfo, 'wallet-external-provider-ready');
+
+  await externalProvider.getByLabel('Asset').selectOption(fixture.recovery.external.tokenAddress);
+  await externalProvider.getByLabel('Amount').fill('1');
+  await externalProvider.getByLabel('Recipient EOA').fill(fixture.recovery.external.recipient);
+  await externalProvider.getByRole('button', { name: 'Sign wallet transfer' }).click();
+  await expect(externalProvider.getByText('Transfer confirmed. Finalized balances are refreshing.')).toBeVisible({ timeout: 90_000 });
+  await expect.poll(() => usdcBalance.locator('strong').textContent(), { timeout: 90_000 })
+    .not.toBe(balanceBefore);
+  await expect(externalProvider.locator('.wallet-external-operation code')).toHaveText(/^0x[0-9a-f]{64}$/);
+  await expectPageContained(page);
+  await screenshotEvidence(page, testInfo, 'wallet-external-provider-transfer-confirmed');
+
+  await externalProvider.getByRole('radio', { name: /Deposit to reserve/ }).click();
+  await externalProvider.getByLabel('Asset').selectOption(fixture.recovery.external.tokenAddress);
+  await externalProvider.getByLabel('Amount').fill(depositAmount);
+  await externalProvider.getByRole('button', { name: 'Approve exact amount' }).click();
+  await expect(externalProvider.getByText('Approval confirmed. Finalized balances are refreshing.')).toBeVisible({ timeout: 90_000 });
+  await expect(usdcBalance).toContainText(`allowance ${depositAmount}`, { timeout: 90_000 });
+  await expectPageContained(page);
+  await screenshotEvidence(page, testInfo, 'wallet-external-provider-approved');
+
+  await externalProvider.getByRole('button', { name: 'Queue reserve deposit' }).click();
+  await expect(page.locator('.wallet-payment-command.is-accepted')).toContainText('accepted', { timeout: 90_000 });
+  await expect(page.locator('.wallet-payment-command.is-accepted')).toContainText('Queued after committed Runtime height');
+  await expect.poll(() => committedHeight.textContent(), { timeout: 90_000 }).not.toBe(heightBeforeDeposit);
+  await expectPageContained(page);
+  await screenshotEvidence(page, testInfo, 'wallet-external-provider-deposit-queued');
+  expectNoBrowserErrors(errors);
 });
 
 test('address directory reads the isolated wallet Runtime', async ({ page }, testInfo) => {

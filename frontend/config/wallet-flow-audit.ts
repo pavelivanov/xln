@@ -307,6 +307,24 @@ export const WALLET_FLOW_AUDIT = [
       'frontend/tests/react-candidate/wallet-transactions.spec.ts',
     ],
   },
+  {
+    id: 'external-wallet-moves',
+    pathname: '/app',
+    search: '?payments=1',
+    page: 'app',
+    view: 'payments',
+    sources: [
+      'frontend/apps/wallet/src/wallet-payment-external.tsx',
+      'frontend/apps/wallet/src/wallet-external-provider-source.ts',
+      'frontend/bridges/wallet-canonical-external-provider.ts',
+      'frontend/packages/browser/src/wallet-external-provider.ts',
+      'frontend/src/lib/native/external-wallet-authority.ts',
+    ],
+    tests: [
+      'tests/frontend/payments/frontend-wallet-external-provider.test.ts',
+      'frontend/tests/react-candidate/wallet.spec.ts',
+    ],
+  },
 ] as const satisfies readonly WalletFlowAuditEntry[];
 
 export const WALLET_FLOW_DEFERRALS = [
@@ -316,13 +334,6 @@ export const WALLET_FLOW_DEFERRALS = [
     evidenceSource: 'frontend/apps/wallet/src/identity-recovery.tsx',
     evidenceMarker: 'No wallet has been created and no secret has left this form.',
     reason: 'Canonical identity creation and recovery-service onboarding are live; post-creation profile, jurisdiction, and hub-join remain in WP9.',
-  },
-  {
-    id: 'external-wallet-provider',
-    destination: 'WP9',
-    evidenceSource: 'frontend/apps/wallet/src/wallet-payments.tsx',
-    evidenceMarker: 'External-wallet moves are excluded until the React provider boundary is live',
-    reason: 'Provider, native, and offline authority must be integrated with artifact consumers.',
   },
   {
     id: 'canonical-cutover',
@@ -347,10 +358,11 @@ export const WALLET_REQUIREMENT_AUDIT = [
   ...['debt', 'solvency', 'disputes', 'history'].map((id) => ({
     id, group: 2 as const, disposition: 'implemented' as const, evidenceId: 'financial-health',
   })),
-  ...['payments', 'receive', 'invoices', 'moves', 'lending', 'settlement', 'reconnect', 'failures', 'quotes', 'routing'].map((id) => ({
+  ...['payments', 'receive', 'invoices', 'lending', 'settlement', 'reconnect', 'failures', 'quotes', 'routing'].map((id) => ({
     id, group: id === 'quotes' || id === 'routing' ? 4 as const : 3 as const,
     disposition: 'implemented' as const, evidenceId: 'payments',
   })),
+  { id: 'moves', group: 3, disposition: 'implemented', evidenceId: 'external-wallet-moves' },
   ...['orders', 'orderbook', 'cancel-fill', 'cross-j', 'activity'].map((id) => ({
     id, group: 4 as const, disposition: 'implemented' as const, evidenceId: 'markets-and-activity',
   })),
