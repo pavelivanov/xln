@@ -1,6 +1,6 @@
 # React frontend migration work plan
 
-**Status:** `IN PROGRESS — WP0–WP6 COMPLETE; WP7 HEALTH + QA + HLT + RUNS + SCENARIOS + AI IMPLEMENTED, WORKSPACE STATE LAYER SVELTE-FREE, PANEL PORTS THROUGH ARCHITECT, REACT DOCKVIEW WRAPPER READY, GRAPH3D LIFECYCLE + RENDERER/PRIMITIVES/EFFECTS/ENTITY/ACCOUNT VISUAL FACTORY/INTERACTION/SELECTION/CAMERA/POINTER+XR DRAG + HOVER MECHANICS + VIEW/SCENE INPUT MODELS EXTRACTED, ENTITY WORKSPACE REACT SHELL/TABS + LIVE RUNTIME CONTEXT + READ-ONLY OWNERSHIP/ACCOUNTS/PROFILE READY; WP8 COMPLETE; WP9 HAS 19 COVERED / 1 PARTIAL BROWSER ROUTE AND 4 EXACT GAPS, IRREVERSIBLE IDENTITY NEXT`
+**Status:** `IN PROGRESS — WP0–WP6 COMPLETE; WP7 HEALTH + QA + HLT + RUNS + SCENARIOS + AI IMPLEMENTED, WORKSPACE STATE LAYER SVELTE-FREE, PANEL PORTS THROUGH ARCHITECT, REACT DOCKVIEW WRAPPER READY, GRAPH3D LIFECYCLE + RENDERER/PRIMITIVES/EFFECTS/ENTITY/ACCOUNT VISUAL FACTORY/INTERACTION/SELECTION/CAMERA/POINTER+XR DRAG + HOVER MECHANICS + VIEW/SCENE INPUT MODELS EXTRACTED, ENTITY WORKSPACE REACT SHELL/TABS + LIVE RUNTIME CONTEXT + READ-ONLY OWNERSHIP/ACCOUNTS/PROFILE READY; WP8 COMPLETE; WP9 HAS 19 COVERED / 1 PARTIAL BROWSER ROUTE AND 4 EXACT GAPS, RECOVERY SELECTION NEXT`
 
 This is the executable work plan for splitting the Svelte frontend into React
 applications. It is intentionally lightweight and should be updated as live
@@ -2420,6 +2420,35 @@ error with 7,181 expectations across 1,275 tests. Root evidence again passes
 26 / 26 BrainVault/runtime tests and all 10 soundchecks before the same shared
 Hardhat mutex, missing local `cargo`, and known 3,001 / 3,000 file-size stops.
 
+React mnemonic identity now crosses the irreversible boundary only after the
+second seed entry reproduces the expected public address and canonical recovery
+discovery reports zero backups. An inventoried migration bridge outside the
+React application roots dynamically loads the same vault adapter used by
+Svelte, preserving the rule that React sources do not import the legacy
+`src/lib` tree. It opens or unlocks through the shared Runtime-opening executor,
+persists the canonical vault state, and restores that state on later React
+boots. Discovery results remain loud and block fresh creation whenever a backup
+exists; React recovery-candidate selection is the next slice. Opening
+replaces the ambient embedded Runtime under its existing active-tab lease. If
+the canonical boot fails, the session transactionally restores the ambient
+Runtime before returning the original inline error, so the verified screen is
+not unmounted and secrets remain cleared. The focused opening/session batch
+passes 27 / 27 with 113 expectations, and the complete onboarding directory
+passes 178 / 178 with 730 expectations. The wallet local gate covers 658 files
+with zero unsafe findings, and the production wallet build transforms 1,798
+modules. The canonical frontend gate remains at zero errors/warnings and builds
+4,677 SSR plus 6,428 client modules. The full 209-file suite preserves the exact
+14 known failures with 1,264 passes, one error, and 7,230 expectations across
+1,278 tests; its loopback server checks pass 6 / 6 outside the filesystem
+sandbox. Browser evidence at 390×844, 1366×900, and 1920×1080 confirms the
+verified consent state without horizontal overflow. The isolated real-backend
+boundary intentionally had no API process; its HTTP 502 reproduced and then
+proved the retained, fail-loud error state with the ambient Runtime restored.
+Root evidence passes 26 / 26 BrainVault/runtime tests with 100,156 expectations
+and all ten soundchecks before the same shared Hardhat compiler-cache mutex,
+missing local `cargo`, and known `core/qa/report.ts` 3,001 / 3,000 file-size
+stops.
+
 **Current checkpoint:** all retained routes have React application owners; two
 implementations, one browser route, and four typed gaps remain partial before
 cutover readiness.
@@ -2465,8 +2494,8 @@ any mismatch. Never compile on production.
 
 ## Current next actions
 
-1. Dynamically load the canonical vault adapter from React only after recovery
-   discovery authorizes local unlock or fresh Runtime creation.
+1. Add React recovery-candidate selection and Brain Vault derivation through
+   the canonical recovery and vault adapters.
 2. Owner to assign: two `network-timeline-source` failures
    (`NETWORK_TRAIL_FRAME_INVALID:1` in the JSON-safe-frame and trail
    round-trip tests) appeared with the in-flight `core/scenarios` runner

@@ -19,6 +19,7 @@ const USE_DEVELOPMENT_GATEWAY = process.env['XLN_REACT_DEV_GATEWAY'] === '1';
 type ReactAppConfigInput = Readonly<{
   surfaceId: SurfaceId;
   rootDirectory: string;
+  aliases?: Readonly<Record<string, string>>;
 }>;
 
 const createWalletContentSecurityPolicyPlugin = (policy: string): Plugin => ({
@@ -54,7 +55,7 @@ export const getReactViteCacheDirectory = (
   configuredRoot = process.env['XLN_REACT_VITE_CACHE_ROOT'],
 ): string => resolve(FRONTEND_ROOT, configuredRoot?.trim() || 'node_modules/.vite-react', surfaceId);
 
-export const createReactAppConfig = ({ surfaceId, rootDirectory }: ReactAppConfigInput): UserConfig => {
+export const createReactAppConfig = ({ surfaceId, rootDirectory, aliases = {} }: ReactAppConfigInput): UserConfig => {
   const surface = getSurface(surfaceId);
   const contentSecurityPolicy = getReactContentSecurityPolicy(surfaceId);
   const developmentPort = resolveDevelopmentSurfacePort(
@@ -70,6 +71,7 @@ export const createReactAppConfig = ({ surfaceId, rootDirectory }: ReactAppConfi
     resolve: {
       alias: {
         '@xln/core': resolve(REPOSITORY_ROOT, 'core'),
+        ...aliases,
       },
     },
     cacheDir: getReactViteCacheDirectory(surfaceId),

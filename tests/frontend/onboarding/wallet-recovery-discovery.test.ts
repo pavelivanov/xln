@@ -126,7 +126,7 @@ describe('browser wallet recovery discovery', () => {
     expect(await run).toEqual({ status: 'cancelled' });
   });
 
-  test('keeps discovery sources and UI publication in the Svelte event flow', () => {
+  test('keeps discovery effects behind the canonical adapter and UI publication in Svelte', () => {
     const boundary = readFileSync(
       'frontend/packages/browser/src/wallet-recovery-discovery.ts',
       'utf8',
@@ -135,12 +135,18 @@ describe('browser wallet recovery discovery', () => {
       'frontend/src/lib/components/Views/RuntimeCreation.svelte',
       'utf8',
     );
+    const adapter = readFileSync(
+      'frontend/src/lib/stores/vault/walletRuntimeOpeningAdapter.ts',
+      'utf8',
+    );
 
     expect(boundary).not.toContain('svelte');
     expect(boundary).not.toContain('discoverRuntimeRecoveryCandidates');
     expect(boundary).not.toContain('vaultOperations');
     expect(view).toContain('new WalletRecoveryDiscoveryCoordinator<');
-    expect(view).toContain('discover: ({ seed, runtimeId }) => discoverRuntimeRecoveryCandidates(seed, {');
+    expect(view).toContain('discover: ({ seed, runtimeId }) => discoverCanonicalWalletRuntimeRecovery(seed, runtimeId)');
+    expect(adapter).toContain('await discoverRuntimeRecoveryCandidates(seed, {');
+    expect(adapter).toContain('peers: buildRemoteRuntimeRecoveryPeerSources({ runtimeId: expectedRuntimeId })');
     expect(view).toContain('const outcome = await walletRecoveryDiscovery.run({');
     expect(view).toContain("outcome.status === 'cancelled'");
     expect(view).toContain('recoveryErrors = [outcome.message]');

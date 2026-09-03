@@ -1,4 +1,4 @@
-import { useRef, useState, type FormEvent, type KeyboardEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from 'react';
 
 import { DEMO_ACCOUNTS } from '../../../packages/ui/src/demo-accounts';
 import {
@@ -11,9 +11,11 @@ import {
   createWalletIdentityDraft,
   deriveWalletIdentityMnemonicAddress,
   evaluateWalletMnemonicRecoveryAttempt,
+  normalizeWalletIdentityMnemonic,
   validateWalletIdentityDraft,
   walletIdentityMnemonicErrorMessage,
   walletIdentityModeLabel,
+  walletRuntimeOpeningErrorMessage,
   type WalletIdentityDraft,
 } from './identity-onboarding-model';
 import { IdentityRecoveryVerified, IdentityReview } from './identity-recovery';
@@ -21,6 +23,7 @@ import {
   resetWalletRecoveryRehearsal,
   type WalletRecoveryRehearsalState,
 } from '../../../packages/browser/src/wallet-recovery-rehearsal';
+import { openWalletRuntimeWithCanonicalVault } from './wallet-embedded-runtime';
 import './styles/identity-onboarding.css';
 
 const FACTORS = [1, 2, 3, 4, 5] as const;
@@ -35,6 +38,10 @@ export function IdentityOnboarding() {
   const [derivedAddress, setDerivedAddress] = useState('');
   const [deriving, setDeriving] = useState(false);
   const [recoveryVerified, setRecoveryVerified] = useState(false);
+  const [openingRuntime, setOpeningRuntime] = useState(false);
+  const [openingError, setOpeningError] = useState('');
+  const [openedRuntimeId, setOpenedRuntimeId] = useState('');
+  const verifiedMnemonicRef = useRef('');
   const [rehearsal, setRehearsal] = useState<WalletRecoveryRehearsalState>(
     resetWalletRecoveryRehearsal,
   );
@@ -44,12 +51,19 @@ export function IdentityOnboarding() {
   });
   const validation = validateWalletIdentityDraft(draft);
 
+  useEffect(() => () => {
+    verifiedMnemonicRef.current = '';
+  }, []);
+
   const selectMode = (nextMode: WalletIdentityMode): void => {
     setSubmitted(false);
     setSubmissionError('');
     setDerivedAddress('');
     setReviewing(false);
     setRecoveryVerified(false);
+    verifiedMnemonicRef.current = '';
+    setOpeningError('');
+    setOpenedRuntimeId('');
     setRehearsal(resetWalletRecoveryRehearsal());
     setDraft((current) => ({
       ...current,
@@ -100,6 +114,7 @@ export function IdentityOnboarding() {
           setSubmissionError(attempt.error);
           return;
         }
+        verifiedMnemonicRef.current = normalizeWalletIdentityMnemonic(draft.mnemonicInput);
         setDraft((current) => ({ ...current, mnemonicInput: '' }));
         setDerivedAddress(address);
         setRecoveryVerified(true);
@@ -123,17 +138,54 @@ export function IdentityOnboarding() {
   };
 
   const resetIdentity = (): void => {
+    verifiedMnemonicRef.current = '';
     setDraft(createWalletIdentityDraft('', DEMO_ACCOUNTS));
     setDerivedAddress('');
     setSubmissionError('');
     setSubmitted(false);
     setReviewing(false);
     setRecoveryVerified(false);
+    setOpeningRuntime(false);
+    setOpeningError('');
+    setOpenedRuntimeId('');
     setRehearsal(resetWalletRecoveryRehearsal());
   };
 
+  const openVerifiedMnemonic = async (): Promise<void> => {
+    const seed = verifiedMnemonicRef.current;
+    if (!seed || !derivedAddress) throw new Error('WALLET_VERIFIED_MNEMONIC_REQUIRED');
+    setOpeningRuntime(true);
+    setOpeningError('');
+    try {
+      const runtimeId = await openWalletRuntimeWithCanonicalVault({
+        runtimeId: derivedAddress,
+        name: `Mnemonic ${derivedAddress.slice(0, 6)}`,
+        labelOverride: undefined,
+        seed,
+        mnemonic12: '',
+        devicePassphrase: '',
+        loginType: 'manual',
+        unlockDurationMs: 600_000,
+      });
+      verifiedMnemonicRef.current = '';
+      setOpenedRuntimeId(runtimeId);
+    } catch (error: unknown) {
+      verifiedMnemonicRef.current = '';
+      setOpeningError(walletRuntimeOpeningErrorMessage(error));
+    } finally {
+      setOpeningRuntime(false);
+    }
+  };
+
   if (recoveryVerified) {
-    return <IdentityRecoveryVerified address={derivedAddress} onReset={resetIdentity} />;
+    return <IdentityRecoveryVerified
+      address={derivedAddress}
+      openedRuntimeId={openedRuntimeId}
+      opening={openingRuntime}
+      openingError={openingError}
+      onOpen={() => { void openVerifiedMnemonic(); }}
+      onReset={resetIdentity}
+    />;
   }
 
   if (reviewing) {

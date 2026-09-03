@@ -93,13 +93,17 @@ describe('browser wallet recovery choice', () => {
     })).toBe('create-fresh');
   });
 
-  test('keeps discovery, file parsing, and Runtime actions in the Svelte flow', () => {
+  test('keeps discovery behind the canonical adapter and decisions in the Svelte flow', () => {
     const boundary = readFileSync(
       'frontend/packages/browser/src/wallet-recovery-choice.ts',
       'utf8',
     );
     const view = readFileSync(
       'frontend/src/lib/components/Views/RuntimeCreation.svelte',
+      'utf8',
+    );
+    const adapter = readFileSync(
+      'frontend/src/lib/stores/vault/walletRuntimeOpeningAdapter.ts',
       'utf8',
     );
 
@@ -109,7 +113,8 @@ describe('browser wallet recovery choice', () => {
     expect(view).toContain('summarizeWalletRecoveryCandidates(');
     expect(view).toContain('resolveWalletRecoveryContinuation({');
     expect(view).toContain('mergeWalletRecoveryCandidate(recoveryCandidates, candidate)');
-    expect(view).toContain('discover: ({ seed, runtimeId }) => discoverRuntimeRecoveryCandidates(seed, {');
+    expect(view).toContain('discover: ({ seed, runtimeId }) => discoverCanonicalWalletRuntimeRecovery(seed, runtimeId)');
+    expect(adapter).toContain('await discoverRuntimeRecoveryCandidates(seed, {');
     expect(view).toContain('const outcome = await walletRecoveryDiscovery.run({');
     expect(view).toContain('await parseRuntimeRecoveryCandidateFile(');
     expect(view).toContain('await openLocalRuntime()');

@@ -110,6 +110,16 @@ export const walletIdentityMnemonicErrorMessage = (error: unknown): string => {
     : `Mnemonic validation failed: ${detail}`;
 };
 
+export const walletRuntimeOpeningErrorMessage = (error: unknown): string => {
+  const detail = error instanceof Error ? error.message : String(error);
+  const recoveryMatch = /^WALLET_RECOVERY_SELECTION_REQUIRED:(\d+)$/.exec(detail);
+  if (recoveryMatch) {
+    const count = Number(recoveryMatch[1]);
+    return `${count} recovery backup${count === 1 ? '' : 's'} found. Fresh creation was blocked; select a backup before opening this wallet.`;
+  }
+  return `Wallet opening failed: ${detail}`;
+};
+
 export const beginWalletMnemonicRecoveryRehearsal = (
   address: string,
 ): WalletRecoveryRehearsalState => {

@@ -39,13 +39,18 @@ describe('React wallet mnemonic recovery rehearsal', () => {
     });
   });
 
-  test('clears both seed entries and keeps verified output secret-free', () => {
+  test('clears both inputs and releases the verified phrase on open, failure, reset, or unmount', () => {
     const onboarding = readFileSync('frontend/apps/wallet/src/identity-onboarding.tsx', 'utf8');
     const recovery = readFileSync('frontend/apps/wallet/src/identity-recovery.tsx', 'utf8');
 
     expect(onboarding).toContain("setDraft((current) => ({ ...current, mnemonicInput: '' }))");
+    expect(onboarding).toContain('verifiedMnemonicRef.current = normalizeWalletIdentityMnemonic(draft.mnemonicInput)');
+    expect(onboarding.match(/verifiedMnemonicRef\.current = '';/g)?.length).toBeGreaterThanOrEqual(4);
+    expect(onboarding).toContain('await openWalletRuntimeWithCanonicalVault({');
     expect(onboarding).toContain('setRecoveryVerified(true)');
     expect(recovery).toContain('Both seed entries were cleared.');
+    expect(recovery).toContain('The verified phrase remains only in this tab until you open the wallet or reset.');
+    expect(recovery).toContain('Check recovery and open wallet');
     expect(recovery).not.toContain('mnemonicInput');
     expect(recovery).not.toContain('localStorage');
     expect(recovery).not.toContain('sessionStorage');

@@ -4,7 +4,9 @@
     "baseUrl": "../..",
     "paths": {
       "$lib/*": ["src/lib/*"],
-      "@xln/core/*": ["../core/*"]
+      "@xln/core/*": ["../core/*"],
+      "@xln/brainvault": ["../brainvault"],
+      "@xln/brainvault/*": ["../brainvault/*"]
     }
   },
   "include": [
