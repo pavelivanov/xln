@@ -33,6 +33,19 @@ export function EntityWorkspaceAccountsPanel({
                   <div><dt>Frame</dt><dd>{account.frameHeight}</dd></div>
                   <div><dt>State</dt><dd title={account.stateHash}>{formatAddress(account.stateHash)}</dd></div>
                 </dl>
+                <dl className="account-commitment-detail" data-testid="account-commitment">
+                  <div><dt>J height</dt><dd data-testid="account-commitment-j-height">{account.jurisdictionHeight}</dd></div>
+                  <div><dt>Timestamp</dt><dd>{account.frameTimestamp}</dd></div>
+                  <div><dt>Frame txs</dt><dd>{account.transactionCount}</dd></div>
+                  <div className="account-commitment-wide">
+                    <dt>Account state root</dt>
+                    <dd data-testid="account-commitment-root" title={account.accountStateRoot}>{formatAddress(account.accountStateRoot)}</dd>
+                  </div>
+                  <div className="account-commitment-wide">
+                    <dt>Previous frame</dt>
+                    <dd title={account.previousFrameHash}>{account.previousFrameHash ? formatAddress(account.previousFrameHash) : 'None'}</dd>
+                  </div>
+                </dl>
               </li>
             ))}
           </ol>}
@@ -42,7 +55,7 @@ export function EntityWorkspaceAccountsPanel({
           onClick={() => onSelectPage(accounts.pageIndex - 1)}
           type="button"
         >Previous</button>
-        <span>Committed frame headers only</span>
+        <span>Exact committed frame evidence</span>
         <button
           disabled={accounts.pageIndex + 1 >= accounts.pageCount}
           onClick={() => onSelectPage(accounts.pageIndex + 1)}

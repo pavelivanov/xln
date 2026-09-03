@@ -28,7 +28,7 @@
   display: grid;
   grid-template-columns: auto minmax(7rem, 1fr) auto;
   gap: 0.75rem;
-  align-items: center;
+  align-items: start;
   padding: 0.9rem 1.35rem;
   border-bottom: 1px solid var(--entity-line);
 }
@@ -39,6 +39,18 @@
 .entity-workspace-accounts-panel dl div { min-width: 3rem; }
 .entity-workspace-accounts-panel dt { color: var(--theme-text-muted, #555650); }
 .entity-workspace-accounts-panel dd { margin: 0.25rem 0 0; color: var(--theme-text-secondary, #99978f); font: 500 0.64rem/1 "SFMono-Regular", Consolas, monospace; }
+.entity-workspace-accounts-panel .account-commitment-detail {
+  grid-column: 2 / -1;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.65rem 1rem;
+  width: 100%;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--entity-line);
+}
+.entity-workspace-accounts-panel .account-commitment-detail div { min-width: 0; }
+.entity-workspace-accounts-panel .account-commitment-detail .account-commitment-wide { grid-column: 1 / -1; }
+.entity-workspace-accounts-panel .account-commitment-detail dd { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .entity-workspace-accounts-empty { align-self: center; margin: 0; padding: 2rem; color: var(--theme-text-secondary, #777871); font-size: 0.78rem; line-height: 1.6; }
 
 .entity-workspace-accounts-panel > footer { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 0.75rem; padding: 0.8rem 1.35rem; color: var(--theme-text-muted, #666761); border-top: 1px solid var(--entity-line); }
@@ -51,4 +63,5 @@
   .entity-workspace-accounts-panel { border-top: 1px solid var(--entity-line); border-left: 0; }
   .entity-workspace-accounts-panel li { grid-template-columns: auto minmax(0, 1fr); }
   .entity-workspace-accounts-panel dl { grid-column: 2; justify-content: space-between; }
+  .entity-workspace-accounts-panel .account-commitment-detail { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }

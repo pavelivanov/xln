@@ -47,7 +47,7 @@ describe('React Entity workspace shell', () => {
     expect(shell).toContain("settingsSubview === 'wallet' || settingsSubview === 'entity'");
     expect(shell).toContain("settingsSubview === 'display'");
     expect(page).toContain("route.settingsSubview ?? 'wallet'");
-    expect(accounts).toContain('Committed frame headers only');
+    expect(accounts).toContain('Exact committed frame evidence');
     expect(accounts).not.toContain('deriveDelta');
     expect(accounts).not.toContain('CreditLimit');
     expect(consensus).toContain('Validator-local proposals, votes, locks, and certificates are not exposed');
