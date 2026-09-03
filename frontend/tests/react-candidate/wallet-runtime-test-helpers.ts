@@ -17,9 +17,11 @@ export type WalletRuntimeFixtureInfo = Readonly<{
   token: string;
   recovery: Readonly<{
     backupFileContents: string;
+    entityId: string;
     runtimeId: string;
     runtimeHeight: number;
     towerUrl: string;
+    rpcUrl: string;
     brainVault: Readonly<{
       backupFileContents: string;
       runtimeId: string;
@@ -57,9 +59,11 @@ export const readWalletRuntimeFixture = async (page: Page): Promise<WalletRuntim
   }
   const recoveryInfo = recovery as Record<string, unknown>;
   const recoveryRuntimeId = String(recoveryInfo['runtimeId'] || '').trim().toLowerCase();
+  const recoveryEntityId = String(recoveryInfo['entityId'] || '').trim().toLowerCase();
   const recoveryRuntimeHeight = Number(recoveryInfo['runtimeHeight']);
   const recoveryBackupFileContents = String(recoveryInfo['backupFileContents'] || '');
   const towerUrl = String(recoveryInfo['towerUrl'] || '').trim();
+  const rpcUrl = String(recoveryInfo['rpcUrl'] || '').trim();
   const brainVault = recoveryInfo['brainVault'];
   if (!brainVault || typeof brainVault !== 'object' || Array.isArray(brainVault)) {
     throw new Error('WALLET_RECOVERY_FIXTURE_INFO_INVALID');
@@ -78,6 +82,7 @@ export const readWalletRuntimeFixture = async (page: Page): Promise<WalletRuntim
     throw new Error('WALLET_RUNTIME_FIXTURE_AUTH_INVALID');
   }
   if (!/^0x[0-9a-f]{40}$/.test(recoveryRuntimeId)
+    || !/^0x[0-9a-f]{64}$/.test(recoveryEntityId)
     || !Number.isSafeInteger(recoveryRuntimeHeight)
     || recoveryRuntimeHeight < 0
     || !recoveryBackupFileContents.startsWith('{')
@@ -86,6 +91,9 @@ export const readWalletRuntimeFixture = async (page: Page): Promise<WalletRuntim
     || brainVaultRuntimeHeight < 0
     || !brainVaultBackupFileContents.startsWith('{')
     || !towerUrl.startsWith('http://127.0.0.1:')) {
+    throw new Error('WALLET_RECOVERY_FIXTURE_INFO_INVALID');
+  }
+  if (!rpcUrl.startsWith('http://127.0.0.1:')) {
     throw new Error('WALLET_RECOVERY_FIXTURE_INFO_INVALID');
   }
   return {
@@ -97,9 +105,11 @@ export const readWalletRuntimeFixture = async (page: Page): Promise<WalletRuntim
     token,
     recovery: {
       backupFileContents: recoveryBackupFileContents,
+      entityId: recoveryEntityId,
       runtimeId: recoveryRuntimeId,
       runtimeHeight: recoveryRuntimeHeight,
       towerUrl,
+      rpcUrl,
       brainVault: {
         backupFileContents: brainVaultBackupFileContents,
         runtimeId: brainVaultRuntimeId,

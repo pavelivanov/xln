@@ -201,6 +201,25 @@ export const WALLET_FLOW_AUDIT = [
     ],
   },
   {
+    id: 'push-wake-registration',
+    pathname: '/app',
+    search: '?settings=1',
+    page: 'app',
+    view: 'settings',
+    sources: [
+      'frontend/apps/wallet/src/wallet-push-wake.tsx',
+      'frontend/apps/wallet/src/wallet-push-wake-source.ts',
+      'frontend/bridges/wallet-canonical-push-wake.ts',
+      'frontend/packages/browser/src/wallet-push-wake.ts',
+      'frontend/static/push-wake-sw.js',
+    ],
+    tests: [
+      'tests/frontend/onboarding/frontend-wallet-push-wake.test.ts',
+      'tests/frontend/recovery/push-wake-registration.test.ts',
+      'frontend/tests/react-candidate/wallet.spec.ts',
+    ],
+  },
+  {
     id: 'preferences',
     pathname: '/app',
     search: '?settings=1',
@@ -299,13 +318,6 @@ export const WALLET_FLOW_DEFERRALS = [
     reason: 'Canonical identity creation and recovery-service onboarding are live; post-creation profile, jurisdiction, and hub-join remain in WP9.',
   },
   {
-    id: 'full-recovery',
-    destination: 'WP9',
-    evidenceSource: 'frontend/apps/wallet/src/identity-recovery.tsx',
-    evidenceMarker: 'Selecting a backup never authorizes fresh creation.',
-    reason: 'Tower, peer, encrypted backup-file restore, and recovery-service enrollment are implemented; push wake remains in WP9.',
-  },
-  {
     id: 'external-wallet-provider',
     destination: 'WP9',
     evidenceSource: 'frontend/apps/wallet/src/wallet-payments.tsx',
@@ -326,7 +338,7 @@ export const WALLET_REQUIREMENT_AUDIT = [
   { id: 'shell', group: 1, disposition: 'implemented', evidenceId: 'runtime-overview-shell' },
   { id: 'identity', group: 1, disposition: 'implemented', evidenceId: 'identity-entry-and-rehearsal' },
   { id: 'onboarding', group: 1, disposition: 'deferred', evidenceId: 'wallet-creation-and-onboarding' },
-  { id: 'recovery', group: 1, disposition: 'deferred', evidenceId: 'full-recovery' },
+  { id: 'recovery', group: 1, disposition: 'implemented', evidenceId: 'push-wake-registration' },
   { id: 'settings', group: 1, disposition: 'implemented', evidenceId: 'preferences' },
   { id: 'diagnostics', group: 1, disposition: 'implemented', evidenceId: 'diagnostics' },
   ...['assets', 'accounts', 'credit', 'collateral'].map((id) => ({

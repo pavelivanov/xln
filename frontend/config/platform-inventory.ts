@@ -234,14 +234,23 @@ export const PLATFORM_INVENTORY = [
     id: 'push-wake-service-worker',
     owner: 'wallet',
     workPackage: 'WP8',
-    status: 'owned-for-later-wp',
+    status: 'implemented',
     interfaces: ['asset', 'local-storage', 'service-worker'],
     sources: [
       'frontend/static/push-wake-sw.js',
       'frontend/src/lib/utils/recovery/pushWakeRegistration.ts',
+      'frontend/packages/browser/src/wallet-push-wake.ts',
+      'frontend/bridges/wallet-canonical-push-wake.ts',
     ],
-    consumers: ['frontend/src/lib/components/Settings/PushWakePanel.svelte'],
-    evidence: ['tests/frontend/recovery/push-wake-registration.test.ts'],
+    consumers: [
+      'frontend/src/lib/components/Settings/PushWakePanel.svelte',
+      'frontend/apps/wallet/src/wallet-push-wake.tsx',
+    ],
+    evidence: [
+      'tests/frontend/recovery/push-wake-registration.test.ts',
+      'tests/frontend/onboarding/frontend-wallet-push-wake.test.ts',
+      'frontend/tests/react-candidate/wallet.spec.ts',
+    ],
   },
   {
     id: 'native-and-packaged-consumers',

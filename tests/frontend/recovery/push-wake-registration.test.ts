@@ -7,12 +7,14 @@ import {
   buildPushWakeUnregisterPayload,
   buildPushWakeUnregisterRequest,
   buildWatchtowerPushRequestUrl,
+  resolvePushWakeTarget,
+} from '../../../frontend/src/lib/utils/recovery/pushWakeRegistration';
+import {
   readPushWakeRegistrationRecords,
   removePushWakeRegistrationRecord,
-  resolvePushWakeTarget,
   upsertPushWakeRegistrationRecord,
-  type PushWakeDeviceToken,
-} from '../../../frontend/src/lib/utils/recovery/pushWakeRegistration';
+} from '../../../frontend/src/lib/utils/recovery/pushWakeRecords';
+import type { PushWakeDeviceToken } from '../../../frontend/src/lib/utils/recovery/pushWakeTypes';
 import {
   hashPushToken,
   verifyPushRegistration,

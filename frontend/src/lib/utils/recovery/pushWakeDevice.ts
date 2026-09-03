@@ -1,5 +1,3 @@
-import { Capacitor } from '@capacitor/core';
-import { requestNativePaymentWakeNotifications } from '$lib/native/capacitor';
 import type { PushWakeDeviceToken } from './pushWakeTypes';
 import { normalizeDeviceToken, normalizePlatform } from './pushWakeBoundary';
 import { requestWebPushToken } from './pushWakeWeb';
@@ -25,8 +23,9 @@ const normalizeBridgeToken = (
   };
 };
 
-const waitForNativePushToken = (timeoutMs: number): Promise<PushWakeDeviceToken> =>
-  new Promise((resolve, reject) => {
+const waitForNativePushToken = async (timeoutMs: number): Promise<PushWakeDeviceToken> => {
+  const { requestNativePaymentWakeNotifications } = await import('$lib/native/capacitor');
+  return new Promise((resolve, reject) => {
     if (typeof window === 'undefined') {
       reject(new Error('PUSH_NATIVE_WINDOW_UNAVAILABLE'));
       return;
@@ -58,6 +57,7 @@ const waitForNativePushToken = (timeoutMs: number): Promise<PushWakeDeviceToken>
       reject(error);
     });
   });
+};
 
 export const requestPushWakeDeviceToken = async (options: { timeoutMs?: number } = {}): Promise<PushWakeDeviceToken> => {
   const desktopBridge = getDesktopBridge();
@@ -66,6 +66,7 @@ export const requestPushWakeDeviceToken = async (options: { timeoutMs?: number }
     return normalizeBridgeToken(token, 'desktop-bridge');
   }
 
+  const { Capacitor } = await import('@capacitor/core');
   if (Capacitor.isNativePlatform()) {
     return waitForNativePushToken(options.timeoutMs ?? DEFAULT_PUSH_TOKEN_TIMEOUT_MS);
   }

@@ -3,6 +3,8 @@ import { join } from 'node:path';
 
 import { Wallet, hexlify } from 'ethers';
 
+import { createBrowserVmRpcFixture } from './browser-vm-rpc-fixture';
+
 export const WALLET_RECOVERY_FIXTURE_MNEMONIC =
   'test test test test test test test test test test test junk';
 export const WALLET_BRAINVAULT_FIXTURE_MNEMONIC =
@@ -10,9 +12,11 @@ export const WALLET_BRAINVAULT_FIXTURE_MNEMONIC =
 
 export type WalletRecoveryFixture = Readonly<{
   backupFileContents: string;
+  entityId: string;
   runtimeId: string;
   runtimeHeight: number;
   towerUrl: string;
+  rpcUrl: string;
   brainVault: Readonly<{
     backupFileContents: string;
     runtimeId: string;
@@ -36,12 +40,18 @@ export const waitForWalletFixtureState = async (
 export const createWalletRecoveryFixture = async (
   fixturePort: number,
 ): Promise<WalletRecoveryFixture> => {
-  const [runtime, commandAuthority, serialization, watchtower] = await Promise.all([
+  const [runtime, commandAuthority, serialization, watchtower, liveJAdapters] = await Promise.all([
     import('../../../core/runtime'),
     import('../../../core/runtime/command/frontier-auth'),
     import('../../../core/protocol/serialization'),
     import('../../../core/watchtower/standalone-server'),
+    import('../../../core/runtime/j-submit/live-jadapters'),
   ]);
+  const chainId = 31_337;
+  const rpcPort = fixturePort + 2;
+  if (rpcPort > 65_535) throw new Error('WALLET_RECOVERY_FIXTURE_PORT_INVALID');
+  const rpcFixture = await createBrowserVmRpcFixture(rpcPort);
+  const { chainAdapter, rpcUrl } = rpcFixture;
   const createAppointment = async (seed: string, suffix: string) => {
     const env = runtime.createEmptyEnv(seed);
     const runtimeId = String(env.runtimeId || '').trim().toLowerCase();
@@ -64,8 +74,64 @@ export const createWalletRecoveryFixture = async (
       entityInputs: [],
     });
     await runtime.processRuntime(env);
+    const jurisdictionName = `React Recovery ${suffix}`;
+    runtime.enqueueRuntimeInput(env, {
+      runtimeTxs: [{
+        type: 'importJ',
+        data: {
+          name: jurisdictionName,
+          chainId,
+          ticker: 'SIM',
+          rpcs: [rpcUrl],
+          contracts: { ...chainAdapter.addresses },
+          entityProviderDeploymentBlock: chainAdapter.entityProviderDeploymentBlock,
+        },
+      }],
+      entityInputs: [],
+    });
+    await runtime.processRuntime(env);
+    await runtime.processRuntime(env);
+    const jReplica = env.state.jReplicas.get(jurisdictionName);
+    if (!jReplica?.contracts?.depository || !jReplica.contracts.entityProvider) {
+      throw new Error('WALLET_RECOVERY_FIXTURE_JURISDICTION_MISSING');
+    }
+    const jurisdiction = {
+      name: jurisdictionName,
+      chainId,
+      address: rpcUrl,
+      depositoryAddress: jReplica.contracts.depository,
+      entityProviderAddress: jReplica.contracts.entityProvider,
+    };
+    const entityId = runtime.generateLazyEntityId([runtimeId], 1n);
+    runtime.enqueueRuntimeInput(env, {
+      runtimeTxs: [runtime.importEntity({
+        entityId,
+        signerId: runtimeId,
+        entitySeed: seed,
+        data: {
+          isProposer: true,
+          profileName: `Recovery ${suffix}`,
+          config: {
+            mode: 'proposer-based',
+            threshold: 1n,
+            validators: [runtimeId],
+            shares: { [runtimeId]: 1n },
+            jurisdiction,
+          },
+        },
+      })],
+      entityInputs: [],
+    });
+    await runtime.processRuntime(env);
     const bundle = runtime.buildRuntimeRecoveryBundle(env, {
-      signers: [{ index: 0, derivationIndex: 0, address: runtimeId, name: 'Signer 1' }],
+      signers: [{
+        index: 0,
+        derivationIndex: 0,
+        address: runtimeId,
+        name: 'Signer 1',
+        entityId,
+        jurisdiction: jurisdictionName,
+      }],
     });
     const encrypted = await runtime.encryptRuntimeRecoveryBundle(bundle, seed);
     const signedAt = Date.now();
@@ -73,7 +139,7 @@ export const createWalletRecoveryFixture = async (
     const signature = await wallet.signMessage(runtime.buildTowerAppointmentOwnerMessage(
       runtimeId, 'blind_backup', encrypted.lookupKey, 0, encrypted, signedAt, undefined,
     ));
-    return { env, runtimeId, bundle, encrypted, ownerProof: { runtimeId, signedAt, signature } };
+    return { env, runtimeId, entityId, bundle, encrypted, ownerProof: { runtimeId, signedAt, signature } };
   };
   const [mnemonic, brainVault] = await Promise.all([
     createAppointment(WALLET_RECOVERY_FIXTURE_MNEMONIC, 'mnemonic'),
@@ -81,6 +147,9 @@ export const createWalletRecoveryFixture = async (
   ]);
   const closeAppointments = async (): Promise<void> => {
     for (const appointment of [mnemonic, brainVault]) {
+      for (const { adapter } of liveJAdapters.getLiveJAdapterEntries(appointment.env)) {
+        await adapter.close();
+      }
       await runtime.closeRuntimeDb(appointment.env);
       await runtime.closeInfraDb(appointment.env);
     }
@@ -94,6 +163,9 @@ export const createWalletRecoveryFixture = async (
     port: towerPort,
     towerId: 'react-wallet-recovery',
     dbPath: join(towerRoot, 'tower.level'),
+    enablePushWake: true,
+    pushDbPath: join(towerRoot, 'push.level'),
+    pushSweepIntervalMs: 24 * 60 * 60 * 1000,
     maxStoredBytesPerLookupKey: 4 * 1024 * 1024,
   });
   const towerUrl = `http://127.0.0.1:${tower.server.port}`;
@@ -125,9 +197,11 @@ export const createWalletRecoveryFixture = async (
       version: 1,
       bundles: [mnemonic.encrypted],
     }),
+    entityId: mnemonic.entityId,
     runtimeId: mnemonic.runtimeId,
     runtimeHeight: mnemonic.bundle.runtimeHeight,
     towerUrl,
+    rpcUrl,
     brainVault: {
       backupFileContents: serialization.serializeTaggedJson({
         version: 1,
@@ -139,6 +213,7 @@ export const createWalletRecoveryFixture = async (
     close: async () => {
       await tower.close();
       await closeAppointments();
+      await rpcFixture.close();
       await rm(towerRoot, { recursive: true, force: true });
     },
   };
