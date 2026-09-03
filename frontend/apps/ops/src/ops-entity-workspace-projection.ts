@@ -11,6 +11,11 @@ import {
   type EntityWorkspaceReadState,
 } from '../../../packages/runtime-client/src/entity-workspace-context';
 import {
+  emptyEntityWorkspaceConsensusEvidence,
+  projectEntityWorkspaceConsensusEvidence,
+  type EntityWorkspaceConsensusEvidence,
+} from '../../../packages/runtime-client/src/entity-workspace-consensus-evidence';
+import {
   emptyEntityWorkspaceOwnership,
   projectEntityWorkspaceOwnership,
   type EntityWorkspaceOwnership,
@@ -28,6 +33,7 @@ import {
 
 export type OpsEntityWorkspaceProjection = Readonly<{
   accounts: EntityWorkspaceAccounts;
+  consensus: EntityWorkspaceConsensusEvidence;
   context: EntityWorkspaceContext;
   ownership: EntityWorkspaceOwnership;
   profile: EntityWorkspaceProfile;
@@ -42,6 +48,7 @@ export const emptyOpsEntityWorkspaceProjection = (
   runtimeId: unknown = null,
 ): OpsEntityWorkspaceProjection => ({
   accounts: emptyEntityWorkspaceAccounts(),
+  consensus: emptyEntityWorkspaceConsensusEvidence(),
   context: emptyEntityWorkspaceContext(runtimeId),
   ownership: emptyEntityWorkspaceOwnership(),
   profile: emptyEntityWorkspaceProfile(),
@@ -53,10 +60,13 @@ export const projectOpsEntityWorkspaceFrame = (
   frame: unknown,
 ): OpsEntityWorkspaceProjection => {
   const context = projectEntityWorkspaceContext({ runtimeId, frame });
+  const accounts = projectEntityWorkspaceAccounts({ context, frame });
+  const ownership = projectEntityWorkspaceOwnership({ context, frame });
   return {
-    accounts: projectEntityWorkspaceAccounts({ context, frame }),
+    accounts,
+    consensus: projectEntityWorkspaceConsensusEvidence({ accounts, context, ownership }),
     context,
-    ownership: projectEntityWorkspaceOwnership({ context, frame }),
+    ownership,
     profile: projectEntityWorkspaceProfile({ context, frame }),
     reserves: projectEntityWorkspaceReserves({ context, frame }),
   };
