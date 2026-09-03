@@ -11,6 +11,8 @@ export type StorageEntityViewQuery = {
   booksCursor?: string;
   accountsLimit?: number;
   booksLimit?: number;
+  accountsPage?: number;
+  booksPage?: number;
   sortDir?: 'asc' | 'desc';
 };
 
@@ -35,24 +37,52 @@ const pageKeys = (
   cursor: string,
   limit: number,
   sortDir: 'asc' | 'desc',
-): { visible: string[]; nextCursor: string | null } => {
+  pageIndex: number,
+): { ordered: readonly string[]; start: number; visible: string[]; nextCursor: string | null } => {
   const ascending = sortedStringMapKeys(map);
   if (sortDir === 'asc') {
-    const start = sortedStringMapStartIndex(ascending, cursor, -1, limit);
+    const start = sortedStringMapStartIndex(ascending, cursor, pageIndex, limit);
     const visible = ascending.slice(start, start + limit);
     return {
+      ordered: ascending,
+      start,
       visible,
       nextCursor: start + limit < ascending.length ? visible[visible.length - 1] ?? null : null,
     };
   }
   const ordered = [...ascending].reverse();
-  const start = cursor ? ordered.findIndex(key => compareAscii(key, cursor) < 0) : 0;
-  const from = start < 0 ? ordered.length : start;
-  const visible = ordered.slice(from, from + limit);
+  const cursorStart = cursor ? ordered.findIndex(key => compareAscii(key, cursor) < 0) : 0;
+  const start = pageIndex >= 0
+    ? Math.min(ordered.length, pageIndex * limit)
+    : cursorStart < 0 ? ordered.length : cursorStart;
+  const visible = ordered.slice(start, start + limit);
   return {
+    ordered,
+    start,
     visible,
-    nextCursor: from + limit < ordered.length ? visible[visible.length - 1] ?? null : null,
+    nextCursor: start + limit < ordered.length ? visible[visible.length - 1] ?? null : null,
   };
+};
+
+const pageMetadata = (
+  ordered: readonly string[],
+  start: number,
+  limit: number,
+  visible: readonly string[],
+): Omit<StorageEntityViewPage['accounts'], 'items' | 'nextCursor'> => ({
+  prevCursor: start > 0 ? ordered[Math.max(0, start - limit)] ?? null : null,
+  firstCursor: visible[0] ?? null,
+  lastCursor: visible[visible.length - 1] ?? null,
+  pageIndex: Math.floor(start / limit),
+  pageCount: Math.ceil(ordered.length / limit),
+  totalItems: ordered.length,
+  limit,
+});
+
+const requestedPage = (value: number | undefined): number => {
+  if (value === undefined) return -1;
+  if (!Number.isSafeInteger(value) || value < 0) throw new Error('STORAGE_ENTITY_VIEW_PAGE_INVALID');
+  return value;
 };
 
 export const findReplicaForEntityId = (
@@ -71,11 +101,13 @@ const pageAccounts = (
   query: StorageEntityViewQuery | undefined,
 ): StorageEntityViewPage['accounts'] => {
   const accounts = replica.state.accounts;
+  const limit = pageLimit(query?.accountsLimit ?? query?.limit);
   const page = pageKeys(
     accounts,
     normalizeEntityId(String(query?.accountsCursor ?? query?.cursor ?? '')),
-    pageLimit(query?.accountsLimit ?? query?.limit),
+    limit,
     query?.sortDir === 'desc' ? 'desc' : 'asc',
+    requestedPage(query?.accountsPage),
   );
   return {
     items: page.visible.map(id => {
@@ -84,6 +116,7 @@ const pageAccounts = (
       return projectAccountDoc(account);
     }),
     nextCursor: page.nextCursor,
+    ...pageMetadata(page.ordered, page.start, limit, page.visible),
   };
 };
 
@@ -92,11 +125,13 @@ const pageBooks = (
   query: StorageEntityViewQuery | undefined,
 ): StorageEntityViewPage['books'] => {
   const books = replica.state.orderbookExt?.books;
+  const limit = pageLimit(query?.booksLimit ?? query?.limit);
   const page = pageKeys(
     books ?? EMPTY_BOOKS_MAP,
     String(query?.booksCursor ?? (query?.accountsCursor ? '' : query?.cursor ?? '')).trim(),
-    pageLimit(query?.booksLimit ?? query?.limit),
+    limit,
     'asc',
+    requestedPage(query?.booksPage),
   );
   return {
     items: page.visible.map(pairId => {
@@ -105,6 +140,7 @@ const pageBooks = (
       return { pairId, book };
     }),
     nextCursor: page.nextCursor,
+    ...pageMetadata(page.ordered, page.start, limit, page.visible),
   };
 };
 

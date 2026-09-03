@@ -2690,8 +2690,9 @@ The Entity Settings stage now shares the canonical seven-theme model and
 `xln-settings` storage boundary between Svelte and React. The React Display
 panel applies the selected palette immediately and writes only the `theme`
 field, preserving concurrent and unknown settings; malformed persisted data is
-removed with a visible, logged error. Time Machine and mascot controls remain
-read-only projections of their canonical Svelte-owned values, and the shared
+removed with a visible, logged error. At that checkpoint, Time Machine and
+mascot controls remained read-only projections of their canonical Svelte-owned
+values, and the shared
 Settings navigation maps the historical `settings/entity` alias to Wallet.
 Theme-aware workspace CSS keeps Assets, Consensus, Accounts, Profile, and
 Display readable across dark and light palettes without changing product
@@ -2721,10 +2722,54 @@ policy passes 1,047 files with zero overage, and file-size checking reaches only
 the existing `core/qa/report.ts` 3001/3000 violation. This slice changes no
 Runtime protocol, contract, persistence schema, or artifact.
 
+The next authorized Entity Settings slice makes Time Machine a real React
+consumer of the shared remote-history transport. The Display toggle performs a
+field-scoped `xln-settings` update, and hiding the rail always returns the
+workspace to live state. The responsive operator rail reads one exact committed
+height, replaces every Entity projection from that single frame, exposes live
+and historical mode, steps backward or forward, restores live state explicitly,
+and round-trips canonical Runtime/Entity/height deep links. Latest-wins request
+ownership suppresses stale overlapping reads; Runtime, Entity, page, and height
+drift fail loudly without publishing partial history.
+
+The existing replayed Entity-view read now preserves the same exact pagination
+metadata as its live counterpart so the frontend never invents Account totals
+or page positions. This is read-only storage/adapter projection wiring: it
+changes no Runtime transition, durable representation, protocol authority,
+financial formula, contract, or persistence schema. The shared hash parameter
+definition moved out of core configuration into `packages/runtime-client`, and
+both the canonical Svelte view and React candidate consume that single frontend
+definition.
+
+Focused Time Machine, display, Runtime-read, and inventory coverage passes
+22 / 22 with 259 expectations; the shared-boundary plus Time Machine batch
+passes 10 / 10 with 138 expectations. The replay-pagination regression passes
+1 / 1, Runtime types are green, and the React-local gate scans 690 files with
+zero unsafe findings. The complete ops candidate matrix passes 30 / 30 across
+390×844, 1366×900, and 1920×1080. The final isolated real-H1 flow passes in
+25.4 seconds (26.6 seconds total) with candidate `2862afd96fbd`, proves exact
+historical selection plus both return-live paths, preserves unrelated settings,
+and emits no browser-console errors. All 18 final screenshots were inspected;
+the three unchanged Assets images are byte-identical to the prior passing set,
+and every data-bearing frame is readable without clipping or horizontal
+overflow.
+
+All four React production surfaces build. The final ops build transforms 1,636
+modules in 2.46 seconds and isolates the workspace CSS/view/runtime chunks at
+28.93 / 26.03 / 29.55 kB. Production function-size policy passes 1,047 files
+with zero overage. The canonical frontend check reports zero errors/warnings
+while transforming 4,681 SSR plus 6,432 client modules. The 220-file frontend
+suite reports 1,307 passes, the unchanged 16-failure plus one-error repository
+baseline, and 7,483 expectations across 1,323 tests; the slice-owned shared-
+boundary regression is absent.
+Root evidence passes 26 / 26 deterministic tests with 100,156 expectations
+before the documented 60-second Hardhat compiler-cache mutex.
+
 **Current checkpoint:** all retained routes have React application owners;
 wallet parity is complete. `/embed` is the sole partial implementation/browser
 route, and its authorized Entity workspace is the sole remaining WP9
-implementation gap before WP10; display-theme parity is now complete.
+implementation gap before WP10; display-theme and exact Time Machine parity are
+now complete.
 
 ### WP10 — Authorized canonical cutover
 

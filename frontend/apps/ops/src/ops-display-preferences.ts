@@ -2,6 +2,7 @@ import {
   DEFAULT_DISPLAY_PREFERENCES,
   DISPLAY_PREFERENCES_STORAGE_KEY,
   readDisplayPreferences,
+  writeTimeMachinePreference,
   writeThemePreference,
   type DisplayPreferences,
 } from '../../../packages/browser/src/display-preferences';
@@ -60,6 +61,17 @@ export const opsDisplayPreferencesSource = {
       console.error('OPS_DISPLAY_PREFERENCES_WRITE_RECOVERY', error);
       localStorage.removeItem(DISPLAY_PREFERENCES_STORAGE_KEY);
       writeThemePreference(localStorage, theme);
+    }
+    publish({ issue: null, preferences });
+  },
+  setTimeMachineVisibility(showTimeMachine: boolean): void {
+    const preferences = { ...snapshot.preferences, showTimeMachine };
+    try {
+      writeTimeMachinePreference(localStorage, showTimeMachine);
+    } catch (error) {
+      console.error('OPS_TIME_MACHINE_PREFERENCE_WRITE_RECOVERY', error);
+      localStorage.removeItem(DISPLAY_PREFERENCES_STORAGE_KEY);
+      writeTimeMachinePreference(localStorage, showTimeMachine);
     }
     publish({ issue: null, preferences });
   },
