@@ -11,6 +11,30 @@ export type WalletCanonicalRuntimeOpeningRequest = Readonly<{
   unlockDurationMs: 600_000 | 86_400_000 | null;
 }>;
 
+export type WalletCanonicalRecoveryCandidateView = Readonly<{
+  id: string;
+  source: 'tower' | 'file' | 'peer';
+  sourceLabel: string;
+  runtimeHeight: number;
+  createdAt: number;
+  signerCount: number;
+  bundleCount: number;
+}>;
+
+export type WalletCanonicalRecoveryDiscoveryView = Readonly<{
+  token: string;
+  runtimeId: string;
+  candidates: readonly WalletCanonicalRecoveryCandidateView[];
+  errors: readonly string[];
+  checkedTowers: number;
+  checkedPeers: number;
+  peerBackupCount: number;
+}>;
+
+export type WalletCanonicalRuntimeOpeningOutcome =
+  | Readonly<{ status: 'opened'; runtimeId: string }>
+  | Readonly<{ status: 'recovery-required'; discovery: WalletCanonicalRecoveryDiscoveryView }>;
+
 export type WalletRuntimeOpeningChoice = Readonly<{
   openLocal: boolean;
   forceFresh: boolean;

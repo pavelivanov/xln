@@ -112,11 +112,9 @@ export const walletIdentityMnemonicErrorMessage = (error: unknown): string => {
 
 export const walletRuntimeOpeningErrorMessage = (error: unknown): string => {
   const detail = error instanceof Error ? error.message : String(error);
-  const recoveryMatch = /^WALLET_RECOVERY_SELECTION_REQUIRED:(\d+)$/.exec(detail);
-  if (recoveryMatch) {
-    const count = Number(recoveryMatch[1]);
-    return `${count} recovery backup${count === 1 ? '' : 's'} found. Fresh creation was blocked; select a backup before opening this wallet.`;
-  }
+  if (detail === 'WALLET_RECOVERY_CANDIDATE_REQUIRED') return 'Select a recovery backup before restoring this wallet.';
+  if (detail === 'WALLET_RECOVERY_DISCOVERY_STALE') return 'Recovery results expired. Re-enter the seed to check again.';
+  if (detail === 'WALLET_RECOVERY_DISCOVERY_CANCELLED') return 'Recovery check was cancelled before it completed.';
   return `Wallet opening failed: ${detail}`;
 };
 

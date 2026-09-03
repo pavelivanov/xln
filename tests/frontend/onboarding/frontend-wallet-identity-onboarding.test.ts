@@ -87,10 +87,13 @@ describe('React wallet identity onboarding', () => {
     expect(source).not.toContain('Set up identity');
   });
 
-  test('keeps recovery-required and canonical opening failures explicit', () => {
+  test('keeps recovery-selection and canonical opening failures explicit', () => {
     expect(walletRuntimeOpeningErrorMessage(
-      new Error('WALLET_RECOVERY_SELECTION_REQUIRED:1'),
-    )).toBe('1 recovery backup found. Fresh creation was blocked; select a backup before opening this wallet.');
+      new Error('WALLET_RECOVERY_CANDIDATE_REQUIRED'),
+    )).toBe('Select a recovery backup before restoring this wallet.');
+    expect(walletRuntimeOpeningErrorMessage(
+      new Error('WALLET_RECOVERY_DISCOVERY_STALE'),
+    )).toBe('Recovery results expired. Re-enter the seed to check again.');
     expect(walletRuntimeOpeningErrorMessage(
       new Error('VAULT_STORAGE_CORRUPT'),
     )).toBe('Wallet opening failed: VAULT_STORAGE_CORRUPT');
