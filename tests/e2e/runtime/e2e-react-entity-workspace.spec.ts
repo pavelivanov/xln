@@ -288,9 +288,20 @@ test('React Entity workspace reads selected context from a real H1 Runtime', { t
       await expect(firstCommitment.getByTestId('account-commitment-root')).not.toHaveText('');
       const activity = candidatePage.getByTestId('entity-activity-ledger');
       await expect(activity).toBeVisible();
-      await expect(candidatePage.getByTestId('entity-activity-through-height')).toHaveText(/^h\d+$/);
+      const activityThrough = candidatePage.getByTestId('entity-activity-through-height');
+      await expect(activityThrough).toHaveText(/^h\d+$/);
       await expect(candidatePage.getByTestId('entity-activity-event-count')).toHaveText(/^\d+$/);
       await expect(activity.getByText('Adapter order is preserved', { exact: false })).toBeVisible();
+      const latestActivityHeight = Number((await activityThrough.innerText()).replace(/^h/, ''));
+      const earlierActivity = candidatePage.getByTestId('entity-activity-earlier');
+      await expect(earlierActivity).toBeEnabled();
+      await earlierActivity.click();
+      await expect.poll(async () => Number((await activityThrough.innerText()).replace(/^h/, '')))
+        .toBeLessThan(latestActivityHeight);
+      const latestActivity = candidatePage.getByTestId('entity-activity-latest');
+      await expect(latestActivity).toBeEnabled();
+      await latestActivity.click();
+      await expect(activityThrough).toHaveText(`h${latestActivityHeight}`);
       await expect(candidatePage.getByText('Payments, swaps, credit, and Account lifecycle commands remain on the canonical workspace.')).toBeVisible();
       await capturePageScreenshot(candidatePage, testInfo, `react-entity-workspace-accounts-${viewport.name}.png`);
       await candidatePage.evaluate(() => { window.location.hash = 'settings/entity'; });

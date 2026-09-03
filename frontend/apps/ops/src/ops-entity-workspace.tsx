@@ -130,6 +130,7 @@ export function OpsEntityWorkspacePage() {
         hubPolicy={runtimeSnapshot.hubPolicy}
         onRefresh={() => { void opsEntityWorkspaceSource.refresh(); }}
         onSelectAccountsPage={opsEntityWorkspaceSource.selectAccountsPage}
+        onSelectActivityBeforeHeight={opsEntityWorkspaceSource.selectActivityPage}
         onSelectTheme={opsDisplayPreferencesSource.setTheme}
         onToggleTimeMachine={toggleTimeMachine}
         onToggleXlnGuide={opsDisplayPreferencesSource.setXlnGuideVisibility}

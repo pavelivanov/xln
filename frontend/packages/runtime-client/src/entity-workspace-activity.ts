@@ -42,6 +42,8 @@ type EmptyEntityWorkspaceActivity = Readonly<{ status: 'empty' }>;
 type SelectedEntityWorkspaceActivity = Readonly<{
   status: 'selected';
   entityId: string;
+  requestedBeforeHeight: number;
+  isLatestPage: boolean;
   latestHeight: number;
   fromHeight: number;
   toHeight: number;
@@ -134,26 +136,35 @@ const requireCursor = (value: unknown, fromHeight: number): number | null => {
 const requireFilters = (
   value: unknown,
   context: Extract<EntityWorkspaceContext, { status: 'selected' }>,
+  beforeHeight: number,
 ): void => {
   const filters = requireUnknownRecord(value, 'ENTITY_WORKSPACE_ACTIVITY_FILTERS_INVALID');
   if (optionalString(filters['entityId'], 'ENTITY_WORKSPACE_ACTIVITY_FILTER_ENTITY_INVALID')?.trim().toLowerCase() !== context.entityId) {
     throw new Error('ENTITY_WORKSPACE_ACTIVITY_FILTER_ENTITY_MISMATCH');
   }
   if (filters['kind'] !== 'all') throw new Error('ENTITY_WORKSPACE_ACTIVITY_FILTER_KIND_MISMATCH');
-  if (filters['beforeHeight'] !== context.height) throw new Error('ENTITY_WORKSPACE_ACTIVITY_FILTER_HEIGHT_MISMATCH');
+  if (filters['beforeHeight'] !== beforeHeight) throw new Error('ENTITY_WORKSPACE_ACTIVITY_FILTER_HEIGHT_MISMATCH');
   if (filters['limit'] !== ACTIVITY_LIMIT || filters['scanLimit'] !== ACTIVITY_SCAN_LIMIT) {
     throw new Error('ENTITY_WORKSPACE_ACTIVITY_FILTER_BOUNDS_MISMATCH');
   }
 };
 
+const requireBeforeHeight = (value: unknown, contextHeight: number): number => {
+  const beforeHeight = integer(value, 'ENTITY_WORKSPACE_ACTIVITY_BEFORE_HEIGHT_INVALID', 1);
+  if (beforeHeight > contextHeight) throw new Error('ENTITY_WORKSPACE_ACTIVITY_BEFORE_HEIGHT_INVALID');
+  return beforeHeight;
+};
+
 export const buildEntityWorkspaceActivityQuery = (
   context: EntityWorkspaceContext,
+  beforeHeight: number = context.height,
 ): RuntimeAdapterReadQuery => {
   if (context.status !== 'selected' || context.height < 1) {
     throw new Error('ENTITY_WORKSPACE_ACTIVITY_CONTEXT_REQUIRED');
   }
+  const requestedBeforeHeight = requireBeforeHeight(beforeHeight, context.height);
   return {
-    beforeHeight: context.height,
+    beforeHeight: requestedBeforeHeight,
     entityId: context.entityId,
     kind: 'all',
     limit: ACTIVITY_LIMIT,
@@ -162,15 +173,17 @@ export const buildEntityWorkspaceActivityQuery = (
 };
 
 export function projectEntityWorkspaceActivity(input: Readonly<{
+  beforeHeight?: number;
   context: EntityWorkspaceContext;
   page?: unknown;
 }>): EntityWorkspaceActivity {
   if (input.context.status === 'empty') return emptyEntityWorkspaceActivity();
   const context = input.context;
+  const requestedBeforeHeight = requireBeforeHeight(input.beforeHeight ?? context.height, context.height);
   const page = requireUnknownRecord(input.page, 'ENTITY_WORKSPACE_ACTIVITY_PAGE_INVALID');
   if (page['ok'] !== true) throw new Error('ENTITY_WORKSPACE_ACTIVITY_READ_FAILED');
   matchingRuntimeId(page['runtimeId'], context, 'ENTITY_WORKSPACE_ACTIVITY_RUNTIME_MISMATCH');
-  requireFilters(page['filters'], context);
+  requireFilters(page['filters'], context, requestedBeforeHeight);
 
   const latestHeight = integer(page['latestHeight'], 'ENTITY_WORKSPACE_ACTIVITY_LATEST_HEIGHT_INVALID');
   const fromHeight = integer(page['fromHeight'], 'ENTITY_WORKSPACE_ACTIVITY_FROM_HEIGHT_INVALID');
@@ -191,12 +204,13 @@ export function projectEntityWorkspaceActivity(input: Readonly<{
       throw new Error('ENTITY_WORKSPACE_ACTIVITY_EMPTY_METADATA_MISMATCH');
     }
     return {
-      status: 'selected', entityId: context.entityId, latestHeight,
+      status: 'selected', entityId: context.entityId, requestedBeforeHeight,
+      isLatestPage: requestedBeforeHeight === context.height, latestHeight,
       fromHeight, toHeight, scannedFrames, nextBeforeHeight: null, events: [],
     };
   }
 
-  const expectedToHeight = Math.min(latestHeight, context.height);
+  const expectedToHeight = Math.min(latestHeight, requestedBeforeHeight);
   if (fromHeight < 1 || fromHeight > toHeight || toHeight !== expectedToHeight) {
     throw new Error('ENTITY_WORKSPACE_ACTIVITY_HEIGHT_RANGE_MISMATCH');
   }
@@ -208,7 +222,8 @@ export function projectEntityWorkspaceActivity(input: Readonly<{
     throw new Error('ENTITY_WORKSPACE_ACTIVITY_EVENT_ID_DUPLICATE');
   }
   return {
-    status: 'selected', entityId: context.entityId, latestHeight,
+    status: 'selected', entityId: context.entityId, requestedBeforeHeight,
+    isLatestPage: requestedBeforeHeight === context.height, latestHeight,
     fromHeight, toHeight, scannedFrames,
     nextBeforeHeight: requireCursor(page['nextBeforeHeight'], fromHeight),
     events,

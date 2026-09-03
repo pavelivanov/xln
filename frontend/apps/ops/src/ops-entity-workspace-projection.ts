@@ -96,9 +96,14 @@ export const projectOpsEntityWorkspaceFrame = (
 export const projectOpsEntityWorkspaceActivityPage = (
   projection: OpsEntityWorkspaceProjection,
   page: unknown,
+  beforeHeight?: number,
 ): OpsEntityWorkspaceProjection => ({
   ...projection,
-  activity: projectEntityWorkspaceActivity({ context: projection.context, page }),
+  activity: projectEntityWorkspaceActivity({
+    context: projection.context,
+    page,
+    ...(beforeHeight === undefined ? {} : { beforeHeight }),
+  }),
 });
 
 export const projectOpsEntityWorkspaceObserverSnapshot = (

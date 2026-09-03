@@ -163,6 +163,7 @@ type EntityWorkspaceStageWithOwnershipProps = EntityWorkspaceStageProps & Readon
   displayPreferences: EntityWorkspaceDisplayPreferences;
   hubPolicy: EntityWorkspaceHubPolicy;
   onSelectTheme: (theme: ThemeName) => void;
+  onSelectActivityBeforeHeight: (beforeHeight: number | null) => void;
   onToggleTimeMachine: (show: boolean) => void;
   onToggleXlnGuide: (show: boolean) => void;
   onSelectAccountsPage: (page: number) => void;
@@ -185,13 +186,13 @@ const readFooterLabel = (
   return 'Unavailable — no remote Runtime selected';
 };
 
-function EntityWorkspaceStage({ activity, accounts, activeTab, consensus, context, displayIssue, displayPreferences, hubPolicy, onRefresh, onSelectAccountsPage, onSelectTheme, onToggleTimeMachine, onToggleXlnGuide, ownership, profile, readState, reserves, settingsSubview, timeMachine }: EntityWorkspaceStageWithOwnershipProps) {
+function EntityWorkspaceStage({ activity, accounts, activeTab, consensus, context, displayIssue, displayPreferences, hubPolicy, onRefresh, onSelectAccountsPage, onSelectActivityBeforeHeight, onSelectTheme, onToggleTimeMachine, onToggleXlnGuide, ownership, profile, readState, reserves, settingsSubview, timeMachine }: EntityWorkspaceStageWithOwnershipProps) {
   const copy = SECTION_COPY[activeTab];
   const showsActivity = readState.status === 'ready' && context.status === 'selected' && activeTab === 'accounts';
   return (
     <section className="entity-workspace-stage" data-testid="entity-workspace-stage">
       {showsActivity
-        ? <EntityWorkspaceActivityPanel activity={activity} />
+        ? <EntityWorkspaceActivityPanel activity={activity} onSelectBeforeHeight={onSelectActivityBeforeHeight} />
         : <header>
             <span>{copy.eyebrow}</span>
             <h2>{copy.title}</h2>
@@ -234,6 +235,7 @@ type EntityWorkspaceShellProps = Readonly<{
   displayPreferences: EntityWorkspaceDisplayPreferences;
   hubPolicy: EntityWorkspaceHubPolicy;
   onRefresh: () => void;
+  onSelectActivityBeforeHeight: (beforeHeight: number | null) => void;
   onSelectTheme: (theme: ThemeName) => void;
   onToggleTimeMachine: (show: boolean) => void;
   onToggleXlnGuide: (show: boolean) => void;
@@ -257,7 +259,7 @@ const readModeLabel = (
   return 'Read boundary';
 };
 
-export function EntityWorkspaceShell({ activity, accounts, activeTab, consensus, context, displayIssue, displayPreferences, hubPolicy, onRefresh, onSelectAccountsPage, onSelectTheme, onToggleTimeMachine, onToggleXlnGuide, ownership, profile, readState, reserves, settingsSubview, timeMachine }: EntityWorkspaceShellProps) {
+export function EntityWorkspaceShell({ activity, accounts, activeTab, consensus, context, displayIssue, displayPreferences, hubPolicy, onRefresh, onSelectAccountsPage, onSelectActivityBeforeHeight, onSelectTheme, onToggleTimeMachine, onToggleXlnGuide, ownership, profile, readState, reserves, settingsSubview, timeMachine }: EntityWorkspaceShellProps) {
   return (
     <section
       className="entity-workspace"
@@ -302,6 +304,7 @@ export function EntityWorkspaceShell({ activity, accounts, activeTab, consensus,
         hubPolicy={hubPolicy}
         onRefresh={onRefresh}
         onSelectAccountsPage={onSelectAccountsPage}
+        onSelectActivityBeforeHeight={onSelectActivityBeforeHeight}
         onSelectTheme={onSelectTheme}
         onToggleTimeMachine={onToggleTimeMachine}
         onToggleXlnGuide={onToggleXlnGuide}
