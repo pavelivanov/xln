@@ -189,13 +189,29 @@ test('wallet derives and opens a canonical Brain Vault outside React state', asy
 });
 
 test('wallet restores a canonical backup and enrolls recovery services', async ({ page }, testInfo) => {
-  testInfo.setTimeout(120_000);
+  testInfo.setTimeout(180_000);
   const errors = observeBrowserErrors(page);
   const fixture = await readWalletRuntimeFixture(page);
-  await page.addInitScript((towerUrl: string) => {
+  await page.addInitScript(({ rpcUrl, towerUrl }: { rpcUrl: string; towerUrl: string }) => {
     localStorage.setItem('xln-watchtower-urls', JSON.stringify([towerUrl]));
-    (window as typeof window & { __XLN_WATCHTOWERS__?: string[] }).__XLN_WATCHTOWERS__ = [towerUrl];
-  }, fixture.recovery.towerUrl);
+    const target = window as typeof window & {
+      __XLN_PUSH_WAKE_RPC_URLS__?: Record<string, string>;
+      __XLN_WATCHTOWERS__?: string[];
+      xlnDesktop?: {
+        platform: 'desktop';
+        getPushWakeToken: () => Promise<{ value: string; platform: 'desktop' }>;
+      };
+    };
+    target.__XLN_WATCHTOWERS__ = [towerUrl];
+    target.__XLN_PUSH_WAKE_RPC_URLS__ = { default: rpcUrl };
+    target.xlnDesktop = {
+      platform: 'desktop',
+      getPushWakeToken: async () => ({
+        value: 'react-wallet-device-wake-integration-token',
+        platform: 'desktop',
+      }),
+    };
+  }, { rpcUrl: fixture.recovery.rpcUrl, towerUrl: fixture.recovery.towerUrl });
   const response = await page.goto('/app?setup=1', { waitUntil: 'domcontentloaded' });
   expect(response?.ok(), 'document response for canonical recovery').toBe(true);
   await expect(page.locator('.wallet-shell-runtime-state')).toHaveText('Local Runtime', {
@@ -246,8 +262,30 @@ test('wallet restores a canonical backup and enrolls recovery services', async (
   await screenshotEvidence(page, testInfo, 'wallet-canonical-recovery-opened');
 
   await expect(page.getByRole('heading', { name: 'Recovery services' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Device wake' })).toBeVisible();
+  await expect(page.getByText(fixture.recovery.entityId.slice(0, 10), { exact: false })).toBeVisible();
   const officialTower = page.getByText('Official xln tower').locator('..');
   await expect(officialTower).toContainText(fixture.recovery.towerUrl);
+  await page.getByRole('button', { name: 'Register this device' }).click();
+  await expect(page.getByText('Registered with 1/1 recovery services.')).toBeVisible();
+  await expect(page.getByText('Registered', { exact: true })).toBeVisible();
+  await expect.poll(async () => {
+    const health = await page.request.get(`${fixture.recovery.towerUrl}/api/tower/healthz`);
+    const payload = await health.json() as { pushWake?: { stats?: { registrationCount?: number } } };
+    return payload.pushWake?.stats?.registrationCount ?? 0;
+  }).toBe(1);
+  const wakeStorage = await page.evaluate(() => localStorage.getItem('xln-push-wake-registrations-v1'));
+  expect(wakeStorage).toContain('"platform":"desktop"');
+  expect(wakeStorage).not.toContain('react-wallet-device-wake-integration-token');
+  await expectPageContained(page);
+  await screenshotEvidence(page, testInfo, 'wallet-device-wake-registered');
+  await page.getByRole('button', { name: 'Disable device wake' }).click();
+  await expect(page.getByText('Device wake disabled at 1/1 recovery services.')).toBeVisible();
+  await expect.poll(async () => {
+    const health = await page.request.get(`${fixture.recovery.towerUrl}/api/tower/healthz`);
+    const payload = await health.json() as { pushWake?: { stats?: { registrationCount?: number } } };
+    return payload.pushWake?.stats?.registrationCount ?? 0;
+  }).toBe(0);
   await page.getByRole('radio', { name: /Backup only/ }).click();
   await expect(page.getByRole('radio', { name: /Backup only/ })).toHaveAttribute('aria-checked', 'true');
 

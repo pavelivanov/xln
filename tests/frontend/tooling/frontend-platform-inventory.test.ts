@@ -57,7 +57,6 @@ describe('frontend platform baseline inventory', () => {
 
     expect(deferred.map(({ id }) => id)).toEqual([
       'wallet-durable-custody-storage',
-      'push-wake-service-worker',
       'ops-workspace-registries',
       'canonical-release-consumers',
     ]);
@@ -73,6 +72,8 @@ describe('frontend platform baseline inventory', () => {
     expect(PLATFORM_INVENTORY.find(({ id }) => id === 'native-and-packaged-consumers')?.status)
       .toBe('implemented');
     expect(PLATFORM_INVENTORY.find(({ id }) => id === 'candidate-release-consumers')?.status)
+      .toBe('implemented');
+    expect(PLATFORM_INVENTORY.find(({ id }) => id === 'push-wake-service-worker')?.status)
       .toBe('implemented');
   });
 
