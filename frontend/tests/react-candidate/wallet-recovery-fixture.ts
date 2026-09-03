@@ -9,10 +9,15 @@ export const WALLET_BRAINVAULT_FIXTURE_MNEMONIC =
   'milk click novel require across cousin good chair street mouse crash movie same daughter air quote total pride crop mention focus sick slice hole';
 
 export type WalletRecoveryFixture = Readonly<{
+  backupFileContents: string;
   runtimeId: string;
   runtimeHeight: number;
   towerUrl: string;
-  brainVault: Readonly<{ runtimeId: string; runtimeHeight: number }>;
+  brainVault: Readonly<{
+    backupFileContents: string;
+    runtimeId: string;
+    runtimeHeight: number;
+  }>;
   close: () => Promise<void>;
 }>;
 
@@ -116,10 +121,18 @@ export const createWalletRecoveryFixture = async (
   }
 
   return {
+    backupFileContents: serialization.serializeTaggedJson({
+      version: 1,
+      bundles: [mnemonic.encrypted],
+    }),
     runtimeId: mnemonic.runtimeId,
     runtimeHeight: mnemonic.bundle.runtimeHeight,
     towerUrl,
     brainVault: {
+      backupFileContents: serialization.serializeTaggedJson({
+        version: 1,
+        bundles: [brainVault.encrypted],
+      }),
       runtimeId: brainVault.runtimeId,
       runtimeHeight: brainVault.bundle.runtimeHeight,
     },

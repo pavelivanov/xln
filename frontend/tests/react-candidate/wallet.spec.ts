@@ -141,6 +141,38 @@ test('wallet derives and opens a canonical Brain Vault outside React state', asy
   await expectPageContained(page);
   await screenshotEvidence(page, testInfo, 'wallet-brainvault-ready');
 
+  const importBackup = page.getByRole('button', { name: 'Import runtime backup' });
+  let fileChooserPromise = page.waitForEvent('filechooser');
+  await importBackup.click();
+  let fileChooser = await fileChooserPromise;
+  await fileChooser.setFiles({
+    name: 'invalid-brainvault-backup.json',
+    mimeType: 'application/json',
+    buffer: Buffer.from('{invalid'),
+  });
+  await expect(page.getByRole('alert')).toHaveText('Backup file is not valid recovery JSON.');
+  await expectPageContained(page);
+  await page.getByRole('button', { name: 'Start over' }).scrollIntoViewIfNeeded();
+  await page.evaluate(() => window.scrollBy(0, 160));
+  await screenshotEvidence(page, testInfo, 'wallet-brainvault-file-error');
+
+  fileChooserPromise = page.waitForEvent('filechooser');
+  await importBackup.click();
+  fileChooser = await fileChooserPromise;
+  await fileChooser.setFiles({
+    name: 'brainvault-backup.json',
+    mimeType: 'application/json',
+    buffer: Buffer.from(fixture.recovery.brainVault.backupFileContents),
+  });
+  const fileCandidate = page.getByRole('radio', { name: /brainvault-backup\.json/ });
+  await expect(fileCandidate).toHaveAttribute('aria-checked', 'true');
+  await expect(fileCandidate).toContainText(`H${fixture.recovery.brainVault.runtimeHeight}`);
+  await expect(page.getByRole('radio', { name: new RegExp(fixture.recovery.towerUrl.replaceAll('.', '\\.')) })).toBeVisible();
+  await expectPageContained(page);
+  await page.getByRole('button', { name: 'Start over' }).scrollIntoViewIfNeeded();
+  await page.evaluate(() => window.scrollBy(0, 160));
+  await screenshotEvidence(page, testInfo, 'wallet-brainvault-file-ready');
+
   const storage = await page.evaluate(() => JSON.stringify({
     local: Object.entries(localStorage),
     session: Object.entries(sessionStorage),
@@ -177,16 +209,28 @@ test('wallet restores the selected canonical watchtower backup', async ({ page }
   const recoveryInput = page.getByRole('textbox', { name: /^Seed phrase/ });
   await recoveryInput.fill(FIRST_MNEMONIC);
   await page.getByRole('button', { name: 'Verify recovered wallet' }).click();
-  await page.getByRole('button', { name: 'Check recovery and open wallet' }).click();
+  const fileChooserPromise = page.waitForEvent('filechooser');
+  await page.getByRole('button', { name: 'Import runtime backup' }).click();
+  const fileChooser = await fileChooserPromise;
+  await fileChooser.setFiles({
+    name: 'mnemonic-backup.json',
+    mimeType: 'application/json',
+    buffer: Buffer.from(fixture.recovery.backupFileContents),
+  });
 
   await expect(page.getByRole('heading', { name: 'Choose a backup' })).toBeVisible({ timeout: 90_000 });
   await expect(page.getByText('Fresh creation is blocked. Restore one of the encrypted backups found for this wallet.')).toBeVisible();
-  const candidate = page.getByRole('radio', { name: /Latest backup/ });
-  await expect(candidate).toHaveAttribute('aria-checked', 'true');
-  await expect(candidate).toContainText(`H${fixture.recovery.runtimeHeight}`);
-  await expect(candidate).toContainText(fixture.recovery.towerUrl);
+  const fileCandidate = page.getByRole('radio', { name: /mnemonic-backup\.json/ });
+  await expect(fileCandidate).toHaveAttribute('aria-checked', 'true');
+  await expect(fileCandidate).toContainText(`H${fixture.recovery.runtimeHeight}`);
+  const towerCandidate = page.getByRole('radio', {
+    name: new RegExp(fixture.recovery.towerUrl.replaceAll('.', '\\.')),
+  });
+  await towerCandidate.click();
+  await expect(towerCandidate).toHaveAttribute('aria-checked', 'true');
   await expect(page.getByText('1 tower and 0 saved peers checked.')).toBeVisible();
   await expectPageContained(page);
+  await page.evaluate(() => window.scrollBy(0, 320));
   await screenshotEvidence(page, testInfo, 'wallet-canonical-recovery-choice');
 
   const storage = await page.evaluate(() => JSON.stringify({

@@ -1,5 +1,7 @@
+import { useRef, useState, type ChangeEvent } from 'react';
+
 import type { WalletIdentityDraft, WalletIdentityDraftValidation } from './identity-onboarding-model';
-import { walletIdentityModeLabel } from './identity-onboarding-model';
+import { walletIdentityModeLabel, walletRecoveryFileErrorMessage } from './identity-onboarding-model';
 import type { WalletCanonicalRecoveryDiscoveryView } from '../../../packages/browser/src/wallet-runtime-opening';
 import type { WalletIdentityMode } from '../../../packages/browser/src/wallet-identity-entry';
 import './styles/identity-recovery.css';
@@ -65,6 +67,7 @@ export function IdentityRecoveryVerified({
   recoveryDiscovery,
   selectedRecoveryCandidateId,
   onOpen,
+  onImportRecoveryFile,
   onReset,
   onSelectRecoveryCandidate,
 }: Readonly<{
@@ -76,12 +79,31 @@ export function IdentityRecoveryVerified({
   recoveryDiscovery: WalletCanonicalRecoveryDiscoveryView | null;
   selectedRecoveryCandidateId: string;
   onOpen: () => void;
+  onImportRecoveryFile: (file: File) => Promise<void>;
   onReset: () => void;
   onSelectRecoveryCandidate: (candidateId: string) => void;
 }>) {
   const opened = openedRuntimeId !== '';
   const choosingRecovery = recoveryDiscovery !== null;
   const brainVault = mode === 'brainvault';
+  const backupFileInput = useRef<HTMLInputElement>(null);
+  const [importingFile, setImportingFile] = useState(false);
+  const [fileError, setFileError] = useState('');
+  const importRecoveryFile = async (event: ChangeEvent<HTMLInputElement>): Promise<void> => {
+    const input = event.currentTarget;
+    const file = input.files?.[0];
+    if (!file) return;
+    setImportingFile(true);
+    setFileError('');
+    try {
+      await onImportRecoveryFile(file);
+    } catch (error: unknown) {
+      setFileError(walletRecoveryFileErrorMessage(error));
+    } finally {
+      input.value = '';
+      setImportingFile(false);
+    }
+  };
   return (
     <section className="identity-review" aria-labelledby="identity-verified-title">
       <p className="wallet-shell-eyebrow">{opened ? 'Runtime ready' : choosingRecovery ? 'Recovery found' : brainVault ? 'Derivation complete' : 'Recovery verified'}</p>
@@ -136,20 +158,38 @@ export function IdentityRecoveryVerified({
               : 'The verified phrase remains only in this tab until you open the wallet or reset.'}</span>
       </div>
       {openingError ? <p className="identity-opening-error" role="alert">{openingError}</p> : null}
+      {fileError ? <p className="identity-opening-error" role="alert">{fileError}</p> : null}
       <div className="identity-review-actions">
         {opened ? (
           <a className="identity-primary-action" href="/app?portfolio=1">Continue to assets</a>
         ) : openingError ? null : (
-          <button className="identity-primary-action" disabled={opening} onClick={onOpen} type="button">
+          <button className="identity-primary-action" disabled={opening || importingFile} onClick={onOpen} type="button">
             {opening
               ? choosingRecovery ? 'Restoring backup…' : 'Checking recovery…'
               : choosingRecovery ? 'Restore selected backup' : brainVault ? 'Create and open wallet' : 'Check recovery and open wallet'}
           </button>
         )}
-        <button className="identity-secondary-action" disabled={opening} onClick={onReset} type="button">
+        {!opened && !openingError ? (
+          <button
+            className="identity-secondary-action"
+            disabled={opening || importingFile}
+            onClick={() => backupFileInput.current?.click()}
+            type="button"
+          >
+            {importingFile ? 'Loading backup…' : 'Import runtime backup'}
+          </button>
+        ) : null}
+        <button className="identity-secondary-action" disabled={opening || importingFile} onClick={onReset} type="button">
           {openingError ? brainVault ? 'Re-enter inputs' : 'Re-enter seed' : 'Start over'}
         </button>
       </div>
+      <input
+        accept=".json,application/json,text/plain"
+        className="identity-recovery-file-input"
+        onChange={(event) => { void importRecoveryFile(event); }}
+        ref={backupFileInput}
+        type="file"
+      />
     </section>
   );
 }

@@ -26,6 +26,10 @@
   border-bottom: 1px solid #452a27;
 }
 
+.identity-recovery-file-input {
+  display: none;
+}
+
 .identity-recovery-candidates {
   display: grid;
   gap: 0.75rem;

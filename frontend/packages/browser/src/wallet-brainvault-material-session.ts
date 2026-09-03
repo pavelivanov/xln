@@ -29,12 +29,17 @@ export class WalletBrainVaultMaterialSession<Material extends RuntimeMaterial> {
     return true;
   }
 
-  consume(token: string, runtimeId: string): Material {
+  read(token: string, runtimeId: string): Material {
     const active = this.active;
     if (!active || active.token !== token || active.material.runtimeId !== runtimeId) {
       throw new Error('WALLET_BRAINVAULT_DERIVATION_STALE');
     }
-    this.discard(token);
     return active.material;
+  }
+
+  consume(token: string, runtimeId: string): Material {
+    const material = this.read(token, runtimeId);
+    this.discard(token);
+    return material;
   }
 }
