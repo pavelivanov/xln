@@ -1,5 +1,10 @@
 import type { RuntimeQuerySnapshot } from '../../../packages/runtime-client/src/runtime-query-observer';
 import {
+  emptyEntityWorkspaceActivity,
+  projectEntityWorkspaceActivity,
+  type EntityWorkspaceActivity,
+} from '../../../packages/runtime-client/src/entity-workspace-activity';
+import {
   emptyEntityWorkspaceAccounts,
   projectEntityWorkspaceAccounts,
   type EntityWorkspaceAccounts,
@@ -41,6 +46,7 @@ import {
 } from '../../../packages/runtime-client/src/entity-workspace-time-machine';
 
 export type OpsEntityWorkspaceProjection = Readonly<{
+  activity: EntityWorkspaceActivity;
   accounts: EntityWorkspaceAccounts;
   consensus: EntityWorkspaceConsensusEvidence;
   context: EntityWorkspaceContext;
@@ -58,6 +64,7 @@ export type OpsEntityWorkspaceSourceSnapshot = OpsEntityWorkspaceProjection & Re
 export const emptyOpsEntityWorkspaceProjection = (
   runtimeId: unknown = null,
 ): OpsEntityWorkspaceProjection => ({
+  activity: emptyEntityWorkspaceActivity(),
   accounts: emptyEntityWorkspaceAccounts(),
   consensus: emptyEntityWorkspaceConsensusEvidence(),
   context: emptyEntityWorkspaceContext(runtimeId),
@@ -75,6 +82,7 @@ export const projectOpsEntityWorkspaceFrame = (
   const accounts = projectEntityWorkspaceAccounts({ context, frame });
   const ownership = projectEntityWorkspaceOwnership({ context, frame });
   return {
+    activity: emptyEntityWorkspaceActivity(),
     accounts,
     consensus: projectEntityWorkspaceConsensusEvidence({ accounts, context, ownership }),
     context,
@@ -84,6 +92,14 @@ export const projectOpsEntityWorkspaceFrame = (
     reserves: projectEntityWorkspaceReserves({ context, frame }),
   };
 };
+
+export const projectOpsEntityWorkspaceActivityPage = (
+  projection: OpsEntityWorkspaceProjection,
+  page: unknown,
+): OpsEntityWorkspaceProjection => ({
+  ...projection,
+  activity: projectEntityWorkspaceActivity({ context: projection.context, page }),
+});
 
 export const projectOpsEntityWorkspaceObserverSnapshot = (
   runtimeId: string,

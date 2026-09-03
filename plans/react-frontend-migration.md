@@ -2894,12 +2894,47 @@ is unchanged, production function sizing passes 1,047 files, diff hygiene is
 clean, and file-size checking reaches only the existing out-of-scope
 `core/qa/report.ts` 3001/3000 violation.
 
+The following read-only Account slice adds an exact persisted Entity activity
+ledger beside the bounded Account page. Its query is pinned to the displayed
+committed frame, including Time Machine history, with an eight-event / 160-frame
+bound. The strict projection validates Runtime and Entity ownership, filter and
+page bounds, coherent scan/cursor metadata, unique event ids, canonical event
+enums, timestamps, and frame ranges while preserving adapter order. It exposes
+event descriptions and committed heights without calculating balances, credit,
+capacity, routing, payment amounts, or swap amounts and adds no command path.
+
+Focused Activity, Runtime-read, workspace, Time Machine, shared-boundary, and
+typed-inventory coverage passes 82 / 82 with 849 expectations. The all-surface
+React-local gate scans 694 files with zero unsafe findings. All four React
+production surfaces build; site/docs/wallet/ops transform 401 / 35 / 1,860 /
+1,641 modules, and the ops workspace CSS/view/Runtime chunks are 33.54 / 33.65 /
+36.87 kB. The canonical frontend check reports zero errors/warnings while
+transforming 4,681 SSR plus 6,432 client modules. The complete ops candidate
+matrix passes 30 / 30 across the required mobile, laptop, and wide viewports.
+
+The final isolated real-H1 flow passes in 26.9 seconds (28.2 seconds total) with
+candidate `cd08be8f6437`, reads eight persisted events through Runtime h24 from
+an eleven-frame scan, verifies the strict activity metadata, and emits no
+browser-console error. Its changed Account/activity screenshots at 390×844,
+1366×900, and 1920×1080 were inspected with no clipping or horizontal overflow.
+The 224-file frontend suite reports 1,324 passes, the unchanged 16-failure plus
+one-error repository baseline, and 7,557 expectations across 1,340 tests; no
+slice-owned test fails.
+
+Root evidence passes 26 / 26 deterministic tests with 100,156 expectations
+before the documented 60-second Hardhat compiler-cache mutex. Downstream
+soundcheck passes all ten gates; frozen core remains at
+`0x4eccf4492e5d085b24162f86d327e003c36b7e2a90ad527db1653fde391946a7`,
+production function sizing passes 1,047 files, diff hygiene is clean, and file
+size checking reaches only the existing out-of-scope `core/qa/report.ts`
+3001/3000 violation.
+
 **Current checkpoint:** all retained routes have React application owners;
 wallet parity is complete. `/embed` is the sole partial implementation/browser
 route, and its authorized Entity workspace is the sole remaining WP9
 implementation gap before WP10; display-theme, exact Time Machine, and shared
-xln-guide preference, exact Account commitment evidence, committed Hub-policy,
-and committed Settings-summary parity are now complete.
+xln-guide preference, exact Account commitment evidence, persisted Activity,
+committed Hub-policy, and committed Settings-summary parity are now complete.
 
 ### WP10 — Authorized canonical cutover
 

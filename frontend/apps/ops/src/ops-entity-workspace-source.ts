@@ -1,4 +1,5 @@
 import type {
+  RuntimeAdapterActivityPage,
   RuntimeAdapter,
   RuntimeAdapterHistoryFrameBatch,
   RuntimeAdapterReadQuery,
@@ -7,6 +8,7 @@ import type {
 import type { RuntimeAdapterStorageSnapshot } from '../../../packages/browser/src/runtime-adapter-session';
 import {
   emptyOpsEntityWorkspaceProjection,
+  projectOpsEntityWorkspaceActivityPage,
   projectOpsEntityWorkspaceFrame,
   projectOpsEntityWorkspaceObserverSnapshot,
   type OpsEntityWorkspaceProjection,
@@ -15,6 +17,7 @@ import {
 import { RuntimeQueryClient } from '../../../packages/runtime-client/src/runtime-query-client';
 import type { RuntimeQueryResultSchema } from '../../../packages/runtime-client/src/runtime-query-client';
 import { RuntimeQueryObserver } from '../../../packages/runtime-client/src/runtime-query-observer';
+import { buildEntityWorkspaceActivityQuery } from '../../../packages/runtime-client/src/entity-workspace-activity';
 import { createEntityWorkspaceLiveState } from '../../../packages/runtime-client/src/entity-workspace-time-machine';
 import { OpsEntityWorkspaceHistoryController } from './ops-entity-workspace-history-controller';
 
@@ -33,11 +36,23 @@ type RemoteSessionConfig = Readonly<{
 }>;
 
 type OpsRuntimeQueryResults = RuntimeQueryResultSchema & Readonly<{
+  activity: RuntimeAdapterActivityPage;
   historyFrameBatch: RuntimeAdapterHistoryFrameBatch;
   viewFrame: RuntimeAdapterViewFrame;
 }>;
 
 type OpsRuntimeQueryClient = RuntimeQueryClient<RuntimeAdapterReadQuery, OpsRuntimeQueryResults>;
+
+const readEntityWorkspaceProjection = async (
+  client: OpsRuntimeQueryClient,
+  runtimeId: string,
+  frame: RuntimeAdapterViewFrame,
+): Promise<OpsEntityWorkspaceProjection> => {
+  const projection = projectOpsEntityWorkspaceFrame(runtimeId, frame);
+  if (projection.context.status === 'empty') return projection;
+  const activity = await client.readActivity(buildEntityWorkspaceActivityQuery(projection.context));
+  return projectOpsEntityWorkspaceActivityPage(projection, activity);
+};
 
 export const requireOpsEntityRemoteSession = (
   snapshot: RuntimeAdapterStorageSnapshot,
@@ -204,7 +219,7 @@ export class OpsEntityWorkspaceSource {
           accountsPage: this.accountsPage,
           booksLimit: 1,
         });
-        return projectOpsEntityWorkspaceFrame(adapter.runtimeId, frame);
+        return readEntityWorkspaceProjection(client, adapter.runtimeId, frame);
       },
       {
         readHeight: () => adapter.currentHeight,
@@ -228,6 +243,7 @@ export class OpsEntityWorkspaceSource {
     const next = projectOpsEntityWorkspaceObserverSnapshot(
       adapter.runtimeId,
       {
+        activity: this.snapshot.activity,
         accounts: this.snapshot.accounts,
         consensus: this.snapshot.consensus,
         context: this.snapshot.context,

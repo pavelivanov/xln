@@ -1,0 +1,68 @@
+.entity-workspace-activity-panel {
+  align-self: stretch;
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
+  min-width: 0;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 14% 4%, color-mix(in srgb, var(--entity-accent) 8%, transparent), transparent 34%),
+    var(--theme-background, #0a0a09);
+}
+
+.entity-workspace-activity-panel > header {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 1.5rem;
+  padding: clamp(1.5rem, 4vw, 3.5rem);
+  padding-bottom: 1rem;
+}
+.entity-workspace-activity-panel > header span,
+.entity-workspace-activity-panel dt,
+.entity-workspace-activity-panel small,
+.entity-workspace-activity-panel footer {
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: 0.58rem;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+.entity-workspace-activity-panel > header span { color: var(--entity-accent-soft); }
+.entity-workspace-activity-panel h2 {
+  margin: 0.65rem 0 0;
+  color: var(--theme-text-primary, #f3f1e9);
+  font-size: clamp(2.6rem, 6vw, 6rem);
+  font-weight: 620;
+  letter-spacing: -0.07em;
+  line-height: 0.88;
+}
+.entity-workspace-activity-panel > header dl { display: flex; gap: 1.25rem; margin: 0; }
+.entity-workspace-activity-panel > header dl div { text-align: right; }
+.entity-workspace-activity-panel dt { color: var(--theme-text-muted, #5f605b); }
+.entity-workspace-activity-panel dd { margin: 0.35rem 0 0; color: var(--theme-text-primary, #d6d3c9); font: 600 0.72rem/1 "SFMono-Regular", Consolas, monospace; }
+.entity-workspace-activity-panel > p { margin: 0; padding: 0 clamp(1.5rem, 4vw, 3.5rem) 1.25rem; color: var(--theme-text-secondary, #85847d); font-size: 0.76rem; line-height: 1.55; }
+
+.entity-workspace-activity-panel > ol { min-height: 0; margin: 0; padding: 0; overflow: auto; list-style: none; border-top: 1px solid var(--entity-line); }
+.entity-workspace-activity-panel li { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 0.9rem; padding: 0.9rem clamp(1.5rem, 4vw, 3.5rem); border-bottom: 1px solid var(--entity-line); }
+.entity-workspace-activity-panel li > span { padding-top: 0.18rem; color: var(--theme-text-muted, #4f504b); font: 0.56rem/1 "SFMono-Regular", Consolas, monospace; }
+.entity-workspace-activity-copy { min-width: 0; }
+.entity-workspace-activity-copy strong { display: block; overflow: hidden; color: var(--theme-text-primary, #d7d4c9); font-size: 0.82rem; font-weight: 570; text-overflow: ellipsis; white-space: nowrap; }
+.entity-workspace-activity-copy p { margin: 0.25rem 0 0; overflow: hidden; color: var(--theme-text-secondary, #85847d); font-size: 0.69rem; text-overflow: ellipsis; white-space: nowrap; }
+.entity-workspace-activity-copy small { display: block; margin-top: 0.45rem; color: var(--theme-text-muted, #60615b); }
+.entity-workspace-activity-facts { display: grid; justify-items: end; gap: 0.25rem; min-width: 9rem; text-align: right; }
+.entity-workspace-activity-facts b { color: var(--entity-accent-soft); font: 600 0.58rem/1 "SFMono-Regular", Consolas, monospace; letter-spacing: 0.08em; text-transform: uppercase; }
+.entity-workspace-activity-facts code { color: var(--theme-text-secondary, #95938b); font-size: 0.61rem; }
+.entity-workspace-activity-facts em { color: var(--theme-text-muted, #5f605a); font: 500 0.53rem/1 "SFMono-Regular", Consolas, monospace; font-style: normal; text-transform: uppercase; }
+.entity-workspace-activity-empty { align-self: center; padding: 2rem clamp(1.5rem, 4vw, 3.5rem); color: var(--theme-text-secondary, #777871); font-size: 0.78rem; line-height: 1.6; border-top: 1px solid var(--entity-line); }
+.entity-workspace-activity-panel > footer { display: grid; grid-template-columns: auto 1fr auto; gap: 1rem; padding: 0.8rem clamp(1.5rem, 4vw, 3.5rem); color: var(--theme-text-muted, #5c5d57); border-top: 1px solid var(--entity-line); }
+.entity-workspace-activity-panel > footer strong { color: var(--theme-text-secondary, #8e8c84); text-align: center; }
+
+@media (max-width: 760px) {
+  .entity-workspace-activity-panel > header { align-items: start; flex-direction: column; padding-inline: 1rem; }
+  .entity-workspace-activity-panel h2 { font-size: clamp(3.2rem, 18vw, 4.8rem); }
+  .entity-workspace-activity-panel > header dl { width: 100%; justify-content: space-between; }
+  .entity-workspace-activity-panel > header dl div { text-align: left; }
+  .entity-workspace-activity-panel > p { padding-inline: 1rem; }
+  .entity-workspace-activity-panel li { grid-template-columns: auto minmax(0, 1fr); padding-inline: 1rem; }
+  .entity-workspace-activity-facts { grid-column: 2; justify-items: start; min-width: 0; text-align: left; }
+  .entity-workspace-activity-panel > footer { padding-inline: 1rem; }
+}
