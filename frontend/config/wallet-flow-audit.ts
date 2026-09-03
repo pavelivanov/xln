@@ -2,9 +2,9 @@ import type { WalletAppView } from '../apps/wallet/src/app-shell-model';
 
 export type WalletFlowAuditEntry = Readonly<{
   id: string;
-  pathname: '/app' | '/testnet';
+  pathname: '/app' | '/testnet' | '/address' | `/address/${string}`;
   search: string;
-  page: 'app' | 'testnet';
+  page: 'app' | 'testnet' | 'address-directory' | 'address-detail';
   view: WalletAppView | null;
   sources: readonly string[];
   tests: readonly string[];
@@ -57,6 +57,32 @@ export const WALLET_FLOW_AUDIT = [
       'frontend/apps/wallet/src/testnet-page.tsx',
     ],
     tests: ['tests/frontend/tooling/frontend-testnet-pilot.test.ts'],
+  },
+  {
+    id: 'address-directory',
+    pathname: '/address',
+    search: '',
+    page: 'address-directory',
+    view: null,
+    sources: [
+      'frontend/apps/wallet/src/wallet-address-model.ts',
+      'frontend/apps/wallet/src/wallet-address-source.ts',
+      'frontend/apps/wallet/src/wallet-address.tsx',
+    ],
+    tests: ['tests/frontend/runtime/frontend-wallet-address.test.ts'],
+  },
+  {
+    id: 'address-detail',
+    pathname: `/address/0x${'0'.repeat(64)}`,
+    search: '',
+    page: 'address-detail',
+    view: null,
+    sources: [
+      'frontend/apps/wallet/src/wallet-address-model.ts',
+      'frontend/apps/wallet/src/wallet-address-source.ts',
+      'frontend/apps/wallet/src/wallet-address.tsx',
+    ],
+    tests: ['tests/frontend/runtime/frontend-wallet-address.test.ts'],
   },
   {
     id: 'runtime-overview-shell',
@@ -182,9 +208,9 @@ export const WALLET_FLOW_DEFERRALS = [
   {
     id: 'address-route',
     destination: 'WP9',
-    evidenceSource: 'frontend/apps/wallet/src/wallet-app.tsx',
-    evidenceMarker: 'remains on the canonical Svelte wallet while its React flow is migrated',
-    reason: 'The retained public address route still needs a React owner before parity can close.',
+    evidenceSource: 'frontend/apps/wallet/src/wallet-address-source.ts',
+    evidenceMarker: 'WALLET_ADDRESS_RUNTIME_NOT_SELECTED',
+    reason: 'The React route is live, but imported Runtime selection and populated browser evidence remain before parity can close.',
   },
   {
     id: 'external-wallet-provider',

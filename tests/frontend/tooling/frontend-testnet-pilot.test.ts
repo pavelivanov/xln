@@ -12,10 +12,10 @@ import { resolveWalletPage } from '../../../frontend/apps/wallet/src/wallet-mode
 const ROOT = resolve(import.meta.dir, '../../..');
 
 describe('React wallet testnet pilot', () => {
-  test('owns the exact testnet and app routes without claiming address flows', () => {
+  test('owns the exact testnet and app routes alongside the address candidate', () => {
     expect(resolveWalletPage('/testnet')).toEqual({ kind: 'testnet' });
     expect(resolveWalletPage('/app')).toEqual({ kind: 'app' });
-    expect(resolveWalletPage('/address')).toEqual({ kind: 'pending', pathname: '/address' });
+    expect(resolveWalletPage('/address')).toEqual({ kind: 'address-directory' });
   });
 
   test('preserves wallet, custody, health, and disposable identity destinations', () => {
