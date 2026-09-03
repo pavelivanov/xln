@@ -45,9 +45,9 @@ to finish, not a reason to block unrelated scaffolding or migration slices.
 
 | Artifact | Status | Next action |
 |---|---|---|
-| [Migration work plan](react-frontend-migration.md) | `IN PROGRESS — WP0–WP6 + WP8 COMPLETE; WP7 WORKSPACE PARTIAL; WP9 HAS 18 COVERED / 2 PARTIAL / 0 MISSING ROUTES AND 5 EXACT GAPS` | Exercise populated portfolio and financial-health views against committed Runtime state. |
+| [Migration work plan](react-frontend-migration.md) | `IN PROGRESS — WP0–WP6 + WP8 COMPLETE; WP7 WORKSPACE PARTIAL; WP9 HAS 18 COVERED / 2 PARTIAL / 0 MISSING ROUTES AND 5 EXACT GAPS` | Exercise payment and market views against committed Runtime state. |
 | [Technical decisions](react-frontend-migration-decisions.md) | `ACTIVE` | Use the recorded application, route, build, and coexistence decisions. |
-| Frontend implementation | `IN PROGRESS — 18 COVERED / 2 PARTIAL ROUTES; WALLET PORTFOLIO + HEALTH DEPTH NEXT` | Keep the next `/app` slice read-only and prove it at all required viewports. |
+| Frontend implementation | `IN PROGRESS — 18 COVERED / 2 PARTIAL ROUTES; WALLET PAYMENT + MARKET DEPTH NEXT` | Keep the next `/app` slice inside the existing command boundary and prove it at all required viewports. |
 
 WP9 parity follows application completion; WP10 cutover and WP11 production
 activation remain separately owner-authorized.

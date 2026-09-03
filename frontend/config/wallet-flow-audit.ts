@@ -156,7 +156,10 @@ export const WALLET_FLOW_AUDIT = [
       'frontend/apps/wallet/src/wallet-portfolio-source.ts',
       'frontend/apps/wallet/src/wallet-portfolio.tsx',
     ],
-    tests: ['tests/frontend/runtime/frontend-wallet-portfolio.test.ts'],
+    tests: [
+      'tests/frontend/runtime/frontend-wallet-portfolio.test.ts',
+      'frontend/tests/react-candidate/wallet-financial.spec.ts',
+    ],
   },
   {
     id: 'financial-health',
@@ -169,7 +172,10 @@ export const WALLET_FLOW_AUDIT = [
       'frontend/apps/wallet/src/wallet-financial-health-source.ts',
       'frontend/apps/wallet/src/wallet-financial-health.tsx',
     ],
-    tests: ['tests/frontend/runtime/frontend-wallet-financial-health.test.ts'],
+    tests: [
+      'tests/frontend/runtime/frontend-wallet-financial-health.test.ts',
+      'frontend/tests/react-candidate/wallet-financial.spec.ts',
+    ],
   },
   {
     id: 'payments',
