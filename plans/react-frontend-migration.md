@@ -1,6 +1,6 @@
 # React frontend migration work plan
 
-**Status:** `IN PROGRESS — WP0–WP6 COMPLETE; WP7 HEALTH + QA + HLT + RUNS + SCENARIOS + AI IMPLEMENTED, WORKSPACE STATE LAYER SVELTE-FREE, PANEL PORTS THROUGH ARCHITECT, REACT DOCKVIEW WRAPPER READY, GRAPH3D LIFECYCLE + RENDERER/PRIMITIVES/EFFECTS/ENTITY/ACCOUNT VISUAL FACTORY/INTERACTION/SELECTION/CAMERA/POINTER+XR DRAG + HOVER MECHANICS + VIEW/SCENE INPUT MODELS EXTRACTED, ENTITY WORKSPACE REACT SHELL/TABS + LIVE RUNTIME CONTEXT + READ-ONLY OWNERSHIP/ACCOUNTS/PROFILE READY; WP8 COMPLETE; WP9 HAS 19 COVERED / 1 PARTIAL BROWSER ROUTE AND 4 EXACT GAPS, BRAIN VAULT DERIVATION NEXT`
+**Status:** `IN PROGRESS — WP0–WP6 COMPLETE; WP7 HEALTH + QA + HLT + RUNS + SCENARIOS + AI IMPLEMENTED, WORKSPACE STATE LAYER SVELTE-FREE, PANEL PORTS THROUGH ARCHITECT, REACT DOCKVIEW WRAPPER READY, GRAPH3D LIFECYCLE + RENDERER/PRIMITIVES/EFFECTS/ENTITY/ACCOUNT VISUAL FACTORY/INTERACTION/SELECTION/CAMERA/POINTER+XR DRAG + HOVER MECHANICS + VIEW/SCENE INPUT MODELS EXTRACTED, ENTITY WORKSPACE REACT SHELL/TABS + LIVE RUNTIME CONTEXT + READ-ONLY OWNERSHIP/ACCOUNTS/PROFILE READY; WP8 COMPLETE; WP9 HAS 19 COVERED / 1 PARTIAL BROWSER ROUTE AND 3 EXACT GAPS, BACKUP-FILE RECOVERY NEXT`
 
 This is the executable work plan for splitting the Svelte frontend into React
 applications. It is intentionally lightweight and should be updated as live
@@ -2476,8 +2476,34 @@ source or artifact. The irreversible-identity gap remains partial only for
 React Brain Vault derivation; the typed inventory still reports four exact
 gaps.
 
+React Brain Vault now derives through the versioned canonical WebAssembly
+worker and the shared validation, scheduling, resilience, and finalization
+boundaries. Derived mnemonics and the device passphrase remain inside a
+bridge-owned exact-once material session; React receives only progress, the
+public Runtime address, recovery summaries, and opaque generation tokens. The
+passphrase field is cleared before the asynchronous derivation completes, and
+cancel, unmount, replacement, stale generations, or opening failure invalidate
+both material and recovery sessions. The real browser flow reproduces the
+frozen factor-1 Runtime address, discovers its signed height-1 snapshot on the
+production standalone watchtower implementation, and restores it through the
+canonical vault executor at 390×844, 1366×900, and 1920×1080. That flow passes
+3 / 3 in 14.3 seconds and the complete wallet browser matrix passes 36 / 36 in
+58.4 seconds; all deriving, candidate, and opened screenshots were inspected
+without clipping or horizontal overflow. The full onboarding batch passes 189
+/ 189 with 781 expectations, and the four typed inventory audits pass 21 / 21
+with 643 expectations. The authoritative 212-file frontend suite preserves the
+exact 14 known failures with 1,275 passes, one error, and 7,287 expectations
+across 1,289 tests. The wallet-local gate scans 663 files with zero unsafe-type
+findings, the production wallet build completes in 1.98 seconds, and the
+canonical frontend gate has zero errors/warnings while building 4,677 SSR plus
+6,428 client modules. Root evidence passes 26 / 26 BrainVault/runtime tests
+with 100,156 expectations before the documented shared Hardhat compiler-cache
+mutex stops contract-artifact drift after 60 seconds; this slice changes no
+contract source or artifact. The irreversible-identity gap is closed; the typed
+inventory now reports three exact gaps.
+
 **Current checkpoint:** all retained routes have React application owners; two
-implementations, one browser route, and four typed gaps remain partial before
+implementations, one browser route, and three typed gaps remain partial before
 cutover readiness.
 
 ### WP10 — Authorized canonical cutover
@@ -2521,14 +2547,14 @@ any mismatch. Never compile on production.
 
 ## Current next actions
 
-1. Add React Brain Vault derivation through the canonical worker, recovery,
-   and vault adapters without moving secret bytes into React state.
+1. Add React backup-file recovery to the existing candidate-selection bridge,
+   preserving the same exact-once material and canonical vault boundaries.
 2. Owner to assign: two `network-timeline-source` failures
    (`NETWORK_TRAIL_FRAME_INVALID:1` in the JSON-safe-frame and trail
    round-trip tests) appeared with the in-flight `core/scenarios` runner
    changes in the working tree and are collateral from that stream, not the
    frontend migration.
-3. Close the irreversible identity/recovery and external-provider gaps as
+3. Close the remaining recovery/tower/push and external-provider gaps as
    separate slices.
 4. Keep the sized Entity workspace expansion behind its explicit owner decision
    while `/embed` remains canonical.

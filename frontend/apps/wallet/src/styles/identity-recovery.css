@@ -77,6 +77,38 @@
   color: #f0b0aa;
 }
 
+.identity-derivation-meter {
+  display: grid;
+  gap: 0.65rem;
+  margin: 1.5rem 0;
+}
+
+.identity-derivation-meter > div {
+  height: 0.45rem;
+  overflow: hidden;
+  background: #202525;
+  border-radius: 999px;
+}
+
+.identity-derivation-meter > div > span {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+  border-radius: inherit;
+  transition: width 180ms ease;
+}
+
+.identity-derivation-meter > strong {
+  color: #f2f4ed;
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+}
+
+.identity-derivation-meter > span {
+  color: #8f9699;
+  font-size: 0.75rem;
+}
+
 .identity-verified-note {
   display: grid;
   gap: 0.45rem;
