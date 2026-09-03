@@ -1,6 +1,12 @@
 import type { ServerWebSocket } from 'bun';
 import { rm } from 'node:fs/promises';
 
+import {
+  buildWalletFixtureHubTxs,
+  buildWalletFixtureOrderTx,
+  buildWalletFixtureProfileTx,
+} from './wallet-runtime-fixture-topology';
+
 type FixtureSocketData = Readonly<{
   type: 'rpc';
   clientIp: string;
@@ -131,34 +137,12 @@ await commit({
     {
       entityId,
       signerId: runtimeId,
-      entityTxs: [{
-        type: 'profile-update',
-        data: {
-          profile: {
-            entityId,
-            name: 'Browser Alice',
-            avatar: '',
-            bio: 'Committed by the isolated candidate Runtime.',
-            website: 'https://xln.finance',
-          },
-        },
-      }],
+      entityTxs: [buildWalletFixtureProfileTx(entityId)],
     },
     {
       entityId: counterpartyEntityId,
       signerId: counterpartySignerId,
-      entityTxs: [{
-        type: 'profile-update',
-        data: {
-          profile: {
-            entityId: counterpartyEntityId,
-            name: 'Browser Hub',
-            avatar: '',
-            bio: 'Counterparty committed by the isolated candidate Runtime.',
-            website: 'https://xln.finance',
-          },
-        },
-      }],
+      entityTxs: buildWalletFixtureHubTxs(counterpartyEntityId),
     },
   ],
 });
@@ -212,7 +196,34 @@ await waitForFixtureState('credit-extended', () => {
   const delta = readAccount(entityId, counterpartyEntityId)?.state.deltas.get(usdcTokenId);
   return delta?.leftCreditLimit === creditLimit && delta.rightCreditLimit === creditLimit;
 });
-
+await commit({
+  runtimeTxs: [],
+  entityInputs: [{
+    entityId,
+    signerId: runtimeId,
+    entityTxs: [buildWalletFixtureOrderTx(counterpartyEntityId)],
+  }],
+});
+await waitForFixtureState('market-open-order', () => {
+  const hub = [...env.state.eReplicas.values()]
+    .find((candidate) => candidate.state.entityId === counterpartyEntityId);
+  return hub?.state.orderbookExt?.books.get('1/2')?.orders.size === 1;
+});
+const p2p = runtime.startP2P(env, {
+  relayUrls: [],
+  wsUrl: null,
+  seedRuntimeIds: [],
+  advertiseEntityIds: [entityId, counterpartyEntityId],
+});
+if (!p2p) throw new Error('WALLET_RUNTIME_FIXTURE_P2P_START_FAILED');
+await p2p.announceProfilesForEntitiesNow(
+  [entityId, counterpartyEntityId],
+  'wallet-browser-fixture',
+  false,
+);
+if (!await runtime.ensureGossipProfiles(env, [entityId, counterpartyEntityId])) {
+  throw new Error('WALLET_RUNTIME_FIXTURE_PROFILES_UNAVAILABLE');
+}
 const token = auth.deriveRuntimeAdapterCapabilityToken(
   authSeed,
   'full',
@@ -222,7 +233,6 @@ const token = auth.deriveRuntimeAdapterCapabilityToken(
 const handleRpc = rpc.createServerRpcMessageHandler({
   validateRuntimeInputAdmission: runtime.validateRuntimeInputAdmission,
 });
-
 let server: ReturnType<typeof Bun.serve<FixtureSocketData>>;
 server = Bun.serve<FixtureSocketData>({
   hostname: '127.0.0.1',
@@ -270,6 +280,7 @@ const stop = async (): Promise<void> => {
   if (stopping) return;
   stopping = true;
   await server.stop(true);
+  await runtime.stopP2PAndWait(env, 1_000);
   await runtime.stopRuntimeLoopAndWait(env).catch(() => false);
   await runtime.closeRuntimeDb(env);
   await runtime.closeInfraDb(env);
