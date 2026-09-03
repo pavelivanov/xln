@@ -16,23 +16,33 @@ export type DevelopmentProcessSpec = Readonly<{
 
 export const createDevelopmentProcessSpecs = (
   surfaceIds: readonly SurfaceId[],
-): readonly DevelopmentProcessSpec[] => [
-  ...surfaceIds.map((surfaceId) => ({
-    label: `vite-${getSurface(surfaceId).id}`,
-    argv: ['bunx', 'vite', '--config', `apps/${surfaceId}/vite.config.ts`],
-    gatewayAware: true,
-  })),
-  {
-    label: 'same-origin-gateway',
-    argv: ['bun', 'scripts/run-dev-gateway.ts'],
-    gatewayAware: false,
-    ...(surfaceIds.length === 1 && surfaceIds[0] === 'site'
-      ? { environment: { XLN_REACT_DOCS_PROXY_OWNER: 'site' } }
-      : surfaceIds.length === 1 && surfaceIds[0] === 'ops'
-        ? { environment: { XLN_REACT_WALLET_PROXY_OWNER: 'ops' } }
-      : {}),
-  },
-];
+): readonly DevelopmentProcessSpec[] => {
+  const walletFixtureEnabled = process.env['XLN_REACT_WALLET_ADDRESS_FIXTURE'] === '1'
+    && surfaceIds.length === 1
+    && surfaceIds[0] === 'wallet';
+  return [
+    ...surfaceIds.map((surfaceId) => ({
+      label: `vite-${getSurface(surfaceId).id}`,
+      argv: ['bunx', 'vite', '--config', `apps/${surfaceId}/vite.config.ts`],
+      gatewayAware: true,
+    })),
+    {
+      label: 'same-origin-gateway',
+      argv: ['bun', 'scripts/run-dev-gateway.ts'],
+      gatewayAware: false,
+      ...(surfaceIds.length === 1 && surfaceIds[0] === 'site'
+        ? { environment: { XLN_REACT_DOCS_PROXY_OWNER: 'site' } }
+        : surfaceIds.length === 1 && surfaceIds[0] === 'ops'
+          ? { environment: { XLN_REACT_WALLET_PROXY_OWNER: 'ops' } }
+        : {}),
+    },
+    ...(walletFixtureEnabled ? [{
+      label: 'wallet-address-runtime-fixture',
+      argv: ['bun', 'tests/react-candidate/wallet-runtime-fixture.ts'],
+      gatewayAware: false,
+    }] : []),
+  ];
+};
 
 export const getDevelopmentExitFailure = (
   shutdownRequested: boolean,
