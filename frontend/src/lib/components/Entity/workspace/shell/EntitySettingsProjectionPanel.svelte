@@ -48,6 +48,7 @@
   import type { EntityConsensusSettingsView } from '../entity-consensus-settings';
   import type { SettingsSubview } from '../entity-panel-routing';
   import type { ThemeName } from '$lib/types/ui';
+  import { getAvailableThemes } from '$lib/utils/themes';
 
   type ProfileView = {
     name?: string;
@@ -107,15 +108,8 @@
   let recoveryDiscoveryStatus: RuntimeRecoveryDiscoveryStatus | null = null;
   let recoveryDiscoveryLoadedFor = '';
 
-  const themeOptions: Array<{ value: ThemeName; label: string }> = [
-    { value: 'dark', label: 'Dark' },
-    { value: 'editor', label: 'Editor' },
-    { value: 'light', label: 'Light' },
-    { value: 'merchant', label: 'Merchant' },
-    { value: 'gold-luxe', label: 'Gold Luxe' },
-    { value: 'matrix', label: 'Matrix' },
-    { value: 'arctic', label: 'Arctic' },
-  ];
+  const themeOptions: Array<{ value: ThemeName; label: string }> = getAvailableThemes()
+    .map(({ id, name }) => ({ value: id, label: name }));
 
   const normalizeText = (value: unknown): string => String(value || '').trim();
 

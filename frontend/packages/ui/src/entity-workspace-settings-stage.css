@@ -1,0 +1,48 @@
+.entity-workspace-settings-stage {
+  align-self: stretch;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  min-width: 0;
+  border-left: 1px solid var(--entity-line);
+  background: color-mix(in srgb, var(--theme-surface) 94%, transparent);
+}
+
+.entity-workspace-settings-stage > nav {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  border-bottom: 1px solid var(--entity-line);
+}
+
+.entity-workspace-settings-stage > nav a {
+  display: grid;
+  place-items: center;
+  min-width: 0;
+  min-height: 2.85rem;
+  padding: 0.45rem 0.3rem;
+  overflow: hidden;
+  color: var(--theme-text-muted);
+  border-right: 1px solid var(--entity-line);
+  font: 600 0.55rem/1.2 "SFMono-Regular", Consolas, monospace;
+  text-align: center;
+  text-decoration: none;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  transition: color 140ms ease, background 140ms ease;
+}
+.entity-workspace-settings-stage > nav a:last-child { border-right: 0; }
+.entity-workspace-settings-stage > nav a:hover { color: var(--theme-text-primary); background: var(--theme-surface-hover); }
+.entity-workspace-settings-stage > nav a[aria-current="page"] { color: var(--entity-accent); background: color-mix(in srgb, var(--entity-accent) 9%, transparent); }
+.entity-workspace-settings-stage > nav a:focus-visible { position: relative; z-index: 1; outline: 2px solid var(--entity-accent); outline-offset: -3px; }
+.entity-workspace-settings-stage > div { min-height: 0; }
+.entity-workspace-settings-stage > div > * { height: 100%; border-left: 0; }
+
+@media (max-width: 760px) {
+  .entity-workspace-settings-stage { border-top: 1px solid var(--entity-line); border-left: 0; }
+  .entity-workspace-settings-stage > nav { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .entity-workspace-settings-stage > nav a:nth-child(3) { border-right: 0; }
+  .entity-workspace-settings-stage > nav a:nth-child(-n + 3) { border-bottom: 1px solid var(--entity-line); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .entity-workspace-settings-stage > nav a { transition: none; }
+}

@@ -9,6 +9,7 @@
 import type { EnvSnapshot, RuntimeTx } from '@xln/core/runtime/types';
 import type { EntityInput } from '@xln/core/entity/types';
 import type { FrameLogEntry } from '@xln/core/types/logging';
+import type { ThemeName } from '../../../packages/ui/src/theme-model';
 
 export type LogLevel = FrameLogEntry['level'];
 
@@ -54,7 +55,7 @@ export interface ComponentState {
 }
 
 // Theme system
-export type ThemeName = 'dark' | 'editor' | 'light' | 'merchant' | 'gold-luxe' | 'matrix' | 'arctic';
+export type { ThemeName } from '../../../packages/ui/src/theme-model';
 
 // ThemeColors interface is defined in utils/themes.ts (single source of truth)
 export type { ThemeColors } from '$lib/utils/themes';

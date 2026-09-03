@@ -1,4 +1,5 @@
 import type { Settings, ThemeName, BarColorMode, BarLayoutMode, AccountDeltaViewMode, AccountSkin, AccountBarStyle, UIStyleSettings } from '$lib/types/ui';
+import { DISPLAY_PREFERENCES_STORAGE_KEY as SETTINGS_KEY } from '../../../packages/browser/src/display-preferences';
 import { applyThemeToDocument } from '../utils/themes';
 import {
   DEFAULT_UI_STYLE,
@@ -73,7 +74,6 @@ const defaultSettings: Settings = {
 export const settings = createObservableStore<Settings>(defaultSettings);
 
 // Storage keys
-const SETTINGS_KEY = 'xln-settings';
 const COMPONENT_STATES_KEY = 'xlnComponentStates';
 
 // Settings operations

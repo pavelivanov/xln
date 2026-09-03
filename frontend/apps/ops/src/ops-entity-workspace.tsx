@@ -2,6 +2,7 @@ import { useSyncExternalStore } from 'react';
 
 import { resolveEntityPanelDeepLinkFromLocation } from '../../../packages/runtime-client/src/entity-workspace-navigation';
 import { EntityWorkspaceShell } from '../../../packages/ui/src/entity-workspace-shell';
+import { opsDisplayPreferencesSource } from './ops-display-preferences';
 import { opsEntityWorkspaceSource } from './ops-entity-workspace-runtime';
 import { OpsShell } from './ops-shell';
 
@@ -14,10 +15,15 @@ const readHash = (): string => window.location.hash;
 
 export function OpsEntityWorkspacePage() {
   const hash = useSyncExternalStore(subscribeToHash, readHash, () => '');
-  const snapshot = useSyncExternalStore(
+  const runtimeSnapshot = useSyncExternalStore(
     opsEntityWorkspaceSource.subscribe,
     opsEntityWorkspaceSource.getSnapshot,
     opsEntityWorkspaceSource.getSnapshot,
+  );
+  const displaySnapshot = useSyncExternalStore(
+    opsDisplayPreferencesSource.subscribe,
+    opsDisplayPreferencesSource.getSnapshot,
+    opsDisplayPreferencesSource.getSnapshot,
   );
   const route = resolveEntityPanelDeepLinkFromLocation({ hash, search: '' });
   const activeTab = route.activeTab ?? 'assets';
@@ -25,16 +31,19 @@ export function OpsEntityWorkspacePage() {
   return (
     <OpsShell activePath="/embed">
       <EntityWorkspaceShell
-        accounts={snapshot.accounts}
+        accounts={runtimeSnapshot.accounts}
         activeTab={activeTab}
-        consensus={snapshot.consensus}
-        context={snapshot.context}
+        consensus={runtimeSnapshot.consensus}
+        context={runtimeSnapshot.context}
+        displayIssue={displaySnapshot.issue}
+        displayPreferences={displaySnapshot.preferences}
         onRefresh={() => { void opsEntityWorkspaceSource.refresh(); }}
         onSelectAccountsPage={opsEntityWorkspaceSource.selectAccountsPage}
-        ownership={snapshot.ownership}
-        profile={snapshot.profile}
-        readState={snapshot.readState}
-        reserves={snapshot.reserves}
+        onSelectTheme={opsDisplayPreferencesSource.setTheme}
+        ownership={runtimeSnapshot.ownership}
+        profile={runtimeSnapshot.profile}
+        readState={runtimeSnapshot.readState}
+        reserves={runtimeSnapshot.reserves}
         settingsSubview={settingsSubview}
       />
     </OpsShell>
