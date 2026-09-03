@@ -1,11 +1,20 @@
+import type { EntityWorkspaceContext } from '../../runtime-client/src/entity-workspace-context';
 import type { EntityWorkspaceHubPolicy } from '../../runtime-client/src/entity-workspace-hub-policy';
 import type { EntityWorkspaceProfile } from '../../runtime-client/src/entity-workspace-profile';
+import type { EntityWorkspaceReserves } from '../../runtime-client/src/entity-workspace-reserves';
+import {
+  projectEntityWorkspaceSettingsSummary,
+} from '../../runtime-client/src/entity-workspace-settings-summary';
+import type { EntityWorkspaceTimeMachineState } from '../../runtime-client/src/entity-workspace-time-machine';
 import { formatAddress } from './entity-workspace-display';
 import './entity-workspace-profile-panel.css';
 
 type EntityWorkspaceProfilePanelProps = Readonly<{
+  context: EntityWorkspaceContext;
   hubPolicy: EntityWorkspaceHubPolicy;
   profile: EntityWorkspaceProfile;
+  reserves: EntityWorkspaceReserves;
+  timeMachine: EntityWorkspaceTimeMachineState;
 }>;
 
 const profileInitials = (name: string): string => name
@@ -16,6 +25,10 @@ const profileInitials = (name: string): string => name
   .toUpperCase();
 
 type SelectedProfile = Extract<EntityWorkspaceProfile, Readonly<{ status: 'selected' }>>;
+type SettingsSummaryMode = 'live' | 'history' | 'reading';
+
+const settingsSummaryModeLabel = (mode: SettingsSummaryMode): string =>
+  mode === 'live' ? 'Live' : mode === 'history' ? 'History' : 'Reading';
 
 function ProfileHeader({ profile }: Readonly<{ profile: SelectedProfile }>) {
   return (
@@ -45,6 +58,34 @@ function ProfileFields({ profile }: Readonly<{ profile: SelectedProfile }>) {
   );
 }
 
+function SettingsSummary({ context, profile, reserves, timeMachine }: Readonly<{
+  context: EntityWorkspaceContext;
+  profile: EntityWorkspaceProfile;
+  reserves: EntityWorkspaceReserves;
+  timeMachine: EntityWorkspaceTimeMachineState;
+}>) {
+  const summary = projectEntityWorkspaceSettingsSummary({ context, profile, reserves, timeMachine });
+  if (summary.status !== 'selected') return null;
+  return (
+    <section className="entity-workspace-profile-subsection" data-testid="settings-runtime-summary">
+      <header>
+        <small>Committed Runtime context</small>
+        <strong data-testid="settings-runtime-mode">{settingsSummaryModeLabel(summary.mode)}</strong>
+      </header>
+      <dl>
+        <div className="profile-wide-field"><dt>Runtime</dt><dd title={summary.runtimeId ?? ''}>{formatAddress(summary.runtimeId ?? '') || 'Not attached'}</dd></div>
+        <div><dt>Height</dt><dd data-testid="settings-runtime-height">{summary.runtimeHeight}</dd></div>
+        <div><dt>Jurisdiction</dt><dd>{summary.jurisdictionName || 'Unassigned'}</dd></div>
+        <div className="profile-wide-field"><dt>Entity</dt><dd title={summary.entityId}>{formatAddress(summary.entityId)}</dd></div>
+        <div className="profile-wide-field"><dt>Signer</dt><dd title={summary.signerId ?? ''}>{formatAddress(summary.signerId ?? '') || 'Not exposed'}</dd></div>
+        <div><dt>Hub</dt><dd>{summary.isHub ? 'Yes' : 'No'}</dd></div>
+        <div><dt>Accounts</dt><dd data-testid="settings-account-count">{summary.accountCount}</dd></div>
+        <div className="profile-wide-field"><dt>Visible reserves</dt><dd data-testid="settings-visible-reserve-count">{summary.visibleReserveCount}</dd></div>
+      </dl>
+    </section>
+  );
+}
+
 function HubPolicyFields({ policy }: Readonly<{ policy: EntityWorkspaceHubPolicy }>) {
   if (policy.status !== 'selected') return null;
   return (
@@ -64,12 +105,13 @@ function HubPolicyFields({ policy }: Readonly<{ policy: EntityWorkspaceHubPolicy
   );
 }
 
-export function EntityWorkspaceProfilePanel({ hubPolicy, profile }: EntityWorkspaceProfilePanelProps) {
+export function EntityWorkspaceProfilePanel({ context, hubPolicy, profile, reserves, timeMachine }: EntityWorkspaceProfilePanelProps) {
   if (profile.status !== 'selected') return null;
   return (
     <section className="entity-workspace-profile-panel" data-testid="settings-profile-projection">
       <ProfileHeader profile={profile} />
       <div className="entity-workspace-profile-content">
+        <SettingsSummary context={context} profile={profile} reserves={reserves} timeMachine={timeMachine} />
         <ProfileFields profile={profile} />
         <HubPolicyFields policy={hubPolicy} />
       </div>

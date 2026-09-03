@@ -13,6 +13,7 @@ import type { EntityWorkspaceHubPolicy } from '../../runtime-client/src/entity-w
 import type { EntityWorkspaceOwnership } from '../../runtime-client/src/entity-workspace-ownership';
 import type { EntityWorkspaceProfile } from '../../runtime-client/src/entity-workspace-profile';
 import type { EntityWorkspaceReserves } from '../../runtime-client/src/entity-workspace-reserves';
+import type { EntityWorkspaceTimeMachineState } from '../../runtime-client/src/entity-workspace-time-machine';
 import type { ThemeName } from './theme-model';
 import { EntityWorkspaceAccountsPanel } from './entity-workspace-accounts-panel';
 import { EntityWorkspaceConsensusPanel } from './entity-workspace-consensus-panel';
@@ -166,6 +167,7 @@ type EntityWorkspaceStageWithOwnershipProps = EntityWorkspaceStageProps & Readon
   profile: EntityWorkspaceProfile;
   reserves: EntityWorkspaceReserves;
   settingsSubview: SettingsSubview;
+  timeMachine: EntityWorkspaceTimeMachineState;
 }>;
 
 const readFooterLabel = (
@@ -180,7 +182,7 @@ const readFooterLabel = (
   return 'Unavailable — no remote Runtime selected';
 };
 
-function EntityWorkspaceStage({ accounts, activeTab, consensus, context, displayIssue, displayPreferences, hubPolicy, onRefresh, onSelectAccountsPage, onSelectTheme, onToggleTimeMachine, onToggleXlnGuide, ownership, profile, readState, reserves, settingsSubview }: EntityWorkspaceStageWithOwnershipProps) {
+function EntityWorkspaceStage({ accounts, activeTab, consensus, context, displayIssue, displayPreferences, hubPolicy, onRefresh, onSelectAccountsPage, onSelectTheme, onToggleTimeMachine, onToggleXlnGuide, ownership, profile, readState, reserves, settingsSubview, timeMachine }: EntityWorkspaceStageWithOwnershipProps) {
   const copy = SECTION_COPY[activeTab];
   return (
     <section className="entity-workspace-stage" data-testid="entity-workspace-stage">
@@ -202,7 +204,7 @@ function EntityWorkspaceStage({ accounts, activeTab, consensus, context, display
                   : settingsSubview === 'display'
                     ? <EntityWorkspaceDisplayPanel issue={displayIssue} onSelectTheme={onSelectTheme} onToggleTimeMachine={onToggleTimeMachine} onToggleXlnGuide={onToggleXlnGuide} preferences={displayPreferences} />
                     : settingsSubview === 'wallet' || settingsSubview === 'entity'
-                      ? <EntityWorkspaceProfilePanel hubPolicy={hubPolicy} profile={profile} />
+                      ? <EntityWorkspaceProfilePanel context={context} hubPolicy={hubPolicy} profile={profile} reserves={reserves} timeMachine={timeMachine} />
                       : <ProjectionBoundary context={context} emptyMessage={copy.nextBoundary} onRefresh={onRefresh} readState={readState} />}
               </EntityWorkspaceSettingsStage>
           : <ProjectionBoundary
@@ -234,6 +236,7 @@ type EntityWorkspaceShellProps = Readonly<{
   readState: EntityWorkspaceReadState;
   reserves: EntityWorkspaceReserves;
   settingsSubview: SettingsSubview;
+  timeMachine: EntityWorkspaceTimeMachineState;
 }>;
 
 const readModeLabel = (
@@ -247,7 +250,7 @@ const readModeLabel = (
   return 'Read boundary';
 };
 
-export function EntityWorkspaceShell({ accounts, activeTab, consensus, context, displayIssue, displayPreferences, hubPolicy, onRefresh, onSelectAccountsPage, onSelectTheme, onToggleTimeMachine, onToggleXlnGuide, ownership, profile, readState, reserves, settingsSubview }: EntityWorkspaceShellProps) {
+export function EntityWorkspaceShell({ accounts, activeTab, consensus, context, displayIssue, displayPreferences, hubPolicy, onRefresh, onSelectAccountsPage, onSelectTheme, onToggleTimeMachine, onToggleXlnGuide, ownership, profile, readState, reserves, settingsSubview, timeMachine }: EntityWorkspaceShellProps) {
   return (
     <section
       className="entity-workspace"
@@ -299,6 +302,7 @@ export function EntityWorkspaceShell({ accounts, activeTab, consensus, context, 
         readState={readState}
         reserves={reserves}
         settingsSubview={settingsSubview}
+        timeMachine={timeMachine}
       />
       <p className="entity-workspace-footnote">No inferred state · no hidden fallback · Svelte remains canonical</p>
     </section>

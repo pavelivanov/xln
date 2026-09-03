@@ -289,6 +289,12 @@ test('React Entity workspace reads selected context from a real H1 Runtime', { t
       await expect(profile).toBeVisible();
       await expect(candidatePage.getByTestId('settings-profile-name')).not.toHaveText('');
       await expect(candidatePage.getByTestId('settings-profile-role')).toHaveText('Hub entity');
+      const runtimeSummary = candidatePage.getByTestId('settings-runtime-summary');
+      await expect(runtimeSummary).toBeVisible();
+      await expect(candidatePage.getByTestId('settings-runtime-mode')).toHaveText('Live');
+      await expect(candidatePage.getByTestId('settings-runtime-height')).not.toHaveText('0');
+      await expect(candidatePage.getByTestId('settings-account-count')).not.toHaveText('0');
+      await expect(candidatePage.getByTestId('settings-visible-reserve-count')).not.toHaveText('0');
       const hubPolicy = candidatePage.getByTestId('settings-hub-policy');
       await expect(hubPolicy).toBeVisible();
       await expect(candidatePage.getByTestId('settings-hub-policy-version')).not.toHaveText('0');
