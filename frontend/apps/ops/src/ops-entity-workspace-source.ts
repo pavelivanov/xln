@@ -55,6 +55,7 @@ const readEntityWorkspaceProjection = async (
   activityBeforeHeight?: number,
   activityKind: EntityWorkspaceActivityKind = 'all',
   activityTypes: readonly EntityWorkspaceActivityFilterType[] = [],
+  activitySearch: string = '',
 ): Promise<OpsEntityWorkspaceProjection> => {
   const projection = projectOpsEntityWorkspaceFrame(runtimeId, frame);
   if (projection.context.status === 'empty') return projection;
@@ -63,6 +64,7 @@ const readEntityWorkspaceProjection = async (
     activityBeforeHeight,
     activityKind,
     activityTypes,
+    activitySearch,
   );
   const activity = await client.readActivity(activityQuery);
   return projectOpsEntityWorkspaceActivityPage(
@@ -71,6 +73,7 @@ const readEntityWorkspaceProjection = async (
     activityQuery.beforeHeight,
     activityQuery.kind,
     activityTypes,
+    activitySearch,
   );
 };
 
@@ -145,6 +148,7 @@ export class OpsEntityWorkspaceSource {
       publish: (snapshot) => this.publish(snapshot),
       readActivityBeforeHeight: () => this.activityController.readBeforeHeight(),
       readActivityKind: () => this.activityController.readKind(),
+      readActivitySearch: () => this.activityController.readSearch(),
       readActivityTypes: () => this.activityController.readTypes(),
       readAccountsPage: () => this.accountsPage,
       readAdapter: () => this.session?.adapter ?? null,
@@ -230,6 +234,10 @@ export class OpsEntityWorkspaceSource {
     this.activityController.toggleType(this.snapshot.activity, type);
   };
 
+  readonly selectActivitySearch = (search: string): void => {
+    this.activityController.selectSearch(this.snapshot.activity, search);
+  };
+
   readonly selectHistoryHeight = (height: number): Promise<boolean> => {
     this.activityController.resetPage();
     return this.historyController.select(height);
@@ -277,6 +285,7 @@ export class OpsEntityWorkspaceSource {
           this.activityController.readBeforeHeight() ?? undefined,
           this.activityController.readKind(),
           this.activityController.readTypes(),
+          this.activityController.readSearch(),
         );
       },
       {

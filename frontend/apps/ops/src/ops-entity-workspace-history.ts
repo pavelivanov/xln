@@ -29,6 +29,7 @@ export type OpsEntityWorkspaceHistoryReader = Readonly<{
 export async function readOpsEntityWorkspaceHistory(input: Readonly<{
   activityBeforeHeight?: number;
   activityKind?: EntityWorkspaceActivityKind;
+  activitySearch?: string;
   activityTypes?: readonly EntityWorkspaceActivityFilterType[];
   accountsPage: number;
   client: OpsEntityWorkspaceHistoryReader;
@@ -61,6 +62,7 @@ export async function readOpsEntityWorkspaceHistory(input: Readonly<{
     input.activityBeforeHeight,
     input.activityKind,
     input.activityTypes,
+    input.activitySearch,
   );
   const activity = await input.client.readActivity(activityQuery);
   return projectOpsEntityWorkspaceActivityPage(
@@ -69,5 +71,6 @@ export async function readOpsEntityWorkspaceHistory(input: Readonly<{
     activityQuery.beforeHeight,
     activityQuery.kind,
     input.activityTypes,
+    input.activitySearch,
   );
 }
