@@ -5,7 +5,6 @@ export type ParityBrowserEvidence = 'covered' | 'partial' | 'missing';
 export type ParityGapKind = 'browser' | 'implementation' | 'owner' | 'owner-decision' | 'verification';
 
 export const PARITY_GAP_IDS = [
-  'wallet-app-browser-depth',
   'wallet-irreversible-identity',
   'wallet-recovery-tower-push',
   'wallet-external-provider',
@@ -36,6 +35,7 @@ const docsBrowser = ['frontend/tests/react-candidate/docs.spec.ts'] as const;
 const walletBrowser = [
   'frontend/tests/react-candidate/wallet.spec.ts',
   'frontend/tests/react-candidate/wallet-financial.spec.ts',
+  'frontend/tests/react-candidate/wallet-transactions.spec.ts',
 ] as const;
 const opsBrowser = ['frontend/tests/react-candidate/ops.spec.ts'] as const;
 const crossSurfaceBrowser = ['frontend/tests/react-candidate/cross-surface.spec.ts'] as const;
@@ -49,7 +49,7 @@ export const RETAINED_ROUTE_PARITY = [
   { id: 'unicast', pathname: '/unicast', representativePath: '/unicast', sveltePage: 'frontend/src/routes/unicast/+page.svelte', intendedOwner: 'site', implementation: 'complete', browserEvidence: 'covered', reactSource: 'frontend/apps/site/src/unicast-page.tsx', focusedTests: ['tests/frontend/tooling/frontend-unicast-pilot.test.ts'], browserTests: siteBrowser, gapIds: [] },
   { id: 'market-cap', pathname: '/market-cap', representativePath: '/market-cap', sveltePage: 'frontend/src/routes/market-cap/+page.svelte', intendedOwner: 'site', implementation: 'complete', browserEvidence: 'covered', reactSource: 'frontend/apps/site/src/market-cap-page.tsx', focusedTests: ['tests/frontend/tooling/frontend-market-cap-pilot.test.ts'], browserTests: siteBrowser, gapIds: [] },
   { id: 'docs', pathname: '/docs', representativePath: '/docs', sveltePage: 'frontend/src/routes/docs/+page.svelte', intendedOwner: 'docs', implementation: 'complete', browserEvidence: 'covered', reactSource: 'frontend/apps/docs/src/docs-app.tsx', focusedTests: ['tests/frontend/tooling/frontend-docs-pilot.test.ts'], browserTests: docsBrowser, gapIds: [] },
-  { id: 'wallet-app', pathname: '/app', representativePath: '/app', sveltePage: 'frontend/src/routes/app/+page.svelte', intendedOwner: 'wallet', implementation: 'partial', browserEvidence: 'partial', reactSource: 'frontend/apps/wallet/src/app-shell.tsx', focusedTests: ['tests/frontend/runtime/frontend-wallet-app-shell.test.ts', 'tests/frontend/tooling/frontend-wallet-flow-audit.test.ts'], browserTests: [...walletBrowser, ...crossSurfaceBrowser], gapIds: ['wallet-app-browser-depth', 'wallet-irreversible-identity', 'wallet-recovery-tower-push', 'wallet-external-provider'] },
+  { id: 'wallet-app', pathname: '/app', representativePath: '/app', sveltePage: 'frontend/src/routes/app/+page.svelte', intendedOwner: 'wallet', implementation: 'partial', browserEvidence: 'covered', reactSource: 'frontend/apps/wallet/src/app-shell.tsx', focusedTests: ['tests/frontend/runtime/frontend-wallet-app-shell.test.ts', 'tests/frontend/tooling/frontend-wallet-flow-audit.test.ts'], browserTests: [...walletBrowser, ...crossSurfaceBrowser], gapIds: ['wallet-irreversible-identity', 'wallet-recovery-tower-push', 'wallet-external-provider'] },
   { id: 'wallet-address', pathname: '/address', representativePath: '/address', sveltePage: 'frontend/src/routes/address/+page.svelte', intendedOwner: 'wallet', implementation: 'complete', browserEvidence: 'covered', reactSource: 'frontend/apps/wallet/src/wallet-address.tsx', focusedTests: ['tests/frontend/runtime/frontend-wallet-address.test.ts'], browserTests: walletBrowser, gapIds: [] },
   { id: 'wallet-address-entity', pathname: '/address/:entityId', representativePath: '/address/0xabc', sveltePage: 'frontend/src/routes/address/[entityId]/+page.svelte', intendedOwner: 'wallet', implementation: 'complete', browserEvidence: 'covered', reactSource: 'frontend/apps/wallet/src/wallet-address.tsx', focusedTests: ['tests/frontend/runtime/frontend-wallet-address.test.ts'], browserTests: walletBrowser, gapIds: [] },
   { id: 'testnet', pathname: '/testnet', representativePath: '/testnet', sveltePage: 'frontend/src/routes/testnet/+page.svelte', intendedOwner: 'wallet', implementation: 'complete', browserEvidence: 'covered', reactSource: 'frontend/apps/wallet/src/testnet-page.tsx', focusedTests: ['tests/frontend/tooling/frontend-testnet-pilot.test.ts'], browserTests: walletBrowser, gapIds: [] },
@@ -73,7 +73,6 @@ export type ParityGap = Readonly<{
 }>;
 
 export const PARITY_GAPS = [
-  { id: 'wallet-app-browser-depth', kind: 'browser', capabilityIds: ['wallet-payments-and-markets'], routeIds: ['wallet-app'], evidenceSources: ['frontend/tests/react-candidate/wallet.spec.ts', 'frontend/tests/react-candidate/wallet-financial.spec.ts', 'frontend/tests/runtime-command-journal.spec.ts'], nextSlice: 'Exercise React wallet payment and market states at all required viewports.' },
   { id: 'wallet-irreversible-identity', kind: 'implementation', capabilityIds: ['wallet-shell-and-identity'], routeIds: ['wallet-app'], evidenceSources: ['frontend/apps/wallet/src/identity-recovery.tsx', 'frontend/config/wallet-flow-audit.ts'], nextSlice: 'Connect the reviewed identity inputs to the existing canonical creation and persistence boundary.' },
   { id: 'wallet-recovery-tower-push', kind: 'implementation', capabilityIds: ['wallet-recovery'], routeIds: ['wallet-app'], evidenceSources: ['frontend/src/lib/utils/recovery', 'frontend/static/push-wake-sw.js'], nextSlice: 'Port tower onboarding, full recovery, and push-wake controls without changing persistence schemas.' },
   { id: 'wallet-external-provider', kind: 'implementation', capabilityIds: ['wallet-payments-and-markets', 'wallet-native-and-offline'], routeIds: ['wallet-app'], evidenceSources: ['frontend/apps/wallet/src/wallet-payments.tsx', 'frontend/src/lib/native'], nextSlice: 'Connect the React payment surface to the existing external-wallet provider and native authority boundary.' },
@@ -88,7 +87,7 @@ export const CAPABILITY_PARITY = [
   { capabilityId: 'wallet-runtime-discovery', gapIds: [] },
   { capabilityId: 'wallet-recovery', gapIds: ['wallet-recovery-tower-push'] },
   { capabilityId: 'wallet-finance', gapIds: [] },
-  { capabilityId: 'wallet-payments-and-markets', gapIds: ['wallet-app-browser-depth', 'wallet-external-provider'] },
+  { capabilityId: 'wallet-payments-and-markets', gapIds: ['wallet-external-provider'] },
   { capabilityId: 'wallet-native-and-offline', gapIds: ['wallet-external-provider'] },
   { capabilityId: 'ops-health-and-qa', gapIds: [] },
   { capabilityId: 'ops-runs-scenarios-and-ai', gapIds: [] },
