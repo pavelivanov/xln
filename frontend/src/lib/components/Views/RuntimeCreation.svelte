@@ -74,8 +74,7 @@
     type WalletRecoveryDiscoveryRequest,
   } from '../../../../packages/browser/src/wallet-recovery-discovery';
   import {
-    resolveWalletRuntimeOpeningPlan,
-    walletRuntimeOpeningNeedsLocalLookup,
+    executeWalletRuntimeOpening,
   } from '../../../../packages/browser/src/wallet-runtime-opening';
   import { WalletNodeMnemonicRevealCoordinator } from '../../../../packages/browser/src/wallet-node-mnemonic-reveal';
   import {
@@ -548,12 +547,7 @@
     derivationError = '';
     try {
       const runtimeId = ethereumAddress;
-      const openingChoice = {
-        openLocal: options.openLocal === true,
-        forceFresh: options.forceFresh === true,
-        hasRecoveryCandidate: options.recoveryCandidate !== undefined,
-      };
-      const openingPlan = resolveWalletRuntimeOpeningPlan({
+      const opening = await executeWalletRuntimeOpening({
         runtimeId,
         name,
         labelOverride,
@@ -563,26 +557,17 @@
         loginType: createLoginType,
         unlockDurationMs,
         recoveryCandidate: options.recoveryCandidate,
-        forceFresh: openingChoice.forceFresh,
-        openLocal: openingChoice.openLocal,
-        localRuntimeExists: walletRuntimeOpeningNeedsLocalLookup(openingChoice)
-          ? vaultOperations.runtimeExists(runtimeId)
-          : false,
+        forceFresh: options.forceFresh === true,
+        openLocal: options.openLocal === true,
+      }, {
+        runtimeExists: candidateId => vaultOperations.runtimeExists(candidateId),
+        unlockRuntime: (candidateId, candidateSeed, durationMs) =>
+          vaultOperations.unlockRuntime(candidateId, candidateSeed, durationMs),
+        createRuntime: (label, candidateSeed, creationOptions) =>
+          vaultOperations.createRuntime(label, candidateSeed, creationOptions),
       });
-
-      if (openingPlan.action === 'unlock-local') {
-        await vaultOperations.unlockRuntime(
-          openingPlan.runtimeId,
-          openingPlan.seed,
-          openingPlan.unlockDurationMs,
-        );
-      } else {
-        const runtime = await vaultOperations.createRuntime(
-          openingPlan.label,
-          openingPlan.seed,
-          openingPlan.options,
-        );
-        entityId = runtime.signers[0]?.entityId || entityId;
+      if (opening.action === 'create-runtime') {
+        entityId = opening.runtime.signers[0]?.entityId || entityId;
       }
       createLoginType = 'manual';
       clearSensitiveWalletMaterial();
