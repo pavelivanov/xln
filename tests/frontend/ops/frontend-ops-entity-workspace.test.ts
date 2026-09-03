@@ -42,6 +42,7 @@ describe('React Entity workspace shell', () => {
     expect(shell).toContain('EntityWorkspaceAccountsPanel');
     expect(shell).toContain('EntityWorkspaceConsensusPanel');
     expect(shell).toContain('EntityWorkspaceProfilePanel');
+    expect(shell).toContain('hubPolicy={hubPolicy}');
     expect(shell).toContain('EntityWorkspaceReservesPanel');
     expect(shell).toContain("settingsSubview === 'wallet' || settingsSubview === 'entity'");
     expect(shell).toContain("settingsSubview === 'display'");
@@ -58,6 +59,7 @@ describe('React Entity workspace shell', () => {
     expect(page).toContain('setXlnGuideVisibility');
     expect(settingsStage).toContain('ENTITY_SETTINGS_SECTIONS.map');
     expect(settingsStage).toContain("settingsSubview === 'entity' ? 'wallet' : settingsSubview");
+    expect(profile).toContain('settings-hub-policy');
     expect(profile).toContain('Profile edits stay on the canonical workspace');
     expect(profile).not.toContain('onSave');
     expect(profile).not.toContain('runtimeController');

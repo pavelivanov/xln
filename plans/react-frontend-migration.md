@@ -1,6 +1,6 @@
 # React frontend migration work plan
 
-**Status:** `IN PROGRESS — WP0–WP6 COMPLETE; WP7 HEALTH + QA + HLT + RUNS + SCENARIOS + AI IMPLEMENTED, WORKSPACE STATE LAYER SVELTE-FREE, PANEL PORTS THROUGH ARCHITECT, REACT DOCKVIEW WRAPPER READY, GRAPH3D LIFECYCLE + RENDERER/PRIMITIVES/EFFECTS/ENTITY/ACCOUNT VISUAL FACTORY/INTERACTION/SELECTION/CAMERA/POINTER+XR DRAG + HOVER MECHANICS + VIEW/SCENE INPUT MODELS EXTRACTED, ENTITY WORKSPACE REACT SHELL/TABS + LIVE RUNTIME CONTEXT + READ-ONLY ASSETS/OWNERSHIP/ACCOUNTS/CONSENSUS/PROFILE READY; WP8 COMPLETE; WP9 HAS 19 COMPLETE / 1 PARTIAL IMPLEMENTATION, 19 COVERED / 1 PARTIAL BROWSER ROUTE, AND 1 AUTHORIZED IMPLEMENTATION GAP; ENTITY ASSETS + CONSENSUS EVIDENCE + DISPLAY THEME + TIME MACHINE + XLN GUIDE PREFERENCE COMPLETE`
+**Status:** `IN PROGRESS — WP0–WP6 COMPLETE; WP7 HEALTH + QA + HLT + RUNS + SCENARIOS + AI IMPLEMENTED, WORKSPACE STATE LAYER SVELTE-FREE, PANEL PORTS THROUGH ARCHITECT, REACT DOCKVIEW WRAPPER READY, GRAPH3D LIFECYCLE + RENDERER/PRIMITIVES/EFFECTS/ENTITY/ACCOUNT VISUAL FACTORY/INTERACTION/SELECTION/CAMERA/POINTER+XR DRAG + HOVER MECHANICS + VIEW/SCENE INPUT MODELS EXTRACTED, ENTITY WORKSPACE REACT SHELL/TABS + LIVE RUNTIME CONTEXT + READ-ONLY ASSETS/OWNERSHIP/ACCOUNTS/CONSENSUS/PROFILE READY; WP8 COMPLETE; WP9 HAS 19 COMPLETE / 1 PARTIAL IMPLEMENTATION, 19 COVERED / 1 PARTIAL BROWSER ROUTE, AND 1 AUTHORIZED IMPLEMENTATION GAP; ENTITY ASSETS + CONSENSUS EVIDENCE + DISPLAY THEME + TIME MACHINE + XLN GUIDE PREFERENCE + HUB POLICY COMPLETE`
 
 This is the executable work plan for splitting the Svelte frontend into React
 applications. It is intentionally lightweight and should be updated as live
@@ -2794,11 +2794,44 @@ Frozen core is unchanged; file-size checking reaches only the existing
 behavior, Runtime protocol, contract, persistence schema, financial formula,
 or artifact.
 
+The next Entity Settings slice projects the active Entity's committed Hub
+policy into the React profile overview. Its strict boundary accepts only the
+canonical policy keys and exact strategy, safe-integer, and bigint field
+types; it distinguishes an absent Entity from an Entity with no Hub policy and
+fails loudly on malformed or schema-drifted data. The panel exposes the raw
+committed strategy, policy version, routing fee ppm, base-fee units, liquidity
+fee bps, and rebalance timeout milliseconds. It performs no calculation and
+offers no mutation command.
+
+Focused Hub-policy, Runtime-read, workspace, Time Machine, and parity coverage
+passes 21 / 21 with 294 expectations; the corrected ownership/parity inventory
+batch passes 11 / 11 with 304 expectations. The React-local gate scans 691
+files with zero unsafe findings, all four React production surfaces build, and
+the ops build transforms 1,637 modules with 28.61 kB workspace CSS, 27.86 kB
+view, and 31.43 kB Runtime chunks. The canonical frontend check reports zero
+errors/warnings while transforming 4,681 SSR plus 6,432 client modules.
+
+The isolated real-H1 flow passes in 27.2 seconds (29.6 seconds total) with
+candidate `b0bdd41945b7`, renders nonzero committed Hub policy, and emits no
+browser-console error. Its changed profile screenshots at 390×844, 1366×900,
+and 1920×1080 were inspected with no clipping or horizontal overflow. The
+221-file frontend suite reports 1,312 passes, the unchanged 16-failure plus
+one-error repository baseline, and 7,508 expectations across 1,328 tests; no
+slice-owned test fails. This read-only slice changes no Runtime transition,
+protocol authority, financial formula, contract, persistence schema, or
+artifact.
+
+Root evidence passes 26 / 26 deterministic tests with 100,156 expectations
+before the documented 60-second Hardhat compiler-cache mutex. Downstream
+soundcheck passes all ten gates before the documented missing local `cargo`;
+frozen core is unchanged, diff hygiene is clean, and file-size checking reaches
+only the existing `core/qa/report.ts` 3001/3000 violation.
+
 **Current checkpoint:** all retained routes have React application owners;
 wallet parity is complete. `/embed` is the sole partial implementation/browser
 route, and its authorized Entity workspace is the sole remaining WP9
 implementation gap before WP10; display-theme, exact Time Machine, and shared
-xln-guide preference parity are now complete.
+xln-guide preference plus committed Hub-policy parity are now complete.
 
 ### WP10 — Authorized canonical cutover
 
