@@ -75,6 +75,7 @@ export const CAPABILITIES = [
       'frontend/packages/browser/src/wallet-runtime-opening.ts',
       'frontend/packages/browser/src/wallet-runtime-preferences.ts',
       'frontend/packages/browser/src/wallet-shell-state.ts',
+      'frontend/packages/browser/src/wallet-vault-storage.ts',
       'frontend/packages/ui/src/demo-accounts.ts',
       'frontend/packages/ui/src/runtime-creation-model.ts',
       'frontend/src/lib/components/Views/RuntimeCreation.svelte',
@@ -87,6 +88,7 @@ export const CAPABILITIES = [
       'frontend/apps/wallet/src/wallet-address-source.ts',
       'frontend/apps/wallet/src/wallet-address.tsx',
       'frontend/apps/wallet/src/testnet-page.tsx',
+      'frontend/bridges/wallet-canonical-vault-runtime.ts',
       'frontend/config/wallet-flow-audit.ts',
     ],
     behavior: [

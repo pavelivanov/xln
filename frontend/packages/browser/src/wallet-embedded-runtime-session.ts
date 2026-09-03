@@ -26,6 +26,7 @@ export type WalletEmbeddedRuntimeSession<Adapter> = Readonly<{
   getSnapshot: () => WalletEmbeddedRuntimeSessionSnapshot;
   subscribe: (listener: () => void) => () => void;
   start: () => Promise<Adapter>;
+  replace: (boot: () => Promise<WalletEmbeddedRuntimeResource<Adapter>>) => Promise<Adapter>;
   stop: () => Promise<void>;
   requireAdapter: () => Adapter;
 }>;
@@ -128,6 +129,53 @@ export const createWalletEmbeddedRuntimeSession = <Adapter>(
     }
   };
 
+  const replace = async (
+    boot: () => Promise<WalletEmbeddedRuntimeResource<Adapter>>,
+  ): Promise<Adapter> => {
+    if (!resource || !releaseLock) throw new Error('EMBEDDED_RUNTIME_REPLACE_REQUIRES_ACTIVE_LEASE');
+    if (startInFlight) throw new Error('EMBEDDED_RUNTIME_TRANSITION_IN_FLIGHT');
+    const ownedGeneration = generation;
+    const replacement = (async (): Promise<Adapter> => {
+      publish({ status: 'booting', runtimeId: '', height: 0, message: 'Opening local Runtime…' });
+      let released = false;
+      try {
+        await releaseResource();
+        released = true;
+        const next = await boot();
+        if (ownedGeneration === generation) return installResource(next, ownedGeneration);
+        await next.stop();
+        throw new Error('EMBEDDED_RUNTIME_BOOT_CANCELLED');
+      } catch (openingError: unknown) {
+        if (!released || ownedGeneration !== generation) throw openingError;
+        try {
+          const rollback = await dependencies.boot();
+          if (ownedGeneration === generation) installResource(rollback, ownedGeneration);
+          else {
+            await rollback.stop();
+            throw new Error('EMBEDDED_RUNTIME_BOOT_CANCELLED');
+          }
+        } catch (rollbackError: unknown) {
+          throw new AggregateError(
+            [openingError, rollbackError],
+            'EMBEDDED_RUNTIME_REPLACE_ROLLBACK_FAILED',
+          );
+        }
+        throw openingError;
+      }
+    })();
+    startInFlight = replacement;
+    try {
+      return await replacement;
+    } catch (error: unknown) {
+      if (ownedGeneration === generation && snapshot.status !== 'ready') {
+        publish({ status: 'error', runtimeId: '', height: 0, message: (dependencies.errorMessage ?? defaultErrorMessage)(error) });
+      }
+      throw error;
+    } finally {
+      if (startInFlight === replacement) startInFlight = null;
+    }
+  };
+
   const stop = async (): Promise<void> => {
     generation += 1;
     try {
@@ -150,6 +198,7 @@ export const createWalletEmbeddedRuntimeSession = <Adapter>(
     getSnapshot: () => snapshot,
     subscribe: (listener) => { listeners.add(listener); return () => listeners.delete(listener); },
     start,
+    replace,
     stop,
     requireAdapter,
   };

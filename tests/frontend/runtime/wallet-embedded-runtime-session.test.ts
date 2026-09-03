@@ -99,6 +99,78 @@ describe('wallet embedded Runtime session', () => {
     expect(session.getSnapshot().status).toBe('idle');
   });
 
+  test('replaces the active Runtime while retaining the same tab lease', async () => {
+    const events: string[] = [];
+    const ambient = createResource('ambient');
+    const canonical = createResource('canonical');
+    const session = createWalletEmbeddedRuntimeSession<Adapter>({
+      acquireLock: async () => {
+        events.push('lock-acquire');
+        return () => { events.push('lock-release'); };
+      },
+      boot: async () => ({
+        ...ambient.resource,
+        stop: async () => { events.push('ambient-stop'); },
+      }),
+    });
+    await session.start();
+
+    expect(await session.replace(async () => {
+      events.push('canonical-boot');
+      return {
+        ...canonical.resource,
+        stop: async () => { events.push('canonical-stop'); },
+      };
+    })).toBe(canonical.adapter);
+    expect(events).toEqual(['lock-acquire', 'ambient-stop', 'canonical-boot']);
+    expect(session.getSnapshot()).toMatchObject({ status: 'ready', runtimeId: 'canonical' });
+
+    await session.stop();
+    expect(events).toEqual([
+      'lock-acquire', 'ambient-stop', 'canonical-boot', 'canonical-stop', 'lock-release',
+    ]);
+  });
+
+  test('restores the ambient Runtime under the same lease when replacement fails', async () => {
+    const events: string[] = [];
+    const firstAmbient = createResource('ambient-before');
+    const restoredAmbient = createResource('ambient-after');
+    let ambientBoots = 0;
+    const session = createWalletEmbeddedRuntimeSession<Adapter>({
+      acquireLock: async () => {
+        events.push('lock-acquire');
+        return () => { events.push('lock-release'); };
+      },
+      boot: async () => {
+        ambientBoots += 1;
+        events.push(`ambient-boot-${ambientBoots}`);
+        const harness = ambientBoots === 1 ? firstAmbient : restoredAmbient;
+        return {
+          ...harness.resource,
+          stop: async () => { events.push(`${harness.adapter.id}-stop`); },
+        };
+      },
+    });
+    await session.start();
+
+    await expect(session.replace(async () => {
+      events.push('canonical-boot');
+      throw new Error('CANONICAL_BOOT_FAILED');
+    })).rejects.toThrow('CANONICAL_BOOT_FAILED');
+    expect(events).toEqual([
+      'lock-acquire',
+      'ambient-boot-1',
+      'ambient-before-stop',
+      'canonical-boot',
+      'ambient-boot-2',
+    ]);
+    expect(session.getSnapshot()).toMatchObject({ status: 'ready', runtimeId: 'ambient-after' });
+    expect(session.requireAdapter()).toBe(restoredAmbient.adapter);
+
+    await session.stop();
+    expect(events.slice(-2)).toEqual(['ambient-after-stop', 'lock-release']);
+  });
+
   test('releases a failed lease and permits an explicit retry', async () => {
     const harness = createResource('runtime-b');
     let attempts = 0;
@@ -147,6 +219,8 @@ describe('wallet embedded Runtime session', () => {
     expect(source).toContain('createWalletEmbeddedRuntimeSession');
     expect(source).toContain('activeTabLock.initializeActiveTabLock(handler)');
     expect(source).toContain("await import('./wallet-embedded-runtime-bootstrap')");
+    expect(source).toContain('await session.replace(async () => {');
+    expect(source).not.toContain('await session.stop();');
     expect(source).not.toContain('new EmbeddedRuntimeAdapter');
   });
 });

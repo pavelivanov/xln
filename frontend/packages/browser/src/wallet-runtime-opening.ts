@@ -1,5 +1,16 @@
 export type WalletRuntimeLoginType = 'manual' | 'demo';
 
+export type WalletCanonicalRuntimeOpeningRequest = Readonly<{
+  runtimeId: string;
+  name: string;
+  labelOverride: string | undefined;
+  seed: string;
+  mnemonic12: string;
+  devicePassphrase: string;
+  loginType: WalletRuntimeLoginType;
+  unlockDurationMs: 600_000 | 86_400_000 | null;
+}>;
+
 export type WalletRuntimeOpeningChoice = Readonly<{
   openLocal: boolean;
   forceFresh: boolean;

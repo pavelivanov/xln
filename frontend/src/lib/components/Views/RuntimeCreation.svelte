@@ -7,7 +7,6 @@
   import { appStateOperations } from '$lib/stores/appStateStore';
   import { errorLog } from '$lib/stores/errorLogStore';
   import {
-    discoverRuntimeRecoveryCandidates,
     parseRuntimeRecoveryCandidateFile,
     vaultOperations,
     allRuntimes,
@@ -19,7 +18,6 @@
   import type { VaultUnlockDurationMs } from '$lib/security/vaultProtection';
   import { deriveRequestSignal, vaultUiOperations } from '$lib/stores/vault/vaultUiStore';
   import { writeRuntimeRecoveryDiscoveryStatus } from '$lib/utils/recovery/recoveryDiscoveryStatus';
-  import { buildRemoteRuntimeRecoveryPeerSources } from '$lib/utils/onboarding/remoteRuntimeValidation';
   import {
     BRAINVAULT_V1,
     BRAINVAULT_V1_SPEC_ID,
@@ -73,7 +71,10 @@
     WalletRecoveryDiscoveryCoordinator,
     type WalletRecoveryDiscoveryRequest,
   } from '../../../../packages/browser/src/wallet-recovery-discovery';
-  import { executeCanonicalWalletRuntimeOpening } from '../../stores/vault/walletRuntimeOpeningAdapter';
+  import {
+    discoverCanonicalWalletRuntimeRecovery,
+    executeCanonicalWalletRuntimeOpening,
+  } from '../../stores/vault/walletRuntimeOpeningAdapter';
   import { WalletNodeMnemonicRevealCoordinator } from '../../../../packages/browser/src/wallet-node-mnemonic-reveal';
   import {
     assertWalletNodeBrainVaultResult,
@@ -384,9 +385,7 @@
     WalletRecoveryDiscoveryRequest,
     RuntimeRecoveryDiscoveryResult
   >({
-    discover: ({ seed, runtimeId }) => discoverRuntimeRecoveryCandidates(seed, {
-      peers: buildRemoteRuntimeRecoveryPeerSources({ runtimeId }),
-    }),
+    discover: ({ seed, runtimeId }) => discoverCanonicalWalletRuntimeRecovery(seed, runtimeId),
   });
 
   // ============================================================================
