@@ -33,7 +33,10 @@ const siteBrowser = [
   'frontend/tests/react-candidate/site-routes.spec.ts',
 ] as const;
 const docsBrowser = ['frontend/tests/react-candidate/docs.spec.ts'] as const;
-const walletBrowser = ['frontend/tests/react-candidate/wallet.spec.ts'] as const;
+const walletBrowser = [
+  'frontend/tests/react-candidate/wallet.spec.ts',
+  'frontend/tests/react-candidate/wallet-financial.spec.ts',
+] as const;
 const opsBrowser = ['frontend/tests/react-candidate/ops.spec.ts'] as const;
 const crossSurfaceBrowser = ['frontend/tests/react-candidate/cross-surface.spec.ts'] as const;
 
@@ -70,7 +73,7 @@ export type ParityGap = Readonly<{
 }>;
 
 export const PARITY_GAPS = [
-  { id: 'wallet-app-browser-depth', kind: 'browser', capabilityIds: ['wallet-shell-and-identity', 'wallet-browser-lifecycle', 'wallet-runtime-discovery', 'wallet-recovery', 'wallet-finance', 'wallet-payments-and-markets'], routeIds: ['wallet-app'], evidenceSources: ['frontend/tests/react-candidate/wallet.spec.ts', 'frontend/tests/runtime-command-journal.spec.ts'], nextSlice: 'Exercise React wallet shell, lifecycle, finance, payment, and recovery states at all required viewports.' },
+  { id: 'wallet-app-browser-depth', kind: 'browser', capabilityIds: ['wallet-payments-and-markets'], routeIds: ['wallet-app'], evidenceSources: ['frontend/tests/react-candidate/wallet.spec.ts', 'frontend/tests/react-candidate/wallet-financial.spec.ts', 'frontend/tests/runtime-command-journal.spec.ts'], nextSlice: 'Exercise React wallet payment and market states at all required viewports.' },
   { id: 'wallet-irreversible-identity', kind: 'implementation', capabilityIds: ['wallet-shell-and-identity'], routeIds: ['wallet-app'], evidenceSources: ['frontend/apps/wallet/src/identity-recovery.tsx', 'frontend/config/wallet-flow-audit.ts'], nextSlice: 'Connect the reviewed identity inputs to the existing canonical creation and persistence boundary.' },
   { id: 'wallet-recovery-tower-push', kind: 'implementation', capabilityIds: ['wallet-recovery'], routeIds: ['wallet-app'], evidenceSources: ['frontend/src/lib/utils/recovery', 'frontend/static/push-wake-sw.js'], nextSlice: 'Port tower onboarding, full recovery, and push-wake controls without changing persistence schemas.' },
   { id: 'wallet-external-provider', kind: 'implementation', capabilityIds: ['wallet-payments-and-markets', 'wallet-native-and-offline'], routeIds: ['wallet-app'], evidenceSources: ['frontend/apps/wallet/src/wallet-payments.tsx', 'frontend/src/lib/native'], nextSlice: 'Connect the React payment surface to the existing external-wallet provider and native authority boundary.' },
@@ -80,11 +83,11 @@ export const PARITY_GAPS = [
 export const CAPABILITY_PARITY = [
   { capabilityId: 'site-public-information', gapIds: [] },
   { capabilityId: 'docs-reader', gapIds: [] },
-  { capabilityId: 'wallet-shell-and-identity', gapIds: ['wallet-app-browser-depth', 'wallet-irreversible-identity'] },
-  { capabilityId: 'wallet-browser-lifecycle', gapIds: ['wallet-app-browser-depth'] },
-  { capabilityId: 'wallet-runtime-discovery', gapIds: ['wallet-app-browser-depth'] },
-  { capabilityId: 'wallet-recovery', gapIds: ['wallet-app-browser-depth', 'wallet-recovery-tower-push'] },
-  { capabilityId: 'wallet-finance', gapIds: ['wallet-app-browser-depth'] },
+  { capabilityId: 'wallet-shell-and-identity', gapIds: ['wallet-irreversible-identity'] },
+  { capabilityId: 'wallet-browser-lifecycle', gapIds: [] },
+  { capabilityId: 'wallet-runtime-discovery', gapIds: [] },
+  { capabilityId: 'wallet-recovery', gapIds: ['wallet-recovery-tower-push'] },
+  { capabilityId: 'wallet-finance', gapIds: [] },
   { capabilityId: 'wallet-payments-and-markets', gapIds: ['wallet-app-browser-depth', 'wallet-external-provider'] },
   { capabilityId: 'wallet-native-and-offline', gapIds: ['wallet-external-provider'] },
   { capabilityId: 'ops-health-and-qa', gapIds: [] },

@@ -1,6 +1,6 @@
 # React frontend migration work plan
 
-**Status:** `IN PROGRESS — WP0–WP6 COMPLETE; WP7 HEALTH + QA + HLT + RUNS + SCENARIOS + AI IMPLEMENTED, WORKSPACE STATE LAYER SVELTE-FREE, PANEL PORTS THROUGH ARCHITECT, REACT DOCKVIEW WRAPPER READY, GRAPH3D LIFECYCLE + RENDERER/PRIMITIVES/EFFECTS/ENTITY/ACCOUNT VISUAL FACTORY/INTERACTION/SELECTION/CAMERA/POINTER+XR DRAG + HOVER MECHANICS + VIEW/SCENE INPUT MODELS EXTRACTED, ENTITY WORKSPACE REACT SHELL/TABS + LIVE RUNTIME CONTEXT + READ-ONLY OWNERSHIP/ACCOUNTS/PROFILE READY; WP8 COMPLETE; WP9 HAS 18 COVERED / 2 PARTIAL ROUTES AND 5 EXACT GAPS, WALLET PORTFOLIO + HEALTH DEPTH NEXT`
+**Status:** `IN PROGRESS — WP0–WP6 COMPLETE; WP7 HEALTH + QA + HLT + RUNS + SCENARIOS + AI IMPLEMENTED, WORKSPACE STATE LAYER SVELTE-FREE, PANEL PORTS THROUGH ARCHITECT, REACT DOCKVIEW WRAPPER READY, GRAPH3D LIFECYCLE + RENDERER/PRIMITIVES/EFFECTS/ENTITY/ACCOUNT VISUAL FACTORY/INTERACTION/SELECTION/CAMERA/POINTER+XR DRAG + HOVER MECHANICS + VIEW/SCENE INPUT MODELS EXTRACTED, ENTITY WORKSPACE REACT SHELL/TABS + LIVE RUNTIME CONTEXT + READ-ONLY OWNERSHIP/ACCOUNTS/PROFILE READY; WP8 COMPLETE; WP9 HAS 18 COVERED / 2 PARTIAL ROUTES AND 5 EXACT GAPS, WALLET PAYMENT + MARKET DEPTH NEXT`
 
 This is the executable work plan for splitting the Svelte frontend into React
 applications. It is intentionally lightweight and should be updated as live
@@ -2329,6 +2329,35 @@ tests / 100,156 expectations, 28 Solidity files, 92 TypeChain files, four
 immutable metadata checks, and all ten soundchecks before the established
 missing-`cargo` environment stop.
 
+The portfolio and financial-health views now have durable browser-depth
+evidence against one isolated, persisted Runtime. The fixture registers two
+deterministic local signer keys, imports two lazy Entities through WAL-backed
+Runtime inputs, commits both profiles, opens one canonical bilateral Account,
+and extends 250 USDC of credit in both directions. It uses the production
+Runtime adapter and contains no request interception, projection mock, direct
+state mutation, or UI-side Runtime input. The resulting views expose two
+Entities, two Account views, three canonical token lanes, bilateral credit and
+capacity, unchecked Depository evidence, Account lifecycle state, and
+persisted activity. Screenshot review caught a clipped four-column asset table
+at 390px; the mobile layout now presents those values as an explicit two-column
+facts grid. The focused projection/audit batch passes 13 / 13 with 184
+expectations, and the new browser flow passes 6 / 6 while the complete wallet
+matrix passes 24 / 24 across 390x844, 1366x900, and 1920x1080 with zero page or
+console errors. All six final finance screenshots were inspected with no
+remaining clipping or overflow. All four React surfaces pass the local gate
+across 656 files with zero unsafe findings, and the wallet build transforms
+1,679 modules. The canonical frontend check remains at zero errors/warnings
+and builds 4,675 SSR plus 6,426 client modules. The full frontend suite keeps
+the exact known 13-name baseline with 1,261 passes, 14 reported failures, one
+error, and 7,184 expectations across 1,275 tests / 209 files. The repository
+gate passes 26 deterministic tests / 100,156 expectations; a transient
+Hardhat compiler-cache mutex stopped its first contract-sync attempt, while
+the focused retry compiled 28 Solidity files, published 92 TypeChain files,
+and confirmed four immutable metadata checks. All ten soundchecks pass before
+the established missing-`cargo` environment stop. Production function size
+passes across 1,047 files; file-size policy reports only the known
+`core/qa/report.ts` 3,001 / 3,000 overage.
+
 **Current checkpoint:** all retained routes have React application owners; two
 routes and five typed gaps remain partial before cutover readiness.
 
@@ -2373,16 +2402,15 @@ any mismatch. Never compile on production.
 
 ## Current next actions
 
-1. Exercise the populated portfolio and financial-health surfaces against one
-   committed Runtime fixture at all required viewports while preserving their
-   read-only boundary.
+1. Exercise the payment and market surfaces against committed Runtime state at
+   all required viewports without broadening their existing authority boundary.
 2. Owner to assign: two `network-timeline-source` failures
    (`NETWORK_TRAIL_FRAME_INVALID:1` in the JSON-safe-frame and trail
    round-trip tests) appeared with the in-flight `core/scenarios` runner
    changes in the working tree and are collateral from that stream, not the
    frontend migration.
-3. Close the irreversible identity/recovery, external-provider, and remaining
-   deep browser-flow gaps as separate slices.
+3. Close the irreversible identity/recovery and external-provider gaps as
+   separate slices.
 4. Keep the sized Entity workspace expansion behind its explicit owner decision
    while `/embed` remains canonical.
 5. When WP9 evidence is complete, request explicit WP10 cutover authority and
