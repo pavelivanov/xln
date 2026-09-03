@@ -12,11 +12,35 @@ import {
   resolveWalletPage,
   walletPageMetadata,
 } from '../../../frontend/apps/wallet/src/wallet-model';
+import { resolveWalletAddressRuntimeAffinity } from '../../../frontend/apps/wallet/src/wallet-address-runtime-affinity';
+import type { StoredRemoteRuntimeImportEntry } from '../../../frontend/packages/browser/src/remote-runtime-import';
 
 const USER_ID = `0x${'1'.repeat(64)}`;
 const HUB_ID = `0x${'2'.repeat(64)}`;
 const RUNTIME_ID = `0x${'a'.repeat(40)}`;
 const context = { runtimeId: RUNTIME_ID, online: true, height: 12 } as const;
+const selectedConfig = {
+  mode: 'embedded',
+  wsUrl: null,
+  access: null,
+  sessionKey: null,
+} as const;
+
+const importedRuntime = (
+  runtimeId: string,
+  wsUrl: string,
+  importedAt: number,
+): StoredRemoteRuntimeImportEntry => ({
+  label: `Runtime ${importedAt}`,
+  access: 'admin',
+  wsUrl,
+  token: `token-${importedAt}`,
+  runtimeId,
+  authLevel: 'admin',
+  height: importedAt,
+  entityCount: 1,
+  importedAt,
+});
 
 const userSummary = {
   entityId: USER_ID,
@@ -100,6 +124,30 @@ describe('React wallet address model', () => {
 });
 
 describe('React wallet address routes', () => {
+  test('resolves requested imported Runtime affinity without mutating the selected session', () => {
+    const older = importedRuntime(RUNTIME_ID.toUpperCase(), 'ws://127.0.0.1:8092/rpc', 1);
+    const current = importedRuntime(RUNTIME_ID, 'ws://127.0.0.1:8093/rpc', 2);
+    const resolution = resolveWalletAddressRuntimeAffinity(
+      selectedConfig,
+      RUNTIME_ID.toUpperCase(),
+      [older, current],
+    );
+    expect(resolution.selectedImport).toBe(current);
+    expect(resolution.config).toEqual({
+      mode: 'remote',
+      wsUrl: current.wsUrl,
+      access: 'admin',
+      sessionKey: current.token,
+    });
+    expect(selectedConfig.mode).toBe('embedded');
+  });
+
+  test('keeps current Runtime selection when affinity is absent or not imported', () => {
+    expect(resolveWalletAddressRuntimeAffinity(selectedConfig, '', []).config).toBe(selectedConfig);
+    expect(resolveWalletAddressRuntimeAffinity(selectedConfig, RUNTIME_ID, []).selectedImport).toBeNull();
+    expect(resolveWalletAddressRuntimeAffinity(selectedConfig, RUNTIME_ID, []).config).toBe(selectedConfig);
+  });
+
   test('resolves directory and detail paths with runtime affinity', () => {
     expect(resolveWalletPage('/address')).toEqual({ kind: 'address-directory' });
     expect(resolveWalletPage('/address/')).toEqual({ kind: 'address-directory' });
@@ -116,18 +164,22 @@ describe('React wallet address routes', () => {
 
   test('keeps Runtime effects in a height-aware source and failures in the visible React surface', () => {
     const source = readFileSync('frontend/apps/wallet/src/wallet-address-source.ts', 'utf8');
+    const affinity = readFileSync('frontend/apps/wallet/src/wallet-address-runtime-affinity.ts', 'utf8');
     const view = readFileSync('frontend/apps/wallet/src/wallet-address.tsx', 'utf8');
     const app = readFileSync('frontend/apps/wallet/src/wallet-app.tsx', 'utf8');
     expect(source).toContain('client.readEntities({ limit: 5000 })');
     expect(source).toContain('client.readViewFrame({ entityId, accountsLimit: 8, booksLimit: 8 })');
     expect(source).toContain('client.readActivity({');
     expect(source).toContain('subscribeHeight: (listener) => adapter.onChange');
+    expect(source).toContain('WALLET_ADDRESS_RUNTIME_NOT_SELECTED');
     expect(source).not.toContain('RuntimeReplica');
     expect(source).not.toContain('setInterval');
     expect(view).toContain('useSyncExternalStore');
     expect(view).toContain('entity-history-runtime-mismatch');
     expect(view).toContain('role="alert"');
     expect(view).not.toContain('JSON.stringify');
+    expect(affinity).not.toContain('localStorage');
+    expect(affinity).not.toContain('sessionStorage');
     expect(app).toContain('<WalletAddressPage');
   });
 });

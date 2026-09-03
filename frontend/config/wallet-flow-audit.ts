@@ -66,10 +66,14 @@ export const WALLET_FLOW_AUDIT = [
     view: null,
     sources: [
       'frontend/apps/wallet/src/wallet-address-model.ts',
+      'frontend/apps/wallet/src/wallet-address-runtime-affinity.ts',
       'frontend/apps/wallet/src/wallet-address-source.ts',
       'frontend/apps/wallet/src/wallet-address.tsx',
     ],
-    tests: ['tests/frontend/runtime/frontend-wallet-address.test.ts'],
+    tests: [
+      'tests/frontend/runtime/frontend-wallet-address.test.ts',
+      'frontend/tests/react-candidate/wallet.spec.ts',
+    ],
   },
   {
     id: 'address-detail',
@@ -79,10 +83,14 @@ export const WALLET_FLOW_AUDIT = [
     view: null,
     sources: [
       'frontend/apps/wallet/src/wallet-address-model.ts',
+      'frontend/apps/wallet/src/wallet-address-runtime-affinity.ts',
       'frontend/apps/wallet/src/wallet-address-source.ts',
       'frontend/apps/wallet/src/wallet-address.tsx',
     ],
-    tests: ['tests/frontend/runtime/frontend-wallet-address.test.ts'],
+    tests: [
+      'tests/frontend/runtime/frontend-wallet-address.test.ts',
+      'frontend/tests/react-candidate/wallet.spec.ts',
+    ],
   },
   {
     id: 'runtime-overview-shell',

@@ -1,6 +1,6 @@
 # React frontend migration work plan
 
-**Status:** `IN PROGRESS — WP0–WP6 COMPLETE; WP7 HEALTH + QA + HLT + RUNS + SCENARIOS + AI IMPLEMENTED, WORKSPACE STATE LAYER SVELTE-FREE, PANEL PORTS THROUGH ARCHITECT, REACT DOCKVIEW WRAPPER READY, GRAPH3D LIFECYCLE + RENDERER/PRIMITIVES/EFFECTS/ENTITY/ACCOUNT VISUAL FACTORY/INTERACTION/SELECTION/CAMERA/POINTER+XR DRAG + HOVER MECHANICS + VIEW/SCENE INPUT MODELS EXTRACTED, ENTITY WORKSPACE REACT SHELL/TABS + LIVE RUNTIME CONTEXT + READ-ONLY OWNERSHIP/ACCOUNTS/PROFILE READY; WP8 COMPLETE; WP9 SITE DIRECT ROUTE EVIDENCE + PER-SURFACE BROWSER ISOLATION COMPLETE, WALLET ADDRESS NEXT`
+**Status:** `IN PROGRESS — WP0–WP6 COMPLETE; WP7 HEALTH + QA + HLT + RUNS + SCENARIOS + AI IMPLEMENTED, WORKSPACE STATE LAYER SVELTE-FREE, PANEL PORTS THROUGH ARCHITECT, REACT DOCKVIEW WRAPPER READY, GRAPH3D LIFECYCLE + RENDERER/PRIMITIVES/EFFECTS/ENTITY/ACCOUNT VISUAL FACTORY/INTERACTION/SELECTION/CAMERA/POINTER+XR DRAG + HOVER MECHANICS + VIEW/SCENE INPUT MODELS EXTRACTED, ENTITY WORKSPACE REACT SHELL/TABS + LIVE RUNTIME CONTEXT + READ-ONLY OWNERSHIP/ACCOUNTS/PROFILE READY; WP8 COMPLETE; WP9 HAS 18 COVERED / 2 PARTIAL ROUTES AND 5 EXACT GAPS, WALLET APP DEEP FLOW NEXT`
 
 This is the executable work plan for splitting the Svelte frontend into React
 applications. It is intentionally lightweight and should be updated as live
@@ -2152,7 +2152,7 @@ tests can activate, reject invalid candidates, and roll back.
 
 ### WP9 — Close parity and prepare cutover
 
-**Status:** `IN PROGRESS — ALL RETAINED ROUTES HAVE REACT OWNERS; WALLET ADDRESS RUNTIME AFFINITY NEXT`
+**Status:** `IN PROGRESS — 18 COVERED / 2 PARTIAL ROUTES; WALLET APP DEEP FLOW NEXT`
 
 - Confirm all retained routes and capabilities have React owners and tests.
 - Run all-frontend checks and representative browser flows at required
@@ -2280,14 +2280,35 @@ reported failures, one error, and 7,174 expectations across 1,273 tests / 209
 files. The repository gate passes 26 deterministic tests / 100,156
 expectations, compiles 28 Solidity files, publishes 92 TypeChain files,
 confirms immutable metadata parity for four contracts, and passes all ten
-soundchecks before the established missing-`cargo` environment stop. Imported
-local Runtime selection and populated live directory/detail/history browser
-evidence remain explicit work under `wallet-address-route`. Production function
-size passes across 1,047 files; file-size policy reports only the known
+soundchecks before the established missing-`cargo` environment stop. Production
+function size passes across 1,047 files; file-size policy reports only the known
 `core/qa/report.ts` 3,001 / 3,000 overage.
 
-**Current checkpoint:** all retained routes have React application owners; four
-routes and six typed gaps remain partial before cutover readiness.
+The wallet address surface now resolves imported Runtime affinity before it
+connects. The canonical stored-import registry lives in `packages/browser`,
+with the legacy Svelte utility retained as a thin facade. A connected Runtime
+must exactly match the requested Runtime before the tab token and durable
+endpoint are updated; absent or stale imports leave the previous session
+untouched and surface a visible error. A real isolated Runtime browser fixture
+commits a lazily created Entity and `profile-update`, then serves the production
+Runtime adapter protocol without request interception or projection mocks.
+The resulting populated directory, detail, and committed-history flow passes
+15 / 15 browser cases across 390x844, 1366x900, and 1920x1080. All nine new
+screenshots were inspected with zero page, console, clipping, or overflow
+failures. The affected test batch passes 61 / 61 with 735 expectations; local
+checks cover 656 files with zero unsafe findings; and the wallet build
+transforms 1,679 modules while holding the address chunk at 32.02 kB / 12.76 kB
+gzip. The full frontend suite preserves the exact known 13-name baseline with
+1,261 passes, 14 reported failures, one error, and 7,178 expectations across
+1,275 tests / 209 files. The repository gate repeats 26 deterministic tests /
+100,156 expectations, compiles 28 Solidity files, publishes 92 TypeChain files,
+confirms immutable metadata parity for four contracts, and passes all ten
+soundchecks before the established missing-`cargo` environment stop. Parity is
+now 18 complete and covered routes, two partial routes (`/app` and `/embed`),
+and five exact gaps.
+
+**Current checkpoint:** all retained routes have React application owners; two
+routes and five typed gaps remain partial before cutover readiness.
 
 ### WP10 — Authorized canonical cutover
 
@@ -2330,9 +2351,9 @@ any mismatch. Never compile on production.
 
 ## Current next actions
 
-1. Connect imported Runtime selection for `/address/:entityId` and prove
-   populated directory, detail, and history states in a real browser without
-   changing canonical Svelte routing.
+1. Close one bounded `/app` browser-depth slice with real Runtime state across
+   all required viewports, starting with the existing identity and recovery
+   rehearsal surfaces without crossing into irreversible creation.
 2. Owner to assign: two `network-timeline-source` failures
    (`NETWORK_TRAIL_FRAME_INVALID:1` in the JSON-safe-frame and trail
    round-trip tests) appeared with the in-flight `core/scenarios` runner

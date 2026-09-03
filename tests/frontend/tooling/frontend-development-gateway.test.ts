@@ -297,6 +297,17 @@ describe('React development gateway', () => {
       gatewayAware: false,
       environment: { XLN_REACT_WALLET_PROXY_OWNER: 'ops' },
     });
+    process.env['XLN_REACT_WALLET_ADDRESS_FIXTURE'] = '1';
+    try {
+      expect(createDevelopmentProcessSpecs(['wallet']).at(-1)).toEqual({
+        label: 'wallet-address-runtime-fixture',
+        argv: ['bun', 'tests/react-candidate/wallet-runtime-fixture.ts'],
+        gatewayAware: false,
+      });
+      expect(createDevelopmentProcessSpecs(['site'])).toHaveLength(2);
+    } finally {
+      delete process.env['XLN_REACT_WALLET_ADDRESS_FIXTURE'];
+    }
     expect(getGatewayExitFailure(true, 130)).toBeUndefined();
     expect(getGatewayExitFailure(false, 1)?.message).toBe('FRONTEND_GATEWAY_EXITED:1');
     expect(resolveDevelopmentProxyOwner('docs', { docs: 'site' })).toBe('site');
