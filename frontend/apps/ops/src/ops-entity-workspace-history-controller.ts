@@ -19,6 +19,7 @@ type HistoryControllerDependencies = Readonly<{
   publish(snapshot: OpsEntityWorkspaceSourceSnapshot): void;
   readActivityBeforeHeight(): number | null;
   readActivityKind(): EntityWorkspaceActivityKind;
+  readActivitySearch(): string;
   readActivityTypes(): readonly EntityWorkspaceActivityFilterType[];
   readAccountsPage(): number;
   readAdapter(): RuntimeAdapter | null;
@@ -101,6 +102,7 @@ export class OpsEntityWorkspaceHistoryController {
         entityId: context.entityId, latestHeight, requestedHeight, runtimeId: adapter.runtimeId,
         ...(activityBeforeHeight === null ? {} : { activityBeforeHeight }),
         activityKind: this.dependencies.readActivityKind(),
+        activitySearch: this.dependencies.readActivitySearch(),
         activityTypes: this.dependencies.readActivityTypes(),
       });
       if (!this.isCurrent(request, requestedHeight, client)) return false;

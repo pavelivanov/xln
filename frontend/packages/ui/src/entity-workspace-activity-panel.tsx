@@ -1,3 +1,5 @@
+import { useEffect, useState } from 'react';
+
 import type {
   EntityWorkspaceActivity,
   EntityWorkspaceActivityFilterType,
@@ -11,6 +13,7 @@ type EntityWorkspaceActivityPanelProps = Readonly<{
   onSelectBeforeHeight: (beforeHeight: number | null) => void;
   onSelectKind: (kind: EntityWorkspaceActivityKind) => void;
   onSelectNewerPage: () => void;
+  onSelectSearch: (search: string) => void;
   onToggleType: (type: EntityWorkspaceActivityFilterType) => void;
 }>;
 
@@ -41,7 +44,16 @@ const ACTIVITY_TYPE_OPTIONS = [
 const directionLabel = (direction: 'in' | 'out' | 'neutral'): string =>
   direction === 'in' ? 'Inbound' : direction === 'out' ? 'Outbound' : 'Observed';
 
-export function EntityWorkspaceActivityPanel({ activity, onSelectBeforeHeight, onSelectKind, onSelectNewerPage, onToggleType }: EntityWorkspaceActivityPanelProps) {
+export function EntityWorkspaceActivityPanel({ activity, onSelectBeforeHeight, onSelectKind, onSelectNewerPage, onSelectSearch, onToggleType }: EntityWorkspaceActivityPanelProps) {
+  const selectedQuery = activity.status === 'selected' ? activity.query : '';
+  const selectedEntityId = activity.status === 'selected' ? activity.entityId : '';
+  const [draftQuery, setDraftQuery] = useState(selectedQuery);
+  useEffect(() => setDraftQuery(selectedQuery), [selectedEntityId, selectedQuery]);
+  useEffect(() => {
+    if (activity.status !== 'selected' || draftQuery.trim() === selectedQuery) return undefined;
+    const timer = window.setTimeout(() => onSelectSearch(draftQuery), 250);
+    return () => window.clearTimeout(timer);
+  }, [activity.status, draftQuery, onSelectSearch, selectedQuery]);
   if (activity.status !== 'selected') return null;
   return (
     <section className="entity-workspace-activity-panel" data-testid="entity-activity-ledger">
@@ -68,6 +80,16 @@ export function EntityWorkspaceActivityPanel({ activity, onSelectBeforeHeight, o
           >{label}</button>
         ))}
       </nav>
+      <label className="entity-workspace-activity-search">
+        <span>Search activity</span>
+        <input
+          data-testid="entity-activity-search"
+          onChange={(event) => setDraftQuery(event.currentTarget.value)}
+          placeholder="Title, order, or counterparty"
+          type="search"
+          value={draftQuery}
+        />
+      </label>
       <nav aria-label="Activity event types" className="entity-workspace-activity-types">
         {ACTIVITY_TYPE_OPTIONS.map(({ type, label }) => (
           <button
