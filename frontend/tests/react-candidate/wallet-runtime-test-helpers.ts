@@ -15,6 +15,11 @@ export type WalletRuntimeFixtureInfo = Readonly<{
   height: number;
   wsUrl: string;
   token: string;
+  recovery: Readonly<{
+    runtimeId: string;
+    runtimeHeight: number;
+    towerUrl: string;
+  }>;
 }>;
 
 export const readWalletRuntimeFixture = async (page: Page): Promise<WalletRuntimeFixtureInfo> => {
@@ -40,6 +45,14 @@ export const readWalletRuntimeFixture = async (page: Page): Promise<WalletRuntim
   const height = Number(info['height']);
   const wsUrl = String(info['wsUrl'] || '').trim();
   const token = String(info['token'] || '').trim();
+  const recovery = info['recovery'];
+  if (!recovery || typeof recovery !== 'object' || Array.isArray(recovery)) {
+    throw new Error('WALLET_RECOVERY_FIXTURE_INFO_INVALID');
+  }
+  const recoveryInfo = recovery as Record<string, unknown>;
+  const recoveryRuntimeId = String(recoveryInfo['runtimeId'] || '').trim().toLowerCase();
+  const recoveryRuntimeHeight = Number(recoveryInfo['runtimeHeight']);
+  const towerUrl = String(recoveryInfo['towerUrl'] || '').trim();
   if (!/^0x[0-9a-f]{40}$/.test(runtimeId)
     || !/^0x[0-9a-f]{64}$/.test(entityId)
     || !/^0x[0-9a-f]{64}$/.test(counterpartyEntityId)) {
@@ -49,7 +62,25 @@ export const readWalletRuntimeFixture = async (page: Page): Promise<WalletRuntim
   if (!wsUrl.startsWith('ws://127.0.0.1:') || !token.startsWith('xlnra1.')) {
     throw new Error('WALLET_RUNTIME_FIXTURE_AUTH_INVALID');
   }
-  return { runtimeId, entityId, counterpartyEntityId, height, wsUrl, token };
+  if (!/^0x[0-9a-f]{40}$/.test(recoveryRuntimeId)
+    || !Number.isSafeInteger(recoveryRuntimeHeight)
+    || recoveryRuntimeHeight < 0
+    || !towerUrl.startsWith('http://127.0.0.1:')) {
+    throw new Error('WALLET_RECOVERY_FIXTURE_INFO_INVALID');
+  }
+  return {
+    runtimeId,
+    entityId,
+    counterpartyEntityId,
+    height,
+    wsUrl,
+    token,
+    recovery: {
+      runtimeId: recoveryRuntimeId,
+      runtimeHeight: recoveryRuntimeHeight,
+      towerUrl,
+    },
+  };
 };
 
 export const installImportedRuntime = async (

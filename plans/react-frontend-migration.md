@@ -1,6 +1,6 @@
 # React frontend migration work plan
 
-**Status:** `IN PROGRESS — WP0–WP6 COMPLETE; WP7 HEALTH + QA + HLT + RUNS + SCENARIOS + AI IMPLEMENTED, WORKSPACE STATE LAYER SVELTE-FREE, PANEL PORTS THROUGH ARCHITECT, REACT DOCKVIEW WRAPPER READY, GRAPH3D LIFECYCLE + RENDERER/PRIMITIVES/EFFECTS/ENTITY/ACCOUNT VISUAL FACTORY/INTERACTION/SELECTION/CAMERA/POINTER+XR DRAG + HOVER MECHANICS + VIEW/SCENE INPUT MODELS EXTRACTED, ENTITY WORKSPACE REACT SHELL/TABS + LIVE RUNTIME CONTEXT + READ-ONLY OWNERSHIP/ACCOUNTS/PROFILE READY; WP8 COMPLETE; WP9 HAS 19 COVERED / 1 PARTIAL BROWSER ROUTE AND 4 EXACT GAPS, RECOVERY SELECTION NEXT`
+**Status:** `IN PROGRESS — WP0–WP6 COMPLETE; WP7 HEALTH + QA + HLT + RUNS + SCENARIOS + AI IMPLEMENTED, WORKSPACE STATE LAYER SVELTE-FREE, PANEL PORTS THROUGH ARCHITECT, REACT DOCKVIEW WRAPPER READY, GRAPH3D LIFECYCLE + RENDERER/PRIMITIVES/EFFECTS/ENTITY/ACCOUNT VISUAL FACTORY/INTERACTION/SELECTION/CAMERA/POINTER+XR DRAG + HOVER MECHANICS + VIEW/SCENE INPUT MODELS EXTRACTED, ENTITY WORKSPACE REACT SHELL/TABS + LIVE RUNTIME CONTEXT + READ-ONLY OWNERSHIP/ACCOUNTS/PROFILE READY; WP8 COMPLETE; WP9 HAS 19 COVERED / 1 PARTIAL BROWSER ROUTE AND 4 EXACT GAPS, BRAIN VAULT DERIVATION NEXT`
 
 This is the executable work plan for splitting the Svelte frontend into React
 applications. It is intentionally lightweight and should be updated as live
@@ -2449,6 +2449,33 @@ and all ten soundchecks before the same shared Hardhat compiler-cache mutex,
 missing local `cargo`, and known `core/qa/report.ts` 3,001 / 3,000 file-size
 stops.
 
+React mnemonic recovery now renders every canonical tower/peer candidate as a
+display-safe summary, blocks fresh creation while candidates exist, and passes
+only the selected full candidate back to the canonical vault executor. The
+decrypted candidates remain transient inside the migration bridge; an exact-
+once generation token binds selection to one Runtime and is invalidated by
+consumption, reset, unmount, a newer discovery, or replacement failure. No
+candidate, token, or recovery metadata is added to durable Runtime state. A
+real browser fixture creates a signed height-1 Runtime snapshot through an
+authorized Runtime-adapter command, encrypts it, uploads it to the production
+standalone watchtower implementation, and proves discovery, selection,
+decryption, persistence, and restore at 390×844, 1366×900, and 1920×1080. The
+focused recovery/session batch passes 34 / 34 with 276 expectations, the full
+onboarding directory passes 182 / 182 with 747 expectations, and the complete
+wallet browser matrix passes 33 / 33 in 44.7 seconds. All candidate/opened
+screenshots were inspected with no clipping or horizontal overflow. The
+authoritative 210-file frontend suite preserves the exact 14 known failures
+with 1,268 passes, one error, and 7,250 expectations across 1,282 tests. The
+wallet-local gate scans 659 files with zero unsafe-type findings, the production
+wallet build transforms 1,799 modules in 1.92 seconds, and the canonical
+frontend gate has zero errors/warnings while building 4,677 SSR and 6,428
+client modules. Root evidence passes 26 / 26 BrainVault/runtime tests with
+100,156 expectations before the documented shared Hardhat compiler-cache mutex
+stops contract-artifact drift after 60 seconds; this slice changes no contract
+source or artifact. The irreversible-identity gap remains partial only for
+React Brain Vault derivation; the typed inventory still reports four exact
+gaps.
+
 **Current checkpoint:** all retained routes have React application owners; two
 implementations, one browser route, and four typed gaps remain partial before
 cutover readiness.
@@ -2494,8 +2521,8 @@ any mismatch. Never compile on production.
 
 ## Current next actions
 
-1. Add React recovery-candidate selection and Brain Vault derivation through
-   the canonical recovery and vault adapters.
+1. Add React Brain Vault derivation through the canonical worker, recovery,
+   and vault adapters without moving secret bytes into React state.
 2. Owner to assign: two `network-timeline-source` failures
    (`NETWORK_TRAIL_FRAME_INVALID:1` in the JSON-safe-frame and trail
    round-trip tests) appeared with the in-flight `core/scenarios` runner

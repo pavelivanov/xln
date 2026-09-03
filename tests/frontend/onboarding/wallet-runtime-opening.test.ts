@@ -188,10 +188,15 @@ describe('browser wallet Runtime opening', () => {
     expect(view).not.toContain("openingPlan.action === 'unlock-local'");
     expect(reactBridge.indexOf('await discoverCanonicalWalletRuntimeRecovery('))
       .toBeLessThan(reactBridge.indexOf('await executeCanonicalWalletRuntimeOpening({'));
-    expect(reactBridge).toContain('if (discovery.candidates.length > 0)');
-    expect(reactBridge).toContain('WALLET_RECOVERY_SELECTION_REQUIRED:');
+    expect(reactBridge).toContain('recoverySelection.commit(revision, discovery.runtimeId, discovery.candidates)');
+    expect(reactBridge).toContain('recoverySelection.consume(token, runtimeId, candidateId)');
     expect(reactBridge).toContain('writeRuntimeRecoveryDiscoveryStatus({');
     expect(reactRuntime).toContain('await session.replace(async () => {');
+    expect(reactRuntime).toContain("status: 'recovery-required', discovery");
+    expect(reactRuntime.indexOf('const discovery = await canonical.discoverCanonicalWalletRuntimeRecoveryView(request)'))
+      .toBeLessThan(reactRuntime.indexOf('if (discovery.candidates.length > 0)'));
+    expect(reactRuntime.indexOf('if (discovery.candidates.length > 0)'))
+      .toBeLessThan(reactRuntime.lastIndexOf("return openDiscoveredWalletRuntime(request, discovery, '');"));
     expect(reactBootstrap).toContain('hasPersistedWalletVault(localStorage)');
     expect(reactBootstrap).toContain("await import('../../../bridges/wallet-canonical-vault-runtime')");
     expect(vault).toContain("import { WALLET_VAULT_STORAGE_KEY } from '../../../../packages/browser/src/wallet-vault-storage';");

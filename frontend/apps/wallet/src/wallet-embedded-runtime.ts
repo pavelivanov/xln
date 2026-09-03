@@ -4,11 +4,16 @@ import {
   createWalletEmbeddedRuntimeSession,
   type WalletEmbeddedRuntimeSessionSnapshot,
 } from '../../../packages/browser/src/wallet-embedded-runtime-session';
-import type { WalletCanonicalRuntimeOpeningRequest } from '../../../packages/browser/src/wallet-runtime-opening';
+import type {
+  WalletCanonicalRecoveryDiscoveryView,
+  WalletCanonicalRuntimeOpeningOutcome,
+  WalletCanonicalRuntimeOpeningRequest,
+} from '../../../packages/browser/src/wallet-runtime-opening';
 
 const activeTabLock = createActiveTabLockController({ publishState: () => {} });
 let pageUnloadFence: () => void = () => {};
 let pagehideInstalled = false;
+let discardCanonicalRecovery: ((token?: string) => void) | null = null;
 
 const setPageUnloadFence = (fence: () => void): void => {
   pageUnloadFence = fence;
@@ -37,16 +42,49 @@ export const startWalletEmbeddedRuntime = async (): Promise<RuntimeAdapter> => {
   return session.start();
 };
 
+const openDiscoveredWalletRuntime = async (
+  request: WalletCanonicalRuntimeOpeningRequest,
+  discovery: WalletCanonicalRecoveryDiscoveryView,
+  candidateId: string,
+): Promise<WalletCanonicalRuntimeOpeningOutcome> => {
+  const canonical = await import('../../../bridges/wallet-canonical-vault-runtime');
+  try {
+    const adapter = await session.replace(async () => {
+      return canonical.openCanonicalWalletRuntime(
+        request,
+        discovery.token,
+        candidateId,
+        setPageUnloadFence,
+      );
+    });
+    return { status: 'opened', runtimeId: adapter.runtimeId };
+  } catch (error) {
+    canonical.discardCanonicalWalletRuntimeRecovery(discovery.token);
+    throw error;
+  }
+};
+
 export const openWalletRuntimeWithCanonicalVault = async (
   request: WalletCanonicalRuntimeOpeningRequest,
-): Promise<string> => {
+): Promise<WalletCanonicalRuntimeOpeningOutcome> => {
   installPagehideFence();
   await session.start();
-  const adapter = await session.replace(async () => {
-    const canonical = await import('../../../bridges/wallet-canonical-vault-runtime');
-    return canonical.openCanonicalWalletRuntime(request, setPageUnloadFence);
-  });
-  return adapter.runtimeId;
+  const canonical = await import('../../../bridges/wallet-canonical-vault-runtime');
+  discardCanonicalRecovery = canonical.discardCanonicalWalletRuntimeRecovery;
+  const discovery = await canonical.discoverCanonicalWalletRuntimeRecoveryView(request);
+  if (discovery.candidates.length > 0) return { status: 'recovery-required', discovery };
+  return openDiscoveredWalletRuntime(request, discovery, '');
+};
+
+export const restoreWalletRuntimeFromCanonicalRecovery = (
+  request: WalletCanonicalRuntimeOpeningRequest,
+  discovery: WalletCanonicalRecoveryDiscoveryView,
+  candidateId: string,
+): Promise<WalletCanonicalRuntimeOpeningOutcome> =>
+  openDiscoveredWalletRuntime(request, discovery, candidateId);
+
+export const discardWalletRuntimeRecovery = (token = ''): void => {
+  discardCanonicalRecovery?.(token);
 };
 
 export const stopWalletEmbeddedRuntime = (): Promise<void> => session.stop();
