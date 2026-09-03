@@ -4,6 +4,7 @@ import {
   readDisplayPreferences,
   writeTimeMachinePreference,
   writeThemePreference,
+  writeXlnGuidePreference,
   type DisplayPreferences,
 } from '../../../packages/browser/src/display-preferences';
 import { applyThemeCoreToDocument } from '../../../packages/browser/src/theme-document';
@@ -72,6 +73,17 @@ export const opsDisplayPreferencesSource = {
       console.error('OPS_TIME_MACHINE_PREFERENCE_WRITE_RECOVERY', error);
       localStorage.removeItem(DISPLAY_PREFERENCES_STORAGE_KEY);
       writeTimeMachinePreference(localStorage, showTimeMachine);
+    }
+    publish({ issue: null, preferences });
+  },
+  setXlnGuideVisibility(showXlnMascot: boolean): void {
+    const preferences = { ...snapshot.preferences, showXlnMascot };
+    try {
+      writeXlnGuidePreference(localStorage, showXlnMascot);
+    } catch (error) {
+      console.error('OPS_XLN_GUIDE_PREFERENCE_WRITE_RECOVERY', error);
+      localStorage.removeItem(DISPLAY_PREFERENCES_STORAGE_KEY);
+      writeXlnGuidePreference(localStorage, showXlnMascot);
     }
     publish({ issue: null, preferences });
   },

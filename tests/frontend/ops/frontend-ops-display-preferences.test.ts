@@ -5,6 +5,7 @@ import {
   parseDisplayPreferences,
   serializeTimeMachinePreferenceUpdate,
   serializeThemePreferenceUpdate,
+  serializeXlnGuidePreferenceUpdate,
 } from '../../../frontend/packages/browser/src/display-preferences';
 import { buildThemeCoreCssVariables } from '../../../frontend/packages/browser/src/theme-document';
 import {
@@ -62,6 +63,18 @@ describe('React Entity workspace display preferences', () => {
     });
   });
 
+  test('updates xln guide visibility without replacing unrelated persisted settings', () => {
+    const serialized = serializeXlnGuidePreferenceUpdate(
+      JSON.stringify({ futureSetting: 'keep', showXlnMascot: false, theme: 'arctic' }),
+      true,
+    );
+    expect(JSON.parse(serialized)).toEqual({
+      futureSetting: 'keep',
+      showXlnMascot: true,
+      theme: 'arctic',
+    });
+  });
+
   test('keeps every option and document token on one canonical palette', () => {
     expect(getThemeOptions().map(option => option.value)).toEqual(THEME_NAMES);
     for (const themeName of THEME_NAMES) {
@@ -92,6 +105,8 @@ describe('React Entity workspace display preferences', () => {
     expect(source).toContain('writeThemePreference(localStorage, theme)');
     expect(source).toContain("window.addEventListener('storage', handleStorage)");
     expect(source).toContain('writeTimeMachinePreference(localStorage, showTimeMachine)');
+    expect(source).toContain('writeXlnGuidePreference(localStorage, showXlnMascot)');
+    expect(panel).toContain('onToggleXlnGuide(event.currentTarget.checked)');
     expect(panel).toContain('field-scoped writes');
     expect(panel).not.toContain('localStorage');
     expect(panel).not.toContain('frontend/src');
