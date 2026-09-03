@@ -138,6 +138,7 @@ export const WALLET_FLOW_AUDIT = [
     tests: [
       'tests/frontend/onboarding/frontend-wallet-recovery-rehearsal.test.ts',
       'tests/frontend/onboarding/wallet-runtime-opening.test.ts',
+      'tests/frontend/onboarding/wallet-recovery-selection-session.test.ts',
       'tests/frontend/runtime/wallet-embedded-runtime-session.test.ts',
     ],
   },
@@ -242,9 +243,9 @@ export const WALLET_FLOW_DEFERRALS = [
   {
     id: 'full-recovery',
     destination: 'WP9',
-    evidenceSource: 'frontend/apps/wallet/src/identity-onboarding-model.ts',
-    evidenceMarker: 'Fresh creation was blocked; select a backup before opening this wallet.',
-    reason: 'Discovery blocks fresh creation, while candidate selection, tower restore, and push wake remain in WP9.',
+    evidenceSource: 'frontend/apps/wallet/src/identity-recovery.tsx',
+    evidenceMarker: 'Selecting a backup never authorizes fresh creation.',
+    reason: 'Tower and peer selection is implemented; backup-file import, tower enrollment, and push wake remain in WP9.',
   },
   {
     id: 'external-wallet-provider',

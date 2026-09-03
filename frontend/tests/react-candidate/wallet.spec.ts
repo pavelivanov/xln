@@ -19,6 +19,23 @@ const FIRST_MNEMONIC = 'test test test test test test test test test test test j
 const SECOND_MNEMONIC = 'abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about';
 const INVALID_MNEMONIC = 'test test test test test test test test test test test test';
 
+const expectOnlyUnavailableFixtureRelayErrors = (
+  errors: ReturnType<typeof observeBrowserErrors>,
+  relayUrl: string,
+): void => {
+  expect(errors.pageErrors).toEqual([]);
+  expect(errors.consoleErrors.length).toBeGreaterThan(0);
+  for (const error of errors.consoleErrors) {
+    const unavailableRelayError = error.includes(relayUrl) && (
+      error.includes('Unexpected response code: 502')
+      || error.includes('WS_UNEXPECTED_ERROR')
+      || error.includes('WS_UNEXPECTED_CLOSE')
+      || error.includes('WS_RELAY_FATAL')
+    );
+    expect(unavailableRelayError, `unexpected browser error: ${error}`).toBe(true);
+  }
+};
+
 
 test('wallet candidate renders without browser errors', async ({ page }, testInfo) => {
   const errors = observeBrowserErrors(page);
@@ -79,7 +96,7 @@ test('wallet app rehearses mnemonic recovery without creating or persisting a wa
   await page.getByRole('button', { name: 'Verify recovered wallet' }).click();
   await expect(page.getByRole('heading', { name: 'The same wallet returned' })).toBeVisible();
   await expect(page.getByText('Both seed entries were cleared.')).toBeVisible();
-  await expect(page.getByText('No wallet has been created or persisted by this rehearsal.')).toBeVisible();
+  await expect(page.getByText('The verified phrase remains only in this tab until you open the wallet or reset.')).toBeVisible();
   const browserStorage = await page.evaluate(() => JSON.stringify({
     local: Object.entries(localStorage),
     session: Object.entries(sessionStorage),
@@ -89,6 +106,56 @@ test('wallet app rehearses mnemonic recovery without creating or persisting a wa
   await expectPageContained(page);
   await screenshotEvidence(page, testInfo, 'wallet-identity-recovery-verified');
   expectNoBrowserErrors(errors);
+});
+
+test('wallet restores the selected canonical watchtower backup', async ({ page }, testInfo) => {
+  testInfo.setTimeout(120_000);
+  const errors = observeBrowserErrors(page);
+  const fixture = await readWalletRuntimeFixture(page);
+  await page.addInitScript((towerUrl: string) => {
+    localStorage.setItem('xln-watchtower-urls', JSON.stringify([towerUrl]));
+    (window as typeof window & { __XLN_WATCHTOWERS__?: string[] }).__XLN_WATCHTOWERS__ = [towerUrl];
+  }, fixture.recovery.towerUrl);
+  const response = await page.goto('/app?setup=1', { waitUntil: 'domcontentloaded' });
+  expect(response?.ok(), 'document response for canonical recovery').toBe(true);
+  await expect(page.locator('.wallet-shell-runtime-state')).toHaveText('Local Runtime', {
+    timeout: 90_000,
+  });
+
+  await page.getByRole('tab', { name: /Mnemonic/ }).click();
+  const seedInput = page.getByRole('textbox', { name: /^Seed phrase/ });
+  await seedInput.fill(FIRST_MNEMONIC);
+  await page.getByRole('button', { name: 'Review identity inputs' }).click();
+  await page.getByRole('button', { name: 'Verify recovery' }).click();
+  const recoveryInput = page.getByRole('textbox', { name: /^Seed phrase/ });
+  await recoveryInput.fill(FIRST_MNEMONIC);
+  await page.getByRole('button', { name: 'Verify recovered wallet' }).click();
+  await page.getByRole('button', { name: 'Check recovery and open wallet' }).click();
+
+  await expect(page.getByRole('heading', { name: 'Choose a backup' })).toBeVisible({ timeout: 90_000 });
+  await expect(page.getByText('Fresh creation is blocked. Restore one of the encrypted backups found for this wallet.')).toBeVisible();
+  const candidate = page.getByRole('radio', { name: /Latest backup/ });
+  await expect(candidate).toHaveAttribute('aria-checked', 'true');
+  await expect(candidate).toContainText(`H${fixture.recovery.runtimeHeight}`);
+  await expect(candidate).toContainText(fixture.recovery.towerUrl);
+  await expect(page.getByText('1 tower and 0 saved peers checked.')).toBeVisible();
+  await expectPageContained(page);
+  await screenshotEvidence(page, testInfo, 'wallet-canonical-recovery-choice');
+
+  const storage = await page.evaluate(() => JSON.stringify({
+    local: Object.entries(localStorage),
+    session: Object.entries(sessionStorage),
+  }));
+  expect(storage).not.toContain(FIRST_MNEMONIC);
+  await page.getByRole('button', { name: 'Restore selected backup' }).click();
+  await expect(page.getByRole('heading', { name: 'Wallet opened' })).toBeVisible({ timeout: 90_000 });
+  await expect(page.getByText(`Active Runtime ${fixture.recovery.runtimeId}.`, { exact: false })).toBeVisible();
+  await expectPageContained(page);
+  await screenshotEvidence(page, testInfo, 'wallet-canonical-recovery-opened');
+  expectOnlyUnavailableFixtureRelayErrors(
+    errors,
+    `ws://localhost:${new URL(page.url()).port}/relay`,
+  );
 });
 
 test('address directory reads the isolated wallet Runtime', async ({ page }, testInfo) => {

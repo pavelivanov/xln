@@ -1,6 +1,10 @@
 import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from 'react';
 
 import { DEMO_ACCOUNTS } from '../../../packages/ui/src/demo-accounts';
+import type {
+  WalletCanonicalRecoveryDiscoveryView,
+  WalletCanonicalRuntimeOpeningRequest,
+} from '../../../packages/browser/src/wallet-runtime-opening';
 import {
   resolveWalletIdentityModeNavigation,
   selectWalletIdentityMode,
@@ -23,7 +27,11 @@ import {
   resetWalletRecoveryRehearsal,
   type WalletRecoveryRehearsalState,
 } from '../../../packages/browser/src/wallet-recovery-rehearsal';
-import { openWalletRuntimeWithCanonicalVault } from './wallet-embedded-runtime';
+import {
+  discardWalletRuntimeRecovery,
+  openWalletRuntimeWithCanonicalVault,
+  restoreWalletRuntimeFromCanonicalRecovery,
+} from './wallet-embedded-runtime';
 import './styles/identity-onboarding.css';
 
 const FACTORS = [1, 2, 3, 4, 5] as const;
@@ -41,7 +49,10 @@ export function IdentityOnboarding() {
   const [openingRuntime, setOpeningRuntime] = useState(false);
   const [openingError, setOpeningError] = useState('');
   const [openedRuntimeId, setOpenedRuntimeId] = useState('');
+  const [recoveryDiscovery, setRecoveryDiscovery] = useState<WalletCanonicalRecoveryDiscoveryView | null>(null);
+  const [selectedRecoveryCandidateId, setSelectedRecoveryCandidateId] = useState('');
   const verifiedMnemonicRef = useRef('');
+  const recoveryTokenRef = useRef('');
   const [rehearsal, setRehearsal] = useState<WalletRecoveryRehearsalState>(
     resetWalletRecoveryRehearsal,
   );
@@ -53,6 +64,8 @@ export function IdentityOnboarding() {
 
   useEffect(() => () => {
     verifiedMnemonicRef.current = '';
+    discardWalletRuntimeRecovery(recoveryTokenRef.current);
+    recoveryTokenRef.current = '';
   }, []);
 
   const selectMode = (nextMode: WalletIdentityMode): void => {
@@ -62,6 +75,10 @@ export function IdentityOnboarding() {
     setReviewing(false);
     setRecoveryVerified(false);
     verifiedMnemonicRef.current = '';
+    discardWalletRuntimeRecovery(recoveryTokenRef.current);
+    recoveryTokenRef.current = '';
+    setRecoveryDiscovery(null);
+    setSelectedRecoveryCandidateId('');
     setOpeningError('');
     setOpenedRuntimeId('');
     setRehearsal(resetWalletRecoveryRehearsal());
@@ -139,6 +156,8 @@ export function IdentityOnboarding() {
 
   const resetIdentity = (): void => {
     verifiedMnemonicRef.current = '';
+    discardWalletRuntimeRecovery(recoveryTokenRef.current);
+    recoveryTokenRef.current = '';
     setDraft(createWalletIdentityDraft('', DEMO_ACCOUNTS));
     setDerivedAddress('');
     setSubmissionError('');
@@ -148,8 +167,21 @@ export function IdentityOnboarding() {
     setOpeningRuntime(false);
     setOpeningError('');
     setOpenedRuntimeId('');
+    setRecoveryDiscovery(null);
+    setSelectedRecoveryCandidateId('');
     setRehearsal(resetWalletRecoveryRehearsal());
   };
+
+  const runtimeOpeningRequest = (seed: string): WalletCanonicalRuntimeOpeningRequest => ({
+    runtimeId: derivedAddress,
+    name: `Mnemonic ${derivedAddress.slice(0, 6)}`,
+    labelOverride: undefined,
+    seed,
+    mnemonic12: '',
+    devicePassphrase: '',
+    loginType: 'manual',
+    unlockDurationMs: 600_000,
+  });
 
   const openVerifiedMnemonic = async (): Promise<void> => {
     const seed = verifiedMnemonicRef.current;
@@ -157,20 +189,31 @@ export function IdentityOnboarding() {
     setOpeningRuntime(true);
     setOpeningError('');
     try {
-      const runtimeId = await openWalletRuntimeWithCanonicalVault({
-        runtimeId: derivedAddress,
-        name: `Mnemonic ${derivedAddress.slice(0, 6)}`,
-        labelOverride: undefined,
-        seed,
-        mnemonic12: '',
-        devicePassphrase: '',
-        loginType: 'manual',
-        unlockDurationMs: 600_000,
-      });
+      const request = runtimeOpeningRequest(seed);
+      const outcome = recoveryDiscovery
+        ? await restoreWalletRuntimeFromCanonicalRecovery(
+            request,
+            recoveryDiscovery,
+            selectedRecoveryCandidateId,
+          )
+        : await openWalletRuntimeWithCanonicalVault(request);
+      if (outcome.status === 'recovery-required') {
+        recoveryTokenRef.current = outcome.discovery.token;
+        setRecoveryDiscovery(outcome.discovery);
+        setSelectedRecoveryCandidateId(outcome.discovery.candidates[0]?.id || '');
+        return;
+      }
       verifiedMnemonicRef.current = '';
-      setOpenedRuntimeId(runtimeId);
+      recoveryTokenRef.current = '';
+      setRecoveryDiscovery(null);
+      setSelectedRecoveryCandidateId('');
+      setOpenedRuntimeId(outcome.runtimeId);
     } catch (error: unknown) {
       verifiedMnemonicRef.current = '';
+      discardWalletRuntimeRecovery(recoveryTokenRef.current);
+      recoveryTokenRef.current = '';
+      setRecoveryDiscovery(null);
+      setSelectedRecoveryCandidateId('');
       setOpeningError(walletRuntimeOpeningErrorMessage(error));
     } finally {
       setOpeningRuntime(false);
@@ -183,8 +226,11 @@ export function IdentityOnboarding() {
       openedRuntimeId={openedRuntimeId}
       opening={openingRuntime}
       openingError={openingError}
+      recoveryDiscovery={recoveryDiscovery}
+      selectedRecoveryCandidateId={selectedRecoveryCandidateId}
       onOpen={() => { void openVerifiedMnemonic(); }}
       onReset={resetIdentity}
+      onSelectRecoveryCandidate={setSelectedRecoveryCandidateId}
     />;
   }
 

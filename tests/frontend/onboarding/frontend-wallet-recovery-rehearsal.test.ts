@@ -46,11 +46,16 @@ describe('React wallet mnemonic recovery rehearsal', () => {
     expect(onboarding).toContain("setDraft((current) => ({ ...current, mnemonicInput: '' }))");
     expect(onboarding).toContain('verifiedMnemonicRef.current = normalizeWalletIdentityMnemonic(draft.mnemonicInput)');
     expect(onboarding.match(/verifiedMnemonicRef\.current = '';/g)?.length).toBeGreaterThanOrEqual(4);
-    expect(onboarding).toContain('await openWalletRuntimeWithCanonicalVault({');
+    expect(onboarding).toContain('await openWalletRuntimeWithCanonicalVault(request)');
+    expect(onboarding).toContain('await restoreWalletRuntimeFromCanonicalRecovery(');
+    expect(onboarding).toContain("outcome.status === 'recovery-required'");
+    expect(onboarding).toContain('discardWalletRuntimeRecovery(recoveryTokenRef.current)');
     expect(onboarding).toContain('setRecoveryVerified(true)');
     expect(recovery).toContain('Both seed entries were cleared.');
     expect(recovery).toContain('The verified phrase remains only in this tab until you open the wallet or reset.');
     expect(recovery).toContain('Check recovery and open wallet');
+    expect(recovery).toContain('Restore selected backup');
+    expect(recovery).toContain('Fresh creation is blocked.');
     expect(recovery).not.toContain('mnemonicInput');
     expect(recovery).not.toContain('localStorage');
     expect(recovery).not.toContain('sessionStorage');

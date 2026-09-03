@@ -6,6 +6,7 @@ import {
   buildWalletFixtureOrderTx,
   buildWalletFixtureProfileTx,
 } from './wallet-runtime-fixture-topology';
+import { createWalletRecoveryFixture, waitForWalletFixtureState } from './wallet-recovery-fixture';
 
 type FixtureSocketData = Readonly<{
   type: 'rpc';
@@ -99,15 +100,6 @@ const commit = async (submitted: Parameters<typeof runtime.enqueueRuntimeInput>[
   });
 };
 
-const waitForFixtureState = async (label: string, predicate: () => boolean): Promise<void> => {
-  const deadline = Date.now() + 20_000;
-  while (Date.now() < deadline) {
-    if (predicate()) return;
-    await Bun.sleep(25);
-  }
-  throw new Error(`WALLET_RUNTIME_FIXTURE_STATE_TIMEOUT:${label}`);
-};
-
 const readAccount = (ownerEntityId: string, peerEntityId: string) => {
   const replica = [...env.state.eReplicas.values()]
     .find((candidate) => candidate.state.entityId === ownerEntityId);
@@ -165,7 +157,7 @@ await commit({
     }],
   }],
 });
-await waitForFixtureState('account-open', () =>
+await waitForWalletFixtureState('account-open', () =>
   Boolean(readAccount(entityId, counterpartyEntityId))
   && Boolean(readAccount(counterpartyEntityId, entityId)));
 
@@ -192,7 +184,7 @@ await commit({
     },
   ],
 });
-await waitForFixtureState('credit-extended', () => {
+await waitForWalletFixtureState('credit-extended', () => {
   const delta = readAccount(entityId, counterpartyEntityId)?.state.deltas.get(usdcTokenId);
   return delta?.leftCreditLimit === creditLimit && delta.rightCreditLimit === creditLimit;
 });
@@ -204,7 +196,7 @@ await commit({
     entityTxs: [buildWalletFixtureOrderTx(counterpartyEntityId)],
   }],
 });
-await waitForFixtureState('market-open-order', () => {
+await waitForWalletFixtureState('market-open-order', () => {
   const hub = [...env.state.eReplicas.values()]
     .find((candidate) => candidate.state.entityId === counterpartyEntityId);
   return hub?.state.orderbookExt?.books.get('1/2')?.orders.size === 1;
@@ -230,6 +222,7 @@ const token = auth.deriveRuntimeAdapterCapabilityToken(
   Date.now() + 60 * 60_000,
   { audience: runtimeId, keyId: 'wallet-address-e2e', tokenId: 'wallet-address-e2e' },
 );
+const recoveryFixture = await createWalletRecoveryFixture(port);
 const handleRpc = rpc.createServerRpcMessageHandler({
   validateRuntimeInputAdmission: runtime.validateRuntimeInputAdmission,
 });
@@ -250,6 +243,11 @@ server = Bun.serve<FixtureSocketData>({
         height: env.state.height,
         wsUrl: `ws://127.0.0.1:${server.port}/rpc`,
         token,
+        recovery: {
+          runtimeId: recoveryFixture.runtimeId,
+          runtimeHeight: recoveryFixture.runtimeHeight,
+          towerUrl: recoveryFixture.towerUrl,
+        },
       }, { headers: { 'access-control-allow-origin': '*' } });
     }
     return new Response('not found', { status: 404 });
@@ -284,6 +282,7 @@ const stop = async (): Promise<void> => {
   await runtime.stopRuntimeLoopAndWait(env).catch(() => false);
   await runtime.closeRuntimeDb(env);
   await runtime.closeInfraDb(env);
+  await recoveryFixture.close();
   await rm(databaseRoot, { recursive: true, force: true });
 };
 
