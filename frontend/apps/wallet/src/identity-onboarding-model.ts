@@ -128,6 +128,17 @@ export const walletRuntimeOpeningErrorMessage = (error: unknown): string => {
   return `Wallet opening failed: ${detail}`;
 };
 
+export const walletRecoveryFileErrorMessage = (error: unknown): string => {
+  const detail = error instanceof Error ? error.message : String(error);
+  if (detail === 'RECOVERY_BACKUP_FILE_JSON_INVALID') return 'Backup file is not valid recovery JSON.';
+  if (detail === 'RECOVERY_BACKUP_FILE_EMPTY') return 'Backup file contains no encrypted Runtime bundles.';
+  if (detail.startsWith('RECOVERY_BACKUP_FILE_RUNTIME_MISMATCH:')) return 'Backup file does not match the verified wallet.';
+  if (detail === 'WALLET_RECOVERY_FILE_IMPORT_CANCELLED') return 'Backup import was cancelled.';
+  if (detail === 'WALLET_RECOVERY_DISCOVERY_STALE') return 'Recovery results expired. Re-enter the wallet inputs.';
+  if (detail === 'WALLET_BRAINVAULT_DERIVATION_STALE') return 'Brain Vault results expired. Re-enter the exact inputs.';
+  return `Backup import failed: ${detail}`;
+};
+
 export const beginWalletMnemonicRecoveryRehearsal = (
   address: string,
 ): WalletRecoveryRehearsalState => {

@@ -244,6 +244,7 @@ server = Bun.serve<FixtureSocketData>({
         wsUrl: `ws://127.0.0.1:${server.port}/rpc`,
         token,
         recovery: {
+          backupFileContents: recoveryFixture.backupFileContents,
           runtimeId: recoveryFixture.runtimeId,
           runtimeHeight: recoveryFixture.runtimeHeight,
           towerUrl: recoveryFixture.towerUrl,

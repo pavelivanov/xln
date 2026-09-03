@@ -6,9 +6,12 @@ import {
 } from '../../../packages/browser/src/wallet-embedded-runtime-session';
 import type {
   WalletCanonicalRecoveryDiscoveryView,
+  WalletCanonicalRecoveryFile,
+  WalletCanonicalRecoveryFileImport,
   WalletCanonicalRuntimeOpeningOutcome,
   WalletCanonicalRuntimeOpeningRequest,
 } from '../../../packages/browser/src/wallet-runtime-opening';
+import { mergeWalletRecoveryCandidate } from '../../../packages/browser/src/wallet-recovery-choice';
 import type {
   WalletBrainVaultDerivationInput,
   WalletBrainVaultDerivationProgress,
@@ -20,6 +23,7 @@ let pageUnloadFence: () => void = () => {};
 let pagehideInstalled = false;
 let discardCanonicalRecovery: ((token?: string) => void) | null = null;
 let discardCanonicalBrainVault: ((token?: string) => void) | null = null;
+let recoveryFileImportRevision = 0;
 
 const setPageUnloadFence = (fence: () => void): void => {
   pageUnloadFence = fence;
@@ -89,7 +93,47 @@ export const restoreWalletRuntimeFromCanonicalRecovery = (
 ): Promise<WalletCanonicalRuntimeOpeningOutcome> =>
   openDiscoveredWalletRuntime(request, discovery, candidateId);
 
+const mergeImportedRecoveryCandidate = (
+  discovery: WalletCanonicalRecoveryDiscoveryView,
+  candidate: WalletCanonicalRecoveryDiscoveryView['candidates'][number],
+): WalletCanonicalRecoveryFileImport => ({
+  candidateId: candidate.id,
+  discovery: {
+    ...discovery,
+    candidates: mergeWalletRecoveryCandidate(discovery.candidates, candidate),
+  },
+});
+
+export const importWalletRuntimeRecoveryFileWithCanonicalVault = async (
+  request: WalletCanonicalRuntimeOpeningRequest,
+  discovery: WalletCanonicalRecoveryDiscoveryView | null,
+  file: WalletCanonicalRecoveryFile,
+): Promise<WalletCanonicalRecoveryFileImport> => {
+  const revision = recoveryFileImportRevision + 1;
+  recoveryFileImportRevision = revision;
+  installPagehideFence();
+  await session.start();
+  if (revision !== recoveryFileImportRevision) throw new Error('WALLET_RECOVERY_FILE_IMPORT_CANCELLED');
+  const canonical = await import('../../../bridges/wallet-canonical-vault-runtime');
+  if (revision !== recoveryFileImportRevision) throw new Error('WALLET_RECOVERY_FILE_IMPORT_CANCELLED');
+  discardCanonicalRecovery = canonical.discardCanonicalWalletRuntimeRecovery;
+  const current = discovery ?? await canonical.discoverCanonicalWalletRuntimeRecoveryView(request);
+  if (revision !== recoveryFileImportRevision) {
+    canonical.discardCanonicalWalletRuntimeRecovery(current.token);
+    throw new Error('WALLET_RECOVERY_FILE_IMPORT_CANCELLED');
+  }
+  const candidate = await canonical.importCanonicalWalletRuntimeRecoveryFile(
+    request, current.token, file,
+  );
+  if (revision !== recoveryFileImportRevision) {
+    canonical.discardCanonicalWalletRuntimeRecovery(current.token);
+    throw new Error('WALLET_RECOVERY_FILE_IMPORT_CANCELLED');
+  }
+  return mergeImportedRecoveryCandidate(current, candidate);
+};
+
 export const discardWalletRuntimeRecovery = (token = ''): void => {
+  recoveryFileImportRevision += 1;
   discardCanonicalRecovery?.(token);
 };
 
@@ -122,6 +166,18 @@ export const openPreparedWalletBrainVault = async (
     canonical.discardCanonicalWalletBrainVault(prepared.token);
     throw error;
   }
+};
+
+export const importPreparedWalletBrainVaultRecoveryFile = async (
+  prepared: WalletBrainVaultPreparedView,
+  discovery: WalletCanonicalRecoveryDiscoveryView,
+  file: WalletCanonicalRecoveryFile,
+): Promise<WalletCanonicalRecoveryFileImport> => {
+  const canonical = await import('../../../bridges/wallet-canonical-vault-runtime');
+  const candidate = await canonical.importCanonicalWalletBrainVaultRecoveryFile(
+    prepared.token, prepared.runtimeId, discovery.token, file,
+  );
+  return mergeImportedRecoveryCandidate(discovery, candidate);
 };
 
 export const discardWalletBrainVault = (token = ''): void => {

@@ -26,6 +26,15 @@ describe('wallet Brain Vault material session', () => {
     expect(session.consume(token, 'runtime-a')).toBe(material);
   });
 
+  test('allows bridge-only recovery work without consuming derived material', () => {
+    const session = new WalletBrainVaultMaterialSession<Material>();
+    const material = { runtimeId: 'runtime-a', mnemonic24: 'secret words' };
+    const token = session.commit(session.begin(), material);
+
+    expect(session.read(token, 'runtime-a')).toBe(material);
+    expect(session.consume(token, 'runtime-a')).toBe(material);
+  });
+
   test('invalidates stale derivations and explicit cancellation', () => {
     const session = new WalletBrainVaultMaterialSession<Material>();
     const staleRevision = session.begin();

@@ -1,6 +1,6 @@
 # React frontend migration work plan
 
-**Status:** `IN PROGRESS — WP0–WP6 COMPLETE; WP7 HEALTH + QA + HLT + RUNS + SCENARIOS + AI IMPLEMENTED, WORKSPACE STATE LAYER SVELTE-FREE, PANEL PORTS THROUGH ARCHITECT, REACT DOCKVIEW WRAPPER READY, GRAPH3D LIFECYCLE + RENDERER/PRIMITIVES/EFFECTS/ENTITY/ACCOUNT VISUAL FACTORY/INTERACTION/SELECTION/CAMERA/POINTER+XR DRAG + HOVER MECHANICS + VIEW/SCENE INPUT MODELS EXTRACTED, ENTITY WORKSPACE REACT SHELL/TABS + LIVE RUNTIME CONTEXT + READ-ONLY OWNERSHIP/ACCOUNTS/PROFILE READY; WP8 COMPLETE; WP9 HAS 19 COVERED / 1 PARTIAL BROWSER ROUTE AND 3 EXACT GAPS, BACKUP-FILE RECOVERY NEXT`
+**Status:** `IN PROGRESS — WP0–WP6 COMPLETE; WP7 HEALTH + QA + HLT + RUNS + SCENARIOS + AI IMPLEMENTED, WORKSPACE STATE LAYER SVELTE-FREE, PANEL PORTS THROUGH ARCHITECT, REACT DOCKVIEW WRAPPER READY, GRAPH3D LIFECYCLE + RENDERER/PRIMITIVES/EFFECTS/ENTITY/ACCOUNT VISUAL FACTORY/INTERACTION/SELECTION/CAMERA/POINTER+XR DRAG + HOVER MECHANICS + VIEW/SCENE INPUT MODELS EXTRACTED, ENTITY WORKSPACE REACT SHELL/TABS + LIVE RUNTIME CONTEXT + READ-ONLY OWNERSHIP/ACCOUNTS/PROFILE READY; WP8 COMPLETE; WP9 HAS 19 COVERED / 1 PARTIAL BROWSER ROUTE AND 3 EXACT GAPS, RECOVERY-SERVICE ONBOARDING NEXT`
 
 This is the executable work plan for splitting the Svelte frontend into React
 applications. It is intentionally lightweight and should be updated as live
@@ -2501,6 +2501,34 @@ with 100,156 expectations before the documented shared Hardhat compiler-cache
 mutex stops contract-artifact drift after 60 seconds; this slice changes no
 contract source or artifact. The irreversible-identity gap is closed; the typed
 inventory now reports three exact gaps.
+
+React identity recovery now imports canonical encrypted Runtime backup files
+for both verified mnemonic and Brain Vault identities. File parsing,
+decryption, full candidates, and derived Brain Vault seed material stay inside
+the migration bridge; React receives only display-safe summaries and the exact
+selected candidate id. The bridge validates the active recovery token and the
+seed-derived Runtime id before atomically merging a file candidate. Reset,
+unmount, or a newer import generation invalidates in-flight discovery and
+prevents stale publication. The real browser fixture serializes genuine signed
+height-1 encrypted Runtime bundles, proves malformed JSON is rejected loudly,
+imports and restores the Brain Vault file, and imports a mnemonic file before
+deliberately reselecting and restoring its tower backup. The focused
+session/bridge batch passes 17 / 17 with 70 expectations, the full onboarding
+batch passes 196 / 196 with 812 expectations, and the four typed inventory
+audits pass 21 / 21 with 656 expectations. The complete wallet browser matrix
+passes 36 / 36 in 1.0 minute across 390×844, 1366×900, and 1920×1080; all
+changed error and candidate screenshots were inspected without clipping or
+horizontal overflow. The authoritative 213-file frontend suite preserves the
+exact 14 known failures with 1,282 passes, one error, and 7,331 expectations
+across 1,296 tests. The wallet-local and canonical gates scan 664 files with
+zero unsafe-type findings and zero errors/warnings, the production wallet
+build completes in 2.08 seconds, and the canonical build transforms 4,677 SSR
+plus 6,428 client modules. Root evidence passes 26 / 26 BrainVault/runtime
+tests with 100,156 expectations before the documented shared Hardhat
+compiler-cache mutex stops contract-artifact drift after 60 seconds; this
+slice changes no contract source or artifact. The recovery capability moves
+from unstarted to in progress; recovery-service enrollment and push wake are
+the next slice while the typed inventory remains at three exact gaps.
 
 **Current checkpoint:** all retained routes have React application owners; two
 implementations, one browser route, and three typed gaps remain partial before

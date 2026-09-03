@@ -140,6 +140,7 @@ export const PLATFORM_INVENTORY = [
     consumers: [
       'frontend/src/lib/utils/control/activeTabLock.ts',
       'frontend/apps/wallet/src/wallet-embedded-runtime.ts',
+      'frontend/apps/wallet/src/wallet-identity-opening.ts',
     ],
     evidence: [
       'tests/frontend/runtime/active-tab-lock.test.ts',
@@ -180,6 +181,7 @@ export const PLATFORM_INVENTORY = [
       'tests/frontend/onboarding/wallet-recovery-selection-session.test.ts',
       'tests/frontend/onboarding/wallet-brainvault-material-session.test.ts',
       'tests/frontend/onboarding/frontend-wallet-brainvault-derivation.test.ts',
+      'tests/frontend/onboarding/frontend-wallet-recovery-file.test.ts',
       'tests/frontend/runtime/wallet-runtime-suspension.test.ts',
       'tests/frontend/runtime/frontend-wallet-app-shell.test.ts',
     ],
