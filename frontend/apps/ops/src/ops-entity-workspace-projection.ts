@@ -3,6 +3,7 @@ import {
   emptyEntityWorkspaceActivity,
   projectEntityWorkspaceActivity,
   type EntityWorkspaceActivity,
+  type EntityWorkspaceActivityKind,
 } from '../../../packages/runtime-client/src/entity-workspace-activity';
 import {
   emptyEntityWorkspaceAccounts,
@@ -97,12 +98,14 @@ export const projectOpsEntityWorkspaceActivityPage = (
   projection: OpsEntityWorkspaceProjection,
   page: unknown,
   beforeHeight?: number,
+  kind?: EntityWorkspaceActivityKind,
 ): OpsEntityWorkspaceProjection => ({
   ...projection,
   activity: projectEntityWorkspaceActivity({
     context: projection.context,
     page,
     ...(beforeHeight === undefined ? {} : { beforeHeight }),
+    ...(kind === undefined ? {} : { kind }),
   }),
 });
 
