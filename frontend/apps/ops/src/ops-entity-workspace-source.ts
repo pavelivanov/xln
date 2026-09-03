@@ -1,7 +1,9 @@
 import type {
   RuntimeAdapter,
+  RuntimeAdapterHistoryFrameBatch,
   RuntimeAdapterReadQuery,
-} from '../../../../core/api/runtime-adapter/types';
+  RuntimeAdapterViewFrame,
+} from '@xln/core/api/public/runtime-module';
 import type { RuntimeAdapterStorageSnapshot } from '../../../packages/browser/src/runtime-adapter-session';
 import {
   emptyOpsEntityWorkspaceProjection,
@@ -11,7 +13,10 @@ import {
   type OpsEntityWorkspaceSourceSnapshot,
 } from './ops-entity-workspace-projection';
 import { RuntimeQueryClient } from '../../../packages/runtime-client/src/runtime-query-client';
+import type { RuntimeQueryResultSchema } from '../../../packages/runtime-client/src/runtime-query-client';
 import { RuntimeQueryObserver } from '../../../packages/runtime-client/src/runtime-query-observer';
+import { createEntityWorkspaceLiveState } from '../../../packages/runtime-client/src/entity-workspace-time-machine';
+import { OpsEntityWorkspaceHistoryController } from './ops-entity-workspace-history-controller';
 
 type RuntimeReadSession = Readonly<{
   adapter: RuntimeAdapter;
@@ -26,6 +31,13 @@ type RemoteSessionConfig = Readonly<{
   wsUrl: string;
   authKey: string;
 }>;
+
+type OpsRuntimeQueryResults = RuntimeQueryResultSchema & Readonly<{
+  historyFrameBatch: RuntimeAdapterHistoryFrameBatch;
+  viewFrame: RuntimeAdapterViewFrame;
+}>;
+
+type OpsRuntimeQueryClient = RuntimeQueryClient<RuntimeAdapterReadQuery, OpsRuntimeQueryResults>;
 
 export const requireOpsEntityRemoteSession = (
   snapshot: RuntimeAdapterStorageSnapshot,
@@ -61,6 +73,7 @@ const unavailableSnapshot = (): OpsEntityWorkspaceSourceSnapshot => ({
     status: 'unavailable',
     message: 'Select a remote Runtime in the wallet before opening this candidate workspace.',
   },
+  timeMachine: createEntityWorkspaceLiveState(0),
 });
 
 export const initialOpsEntityWorkspaceSnapshot = (
@@ -69,6 +82,7 @@ export const initialOpsEntityWorkspaceSnapshot = (
   ? {
       ...emptyOpsEntityWorkspaceProjection(),
       readState: { status: 'connecting', message: 'Connecting to the selected Runtime…' },
+      timeMachine: createEntityWorkspaceLiveState(0),
     }
   : unavailableSnapshot();
 
@@ -78,6 +92,8 @@ export class OpsEntityWorkspaceSource {
   private session: RuntimeReadSession | null = null;
   private observer: RuntimeQueryObserver<OpsEntityWorkspaceProjection> | null = null;
   private observerTeardown: (() => void) | null = null;
+  private queryClient: OpsRuntimeQueryClient | null = null;
+  private readonly historyController: OpsEntityWorkspaceHistoryController;
   private generation = 0;
   private accountsPage = 0;
   private started = false;
@@ -89,6 +105,14 @@ export class OpsEntityWorkspaceSource {
     },
   ) {
     this.snapshot = initialOpsEntityWorkspaceSnapshot(config);
+    this.historyController = new OpsEntityWorkspaceHistoryController({
+      publish: (snapshot) => this.publish(snapshot),
+      readAccountsPage: () => this.accountsPage,
+      readAdapter: () => this.session?.adapter ?? null,
+      readClient: () => this.queryClient,
+      readSnapshot: () => this.snapshot,
+      refreshLive: () => { void this.observer?.refresh(); },
+    });
   }
 
   readonly getSnapshot = (): OpsEntityWorkspaceSourceSnapshot => this.snapshot;
@@ -105,6 +129,7 @@ export class OpsEntityWorkspaceSource {
     this.publish({
       ...emptyOpsEntityWorkspaceProjection(),
       readState: { status: 'connecting', message: 'Connecting to the selected Runtime…' },
+      timeMachine: createEntityWorkspaceLiveState(0),
     });
     try {
       const session = await this.dependencies.openSession(this.config);
@@ -124,6 +149,7 @@ export class OpsEntityWorkspaceSource {
           status: 'error',
           message: error instanceof Error ? error.message : String(error || 'Runtime connection failed'),
         },
+        timeMachine: createEntityWorkspaceLiveState(0),
       });
     }
   };
@@ -137,27 +163,39 @@ export class OpsEntityWorkspaceSource {
     }
     if (page === this.accountsPage) return;
     this.accountsPage = page;
-    void this.observer?.refresh();
+    if (this.historyController.isActive()) {
+      this.historyController.reload();
+    } else {
+      void this.observer?.refresh();
+    }
   };
+
+  readonly selectHistoryHeight = (height: number): Promise<boolean> =>
+    this.historyController.select(height);
+
+  readonly returnLive = (): void => this.historyController.returnLive();
 
   readonly stop = (): void => {
     this.started = false;
     this.accountsPage = 0;
+    this.historyController.reset();
     this.generation += 1;
     this.releaseRuntimeConnection();
     this.publish(initialOpsEntityWorkspaceSnapshot(this.config));
   };
 
   private installObserver(adapter: RuntimeAdapter): void {
-    const client = new RuntimeQueryClient<RuntimeAdapterReadQuery>({
+    const client = new RuntimeQueryClient<RuntimeAdapterReadQuery, OpsRuntimeQueryResults>({
       resolveAdapter: () => adapter,
       readRuntimeId: () => adapter.runtimeId,
       readCurrentHeight: () => adapter.currentHeight,
       createEmptyQuery: () => ({}),
     });
+    this.queryClient = client;
     this.publish({
       ...emptyOpsEntityWorkspaceProjection(adapter.runtimeId),
       readState: { status: 'loading', message: 'Reading the committed Entity context…' },
+      timeMachine: createEntityWorkspaceLiveState(adapter.currentHeight),
     });
     const observer = new RuntimeQueryObserver(
       async () => {
@@ -183,6 +221,10 @@ export class OpsEntityWorkspaceSource {
     const observer = this.observer;
     const adapter = this.session?.adapter;
     if (!observer || !adapter) return;
+    if (this.historyController.isActive()) {
+      this.historyController.syncLatest();
+      return;
+    }
     const next = projectOpsEntityWorkspaceObserverSnapshot(
       adapter.runtimeId,
       {
@@ -194,6 +236,7 @@ export class OpsEntityWorkspaceSource {
         reserves: this.snapshot.reserves,
       },
       observer.getSnapshot(),
+      createEntityWorkspaceLiveState(adapter.currentHeight),
     );
     if (next.readState.status === 'error' && adapter.status === 'error') {
       this.started = false;
@@ -208,6 +251,8 @@ export class OpsEntityWorkspaceSource {
     this.observerTeardown = null;
     this.observer?.destroy();
     this.observer = null;
+    this.queryClient = null;
+    this.historyController.reset();
     this.session?.release();
     this.session = null;
   }
