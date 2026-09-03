@@ -17,6 +17,10 @@ import {
   projectEntityWorkspaceContext,
 } from '../../../frontend/packages/runtime-client/src/entity-workspace-context';
 import {
+  emptyEntityWorkspaceConsensusEvidence,
+  projectEntityWorkspaceConsensusEvidence,
+} from '../../../frontend/packages/runtime-client/src/entity-workspace-consensus-evidence';
+import {
   emptyEntityWorkspaceOwnership,
   projectEntityWorkspaceOwnership,
 } from '../../../frontend/packages/runtime-client/src/entity-workspace-ownership';
@@ -91,8 +95,15 @@ const SELECTED_RESERVES = projectEntityWorkspaceReserves({
   frame: OWNERSHIP_FRAME,
 });
 
+const SELECTED_CONSENSUS = projectEntityWorkspaceConsensusEvidence({
+  accounts: SELECTED_ACCOUNTS,
+  context: SELECTED_CONTEXT,
+  ownership: SELECTED_OWNERSHIP,
+});
+
 const SELECTED_PROJECTION = {
   accounts: SELECTED_ACCOUNTS,
+  consensus: SELECTED_CONSENSUS,
   context: SELECTED_CONTEXT,
   ownership: SELECTED_OWNERSHIP,
   profile: SELECTED_PROFILE,
@@ -135,6 +146,7 @@ describe('React Entity workspace Runtime read boundary', () => {
     });
     expect(projectOpsEntityWorkspaceObserverSnapshot('runtime-a', {
       accounts: emptyEntityWorkspaceAccounts(),
+      consensus: emptyEntityWorkspaceConsensusEvidence(),
       context: emptyEntityWorkspaceContext(), ownership: emptyEntityWorkspaceOwnership(),
       profile: emptyEntityWorkspaceProfile(),
       reserves: emptyEntityWorkspaceReserves(),
@@ -146,6 +158,7 @@ describe('React Entity workspace Runtime read boundary', () => {
     })).toMatchObject({
       context: { status: 'empty', runtimeId: 'runtime-a', entityId: null },
       accounts: { status: 'empty' },
+      consensus: { status: 'empty' },
       ownership: { status: 'empty' },
       profile: { status: 'empty' },
       reserves: { status: 'empty' },
@@ -171,6 +184,7 @@ describe('React Entity workspace Runtime read boundary', () => {
     expect(source).toContain('accountsPage: this.accountsPage');
     expect(source).toContain('projectOpsEntityWorkspaceFrame(adapter.runtimeId, frame)');
     expect(projection).toContain('projectEntityWorkspaceAccounts({ context, frame })');
+    expect(projection).toContain('projectEntityWorkspaceConsensusEvidence({ accounts, context, ownership })');
     expect(projection).toContain('projectEntityWorkspaceOwnership({ context, frame })');
     expect(projection).toContain('projectEntityWorkspaceProfile({ context, frame })');
     expect(projection).toContain('projectEntityWorkspaceReserves({ context, frame })');

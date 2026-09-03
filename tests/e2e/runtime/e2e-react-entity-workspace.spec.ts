@@ -217,6 +217,13 @@ test('React Entity workspace reads selected context from a real H1 Runtime', { t
       await expect(candidatePage.getByTestId('assets-reserve-count')).not.toHaveText('0');
       await expect(reserves.getByText('raw units').first()).toBeVisible();
       await capturePageScreenshot(candidatePage, testInfo, `react-entity-workspace-assets-${viewport.name}.png`);
+      await candidatePage.evaluate(() => { window.location.hash = 'settings/consensus'; });
+      const consensus = candidatePage.getByTestId('settings-consensus-evidence');
+      await expect(consensus).toBeVisible();
+      await expect(candidatePage.getByTestId('consensus-board-members').locator('li')).not.toHaveCount(0);
+      await expect(candidatePage.getByTestId('consensus-account-count')).not.toHaveText('0');
+      await expect(consensus.getByText('Committed only')).toBeVisible();
+      await capturePageScreenshot(candidatePage, testInfo, `react-entity-workspace-consensus-${viewport.name}.png`);
       await candidatePage.evaluate(() => { window.location.hash = 'accounts'; });
       const accounts = candidatePage.getByTestId('accounts-page-projection');
       await expect(accounts).toBeVisible();

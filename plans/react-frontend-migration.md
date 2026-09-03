@@ -1,6 +1,6 @@
 # React frontend migration work plan
 
-**Status:** `IN PROGRESS — WP0–WP6 COMPLETE; WP7 HEALTH + QA + HLT + RUNS + SCENARIOS + AI IMPLEMENTED, WORKSPACE STATE LAYER SVELTE-FREE, PANEL PORTS THROUGH ARCHITECT, REACT DOCKVIEW WRAPPER READY, GRAPH3D LIFECYCLE + RENDERER/PRIMITIVES/EFFECTS/ENTITY/ACCOUNT VISUAL FACTORY/INTERACTION/SELECTION/CAMERA/POINTER+XR DRAG + HOVER MECHANICS + VIEW/SCENE INPUT MODELS EXTRACTED, ENTITY WORKSPACE REACT SHELL/TABS + LIVE RUNTIME CONTEXT + READ-ONLY ASSETS/OWNERSHIP/ACCOUNTS/PROFILE READY; WP8 COMPLETE; WP9 HAS 19 COMPLETE / 1 PARTIAL IMPLEMENTATION, 19 COVERED / 1 PARTIAL BROWSER ROUTE, AND 1 AUTHORIZED IMPLEMENTATION GAP; ENTITY ASSETS PROJECTION COMPLETE`
+**Status:** `IN PROGRESS — WP0–WP6 COMPLETE; WP7 HEALTH + QA + HLT + RUNS + SCENARIOS + AI IMPLEMENTED, WORKSPACE STATE LAYER SVELTE-FREE, PANEL PORTS THROUGH ARCHITECT, REACT DOCKVIEW WRAPPER READY, GRAPH3D LIFECYCLE + RENDERER/PRIMITIVES/EFFECTS/ENTITY/ACCOUNT VISUAL FACTORY/INTERACTION/SELECTION/CAMERA/POINTER+XR DRAG + HOVER MECHANICS + VIEW/SCENE INPUT MODELS EXTRACTED, ENTITY WORKSPACE REACT SHELL/TABS + LIVE RUNTIME CONTEXT + READ-ONLY ASSETS/OWNERSHIP/ACCOUNTS/CONSENSUS/PROFILE READY; WP8 COMPLETE; WP9 HAS 19 COMPLETE / 1 PARTIAL IMPLEMENTATION, 19 COVERED / 1 PARTIAL BROWSER ROUTE, AND 1 AUTHORIZED IMPLEMENTATION GAP; ENTITY ASSETS + CONSENSUS EVIDENCE COMPLETE`
 
 This is the executable work plan for splitting the Svelte frontend into React
 applications. It is intentionally lightweight and should be updated as live
@@ -2656,6 +2656,35 @@ soundcheck passes all ten gates before the documented missing local `cargo`;
 file-size checking reaches only the existing `core/qa/report.ts` 3001/3000
 violation. This slice changes no Runtime protocol, contract, persistence schema,
 or artifact.
+
+The next authorized Entity slice composes the already strict context, board,
+and bounded Account-page projections into a read-only `settings/consensus`
+evidence panel. It publishes committed Runtime height, board mode and threshold,
+validator shares, and exact Account frame heads while explicitly withholding
+validator-local proposals, votes, locks, and certificates from the remote
+projection. Cross-Entity or partial composition fails loudly; no consensus
+transition, quorum formula, proposal handling, or command path is reproduced.
+The focused context/board/Account/source/shell batch passes 26 / 26 with 117
+expectations, and typed inventory coverage passes 18 / 18 with 473 expectations.
+The isolated real-H1 flow passes in 19.6 seconds (21.0 seconds total) and renders
+one committed validator plus two Account heads at 390×844, 1366×900, and
+1920×1080. Screenshot review caught and corrected a desktop summary truncation;
+all three final screenshots are readable with no clipping or horizontal
+overflow. The complete ops candidate matrix passes 30 / 30. The React-local
+gate scans 680 files with zero unsafe findings, all four React production
+surfaces build, and ops transforms 1,621 modules with 18.30 / 18.74 kB
+workspace view/runtime chunks. The canonical frontend check remains at zero
+errors/warnings while transforming 4,677 SSR plus 6,428 client modules. The
+218-file frontend suite reports 1,298 passes, 16 restricted-sandbox failures,
+one error, and 7,426 expectations across 1,314 tests; the three network-binding
+fixtures pass 6 / 6 with host networking, leaving the unchanged 13-name
+repository baseline and no slice-owned failure. Root evidence passes 26 / 26
+deterministic tests with 100,156 expectations before the documented 60-second
+Hardhat compiler-cache mutex. Downstream soundcheck passes all ten gates before
+the documented missing local `cargo`; production function-size policy passes
+1,047 files with zero overage, and file-size checking reaches only the existing
+`core/qa/report.ts` 3001/3000 violation. This slice changes no Runtime protocol,
+contract, persistence schema, or artifact.
 
 **Current checkpoint:** all retained routes have React application owners;
 wallet parity is complete. `/embed` is the sole partial implementation/browser
