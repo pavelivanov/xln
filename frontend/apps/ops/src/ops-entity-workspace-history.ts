@@ -3,7 +3,10 @@ import type {
   RuntimeAdapterHistoryFrameBatch,
   RuntimeAdapterReadQuery,
 } from '@xln/core/api/public/runtime-module';
-import { buildEntityWorkspaceActivityQuery } from '../../../packages/runtime-client/src/entity-workspace-activity';
+import {
+  buildEntityWorkspaceActivityQuery,
+  type EntityWorkspaceActivityKind,
+} from '../../../packages/runtime-client/src/entity-workspace-activity';
 import {
   assertTimeMachineHistorySelection,
   createTimeMachineHistoryBatchQuery,
@@ -24,6 +27,7 @@ export type OpsEntityWorkspaceHistoryReader = Readonly<{
 
 export async function readOpsEntityWorkspaceHistory(input: Readonly<{
   activityBeforeHeight?: number;
+  activityKind?: EntityWorkspaceActivityKind;
   accountsPage: number;
   client: OpsEntityWorkspaceHistoryReader;
   entityId: string;
@@ -53,7 +57,13 @@ export async function readOpsEntityWorkspaceHistory(input: Readonly<{
   const activityQuery = buildEntityWorkspaceActivityQuery(
     projection.context,
     input.activityBeforeHeight,
+    input.activityKind,
   );
   const activity = await input.client.readActivity(activityQuery);
-  return projectOpsEntityWorkspaceActivityPage(projection, activity, activityQuery.beforeHeight);
+  return projectOpsEntityWorkspaceActivityPage(
+    projection,
+    activity,
+    activityQuery.beforeHeight,
+    activityQuery.kind,
+  );
 }

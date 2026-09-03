@@ -53,7 +53,7 @@ const historyBatch = (frame: RuntimeAdapterViewFrame): RuntimeAdapterHistoryFram
   unavailable: [],
 });
 
-const activityPage = (height: number) => ({
+const activityPage = (height: number, kind: 'all' | 'onchain' | 'offchain' = 'all') => ({
   ok: true as const,
   runtimeId: 'runtime-a',
   latestHeight: 18,
@@ -64,7 +64,7 @@ const activityPage = (height: number) => ({
   limit: 8,
   scanLimit: 160,
   nextBeforeHeight: null,
-  filters: { entityId: '0xaaaa', kind: 'all' as const, beforeHeight: height, limit: 8, scanLimit: 160 },
+  filters: { entityId: '0xaaaa', kind, beforeHeight: height, limit: 8, scanLimit: 160 },
   events: [],
 });
 
@@ -100,13 +100,14 @@ describe('React Entity workspace Time Machine', () => {
       client: {
         readActivity: async (query) => {
           queries.push(query);
-          return activityPage(7);
+          return activityPage(7, 'offchain');
         },
         readHistoryFrameBatch: async (query) => {
           queries.push(query);
           return historyBatch(historyFrame(7));
         },
       },
+      activityKind: 'offchain',
       entityId: '0xaaaa', latestHeight: 18, requestedHeight: 7, runtimeId: 'runtime-a',
     });
     expect(queries).toEqual([
@@ -114,9 +115,10 @@ describe('React Entity workspace Time Machine', () => {
         accountsLimit: 8, accountsPage: 0, booksLimit: 8, booksPage: 0,
         entityId: '0xaaaa', heights: [7],
       },
-      { beforeHeight: 7, entityId: '0xaaaa', kind: 'all', limit: 8, scanLimit: 160 },
+      { beforeHeight: 7, entityId: '0xaaaa', kind: 'offchain', limit: 8, scanLimit: 160 },
     ]);
     expect(projection.context).toMatchObject({ entityId: '0xaaaa', height: 7, status: 'selected' });
+    expect(projection.activity).toMatchObject({ kind: 'offchain', status: 'selected' });
     expect(projection.consensus).toMatchObject({ entityId: '0xaaaa', runtimeHeight: 7, status: 'selected' });
   });
 
