@@ -22,6 +22,10 @@ type WalletRuntimeFixtureInfo = Readonly<{
   token: string;
 }>;
 
+const FIRST_MNEMONIC = 'test test test test test test test test test test test junk';
+const SECOND_MNEMONIC = 'abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about';
+const INVALID_MNEMONIC = 'test test test test test test test test test test test test';
+
 const readWalletRuntimeFixture = async (page: Page): Promise<WalletRuntimeFixtureInfo> => {
   const port = Number(process.env['XLN_REACT_WALLET_FIXTURE_PORT'] || 19092);
   let value: unknown = null;
@@ -102,6 +106,56 @@ test('wallet app renders within the isolated wallet surface', async ({ page }, t
   await expect(page.getByLabel('Current Runtime status')).toBeVisible();
   await expectPageContained(page);
   await screenshotEvidence(page, testInfo, 'wallet-app');
+  expectNoBrowserErrors(errors);
+});
+
+test('wallet app rehearses mnemonic recovery without creating or persisting a wallet', async ({ page }, testInfo) => {
+  const errors = observeBrowserErrors(page);
+  const response = await page.goto('/app?setup=1', { waitUntil: 'domcontentloaded' });
+  expect(response?.ok(), 'document response for identity rehearsal').toBe(true);
+  await expect(page.locator('.wallet-shell-runtime-state')).toHaveText('Local Runtime', {
+    timeout: 90_000,
+  });
+
+  await page.getByRole('tab', { name: /Mnemonic/ }).click();
+  const seedInput = page.getByRole('textbox', { name: /^Seed phrase/ });
+  await seedInput.fill(INVALID_MNEMONIC);
+  await page.getByRole('button', { name: 'Review identity inputs' }).click();
+  await expect(page.getByText('Seed phrase checksum or words are invalid.')).toBeVisible();
+
+  await seedInput.fill(FIRST_MNEMONIC);
+  await page.getByRole('button', { name: 'Review identity inputs' }).click();
+  await expect(page.getByRole('heading', { name: 'Review recovery requirements' })).toBeVisible();
+  await expect(page.getByText('0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266')).toBeVisible();
+  await expect(page.getByText('No wallet has been created and no secret has left this form.')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Edit inputs' })).toBeInViewport();
+  await expectPageContained(page);
+  await screenshotEvidence(page, testInfo, 'wallet-identity-mnemonic-review');
+
+  await page.getByRole('button', { name: 'Verify recovery' }).click();
+  await expect(page.getByRole('heading', { name: 'Re-enter your seed' })).toBeVisible();
+  const recoveryInput = page.getByRole('textbox', { name: /^Seed phrase/ });
+  await expect(recoveryInput).toHaveValue('');
+  await recoveryInput.fill(SECOND_MNEMONIC);
+  await page.getByRole('button', { name: 'Verify recovered wallet' }).click();
+  await expect(page.getByText('Recovery rehearsal did not reproduce the same wallet. Check every input and try again.')).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Re-enter your seed' })).toBeVisible();
+  await expectPageContained(page);
+  await screenshotEvidence(page, testInfo, 'wallet-identity-recovery-mismatch');
+
+  await recoveryInput.fill(FIRST_MNEMONIC);
+  await page.getByRole('button', { name: 'Verify recovered wallet' }).click();
+  await expect(page.getByRole('heading', { name: 'The same wallet returned' })).toBeVisible();
+  await expect(page.getByText('Both seed entries were cleared.')).toBeVisible();
+  await expect(page.getByText('No wallet has been created or persisted by this rehearsal.')).toBeVisible();
+  const browserStorage = await page.evaluate(() => JSON.stringify({
+    local: Object.entries(localStorage),
+    session: Object.entries(sessionStorage),
+  }));
+  expect(browserStorage).not.toContain(FIRST_MNEMONIC);
+  expect(browserStorage).not.toContain(SECOND_MNEMONIC);
+  await expectPageContained(page);
+  await screenshotEvidence(page, testInfo, 'wallet-identity-recovery-verified');
   expectNoBrowserErrors(errors);
 });
 
