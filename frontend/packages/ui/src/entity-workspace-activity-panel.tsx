@@ -10,6 +10,7 @@ type EntityWorkspaceActivityPanelProps = Readonly<{
   activity: EntityWorkspaceActivity;
   onSelectBeforeHeight: (beforeHeight: number | null) => void;
   onSelectKind: (kind: EntityWorkspaceActivityKind) => void;
+  onSelectNewerPage: () => void;
   onToggleType: (type: EntityWorkspaceActivityFilterType) => void;
 }>;
 
@@ -40,7 +41,7 @@ const ACTIVITY_TYPE_OPTIONS = [
 const directionLabel = (direction: 'in' | 'out' | 'neutral'): string =>
   direction === 'in' ? 'Inbound' : direction === 'out' ? 'Outbound' : 'Observed';
 
-export function EntityWorkspaceActivityPanel({ activity, onSelectBeforeHeight, onSelectKind, onToggleType }: EntityWorkspaceActivityPanelProps) {
+export function EntityWorkspaceActivityPanel({ activity, onSelectBeforeHeight, onSelectKind, onSelectNewerPage, onToggleType }: EntityWorkspaceActivityPanelProps) {
   if (activity.status !== 'selected') return null;
   return (
     <section className="entity-workspace-activity-panel" data-testid="entity-activity-ledger">
@@ -101,12 +102,20 @@ export function EntityWorkspaceActivityPanel({ activity, onSelectBeforeHeight, o
             ))}
           </ol>}
       <footer>
-        <button
-          data-testid="entity-activity-latest"
-          disabled={activity.isLatestPage}
-          onClick={() => onSelectBeforeHeight(null)}
-          type="button"
-        >Latest</button>
+        <div className="entity-workspace-activity-newer">
+          <button
+            data-testid="entity-activity-latest"
+            disabled={activity.isLatestPage}
+            onClick={() => onSelectBeforeHeight(null)}
+            type="button"
+          >Latest</button>
+          <button
+            data-testid="entity-activity-newer"
+            disabled={activity.isLatestPage}
+            onClick={onSelectNewerPage}
+            type="button"
+          >Newer</button>
+        </div>
         <strong>h{activity.fromHeight}–h{activity.toHeight}</strong>
         <button
           data-testid="entity-activity-earlier"
