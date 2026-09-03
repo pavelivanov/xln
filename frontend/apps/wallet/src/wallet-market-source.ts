@@ -331,6 +331,14 @@ export class WalletMarketSource {
         await this.observer?.refresh();
         return;
       }
+      if (command.mode === 'embedded') {
+        this.pendingCommand = null;
+        this.patch({ command: {
+          status: 'accepted', message: `Queued after committed Runtime height ${result.height}.`,
+          commandId: shortId, durable: false, retryable: false,
+        } });
+        return;
+      }
       this.patch({ command: {
         status: 'pending',
         message: `Accepted after height ${result.height}. Do not submit a second command while observation is pending.`,

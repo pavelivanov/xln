@@ -1,6 +1,7 @@
 import { getBytes, hexlify, type TransactionRequest } from 'ethers';
 
 import type { JAdapter } from '../../../core/jurisdiction/adapter/types';
+import type { BrowserVMState } from '../../../core/runtime/types';
 export type BrowserVmRpcFixture = Readonly<{
   chainAdapter: JAdapter;
   rpcUrl: string;
@@ -27,11 +28,22 @@ export const createBrowserVmRpcFixture = async (rpcPort: number): Promise<Browse
   const chainId = 31_337;
   const chainAdapter = await createJAdapter({ mode: 'browservm', chainId });
   if (!chainAdapter.getBrowserVM()) throw new Error('WALLET_RECOVERY_FIXTURE_BROWSERVM_REQUIRED');
-  const browserVmState = await chainAdapter.dumpState();
-  if (typeof browserVmState === 'string') throw new Error('WALLET_RECOVERY_FIXTURE_BROWSERVM_STATE_INVALID');
-  const receipts = new Map(browserVmState.chain.txReceipts);
-  const receiptRoots = new Map(browserVmState.chain.blockReceiptRoots);
-  const blockHashes = new Map(browserVmState.chain.blockHashes);
+  const initialBrowserVmState = await chainAdapter.dumpState();
+  if (typeof initialBrowserVmState === 'string') {
+    throw new Error('WALLET_RECOVERY_FIXTURE_BROWSERVM_STATE_INVALID');
+  }
+  let browserVmState: BrowserVMState = initialBrowserVmState;
+  let receipts = new Map(browserVmState.chain.txReceipts);
+  let receiptRoots = new Map(browserVmState.chain.blockReceiptRoots);
+  let blockHashes = new Map(browserVmState.chain.blockHashes);
+  const refreshBrowserVmState = async (): Promise<void> => {
+    const next = await chainAdapter.dumpState();
+    if (typeof next === 'string') throw new Error('WALLET_RECOVERY_FIXTURE_BROWSERVM_STATE_INVALID');
+    browserVmState = next;
+    receipts = new Map(next.chain.txReceipts);
+    receiptRoots = new Map(next.chain.blockReceiptRoots);
+    blockHashes = new Map(next.chain.blockHashes);
+  };
   const blockHashAt = (blockNumber: number): string => {
     const hash = blockHashes.get(blockNumber);
     if (!hash) throw new Error(`WALLET_RECOVERY_FIXTURE_BLOCK_HASH_MISSING:${blockNumber}`);
@@ -50,6 +62,8 @@ export const createBrowserVmRpcFixture = async (rpcPort: number): Promise<Browse
       ...receipt,
       blockNumber: quantity(receipt.blockNumber),
       cumulativeGasUsed: quantity(receipt.cumulativeGasUsed),
+      effectiveGasPrice: quantity(1_000_000_000n),
+      gasUsed: quantity(receipt.cumulativeGasUsed),
       status: quantity(receipt.status),
       transactionIndex: quantity(receipt.transactionIndex),
       type: quantity(receipt.type),
@@ -64,9 +78,42 @@ export const createBrowserVmRpcFixture = async (rpcPort: number): Promise<Browse
       })),
     };
   };
+  const transactionRequest = (value: unknown): TransactionRequest => {
+    if (!value || typeof value !== 'object' || Array.isArray(value)) {
+      throw new Error('WALLET_RECOVERY_FIXTURE_RPC_TRANSACTION_INVALID');
+    }
+    const record = value as Record<string, unknown>;
+    const optionalBigInt = (field: string): bigint | undefined => (
+      record[field] === undefined ? undefined : BigInt(String(record[field]))
+    );
+    const valueAmount = optionalBigInt('value');
+    const gasLimit = optionalBigInt('gas');
+    const maxFeePerGas = optionalBigInt('maxFeePerGas');
+    const maxPriorityFeePerGas = optionalBigInt('maxPriorityFeePerGas');
+    return {
+      ...(record['to'] === undefined ? {} : { to: String(record['to']) }),
+      ...(record['from'] === undefined ? {} : { from: String(record['from']) }),
+      ...(record['data'] === undefined ? {} : { data: String(record['data']) }),
+      ...(valueAmount === undefined ? {} : { value: valueAmount }),
+      ...(gasLimit === undefined ? {} : { gasLimit }),
+      ...(maxFeePerGas === undefined ? {} : { maxFeePerGas }),
+      ...(maxPriorityFeePerGas === undefined ? {} : { maxPriorityFeePerGas }),
+      ...(record['nonce'] === undefined ? {} : { nonce: Number(BigInt(String(record['nonce']))) }),
+    };
+  };
   const executeRpc = async (method: string, params: unknown[]): Promise<unknown> => {
+    await refreshBrowserVmState();
     if (method === 'eth_chainId') return quantity(chainId);
     if (method === 'eth_blockNumber') return quantity(browserVmState.chain.blockHeight);
+    if (method === 'eth_gasPrice' || method === 'eth_maxPriorityFeePerGas') {
+      return quantity(1_000_000_000n);
+    }
+    if (method === 'eth_getBalance') {
+      return quantity(await chainAdapter.provider.getBalance(String(params[0] || '')));
+    }
+    if (method === 'eth_getTransactionCount') {
+      return quantity(await chainAdapter.provider.getTransactionCount(String(params[0] || '')));
+    }
     if (method === 'eth_getCode') {
       return chainAdapter.provider.getCode(String(params[0] || ''), String(params[1] || 'latest'));
     }
@@ -74,7 +121,15 @@ export const createBrowserVmRpcFixture = async (rpcPort: number): Promise<Browse
       if (!params[0] || typeof params[0] !== 'object' || Array.isArray(params[0])) {
         throw new Error('WALLET_RECOVERY_FIXTURE_RPC_CALL_INVALID');
       }
-      return chainAdapter.provider.call(params[0] as TransactionRequest);
+      return chainAdapter.provider.call(transactionRequest(params[0]));
+    }
+    if (method === 'eth_estimateGas') {
+      return quantity(await chainAdapter.provider.estimateGas(transactionRequest(params[0])));
+    }
+    if (method === 'eth_sendRawTransaction') {
+      const raw = String(params[0] || '');
+      if (!raw.startsWith('0x')) throw new Error('WALLET_RECOVERY_FIXTURE_RPC_RAW_TRANSACTION_INVALID');
+      return (await chainAdapter.provider.broadcastTransaction(raw)).hash;
     }
     if (method === 'eth_getBlockByNumber') {
       const blockNumber = blockHeight(params[0]);
@@ -88,9 +143,18 @@ export const createBrowserVmRpcFixture = async (rpcPort: number): Promise<Browse
         number: quantity(blockNumber),
         receiptsRoot,
         logsBloom: combineBlooms(blockReceipts.map((receipt) => receipt.logsBloom)),
+        timestamp: quantity(browserVmState.chain.blockTimestamp),
+        nonce: '0x0000000000000000',
+        difficulty: quantity(0),
+        gasLimit: quantity(30_000_000),
+        gasUsed: quantity(blockReceipts.at(-1)?.cumulativeGasUsed ?? 0),
+        miner: `0x${'0'.repeat(40)}`,
+        extraData: '0x',
+        baseFeePerGas: quantity(1_000_000_000n),
         transactions: blockReceipts.map((receipt) => receipt.transactionHash),
       };
     }
+    if (method === 'eth_getTransactionByHash') return null;
     if (method === 'eth_getTransactionReceipt') return rawReceipt(String(params[0] || ''));
     if (method === 'eth_getLogs') {
       const filter = params[0];

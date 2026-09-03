@@ -205,7 +205,7 @@ describe('frontend capability inventory', () => {
       .toContain('frontend/apps/wallet/src/wallet-financial-health.tsx');
     expect(CAPABILITIES.find(({ id }) => id === 'wallet-finance')?.behavior)
       .toContain('React-owned debt, Runtime solvency evidence, Account dispute gates, and committed history');
-    expect(CAPABILITIES.find(({ id }) => id === 'wallet-payments-and-markets')?.status).toBe('in_progress');
+    expect(CAPABILITIES.find(({ id }) => id === 'wallet-payments-and-markets')?.status).toBe('implemented');
     expect(CAPABILITIES.find(({ id }) => id === 'wallet-payments-and-markets')?.currentSources)
       .toContain('frontend/apps/wallet/src/wallet-payment-source.ts');
     expect(CAPABILITIES.find(({ id }) => id === 'wallet-payments-and-markets')?.behavior)
@@ -214,7 +214,9 @@ describe('frontend capability inventory', () => {
       .toContain('frontend/apps/wallet/src/wallet-market-source.ts');
     expect(CAPABILITIES.find(({ id }) => id === 'wallet-payments-and-markets')?.behavior)
       .toContain('React-owned Runtime orderbooks, canonical same-j order and cancel commands, cross-j lifecycle, and persisted activity');
-    expect(CAPABILITIES.find(({ id }) => id === 'wallet-native-and-offline')?.status).toBe('in_progress');
+    expect(CAPABILITIES.find(({ id }) => id === 'wallet-payments-and-markets')?.currentSources)
+      .toContain('frontend/bridges/wallet-canonical-external-provider.ts');
+    expect(CAPABILITIES.find(({ id }) => id === 'wallet-native-and-offline')?.status).toBe('implemented');
   });
 
   test('records the implemented docs reader and its generated-output boundary', () => {

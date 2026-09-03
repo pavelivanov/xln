@@ -1,4 +1,4 @@
-import { useEffect, useState, useSyncExternalStore } from 'react';
+import { lazy, Suspense, useEffect, useState, useSyncExternalStore } from 'react';
 
 import { readRuntimeAdapterStorageSnapshot } from '../../../packages/browser/src/runtime-adapter-session';
 import { WalletPaymentOperations } from './wallet-payment-operations';
@@ -8,7 +8,12 @@ import { WalletPaymentSource } from './wallet-payment-source';
 import './styles/wallet-payments.css';
 import './styles/wallet-payments-responsive.css';
 
-type PaymentTab = 'send' | 'receive' | 'operations';
+type PaymentTab = 'send' | 'receive' | 'operations' | 'external';
+
+const WalletPaymentExternal = lazy(async () => {
+  const module = await import('./wallet-payment-external');
+  return { default: module.WalletPaymentExternal };
+});
 
 const shortCommandId = (value: string): string => value ? `…${value}` : '';
 
@@ -95,15 +100,24 @@ export function WalletPayments() {
             </section>
           ) : null}
 
-          {projection.recipients.length > 0 && projection.tokens.length > 0 ? (
+          <nav className="wallet-payment-tabs" aria-label="Payment tools">
+            {(['send', 'receive', 'operations', 'external'] as const).map((option) => (
+              <button aria-current={tab === option ? 'page' : undefined} className={tab === option ? 'is-current' : ''} key={option} onClick={() => setTab(option)} type="button">
+                {option[0]?.toUpperCase() + option.slice(1)}
+              </button>
+            ))}
+          </nav>
+          {tab === 'external' ? (
+            <Suspense fallback={<p className="wallet-payments-empty" role="status">Loading the local authority bridge…</p>}>
+              <WalletPaymentExternal
+                key={`${projection.activeEntityId}:${projection.signerId}`}
+                paymentSnapshot={snapshot}
+                paymentSource={source}
+                projection={projection}
+              />
+            </Suspense>
+          ) : projection.recipients.length > 0 && projection.tokens.length > 0 ? (
             <>
-              <nav className="wallet-payment-tabs" aria-label="Payment tools">
-                {(['send', 'receive', 'operations'] as const).map((option) => (
-                  <button aria-current={tab === option ? 'page' : undefined} className={tab === option ? 'is-current' : ''} key={option} onClick={() => setTab(option)} type="button">
-                    {option === 'operations' ? 'Operations' : option[0]?.toUpperCase() + option.slice(1)}
-                  </button>
-                ))}
-              </nav>
               {tab === 'send' ? <WalletPaymentSend projection={projection} snapshot={snapshot} source={source} /> : null}
               {tab === 'receive' ? <WalletPaymentReceive projection={projection} source={source} /> : null}
               {tab === 'operations' ? <WalletPaymentOperations projection={projection} snapshot={snapshot} source={source} /> : null}
@@ -117,7 +131,7 @@ export function WalletPayments() {
       )}
 
       <p className="wallet-payments-boundary">
-        Route quotes come from the selected Runtime. External-wallet moves are excluded until the React provider boundary is live; no placeholder transaction is emitted.
+        Route quotes come from the selected Runtime. External writes use the active local vault and its committed Entity jurisdiction; React never receives signer key material.
       </p>
     </section>
   );

@@ -16,7 +16,7 @@
 }
 
 @media (max-width: 620px) {
-  .wallet-payment-tabs { display: grid; grid-template-columns: repeat(3, 1fr); }
+  .wallet-payment-tabs { display: grid; grid-template-columns: repeat(4, 1fr); }
   .wallet-payment-tabs button { padding-inline: 0.35rem; }
   .wallet-payments-section-heading { display: grid; gap: 0.55rem; }
   .wallet-payments-section-heading > span { margin-left: 2rem; }
