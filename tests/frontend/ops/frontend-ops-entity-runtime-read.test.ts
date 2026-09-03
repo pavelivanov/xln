@@ -17,6 +17,10 @@ import {
   projectEntityWorkspaceContext,
 } from '../../../frontend/packages/runtime-client/src/entity-workspace-context';
 import {
+  emptyEntityWorkspaceHubPolicy,
+  projectEntityWorkspaceHubPolicy,
+} from '../../../frontend/packages/runtime-client/src/entity-workspace-hub-policy';
+import {
   emptyEntityWorkspaceConsensusEvidence,
   projectEntityWorkspaceConsensusEvidence,
 } from '../../../frontend/packages/runtime-client/src/entity-workspace-consensus-evidence';
@@ -62,6 +66,10 @@ const OWNERSHIP_FRAME = {
     core: {
       entityId: '0xaaaa',
       signerId: '0xbbbb',
+      hubRebalanceConfig: {
+        matchingStrategy: 'amount', policyVersion: 3, routingFeePPM: 25,
+        baseFee: 5n, rebalanceLiquidityFeeBps: 2n, rebalanceTimeoutMs: 60_000,
+      },
       reserves: new Map([[1, 2_500_000n]]),
       config: {
         mode: 'proposer-based', threshold: 1n,
@@ -77,6 +85,11 @@ const OWNERSHIP_FRAME = {
 };
 
 const SELECTED_OWNERSHIP = projectEntityWorkspaceOwnership({
+  context: SELECTED_CONTEXT,
+  frame: OWNERSHIP_FRAME,
+});
+
+const SELECTED_HUB_POLICY = projectEntityWorkspaceHubPolicy({
   context: SELECTED_CONTEXT,
   frame: OWNERSHIP_FRAME,
 });
@@ -106,6 +119,7 @@ const SELECTED_PROJECTION = {
   accounts: SELECTED_ACCOUNTS,
   consensus: SELECTED_CONSENSUS,
   context: SELECTED_CONTEXT,
+  hubPolicy: SELECTED_HUB_POLICY,
   ownership: SELECTED_OWNERSHIP,
   profile: SELECTED_PROFILE,
   reserves: SELECTED_RESERVES,
@@ -152,6 +166,7 @@ describe('React Entity workspace Runtime read boundary', () => {
       accounts: emptyEntityWorkspaceAccounts(),
       consensus: emptyEntityWorkspaceConsensusEvidence(),
       context: emptyEntityWorkspaceContext(), ownership: emptyEntityWorkspaceOwnership(),
+      hubPolicy: emptyEntityWorkspaceHubPolicy(),
       profile: emptyEntityWorkspaceProfile(),
       reserves: emptyEntityWorkspaceReserves(),
     }, {
@@ -167,6 +182,7 @@ describe('React Entity workspace Runtime read boundary', () => {
       context: { status: 'empty', runtimeId: 'runtime-a', entityId: null },
       accounts: { status: 'empty' },
       consensus: { status: 'empty' },
+      hubPolicy: { status: 'empty' },
       ownership: { status: 'empty' },
       profile: { status: 'empty' },
       reserves: { status: 'empty' },
@@ -194,6 +210,7 @@ describe('React Entity workspace Runtime read boundary', () => {
     expect(source).toContain('projectOpsEntityWorkspaceFrame(adapter.runtimeId, frame)');
     expect(projection).toContain('projectEntityWorkspaceAccounts({ context, frame })');
     expect(projection).toContain('projectEntityWorkspaceConsensusEvidence({ accounts, context, ownership })');
+    expect(projection).toContain('projectEntityWorkspaceHubPolicy({ context, frame })');
     expect(projection).toContain('projectEntityWorkspaceOwnership({ context, frame })');
     expect(projection).toContain('projectEntityWorkspaceProfile({ context, frame })');
     expect(projection).toContain('projectEntityWorkspaceReserves({ context, frame })');

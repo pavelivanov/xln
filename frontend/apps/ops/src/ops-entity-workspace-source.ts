@@ -231,6 +231,7 @@ export class OpsEntityWorkspaceSource {
         accounts: this.snapshot.accounts,
         consensus: this.snapshot.consensus,
         context: this.snapshot.context,
+        hubPolicy: this.snapshot.hubPolicy,
         ownership: this.snapshot.ownership,
         profile: this.snapshot.profile,
         reserves: this.snapshot.reserves,

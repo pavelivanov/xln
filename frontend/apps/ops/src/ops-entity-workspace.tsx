@@ -126,6 +126,7 @@ export function OpsEntityWorkspacePage() {
         context={runtimeSnapshot.context}
         displayIssue={displaySnapshot.issue}
         displayPreferences={displaySnapshot.preferences}
+        hubPolicy={runtimeSnapshot.hubPolicy}
         onRefresh={() => { void opsEntityWorkspaceSource.refresh(); }}
         onSelectAccountsPage={opsEntityWorkspaceSource.selectAccountsPage}
         onSelectTheme={opsDisplayPreferencesSource.setTheme}

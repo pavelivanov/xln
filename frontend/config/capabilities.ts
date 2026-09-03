@@ -452,6 +452,7 @@ export const CAPABILITIES = [
       'frontend/packages/runtime-client/src/entity-workspace-navigation.ts',
       'frontend/packages/runtime-client/src/entity-workspace-context.ts',
       'frontend/packages/runtime-client/src/entity-workspace-consensus-evidence.ts',
+      'frontend/packages/runtime-client/src/entity-workspace-hub-policy.ts',
       'frontend/packages/runtime-client/src/entity-workspace-accounts.ts',
       'frontend/packages/runtime-client/src/entity-workspace-ownership.ts',
       'frontend/packages/runtime-client/src/entity-workspace-profile.ts',
