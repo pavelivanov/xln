@@ -157,6 +157,7 @@ export const PLATFORM_INVENTORY = [
       'frontend/packages/browser/src/wallet-embedded-runtime-session.ts',
       'frontend/packages/browser/src/wallet-runtime-suspension.ts',
       'frontend/packages/browser/src/wallet-vault-storage.ts',
+      'frontend/packages/browser/src/wallet-recovery-selection-session.ts',
       'frontend/apps/wallet/src/wallet-embedded-runtime-adapter.ts',
       'frontend/apps/wallet/src/wallet-embedded-runtime-bootstrap.ts',
       'frontend/apps/wallet/src/wallet-embedded-runtime.ts',
@@ -171,6 +172,7 @@ export const PLATFORM_INVENTORY = [
     evidence: [
       'tests/frontend/runtime/runtime-module-loader.test.ts',
       'tests/frontend/runtime/wallet-embedded-runtime-session.test.ts',
+      'tests/frontend/onboarding/wallet-recovery-selection-session.test.ts',
       'tests/frontend/runtime/wallet-runtime-suspension.test.ts',
       'tests/frontend/runtime/frontend-wallet-app-shell.test.ts',
     ],

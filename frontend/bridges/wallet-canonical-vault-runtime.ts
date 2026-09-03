@@ -3,7 +3,12 @@ import { get } from 'svelte/store';
 import type { RuntimeAdapter } from '../../core/api/public/runtime-module';
 import { summarizeWalletRecoveryCandidates } from '../packages/browser/src/wallet-recovery-choice';
 import type { WalletEmbeddedRuntimeResource } from '../packages/browser/src/wallet-embedded-runtime-session';
-import type { WalletCanonicalRuntimeOpeningRequest } from '../packages/browser/src/wallet-runtime-opening';
+import { WalletRecoverySelectionSession } from '../packages/browser/src/wallet-recovery-selection-session';
+import type {
+  WalletCanonicalRecoveryCandidateView,
+  WalletCanonicalRecoveryDiscoveryView,
+  WalletCanonicalRuntimeOpeningRequest,
+} from '../packages/browser/src/wallet-runtime-opening';
 import {
   discoverCanonicalWalletRuntimeRecovery,
   executeCanonicalWalletRuntimeOpening,
@@ -14,8 +19,36 @@ import {
 } from '../src/lib/stores/runtimeControllerStore';
 import { runtimesState, vaultOperations } from '../src/lib/stores/vault/vaultStore';
 import { writeRuntimeRecoveryDiscoveryStatus } from '../src/lib/utils/recovery/recoveryDiscoveryStatus';
+import type { RuntimeRecoveryCandidate } from '../src/lib/stores/vault/vault-recovery';
 
 type PageUnloadFenceSetter = (fence: () => void) => void;
+
+const recoverySelection = new WalletRecoverySelectionSession<RuntimeRecoveryCandidate>();
+
+const projectRecoveryCandidate = (
+  candidate: RuntimeRecoveryCandidate,
+): WalletCanonicalRecoveryCandidateView => ({
+  id: candidate.id,
+  source: candidate.source,
+  sourceLabel: candidate.towerUrl || candidate.sourceLabel,
+  runtimeHeight: candidate.runtimeHeight,
+  createdAt: candidate.createdAt,
+  signerCount: candidate.signerCount,
+  bundleCount: candidate.bundleCount,
+});
+
+export const discardCanonicalWalletRuntimeRecovery = (token = ''): void => {
+  recoverySelection.discard(token);
+};
+
+const consumeRecoveryCandidate = (
+  request: WalletCanonicalRuntimeOpeningRequest,
+  token: string,
+  candidateId: string,
+): RuntimeRecoveryCandidate | undefined => {
+  const runtimeId = request.runtimeId.trim().toLowerCase();
+  return recoverySelection.consume(token, runtimeId, candidateId);
+};
 
 const requireCanonicalAdapter = (expectedRuntimeId: string): RuntimeAdapter => {
   const adapter = getRuntimeControllerAdapter();
@@ -76,10 +109,10 @@ export const restoreCanonicalWalletRuntime = async (
   return createCanonicalResource(runtimeId, requireCanonicalAdapter(runtimeId), setPageUnloadFence);
 };
 
-export const openCanonicalWalletRuntime = async (
+export const discoverCanonicalWalletRuntimeRecoveryView = async (
   request: WalletCanonicalRuntimeOpeningRequest,
-  setPageUnloadFence: PageUnloadFenceSetter,
-): Promise<WalletEmbeddedRuntimeResource<RuntimeAdapter>> => {
+): Promise<WalletCanonicalRecoveryDiscoveryView> => {
+  const revision = recoverySelection.begin();
   const discovery = await discoverCanonicalWalletRuntimeRecovery(request.seed, request.runtimeId);
   const summary = summarizeWalletRecoveryCandidates(discovery.candidates, '');
   writeRuntimeRecoveryDiscoveryStatus({
@@ -92,15 +125,31 @@ export const openCanonicalWalletRuntime = async (
     failures: discovery.failures,
     checkedAt: Date.now(),
   });
-  if (discovery.candidates.length > 0) {
-    throw new Error(`WALLET_RECOVERY_SELECTION_REQUIRED:${discovery.candidates.length}`);
-  }
+  const token = recoverySelection.commit(revision, discovery.runtimeId, discovery.candidates);
+  return {
+    token,
+    runtimeId: discovery.runtimeId,
+    candidates: discovery.candidates.map(projectRecoveryCandidate),
+    errors: discovery.errors,
+    checkedTowers: discovery.checkedTowers,
+    checkedPeers: discovery.checkedPeers,
+    peerBackupCount: summary.peerBackupCount,
+  };
+};
+
+export const openCanonicalWalletRuntime = async (
+  request: WalletCanonicalRuntimeOpeningRequest,
+  token: string,
+  candidateId: string,
+  setPageUnloadFence: PageUnloadFenceSetter,
+): Promise<WalletEmbeddedRuntimeResource<RuntimeAdapter>> => {
+  const recoveryCandidate = consumeRecoveryCandidate(request, token, candidateId);
   await executeCanonicalWalletRuntimeOpening({
     ...request,
-    recoveryCandidate: undefined,
+    recoveryCandidate,
     forceFresh: false,
     openLocal: false,
   });
-  const runtimeId = discovery.runtimeId;
+  const runtimeId = request.runtimeId.trim().toLowerCase();
   return createCanonicalResource(runtimeId, requireCanonicalAdapter(runtimeId), setPageUnloadFence);
 };
