@@ -4,50 +4,18 @@ import type {
 } from '../../../../core/api/runtime-adapter/types';
 import type { RuntimeAdapterStorageSnapshot } from '../../../packages/browser/src/runtime-adapter-session';
 import {
-  emptyEntityWorkspaceAccounts,
-  projectEntityWorkspaceAccounts,
-  type EntityWorkspaceAccounts,
-} from '../../../packages/runtime-client/src/entity-workspace-accounts';
-import {
-  emptyEntityWorkspaceContext,
-  projectEntityWorkspaceContext,
-  type EntityWorkspaceContext,
-  type EntityWorkspaceReadState,
-} from '../../../packages/runtime-client/src/entity-workspace-context';
-import {
-  emptyEntityWorkspaceOwnership,
-  projectEntityWorkspaceOwnership,
-  type EntityWorkspaceOwnership,
-} from '../../../packages/runtime-client/src/entity-workspace-ownership';
-import {
-  emptyEntityWorkspaceProfile,
-  projectEntityWorkspaceProfile,
-  type EntityWorkspaceProfile,
-} from '../../../packages/runtime-client/src/entity-workspace-profile';
+  emptyOpsEntityWorkspaceProjection,
+  projectOpsEntityWorkspaceFrame,
+  projectOpsEntityWorkspaceObserverSnapshot,
+  type OpsEntityWorkspaceProjection,
+  type OpsEntityWorkspaceSourceSnapshot,
+} from './ops-entity-workspace-projection';
 import { RuntimeQueryClient } from '../../../packages/runtime-client/src/runtime-query-client';
-import {
-  RuntimeQueryObserver,
-  type RuntimeQuerySnapshot,
-} from '../../../packages/runtime-client/src/runtime-query-observer';
+import { RuntimeQueryObserver } from '../../../packages/runtime-client/src/runtime-query-observer';
 
 type RuntimeReadSession = Readonly<{
   adapter: RuntimeAdapter;
   release: () => void;
-}>;
-
-export type OpsEntityWorkspaceSourceSnapshot = Readonly<{
-  accounts: EntityWorkspaceAccounts;
-  context: EntityWorkspaceContext;
-  ownership: EntityWorkspaceOwnership;
-  profile: EntityWorkspaceProfile;
-  readState: EntityWorkspaceReadState;
-}>;
-
-type OpsEntityWorkspaceProjection = Readonly<{
-  accounts: EntityWorkspaceAccounts;
-  context: EntityWorkspaceContext;
-  ownership: EntityWorkspaceOwnership;
-  profile: EntityWorkspaceProfile;
 }>;
 
 export type OpsEntityWorkspaceSourceDependencies = Readonly<{
@@ -58,13 +26,6 @@ type RemoteSessionConfig = Readonly<{
   wsUrl: string;
   authKey: string;
 }>;
-
-const emptyProjection = (runtimeId: unknown = null): OpsEntityWorkspaceProjection => ({
-  accounts: emptyEntityWorkspaceAccounts(),
-  context: emptyEntityWorkspaceContext(runtimeId),
-  ownership: emptyEntityWorkspaceOwnership(),
-  profile: emptyEntityWorkspaceProfile(),
-});
 
 export const requireOpsEntityRemoteSession = (
   snapshot: RuntimeAdapterStorageSnapshot,
@@ -95,7 +56,7 @@ export const openOpsEntityRuntimeReadSession = async (
 };
 
 const unavailableSnapshot = (): OpsEntityWorkspaceSourceSnapshot => ({
-  ...emptyProjection(),
+  ...emptyOpsEntityWorkspaceProjection(),
   readState: {
     status: 'unavailable',
     message: 'Select a remote Runtime in the wallet before opening this candidate workspace.',
@@ -106,36 +67,10 @@ export const initialOpsEntityWorkspaceSnapshot = (
   config: RuntimeAdapterStorageSnapshot,
 ): OpsEntityWorkspaceSourceSnapshot => config.mode === 'remote'
   ? {
-      ...emptyProjection(),
+      ...emptyOpsEntityWorkspaceProjection(),
       readState: { status: 'connecting', message: 'Connecting to the selected Runtime…' },
     }
   : unavailableSnapshot();
-
-export const projectOpsEntityWorkspaceObserverSnapshot = (
-  runtimeId: string,
-  currentProjection: OpsEntityWorkspaceProjection,
-  snapshot: RuntimeQuerySnapshot<OpsEntityWorkspaceProjection>,
-): OpsEntityWorkspaceSourceSnapshot => {
-  if (snapshot.loading) {
-    return {
-      ...(snapshot.data ?? currentProjection),
-      readState: { status: 'loading', message: 'Reading the committed Entity context…' },
-    };
-  }
-  if (snapshot.error) {
-    return {
-      ...emptyProjection(runtimeId),
-      readState: { status: 'error', message: snapshot.error },
-    };
-  }
-  if (!snapshot.data) {
-    return {
-      ...emptyProjection(runtimeId),
-      readState: { status: 'error', message: 'Runtime returned no Entity workspace context.' },
-    };
-  }
-  return { ...snapshot.data, readState: { status: 'ready', message: '' } };
-};
 
 export class OpsEntityWorkspaceSource {
   private readonly listeners = new Set<() => void>();
@@ -168,7 +103,7 @@ export class OpsEntityWorkspaceSource {
     this.started = true;
     const generation = ++this.generation;
     this.publish({
-      ...emptyProjection(),
+      ...emptyOpsEntityWorkspaceProjection(),
       readState: { status: 'connecting', message: 'Connecting to the selected Runtime…' },
     });
     try {
@@ -184,7 +119,7 @@ export class OpsEntityWorkspaceSource {
       this.started = false;
       this.releaseRuntimeConnection();
       this.publish({
-        ...emptyProjection(),
+        ...emptyOpsEntityWorkspaceProjection(),
         readState: {
           status: 'error',
           message: error instanceof Error ? error.message : String(error || 'Runtime connection failed'),
@@ -221,7 +156,7 @@ export class OpsEntityWorkspaceSource {
       createEmptyQuery: () => ({}),
     });
     this.publish({
-      ...emptyProjection(adapter.runtimeId),
+      ...emptyOpsEntityWorkspaceProjection(adapter.runtimeId),
       readState: { status: 'loading', message: 'Reading the committed Entity context…' },
     });
     const observer = new RuntimeQueryObserver(
@@ -231,13 +166,7 @@ export class OpsEntityWorkspaceSource {
           accountsPage: this.accountsPage,
           booksLimit: 1,
         });
-        const context = projectEntityWorkspaceContext({ runtimeId: adapter.runtimeId, frame });
-        return {
-          accounts: projectEntityWorkspaceAccounts({ context, frame }),
-          context,
-          ownership: projectEntityWorkspaceOwnership({ context, frame }),
-          profile: projectEntityWorkspaceProfile({ context, frame }),
-        };
+        return projectOpsEntityWorkspaceFrame(adapter.runtimeId, frame);
       },
       {
         readHeight: () => adapter.currentHeight,
@@ -261,6 +190,7 @@ export class OpsEntityWorkspaceSource {
         context: this.snapshot.context,
         ownership: this.snapshot.ownership,
         profile: this.snapshot.profile,
+        reserves: this.snapshot.reserves,
       },
       observer.getSnapshot(),
     );

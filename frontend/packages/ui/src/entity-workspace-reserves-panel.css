@@ -1,0 +1,42 @@
+.entity-workspace-reserves {
+  align-self: stretch;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  min-width: 0;
+  border-left: 1px solid var(--entity-line);
+  background: rgb(255 255 255 / 1.2%);
+}
+
+.entity-workspace-reserves > header,
+.entity-workspace-reserves > footer { padding: 1.35rem; }
+.entity-workspace-reserves > header { border-bottom: 1px solid var(--entity-line); }
+.entity-workspace-reserves > header > span,
+.entity-workspace-reserves > footer > span {
+  color: #666761;
+  font: 0.58rem/1 "SFMono-Regular", Consolas, monospace;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+}
+.entity-workspace-reserves > header > strong { display: block; margin-top: 0.6rem; color: #d8d5ca; font-size: 1.1rem; }
+.entity-workspace-reserves > header b { color: var(--entity-accent-soft); font-weight: 600; }
+.entity-workspace-reserves > header p { margin: 0.45rem 0 0; color: #807f78; font-size: 0.72rem; line-height: 1.5; }
+.entity-workspace-reserves ol { min-height: 0; margin: 0; padding: 0; overflow: auto; list-style: none; }
+.entity-workspace-reserves li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 1rem;
+  align-items: center;
+  padding: 1rem 1.35rem;
+  border-bottom: 1px solid var(--entity-line);
+}
+.entity-workspace-reserves li > span { color: #85847d; font: 0.65rem/1 "SFMono-Regular", Consolas, monospace; }
+.entity-workspace-reserves li > div { min-width: 0; text-align: right; }
+.entity-workspace-reserves code { display: block; overflow: hidden; color: var(--entity-accent-soft); font-size: 0.78rem; text-overflow: ellipsis; }
+.entity-workspace-reserves em { color: #666761; font-size: 0.58rem; font-style: normal; text-transform: uppercase; }
+.entity-workspace-reserves-empty { align-self: center; margin: 0; padding: 1.35rem; color: #777871; font-size: 0.78rem; }
+.entity-workspace-reserves > footer { display: flex; justify-content: space-between; border-top: 1px solid var(--entity-line); }
+.entity-workspace-reserves > footer > strong { color: #939188; font: 500 0.63rem/1 "SFMono-Regular", Consolas, monospace; text-transform: uppercase; }
+
+@media (max-width: 760px) {
+  .entity-workspace-reserves { border-top: 1px solid var(--entity-line); border-left: 0; }
+}
