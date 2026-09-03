@@ -110,11 +110,21 @@ export const walletIdentityMnemonicErrorMessage = (error: unknown): string => {
     : `Mnemonic validation failed: ${detail}`;
 };
 
+export const walletBrainVaultDerivationErrorMessage = (error: unknown): string => {
+  const detail = error instanceof Error ? error.message : String(error);
+  if (detail === 'WALLET_BRAINVAULT_DERIVATION_CANCELLED') return 'Brain Vault derivation was cancelled.';
+  if (detail.startsWith('BRAINVAULT_WORKER_SPEC_MISMATCH:')) {
+    return 'The cached Brain Vault worker is outdated. Reload this page before deriving.';
+  }
+  return `Brain Vault derivation failed: ${detail}`;
+};
+
 export const walletRuntimeOpeningErrorMessage = (error: unknown): string => {
   const detail = error instanceof Error ? error.message : String(error);
   if (detail === 'WALLET_RECOVERY_CANDIDATE_REQUIRED') return 'Select a recovery backup before restoring this wallet.';
   if (detail === 'WALLET_RECOVERY_DISCOVERY_STALE') return 'Recovery results expired. Re-enter the seed to check again.';
   if (detail === 'WALLET_RECOVERY_DISCOVERY_CANCELLED') return 'Recovery check was cancelled before it completed.';
+  if (detail === 'WALLET_BRAINVAULT_DERIVATION_STALE') return 'Brain Vault results expired. Re-enter the exact inputs.';
   return `Wallet opening failed: ${detail}`;
 };
 

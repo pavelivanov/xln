@@ -18,6 +18,7 @@ import { installImportedRuntime, readWalletRuntimeFixture } from './wallet-runti
 const FIRST_MNEMONIC = 'test test test test test test test test test test test junk';
 const SECOND_MNEMONIC = 'abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about';
 const INVALID_MNEMONIC = 'test test test test test test test test test test test test';
+const BRAINVAULT_MNEMONIC = 'milk click novel require across cousin good chair street mouse crash movie same daughter air quote total pride crop mention focus sick slice hole';
 
 const expectOnlyUnavailableFixtureRelayErrors = (
   errors: ReturnType<typeof observeBrowserErrors>,
@@ -106,6 +107,52 @@ test('wallet app rehearses mnemonic recovery without creating or persisting a wa
   await expectPageContained(page);
   await screenshotEvidence(page, testInfo, 'wallet-identity-recovery-verified');
   expectNoBrowserErrors(errors);
+});
+
+test('wallet derives and opens a canonical Brain Vault outside React state', async ({ page }, testInfo) => {
+  testInfo.setTimeout(180_000);
+  const errors = observeBrowserErrors(page);
+  const fixture = await readWalletRuntimeFixture(page);
+  expect(fixture.recovery.brainVault.runtimeId).toBe('0x93bab14ed871462d414a7c0357bf1a76de741397');
+  await page.addInitScript((towerUrl: string) => {
+    localStorage.setItem('xln-watchtower-urls', JSON.stringify([towerUrl]));
+    (window as typeof window & { __XLN_WATCHTOWERS__?: string[] }).__XLN_WATCHTOWERS__ = [towerUrl];
+  }, fixture.recovery.towerUrl);
+  const response = await page.goto('/app?setup=1', { waitUntil: 'domcontentloaded' });
+  expect(response?.ok(), 'document response for canonical Brain Vault').toBe(true);
+  await expect(page.locator('.wallet-shell-runtime-state')).toHaveText('Local Runtime', {
+    timeout: 90_000,
+  });
+
+  await page.getByRole('textbox', { name: /Vault name/ }).fill('alice');
+  await page.getByLabel(/Secret passphrase/).fill('secret123456');
+  await page.locator('.identity-factor-row').getByRole('button', { name: '1', exact: true }).click();
+  await page.getByRole('button', { name: 'Review identity inputs' }).click();
+  await expect(page.getByRole('heading', { name: 'Review recovery requirements' })).toBeVisible();
+  await page.getByRole('button', { name: 'Derive Brain Vault' }).click();
+
+  await expect(page.getByRole('heading', { name: /Deriving Brain Vault|Checking encrypted backups/ })).toBeVisible();
+  await screenshotEvidence(page, testInfo, 'wallet-brainvault-deriving');
+  await expect(page.getByRole('heading', { name: 'Choose a backup' })).toBeVisible({ timeout: 120_000 });
+  await expect(page.getByText('0x93bab14ed871462d414a7c0357bf1a76de741397')).toBeVisible();
+  await expect(page.getByText('Derived wallet material remains outside React state.')).toBeVisible();
+  await expect(page.getByRole('radio', { name: /Latest backup/ }))
+    .toContainText(`H${fixture.recovery.brainVault.runtimeHeight}`);
+  await expectPageContained(page);
+  await screenshotEvidence(page, testInfo, 'wallet-brainvault-ready');
+
+  const storage = await page.evaluate(() => JSON.stringify({
+    local: Object.entries(localStorage),
+    session: Object.entries(sessionStorage),
+  }));
+  expect(storage).not.toContain('secret123456');
+  expect(storage).not.toContain(BRAINVAULT_MNEMONIC);
+  await page.getByRole('button', { name: 'Restore selected backup' }).click();
+  await expect(page.getByRole('heading', { name: 'Wallet opened' })).toBeVisible({ timeout: 90_000 });
+  await expect(page.getByText('Active Runtime 0x93bab14ed871462d414a7c0357bf1a76de741397.', { exact: false })).toBeVisible();
+  await expectPageContained(page);
+  await screenshotEvidence(page, testInfo, 'wallet-brainvault-opened');
+  expectOnlyUnavailableFixtureRelayErrors(errors, `ws://localhost:${new URL(page.url()).port}/relay`);
 });
 
 test('wallet restores the selected canonical watchtower backup', async ({ page }, testInfo) => {

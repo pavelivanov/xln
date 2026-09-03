@@ -4,6 +4,13 @@ import type { RuntimeAdapter } from '../../core/api/public/runtime-module';
 import { summarizeWalletRecoveryCandidates } from '../packages/browser/src/wallet-recovery-choice';
 import type { WalletEmbeddedRuntimeResource } from '../packages/browser/src/wallet-embedded-runtime-session';
 import { WalletRecoverySelectionSession } from '../packages/browser/src/wallet-recovery-selection-session';
+import { WalletBrainVaultMaterialSession } from '../packages/browser/src/wallet-brainvault-material-session';
+import type {
+  WalletBrainVaultDerivationInput,
+  WalletBrainVaultDerivationProgress,
+  WalletBrainVaultDerivedMaterial,
+  WalletBrainVaultPreparedView,
+} from '../packages/browser/src/wallet-brainvault-opening';
 import type {
   WalletCanonicalRecoveryCandidateView,
   WalletCanonicalRecoveryDiscoveryView,
@@ -20,10 +27,13 @@ import {
 import { runtimesState, vaultOperations } from '../src/lib/stores/vault/vaultStore';
 import { writeRuntimeRecoveryDiscoveryStatus } from '../src/lib/utils/recovery/recoveryDiscoveryStatus';
 import type { RuntimeRecoveryCandidate } from '../src/lib/stores/vault/vault-recovery';
+import { WalletBrainVaultBrowserDerivation } from './wallet-brainvault-browser-derivation';
 
 type PageUnloadFenceSetter = (fence: () => void) => void;
 
 const recoverySelection = new WalletRecoverySelectionSession<RuntimeRecoveryCandidate>();
+const brainVaultDerivation = new WalletBrainVaultBrowserDerivation();
+const brainVaultMaterials = new WalletBrainVaultMaterialSession<WalletBrainVaultDerivedMaterial>();
 
 const projectRecoveryCandidate = (
   candidate: RuntimeRecoveryCandidate,
@@ -39,6 +49,12 @@ const projectRecoveryCandidate = (
 
 export const discardCanonicalWalletRuntimeRecovery = (token = ''): void => {
   recoverySelection.discard(token);
+};
+
+export const discardCanonicalWalletBrainVault = (token = ''): void => {
+  if (!brainVaultMaterials.discard(token)) return;
+  brainVaultDerivation.cancel();
+  recoverySelection.discard();
 };
 
 const consumeRecoveryCandidate = (
@@ -152,4 +168,61 @@ export const openCanonicalWalletRuntime = async (
   });
   const runtimeId = request.runtimeId.trim().toLowerCase();
   return createCanonicalResource(runtimeId, requireCanonicalAdapter(runtimeId), setPageUnloadFence);
+};
+
+const brainVaultOpeningRequest = (
+  material: WalletBrainVaultDerivedMaterial,
+): WalletCanonicalRuntimeOpeningRequest => ({
+  runtimeId: material.runtimeId,
+  name: material.name,
+  labelOverride: material.name,
+  seed: material.mnemonic24,
+  mnemonic12: material.mnemonic12,
+  devicePassphrase: material.devicePassphrase,
+  loginType: 'manual',
+  unlockDurationMs: 600_000,
+});
+
+export const prepareCanonicalWalletBrainVault = async (
+  input: WalletBrainVaultDerivationInput,
+  onProgress: (progress: WalletBrainVaultDerivationProgress) => void,
+): Promise<WalletBrainVaultPreparedView> => {
+  const revision = brainVaultMaterials.begin();
+  recoverySelection.discard();
+  const material = await brainVaultDerivation.derive(input, onProgress);
+  onProgress({
+    phase: 'recovery',
+    completed: material.shardCount,
+    total: material.shardCount,
+    workers: 0,
+    notice: '',
+  });
+  const discovery = await discoverCanonicalWalletRuntimeRecoveryView(
+    brainVaultOpeningRequest(material),
+  );
+  try {
+    return {
+      token: brainVaultMaterials.commit(revision, material),
+      runtimeId: material.runtimeId,
+      name: material.name,
+      factor: material.factor,
+      shardCount: material.shardCount,
+      discovery,
+    };
+  } catch (error) {
+    recoverySelection.discard(discovery.token);
+    throw error;
+  }
+};
+
+export const openCanonicalWalletBrainVault = async (
+  token: string,
+  runtimeId: string,
+  recoveryToken: string,
+  candidateId: string,
+  setPageUnloadFence: PageUnloadFenceSetter,
+): Promise<WalletEmbeddedRuntimeResource<RuntimeAdapter>> => {
+  const material = brainVaultMaterials.consume(token, runtimeId);
+  const request = brainVaultOpeningRequest(material);
+  return openCanonicalWalletRuntime(request, recoveryToken, candidateId, setPageUnloadFence);
 };

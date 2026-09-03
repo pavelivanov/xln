@@ -48,9 +48,9 @@ describe('React wallet testnet pilot', () => {
     expect(resetSource).toContain('publishBrowserHardResetRequest');
   });
 
-  test('tracks the first wallet capability as in progress', () => {
+  test('tracks the wallet shell and identity capability as implemented', () => {
     const capability = CAPABILITIES.find(({ id }) => id === 'wallet-shell-and-identity');
-    expect(capability?.status).toBe('in_progress');
+    expect(capability?.status).toBe('implemented');
     expect(capability?.routes).toContain('/testnet');
     expect(capability?.currentSources).toContain('frontend/apps/wallet/src/testnet-page.tsx');
   });

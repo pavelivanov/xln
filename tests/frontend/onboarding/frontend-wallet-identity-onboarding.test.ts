@@ -5,6 +5,7 @@ import {
   createWalletIdentityDraft,
   deriveWalletIdentityMnemonicAddress,
   validateWalletIdentityDraft,
+  walletBrainVaultDerivationErrorMessage,
   walletIdentityMnemonicErrorMessage,
   walletRuntimeOpeningErrorMessage,
 } from '../../../frontend/apps/wallet/src/identity-onboarding-model';
@@ -79,12 +80,25 @@ describe('React wallet identity onboarding', () => {
     )).toBe('Seed phrase checksum or words are invalid.');
 
     const source = readFileSync('frontend/apps/wallet/src/identity-onboarding.tsx', 'utf8');
+    const entry = readFileSync('frontend/apps/wallet/src/identity-entry-form.tsx', 'utf8');
     expect(source).toContain('await deriveWalletIdentityMnemonicAddress(draft.mnemonicInput)');
     expect(source).toContain('setSubmissionError(walletIdentityMnemonicErrorMessage(error))');
     expect(source.indexOf('await deriveWalletIdentityMnemonicAddress('))
       .toBeLessThan(source.indexOf('setReviewing(true)'));
-    expect(source).toContain('No wallet is created or persisted here.');
-    expect(source).not.toContain('Set up identity');
+    expect(entry).toContain('No wallet is created or persisted here.');
+    expect(entry).not.toContain('Set up identity');
+  });
+
+  test('maps Brain Vault worker and cancellation failures without exposing inputs', () => {
+    expect(walletBrainVaultDerivationErrorMessage(
+      new Error('WALLET_BRAINVAULT_DERIVATION_CANCELLED'),
+    )).toBe('Brain Vault derivation was cancelled.');
+    expect(walletBrainVaultDerivationErrorMessage(
+      new Error('BRAINVAULT_WORKER_SPEC_MISMATCH:old:new'),
+    )).toBe('The cached Brain Vault worker is outdated. Reload this page before deriving.');
+    expect(walletBrainVaultDerivationErrorMessage(
+      new Error('worker failed'),
+    )).toBe('Brain Vault derivation failed: worker failed');
   });
 
   test('keeps recovery-selection and canonical opening failures explicit', () => {

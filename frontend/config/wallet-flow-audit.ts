@@ -143,6 +143,28 @@ export const WALLET_FLOW_AUDIT = [
     ],
   },
   {
+    id: 'brainvault-runtime-opening',
+    pathname: '/app',
+    search: '?setup=1',
+    page: 'app',
+    view: 'identity',
+    sources: [
+      'frontend/apps/wallet/src/identity-onboarding.tsx',
+      'frontend/apps/wallet/src/identity-brainvault-progress.tsx',
+      'frontend/apps/wallet/src/wallet-embedded-runtime.ts',
+      'frontend/bridges/wallet-brainvault-browser-derivation.ts',
+      'frontend/bridges/wallet-brainvault-material-finalization.ts',
+      'frontend/bridges/wallet-canonical-vault-runtime.ts',
+      'frontend/packages/browser/src/wallet-brainvault-material-session.ts',
+      'frontend/src/lib/stores/vault/walletRuntimeOpeningAdapter.ts',
+    ],
+    tests: [
+      'tests/frontend/onboarding/frontend-wallet-brainvault-derivation.test.ts',
+      'tests/frontend/onboarding/wallet-brainvault-material-session.test.ts',
+      'frontend/tests/react-candidate/wallet.spec.ts',
+    ],
+  },
+  {
     id: 'preferences',
     pathname: '/app',
     search: '?settings=1',
