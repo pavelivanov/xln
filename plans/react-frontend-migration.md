@@ -2405,6 +2405,21 @@ and all 10 soundchecks, then reproduced only the shared Hardhat compiler-cache
 mutex, missing local `cargo`, and known `core/qa/report.ts` 3,001 / 3,000
 file-size environment/baseline stops.
 
+The canonical Svelte Runtime-creation flow now consumes a dedicated vault
+adapter instead of binding `vaultOperations` at the component boundary. The
+adapter is the single concrete bridge from the framework-neutral opening
+executor to existing Runtime lookup, unlock, creation, and persistence; the
+Svelte view retains recovery authorization, secret cleanup, navigation, and
+error publication. This is a nonvisual dependency extraction with no user-
+visible behavior change. React can dynamically load the same adapter next,
+but only after its recovery-discovery flow has authorized local unlock or
+fresh creation. The onboarding suite passes 177 / 177 with 707 expectations,
+the all-surface local gate covers 657 files with zero unsafe findings, and the
+authoritative frontend baseline remains exact at 1,261 pass / 14 fail / 1
+error with 7,181 expectations across 1,275 tests. Root evidence again passes
+26 / 26 BrainVault/runtime tests and all 10 soundchecks before the same shared
+Hardhat mutex, missing local `cargo`, and known 3,001 / 3,000 file-size stops.
+
 **Current checkpoint:** all retained routes have React application owners; two
 implementations, one browser route, and four typed gaps remain partial before
 cutover readiness.
@@ -2450,8 +2465,8 @@ any mismatch. Never compile on production.
 
 ## Current next actions
 
-1. Wire the React identity review through the shared Runtime-opening executor
-   and canonical vault adapter without duplicating recovery or persistence.
+1. Dynamically load the canonical vault adapter from React only after recovery
+   discovery authorizes local unlock or fresh Runtime creation.
 2. Owner to assign: two `network-timeline-source` failures
    (`NETWORK_TRAIL_FRAME_INVALID:1` in the JSON-safe-frame and trail
    round-trip tests) appeared with the in-flight `core/scenarios` runner
