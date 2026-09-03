@@ -1,12 +1,14 @@
 import type { WalletIdentityDraft, WalletIdentityDraftValidation } from './identity-onboarding-model';
 import { walletIdentityModeLabel } from './identity-onboarding-model';
 import type { WalletCanonicalRecoveryDiscoveryView } from '../../../packages/browser/src/wallet-runtime-opening';
+import type { WalletIdentityMode } from '../../../packages/browser/src/wallet-identity-entry';
 import './styles/identity-recovery.css';
 
 type IdentityReviewProps = Readonly<{
   address: string;
   draft: WalletIdentityDraft;
   onEdit: () => void;
+  onDeriveBrainVault: () => void;
   onVerifyMnemonic: () => void;
   validation: WalletIdentityDraftValidation;
 }>;
@@ -15,6 +17,7 @@ export function IdentityReview({
   address,
   draft,
   onEdit,
+  onDeriveBrainVault,
   onVerifyMnemonic,
   validation,
 }: IdentityReviewProps) {
@@ -36,11 +39,15 @@ export function IdentityReview({
           : 'Keep the seed offline and hidden from cameras, cloud backups, and other people.'}</span>
       </div>
       <div className="identity-review-actions">
-        {draft.mode === 'mnemonic' ? (
+        {draft.mode === 'brainvault' ? (
+          <button className="identity-primary-action" onClick={onDeriveBrainVault} type="button">
+            Derive Brain Vault
+          </button>
+        ) : (
           <button className="identity-primary-action" onClick={onVerifyMnemonic} type="button">
             Verify recovery
           </button>
-        ) : null}
+        )}
         <button className="identity-secondary-action" onClick={onEdit} type="button">
           Edit inputs
         </button>
@@ -51,6 +58,7 @@ export function IdentityReview({
 
 export function IdentityRecoveryVerified({
   address,
+  mode,
   openedRuntimeId,
   opening,
   openingError,
@@ -61,6 +69,7 @@ export function IdentityRecoveryVerified({
   onSelectRecoveryCandidate,
 }: Readonly<{
   address: string;
+  mode: WalletIdentityMode;
   openedRuntimeId: string;
   opening: boolean;
   openingError: string;
@@ -72,19 +81,22 @@ export function IdentityRecoveryVerified({
 }>) {
   const opened = openedRuntimeId !== '';
   const choosingRecovery = recoveryDiscovery !== null;
+  const brainVault = mode === 'brainvault';
   return (
     <section className="identity-review" aria-labelledby="identity-verified-title">
-      <p className="wallet-shell-eyebrow">{opened ? 'Runtime ready' : choosingRecovery ? 'Recovery found' : 'Recovery verified'}</p>
-      <h1 id="identity-verified-title">{opened ? 'Wallet opened' : choosingRecovery ? 'Choose a backup' : 'The same wallet returned'}</h1>
+      <p className="wallet-shell-eyebrow">{opened ? 'Runtime ready' : choosingRecovery ? 'Recovery found' : brainVault ? 'Derivation complete' : 'Recovery verified'}</p>
+      <h1 id="identity-verified-title">{opened ? 'Wallet opened' : choosingRecovery ? 'Choose a backup' : brainVault ? 'Brain Vault ready' : 'The same wallet returned'}</h1>
       <p>{opened
         ? 'The canonical vault persisted this identity and attached its local Runtime.'
         : choosingRecovery
           ? 'Fresh creation is blocked. Restore one of the encrypted backups found for this wallet.'
-        : 'The second seed phrase reproduced the first public address.'}</p>
+          : brainVault
+            ? 'The canonical worker derived this public address and recovery discovery found no existing backup.'
+            : 'The second seed phrase reproduced the first public address.'}</p>
       <dl className="identity-verified-facts">
-        <div><dt>Method</dt><dd>Mnemonic</dd></div>
+        <div><dt>Method</dt><dd>{walletIdentityModeLabel(mode)}</dd></div>
         <div><dt>Public address</dt><dd>{address}</dd></div>
-        <div><dt>Status</dt><dd>{opened ? 'Runtime persisted' : choosingRecovery ? 'Backup required' : 'Recovery match'}</dd></div>
+        <div><dt>Status</dt><dd>{opened ? 'Runtime persisted' : choosingRecovery ? 'Backup required' : brainVault ? 'Recovery checked' : 'Recovery match'}</dd></div>
       </dl>
       {recoveryDiscovery ? (
         <div className="identity-recovery-candidates" role="radiogroup" aria-label="Recovery backup versions">
@@ -110,12 +122,18 @@ export function IdentityRecoveryVerified({
         </div>
       ) : null}
       <div className="identity-verified-note">
-        <strong>{opened ? 'The verified phrase was released from the form.' : choosingRecovery ? 'The verified phrase remains only for this restore.' : 'Both seed entries were cleared.'}</strong>
+        <strong>{opened
+          ? brainVault ? 'Derived wallet material was released.' : 'The verified phrase was released from the form.'
+          : choosingRecovery
+            ? brainVault ? 'Derived wallet material remains outside React state.' : 'The verified phrase remains only for this restore.'
+            : brainVault ? 'Derived wallet material remains outside React state.' : 'Both seed entries were cleared.'}</strong>
         <span>{opened
           ? `Active Runtime ${openedRuntimeId}. Recovery discovery completed before opening.`
           : choosingRecovery
             ? 'Selecting a backup never authorizes fresh creation. Reset clears this recovery session.'
-          : 'The verified phrase remains only in this tab until you open the wallet or reset.'}</span>
+            : brainVault
+              ? 'Only the migration bridge can consume it, once, to create and open this wallet.'
+              : 'The verified phrase remains only in this tab until you open the wallet or reset.'}</span>
       </div>
       {openingError ? <p className="identity-opening-error" role="alert">{openingError}</p> : null}
       <div className="identity-review-actions">
@@ -125,11 +143,11 @@ export function IdentityRecoveryVerified({
           <button className="identity-primary-action" disabled={opening} onClick={onOpen} type="button">
             {opening
               ? choosingRecovery ? 'Restoring backup…' : 'Checking recovery…'
-              : choosingRecovery ? 'Restore selected backup' : 'Check recovery and open wallet'}
+              : choosingRecovery ? 'Restore selected backup' : brainVault ? 'Create and open wallet' : 'Check recovery and open wallet'}
           </button>
         )}
         <button className="identity-secondary-action" disabled={opening} onClick={onReset} type="button">
-          {openingError ? 'Re-enter seed' : 'Start over'}
+          {openingError ? brainVault ? 'Re-enter inputs' : 'Re-enter seed' : 'Start over'}
         </button>
       </div>
     </section>

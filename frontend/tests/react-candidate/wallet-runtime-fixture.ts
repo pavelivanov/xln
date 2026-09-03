@@ -247,6 +247,7 @@ server = Bun.serve<FixtureSocketData>({
           runtimeId: recoveryFixture.runtimeId,
           runtimeHeight: recoveryFixture.runtimeHeight,
           towerUrl: recoveryFixture.towerUrl,
+          brainVault: recoveryFixture.brainVault,
         },
       }, { headers: { 'access-control-allow-origin': '*' } });
     }
