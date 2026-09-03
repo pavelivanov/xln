@@ -44,7 +44,6 @@ describe('React wallet WP6 flow audit', () => {
   test('keeps every deferred boundary loud in its owning source', () => {
     expect(WALLET_FLOW_DEFERRALS.map(({ id }) => id)).toEqual([
       'wallet-creation-and-onboarding',
-      'full-recovery',
       'external-wallet-provider',
       'canonical-cutover',
     ]);
