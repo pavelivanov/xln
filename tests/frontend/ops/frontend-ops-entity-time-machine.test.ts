@@ -53,7 +53,11 @@ const historyBatch = (frame: RuntimeAdapterViewFrame): RuntimeAdapterHistoryFram
   unavailable: [],
 });
 
-const activityPage = (height: number, kind: 'all' | 'onchain' | 'offchain' = 'all') => ({
+const activityPage = (
+  height: number,
+  kind: 'all' | 'onchain' | 'offchain' = 'all',
+  types: string[] = [],
+) => ({
   ok: true as const,
   runtimeId: 'runtime-a',
   latestHeight: 18,
@@ -64,7 +68,7 @@ const activityPage = (height: number, kind: 'all' | 'onchain' | 'offchain' = 'al
   limit: 8,
   scanLimit: 160,
   nextBeforeHeight: null,
-  filters: { entityId: '0xaaaa', kind, beforeHeight: height, limit: 8, scanLimit: 160 },
+  filters: { entityId: '0xaaaa', kind, types, beforeHeight: height, limit: 8, scanLimit: 160 },
   events: [],
 });
 
@@ -100,7 +104,7 @@ describe('React Entity workspace Time Machine', () => {
       client: {
         readActivity: async (query) => {
           queries.push(query);
-          return activityPage(7, 'offchain');
+          return activityPage(7, 'offchain', ['j_event']);
         },
         readHistoryFrameBatch: async (query) => {
           queries.push(query);
@@ -108,6 +112,7 @@ describe('React Entity workspace Time Machine', () => {
         },
       },
       activityKind: 'offchain',
+      activityTypes: ['j_event'],
       entityId: '0xaaaa', latestHeight: 18, requestedHeight: 7, runtimeId: 'runtime-a',
     });
     expect(queries).toEqual([
@@ -115,10 +120,13 @@ describe('React Entity workspace Time Machine', () => {
         accountsLimit: 8, accountsPage: 0, booksLimit: 8, booksPage: 0,
         entityId: '0xaaaa', heights: [7],
       },
-      { beforeHeight: 7, entityId: '0xaaaa', kind: 'offchain', limit: 8, scanLimit: 160 },
+      {
+        beforeHeight: 7, entityId: '0xaaaa', kind: 'offchain', limit: 8,
+        scanLimit: 160, types: ['j_event'],
+      },
     ]);
     expect(projection.context).toMatchObject({ entityId: '0xaaaa', height: 7, status: 'selected' });
-    expect(projection.activity).toMatchObject({ kind: 'offchain', status: 'selected' });
+    expect(projection.activity).toMatchObject({ kind: 'offchain', status: 'selected', types: ['j_event'] });
     expect(projection.consensus).toMatchObject({ entityId: '0xaaaa', runtimeHeight: 7, status: 'selected' });
   });
 

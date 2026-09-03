@@ -5,6 +5,7 @@ import type {
 } from '@xln/core/api/public/runtime-module';
 import {
   buildEntityWorkspaceActivityQuery,
+  type EntityWorkspaceActivityFilterType,
   type EntityWorkspaceActivityKind,
 } from '../../../packages/runtime-client/src/entity-workspace-activity';
 import {
@@ -28,6 +29,7 @@ export type OpsEntityWorkspaceHistoryReader = Readonly<{
 export async function readOpsEntityWorkspaceHistory(input: Readonly<{
   activityBeforeHeight?: number;
   activityKind?: EntityWorkspaceActivityKind;
+  activityTypes?: readonly EntityWorkspaceActivityFilterType[];
   accountsPage: number;
   client: OpsEntityWorkspaceHistoryReader;
   entityId: string;
@@ -58,6 +60,7 @@ export async function readOpsEntityWorkspaceHistory(input: Readonly<{
     projection.context,
     input.activityBeforeHeight,
     input.activityKind,
+    input.activityTypes,
   );
   const activity = await input.client.readActivity(activityQuery);
   return projectOpsEntityWorkspaceActivityPage(
@@ -65,5 +68,6 @@ export async function readOpsEntityWorkspaceHistory(input: Readonly<{
     activity,
     activityQuery.beforeHeight,
     activityQuery.kind,
+    input.activityTypes,
   );
 }

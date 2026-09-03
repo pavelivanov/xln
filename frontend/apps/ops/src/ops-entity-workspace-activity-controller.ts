@@ -1,6 +1,8 @@
 import {
   requireEntityWorkspaceActivityKind,
+  requireEntityWorkspaceActivityFilterType,
   type EntityWorkspaceActivity,
+  type EntityWorkspaceActivityFilterType,
   type EntityWorkspaceActivityKind,
 } from '../../../packages/runtime-client/src/entity-workspace-activity';
 
@@ -13,15 +15,18 @@ type ActivityControllerDependencies = Readonly<{
 export class OpsEntityWorkspaceActivityController {
   private beforeHeight: number | null = null;
   private kind: EntityWorkspaceActivityKind = 'all';
+  private types: readonly EntityWorkspaceActivityFilterType[] = [];
 
   constructor(private readonly dependencies: ActivityControllerDependencies) {}
 
   readonly readBeforeHeight = (): number | null => this.beforeHeight;
   readonly readKind = (): EntityWorkspaceActivityKind => this.kind;
+  readonly readTypes = (): readonly EntityWorkspaceActivityFilterType[] => this.types;
 
   readonly reset = (): void => {
     this.beforeHeight = null;
     this.kind = 'all';
+    this.types = [];
   };
 
   readonly resetPage = (): void => {
@@ -54,6 +59,22 @@ export class OpsEntityWorkspaceActivityController {
     const requestedKind = requireEntityWorkspaceActivityKind(kind);
     if (requestedKind === this.kind) return;
     this.kind = requestedKind;
+    this.beforeHeight = null;
+    if (this.dependencies.isHistoryActive()) this.dependencies.refreshHistory();
+    else this.dependencies.refreshLive();
+  };
+
+  readonly toggleType = (
+    activity: EntityWorkspaceActivity,
+    type: EntityWorkspaceActivityFilterType,
+  ): void => {
+    if (activity.status !== 'selected') {
+      throw new Error('OPS_ENTITY_ACTIVITY_TYPE_CONTEXT_REQUIRED');
+    }
+    const requestedType = requireEntityWorkspaceActivityFilterType(type);
+    this.types = this.types.includes(requestedType)
+      ? this.types.filter((candidate) => candidate !== requestedType)
+      : [...this.types, requestedType];
     this.beforeHeight = null;
     if (this.dependencies.isHistoryActive()) this.dependencies.refreshHistory();
     else this.dependencies.refreshLive();
