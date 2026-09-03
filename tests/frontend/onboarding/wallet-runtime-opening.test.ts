@@ -146,6 +146,10 @@ describe('browser wallet Runtime opening', () => {
       'frontend/packages/browser/src/wallet-runtime-opening.ts',
       'utf8',
     );
+    const adapter = readFileSync(
+      'frontend/src/lib/stores/vault/walletRuntimeOpeningAdapter.ts',
+      'utf8',
+    );
     const view = readFileSync(
       'frontend/src/lib/components/Views/RuntimeCreation.svelte',
       'utf8',
@@ -158,9 +162,12 @@ describe('browser wallet Runtime opening', () => {
     expect(boundary).toContain('dependencies.runtimeExists(input.runtimeId)');
     expect(boundary).toContain('await dependencies.unlockRuntime(');
     expect(boundary).toContain('await dependencies.createRuntime(');
-    expect(view).toContain('await executeWalletRuntimeOpening({');
-    expect(view).toContain('vaultOperations.unlockRuntime(candidateId, candidateSeed, durationMs)');
-    expect(view).toContain('vaultOperations.createRuntime(label, candidateSeed, creationOptions)');
+    expect(adapter).toContain('executeWalletRuntimeOpening(input, {');
+    expect(adapter).toContain('vaultOperations.runtimeExists(runtimeId)');
+    expect(adapter).toContain('vaultOperations.unlockRuntime(runtimeId, seed, unlockDurationMs)');
+    expect(adapter).toContain('vaultOperations.createRuntime(label, seed, options)');
+    expect(view).toContain('await executeCanonicalWalletRuntimeOpening({');
+    expect(view).not.toContain('executeWalletRuntimeOpening({');
     expect(view).toContain('clearSensitiveWalletMaterial();');
     expect(view).not.toContain("openingPlan.action === 'unlock-local'");
   });
