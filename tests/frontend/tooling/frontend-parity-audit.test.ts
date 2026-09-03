@@ -79,7 +79,7 @@ describe('WP9 retained-route and capability parity audit', () => {
       routes: {
         total: 20,
         implementation: { complete: 18, partial: 2 },
-        browserEvidence: { covered: 18, partial: 2 },
+        browserEvidence: { covered: 19, partial: 1 },
       },
       capabilities: { total: 12, accounted: 12 },
     });

@@ -188,7 +188,10 @@ export const WALLET_FLOW_AUDIT = [
       'frontend/apps/wallet/src/wallet-payment-source.ts',
       'frontend/apps/wallet/src/wallet-payments.tsx',
     ],
-    tests: ['tests/frontend/payments/frontend-wallet-payments.test.ts'],
+    tests: [
+      'tests/frontend/payments/frontend-wallet-payments.test.ts',
+      'frontend/tests/react-candidate/wallet-transactions.spec.ts',
+    ],
   },
   {
     id: 'markets-and-activity',
@@ -201,7 +204,10 @@ export const WALLET_FLOW_AUDIT = [
       'frontend/apps/wallet/src/wallet-market-source.ts',
       'frontend/apps/wallet/src/wallet-markets.tsx',
     ],
-    tests: ['tests/frontend/markets/frontend-wallet-markets.test.ts'],
+    tests: [
+      'tests/frontend/markets/frontend-wallet-markets.test.ts',
+      'frontend/tests/react-candidate/wallet-transactions.spec.ts',
+    ],
   },
 ] as const satisfies readonly WalletFlowAuditEntry[];
 

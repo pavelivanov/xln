@@ -6,18 +6,11 @@ import {
   observeBrowserErrors,
   screenshotEvidence,
 } from './browser-evidence';
-import { installImportedRuntime, readWalletRuntimeFixture } from './wallet-runtime-test-helpers';
-
-const selectFixtureRuntime = async (page: Parameters<typeof readWalletRuntimeFixture>[0]) => {
-  const fixture = await readWalletRuntimeFixture(page);
-  await page.goto('/testnet', { waitUntil: 'domcontentloaded' });
-  await installImportedRuntime(page, fixture);
-  return fixture;
-};
+import { selectWalletFixtureRuntime } from './wallet-runtime-test-helpers';
 
 test('wallet portfolio renders a real committed bilateral Account', async ({ page }, testInfo) => {
   const errors = observeBrowserErrors(page);
-  const fixture = await selectFixtureRuntime(page);
+  const fixture = await selectWalletFixtureRuntime(page);
   const response = await page.goto('/app?portfolio=1', { waitUntil: 'domcontentloaded' });
   expect(response?.ok(), 'document response for populated portfolio').toBe(true);
 
@@ -38,7 +31,7 @@ test('wallet portfolio renders a real committed bilateral Account', async ({ pag
 
 test('wallet financial health renders committed Account and activity evidence', async ({ page }, testInfo) => {
   const errors = observeBrowserErrors(page);
-  const fixture = await selectFixtureRuntime(page);
+  const fixture = await selectWalletFixtureRuntime(page);
   const response = await page.goto('/app?health=1', { waitUntil: 'domcontentloaded' });
   expect(response?.ok(), 'document response for populated financial health').toBe(true);
 
