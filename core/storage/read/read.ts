@@ -88,11 +88,25 @@ import type {
 type StorageAccountDocPage = {
   items: StorageAccountDoc[];
   nextCursor: string | null;
+  prevCursor?: string | null;
+  firstCursor?: string | null;
+  lastCursor?: string | null;
+  pageIndex?: number;
+  pageCount?: number;
+  totalItems?: number;
+  limit?: number;
 };
 
 type StorageBookDocPage = {
   items: Array<{ pairId: string; book: BookState }>;
   nextCursor: string | null;
+  prevCursor?: string | null;
+  firstCursor?: string | null;
+  lastCursor?: string | null;
+  pageIndex?: number;
+  pageCount?: number;
+  totalItems?: number;
+  limit?: number;
 };
 
 export type StorageEntityViewPage = {

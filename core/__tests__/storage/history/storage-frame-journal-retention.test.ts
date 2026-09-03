@@ -401,9 +401,23 @@ describe('storage frame journal retention', () => {
     expect(restored?.profile.name).toBe(namesByHeight.get(replayHeight));
     const historicalView = await loadEntityViewPageFromStorageDb(env, entityId, replayHeight, {
       accountsLimit: 1,
+      accountsPage: 0,
       booksLimit: 1,
+      booksPage: 0,
     });
     expect(historicalView?.core.profile.name).toBe(namesByHeight.get(replayHeight));
+    expect(historicalView?.accounts).toMatchObject({
+      limit: 1,
+      pageCount: 0,
+      pageIndex: 0,
+      totalItems: 0,
+    });
+    expect(historicalView?.books).toMatchObject({
+      limit: 1,
+      pageCount: 0,
+      pageIndex: 0,
+      totalItems: 0,
+    });
 
     await closeRuntimeDb(env);
     await closeInfraDb(env);

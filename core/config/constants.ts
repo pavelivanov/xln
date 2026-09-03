@@ -297,16 +297,6 @@ export const PERFORMANCE = {
 } as const;
 
 // ═══════════════════════════════════════════════════════════════
-// TIME MACHINE
-// ═══════════════════════════════════════════════════════════════
-
-export const TIME_MACHINE = {
-  HASH_HEIGHT_PARAM: 'tmHeight',
-  HASH_ENTITY_PARAM: 'tmEntity',
-  HASH_RUNTIME_PARAM: 'tmRuntime',
-} as const;
-
-// ═══════════════════════════════════════════════════════════════
 // TESTNET OVERRIDES (Uncomment for faster testing)
 // ═══════════════════════════════════════════════════════════════
 
