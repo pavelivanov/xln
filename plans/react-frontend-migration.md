@@ -3458,12 +3458,55 @@ production function sizing passes 1,047 files, diff hygiene is clean, and
 file-size checking reaches only the existing out-of-scope `core/qa/report.ts`
 3001/3000 violation.
 
+The following Consensus evidence slice projects the exact committed Entity
+frame coordinates already present in the bounded remote Runtime frame: Entity
+height, deterministic UTC timestamp, certified frame head, and last finalized
+Jurisdiction height. Non-genesis Entity state must expose the certified head
+that parents its next frame; malformed or missing lineage now fails at the
+React adapter boundary. Validator-local proposals, locks, votes, and
+certificates remain deliberately absent.
+
+Focused projection and wiring coverage passes 14 / 14 tests with 118
+expectations; the wider focused Entity workspace batch passes 82 / 82 with 427
+expectations after two historical-frame fixtures were brought up to the same
+committed-head invariant. The all-surface React-local gate scans 697 files with
+zero unsafe findings. All four React production surfaces build; site/docs/
+wallet/ops transform 401 / 35 / 1,860 / 1,644 modules, and the ops workspace
+CSS/view/Runtime chunks are 40.72 / 44.30 / 51.21 kB. The canonical frontend
+check reports zero errors/warnings while transforming 4,681 SSR plus 6,432
+client modules. The complete ops candidate matrix passes 30 / 30 across the
+required viewports.
+
+The isolated real-H1 flow passes in 33.1 seconds (34.4 seconds total) with
+candidate `2aa9d0f01955`. It verifies exact Entity height, finalized
+Jurisdiction height, UTC timestamp plus ISO instant, and a nonempty certified
+frame head while completing the existing Account, Activity, and Time Machine
+flow. Strict browser health emits no console error. Dedicated mobile 390x844,
+laptop 1366x900, and wide 1920x1080 Consensus screenshots were inspected with
+readable evidence, stable two-column alignment, and no clipping or horizontal
+overflow.
+
+The 224-file frontend suite reports 1,345 passes, the unchanged 16-failure plus
+one-error repository baseline, and 7,744 expectations across 1,361 tests; no
+slice-owned test fails.
+
+Root evidence passes 26 / 26 deterministic tests with 100,156 expectations,
+contract artifact synchronization and immutable metadata parity, then all ten
+fast soundcheck gates. The repository check stops at the environment-owned
+`rscore:fmt` step because `cargo` is not installed on this host (`command not
+found`), not on a slice-owned failure. Frozen core remains at
+`0x4eccf4492e5d085b24162f86d327e003c36b7e2a90ad527db1653fde391946a7`,
+production function sizing passes 1,047 files, diff hygiene is clean, and
+file-size checking reaches only the existing out-of-scope `core/qa/report.ts`
+3001/3000 violation.
+
 **Current checkpoint:** all retained routes have React application owners;
 wallet parity is complete. `/embed` is the sole partial implementation/browser
 route, and its authorized Entity workspace is the sole remaining WP9
 implementation gap before WP10; display-theme, exact Time Machine, and shared
 xln-guide preference, exact Account commitment evidence with deterministic UTC
-timestamps and exact committed Account protocol context, persisted Activity
+timestamps and exact committed Account protocol context, exact committed Entity
+frame context in Consensus, persisted Activity
 with strict bidirectional pagination, kind filters, nine event-type filters,
 debounced search, atomic filter clearing, explicit Activity refresh,
 compact plus legacy Activity page sizing, deterministic UTC Activity timestamps,
