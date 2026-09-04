@@ -30,7 +30,9 @@ const event = (overrides: Record<string, unknown> = {}) => ({
   id: 'runtime-a:44:0', runtimeId: 'runtime-a', height: 44, timestamp: 1_700_000_044,
   kind: 'offchain', type: 'payment', source: 'runtime_input', direction: 'out',
   title: 'Payment started', subtitle: 'Account 0xbbbb', status: 'started',
-  entityId: '0xaaaa', counterpartyId: '0xbbbb', rawType: 'directPayment',
+  entityId: '0xaaaa', counterpartyId: '0xbbbb', amount: '1250000', tokenId: 1,
+  quoteAmount: '2500000', quoteTokenId: 2, orderId: 'order-44', hash: '0xhash44',
+  rawType: 'directPayment',
   ...overrides,
 });
 
@@ -115,16 +117,22 @@ describe('React Entity persisted activity ledger', () => {
       fromHeight: 42, toHeight: 44, scannedFrames: 3, nextBeforeHeight: 41,
       events: [
         {
+          amount: '1250000',
           id: 'runtime-a:44:1', height: 44, timestamp: 1_700_000_044,
+          hash: '0xhash44',
           kind: 'offchain', type: 'payment', source: 'runtime_input', direction: 'out',
+          orderId: 'order-44', quoteAmount: '2500000', quoteTokenId: 2,
           title: 'Payment started', subtitle: 'Account 0xbbbb', status: 'started',
-          counterpartyId: '0xbbbb', rawType: 'directPayment',
+          counterpartyId: '0xbbbb', tokenId: 1, rawType: 'directPayment',
         },
         {
+          amount: '1250000',
           id: 'runtime-a:43:0', height: 43, timestamp: 1_700_000_043,
+          hash: '0xhash44',
           kind: 'offchain', type: 'payment', source: 'runtime_input', direction: 'in',
+          orderId: 'order-44', quoteAmount: '2500000', quoteTokenId: 2,
           title: 'Payment started', subtitle: 'Account 0xbbbb', status: 'started',
-          counterpartyId: '0xbbbb', rawType: 'directPayment',
+          counterpartyId: '0xbbbb', tokenId: 1, rawType: 'directPayment',
         },
       ],
     });
@@ -296,6 +304,18 @@ describe('React Entity persisted activity ledger', () => {
     expect(() => projectEntityWorkspaceActivity({ context, page: page({
       events: [event({ timestamp: Number.MAX_SAFE_INTEGER }), event({ id: 'runtime-a:43:0', height: 43 })],
     }) })).toThrow('ENTITY_WORKSPACE_ACTIVITY_EVENT_TIMESTAMP_INVALID');
+    expect(() => projectEntityWorkspaceActivity({ context, page: page({
+      events: [event({ amount: '1.25' }), event({ id: 'runtime-a:43:0', height: 43 })],
+    }) })).toThrow('ENTITY_WORKSPACE_ACTIVITY_EVENT_AMOUNT_INVALID');
+    expect(() => projectEntityWorkspaceActivity({ context, page: page({
+      events: [event({ tokenId: 1.5 }), event({ id: 'runtime-a:43:0', height: 43 })],
+    }) })).toThrow('ENTITY_WORKSPACE_ACTIVITY_EVENT_TOKEN_INVALID');
+    expect(() => projectEntityWorkspaceActivity({ context, page: page({
+      events: [event({ quoteAmount: 'unknown' }), event({ id: 'runtime-a:43:0', height: 43 })],
+    }) })).toThrow('ENTITY_WORKSPACE_ACTIVITY_EVENT_QUOTE_AMOUNT_INVALID');
+    expect(() => projectEntityWorkspaceActivity({ context, page: page({
+      events: [event({ quoteTokenId: -1 }), event({ id: 'runtime-a:43:0', height: 43 })],
+    }) })).toThrow('ENTITY_WORKSPACE_ACTIVITY_EVENT_QUOTE_TOKEN_INVALID');
     expect(() => projectEntityWorkspaceActivity({ context, page: page({
       events: [event(), event()],
     }) })).toThrow('ENTITY_WORKSPACE_ACTIVITY_EVENT_ID_DUPLICATE');
@@ -547,8 +567,9 @@ describe('React Entity persisted activity ledger', () => {
   });
 
   test('keeps the visible ledger read-only and attached to live plus historical reads', async () => {
-    const [panel, source, history] = await Promise.all([
+    const [panel, row, source, history] = await Promise.all([
       Bun.file('frontend/packages/ui/src/entity-workspace-activity-panel.tsx').text(),
+      Bun.file('frontend/packages/ui/src/entity-workspace-activity-row.tsx').text(),
       Bun.file('frontend/apps/ops/src/ops-entity-workspace-source.ts').text(),
       Bun.file('frontend/apps/ops/src/ops-entity-workspace-history.ts').text(),
     ]);
@@ -561,13 +582,16 @@ describe('React Entity persisted activity ledger', () => {
     expect(panel).toContain('data-testid="entity-activity-clear-filters"');
     expect(panel).toContain('data-testid="entity-activity-refresh"');
     expect(panel).toContain('data-testid="entity-activity-page-size"');
-    expect(panel).toContain('data-testid="entity-activity-timestamp"');
+    expect(row).toContain('data-testid="entity-activity-timestamp"');
+    expect(row).toContain('data-testid="entity-activity-amount"');
+    expect(row).toContain('data-testid="entity-activity-order"');
+    expect(row).toContain('data-testid="entity-activity-hash"');
     expect(panel).toContain('data-testid="entity-activity-mode-timeframe"');
     expect(panel).toContain('data-testid="entity-activity-mode-infinite"');
     expect(panel).toContain('data-testid="entity-activity-load-older"');
     expect(panel).toContain('data-testid="entity-activity-loaded-pages"');
     expect(panel).toContain('data-testid="entity-activity-apply-timeframe"');
-    expect(panel).toContain('title={`Runtime timestamp ${timestamp}`}');
+    expect(row).toContain('title={`Runtime timestamp ${timestamp}`}');
     expect(panel).toContain('data-testid={`entity-activity-kind-${kind}`}');
     expect(panel).toContain('data-testid={`entity-activity-type-${type}`}');
     expect(source).toContain('client.readActivity(activityQuery)');
@@ -584,6 +608,6 @@ describe('React Entity persisted activity ledger', () => {
     expect(source).toContain('readonly toggleActivityType');
     expect(history).toContain('input.client.readActivity(activityQuery)');
     expect(history).toContain('input.activity');
-    expect([panel, source, history].join('\n')).not.toContain('.send(');
+    expect([panel, row, source, history].join('\n')).not.toContain('.send(');
   });
 });
