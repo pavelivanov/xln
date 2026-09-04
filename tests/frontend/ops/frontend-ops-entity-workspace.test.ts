@@ -47,6 +47,9 @@ describe('React Entity workspace shell', () => {
     expect(shell).toContain('hubPolicy={hubPolicy}');
     expect(shell).toContain('EntityWorkspaceReservesPanel');
     expect(shell).toContain("settingsSubview === 'wallet' || settingsSubview === 'entity'");
+    expect(shell).toContain("readState.status === 'ready' || readState.status === 'loading'");
+    expect(shell).toContain('Profile updates use the selected Runtime owner lane');
+    expect(shell).not.toContain('Profile edits and all Settings commands remain');
     expect(shell).toContain("settingsSubview === 'display'");
     expect(page).toContain("route.settingsSubview ?? 'wallet'");
     expect(accounts).toContain('Exact committed frame evidence');
@@ -65,8 +68,9 @@ describe('React Entity workspace shell', () => {
     expect(profile).toContain('settings-hub-policy');
     expect(profile).toContain('settings-runtime-summary');
     expect(profile).toContain('projectEntityWorkspaceSettingsSummary');
-    expect(profile).toContain('Profile edits stay on the canonical workspace');
-    expect(profile).not.toContain('onSave');
+    expect(profile).toContain('EntityWorkspaceProfileEditor');
+    expect(profile).toContain('Owner command');
+    expect(profile).toContain('onSave={onSaveProfile}');
     expect(profile).not.toContain('runtimeController');
     expect(reserves).toContain('Exact Entity-state amounts');
     expect(reserves).toContain('raw units');

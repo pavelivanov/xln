@@ -70,7 +70,7 @@ test('entity settings workspace is a projection command surface, not the retired
   expect(tabs).toContain('EntitySettingsProjectionPanel.svelte');
   expect(tabs).toContain('<EntitySettingsProjectionPanel');
   expect(tabs).toContain('saveSettingsProjectionProfile');
-  expect(tabs).toMatch(/type: ["']profile-update["'] as const/);
+  expect(tabs).toContain('buildEntityWorkspaceProfileUpdateInput');
   expect(tabs).toContain('importJMachineViaRuntime');
   expect(tabs).toContain('importSettingsJMachine');
   expect(tabs).not.toContain("Settings/EntitySettingsPanel");

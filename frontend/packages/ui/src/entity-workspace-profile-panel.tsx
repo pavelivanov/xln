@@ -5,8 +5,10 @@ import type { EntityWorkspaceReserves } from '../../runtime-client/src/entity-wo
 import {
   projectEntityWorkspaceSettingsSummary,
 } from '../../runtime-client/src/entity-workspace-settings-summary';
+import type { EntityWorkspaceProfileDraft } from '../../runtime-client/src/entity-workspace-profile-update';
 import type { EntityWorkspaceTimeMachineState } from '../../runtime-client/src/entity-workspace-time-machine';
 import { formatAddress } from './entity-workspace-display';
+import { EntityWorkspaceProfileEditor } from './entity-workspace-profile-editor';
 import './entity-workspace-profile-panel.css';
 
 type EntityWorkspaceProfilePanelProps = Readonly<{
@@ -15,6 +17,7 @@ type EntityWorkspaceProfilePanelProps = Readonly<{
   profile: EntityWorkspaceProfile;
   reserves: EntityWorkspaceReserves;
   timeMachine: EntityWorkspaceTimeMachineState;
+  onSaveProfile: (draft: EntityWorkspaceProfileDraft) => Promise<void>;
 }>;
 
 const profileInitials = (name: string): string => name
@@ -105,8 +108,13 @@ function HubPolicyFields({ policy }: Readonly<{ policy: EntityWorkspaceHubPolicy
   );
 }
 
-export function EntityWorkspaceProfilePanel({ context, hubPolicy, profile, reserves, timeMachine }: EntityWorkspaceProfilePanelProps) {
+export function EntityWorkspaceProfilePanel({ context, hubPolicy, onSaveProfile, profile, reserves, timeMachine }: EntityWorkspaceProfilePanelProps) {
   if (profile.status !== 'selected') return null;
+  const disabledReason = timeMachine.mode === 'history'
+    ? 'Return to live mode before editing the Entity profile.'
+    : context.signerId
+      ? null
+      : 'The attached Entity signer is not exposed by this Runtime projection.';
   return (
     <section className="entity-workspace-profile-panel" data-testid="settings-profile-projection">
       <ProfileHeader profile={profile} />
@@ -114,10 +122,16 @@ export function EntityWorkspaceProfilePanel({ context, hubPolicy, profile, reser
         <SettingsSummary context={context} profile={profile} reserves={reserves} timeMachine={timeMachine} />
         <ProfileFields profile={profile} />
         <HubPolicyFields policy={hubPolicy} />
+        <EntityWorkspaceProfileEditor
+          disabledReason={disabledReason}
+          key={profile.entityId}
+          onSave={onSaveProfile}
+          profile={profile}
+        />
       </div>
       <footer>
-        <span>Read only</span>
-        <strong>Profile edits stay on the canonical workspace</strong>
+        <span>Owner command</span>
+        <strong>Profile updates use the selected Runtime lane</strong>
       </footer>
     </section>
   );

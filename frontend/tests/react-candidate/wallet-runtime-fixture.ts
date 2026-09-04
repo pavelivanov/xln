@@ -20,7 +20,7 @@ if (!Number.isSafeInteger(port) || port < 1 || port > 65_535) {
 }
 
 const databaseRoot = `/tmp/xln-react-wallet-address-${port}`;
-const runtimeSeed = `xln-react-wallet-address:${port}`;
+const runtimeSeed = 'test test test test test test test test test test test junk';
 const authSeed = `xln-react-wallet-address-auth:${port}:minimum-32-bytes`;
 process.env['XLN_DB_PATH'] = databaseRoot;
 process.env['XLN_DISABLE_RUNTIME_RESTORE'] = '1';
@@ -251,6 +251,7 @@ server = Bun.serve<FixtureSocketData>({
         entityId,
         counterpartyEntityId,
         height: env.state.height,
+        walletSeed: runtimeSeed,
         wsUrl: `ws://127.0.0.1:${server.port}/rpc`,
         token,
         recovery: {

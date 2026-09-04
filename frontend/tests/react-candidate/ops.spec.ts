@@ -7,6 +7,10 @@ import {
   observeBrowserErrors,
   screenshotEvidence,
 } from './browser-evidence';
+import {
+  installImportedRuntime,
+  readWalletRuntimeFixture,
+} from './wallet-runtime-test-helpers';
 
 test('ops candidate renders without browser errors', async ({ page }, testInfo) => {
   const errors = observeBrowserErrors(page);
@@ -78,6 +82,47 @@ test('entity workspace tabs follow canonical hash routes', async ({ page }, test
   await expect(page.getByTestId('entity-workspace-shell')).toHaveAttribute('data-active-tab', 'accounts');
   await expectPageContained(page);
   await screenshotEvidence(page, testInfo, 'ops-entity-workspace-accounts');
+  expectNoBrowserErrors(errors);
+});
+
+test('profile owner command resolves only after the isolated Runtime commits it', async ({ page }, testInfo) => {
+  test.setTimeout(90_000);
+  const errors = observeBrowserErrors(page);
+  const fixture = await readWalletRuntimeFixture(page);
+  await page.goto('/embed', { waitUntil: 'domcontentloaded' });
+  await installImportedRuntime(page, fixture);
+  const response = await page.goto('/__app/ops/entity-workspace#settings', { waitUntil: 'domcontentloaded' });
+  expect(response?.ok(), 'document response for Entity workspace').toBe(true);
+
+  const editor = page.getByTestId('settings-profile-editor');
+  const nameInput = page.getByTestId('settings-profile-name-input');
+  const save = page.getByTestId('settings-profile-save');
+  const nextName = `React owner ${testInfo.project.name}`;
+  await expect(editor).toBeVisible({ timeout: 30_000 });
+  await page.evaluate(async ({ runtimeId, walletSeed }) => {
+    const ownerModulePath = '/__app/ops/src/ops-entity-workspace-owner.ts';
+    const owner = await import(/* @vite-ignore */ ownerModulePath) as Readonly<{
+      unlockOpsEntityWorkspaceOwner: (id: string, seed: string) => Promise<void>;
+    }>;
+    await owner.unlockOpsEntityWorkspaceOwner(runtimeId, walletSeed);
+  }, { runtimeId: fixture.runtimeId, walletSeed: fixture.walletSeed });
+  await expect(nameInput).toBeEnabled();
+  await expect(save).toBeDisabled();
+  await nameInput.fill(nextName);
+  await expect(save).toBeEnabled();
+  await save.click();
+  await expect(page.getByTestId('settings-profile-status')).toHaveText(
+    'Profile committed to the selected Entity.',
+    { timeout: 30_000 },
+  );
+  await expect(page.getByTestId('settings-profile-name')).toHaveText(nextName);
+  await expect(nameInput).toHaveValue(nextName);
+  await expect(save).toBeDisabled();
+  await expect(page.getByText(
+    'Profile updates use the selected Runtime owner lane; remaining Settings commands stay on the canonical workspace.',
+  )).toBeVisible();
+  await expectPageContained(page);
+  await screenshotEvidence(page, testInfo, 'ops-entity-profile-committed');
   expectNoBrowserErrors(errors);
 });
 
