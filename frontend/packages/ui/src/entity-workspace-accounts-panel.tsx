@@ -48,6 +48,21 @@ export function EntityWorkspaceAccountsPanel({
                   <div><dt>J height</dt><dd data-testid="account-commitment-j-height">{account.jurisdictionHeight}</dd></div>
                   <div className="account-commitment-timestamp"><dt>Timestamp</dt><dd><AccountCommitmentTimestamp timestamp={account.frameTimestamp} /></dd></div>
                   <div><dt>Frame txs</dt><dd>{account.transactionCount}</dd></div>
+                  <div><dt>Chain</dt><dd data-testid="account-protocol-chain">{account.chainId}</dd></div>
+                  <div><dt>J finalized</dt><dd data-testid="account-protocol-finalized-j-height">{account.lastFinalizedJurisdictionHeight}</dd></div>
+                  <div><dt>J nonce</dt><dd data-testid="account-protocol-j-nonce">{account.jurisdictionNonce}</dd></div>
+                  <div className="account-commitment-wide">
+                    <dt>Depository</dt>
+                    <dd data-testid="account-protocol-depository" title={account.depositoryAddress}>{formatAddress(account.depositoryAddress)}</dd>
+                  </div>
+                  <div className="account-commitment-wide">
+                    <dt>Response windows</dt>
+                    <dd
+                      data-left-seconds={account.leftResponseSeconds}
+                      data-right-seconds={account.rightResponseSeconds}
+                      data-testid="account-protocol-response-windows"
+                    >L {account.leftResponseSeconds}s · R {account.rightResponseSeconds}s</dd>
+                  </div>
                   <div className="account-commitment-wide">
                     <dt>Account state root</dt>
                     <dd data-testid="account-commitment-root" title={account.accountStateRoot}>{formatAddress(account.accountStateRoot)}</dd>
