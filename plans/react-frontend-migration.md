@@ -3576,12 +3576,54 @@ contracts. All ten soundchecks pass before the established missing-`cargo`
 production function sizing passes 1,047 files, and file-size checking reaches
 only the known out-of-scope `core/qa/report.ts` 3001/3000 violation.
 
+Post-merge authority-path review at `faad579c5` found a remaining production
+gap in that profile slice: `unlockOpsEntityWorkspaceOwner` is exported by the
+ops owner adapter but its only caller is the candidate browser test, which
+imports the module inside `page.evaluate`. No ops user interaction installs
+the matching owner keys. The 33-case matrix proves real command submission
+and committed projection **after test-driven unlock**, not an end-to-end
+user-accessible unlock-and-save flow. The `/embed` route therefore remains
+partial, and the profile command must not be described as complete parity.
+
+Canonical `vaultOperations.unlockRuntime` performs matching-wallet validation,
+protected-secret installation, expiry management, Runtime selection, and
+remote command-intent resumption. A new form calling only the keyring would
+omit that canonical lifecycle. The next step is to make the existing canonical
+unlock flow callable from ops without changing its key derivation, protection,
+expiry, or persistence behavior. Any required custody-adapter refactoring is
+outside the frontend-only authorization and needs the owner's explicit scope
+decision; do not invent a separate keyring-only login. No product source was
+changed during this review.
+
+The follow-up read-only boundary check rules out simply importing the current
+wallet bridge into ops: `openCanonicalWalletRuntime` requires an embedded
+adapter, while `vaultOperations.initialize` restores vault Runtime environments
+and may activate the selected Runtime pipeline. Ops currently owns a separate
+remote read connection and must not initialize, replace, or stop the user's
+live durable Runtime to obtain command authority. The adapter's
+`ensureOwnerCommandLane` also reuses a previously authenticated owner lane;
+merely clearing keyring memory is not proof that subsequent UI submissions are
+blocked. The proposed extraction must therefore preserve canonical vault
+identity validation, protection/expiry, and lock behavior while keeping the
+selected remote Runtime unchanged. Acceptance must exercise visible unlock,
+wrong-wallet rejection, explicit lock/expiry, and committed save without
+module-import key injection. This is a lifecycle/custody integration decision,
+not a missing GitHub permission or a reason to alter protocol authentication.
+
+The documentation correction passes the focused parity, capability, and
+profile-command boundary batch: 16 tests, 404 expectations. Its mandatory root
+check passes 26 tests / 100,156 expectations, compiles 28 Solidity files,
+publishes 92 TypeChain files without a tracked artifact diff, confirms four
+immutable metadata checks, and passes all ten soundchecks before the existing
+missing-`cargo` stop. No browser or product behavior changed in this correction.
+
 **Current checkpoint:** all retained routes have React application owners;
 wallet parity is complete. `/embed` is the sole partial implementation/browser
 route, and remaining Account, Ownership, and Settings command parity is the
-sole WP9 implementation gap before WP10. Public Entity-profile updates now use
+sole WP9 implementation gap before WP10. Public Entity-profile submission uses
 the authenticated selected-Runtime owner lane and exact committed-frame
-observation; display-theme, exact Time Machine, and shared
+observation, but user-accessible canonical owner unlock remains unported;
+display-theme, exact Time Machine, and shared
 xln-guide preference, exact Account commitment evidence with deterministic UTC
 timestamps and exact committed Account protocol context, exact committed Entity
 frame context plus deterministic committed Account-head timestamps in
@@ -3633,8 +3675,12 @@ any mismatch. Never compile on production.
 
 ## Current next actions
 
-1. Continue the authorized Entity workspace subprogram behind the internal
-   candidate route while `/embed` remains canonical.
+1. Resolve the canonical owner-unlock adapter scope before claiming complete
+   profile-command parity: ops currently has no user-facing caller, and its
+   passing command test unlocks the keyring directly. Preserve the existing
+   vault protection/expiry lifecycle; custody-adapter changes need explicit
+   owner authorization. Continue behind the internal candidate route while
+   `/embed` remains canonical.
 2. Owner to assign: two `network-timeline-source` failures
    (`NETWORK_TRAIL_FRAME_INVALID:1` in the JSON-safe-frame and trail
    round-trip tests) appeared with the in-flight `core/scenarios` runner
