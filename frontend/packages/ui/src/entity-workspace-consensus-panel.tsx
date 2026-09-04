@@ -7,8 +7,16 @@ type SelectedEvidence = Extract<
   Readonly<{ status: 'selected' }>
 >;
 
+function CommittedTimestamp({ timestamp, testId }: Readonly<{ timestamp: number; testId: string }>) {
+  const formatted = formatEntityWorkspaceTimestamp(timestamp);
+  return (
+    <time data-testid={testId} dateTime={formatted.dateTime} title={`Runtime timestamp ${timestamp}`}>
+      {formatted.label}
+    </time>
+  );
+}
+
 function ConsensusSummary({ evidence }: Readonly<{ evidence: SelectedEvidence }>) {
-  const timestamp = formatEntityWorkspaceTimestamp(evidence.entityTimestamp);
   return (
     <dl className="entity-workspace-consensus-summary">
       <div><dt>Runtime height</dt><dd data-testid="consensus-runtime-height">R{evidence.runtimeHeight}</dd></div>
@@ -19,7 +27,7 @@ function ConsensusSummary({ evidence }: Readonly<{ evidence: SelectedEvidence }>
       <div><dt>Accounts</dt><dd data-testid="consensus-account-count">{evidence.totalAccounts}</dd></div>
       <div className="consensus-summary-wide">
         <dt>Entity timestamp</dt>
-        <dd><time data-testid="consensus-entity-timestamp" dateTime={timestamp.dateTime} title={`Runtime timestamp ${evidence.entityTimestamp}`}>{timestamp.label}</time></dd>
+        <dd><CommittedTimestamp timestamp={evidence.entityTimestamp} testId="consensus-entity-timestamp" /></dd>
       </div>
       <div className="consensus-summary-wide">
         <dt>Entity frame head</dt>
@@ -61,6 +69,9 @@ function AccountHeads({ evidence }: Readonly<{ evidence: SelectedEvidence }>) {
                 <code title={account.counterpartyId}>{formatAddress(account.counterpartyId)}</code>
                 <span>A{account.frameHeight}</span>
                 <code title={account.stateHash}>{formatAddress(account.stateHash)}</code>
+                <span className="consensus-account-head-timestamp">
+                  <CommittedTimestamp timestamp={account.frameTimestamp} testId="consensus-account-head-timestamp" />
+                </span>
               </li>
             ))}
           </ol>}
