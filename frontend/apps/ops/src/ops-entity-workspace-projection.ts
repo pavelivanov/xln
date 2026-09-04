@@ -86,7 +86,7 @@ export const projectOpsEntityWorkspaceFrame = (
   return {
     activity: emptyEntityWorkspaceActivity(),
     accounts,
-    consensus: projectEntityWorkspaceConsensusEvidence({ accounts, context, ownership }),
+    consensus: projectEntityWorkspaceConsensusEvidence({ accounts, context, frame, ownership }),
     context,
     hubPolicy: projectEntityWorkspaceHubPolicy({ context, frame }),
     ownership,
