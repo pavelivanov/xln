@@ -4,6 +4,11 @@ import type {
   EntityWorkspaceActivity,
   EntityWorkspaceActivityFilterType,
   EntityWorkspaceActivityKind,
+  EntityWorkspaceActivityPageSize,
+} from '../../runtime-client/src/entity-workspace-activity';
+import {
+  ENTITY_WORKSPACE_ACTIVITY_PAGE_SIZES,
+  requireEntityWorkspaceActivityPageSize,
 } from '../../runtime-client/src/entity-workspace-activity';
 import { formatAddress } from './entity-workspace-display';
 import './entity-workspace-activity-panel.css';
@@ -15,6 +20,7 @@ type EntityWorkspaceActivityPanelProps = Readonly<{
   onSelectBeforeHeight: (beforeHeight: number | null) => void;
   onSelectKind: (kind: EntityWorkspaceActivityKind) => void;
   onSelectNewerPage: () => void;
+  onSelectPageSize: (pageSize: EntityWorkspaceActivityPageSize) => void;
   onSelectSearch: (search: string) => void;
   onToggleType: (type: EntityWorkspaceActivityFilterType) => void;
 }>;
@@ -46,7 +52,7 @@ const ACTIVITY_TYPE_OPTIONS = [
 const directionLabel = (direction: 'in' | 'out' | 'neutral'): string =>
   direction === 'in' ? 'Inbound' : direction === 'out' ? 'Outbound' : 'Observed';
 
-export function EntityWorkspaceActivityPanel({ activity, onClearFilters, onRefresh, onSelectBeforeHeight, onSelectKind, onSelectNewerPage, onSelectSearch, onToggleType }: EntityWorkspaceActivityPanelProps) {
+export function EntityWorkspaceActivityPanel({ activity, onClearFilters, onRefresh, onSelectBeforeHeight, onSelectKind, onSelectNewerPage, onSelectPageSize, onSelectSearch, onToggleType }: EntityWorkspaceActivityPanelProps) {
   const selectedQuery = activity.status === 'selected' ? activity.query : '';
   const selectedEntityId = activity.status === 'selected' ? activity.entityId : '';
   const [draftQuery, setDraftQuery] = useState(selectedQuery);
@@ -85,16 +91,32 @@ export function EntityWorkspaceActivityPanel({ activity, onClearFilters, onRefre
           >{label}</button>
         ))}
       </nav>
-      <label className="entity-workspace-activity-search">
-        <span>Search activity</span>
-        <input
-          data-testid="entity-activity-search"
-          onChange={(event) => setDraftQuery(event.currentTarget.value)}
-          placeholder="Title, order, or counterparty"
-          type="search"
-          value={draftQuery}
-        />
-      </label>
+      <div className="entity-workspace-activity-controls">
+        <label className="entity-workspace-activity-search">
+          <span>Search activity</span>
+          <input
+            data-testid="entity-activity-search"
+            onChange={(event) => setDraftQuery(event.currentTarget.value)}
+            placeholder="Title, order, or counterparty"
+            type="search"
+            value={draftQuery}
+          />
+        </label>
+        <label className="entity-workspace-activity-page-size">
+          <span>Rows</span>
+          <select
+            data-testid="entity-activity-page-size"
+            onChange={(event) => onSelectPageSize(
+              requireEntityWorkspaceActivityPageSize(Number(event.currentTarget.value)),
+            )}
+            value={activity.pageSize}
+          >
+            {ENTITY_WORKSPACE_ACTIVITY_PAGE_SIZES.map((pageSize) => (
+              <option key={pageSize} value={pageSize}>{pageSize}</option>
+            ))}
+          </select>
+        </label>
+      </div>
       <nav aria-label="Activity event types" className="entity-workspace-activity-types">
         {ACTIVITY_TYPE_OPTIONS.map(({ type, label }) => (
           <button

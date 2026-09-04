@@ -134,6 +134,7 @@ export function OpsEntityWorkspacePage() {
         onSelectAccountsPage={opsEntityWorkspaceSource.selectAccountsPage}
         onSelectActivityBeforeHeight={opsEntityWorkspaceSource.selectActivityPage}
         onSelectActivityKind={opsEntityWorkspaceSource.selectActivityKind}
+        onSelectActivityPageSize={opsEntityWorkspaceSource.selectActivityPageSize}
         onSelectActivitySearch={opsEntityWorkspaceSource.selectActivitySearch}
         onSelectNewerActivityPage={opsEntityWorkspaceSource.selectNewerActivityPage}
         onSelectTheme={opsDisplayPreferencesSource.setTheme}

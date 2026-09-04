@@ -46,9 +46,13 @@
 .entity-workspace-activity-kind,
 .entity-workspace-activity-types { display: flex; gap: 0.45rem; padding-inline: clamp(1.5rem, 4vw, 3.5rem); }
 .entity-workspace-activity-kind { padding-bottom: 0.7rem; }
-.entity-workspace-activity-search { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 0.75rem; padding: 0 clamp(1.5rem, 4vw, 3.5rem) 0.7rem; color: var(--theme-text-muted, #5f605a); font: 600 0.56rem/1 "SFMono-Regular", Consolas, monospace; letter-spacing: 0.08em; text-transform: uppercase; }
+.entity-workspace-activity-controls { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: 0.75rem; padding: 0 clamp(1.5rem, 4vw, 3.5rem) 0.7rem; }
+.entity-workspace-activity-search { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 0.75rem; color: var(--theme-text-muted, #5f605a); font: 600 0.56rem/1 "SFMono-Regular", Consolas, monospace; letter-spacing: 0.08em; text-transform: uppercase; }
 .entity-workspace-activity-search input { min-width: 0; padding: 0.5rem 0.65rem; color: var(--theme-text-primary, #d7d4c9); border: 1px solid var(--entity-line); border-radius: 0; outline: 0; background: color-mix(in srgb, var(--theme-background, #0a0a09) 88%, transparent); font: 500 0.66rem/1.2 "SFMono-Regular", Consolas, monospace; }
 .entity-workspace-activity-search input:focus-visible { border-color: var(--entity-accent-soft); box-shadow: 0 0 0 1px var(--entity-accent-soft); }
+.entity-workspace-activity-page-size { display: grid; gap: 0.35rem; color: var(--theme-text-muted, #5f605a); font: 600 0.56rem/1 "SFMono-Regular", Consolas, monospace; letter-spacing: 0.08em; text-transform: uppercase; }
+.entity-workspace-activity-page-size select { min-width: 4.5rem; padding: 0.5rem 0.65rem; color: var(--theme-text-primary, #d7d4c9); border: 1px solid var(--entity-line); border-radius: 0; outline: 0; background: var(--theme-background, #0a0a09); font: 500 0.66rem/1.2 "SFMono-Regular", Consolas, monospace; }
+.entity-workspace-activity-page-size select:focus-visible { border-color: var(--entity-accent-soft); box-shadow: 0 0 0 1px var(--entity-accent-soft); }
 .entity-workspace-activity-types { flex-wrap: wrap; padding-bottom: 1.25rem; }
 .entity-workspace-activity-kind button,
 .entity-workspace-activity-types button { padding: 0.45rem 0.75rem; color: var(--theme-text-muted, #5f605a); border: 1px solid var(--entity-line); background: transparent; font: 600 0.56rem/1 "SFMono-Regular", Consolas, monospace; letter-spacing: 0.08em; cursor: pointer; text-transform: uppercase; }
@@ -58,7 +62,7 @@
 .entity-workspace-activity-kind button:focus-visible,
 .entity-workspace-activity-types button:focus-visible { outline: 2px solid var(--entity-accent-soft); outline-offset: 2px; }
 
-.entity-workspace-activity-panel > ol { min-height: 0; margin: 0; padding: 0; overflow: auto; list-style: none; border-top: 1px solid var(--entity-line); }
+.entity-workspace-activity-panel > ol { min-height: 0; max-height: clamp(28rem, 58vh, 52rem); margin: 0; padding: 0; overflow: auto; list-style: none; border-top: 1px solid var(--entity-line); }
 .entity-workspace-activity-panel li { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 0.9rem; padding: 0.9rem clamp(1.5rem, 4vw, 3.5rem); border-bottom: 1px solid var(--entity-line); }
 .entity-workspace-activity-panel li > span { padding-top: 0.18rem; color: var(--theme-text-muted, #4f504b); font: 0.56rem/1 "SFMono-Regular", Consolas, monospace; }
 .entity-workspace-activity-copy { min-width: 0; }
@@ -84,7 +88,8 @@
   .entity-workspace-activity-panel > header dl div { text-align: left; }
   .entity-workspace-activity-summary { width: 100%; justify-items: start; }
   .entity-workspace-activity-panel > p { padding-inline: 1rem; }
-  .entity-workspace-activity-search { grid-template-columns: 1fr; padding-inline: 1rem; }
+  .entity-workspace-activity-controls { grid-template-columns: 1fr; padding-inline: 1rem; }
+  .entity-workspace-activity-search { grid-template-columns: 1fr; }
   .entity-workspace-activity-kind,
   .entity-workspace-activity-types { padding-inline: 1rem; }
   .entity-workspace-activity-panel li { grid-template-columns: auto minmax(0, 1fr); padding-inline: 1rem; }
