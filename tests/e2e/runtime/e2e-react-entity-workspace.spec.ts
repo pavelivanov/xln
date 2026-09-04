@@ -294,6 +294,9 @@ test('React Entity workspace reads selected context from a real H1 Runtime', { t
       await expect(activity.getByText('Adapter order is preserved', { exact: false })).toBeVisible();
       const activityCount = candidatePage.getByTestId('entity-activity-event-count');
       const allActivityCount = Number(await activityCount.innerText());
+      const refreshActivity = candidatePage.getByTestId('entity-activity-refresh');
+      await refreshActivity.click();
+      await expect(activityCount).toHaveText(String(allActivityCount));
       const offchainActivity = candidatePage.getByTestId('entity-activity-kind-offchain');
       await offchainActivity.click();
       await expect(offchainActivity).toHaveAttribute('aria-pressed', 'true');
