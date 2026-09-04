@@ -2,6 +2,7 @@ import { describe, expect, test } from 'bun:test';
 
 import { OpsEntityWorkspaceActivityController } from '../../../frontend/apps/ops/src/ops-entity-workspace-activity-controller';
 import {
+  appendEntityWorkspaceActivityPage,
   buildEntityWorkspaceActivityQuery,
   projectEntityWorkspaceActivity,
 } from '../../../frontend/packages/runtime-client/src/entity-workspace-activity';
@@ -108,7 +109,8 @@ describe('React Entity persisted activity ledger', () => {
   test('preserves adapter event order and exact persisted evidence', () => {
     expect(projectEntityWorkspaceActivity({ context, page: page() })).toEqual({
       status: 'selected', entityId: '0xaaaa', requestedBeforeHeight: 44,
-      fromTimestamp: null, isLatestPage: true, kind: 'all', mode: 'paged', pageSize: 8,
+      fromTimestamp: null, isLatestPage: true, kind: 'all', loadedPages: 1,
+      mode: 'paged', pageSize: 8,
       query: '', toTimestamp: null, types: [], latestHeight: 50,
       fromHeight: 42, toHeight: 44, scannedFrames: 3, nextBeforeHeight: 41,
       events: [
@@ -139,6 +141,51 @@ describe('React Entity persisted activity ledger', () => {
       fromHeight: 10, toHeight: 13, nextBeforeHeight: 9,
       events: [{ id: 'runtime-a:13:1' }, { id: 'runtime-a:12:0' }],
     });
+  });
+
+  test('appends only the exact next Infinite page in adapter order', () => {
+    const latest = projectEntityWorkspaceActivity({ context, mode: 'infinite', page: page() });
+    const older = projectEntityWorkspaceActivity({
+      beforeHeight: 41,
+      context,
+      mode: 'infinite',
+      page: page({
+        events: [
+          event({ id: 'runtime-a:41:0', height: 41, timestamp: 1_700_000_041 }),
+          event({ id: 'runtime-a:40:0', height: 40, timestamp: 1_700_000_040 }),
+        ],
+        filters: { entityId: '0xaaaa', kind: 'all', beforeHeight: 41, limit: 8, scanLimit: 160 },
+        fromHeight: 30,
+        nextBeforeHeight: 29,
+        scannedFrames: 12,
+        toHeight: 41,
+      }),
+    });
+    expect(appendEntityWorkspaceActivityPage(latest, older)).toMatchObject({
+      events: [
+        { id: 'runtime-a:44:1' }, { id: 'runtime-a:43:0' },
+        { id: 'runtime-a:41:0' }, { id: 'runtime-a:40:0' },
+      ],
+      fromHeight: 30,
+      isLatestPage: false,
+      loadedPages: 2,
+      nextBeforeHeight: 29,
+      requestedBeforeHeight: 41,
+      scannedFrames: 15,
+      toHeight: 44,
+    });
+    expect(() => appendEntityWorkspaceActivityPage(
+      projectEntityWorkspaceActivity({ context, page: page() }),
+      older,
+    )).toThrow('ENTITY_WORKSPACE_ACTIVITY_APPEND_CONTEXT_MISMATCH');
+    expect(() => appendEntityWorkspaceActivityPage(latest, {
+      ...older,
+      requestedBeforeHeight: 40,
+    })).toThrow('ENTITY_WORKSPACE_ACTIVITY_APPEND_CURSOR_MISMATCH');
+    expect(() => appendEntityWorkspaceActivityPage(latest, {
+      ...older,
+      events: [{ ...older.events[0], id: latest.events[0]?.id ?? '' }],
+    })).toThrow('ENTITY_WORKSPACE_ACTIVITY_APPEND_EVENT_DUPLICATE');
   });
 
   test('projects only the exact requested adapter kind', () => {
@@ -433,6 +480,46 @@ describe('React Entity persisted activity ledger', () => {
       .toThrow('OPS_ENTITY_ACTIVITY_TIMEFRAME_MODE_REQUIRED');
   });
 
+  test('owns one in-flight Infinite append across live and Time Machine reads', () => {
+    let historyActive = false;
+    let historyRefreshes = 0;
+    let liveRefreshes = 0;
+    const controller = new OpsEntityWorkspaceActivityController({
+      isHistoryActive: () => historyActive,
+      refreshHistory: () => { historyRefreshes += 1; },
+      refreshLive: () => { liveRefreshes += 1; },
+    });
+    const paged = projectEntityWorkspaceActivity({ context, page: page() });
+    controller.selectMode(paged, 'infinite');
+    const infinite = projectEntityWorkspaceActivity({ context, mode: 'infinite', page: page() });
+    controller.loadMore(infinite);
+    controller.loadMore(infinite);
+    expect({
+      appendBeforeHeight: controller.readAppendBeforeHeight(),
+      beforeHeight: controller.readBeforeHeight(),
+      historyRefreshes,
+      liveRefreshes,
+    }).toEqual({ appendBeforeHeight: 41, beforeHeight: 41, historyRefreshes: 0, liveRefreshes: 2 });
+    expect(() => controller.completeAppend(40))
+      .toThrow('OPS_ENTITY_ACTIVITY_APPEND_COMPLETION_MISMATCH');
+    controller.completeAppend(41);
+    expect({
+      appendBeforeHeight: controller.readAppendBeforeHeight(),
+      beforeHeight: controller.readBeforeHeight(),
+    }).toEqual({ appendBeforeHeight: null, beforeHeight: null });
+    historyActive = true;
+    controller.loadMore(infinite);
+    expect({ historyRefreshes, liveRefreshes }).toEqual({ historyRefreshes: 1, liveRefreshes: 2 });
+    expect(() => controller.cancelAppend(40))
+      .toThrow('OPS_ENTITY_ACTIVITY_APPEND_CANCELLATION_MISMATCH');
+    controller.cancelAppend(41);
+    expect(controller.readAppendBeforeHeight()).toBeNull();
+    controller.loadMore(infinite);
+    controller.selectKind(infinite, 'offchain');
+    expect(controller.readAppendBeforeHeight()).toBeNull();
+    expect(() => controller.loadMore(paged)).toThrow('OPS_ENTITY_ACTIVITY_APPEND_MODE_REQUIRED');
+  });
+
   test('refreshes only the active transport without changing Activity controls', () => {
     let historyActive = false;
     let historyRefreshes = 0;
@@ -476,12 +563,16 @@ describe('React Entity persisted activity ledger', () => {
     expect(panel).toContain('data-testid="entity-activity-page-size"');
     expect(panel).toContain('data-testid="entity-activity-timestamp"');
     expect(panel).toContain('data-testid="entity-activity-mode-timeframe"');
+    expect(panel).toContain('data-testid="entity-activity-mode-infinite"');
+    expect(panel).toContain('data-testid="entity-activity-load-older"');
+    expect(panel).toContain('data-testid="entity-activity-loaded-pages"');
     expect(panel).toContain('data-testid="entity-activity-apply-timeframe"');
     expect(panel).toContain('title={`Runtime timestamp ${timestamp}`}');
     expect(panel).toContain('data-testid={`entity-activity-kind-${kind}`}');
     expect(panel).toContain('data-testid={`entity-activity-type-${type}`}');
     expect(source).toContain('client.readActivity(activityQuery)');
     expect(source).toContain('readonly selectActivityPage');
+    expect(source).toContain('readonly loadOlderActivity');
     expect(source).toContain('readonly selectNewerActivityPage');
     expect(source).toContain('readonly selectActivityKind');
     expect(source).toContain('readonly selectActivitySearch');

@@ -1,5 +1,6 @@
 import type { RuntimeQuerySnapshot } from '../../../packages/runtime-client/src/runtime-query-observer';
 import {
+  appendEntityWorkspaceActivityPage,
   emptyEntityWorkspaceActivity,
   projectEntityWorkspaceActivity,
   type EntityWorkspaceActivity,
@@ -98,14 +99,21 @@ export const projectOpsEntityWorkspaceActivityPage = (
   projection: OpsEntityWorkspaceProjection,
   page: unknown,
   options: EntityWorkspaceActivityQueryOptions = {},
-): OpsEntityWorkspaceProjection => ({
-  ...projection,
-  activity: projectEntityWorkspaceActivity({
+  previousActivity: EntityWorkspaceActivity = emptyEntityWorkspaceActivity(),
+  append = false,
+): OpsEntityWorkspaceProjection => {
+  const activity = projectEntityWorkspaceActivity({
     context: projection.context,
     page,
     ...options,
-  }),
-});
+  });
+  return {
+    ...projection,
+    activity: append
+      ? appendEntityWorkspaceActivityPage(previousActivity, activity)
+      : activity,
+  };
+};
 
 export const projectOpsEntityWorkspaceObserverSnapshot = (
   runtimeId: string,
