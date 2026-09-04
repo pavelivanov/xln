@@ -55,6 +55,7 @@
 .entity-workspace-consensus-grid li[data-attached="true"] { background: color-mix(in srgb, var(--entity-accent) 7%, transparent); }
 .entity-workspace-consensus-grid code { overflow: hidden; color: var(--theme-text-secondary, #aaa89f); font: 500 0.66rem/1 "SFMono-Regular", Consolas, monospace; text-overflow: ellipsis; }
 .entity-workspace-consensus-grid li > span { color: var(--theme-text-muted, #72716a); font-size: 0.63rem; white-space: nowrap; }
+.entity-workspace-consensus-grid li > .consensus-account-head-timestamp { grid-column: 1 / -1; }
 .entity-workspace-consensus-grid p { margin: 0; padding: 1.35rem; color: var(--theme-text-secondary, #777871); font-size: 0.75rem; }
 .entity-workspace-consensus > footer { padding: 1rem 1.35rem; border-top: 1px solid var(--entity-line); color: var(--theme-text-muted, #73726b); font-size: 0.66rem; line-height: 1.5; }
 
