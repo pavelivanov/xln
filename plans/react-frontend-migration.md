@@ -1,6 +1,6 @@
 # React frontend migration work plan
 
-**Status:** `IN PROGRESS — WP0–WP6 COMPLETE; WP7 HEALTH + QA + HLT + RUNS + SCENARIOS + AI IMPLEMENTED, WORKSPACE STATE LAYER SVELTE-FREE, PANEL PORTS THROUGH ARCHITECT, REACT DOCKVIEW WRAPPER READY, GRAPH3D LIFECYCLE + RENDERER/PRIMITIVES/EFFECTS/ENTITY/ACCOUNT VISUAL FACTORY/INTERACTION/SELECTION/CAMERA/POINTER+XR DRAG + HOVER MECHANICS + VIEW/SCENE INPUT MODELS EXTRACTED, ENTITY WORKSPACE REACT SHELL/TABS + LIVE RUNTIME CONTEXT + READ-ONLY ASSETS/OWNERSHIP/ACCOUNTS/CONSENSUS/PROFILE READY; WP8 COMPLETE; WP9 HAS 19 COMPLETE / 1 PARTIAL IMPLEMENTATION, 19 COVERED / 1 PARTIAL BROWSER ROUTE, AND 1 AUTHORIZED IMPLEMENTATION GAP; ENTITY ASSETS + ACCOUNT COMMITMENT EVIDENCE + CONSENSUS EVIDENCE + DISPLAY THEME + TIME MACHINE + XLN GUIDE PREFERENCE + HUB POLICY + SETTINGS SUMMARY + PERSISTED ACTIVITY PAGINATION/FILTERING/CLEAR/REFRESH/PAGE-SIZE/TIMESTAMPS COMPLETE`
+**Status:** `IN PROGRESS — WP0–WP6 COMPLETE; WP7 HEALTH + QA + HLT + RUNS + SCENARIOS + AI IMPLEMENTED, WORKSPACE STATE LAYER SVELTE-FREE, PANEL PORTS THROUGH ARCHITECT, REACT DOCKVIEW WRAPPER READY, GRAPH3D LIFECYCLE + RENDERER/PRIMITIVES/EFFECTS/ENTITY/ACCOUNT VISUAL FACTORY/INTERACTION/SELECTION/CAMERA/POINTER+XR DRAG + HOVER MECHANICS + VIEW/SCENE INPUT MODELS EXTRACTED, ENTITY WORKSPACE REACT SHELL/TABS + LIVE RUNTIME CONTEXT + READ-ONLY ASSETS/OWNERSHIP/ACCOUNTS/CONSENSUS/PROFILE READY; WP8 COMPLETE; WP9 HAS 19 COMPLETE / 1 PARTIAL IMPLEMENTATION, 19 COVERED / 1 PARTIAL BROWSER ROUTE, AND 1 AUTHORIZED IMPLEMENTATION GAP; ENTITY ASSETS + ACCOUNT COMMITMENT EVIDENCE + CONSENSUS EVIDENCE + DISPLAY THEME + TIME MACHINE + XLN GUIDE PREFERENCE + HUB POLICY + SETTINGS SUMMARY + PERSISTED ACTIVITY PAGINATION/FILTERING/CLEAR/REFRESH/PAGE-SIZE/TIMESTAMPS/TIMEFRAME COMPLETE`
 
 This is the executable work plan for splitting the Svelte frontend into React
 applications. It is intentionally lightweight and should be updated as live
@@ -3223,6 +3223,45 @@ production function sizing passes 1,047 files, diff hygiene is clean, and
 file-size checking reaches only the existing out-of-scope `core/qa/report.ts`
 3001/3000 violation.
 
+The following Activity filter slice adds the legacy Timeframe mode beside the
+existing Pagination mode. Browser-local `datetime-local` values are parsed
+once into exact millisecond bounds, applied only by an explicit action, and
+sent through the canonical persisted Activity adapter. Timeframe reads retain
+the adapter's existing 1,000-frame maximum; strict projection checks the echoed
+range, scan bound, and every returned event against inclusive From/To bounds.
+Invalid reversed ranges remain disabled and visible, Clear removes the range
+without changing mode, and mode changes reset only the certified page cursor.
+The same request options drive live and exact Time Machine reads without a
+second history source, write path, wall clock, or financial derivation.
+
+Focused Entity workspace coverage passes 115 / 115 tests with 798 expectations,
+and the narrower Activity boundary passes 15 / 15 with 126 expectations. The
+all-surface React-local gate scans 695 files with zero unsafe findings. All four
+React production surfaces build; site/docs/wallet/ops transform 401 / 35 /
+1,860 / 1,642 modules, and the ops workspace CSS/view/Runtime chunks are 39.25 /
+40.45 / 45.95 kB. The canonical frontend check reports zero errors/warnings
+while transforming 4,681 SSR plus 6,432 client modules. The complete ops
+candidate matrix passes 30 / 30 across the required viewports.
+
+The final isolated real-H1 flow passes in 33.5 seconds (34.8 seconds total)
+with candidate `77fa520db3bb`. It proves invalid-range prevention, applies an
+inclusive range over exact persisted event timestamps, clears it while keeping
+Timeframe active, returns to Pagination, and completes the existing controls.
+Strict browser health emits no console error. Mobile 390x844, laptop 1366x900,
+and wide 1920x1080 screenshots were inspected with aligned native date inputs,
+compact controls, bounded list height, and no clipping or horizontal overflow.
+The 224-file frontend suite reports 1,336 passes, the unchanged 16-failure plus
+one-error repository baseline, and 7,678 expectations across 1,352 tests; no
+slice-owned test fails.
+
+Root evidence again passes 26 / 26 deterministic tests with 100,156
+expectations before the documented 60-second Hardhat compiler-cache mutex.
+Downstream soundcheck passes all ten gates; frozen core remains at
+`0x4eccf4492e5d085b24162f86d327e003c36b7e2a90ad527db1653fde391946a7`,
+production function sizing passes 1,047 files, diff hygiene is clean, and
+file-size checking reaches only the existing out-of-scope `core/qa/report.ts`
+3001/3000 violation.
+
 **Current checkpoint:** all retained routes have React application owners;
 wallet parity is complete. `/embed` is the sole partial implementation/browser
 route, and its authorized Entity workspace is the sole remaining WP9
@@ -3231,7 +3270,8 @@ xln-guide preference, exact Account commitment evidence, persisted Activity
 with strict bidirectional pagination, kind filters, nine event-type filters,
 debounced search, atomic filter clearing, explicit Activity refresh,
 compact plus legacy Activity page sizing, deterministic UTC Activity timestamps,
-committed Hub-policy, and committed Settings-summary parity are now complete.
+strict Activity timeframe filtering, committed Hub-policy, and committed
+Settings-summary parity are now complete.
 
 ### WP10 — Authorized canonical cutover
 

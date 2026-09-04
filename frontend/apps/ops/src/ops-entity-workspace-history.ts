@@ -5,9 +5,7 @@ import type {
 } from '@xln/core/api/public/runtime-module';
 import {
   buildEntityWorkspaceActivityQuery,
-  type EntityWorkspaceActivityFilterType,
-  type EntityWorkspaceActivityKind,
-  type EntityWorkspaceActivityPageSize,
+  type EntityWorkspaceActivityQueryOptions,
 } from '../../../packages/runtime-client/src/entity-workspace-activity';
 import {
   assertTimeMachineHistorySelection,
@@ -28,11 +26,7 @@ export type OpsEntityWorkspaceHistoryReader = Readonly<{
 }>;
 
 export async function readOpsEntityWorkspaceHistory(input: Readonly<{
-  activityBeforeHeight?: number;
-  activityKind?: EntityWorkspaceActivityKind;
-  activityPageSize?: EntityWorkspaceActivityPageSize;
-  activitySearch?: string;
-  activityTypes?: readonly EntityWorkspaceActivityFilterType[];
+  activity: EntityWorkspaceActivityQueryOptions;
   accountsPage: number;
   client: OpsEntityWorkspaceHistoryReader;
   entityId: string;
@@ -59,22 +53,7 @@ export async function readOpsEntityWorkspaceHistory(input: Readonly<{
     runtimeId: input.runtimeId,
   }), selection);
   const projection = projectOpsEntityWorkspaceFrame(input.runtimeId, frame);
-  const activityQuery = buildEntityWorkspaceActivityQuery(
-    projection.context,
-    input.activityBeforeHeight,
-    input.activityKind,
-    input.activityTypes,
-    input.activitySearch,
-    input.activityPageSize,
-  );
+  const activityQuery = buildEntityWorkspaceActivityQuery(projection.context, input.activity);
   const activity = await input.client.readActivity(activityQuery);
-  return projectOpsEntityWorkspaceActivityPage(
-    projection,
-    activity,
-    activityQuery.beforeHeight,
-    activityQuery.kind,
-    input.activityTypes,
-    input.activitySearch,
-    input.activityPageSize,
-  );
+  return projectOpsEntityWorkspaceActivityPage(projection, activity, input.activity);
 }

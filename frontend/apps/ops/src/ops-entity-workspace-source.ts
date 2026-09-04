@@ -21,7 +21,9 @@ import {
   buildEntityWorkspaceActivityQuery,
   type EntityWorkspaceActivityFilterType,
   type EntityWorkspaceActivityKind,
+  type EntityWorkspaceActivityMode,
   type EntityWorkspaceActivityPageSize,
+  type EntityWorkspaceActivityQueryOptions,
 } from '../../../packages/runtime-client/src/entity-workspace-activity';
 import { createEntityWorkspaceLiveState } from '../../../packages/runtime-client/src/entity-workspace-time-machine';
 import { OpsEntityWorkspaceActivityController } from './ops-entity-workspace-activity-controller';
@@ -53,32 +55,13 @@ const readEntityWorkspaceProjection = async (
   client: OpsRuntimeQueryClient,
   runtimeId: string,
   frame: RuntimeAdapterViewFrame,
-  activityBeforeHeight?: number,
-  activityKind: EntityWorkspaceActivityKind = 'all',
-  activityTypes: readonly EntityWorkspaceActivityFilterType[] = [],
-  activitySearch: string = '',
-  activityPageSize: EntityWorkspaceActivityPageSize = 8,
+  activityOptions: EntityWorkspaceActivityQueryOptions = {},
 ): Promise<OpsEntityWorkspaceProjection> => {
   const projection = projectOpsEntityWorkspaceFrame(runtimeId, frame);
   if (projection.context.status === 'empty') return projection;
-  const activityQuery = buildEntityWorkspaceActivityQuery(
-    projection.context,
-    activityBeforeHeight,
-    activityKind,
-    activityTypes,
-    activitySearch,
-    activityPageSize,
-  );
+  const activityQuery = buildEntityWorkspaceActivityQuery(projection.context, activityOptions);
   const activity = await client.readActivity(activityQuery);
-  return projectOpsEntityWorkspaceActivityPage(
-    projection,
-    activity,
-    activityQuery.beforeHeight,
-    activityQuery.kind,
-    activityTypes,
-    activitySearch,
-    activityPageSize,
-  );
+  return projectOpsEntityWorkspaceActivityPage(projection, activity, activityOptions);
 };
 
 export const requireOpsEntityRemoteSession = (
@@ -150,11 +133,7 @@ export class OpsEntityWorkspaceSource {
     this.snapshot = initialOpsEntityWorkspaceSnapshot(config);
     this.historyController = new OpsEntityWorkspaceHistoryController({
       publish: (snapshot) => this.publish(snapshot),
-      readActivityBeforeHeight: () => this.activityController.readBeforeHeight(),
-      readActivityKind: () => this.activityController.readKind(),
-      readActivityPageSize: () => this.activityController.readPageSize(),
-      readActivitySearch: () => this.activityController.readSearch(),
-      readActivityTypes: () => this.activityController.readTypes(),
+      readActivityOptions: () => this.activityController.readQueryOptions(),
       readAccountsPage: () => this.accountsPage,
       readAdapter: () => this.session?.adapter ?? null,
       readClient: () => this.queryClient,
@@ -239,6 +218,17 @@ export class OpsEntityWorkspaceSource {
     this.activityController.selectKind(this.snapshot.activity, kind);
   };
 
+  readonly selectActivityMode = (mode: EntityWorkspaceActivityMode): void => {
+    this.activityController.selectMode(this.snapshot.activity, mode);
+  };
+
+  readonly applyActivityTimeframe = (
+    fromTimestamp: number | null,
+    toTimestamp: number | null,
+  ): void => {
+    this.activityController.applyTimeframe(this.snapshot.activity, fromTimestamp, toTimestamp);
+  };
+
   readonly selectActivityPageSize = (pageSize: EntityWorkspaceActivityPageSize): void => {
     this.activityController.selectPageSize(this.snapshot.activity, pageSize);
   };
@@ -299,11 +289,7 @@ export class OpsEntityWorkspaceSource {
           client,
           adapter.runtimeId,
           frame,
-          this.activityController.readBeforeHeight() ?? undefined,
-          this.activityController.readKind(),
-          this.activityController.readTypes(),
-          this.activityController.readSearch(),
-          this.activityController.readPageSize(),
+          this.activityController.readQueryOptions(),
         );
       },
       {

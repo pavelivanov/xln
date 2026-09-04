@@ -6,7 +6,11 @@ import {
   projectEntityWorkspaceActivity,
 } from '../../../frontend/packages/runtime-client/src/entity-workspace-activity';
 import { projectEntityWorkspaceContext } from '../../../frontend/packages/runtime-client/src/entity-workspace-context';
-import { formatEntityWorkspaceTimestamp } from '../../../frontend/packages/ui/src/entity-workspace-display';
+import {
+  formatEntityWorkspaceLocalDateTime,
+  formatEntityWorkspaceTimestamp,
+  parseEntityWorkspaceLocalDateTime,
+} from '../../../frontend/packages/ui/src/entity-workspace-display';
 
 const context = projectEntityWorkspaceContext({
   runtimeId: 'runtime-a',
@@ -53,49 +57,59 @@ describe('React Entity persisted activity ledger', () => {
     expect(() => formatEntityWorkspaceTimestamp(-1)).toThrow('ENTITY_WORKSPACE_TIMESTAMP_INVALID');
     expect(() => formatEntityWorkspaceTimestamp(Number.MAX_SAFE_INTEGER))
       .toThrow('ENTITY_WORKSPACE_TIMESTAMP_INVALID');
+    const minuteTimestamp = Math.floor(1_700_000_000_000 / 60_000) * 60_000;
+    const localValue = formatEntityWorkspaceLocalDateTime(minuteTimestamp);
+    expect(localValue).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/);
+    expect(parseEntityWorkspaceLocalDateTime(localValue)).toBe(minuteTimestamp);
+    expect(parseEntityWorkspaceLocalDateTime('')).toBeNull();
+    expect(() => parseEntityWorkspaceLocalDateTime('2026-02-30T12:00'))
+      .toThrow('ENTITY_WORKSPACE_LOCAL_TIMESTAMP_INVALID');
   });
 
   test('pins one bounded read to the exact displayed committed frame', () => {
     expect(buildEntityWorkspaceActivityQuery(context)).toEqual({
       beforeHeight: 44, entityId: '0xaaaa', kind: 'all', limit: 8, scanLimit: 160,
     });
-    expect(buildEntityWorkspaceActivityQuery(context, 13)).toEqual({
+    expect(buildEntityWorkspaceActivityQuery(context, { beforeHeight: 13 })).toEqual({
       beforeHeight: 13, entityId: '0xaaaa', kind: 'all', limit: 8, scanLimit: 160,
     });
-    expect(buildEntityWorkspaceActivityQuery(context, 13, 'offchain')).toEqual({
+    expect(buildEntityWorkspaceActivityQuery(context, { beforeHeight: 13, kind: 'offchain' })).toEqual({
       beforeHeight: 13, entityId: '0xaaaa', kind: 'offchain', limit: 8, scanLimit: 160,
     });
-    expect(buildEntityWorkspaceActivityQuery(context, 13, 'offchain', ['payment', 'swap'])).toEqual({
+    expect(buildEntityWorkspaceActivityQuery(context, {
+      beforeHeight: 13, kind: 'offchain', types: ['payment', 'swap'],
+    })).toEqual({
       beforeHeight: 13, entityId: '0xaaaa', kind: 'offchain', limit: 8,
       scanLimit: 160, types: ['payment', 'swap'],
     });
-    expect(buildEntityWorkspaceActivityQuery(context, 13, 'all', [], ' Payment ')).toEqual({
+    expect(buildEntityWorkspaceActivityQuery(context, { beforeHeight: 13, search: ' Payment ' })).toEqual({
       beforeHeight: 13, entityId: '0xaaaa', kind: 'all', limit: 8,
       q: 'Payment', scanLimit: 160,
     });
-    expect(buildEntityWorkspaceActivityQuery(context, 13, 'all', [], '', 40)).toEqual({
+    expect(buildEntityWorkspaceActivityQuery(context, { beforeHeight: 13, pageSize: 40 })).toEqual({
       beforeHeight: 13, entityId: '0xaaaa', kind: 'all', limit: 40, scanLimit: 160,
     });
-    expect(() => buildEntityWorkspaceActivityQuery(context, 0))
+    expect(() => buildEntityWorkspaceActivityQuery(context, { beforeHeight: 0 }))
       .toThrow('ENTITY_WORKSPACE_ACTIVITY_BEFORE_HEIGHT_INVALID');
-    expect(() => buildEntityWorkspaceActivityQuery(context, 45))
+    expect(() => buildEntityWorkspaceActivityQuery(context, { beforeHeight: 45 }))
       .toThrow('ENTITY_WORKSPACE_ACTIVITY_BEFORE_HEIGHT_INVALID');
-    expect(() => buildEntityWorkspaceActivityQuery(context, 13, 'system' as never))
+    expect(() => buildEntityWorkspaceActivityQuery(context, { beforeHeight: 13, kind: 'system' as never }))
       .toThrow('ENTITY_WORKSPACE_ACTIVITY_KIND_INVALID');
-    expect(() => buildEntityWorkspaceActivityQuery(context, 13, 'all', ['system' as never]))
+    expect(() => buildEntityWorkspaceActivityQuery(context, { beforeHeight: 13, types: ['system' as never] }))
       .toThrow('ENTITY_WORKSPACE_ACTIVITY_TYPE_INVALID');
-    expect(() => buildEntityWorkspaceActivityQuery(context, 13, 'all', ['payment', 'payment']))
+    expect(() => buildEntityWorkspaceActivityQuery(context, { beforeHeight: 13, types: ['payment', 'payment'] }))
       .toThrow('ENTITY_WORKSPACE_ACTIVITY_TYPES_INVALID');
-    expect(() => buildEntityWorkspaceActivityQuery(context, 13, 'all', [], 7 as never))
+    expect(() => buildEntityWorkspaceActivityQuery(context, { beforeHeight: 13, search: 7 as never }))
       .toThrow('ENTITY_WORKSPACE_ACTIVITY_QUERY_INVALID');
-    expect(() => buildEntityWorkspaceActivityQuery(context, 13, 'all', [], '', 20 as never))
+    expect(() => buildEntityWorkspaceActivityQuery(context, { beforeHeight: 13, pageSize: 20 as never }))
       .toThrow('ENTITY_WORKSPACE_ACTIVITY_PAGE_SIZE_INVALID');
   });
 
   test('preserves adapter event order and exact persisted evidence', () => {
     expect(projectEntityWorkspaceActivity({ context, page: page() })).toEqual({
       status: 'selected', entityId: '0xaaaa', requestedBeforeHeight: 44,
-      isLatestPage: true, kind: 'all', pageSize: 8, query: '', types: [], latestHeight: 50,
+      fromTimestamp: null, isLatestPage: true, kind: 'all', mode: 'paged', pageSize: 8,
+      query: '', toTimestamp: null, types: [], latestHeight: 50,
       fromHeight: 42, toHeight: 44, scannedFrames: 3, nextBeforeHeight: 41,
       events: [
         {
@@ -179,6 +193,47 @@ describe('React Entity persisted activity ledger', () => {
         beforeHeight: 44, limit: 8, scanLimit: 160,
       },
     }), search: 'different' })).toThrow('ENTITY_WORKSPACE_ACTIVITY_EVENT_QUERY_MISMATCH');
+  });
+
+  test('projects only exact inclusive timeframe evidence through the bounded adapter query', () => {
+    const timeframe = {
+      fromTimestamp: 1_700_000_043,
+      mode: 'timeframe' as const,
+      toTimestamp: 1_700_000_044,
+    };
+    expect(buildEntityWorkspaceActivityQuery(context, timeframe)).toEqual({
+      beforeHeight: 44, entityId: '0xaaaa', fromTimestamp: 1_700_000_043,
+      kind: 'all', limit: 8, scanLimit: 1_000, toTimestamp: 1_700_000_044,
+    });
+    expect(buildEntityWorkspaceActivityQuery(context, { mode: 'timeframe' })).toEqual({
+      beforeHeight: 44, entityId: '0xaaaa', kind: 'all', limit: 8, scanLimit: 1_000,
+    });
+    const filtered = page({
+      scanLimit: 1_000,
+      filters: {
+        entityId: '0xaaaa', fromTimestamp: 1_700_000_043, kind: 'all',
+        beforeHeight: 44, limit: 8, scanLimit: 1_000, toTimestamp: 1_700_000_044,
+      },
+    });
+    expect(projectEntityWorkspaceActivity({ context, page: filtered, ...timeframe })).toMatchObject({
+      fromTimestamp: 1_700_000_043, mode: 'timeframe', toTimestamp: 1_700_000_044,
+      events: [{ timestamp: 1_700_000_044 }, { timestamp: 1_700_000_043 }],
+    });
+    expect(() => projectEntityWorkspaceActivity({ context, page: filtered, ...timeframe, toTimestamp: 1_700_000_043 }))
+      .toThrow('ENTITY_WORKSPACE_ACTIVITY_FILTER_TIMEFRAME_MISMATCH');
+    expect(() => projectEntityWorkspaceActivity({ context, page: page({
+      scanLimit: 1_000,
+      filters: {
+        entityId: '0xaaaa', fromTimestamp: 1_700_000_043, kind: 'all',
+        beforeHeight: 44, limit: 8, scanLimit: 1_000, toTimestamp: 1_700_000_044,
+      },
+      events: [event({ timestamp: 1_700_000_042 }), event({ id: 'runtime-a:43:0', height: 43 })],
+    }), ...timeframe })).toThrow('ENTITY_WORKSPACE_ACTIVITY_EVENT_TIMEFRAME_MISMATCH');
+    expect(() => buildEntityWorkspaceActivityQuery(context, {
+      fromTimestamp: 2, mode: 'timeframe', toTimestamp: 1,
+    })).toThrow('ENTITY_WORKSPACE_ACTIVITY_TIMEFRAME_INVALID');
+    expect(() => buildEntityWorkspaceActivityQuery(context, { fromTimestamp: 1 }))
+      .toThrow('ENTITY_WORKSPACE_ACTIVITY_MODE_FILTER_MISMATCH');
   });
 
   test('rejects drift, malformed event facts, duplicates, and incoherent metadata', () => {
@@ -341,6 +396,43 @@ describe('React Entity persisted activity ledger', () => {
     expect(controller.readPageSize()).toBe(8);
   });
 
+  test('owns one strict timeframe filter across live and Time Machine reads', () => {
+    let historyActive = false;
+    let historyRefreshes = 0;
+    let liveRefreshes = 0;
+    const controller = new OpsEntityWorkspaceActivityController({
+      isHistoryActive: () => historyActive,
+      refreshHistory: () => { historyRefreshes += 1; },
+      refreshLive: () => { liveRefreshes += 1; },
+    });
+    const latest = projectEntityWorkspaceActivity({ context, page: page() });
+    controller.selectMode(latest, 'timeframe');
+    controller.applyTimeframe(latest, 1_700_000_043, 1_700_000_044);
+    expect(controller.readQueryOptions()).toEqual({
+      fromTimestamp: 1_700_000_043, kind: 'all', mode: 'timeframe', pageSize: 8,
+      search: '', toTimestamp: 1_700_000_044, types: [],
+    });
+    expect({ historyRefreshes, liveRefreshes }).toEqual({ historyRefreshes: 0, liveRefreshes: 2 });
+    controller.applyTimeframe(latest, 1_700_000_043, 1_700_000_044);
+    expect({ historyRefreshes, liveRefreshes }).toEqual({ historyRefreshes: 0, liveRefreshes: 2 });
+    expect(() => controller.applyTimeframe(latest, 2, 1))
+      .toThrow('ENTITY_WORKSPACE_ACTIVITY_TIMEFRAME_INVALID');
+    historyActive = true;
+    controller.clearFilters(latest);
+    expect(controller.readMode()).toBe('timeframe');
+    expect(controller.readFromTimestamp()).toBeNull();
+    expect(controller.readToTimestamp()).toBeNull();
+    expect({ historyRefreshes, liveRefreshes }).toEqual({ historyRefreshes: 1, liveRefreshes: 2 });
+    controller.selectMode(latest, 'paged');
+    expect(controller.readQueryOptions()).toEqual({
+      fromTimestamp: null, kind: 'all', mode: 'paged', pageSize: 8,
+      search: '', toTimestamp: null, types: [],
+    });
+    expect({ historyRefreshes, liveRefreshes }).toEqual({ historyRefreshes: 2, liveRefreshes: 2 });
+    expect(() => controller.applyTimeframe(latest, null, null))
+      .toThrow('OPS_ENTITY_ACTIVITY_TIMEFRAME_MODE_REQUIRED');
+  });
+
   test('refreshes only the active transport without changing Activity controls', () => {
     let historyActive = false;
     let historyRefreshes = 0;
@@ -383,6 +475,8 @@ describe('React Entity persisted activity ledger', () => {
     expect(panel).toContain('data-testid="entity-activity-refresh"');
     expect(panel).toContain('data-testid="entity-activity-page-size"');
     expect(panel).toContain('data-testid="entity-activity-timestamp"');
+    expect(panel).toContain('data-testid="entity-activity-mode-timeframe"');
+    expect(panel).toContain('data-testid="entity-activity-apply-timeframe"');
     expect(panel).toContain('title={`Runtime timestamp ${timestamp}`}');
     expect(panel).toContain('data-testid={`entity-activity-kind-${kind}`}');
     expect(panel).toContain('data-testid={`entity-activity-type-${type}`}');
@@ -394,9 +488,11 @@ describe('React Entity persisted activity ledger', () => {
     expect(source).toContain('readonly clearActivityFilters');
     expect(source).toContain('readonly refreshActivity');
     expect(source).toContain('readonly selectActivityPageSize');
+    expect(source).toContain('readonly selectActivityMode');
+    expect(source).toContain('readonly applyActivityTimeframe');
     expect(source).toContain('readonly toggleActivityType');
     expect(history).toContain('input.client.readActivity(activityQuery)');
-    expect(history).toContain('input.activityPageSize');
+    expect(history).toContain('input.activity');
     expect([panel, source, history].join('\n')).not.toContain('.send(');
   });
 });
