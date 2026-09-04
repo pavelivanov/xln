@@ -289,6 +289,32 @@ describe('React Entity persisted activity ledger', () => {
       .toEqual({ beforeHeight: null, historyRefreshes: 2, liveRefreshes: 2 });
   });
 
+  test('refreshes only the active transport without changing Activity controls', () => {
+    let historyActive = false;
+    let historyRefreshes = 0;
+    let liveRefreshes = 0;
+    const controller = new OpsEntityWorkspaceActivityController({
+      isHistoryActive: () => historyActive,
+      refreshHistory: () => { historyRefreshes += 1; },
+      refreshLive: () => { liveRefreshes += 1; },
+    });
+    const latest = projectEntityWorkspaceActivity({ context, page: page() });
+    controller.selectKind(latest, 'onchain');
+    controller.toggleType(latest, 'j_event');
+    controller.selectSearch(latest, 'ReserveUpdated');
+    controller.reload(latest);
+    expect({
+      beforeHeight: controller.readBeforeHeight(),
+      kind: controller.readKind(),
+      search: controller.readSearch(),
+      types: controller.readTypes(),
+    }).toEqual({ beforeHeight: null, kind: 'onchain', search: 'ReserveUpdated', types: ['j_event'] });
+    expect({ historyRefreshes, liveRefreshes }).toEqual({ historyRefreshes: 0, liveRefreshes: 4 });
+    historyActive = true;
+    controller.reload(latest);
+    expect({ historyRefreshes, liveRefreshes }).toEqual({ historyRefreshes: 1, liveRefreshes: 4 });
+  });
+
   test('keeps the visible ledger read-only and attached to live plus historical reads', async () => {
     const [panel, source, history] = await Promise.all([
       Bun.file('frontend/packages/ui/src/entity-workspace-activity-panel.tsx').text(),
@@ -302,6 +328,7 @@ describe('React Entity persisted activity ledger', () => {
     expect(panel).toContain('data-testid="entity-activity-newer"');
     expect(panel).toContain('data-testid="entity-activity-search"');
     expect(panel).toContain('data-testid="entity-activity-clear-filters"');
+    expect(panel).toContain('data-testid="entity-activity-refresh"');
     expect(panel).toContain('data-testid={`entity-activity-kind-${kind}`}');
     expect(panel).toContain('data-testid={`entity-activity-type-${type}`}');
     expect(source).toContain('client.readActivity(activityQuery)');
@@ -310,6 +337,7 @@ describe('React Entity persisted activity ledger', () => {
     expect(source).toContain('readonly selectActivityKind');
     expect(source).toContain('readonly selectActivitySearch');
     expect(source).toContain('readonly clearActivityFilters');
+    expect(source).toContain('readonly refreshActivity');
     expect(source).toContain('readonly toggleActivityType');
     expect(history).toContain('input.client.readActivity(activityQuery)');
     expect([panel, source, history].join('\n')).not.toContain('.send(');

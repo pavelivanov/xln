@@ -11,6 +11,7 @@ import './entity-workspace-activity-panel.css';
 type EntityWorkspaceActivityPanelProps = Readonly<{
   activity: EntityWorkspaceActivity;
   onClearFilters: () => void;
+  onRefresh: () => void;
   onSelectBeforeHeight: (beforeHeight: number | null) => void;
   onSelectKind: (kind: EntityWorkspaceActivityKind) => void;
   onSelectNewerPage: () => void;
@@ -45,7 +46,7 @@ const ACTIVITY_TYPE_OPTIONS = [
 const directionLabel = (direction: 'in' | 'out' | 'neutral'): string =>
   direction === 'in' ? 'Inbound' : direction === 'out' ? 'Outbound' : 'Observed';
 
-export function EntityWorkspaceActivityPanel({ activity, onClearFilters, onSelectBeforeHeight, onSelectKind, onSelectNewerPage, onSelectSearch, onToggleType }: EntityWorkspaceActivityPanelProps) {
+export function EntityWorkspaceActivityPanel({ activity, onClearFilters, onRefresh, onSelectBeforeHeight, onSelectKind, onSelectNewerPage, onSelectSearch, onToggleType }: EntityWorkspaceActivityPanelProps) {
   const selectedQuery = activity.status === 'selected' ? activity.query : '';
   const selectedEntityId = activity.status === 'selected' ? activity.entityId : '';
   const [draftQuery, setDraftQuery] = useState(selectedQuery);
@@ -63,11 +64,14 @@ export function EntityWorkspaceActivityPanel({ activity, onClearFilters, onSelec
           <span>Bilateral state / persisted evidence</span>
           <h2>Activity ledger</h2>
         </div>
-        <dl>
-          <div><dt>Through</dt><dd data-testid="entity-activity-through-height">h{activity.toHeight}</dd></div>
-          <div><dt>Scanned</dt><dd>{activity.scannedFrames}</dd></div>
-          <div><dt>Events</dt><dd data-testid="entity-activity-event-count">{activity.events.length}</dd></div>
-        </dl>
+        <div className="entity-workspace-activity-summary">
+          <dl>
+            <div><dt>Through</dt><dd data-testid="entity-activity-through-height">h{activity.toHeight}</dd></div>
+            <div><dt>Scanned</dt><dd>{activity.scannedFrames}</dd></div>
+            <div><dt>Events</dt><dd data-testid="entity-activity-event-count">{activity.events.length}</dd></div>
+          </dl>
+          <button data-testid="entity-activity-refresh" onClick={onRefresh} type="button">Refresh</button>
+        </div>
       </header>
       <p>Exact Runtime activity at or before the displayed committed frame. Adapter order is preserved.</p>
       <nav aria-label="Activity kind" className="entity-workspace-activity-kind">

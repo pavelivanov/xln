@@ -222,6 +222,10 @@ export class OpsEntityWorkspaceSource {
     this.activityController.select(this.snapshot.activity, beforeHeight);
   };
 
+  readonly refreshActivity = (): void => {
+    this.activityController.reload(this.snapshot.activity);
+  };
+
   readonly selectNewerActivityPage = (): void => {
     this.activityController.selectNewer(this.snapshot.activity);
   };
