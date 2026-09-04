@@ -1,10 +1,12 @@
 import {
   requireEntityWorkspaceActivityKind,
+  requireEntityWorkspaceActivityPageSize,
   requireEntityWorkspaceActivityFilterType,
   requireEntityWorkspaceActivitySearch,
   type EntityWorkspaceActivity,
   type EntityWorkspaceActivityFilterType,
   type EntityWorkspaceActivityKind,
+  type EntityWorkspaceActivityPageSize,
 } from '../../../packages/runtime-client/src/entity-workspace-activity';
 
 type ActivityControllerDependencies = Readonly<{
@@ -18,6 +20,7 @@ export class OpsEntityWorkspaceActivityController {
   private cursorIndex = 0;
   private cursorStack: readonly (number | null)[] = [null];
   private kind: EntityWorkspaceActivityKind = 'all';
+  private pageSize: EntityWorkspaceActivityPageSize = 8;
   private search = '';
   private types: readonly EntityWorkspaceActivityFilterType[] = [];
 
@@ -25,6 +28,7 @@ export class OpsEntityWorkspaceActivityController {
 
   readonly readBeforeHeight = (): number | null => this.beforeHeight;
   readonly readKind = (): EntityWorkspaceActivityKind => this.kind;
+  readonly readPageSize = (): EntityWorkspaceActivityPageSize => this.pageSize;
   readonly readSearch = (): string => this.search;
   readonly readTypes = (): readonly EntityWorkspaceActivityFilterType[] => this.types;
 
@@ -49,6 +53,7 @@ export class OpsEntityWorkspaceActivityController {
   readonly reset = (): void => {
     this.resetCursor();
     this.kind = 'all';
+    this.pageSize = 8;
     this.search = '';
     this.types = [];
   };
@@ -103,6 +108,20 @@ export class OpsEntityWorkspaceActivityController {
     const requestedKind = requireEntityWorkspaceActivityKind(kind);
     if (requestedKind === this.kind) return;
     this.kind = requestedKind;
+    this.resetCursor();
+    this.refresh();
+  };
+
+  readonly selectPageSize = (
+    activity: EntityWorkspaceActivity,
+    pageSize: EntityWorkspaceActivityPageSize,
+  ): void => {
+    if (activity.status !== 'selected') {
+      throw new Error('OPS_ENTITY_ACTIVITY_PAGE_SIZE_CONTEXT_REQUIRED');
+    }
+    const requestedPageSize = requireEntityWorkspaceActivityPageSize(pageSize);
+    if (requestedPageSize === this.pageSize) return;
+    this.pageSize = requestedPageSize;
     this.resetCursor();
     this.refresh();
   };

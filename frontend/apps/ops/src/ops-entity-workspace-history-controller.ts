@@ -2,6 +2,7 @@ import type { RuntimeAdapter } from '../../../../core/api/runtime-adapter/types'
 import type {
   EntityWorkspaceActivityFilterType,
   EntityWorkspaceActivityKind,
+  EntityWorkspaceActivityPageSize,
 } from '../../../packages/runtime-client/src/entity-workspace-activity';
 import {
   createEntityWorkspaceHistoryState,
@@ -19,6 +20,7 @@ type HistoryControllerDependencies = Readonly<{
   publish(snapshot: OpsEntityWorkspaceSourceSnapshot): void;
   readActivityBeforeHeight(): number | null;
   readActivityKind(): EntityWorkspaceActivityKind;
+  readActivityPageSize(): EntityWorkspaceActivityPageSize;
   readActivitySearch(): string;
   readActivityTypes(): readonly EntityWorkspaceActivityFilterType[];
   readAccountsPage(): number;
@@ -102,6 +104,7 @@ export class OpsEntityWorkspaceHistoryController {
         entityId: context.entityId, latestHeight, requestedHeight, runtimeId: adapter.runtimeId,
         ...(activityBeforeHeight === null ? {} : { activityBeforeHeight }),
         activityKind: this.dependencies.readActivityKind(),
+        activityPageSize: this.dependencies.readActivityPageSize(),
         activitySearch: this.dependencies.readActivitySearch(),
         activityTypes: this.dependencies.readActivityTypes(),
       });
