@@ -93,12 +93,14 @@ describe('Entity workspace consensus evidence', () => {
       .toThrow('ENTITY_WORKSPACE_CONSENSUS_FINALIZED_J_HEIGHT_INVALID');
   });
 
-  test('renders exact Entity frame coordinates without local consensus state', async () => {
+  test('renders exact committed frame coordinates without local consensus state', async () => {
     const panel = await Bun.file('frontend/packages/ui/src/entity-workspace-consensus-panel.tsx').text();
     expect(panel).toContain('data-testid="consensus-entity-height"');
-    expect(panel).toContain('data-testid="consensus-entity-timestamp"');
+    expect(panel).toContain('testId="consensus-entity-timestamp"');
     expect(panel).toContain('data-testid="consensus-finalized-j-height"');
     expect(panel).toContain('data-testid="consensus-entity-frame-hash"');
+    expect(panel).toContain('testId="consensus-account-head-timestamp"');
+    expect(panel).toContain('formatEntityWorkspaceTimestamp(timestamp)');
     expect(panel).not.toContain('pendingFrameHash');
     expect(panel).not.toContain('leaderCertificateVoteCount');
   });
