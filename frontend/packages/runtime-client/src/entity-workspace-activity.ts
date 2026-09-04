@@ -100,6 +100,14 @@ const optionalId = (value: unknown, code: string): string | null => {
   return nonemptyText(value, code).toLowerCase();
 };
 
+const requireTimestamp = (value: unknown): number => {
+  const timestamp = integer(value, 'ENTITY_WORKSPACE_ACTIVITY_EVENT_TIMESTAMP_INVALID');
+  if (timestamp > 8_640_000_000_000_000) {
+    throw new Error('ENTITY_WORKSPACE_ACTIVITY_EVENT_TIMESTAMP_INVALID');
+  }
+  return timestamp;
+};
+
 const projectEvent = (
   value: unknown,
   context: Extract<EntityWorkspaceContext, { status: 'selected' }>,
@@ -146,7 +154,7 @@ const projectEvent = (
   return {
     id: nonemptyText(event['id'], 'ENTITY_WORKSPACE_ACTIVITY_EVENT_ID_INVALID'),
     height,
-    timestamp: integer(event['timestamp'], 'ENTITY_WORKSPACE_ACTIVITY_EVENT_TIMESTAMP_INVALID'),
+    timestamp: requireTimestamp(event['timestamp']),
     kind,
     type,
     source: enumValue(event['source'], ACTIVITY_SOURCES, 'ENTITY_WORKSPACE_ACTIVITY_EVENT_SOURCE_INVALID'),

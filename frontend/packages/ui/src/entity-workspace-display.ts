@@ -17,3 +17,20 @@ export function shortHash(value: unknown): string {
   if (!text) return '-';
   return formatAddress(text);
 }
+
+export type EntityWorkspaceTimestamp = Readonly<{
+  dateTime: string;
+  label: string;
+}>;
+
+export function formatEntityWorkspaceTimestamp(timestamp: number): EntityWorkspaceTimestamp {
+  if (!Number.isSafeInteger(timestamp) || timestamp < 0 || timestamp > 8_640_000_000_000_000) {
+    throw new Error('ENTITY_WORKSPACE_TIMESTAMP_INVALID');
+  }
+  const dateTime = new Date(timestamp).toISOString();
+  const separator = dateTime.indexOf('T');
+  return {
+    dateTime,
+    label: `${dateTime.slice(0, separator)} ${dateTime.slice(separator + 1, -5)} UTC`,
+  };
+}

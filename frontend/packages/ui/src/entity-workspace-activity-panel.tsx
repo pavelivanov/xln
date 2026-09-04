@@ -10,7 +10,7 @@ import {
   ENTITY_WORKSPACE_ACTIVITY_PAGE_SIZES,
   requireEntityWorkspaceActivityPageSize,
 } from '../../runtime-client/src/entity-workspace-activity';
-import { formatAddress } from './entity-workspace-display';
+import { formatAddress, formatEntityWorkspaceTimestamp } from './entity-workspace-display';
 import './entity-workspace-activity-panel.css';
 
 type EntityWorkspaceActivityPanelProps = Readonly<{
@@ -51,6 +51,17 @@ const ACTIVITY_TYPE_OPTIONS = [
 
 const directionLabel = (direction: 'in' | 'out' | 'neutral'): string =>
   direction === 'in' ? 'Inbound' : direction === 'out' ? 'Outbound' : 'Observed';
+
+function ActivityTimestamp({ timestamp }: Readonly<{ timestamp: number }>) {
+  const formatted = formatEntityWorkspaceTimestamp(timestamp);
+  return (
+    <time
+      data-testid="entity-activity-timestamp"
+      dateTime={formatted.dateTime}
+      title={`Runtime timestamp ${timestamp}`}
+    >{formatted.label}</time>
+  );
+}
 
 export function EntityWorkspaceActivityPanel({ activity, onClearFilters, onRefresh, onSelectBeforeHeight, onSelectKind, onSelectNewerPage, onSelectPageSize, onSelectSearch, onToggleType }: EntityWorkspaceActivityPanelProps) {
   const selectedQuery = activity.status === 'selected' ? activity.query : '';
@@ -152,7 +163,7 @@ export function EntityWorkspaceActivityPanel({ activity, onClearFilters, onRefre
                 </div>
                 <div className="entity-workspace-activity-facts">
                   <b>{directionLabel(event.direction)}</b>
-                  <code>h{event.height} / t{event.timestamp}</code>
+                  <span>h{event.height} / <ActivityTimestamp timestamp={event.timestamp} /></span>
                   <em>{event.kind} · {event.type} · {event.status}</em>
                 </div>
               </li>

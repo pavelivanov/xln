@@ -292,6 +292,10 @@ test('React Entity workspace reads selected context from a real H1 Runtime', { t
       await expect(activityThrough).toHaveText(/^h\d+$/);
       await expect(candidatePage.getByTestId('entity-activity-event-count')).toHaveText(/^\d+$/);
       await expect(activity.getByText('Adapter order is preserved', { exact: false })).toBeVisible();
+      const firstActivityTimestamp = candidatePage.getByTestId('entity-activity-timestamp').first();
+      await expect(firstActivityTimestamp).toHaveText(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} UTC$/);
+      await expect(firstActivityTimestamp).toHaveAttribute('datetime', /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/);
+      await expect(firstActivityTimestamp).toHaveAttribute('title', /^Runtime timestamp \d+$/);
       const activityCount = candidatePage.getByTestId('entity-activity-event-count');
       const activityPageSize = candidatePage.getByTestId('entity-activity-page-size');
       await expect(activityPageSize).toHaveValue('8');
