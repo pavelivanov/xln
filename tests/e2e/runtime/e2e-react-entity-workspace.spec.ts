@@ -290,6 +290,13 @@ test('React Entity workspace reads selected context from a real H1 Runtime', { t
       await expect(accountTimestamp).toHaveText(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} UTC$/);
       await expect(accountTimestamp).toHaveAttribute('datetime', /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/);
       await expect(accountTimestamp).toHaveAttribute('title', /^Runtime timestamp \d+$/);
+      await expect(firstCommitment.getByTestId('account-protocol-chain')).toHaveText(/^\d+$/);
+      await expect(firstCommitment.getByTestId('account-protocol-finalized-j-height')).toHaveText(/^\d+$/);
+      await expect(firstCommitment.getByTestId('account-protocol-j-nonce')).toHaveText(/^\d+$/);
+      await expect(firstCommitment.getByTestId('account-protocol-depository')).toHaveAttribute('title', /^\S+$/);
+      const responseWindows = firstCommitment.getByTestId('account-protocol-response-windows');
+      await expect(responseWindows).toHaveAttribute('data-left-seconds', /^\d+$/);
+      await expect(responseWindows).toHaveAttribute('data-right-seconds', /^\d+$/);
       const activity = candidatePage.getByTestId('entity-activity-ledger');
       await expect(activity).toBeVisible();
       const activityThrough = candidatePage.getByTestId('entity-activity-through-height');

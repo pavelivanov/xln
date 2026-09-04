@@ -11,7 +11,14 @@ const frame = {
     core: { entityId: '0xaaaa' },
     accounts: {
       items: [{
-        state: { leftEntity: '0xaaaa', rightEntity: '0xbbbb' },
+        state: {
+          leftEntity: '0xaaaa',
+          rightEntity: '0xbbbb',
+          domain: { chainId: 31_337, depositoryAddress: '0xdepository' },
+          lastFinalizedJHeight: 9,
+          jNonce: 4,
+          disputeConfig: { leftResponseSeconds: 3_600, rightResponseSeconds: 86_400 },
+        },
         currentFrame: {
           height: 12,
           timestamp: 1_700_000_012,
@@ -31,15 +38,21 @@ const frame = {
 };
 
 describe('React Entity Account commitment evidence', () => {
-  test('projects the exact bounded Account frame header without financial derivation', () => {
+  test('projects exact bounded Account commitment and protocol evidence without financial derivation', () => {
     const context = projectEntityWorkspaceContext({ runtimeId: 'runtime-a', frame });
     expect(projectEntityWorkspaceAccounts({ context, frame })).toMatchObject({
       status: 'selected',
       items: [{
         counterpartyId: '0xbbbb',
+        chainId: 31_337,
+        depositoryAddress: '0xdepository',
         frameHeight: 12,
         frameTimestamp: 1_700_000_012,
         jurisdictionHeight: 11,
+        jurisdictionNonce: 4,
+        lastFinalizedJurisdictionHeight: 9,
+        leftResponseSeconds: 3_600,
+        rightResponseSeconds: 86_400,
         transactionCount: 2,
         previousFrameHash: '0xprevious',
         accountStateRoot: '0xroot',
@@ -53,6 +66,8 @@ describe('React Entity Account commitment evidence', () => {
     expect(panel).toContain('data-testid="account-commitment"');
     expect(panel).toContain('Account state root');
     expect(panel).toContain('Previous frame');
+    expect(panel).toContain('Response windows');
+    expect(panel).toContain('Depository');
     expect(panel).toContain('Exact committed frame evidence');
     expect(panel).not.toContain('.send(');
     expect(panel).not.toContain('deriveDelta');

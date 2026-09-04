@@ -5,10 +5,16 @@ import {
 import type { EntityWorkspaceContext } from './entity-workspace-context';
 
 export type EntityWorkspaceAccountItem = Readonly<{
+  chainId: number;
   counterpartyId: string;
+  depositoryAddress: string;
   frameHeight: number;
   frameTimestamp: number;
   jurisdictionHeight: number;
+  jurisdictionNonce: number;
+  lastFinalizedJurisdictionHeight: number;
+  leftResponseSeconds: number;
+  rightResponseSeconds: number;
   transactionCount: number;
   previousFrameHash: string;
   accountStateRoot: string;
@@ -81,7 +87,16 @@ const frameTransactionCount = (value: unknown): number => {
 
 const accountFrameEvidence = (
   frame: Record<string, unknown>,
-): Omit<EntityWorkspaceAccountItem, 'counterpartyId'> => ({
+): Pick<
+  EntityWorkspaceAccountItem,
+  | 'frameHeight'
+  | 'frameTimestamp'
+  | 'jurisdictionHeight'
+  | 'transactionCount'
+  | 'previousFrameHash'
+  | 'accountStateRoot'
+  | 'stateHash'
+> => ({
   frameHeight: nonnegativeInteger(
     frame['height'],
     'ENTITY_WORKSPACE_ACCOUNT_FRAME_HEIGHT_INVALID',
@@ -100,6 +115,51 @@ const accountFrameEvidence = (
   stateHash: requiredText(frame['stateHash'], 'ENTITY_WORKSPACE_ACCOUNT_STATE_HASH_INVALID'),
 });
 
+const accountDomainEvidence = (
+  state: Record<string, unknown>,
+): Pick<EntityWorkspaceAccountItem, 'chainId' | 'depositoryAddress'> => {
+  const domain = requireUnknownRecord(state['domain'], 'ENTITY_WORKSPACE_ACCOUNT_DOMAIN_INVALID');
+  return {
+    chainId: positiveInteger(domain['chainId'], 'ENTITY_WORKSPACE_ACCOUNT_CHAIN_ID_INVALID'),
+    depositoryAddress: requiredText(
+      domain['depositoryAddress'],
+      'ENTITY_WORKSPACE_ACCOUNT_DEPOSITORY_INVALID',
+    ),
+  };
+};
+
+const accountJurisdictionEvidence = (
+  state: Record<string, unknown>,
+): Pick<EntityWorkspaceAccountItem, 'jurisdictionNonce' | 'lastFinalizedJurisdictionHeight'> => ({
+  jurisdictionNonce: nonnegativeInteger(
+    state['jNonce'],
+    'ENTITY_WORKSPACE_ACCOUNT_JURISDICTION_NONCE_INVALID',
+  ),
+  lastFinalizedJurisdictionHeight: nonnegativeInteger(
+    state['lastFinalizedJHeight'],
+    'ENTITY_WORKSPACE_ACCOUNT_FINALIZED_J_HEIGHT_INVALID',
+  ),
+});
+
+const accountDisputeEvidence = (
+  state: Record<string, unknown>,
+): Pick<EntityWorkspaceAccountItem, 'leftResponseSeconds' | 'rightResponseSeconds'> => {
+  const disputeConfig = requireUnknownRecord(
+    state['disputeConfig'],
+    'ENTITY_WORKSPACE_ACCOUNT_DISPUTE_CONFIG_INVALID',
+  );
+  return {
+    leftResponseSeconds: nonnegativeInteger(
+      disputeConfig['leftResponseSeconds'],
+      'ENTITY_WORKSPACE_ACCOUNT_LEFT_RESPONSE_SECONDS_INVALID',
+    ),
+    rightResponseSeconds: nonnegativeInteger(
+      disputeConfig['rightResponseSeconds'],
+      'ENTITY_WORKSPACE_ACCOUNT_RIGHT_RESPONSE_SECONDS_INVALID',
+    ),
+  };
+};
+
 const accountItem = (
   value: unknown,
   entityId: string,
@@ -117,6 +177,9 @@ const accountItem = (
   );
   return {
     counterpartyId: leftEntity === entityId ? rightEntity : leftEntity,
+    ...accountDomainEvidence(state),
+    ...accountJurisdictionEvidence(state),
+    ...accountDisputeEvidence(state),
     ...accountFrameEvidence(currentFrame),
   };
 };
