@@ -3538,10 +3538,50 @@ production function sizing passes 1,047 files, diff hygiene is clean, and
 file-size checking reaches only the existing out-of-scope `core/qa/report.ts`
 3001/3000 violation.
 
+The following command-bearing Settings slice ports the canonical public
+Entity-profile update into React without introducing a second transaction
+shape. A shared Runtime-client builder now owns exact `profile-update`
+normalization and both the retained Svelte form and React command controller
+consume it. React requires live mode, the projected Entity signer, a positive
+remote command sequence, and the memory-only matching owner-vault signature;
+an admin read capability alone remains insufficient. Submission is not called
+successful until the selected Runtime publishes at least the accepted height
+plus one and the exact committed profile is projected. The editor stays
+mounted during that committed read so saving, committed, and visible failure
+states cannot disappear across refresh.
+
+The isolated Runtime fixture now supports the ops surface with a real matching
+mnemonic and full capability. The final ops matrix passes 33 / 33 in 32.9
+seconds across 390x844, 1366x900, and 1920x1080; all three committed-profile
+screenshots were inspected with visible success, contained fields, responsive
+stacking, no console/page errors, and no horizontal overflow. Focused profile,
+Runtime-read, workspace, capability, ownership, and parity coverage passes
+47 / 47 with 859 expectations; the changed process-spec test adds one pass and
+19 expectations. The all-surface React-local gate checks 701 files with zero
+unsafe findings. All four production surfaces build with 401 / 35 / 1,860 /
+1,652 transformed modules; the ops workspace is 47.49 kB / 11.74 kB gzip and
+its lazy owner-binding chunk is 103.34 kB / 42.62 kB gzip. The canonical
+frontend check reports zero errors/warnings while transforming 4,682 SSR plus
+6,433 client modules.
+
+The 225-file frontend suite reports 1,348 passes, the unchanged 16-failure plus
+one-error repository baseline, and 7,779 expectations across 1,364 tests; no
+slice-owned test fails. Root evidence passes 26 / 26 deterministic tests with
+100,156 expectations. A shared Hardhat compiler-cache mutex stopped the first
+artifact attempt; the required focused retry compiled 28 Solidity files,
+published 92 TypeChain files, and confirmed immutable metadata parity for four
+contracts. All ten soundchecks pass before the established missing-`cargo`
+`rscore:fmt` stop. Frozen core remains
+`0x4eccf4492e5d085b24162f86d327e003c36b7e2a90ad527db1653fde391946a7`,
+production function sizing passes 1,047 files, and file-size checking reaches
+only the known out-of-scope `core/qa/report.ts` 3001/3000 violation.
+
 **Current checkpoint:** all retained routes have React application owners;
 wallet parity is complete. `/embed` is the sole partial implementation/browser
-route, and its authorized Entity workspace is the sole remaining WP9
-implementation gap before WP10; display-theme, exact Time Machine, and shared
+route, and remaining Account, Ownership, and Settings command parity is the
+sole WP9 implementation gap before WP10. Public Entity-profile updates now use
+the authenticated selected-Runtime owner lane and exact committed-frame
+observation; display-theme, exact Time Machine, and shared
 xln-guide preference, exact Account commitment evidence with deterministic UTC
 timestamps and exact committed Account protocol context, exact committed Entity
 frame context plus deterministic committed Account-head timestamps in

@@ -1,0 +1,32 @@
+.entity-workspace-profile-editor { border-top: 1px solid var(--entity-line); }
+.entity-workspace-profile-editor > header,
+.entity-workspace-profile-editor > footer { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 1rem 1.35rem; }
+.entity-workspace-profile-editor > header { border-bottom: 1px solid var(--entity-line); }
+.entity-workspace-profile-editor > header strong { display: block; margin-top: 0.35rem; color: var(--theme-text-primary, #d8d5ca); font-size: 0.78rem; }
+.entity-workspace-profile-editor > header > span { color: var(--entity-accent-soft); font: 600 0.56rem/1 "SFMono-Regular", Consolas, monospace; letter-spacing: 0.08em; text-transform: uppercase; }
+.profile-editor-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.profile-editor-fields label { display: grid; gap: 0.5rem; min-width: 0; padding: 0.9rem 1.35rem; border-right: 1px solid var(--entity-line); border-bottom: 1px solid var(--entity-line); }
+.profile-editor-fields label:nth-child(2n),
+.profile-editor-fields .profile-editor-wide { border-right: 0; }
+.profile-editor-fields .profile-editor-wide { grid-column: 1 / -1; }
+.profile-editor-fields label > span { color: var(--theme-text-muted, #666761); font: 0.58rem/1 "SFMono-Regular", Consolas, monospace; letter-spacing: 0.08em; text-transform: uppercase; }
+.profile-editor-fields input,
+.profile-editor-fields textarea { width: 100%; min-width: 0; border: 0; border-bottom: 1px solid color-mix(in srgb, var(--entity-accent) 28%, var(--entity-line)); border-radius: 0; outline: 0; background: transparent; color: var(--theme-text-primary, #d8d5ca); font: 0.72rem/1.5 "SFMono-Regular", Consolas, monospace; padding: 0.35rem 0; resize: vertical; }
+.profile-editor-fields input:focus,
+.profile-editor-fields textarea:focus { border-bottom-color: var(--entity-accent); }
+.profile-editor-fields input:disabled,
+.profile-editor-fields textarea:disabled { cursor: not-allowed; opacity: 0.55; }
+.entity-workspace-profile-editor > footer { align-items: end; }
+.entity-workspace-profile-editor > footer p { max-width: 23rem; margin: 0; color: var(--theme-text-muted, #73726b); font-size: 0.66rem; line-height: 1.45; }
+.entity-workspace-profile-editor > footer p[data-status="error"] { color: var(--theme-danger, #fb7185); }
+.entity-workspace-profile-editor > footer p[data-status="saved"] { color: var(--entity-accent-soft); }
+.entity-workspace-profile-editor button { flex: 0 0 auto; border: 1px solid color-mix(in srgb, var(--entity-accent) 45%, transparent); border-radius: 0; background: color-mix(in srgb, var(--entity-accent) 10%, transparent); color: var(--entity-accent-soft); font: 650 0.6rem/1 "SFMono-Regular", Consolas, monospace; letter-spacing: 0.06em; padding: 0.7rem 0.85rem; text-transform: uppercase; }
+.entity-workspace-profile-editor button:disabled { cursor: not-allowed; opacity: 0.45; }
+
+@media (max-width: 520px) {
+  .profile-editor-fields { grid-template-columns: 1fr; }
+  .profile-editor-fields label,
+  .profile-editor-fields .profile-editor-wide { grid-column: auto; border-right: 0; }
+  .entity-workspace-profile-editor > footer { align-items: stretch; flex-direction: column; }
+  .entity-workspace-profile-editor button { width: 100%; }
+}

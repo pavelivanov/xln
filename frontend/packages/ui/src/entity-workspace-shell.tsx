@@ -19,6 +19,7 @@ import type { EntityWorkspaceConsensusEvidence } from '../../runtime-client/src/
 import type { EntityWorkspaceHubPolicy } from '../../runtime-client/src/entity-workspace-hub-policy';
 import type { EntityWorkspaceOwnership } from '../../runtime-client/src/entity-workspace-ownership';
 import type { EntityWorkspaceProfile } from '../../runtime-client/src/entity-workspace-profile';
+import type { EntityWorkspaceProfileDraft } from '../../runtime-client/src/entity-workspace-profile-update';
 import type { EntityWorkspaceReserves } from '../../runtime-client/src/entity-workspace-reserves';
 import type { EntityWorkspaceTimeMachineState } from '../../runtime-client/src/entity-workspace-time-machine';
 import type { ThemeName } from './theme-model';
@@ -60,7 +61,7 @@ const SECTION_COPY: Readonly<Record<ViewTab, SectionCopy>> = {
     eyebrow: 'Configuration',
     title: 'Settings',
     summary: 'Wallet, consensus, recovery, display, network, and data controls stay explicit.',
-    nextBoundary: 'Profile edits and all Settings commands remain on the canonical workspace.',
+    nextBoundary: 'Profile updates use the selected Runtime owner lane; remaining Settings commands stay on the canonical workspace.',
   },
 };
 const contextEntityLabel = (context: EntityWorkspaceContext): string =>
@@ -173,6 +174,7 @@ type EntityWorkspaceStageWithOwnershipProps = EntityWorkspaceStageProps & Readon
   onLoadOlderActivity: () => void;
   onRefreshActivity: () => void;
   onSelectTheme: (theme: ThemeName) => void;
+  onSaveProfile: (draft: EntityWorkspaceProfileDraft) => Promise<void>;
   onSelectActivityBeforeHeight: (beforeHeight: number | null) => void;
   onSelectActivityKind: (kind: EntityWorkspaceActivityKind) => void;
   onSelectActivityMode: (mode: EntityWorkspaceActivityMode) => void;
@@ -202,7 +204,7 @@ const readFooterLabel = (
   return 'Unavailable — no remote Runtime selected';
 };
 
-function EntityWorkspaceStage({ activity, accounts, activeTab, consensus, context, displayIssue, displayPreferences, hubPolicy, onApplyActivityTimeframe, onClearActivityFilters, onLoadOlderActivity, onRefresh, onRefreshActivity, onSelectAccountsPage, onSelectActivityBeforeHeight, onSelectActivityKind, onSelectActivityMode, onSelectActivityPageSize, onSelectActivitySearch, onSelectNewerActivityPage, onSelectTheme, onToggleActivityType, onToggleTimeMachine, onToggleXlnGuide, ownership, profile, readState, reserves, settingsSubview, timeMachine }: EntityWorkspaceStageWithOwnershipProps) {
+function EntityWorkspaceStage({ activity, accounts, activeTab, consensus, context, displayIssue, displayPreferences, hubPolicy, onApplyActivityTimeframe, onClearActivityFilters, onLoadOlderActivity, onRefresh, onRefreshActivity, onSaveProfile, onSelectAccountsPage, onSelectActivityBeforeHeight, onSelectActivityKind, onSelectActivityMode, onSelectActivityPageSize, onSelectActivitySearch, onSelectNewerActivityPage, onSelectTheme, onToggleActivityType, onToggleTimeMachine, onToggleXlnGuide, ownership, profile, readState, reserves, settingsSubview, timeMachine }: EntityWorkspaceStageWithOwnershipProps) {
   const copy = SECTION_COPY[activeTab];
   const showsActivity = readState.status === 'ready' && context.status === 'selected' && activeTab === 'accounts';
   return (
@@ -220,14 +222,15 @@ function EntityWorkspaceStage({ activity, accounts, activeTab, consensus, contex
           ? <EntityWorkspaceAccountsPanel accounts={accounts} onSelectPage={onSelectAccountsPage} />
           : readState.status === 'ready' && context.status === 'selected' && activeTab === 'ownership'
           ? <OwnershipProjection ownership={ownership} />
-          : readState.status === 'ready' && context.status === 'selected' && activeTab === 'settings'
+          : (readState.status === 'ready' || readState.status === 'loading')
+            && context.status === 'selected' && activeTab === 'settings'
             ? <EntityWorkspaceSettingsStage settingsSubview={settingsSubview}>
                 {settingsSubview === 'consensus'
                   ? <EntityWorkspaceConsensusPanel evidence={consensus} />
                   : settingsSubview === 'display'
                     ? <EntityWorkspaceDisplayPanel issue={displayIssue} onSelectTheme={onSelectTheme} onToggleTimeMachine={onToggleTimeMachine} onToggleXlnGuide={onToggleXlnGuide} preferences={displayPreferences} />
                     : settingsSubview === 'wallet' || settingsSubview === 'entity'
-                      ? <EntityWorkspaceProfilePanel context={context} hubPolicy={hubPolicy} profile={profile} reserves={reserves} timeMachine={timeMachine} />
+                      ? <EntityWorkspaceProfilePanel context={context} hubPolicy={hubPolicy} onSaveProfile={onSaveProfile} profile={profile} reserves={reserves} timeMachine={timeMachine} />
                       : <ProjectionBoundary context={context} emptyMessage={copy.nextBoundary} onRefresh={onRefresh} readState={readState} />}
               </EntityWorkspaceSettingsStage>
           : <ProjectionBoundary
@@ -263,6 +266,7 @@ type EntityWorkspaceShellProps = Readonly<{
   onSelectActivitySearch: (search: string) => void;
   onToggleActivityType: (type: EntityWorkspaceActivityFilterType) => void;
   onSelectTheme: (theme: ThemeName) => void;
+  onSaveProfile: (draft: EntityWorkspaceProfileDraft) => Promise<void>;
   onToggleTimeMachine: (show: boolean) => void;
   onToggleXlnGuide: (show: boolean) => void;
   onSelectAccountsPage: (page: number) => void;
@@ -285,7 +289,7 @@ const readModeLabel = (
   return 'Read boundary';
 };
 
-export function EntityWorkspaceShell({ activity, accounts, activeTab, consensus, context, displayIssue, displayPreferences, hubPolicy, onApplyActivityTimeframe, onClearActivityFilters, onLoadOlderActivity, onRefresh, onRefreshActivity, onSelectAccountsPage, onSelectActivityBeforeHeight, onSelectActivityKind, onSelectActivityMode, onSelectActivityPageSize, onSelectActivitySearch, onSelectNewerActivityPage, onSelectTheme, onToggleActivityType, onToggleTimeMachine, onToggleXlnGuide, ownership, profile, readState, reserves, settingsSubview, timeMachine }: EntityWorkspaceShellProps) {
+export function EntityWorkspaceShell({ activity, accounts, activeTab, consensus, context, displayIssue, displayPreferences, hubPolicy, onApplyActivityTimeframe, onClearActivityFilters, onLoadOlderActivity, onRefresh, onRefreshActivity, onSaveProfile, onSelectAccountsPage, onSelectActivityBeforeHeight, onSelectActivityKind, onSelectActivityMode, onSelectActivityPageSize, onSelectActivitySearch, onSelectNewerActivityPage, onSelectTheme, onToggleActivityType, onToggleTimeMachine, onToggleXlnGuide, ownership, profile, readState, reserves, settingsSubview, timeMachine }: EntityWorkspaceShellProps) {
   return (
     <section
       className="entity-workspace"
@@ -333,6 +337,7 @@ export function EntityWorkspaceShell({ activity, accounts, activeTab, consensus,
         onLoadOlderActivity={onLoadOlderActivity}
         onRefresh={onRefresh}
         onRefreshActivity={onRefreshActivity}
+        onSaveProfile={onSaveProfile}
         onSelectAccountsPage={onSelectAccountsPage}
         onSelectActivityBeforeHeight={onSelectActivityBeforeHeight}
         onSelectActivityKind={onSelectActivityKind}
