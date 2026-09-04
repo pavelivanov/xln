@@ -1,5 +1,6 @@
 import type { EntityWorkspaceActivityEvent } from '../../runtime-client/src/entity-workspace-activity';
 import { formatAddress, formatEntityWorkspaceTimestamp } from './entity-workspace-display';
+import { entityWorkspaceActivityTone } from './entity-workspace-activity-tone';
 
 type ActivityAmountEvidence = Readonly<{
   amount: string;
@@ -32,7 +33,15 @@ export function EntityWorkspaceActivityRow({ event, index }: Readonly<{
 }>) {
   const amountEvidence = activityAmountEvidence(event);
   return (
-    <li data-direction={event.direction} data-event-id={event.id} data-kind={event.kind} data-type={event.type}>
+    <li
+      data-direction={event.direction}
+      data-event-id={event.id}
+      data-kind={event.kind}
+      data-status={event.status}
+      data-testid="entity-activity-event"
+      data-tone={entityWorkspaceActivityTone(event)}
+      data-type={event.type}
+    >
       <span>{String(index + 1).padStart(2, '0')}</span>
       <div className="entity-workspace-activity-copy">
         <strong>{event.title}</strong>

@@ -3338,6 +3338,42 @@ production function sizing passes 1,047 files, diff hygiene is clean, and
 file-size checking reaches only the existing out-of-scope `core/qa/report.ts`
 3001/3000 violation.
 
+The following Activity presentation slice restores the legacy event-tone
+precedence from fields already validated by the React adapter boundary. A
+small pure UI projection maps errors before on-chain evidence, then inbound
+and outbound payments, cross-j swaps, swaps, and neutral activity. Rows expose
+the exact derived tone alongside kind, type, direction, and status, while a
+restrained rail, row index, and direction label carry the visual distinction.
+No Runtime state, financial formula, token interpretation, or alternate
+activity source is introduced.
+
+Focused Activity coverage passes 18 / 18 tests with 158 expectations; the
+complete focused Entity workspace batch passes 71 / 71 with 533 expectations.
+The all-surface React-local gate scans 697 files with zero unsafe findings. All
+four React production surfaces build; site/docs/wallet/ops transform 401 / 35 /
+1,860 / 1,644 modules, and the ops workspace CSS/view/Runtime chunks are 40.26 /
+42.19 / 49.23 kB. The canonical frontend check reports zero errors/warnings
+while transforming 4,681 SSR plus 6,432 client modules. The complete ops
+candidate matrix passes 30 / 30 across the required viewports.
+
+The isolated real-H1 flow passes in 43.2 seconds (44.7 seconds total) with
+candidate `b092aebc1782`. It verifies every rendered row tone against its exact
+kind, type, direction, and status while completing the existing Activity and
+Time Machine flow. Strict browser health emits no console error. Dedicated
+mobile 390x844, laptop 1366x900, and wide 1920x1080 screenshots were inspected
+with legible semantic rails and labels, stable alignment, and no clipping or
+horizontal overflow. The 224-file frontend suite reports 1,340 passes, the
+unchanged 16-failure plus one-error repository baseline, and 7,713 expectations
+across 1,356 tests; no slice-owned test fails.
+
+Root evidence again passes 26 / 26 deterministic tests with 100,156
+expectations before the documented 60-second Hardhat compiler-cache mutex.
+Downstream soundcheck passes all ten gates; frozen core remains at
+`0x4eccf4492e5d085b24162f86d327e003c36b7e2a90ad527db1653fde391946a7`,
+production function sizing passes 1,047 files, diff hygiene is clean, and
+file-size checking reaches only the existing out-of-scope `core/qa/report.ts`
+3001/3000 violation.
+
 **Current checkpoint:** all retained routes have React application owners;
 wallet parity is complete. `/embed` is the sole partial implementation/browser
 route, and its authorized Entity workspace is the sole remaining WP9
@@ -3347,7 +3383,7 @@ with strict bidirectional pagination, kind filters, nine event-type filters,
 debounced search, atomic filter clearing, explicit Activity refresh,
 compact plus legacy Activity page sizing, deterministic UTC Activity timestamps,
 strict Activity timeframe filtering, bounded Infinite history, committed Hub-policy, and committed
-Activity amount/reference evidence, and Settings-summary parity are now complete.
+Activity amount/reference evidence, semantic Activity event tones, and Settings-summary parity are now complete.
 
 ### WP10 — Authorized canonical cutover
 
