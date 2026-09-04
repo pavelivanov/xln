@@ -1,8 +1,6 @@
 import type { RuntimeAdapter } from '../../../../core/api/runtime-adapter/types';
 import type {
-  EntityWorkspaceActivityFilterType,
-  EntityWorkspaceActivityKind,
-  EntityWorkspaceActivityPageSize,
+  EntityWorkspaceActivityQueryOptions,
 } from '../../../packages/runtime-client/src/entity-workspace-activity';
 import {
   createEntityWorkspaceHistoryState,
@@ -18,11 +16,7 @@ import type { OpsEntityWorkspaceSourceSnapshot } from './ops-entity-workspace-pr
 
 type HistoryControllerDependencies = Readonly<{
   publish(snapshot: OpsEntityWorkspaceSourceSnapshot): void;
-  readActivityBeforeHeight(): number | null;
-  readActivityKind(): EntityWorkspaceActivityKind;
-  readActivityPageSize(): EntityWorkspaceActivityPageSize;
-  readActivitySearch(): string;
-  readActivityTypes(): readonly EntityWorkspaceActivityFilterType[];
+  readActivityOptions(): EntityWorkspaceActivityQueryOptions;
   readAccountsPage(): number;
   readAdapter(): RuntimeAdapter | null;
   readClient(): OpsEntityWorkspaceHistoryReader | null;
@@ -98,15 +92,10 @@ export class OpsEntityWorkspaceHistoryController {
       timeMachine: createEntityWorkspaceHistoryState({ latestHeight, loading: true, selectedHeight: requestedHeight }),
     });
     try {
-      const activityBeforeHeight = this.dependencies.readActivityBeforeHeight();
       const projection = await readOpsEntityWorkspaceHistory({
+        activity: this.dependencies.readActivityOptions(),
         accountsPage: this.dependencies.readAccountsPage(), client,
         entityId: context.entityId, latestHeight, requestedHeight, runtimeId: adapter.runtimeId,
-        ...(activityBeforeHeight === null ? {} : { activityBeforeHeight }),
-        activityKind: this.dependencies.readActivityKind(),
-        activityPageSize: this.dependencies.readActivityPageSize(),
-        activitySearch: this.dependencies.readActivitySearch(),
-        activityTypes: this.dependencies.readActivityTypes(),
       });
       if (!this.isCurrent(request, requestedHeight, client)) return false;
       const next: OpsEntityWorkspaceSourceSnapshot = {

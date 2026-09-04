@@ -296,6 +296,10 @@ test('React Entity workspace reads selected context from a real H1 Runtime', { t
       await expect(firstActivityTimestamp).toHaveText(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} UTC$/);
       await expect(firstActivityTimestamp).toHaveAttribute('datetime', /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/);
       await expect(firstActivityTimestamp).toHaveAttribute('title', /^Runtime timestamp \d+$/);
+      const firstRuntimeTimestamp = Number(
+        (await firstActivityTimestamp.getAttribute('title'))?.replace('Runtime timestamp ', ''),
+      );
+      expect(firstRuntimeTimestamp).toBeGreaterThan(0);
       const activityCount = candidatePage.getByTestId('entity-activity-event-count');
       const activityPageSize = candidatePage.getByTestId('entity-activity-page-size');
       await expect(activityPageSize).toHaveValue('8');
@@ -350,6 +354,54 @@ test('React Entity workspace reads selected context from a real H1 Runtime', { t
       await expect(jEventActivity).toHaveAttribute('aria-pressed', 'false');
       await expect(activityCount).toHaveText(String(allActivityCount));
       await expect(clearActivityFilters).toHaveCount(0);
+      const pagedActivityMode = candidatePage.getByTestId('entity-activity-mode-paged');
+      const timeframeActivityMode = candidatePage.getByTestId('entity-activity-mode-timeframe');
+      await expect(pagedActivityMode).toHaveAttribute('aria-pressed', 'true');
+      await timeframeActivityMode.click();
+      await expect(timeframeActivityMode).toHaveAttribute('aria-pressed', 'true');
+      const timeframeValues = await candidatePage.evaluate((timestamp) => {
+        const format = (value: number): string => {
+          const date = new Date(value);
+          const twoDigits = (part: number): string => String(part).padStart(2, '0');
+          return `${date.getFullYear()}-${twoDigits(date.getMonth() + 1)}-${twoDigits(date.getDate())}`
+            + `T${twoDigits(date.getHours())}:${twoDigits(date.getMinutes())}`;
+        };
+        const fromTimestamp = Math.floor(timestamp / 60_000) * 60_000;
+        const toTimestamp = fromTimestamp + 60_000;
+        return {
+          fromTimestamp,
+          fromValue: format(fromTimestamp),
+          toTimestamp,
+          toValue: format(toTimestamp),
+        };
+      }, firstRuntimeTimestamp);
+      const activityFrom = candidatePage.getByTestId('entity-activity-from');
+      const activityTo = candidatePage.getByTestId('entity-activity-to');
+      const applyTimeframe = candidatePage.getByTestId('entity-activity-apply-timeframe');
+      await activityFrom.fill(timeframeValues.toValue);
+      await activityTo.fill(timeframeValues.fromValue);
+      await expect(applyTimeframe).toBeDisabled();
+      await expect(activity.getByRole('alert')).toHaveText('From must not be later than To.');
+      await activityFrom.fill(timeframeValues.fromValue);
+      await activityTo.fill(timeframeValues.toValue);
+      await expect(applyTimeframe).toBeEnabled();
+      await applyTimeframe.click();
+      await expect.poll(async () => Number(await activityCount.innerText())).toBeGreaterThan(0);
+      const filteredTimestamps = await candidatePage.getByTestId('entity-activity-timestamp')
+        .evaluateAll((times) => times.map((time) => Number(time.getAttribute('title')?.replace('Runtime timestamp ', ''))));
+      expect(filteredTimestamps.every((timestamp) => (
+        timestamp >= timeframeValues.fromTimestamp && timestamp <= timeframeValues.toTimestamp
+      ))).toBe(true);
+      await capturePageScreenshot(candidatePage, testInfo, `react-entity-workspace-activity-timeframe-${viewport.name}.png`);
+      await expect(clearActivityFilters).toBeVisible();
+      await clearActivityFilters.click();
+      await expect(activityFrom).toHaveValue('');
+      await expect(activityTo).toHaveValue('');
+      await expect(timeframeActivityMode).toHaveAttribute('aria-pressed', 'true');
+      await pagedActivityMode.click();
+      await expect(pagedActivityMode).toHaveAttribute('aria-pressed', 'true');
+      await expect(activityFrom).toHaveCount(0);
+      await expect(activityCount).toHaveText(String(allActivityCount));
       const latestActivityHeight = Number((await activityThrough.innerText()).replace(/^h/, ''));
       const earlierActivity = candidatePage.getByTestId('entity-activity-earlier');
       await expect(earlierActivity).toBeEnabled();
