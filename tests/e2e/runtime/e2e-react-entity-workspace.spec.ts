@@ -334,6 +334,29 @@ test('React Entity workspace reads selected context from a real H1 Runtime', { t
       await allActivity.click();
       await expect(allActivity).toHaveAttribute('aria-pressed', 'true');
       await expect(activityCount).toHaveText(String(allActivityCount));
+      const activityToneEvidence = await candidatePage.getByTestId('entity-activity-event').evaluateAll((rows) =>
+        rows.map((row) => ({
+          direction: row.getAttribute('data-direction'),
+          kind: row.getAttribute('data-kind'),
+          status: row.getAttribute('data-status'),
+          tone: row.getAttribute('data-tone'),
+          type: row.getAttribute('data-type'),
+        })),
+      );
+      expect(activityToneEvidence).toHaveLength(allActivityCount);
+      for (const evidence of activityToneEvidence) {
+        const expectedTone = evidence.status === 'error' || evidence.type === 'error'
+          ? 'danger'
+          : evidence.kind === 'onchain'
+            ? 'chain'
+            : evidence.type === 'payment'
+              ? evidence.direction === 'in' ? 'in' : 'out'
+              : evidence.type === 'cross_swap'
+                ? 'cross'
+                : evidence.type === 'swap' ? 'swap' : 'neutral';
+        expect(evidence.tone).toBe(expectedTone);
+      }
+      await capturePageScreenshot(candidatePage, testInfo, `react-entity-workspace-activity-tones-${viewport.name}.png`);
       const jEventActivity = candidatePage.getByTestId('entity-activity-type-j_event');
       await jEventActivity.click();
       await expect(jEventActivity).toHaveAttribute('aria-pressed', 'true');
