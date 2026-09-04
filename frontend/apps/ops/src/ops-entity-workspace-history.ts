@@ -7,6 +7,7 @@ import {
   buildEntityWorkspaceActivityQuery,
   type EntityWorkspaceActivityFilterType,
   type EntityWorkspaceActivityKind,
+  type EntityWorkspaceActivityPageSize,
 } from '../../../packages/runtime-client/src/entity-workspace-activity';
 import {
   assertTimeMachineHistorySelection,
@@ -29,6 +30,7 @@ export type OpsEntityWorkspaceHistoryReader = Readonly<{
 export async function readOpsEntityWorkspaceHistory(input: Readonly<{
   activityBeforeHeight?: number;
   activityKind?: EntityWorkspaceActivityKind;
+  activityPageSize?: EntityWorkspaceActivityPageSize;
   activitySearch?: string;
   activityTypes?: readonly EntityWorkspaceActivityFilterType[];
   accountsPage: number;
@@ -63,6 +65,7 @@ export async function readOpsEntityWorkspaceHistory(input: Readonly<{
     input.activityKind,
     input.activityTypes,
     input.activitySearch,
+    input.activityPageSize,
   );
   const activity = await input.client.readActivity(activityQuery);
   return projectOpsEntityWorkspaceActivityPage(
@@ -72,5 +75,6 @@ export async function readOpsEntityWorkspaceHistory(input: Readonly<{
     activityQuery.kind,
     input.activityTypes,
     input.activitySearch,
+    input.activityPageSize,
   );
 }

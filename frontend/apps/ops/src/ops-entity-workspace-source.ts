@@ -21,6 +21,7 @@ import {
   buildEntityWorkspaceActivityQuery,
   type EntityWorkspaceActivityFilterType,
   type EntityWorkspaceActivityKind,
+  type EntityWorkspaceActivityPageSize,
 } from '../../../packages/runtime-client/src/entity-workspace-activity';
 import { createEntityWorkspaceLiveState } from '../../../packages/runtime-client/src/entity-workspace-time-machine';
 import { OpsEntityWorkspaceActivityController } from './ops-entity-workspace-activity-controller';
@@ -56,6 +57,7 @@ const readEntityWorkspaceProjection = async (
   activityKind: EntityWorkspaceActivityKind = 'all',
   activityTypes: readonly EntityWorkspaceActivityFilterType[] = [],
   activitySearch: string = '',
+  activityPageSize: EntityWorkspaceActivityPageSize = 8,
 ): Promise<OpsEntityWorkspaceProjection> => {
   const projection = projectOpsEntityWorkspaceFrame(runtimeId, frame);
   if (projection.context.status === 'empty') return projection;
@@ -65,6 +67,7 @@ const readEntityWorkspaceProjection = async (
     activityKind,
     activityTypes,
     activitySearch,
+    activityPageSize,
   );
   const activity = await client.readActivity(activityQuery);
   return projectOpsEntityWorkspaceActivityPage(
@@ -74,6 +77,7 @@ const readEntityWorkspaceProjection = async (
     activityQuery.kind,
     activityTypes,
     activitySearch,
+    activityPageSize,
   );
 };
 
@@ -148,6 +152,7 @@ export class OpsEntityWorkspaceSource {
       publish: (snapshot) => this.publish(snapshot),
       readActivityBeforeHeight: () => this.activityController.readBeforeHeight(),
       readActivityKind: () => this.activityController.readKind(),
+      readActivityPageSize: () => this.activityController.readPageSize(),
       readActivitySearch: () => this.activityController.readSearch(),
       readActivityTypes: () => this.activityController.readTypes(),
       readAccountsPage: () => this.accountsPage,
@@ -234,6 +239,10 @@ export class OpsEntityWorkspaceSource {
     this.activityController.selectKind(this.snapshot.activity, kind);
   };
 
+  readonly selectActivityPageSize = (pageSize: EntityWorkspaceActivityPageSize): void => {
+    this.activityController.selectPageSize(this.snapshot.activity, pageSize);
+  };
+
   readonly toggleActivityType = (type: EntityWorkspaceActivityFilterType): void => {
     this.activityController.toggleType(this.snapshot.activity, type);
   };
@@ -294,6 +303,7 @@ export class OpsEntityWorkspaceSource {
           this.activityController.readKind(),
           this.activityController.readTypes(),
           this.activityController.readSearch(),
+          this.activityController.readPageSize(),
         );
       },
       {

@@ -58,6 +58,9 @@ describe('React Entity persisted activity ledger', () => {
       beforeHeight: 13, entityId: '0xaaaa', kind: 'all', limit: 8,
       q: 'Payment', scanLimit: 160,
     });
+    expect(buildEntityWorkspaceActivityQuery(context, 13, 'all', [], '', 40)).toEqual({
+      beforeHeight: 13, entityId: '0xaaaa', kind: 'all', limit: 40, scanLimit: 160,
+    });
     expect(() => buildEntityWorkspaceActivityQuery(context, 0))
       .toThrow('ENTITY_WORKSPACE_ACTIVITY_BEFORE_HEIGHT_INVALID');
     expect(() => buildEntityWorkspaceActivityQuery(context, 45))
@@ -70,12 +73,14 @@ describe('React Entity persisted activity ledger', () => {
       .toThrow('ENTITY_WORKSPACE_ACTIVITY_TYPES_INVALID');
     expect(() => buildEntityWorkspaceActivityQuery(context, 13, 'all', [], 7 as never))
       .toThrow('ENTITY_WORKSPACE_ACTIVITY_QUERY_INVALID');
+    expect(() => buildEntityWorkspaceActivityQuery(context, 13, 'all', [], '', 20 as never))
+      .toThrow('ENTITY_WORKSPACE_ACTIVITY_PAGE_SIZE_INVALID');
   });
 
   test('preserves adapter event order and exact persisted evidence', () => {
     expect(projectEntityWorkspaceActivity({ context, page: page() })).toEqual({
       status: 'selected', entityId: '0xaaaa', requestedBeforeHeight: 44,
-      isLatestPage: true, kind: 'all', query: '', types: [], latestHeight: 50,
+      isLatestPage: true, kind: 'all', pageSize: 8, query: '', types: [], latestHeight: 50,
       fromHeight: 42, toHeight: 44, scannedFrames: 3, nextBeforeHeight: 41,
       events: [
         {
@@ -289,6 +294,35 @@ describe('React Entity persisted activity ledger', () => {
       .toEqual({ beforeHeight: null, historyRefreshes: 2, liveRefreshes: 2 });
   });
 
+  test('owns the compact plus legacy page sizes and resets only the certified cursor', () => {
+    let historyActive = false;
+    let historyRefreshes = 0;
+    let liveRefreshes = 0;
+    const controller = new OpsEntityWorkspaceActivityController({
+      isHistoryActive: () => historyActive,
+      refreshHistory: () => { historyRefreshes += 1; },
+      refreshLive: () => { liveRefreshes += 1; },
+    });
+    const latest = projectEntityWorkspaceActivity({ context, page: page() });
+    controller.select(latest, 41);
+    controller.selectPageSize(latest, 40);
+    expect({ beforeHeight: controller.readBeforeHeight(), pageSize: controller.readPageSize() })
+      .toEqual({ beforeHeight: null, pageSize: 40 });
+    expect({ historyRefreshes, liveRefreshes }).toEqual({ historyRefreshes: 0, liveRefreshes: 2 });
+    controller.selectPageSize(latest, 40);
+    expect({ historyRefreshes, liveRefreshes }).toEqual({ historyRefreshes: 0, liveRefreshes: 2 });
+    expect(() => controller.selectPageSize(latest, 20 as never))
+      .toThrow('ENTITY_WORKSPACE_ACTIVITY_PAGE_SIZE_INVALID');
+    historyActive = true;
+    controller.selectPageSize(latest, 160);
+    expect({ historyRefreshes, liveRefreshes, pageSize: controller.readPageSize() })
+      .toEqual({ historyRefreshes: 1, liveRefreshes: 2, pageSize: 160 });
+    controller.resetPage();
+    expect(controller.readPageSize()).toBe(160);
+    controller.reset();
+    expect(controller.readPageSize()).toBe(8);
+  });
+
   test('refreshes only the active transport without changing Activity controls', () => {
     let historyActive = false;
     let historyRefreshes = 0;
@@ -329,6 +363,7 @@ describe('React Entity persisted activity ledger', () => {
     expect(panel).toContain('data-testid="entity-activity-search"');
     expect(panel).toContain('data-testid="entity-activity-clear-filters"');
     expect(panel).toContain('data-testid="entity-activity-refresh"');
+    expect(panel).toContain('data-testid="entity-activity-page-size"');
     expect(panel).toContain('data-testid={`entity-activity-kind-${kind}`}');
     expect(panel).toContain('data-testid={`entity-activity-type-${type}`}');
     expect(source).toContain('client.readActivity(activityQuery)');
@@ -338,8 +373,10 @@ describe('React Entity persisted activity ledger', () => {
     expect(source).toContain('readonly selectActivitySearch');
     expect(source).toContain('readonly clearActivityFilters');
     expect(source).toContain('readonly refreshActivity');
+    expect(source).toContain('readonly selectActivityPageSize');
     expect(source).toContain('readonly toggleActivityType');
     expect(history).toContain('input.client.readActivity(activityQuery)');
+    expect(history).toContain('input.activityPageSize');
     expect([panel, source, history].join('\n')).not.toContain('.send(');
   });
 });
