@@ -293,6 +293,19 @@ test('React Entity workspace reads selected context from a real H1 Runtime', { t
       await expect(candidatePage.getByTestId('entity-activity-event-count')).toHaveText(/^\d+$/);
       await expect(activity.getByText('Adapter order is preserved', { exact: false })).toBeVisible();
       const activityCount = candidatePage.getByTestId('entity-activity-event-count');
+      const activityPageSize = candidatePage.getByTestId('entity-activity-page-size');
+      await expect(activityPageSize).toHaveValue('8');
+      await activityPageSize.selectOption('40');
+      await expect(activityPageSize).toHaveValue('40');
+      await expect.poll(async () => Number(await activityCount.innerText())).toBeGreaterThan(8);
+      await expect.poll(async () => Number(await activityCount.innerText()) <= 40).toBe(true);
+      await expect.poll(() => activity.locator('ol').evaluate(
+        (list) => list.scrollHeight > list.clientHeight,
+      )).toBe(true);
+      await capturePageScreenshot(candidatePage, testInfo, `react-entity-workspace-activity-page-size-${viewport.name}.png`);
+      await activityPageSize.selectOption('8');
+      await expect(activityPageSize).toHaveValue('8');
+      await expect.poll(async () => Number(await activityCount.innerText()) <= 8).toBe(true);
       const allActivityCount = Number(await activityCount.innerText());
       const refreshActivity = candidatePage.getByTestId('entity-activity-refresh');
       await refreshActivity.click();

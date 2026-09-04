@@ -5,6 +5,7 @@ import {
   type EntityWorkspaceActivity,
   type EntityWorkspaceActivityFilterType,
   type EntityWorkspaceActivityKind,
+  type EntityWorkspaceActivityPageSize,
 } from '../../../packages/runtime-client/src/entity-workspace-activity';
 import {
   emptyEntityWorkspaceAccounts,
@@ -102,6 +103,7 @@ export const projectOpsEntityWorkspaceActivityPage = (
   kind?: EntityWorkspaceActivityKind,
   types?: readonly EntityWorkspaceActivityFilterType[],
   search?: string,
+  pageSize?: EntityWorkspaceActivityPageSize,
 ): OpsEntityWorkspaceProjection => ({
   ...projection,
   activity: projectEntityWorkspaceActivity({
@@ -111,6 +113,7 @@ export const projectOpsEntityWorkspaceActivityPage = (
     ...(kind === undefined ? {} : { kind }),
     ...(types === undefined ? {} : { types }),
     ...(search === undefined ? {} : { search }),
+    ...(pageSize === undefined ? {} : { pageSize }),
   }),
 });
 
