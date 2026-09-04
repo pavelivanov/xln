@@ -12,11 +12,10 @@ import {
   requireEntityWorkspaceActivityPageSize,
 } from '../../runtime-client/src/entity-workspace-activity';
 import {
-  formatAddress,
   formatEntityWorkspaceLocalDateTime,
-  formatEntityWorkspaceTimestamp,
   parseEntityWorkspaceLocalDateTime,
 } from './entity-workspace-display';
+import { EntityWorkspaceActivityRow } from './entity-workspace-activity-row';
 import './entity-workspace-activity-panel.css';
 
 type EntityWorkspaceActivityPanelProps = Readonly<{
@@ -57,20 +56,6 @@ const ACTIVITY_TYPE_OPTIONS = [
   type: EntityWorkspaceActivityFilterType;
   label: string;
 }>>;
-
-const directionLabel = (direction: 'in' | 'out' | 'neutral'): string =>
-  direction === 'in' ? 'Inbound' : direction === 'out' ? 'Outbound' : 'Observed';
-
-function ActivityTimestamp({ timestamp }: Readonly<{ timestamp: number }>) {
-  const formatted = formatEntityWorkspaceTimestamp(timestamp);
-  return (
-    <time
-      data-testid="entity-activity-timestamp"
-      dateTime={formatted.dateTime}
-      title={`Runtime timestamp ${timestamp}`}
-    >{formatted.label}</time>
-  );
-}
 
 export function EntityWorkspaceActivityPanel({ activity, onApplyTimeframe, onClearFilters, onLoadOlder, onRefresh, onSelectBeforeHeight, onSelectKind, onSelectMode, onSelectNewerPage, onSelectPageSize, onSelectSearch, onToggleType }: EntityWorkspaceActivityPanelProps) {
   const selectedQuery = activity.status === 'selected' ? activity.query : '';
@@ -231,22 +216,7 @@ export function EntityWorkspaceActivityPanel({ activity, onApplyTimeframe, onCle
         ? <div className="entity-workspace-activity-empty">No persisted activity in frames {activity.fromHeight}–{activity.toHeight}.</div>
         : <ol>
             {activity.events.map((event, index) => (
-              <li data-direction={event.direction} data-event-id={event.id} data-kind={event.kind} data-type={event.type} key={event.id}>
-                <span>{String(index + 1).padStart(2, '0')}</span>
-                <div className="entity-workspace-activity-copy">
-                  <strong>{event.title}</strong>
-                  <p>{event.subtitle}</p>
-                  <small>
-                    {event.counterpartyId ? `Peer ${formatAddress(event.counterpartyId)} · ` : ''}
-                    {event.source.replace('_', ' ')}
-                  </small>
-                </div>
-                <div className="entity-workspace-activity-facts">
-                  <b>{directionLabel(event.direction)}</b>
-                  <span>h{event.height} / <ActivityTimestamp timestamp={event.timestamp} /></span>
-                  <em>{event.kind} · {event.type} · {event.status}</em>
-                </div>
-              </li>
+              <EntityWorkspaceActivityRow event={event} index={index} key={event.id} />
             ))}
           </ol>}
       <footer>

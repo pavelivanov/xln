@@ -530,6 +530,7 @@ export const PLATFORM_INVENTORY = [
       'frontend/packages/ui/src/entity-workspace-time-machine.tsx',
       'frontend/packages/ui/src/entity-workspace-time-machine.css',
       'frontend/packages/ui/src/entity-workspace-activity-panel.tsx',
+      'frontend/packages/ui/src/entity-workspace-activity-row.tsx',
       'frontend/packages/ui/src/entity-workspace-activity-panel.css',
       'frontend/packages/ui/src/entity-workspace-consensus-panel.tsx',
       'frontend/packages/ui/src/entity-workspace-consensus-panel.css',
