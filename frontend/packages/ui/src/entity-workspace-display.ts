@@ -34,3 +34,29 @@ export function formatEntityWorkspaceTimestamp(timestamp: number): EntityWorkspa
     label: `${dateTime.slice(0, separator)} ${dateTime.slice(separator + 1, -5)} UTC`,
   };
 }
+
+const twoDigits = (value: number): string => String(value).padStart(2, '0');
+
+export function formatEntityWorkspaceLocalDateTime(timestamp: number | null): string {
+  if (timestamp === null) return '';
+  formatEntityWorkspaceTimestamp(timestamp);
+  const date = new Date(timestamp);
+  const year = date.getFullYear();
+  if (year < 1 || year > 9_999) throw new Error('ENTITY_WORKSPACE_LOCAL_TIMESTAMP_INVALID');
+  return [
+    `${String(year).padStart(4, '0')}-${twoDigits(date.getMonth() + 1)}-${twoDigits(date.getDate())}`,
+    `${twoDigits(date.getHours())}:${twoDigits(date.getMinutes())}`,
+  ].join('T');
+}
+
+export function parseEntityWorkspaceLocalDateTime(value: string): number | null {
+  if (value === '') return null;
+  if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(value)) {
+    throw new Error('ENTITY_WORKSPACE_LOCAL_TIMESTAMP_INVALID');
+  }
+  const timestamp = new Date(`${value}:00`).getTime();
+  if (!Number.isSafeInteger(timestamp) || formatEntityWorkspaceLocalDateTime(timestamp) !== value) {
+    throw new Error('ENTITY_WORKSPACE_LOCAL_TIMESTAMP_INVALID');
+  }
+  return timestamp;
+}

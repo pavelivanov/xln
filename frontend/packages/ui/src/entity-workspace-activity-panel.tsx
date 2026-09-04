@@ -4,21 +4,29 @@ import type {
   EntityWorkspaceActivity,
   EntityWorkspaceActivityFilterType,
   EntityWorkspaceActivityKind,
+  EntityWorkspaceActivityMode,
   EntityWorkspaceActivityPageSize,
 } from '../../runtime-client/src/entity-workspace-activity';
 import {
   ENTITY_WORKSPACE_ACTIVITY_PAGE_SIZES,
   requireEntityWorkspaceActivityPageSize,
 } from '../../runtime-client/src/entity-workspace-activity';
-import { formatAddress, formatEntityWorkspaceTimestamp } from './entity-workspace-display';
+import {
+  formatAddress,
+  formatEntityWorkspaceLocalDateTime,
+  formatEntityWorkspaceTimestamp,
+  parseEntityWorkspaceLocalDateTime,
+} from './entity-workspace-display';
 import './entity-workspace-activity-panel.css';
 
 type EntityWorkspaceActivityPanelProps = Readonly<{
   activity: EntityWorkspaceActivity;
+  onApplyTimeframe: (fromTimestamp: number | null, toTimestamp: number | null) => void;
   onClearFilters: () => void;
   onRefresh: () => void;
   onSelectBeforeHeight: (beforeHeight: number | null) => void;
   onSelectKind: (kind: EntityWorkspaceActivityKind) => void;
+  onSelectMode: (mode: EntityWorkspaceActivityMode) => void;
   onSelectNewerPage: () => void;
   onSelectPageSize: (pageSize: EntityWorkspaceActivityPageSize) => void;
   onSelectSearch: (search: string) => void;
@@ -63,17 +71,32 @@ function ActivityTimestamp({ timestamp }: Readonly<{ timestamp: number }>) {
   );
 }
 
-export function EntityWorkspaceActivityPanel({ activity, onClearFilters, onRefresh, onSelectBeforeHeight, onSelectKind, onSelectNewerPage, onSelectPageSize, onSelectSearch, onToggleType }: EntityWorkspaceActivityPanelProps) {
+export function EntityWorkspaceActivityPanel({ activity, onApplyTimeframe, onClearFilters, onRefresh, onSelectBeforeHeight, onSelectKind, onSelectMode, onSelectNewerPage, onSelectPageSize, onSelectSearch, onToggleType }: EntityWorkspaceActivityPanelProps) {
   const selectedQuery = activity.status === 'selected' ? activity.query : '';
   const selectedEntityId = activity.status === 'selected' ? activity.entityId : '';
   const [draftQuery, setDraftQuery] = useState(selectedQuery);
+  const selectedFrom = activity.status === 'selected'
+    ? formatEntityWorkspaceLocalDateTime(activity.fromTimestamp)
+    : '';
+  const selectedTo = activity.status === 'selected'
+    ? formatEntityWorkspaceLocalDateTime(activity.toTimestamp)
+    : '';
+  const [draftFrom, setDraftFrom] = useState(selectedFrom);
+  const [draftTo, setDraftTo] = useState(selectedTo);
   useEffect(() => setDraftQuery(selectedQuery), [selectedEntityId, selectedQuery]);
+  useEffect(() => {
+    setDraftFrom(selectedFrom);
+    setDraftTo(selectedTo);
+  }, [selectedEntityId, selectedFrom, selectedTo]);
   useEffect(() => {
     if (activity.status !== 'selected' || draftQuery.trim() === selectedQuery) return undefined;
     const timer = window.setTimeout(() => onSelectSearch(draftQuery), 250);
     return () => window.clearTimeout(timer);
   }, [activity.status, draftQuery, onSelectSearch, selectedQuery]);
   if (activity.status !== 'selected') return null;
+  const parsedFrom = parseEntityWorkspaceLocalDateTime(draftFrom);
+  const parsedTo = parseEntityWorkspaceLocalDateTime(draftTo);
+  const timeframeInvalid = parsedFrom !== null && parsedTo !== null && parsedFrom > parsedTo;
   return (
     <section className="entity-workspace-activity-panel" data-testid="entity-activity-ledger">
       <header>
@@ -128,6 +151,55 @@ export function EntityWorkspaceActivityPanel({ activity, onClearFilters, onRefre
           </select>
         </label>
       </div>
+      <div className="entity-workspace-activity-mode-row">
+        <nav aria-label="Activity mode" className="entity-workspace-activity-mode">
+          <button
+            aria-pressed={activity.mode === 'paged'}
+            data-testid="entity-activity-mode-paged"
+            onClick={() => onSelectMode('paged')}
+            type="button"
+          >Pagination</button>
+          <button
+            aria-pressed={activity.mode === 'timeframe'}
+            data-testid="entity-activity-mode-timeframe"
+            onClick={() => onSelectMode('timeframe')}
+            type="button"
+          >Timeframe</button>
+        </nav>
+        {activity.mode === 'timeframe'
+          ? <div className="entity-workspace-activity-timeframe">
+              <label>
+                <span>From · local time</span>
+                <input
+                  data-testid="entity-activity-from"
+                  onChange={(event) => setDraftFrom(event.currentTarget.value)}
+                  step="60"
+                  type="datetime-local"
+                  value={draftFrom}
+                />
+              </label>
+              <label>
+                <span>To · local time</span>
+                <input
+                  data-testid="entity-activity-to"
+                  onChange={(event) => setDraftTo(event.currentTarget.value)}
+                  step="60"
+                  type="datetime-local"
+                  value={draftTo}
+                />
+              </label>
+              <button
+                data-testid="entity-activity-apply-timeframe"
+                disabled={timeframeInvalid}
+                onClick={() => onApplyTimeframe(parsedFrom, parsedTo)}
+                type="button"
+              >Apply timeframe</button>
+              {timeframeInvalid
+                ? <small role="alert">From must not be later than To.</small>
+                : null}
+            </div>
+          : null}
+      </div>
       <nav aria-label="Activity event types" className="entity-workspace-activity-types">
         {ACTIVITY_TYPE_OPTIONS.map(({ type, label }) => (
           <button
@@ -139,6 +211,7 @@ export function EntityWorkspaceActivityPanel({ activity, onClearFilters, onRefre
           >{label}</button>
         ))}
         {activity.query.length > 0 || activity.types.length > 0
+          || activity.fromTimestamp !== null || activity.toTimestamp !== null
           ? <button
               className="entity-workspace-activity-clear"
               data-testid="entity-activity-clear-filters"

@@ -128,12 +128,14 @@ export function OpsEntityWorkspacePage() {
         displayIssue={displaySnapshot.issue}
         displayPreferences={displaySnapshot.preferences}
         hubPolicy={runtimeSnapshot.hubPolicy}
+        onApplyActivityTimeframe={opsEntityWorkspaceSource.applyActivityTimeframe}
         onClearActivityFilters={opsEntityWorkspaceSource.clearActivityFilters}
         onRefreshActivity={opsEntityWorkspaceSource.refreshActivity}
         onRefresh={() => { void opsEntityWorkspaceSource.refresh(); }}
         onSelectAccountsPage={opsEntityWorkspaceSource.selectAccountsPage}
         onSelectActivityBeforeHeight={opsEntityWorkspaceSource.selectActivityPage}
         onSelectActivityKind={opsEntityWorkspaceSource.selectActivityKind}
+        onSelectActivityMode={opsEntityWorkspaceSource.selectActivityMode}
         onSelectActivityPageSize={opsEntityWorkspaceSource.selectActivityPageSize}
         onSelectActivitySearch={opsEntityWorkspaceSource.selectActivitySearch}
         onSelectNewerActivityPage={opsEntityWorkspaceSource.selectNewerActivityPage}
