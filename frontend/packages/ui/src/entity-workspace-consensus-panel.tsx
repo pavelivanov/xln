@@ -1,5 +1,5 @@
 import type { EntityWorkspaceConsensusEvidence } from '../../runtime-client/src/entity-workspace-consensus-evidence';
-import { formatAddress } from './entity-workspace-display';
+import { formatAddress, formatEntityWorkspaceTimestamp } from './entity-workspace-display';
 import './entity-workspace-consensus-panel.css';
 
 type SelectedEvidence = Extract<
@@ -8,12 +8,23 @@ type SelectedEvidence = Extract<
 >;
 
 function ConsensusSummary({ evidence }: Readonly<{ evidence: SelectedEvidence }>) {
+  const timestamp = formatEntityWorkspaceTimestamp(evidence.entityTimestamp);
   return (
     <dl className="entity-workspace-consensus-summary">
       <div><dt>Runtime height</dt><dd data-testid="consensus-runtime-height">R{evidence.runtimeHeight}</dd></div>
+      <div><dt>Entity height</dt><dd data-testid="consensus-entity-height">E{evidence.entityHeight}</dd></div>
+      <div><dt>J finalized</dt><dd data-testid="consensus-finalized-j-height">J{evidence.lastFinalizedJurisdictionHeight}</dd></div>
       <div><dt>Board mode</dt><dd>{evidence.boardMode}</dd></div>
       <div><dt>Threshold</dt><dd data-testid="consensus-threshold">{evidence.threshold.toString()} / {evidence.totalShares.toString()}</dd></div>
       <div><dt>Accounts</dt><dd data-testid="consensus-account-count">{evidence.totalAccounts}</dd></div>
+      <div className="consensus-summary-wide">
+        <dt>Entity timestamp</dt>
+        <dd><time data-testid="consensus-entity-timestamp" dateTime={timestamp.dateTime} title={`Runtime timestamp ${evidence.entityTimestamp}`}>{timestamp.label}</time></dd>
+      </div>
+      <div className="consensus-summary-wide">
+        <dt>Entity frame head</dt>
+        <dd data-testid="consensus-entity-frame-hash" title={evidence.entityFrameHash}>{evidence.entityFrameHash === 'genesis' ? 'Genesis' : formatAddress(evidence.entityFrameHash)}</dd>
+      </div>
     </dl>
   );
 }

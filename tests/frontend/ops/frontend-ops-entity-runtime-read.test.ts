@@ -69,6 +69,10 @@ const OWNERSHIP_FRAME = {
     core: {
       entityId: '0xaaaa',
       signerId: '0xbbbb',
+      height: 12,
+      timestamp: 1_700_000_012,
+      prevFrameHash: '0xentity-frame',
+      lastFinalizedJHeight: 11,
       hubRebalanceConfig: {
         matchingStrategy: 'amount', policyVersion: 3, routingFeePPM: 25,
         baseFee: 5n, rebalanceLiquidityFeeBps: 2n, rebalanceTimeoutMs: 60_000,
@@ -115,6 +119,7 @@ const SELECTED_RESERVES = projectEntityWorkspaceReserves({
 const SELECTED_CONSENSUS = projectEntityWorkspaceConsensusEvidence({
   accounts: SELECTED_ACCOUNTS,
   context: SELECTED_CONTEXT,
+  frame: OWNERSHIP_FRAME,
   ownership: SELECTED_OWNERSHIP,
 });
 
@@ -216,7 +221,7 @@ describe('React Entity workspace Runtime read boundary', () => {
     expect(source).toContain('client.readActivity(activityQuery)');
     expect(projection).toContain('projectOpsEntityWorkspaceActivityPage');
     expect(projection).toContain('projectEntityWorkspaceAccounts({ context, frame })');
-    expect(projection).toContain('projectEntityWorkspaceConsensusEvidence({ accounts, context, ownership })');
+    expect(projection).toContain('projectEntityWorkspaceConsensusEvidence({ accounts, context, frame, ownership })');
     expect(projection).toContain('projectEntityWorkspaceHubPolicy({ context, frame })');
     expect(projection).toContain('projectEntityWorkspaceOwnership({ context, frame })');
     expect(projection).toContain('projectEntityWorkspaceProfile({ context, frame })');
