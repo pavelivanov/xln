@@ -10,6 +10,7 @@ import './entity-workspace-activity-panel.css';
 
 type EntityWorkspaceActivityPanelProps = Readonly<{
   activity: EntityWorkspaceActivity;
+  onClearFilters: () => void;
   onSelectBeforeHeight: (beforeHeight: number | null) => void;
   onSelectKind: (kind: EntityWorkspaceActivityKind) => void;
   onSelectNewerPage: () => void;
@@ -44,7 +45,7 @@ const ACTIVITY_TYPE_OPTIONS = [
 const directionLabel = (direction: 'in' | 'out' | 'neutral'): string =>
   direction === 'in' ? 'Inbound' : direction === 'out' ? 'Outbound' : 'Observed';
 
-export function EntityWorkspaceActivityPanel({ activity, onSelectBeforeHeight, onSelectKind, onSelectNewerPage, onSelectSearch, onToggleType }: EntityWorkspaceActivityPanelProps) {
+export function EntityWorkspaceActivityPanel({ activity, onClearFilters, onSelectBeforeHeight, onSelectKind, onSelectNewerPage, onSelectSearch, onToggleType }: EntityWorkspaceActivityPanelProps) {
   const selectedQuery = activity.status === 'selected' ? activity.query : '';
   const selectedEntityId = activity.status === 'selected' ? activity.entityId : '';
   const [draftQuery, setDraftQuery] = useState(selectedQuery);
@@ -100,6 +101,14 @@ export function EntityWorkspaceActivityPanel({ activity, onSelectBeforeHeight, o
             type="button"
           >{label}</button>
         ))}
+        {activity.query.length > 0 || activity.types.length > 0
+          ? <button
+              className="entity-workspace-activity-clear"
+              data-testid="entity-activity-clear-filters"
+              onClick={onClearFilters}
+              type="button"
+            >Clear filters</button>
+          : null}
       </nav>
       {activity.events.length === 0
         ? <div className="entity-workspace-activity-empty">No persisted activity in frames {activity.fromHeight}–{activity.toHeight}.</div>

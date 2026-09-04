@@ -51,6 +51,7 @@
 .entity-workspace-activity-types button { padding: 0.45rem 0.75rem; color: var(--theme-text-muted, #5f605a); border: 1px solid var(--entity-line); background: transparent; font: 600 0.56rem/1 "SFMono-Regular", Consolas, monospace; letter-spacing: 0.08em; cursor: pointer; text-transform: uppercase; }
 .entity-workspace-activity-kind button[aria-pressed="true"],
 .entity-workspace-activity-types button[aria-pressed="true"] { color: var(--entity-accent-soft); border-color: color-mix(in srgb, var(--entity-accent) 45%, var(--entity-line)); background: color-mix(in srgb, var(--entity-accent) 8%, transparent); }
+.entity-workspace-activity-types .entity-workspace-activity-clear { margin-left: auto; color: var(--entity-accent-soft); border-style: dashed; }
 .entity-workspace-activity-kind button:focus-visible,
 .entity-workspace-activity-types button:focus-visible { outline: 2px solid var(--entity-accent-soft); outline-offset: 2px; }
 

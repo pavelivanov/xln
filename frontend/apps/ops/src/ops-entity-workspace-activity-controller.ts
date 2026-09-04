@@ -125,4 +125,15 @@ export class OpsEntityWorkspaceActivityController {
     this.resetCursor();
     this.refresh();
   };
+
+  readonly clearFilters = (activity: EntityWorkspaceActivity): void => {
+    if (activity.status !== 'selected') {
+      throw new Error('OPS_ENTITY_ACTIVITY_FILTER_CONTEXT_REQUIRED');
+    }
+    if (this.search.length === 0 && this.types.length === 0 && this.beforeHeight === null) return;
+    this.search = '';
+    this.types = [];
+    this.resetCursor();
+    this.refresh();
+  };
 }
