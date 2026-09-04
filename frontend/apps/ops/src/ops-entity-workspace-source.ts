@@ -238,6 +238,10 @@ export class OpsEntityWorkspaceSource {
     this.activityController.selectSearch(this.snapshot.activity, search);
   };
 
+  readonly clearActivityFilters = (): void => {
+    this.activityController.clearFilters(this.snapshot.activity);
+  };
+
   readonly selectHistoryHeight = (height: number): Promise<boolean> => {
     this.activityController.resetPage();
     return this.historyController.select(height);
