@@ -15,7 +15,10 @@ import {
 import type { OpsEntityWorkspaceSourceSnapshot } from './ops-entity-workspace-projection';
 
 type HistoryControllerDependencies = Readonly<{
+  cancelActivityAppend(beforeHeight: number): void;
+  completeActivityAppend(beforeHeight: number): void;
   publish(snapshot: OpsEntityWorkspaceSourceSnapshot): void;
+  readActivityAppendBeforeHeight(): number | null;
   readActivityOptions(): EntityWorkspaceActivityQueryOptions;
   readAccountsPage(): number;
   readAdapter(): RuntimeAdapter | null;
@@ -91,13 +94,20 @@ export class OpsEntityWorkspaceHistoryController {
       ...previous,
       timeMachine: createEntityWorkspaceHistoryState({ latestHeight, loading: true, selectedHeight: requestedHeight }),
     });
+    const activity = this.dependencies.readActivityOptions();
+    const appendBeforeHeight = this.dependencies.readActivityAppendBeforeHeight();
     try {
       const projection = await readOpsEntityWorkspaceHistory({
-        activity: this.dependencies.readActivityOptions(),
+        activity,
+        appendActivity: appendBeforeHeight !== null && activity.beforeHeight === appendBeforeHeight,
         accountsPage: this.dependencies.readAccountsPage(), client,
         entityId: context.entityId, latestHeight, requestedHeight, runtimeId: adapter.runtimeId,
+        previousActivity: previous.activity,
       });
       if (!this.isCurrent(request, requestedHeight, client)) return false;
+      if (appendBeforeHeight !== null) {
+        this.dependencies.completeActivityAppend(appendBeforeHeight);
+      }
       const next: OpsEntityWorkspaceSourceSnapshot = {
         ...projection,
         readState: { status: 'ready', message: '' },
@@ -111,6 +121,9 @@ export class OpsEntityWorkspaceHistoryController {
       return true;
     } catch (error: unknown) {
       if (!this.isCurrent(request, requestedHeight, client)) return false;
+      if (appendBeforeHeight !== null) {
+        this.dependencies.cancelActivityAppend(appendBeforeHeight);
+      }
       this.selectedHeight = fallback.timeMachine.mode === 'history'
         ? fallback.timeMachine.selectedHeight
         : null;

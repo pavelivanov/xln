@@ -20,6 +20,7 @@ import { RuntimeQueryObserver } from '../../../packages/runtime-client/src/runti
 import {
   buildEntityWorkspaceActivityQuery,
   type EntityWorkspaceActivityFilterType,
+  type EntityWorkspaceActivity,
   type EntityWorkspaceActivityKind,
   type EntityWorkspaceActivityMode,
   type EntityWorkspaceActivityPageSize,
@@ -56,12 +57,20 @@ const readEntityWorkspaceProjection = async (
   runtimeId: string,
   frame: RuntimeAdapterViewFrame,
   activityOptions: EntityWorkspaceActivityQueryOptions = {},
+  previousActivity?: EntityWorkspaceActivity,
+  appendActivity = false,
 ): Promise<OpsEntityWorkspaceProjection> => {
   const projection = projectOpsEntityWorkspaceFrame(runtimeId, frame);
   if (projection.context.status === 'empty') return projection;
   const activityQuery = buildEntityWorkspaceActivityQuery(projection.context, activityOptions);
   const activity = await client.readActivity(activityQuery);
-  return projectOpsEntityWorkspaceActivityPage(projection, activity, activityOptions);
+  return projectOpsEntityWorkspaceActivityPage(
+    projection,
+    activity,
+    activityOptions,
+    previousActivity,
+    appendActivity,
+  );
 };
 
 export const requireOpsEntityRemoteSession = (
@@ -132,7 +141,10 @@ export class OpsEntityWorkspaceSource {
   ) {
     this.snapshot = initialOpsEntityWorkspaceSnapshot(config);
     this.historyController = new OpsEntityWorkspaceHistoryController({
+      cancelActivityAppend: (beforeHeight) => this.activityController.cancelAppend(beforeHeight),
       publish: (snapshot) => this.publish(snapshot),
+      completeActivityAppend: (beforeHeight) => this.activityController.completeAppend(beforeHeight),
+      readActivityAppendBeforeHeight: () => this.activityController.readAppendBeforeHeight(),
       readActivityOptions: () => this.activityController.readQueryOptions(),
       readAccountsPage: () => this.accountsPage,
       readAdapter: () => this.session?.adapter ?? null,
@@ -204,6 +216,10 @@ export class OpsEntityWorkspaceSource {
 
   readonly selectActivityPage = (beforeHeight: number | null): void => {
     this.activityController.select(this.snapshot.activity, beforeHeight);
+  };
+
+  readonly loadOlderActivity = (): void => {
+    this.activityController.loadMore(this.snapshot.activity);
   };
 
   readonly refreshActivity = (): void => {
@@ -285,11 +301,15 @@ export class OpsEntityWorkspaceSource {
           accountsPage: this.accountsPage,
           booksLimit: 1,
         });
+        const activityOptions = this.activityController.readQueryOptions();
+        const appendBeforeHeight = this.activityController.readAppendBeforeHeight();
         return readEntityWorkspaceProjection(
           client,
           adapter.runtimeId,
           frame,
-          this.activityController.readQueryOptions(),
+          activityOptions,
+          this.snapshot.activity,
+          appendBeforeHeight !== null && activityOptions.beforeHeight === appendBeforeHeight,
         );
       },
       {
@@ -326,6 +346,14 @@ export class OpsEntityWorkspaceSource {
       observer.getSnapshot(),
       createEntityWorkspaceLiveState(adapter.currentHeight),
     );
+    const appendBeforeHeight = this.activityController.readAppendBeforeHeight();
+    if (next.readState.status === 'error' && appendBeforeHeight !== null) {
+      this.activityController.cancelAppend(appendBeforeHeight);
+    } else if (next.readState.status === 'ready' && next.activity.status === 'selected'
+      && next.activity.mode === 'infinite' && next.activity.loadedPages > 1
+      && next.activity.requestedBeforeHeight === appendBeforeHeight) {
+      this.activityController.completeAppend(next.activity.requestedBeforeHeight);
+    }
     if (next.readState.status === 'error' && adapter.status === 'error') {
       this.started = false;
       this.generation += 1;
