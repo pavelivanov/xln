@@ -90,6 +90,10 @@ import {
   type MovePostSettleOp,
 } from "../../account/entity-action-txs";
 import { buildDisputedAccountViews } from "../../account/account-dispute-view";
+import {
+  buildEntityWorkspaceProfileUpdateInput,
+  type EntityWorkspaceProfileDraft as EntitySettingsProfileDraft,
+} from "../../../../../../packages/runtime-client/src/entity-workspace-profile-update";
 export let tab: Tab;
 export let hideHeader: boolean = false;
 export let showJurisdiction: boolean = true;
@@ -114,12 +118,6 @@ $: liveEnvResolver = embeddedRuntimeContext.liveEnvResolver;
 $: envRevision = runtimeFrameContext.envRevision;
 $: isLive = runtimeFrameContext.isLive;
 import type { DebtEnforceRequest } from '../../assets/debt-enforce-request';
-type EntitySettingsProfileDraft = {
-  name: string;
-  avatar: string;
-  bio: string;
-  website: string;
-};
 function getInitialTab(): ViewTab {
   return "accounts";
 }
@@ -721,22 +719,7 @@ async function saveSettingsProjectionProfile(draft: EntitySettingsProfileDraft):
   if (!activeIsLive) throw new Error("Profile updates require LIVE mode");
   const signerId = resolveEntitySigner(entityId, "settings-profile-update");
   if (!signerId) throw new Error("Signer is required for profile update");
-  await submitEntityInputs([
-    buildEntityInput(entityId, signerId, [
-      {
-        type: "profile-update" as const,
-        data: {
-          profile: {
-            entityId,
-            name: draft.name.trim(),
-            avatar: draft.avatar.trim(),
-            bio: draft.bio.trim(),
-            website: draft.website.trim(),
-          },
-        },
-      },
-    ]),
-  ]);
+  await submitPanelRuntimeInput(buildEntityWorkspaceProfileUpdateInput({ entityId, signerId }, draft));
   toasts.success("Entity profile update submitted");
 }
 function requirePanelRuntimeTimestamp(context: string): number {

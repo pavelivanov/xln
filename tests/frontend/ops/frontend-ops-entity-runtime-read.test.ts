@@ -202,7 +202,8 @@ describe('React Entity workspace Runtime read boundary', () => {
   });
 
   test('loads only on the workspace route and exposes bounded reads plus full cleanup', async () => {
-    const [main, page, runtime, source, projection] = await Promise.all([
+    const [command, main, page, runtime, source, projection] = await Promise.all([
+      Bun.file('frontend/apps/ops/src/ops-entity-workspace-profile-command.ts').text(),
       Bun.file('frontend/apps/ops/src/main.tsx').text(),
       Bun.file('frontend/apps/ops/src/ops-entity-workspace.tsx').text(),
       Bun.file('frontend/apps/ops/src/ops-entity-workspace-runtime.ts').text(),
@@ -214,7 +215,8 @@ describe('React Entity workspace Runtime read boundary', () => {
     expect(page).toContain('opsEntityWorkspaceSource.subscribe');
     expect(runtime).toContain("window.addEventListener('pagehide'");
     expect(runtime).toContain('if (!event.persisted) opsEntityWorkspaceSource.stop()');
-    expect(source).toContain("await import('../../../../core/api/runtime-adapter/remote.ts')");
+    expect(source).toContain("import('../../../../core/api/runtime-adapter/remote.ts')");
+    expect(source).toContain("import('./ops-entity-workspace-owner')");
     expect(source).toContain('accountsLimit: 8');
     expect(source).toContain('accountsPage: this.accountsPage');
     expect(source).toContain('return readEntityWorkspaceProjection(');
@@ -228,7 +230,7 @@ describe('React Entity workspace Runtime read boundary', () => {
     expect(projection).toContain('projectEntityWorkspaceReserves({ context, frame })');
     expect(source).toContain('this.observer?.destroy()');
     expect(source).toContain('this.session?.release()');
-    expect(source).not.toContain('.send(');
+    expect(command).toContain('await adapter.send(input');
   });
 
   test('validates Account page navigation before issuing another bounded read', async () => {

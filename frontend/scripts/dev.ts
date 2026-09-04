@@ -17,9 +17,10 @@ export type DevelopmentProcessSpec = Readonly<{
 export const createDevelopmentProcessSpecs = (
   surfaceIds: readonly SurfaceId[],
 ): readonly DevelopmentProcessSpec[] => {
-  const walletFixtureEnabled = process.env['XLN_REACT_WALLET_ADDRESS_FIXTURE'] === '1'
+  const runtimeFixtureEnabled = process.env['XLN_REACT_WALLET_ADDRESS_FIXTURE'] === '1'
     && surfaceIds.length === 1
-    && surfaceIds[0] === 'wallet';
+    && (surfaceIds[0] === 'wallet' || surfaceIds[0] === 'ops');
+  const walletFixtureEnabled = runtimeFixtureEnabled && surfaceIds[0] === 'wallet';
   return [
     ...surfaceIds.map((surfaceId) => ({
       label: `vite-${getSurface(surfaceId).id}`,
@@ -40,7 +41,7 @@ export const createDevelopmentProcessSpecs = (
           ? { environment: { XLN_REACT_WALLET_PROXY_OWNER: 'ops' } }
         : {}),
     },
-    ...(walletFixtureEnabled ? [{
+    ...(runtimeFixtureEnabled ? [{
       label: 'wallet-address-runtime-fixture',
       argv: ['bun', 'tests/react-candidate/wallet-runtime-fixture.ts'],
       gatewayAware: false,
