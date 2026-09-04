@@ -1,6 +1,6 @@
 # React frontend migration work plan
 
-**Status:** `IN PROGRESS — WP0–WP6 COMPLETE; WP7 HEALTH + QA + HLT + RUNS + SCENARIOS + AI IMPLEMENTED, WORKSPACE STATE LAYER SVELTE-FREE, PANEL PORTS THROUGH ARCHITECT, REACT DOCKVIEW WRAPPER READY, GRAPH3D LIFECYCLE + RENDERER/PRIMITIVES/EFFECTS/ENTITY/ACCOUNT VISUAL FACTORY/INTERACTION/SELECTION/CAMERA/POINTER+XR DRAG + HOVER MECHANICS + VIEW/SCENE INPUT MODELS EXTRACTED, ENTITY WORKSPACE REACT SHELL/TABS + LIVE RUNTIME CONTEXT + READ-ONLY ASSETS/OWNERSHIP/ACCOUNTS/CONSENSUS/PROFILE READY; WP8 COMPLETE; WP9 HAS 19 COMPLETE / 1 PARTIAL IMPLEMENTATION, 19 COVERED / 1 PARTIAL BROWSER ROUTE, AND 1 AUTHORIZED IMPLEMENTATION GAP; ENTITY ASSETS + ACCOUNT COMMITMENT EVIDENCE + CONSENSUS EVIDENCE + DISPLAY THEME + TIME MACHINE + XLN GUIDE PREFERENCE + HUB POLICY + SETTINGS SUMMARY + PERSISTED ACTIVITY PAGINATION/FILTERING/CLEAR/REFRESH/PAGE-SIZE/TIMESTAMPS/TIMEFRAME COMPLETE`
+**Status:** `IN PROGRESS — WP0–WP6 COMPLETE; WP7 HEALTH + QA + HLT + RUNS + SCENARIOS + AI IMPLEMENTED, WORKSPACE STATE LAYER SVELTE-FREE, PANEL PORTS THROUGH ARCHITECT, REACT DOCKVIEW WRAPPER READY, GRAPH3D LIFECYCLE + RENDERER/PRIMITIVES/EFFECTS/ENTITY/ACCOUNT VISUAL FACTORY/INTERACTION/SELECTION/CAMERA/POINTER+XR DRAG + HOVER MECHANICS + VIEW/SCENE INPUT MODELS EXTRACTED, ENTITY WORKSPACE REACT SHELL/TABS + LIVE RUNTIME CONTEXT + READ-ONLY ASSETS/OWNERSHIP/ACCOUNTS/CONSENSUS/PROFILE READY; WP8 COMPLETE; WP9 HAS 19 COMPLETE / 1 PARTIAL IMPLEMENTATION, 19 COVERED / 1 PARTIAL BROWSER ROUTE, AND 1 AUTHORIZED IMPLEMENTATION GAP; ENTITY ASSETS + ACCOUNT COMMITMENT EVIDENCE + CONSENSUS EVIDENCE + DISPLAY THEME + TIME MACHINE + XLN GUIDE PREFERENCE + HUB POLICY + SETTINGS SUMMARY + PERSISTED ACTIVITY PAGINATION/FILTERING/CLEAR/REFRESH/PAGE-SIZE/TIMESTAMPS/TIMEFRAME/INFINITE COMPLETE`
 
 This is the executable work plan for splitting the Svelte frontend into React
 applications. It is intentionally lightweight and should be updated as live
@@ -3223,6 +3223,45 @@ production function sizing passes 1,047 files, diff hygiene is clean, and
 file-size checking reaches only the existing out-of-scope `core/qa/report.ts`
 3001/3000 violation.
 
+The following Activity parity slice adds the legacy Infinite mode without a
+second data source or unbounded adapter read. Each explicit Load older action
+requests exactly one bounded adapter-certified cursor, appends that page in
+its returned order, and retains the established scroll-bound presentation.
+The pure accumulator rejects control, cursor, latest-height, page-range, and
+event-id drift instead of sorting or deduplicating evidence. One in-flight
+cursor token prevents duplicate requests; success consumes it, a matching
+failure cancels it for a clean retry, and refresh, context, filter, page-size,
+mode, or Time Machine selection changes reset accumulated pages.
+
+Focused Entity workspace coverage passes 42 / 42 tests with 291 expectations;
+the Activity, Time Machine, and transport boundary passes 28 / 28 with 195
+expectations. The all-surface React-local gate scans 695 files with zero unsafe
+findings. All four React production surfaces build; site/docs/wallet/ops
+transform 401 / 35 / 1,860 / 1,642 modules, and the ops workspace
+CSS/view/Runtime chunks are 39.25 / 41.22 / 48.41 kB. The canonical frontend
+check reports zero errors/warnings while transforming 4,681 SSR plus 6,432
+client modules. The complete ops candidate matrix passes 30 / 30 across the
+required viewports.
+
+The final isolated real-H1 flow passes in 34.3 seconds (35.6 seconds total)
+with candidate `934b589a5cfa`. It proves an explicit 8-row window grows to 16
+unique persisted events across exactly two ordered windows, then returns to a
+fresh Pagination page before exercising bidirectional navigation. Strict
+browser health emits no console error. Mobile 390x844, laptop 1366x900, and
+wide 1920x1080 screenshots were inspected with a bounded Activity list,
+readable accumulated-window evidence, and no clipping or horizontal overflow.
+The 224-file frontend suite reports 1,339 passes, the unchanged 16-failure plus
+one-error repository baseline, and 7,693 expectations across 1,355 tests; no
+slice-owned test fails.
+
+Root evidence again passes 26 / 26 deterministic tests with 100,156
+expectations before the documented 60-second Hardhat compiler-cache mutex.
+Downstream soundcheck passes all ten gates; frozen core remains at
+`0x4eccf4492e5d085b24162f86d327e003c36b7e2a90ad527db1653fde391946a7`,
+production function sizing passes 1,047 files, diff hygiene is clean, and
+file-size checking reaches only the existing out-of-scope `core/qa/report.ts`
+3001/3000 violation.
+
 The following Activity filter slice adds the legacy Timeframe mode beside the
 existing Pagination mode. Browser-local `datetime-local` values are parsed
 once into exact millisecond bounds, applied only by an explicit action, and
@@ -3270,7 +3309,7 @@ xln-guide preference, exact Account commitment evidence, persisted Activity
 with strict bidirectional pagination, kind filters, nine event-type filters,
 debounced search, atomic filter clearing, explicit Activity refresh,
 compact plus legacy Activity page sizing, deterministic UTC Activity timestamps,
-strict Activity timeframe filtering, committed Hub-policy, and committed
+strict Activity timeframe filtering, bounded Infinite history, committed Hub-policy, and committed
 Settings-summary parity are now complete.
 
 ### WP10 — Authorized canonical cutover

@@ -130,6 +130,7 @@ export function OpsEntityWorkspacePage() {
         hubPolicy={runtimeSnapshot.hubPolicy}
         onApplyActivityTimeframe={opsEntityWorkspaceSource.applyActivityTimeframe}
         onClearActivityFilters={opsEntityWorkspaceSource.clearActivityFilters}
+        onLoadOlderActivity={opsEntityWorkspaceSource.loadOlderActivity}
         onRefreshActivity={opsEntityWorkspaceSource.refreshActivity}
         onRefresh={() => { void opsEntityWorkspaceSource.refresh(); }}
         onSelectAccountsPage={opsEntityWorkspaceSource.selectAccountsPage}

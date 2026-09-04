@@ -23,6 +23,7 @@ type EntityWorkspaceActivityPanelProps = Readonly<{
   activity: EntityWorkspaceActivity;
   onApplyTimeframe: (fromTimestamp: number | null, toTimestamp: number | null) => void;
   onClearFilters: () => void;
+  onLoadOlder: () => void;
   onRefresh: () => void;
   onSelectBeforeHeight: (beforeHeight: number | null) => void;
   onSelectKind: (kind: EntityWorkspaceActivityKind) => void;
@@ -71,7 +72,7 @@ function ActivityTimestamp({ timestamp }: Readonly<{ timestamp: number }>) {
   );
 }
 
-export function EntityWorkspaceActivityPanel({ activity, onApplyTimeframe, onClearFilters, onRefresh, onSelectBeforeHeight, onSelectKind, onSelectMode, onSelectNewerPage, onSelectPageSize, onSelectSearch, onToggleType }: EntityWorkspaceActivityPanelProps) {
+export function EntityWorkspaceActivityPanel({ activity, onApplyTimeframe, onClearFilters, onLoadOlder, onRefresh, onSelectBeforeHeight, onSelectKind, onSelectMode, onSelectNewerPage, onSelectPageSize, onSelectSearch, onToggleType }: EntityWorkspaceActivityPanelProps) {
   const selectedQuery = activity.status === 'selected' ? activity.query : '';
   const selectedEntityId = activity.status === 'selected' ? activity.entityId : '';
   const [draftQuery, setDraftQuery] = useState(selectedQuery);
@@ -160,6 +161,12 @@ export function EntityWorkspaceActivityPanel({ activity, onApplyTimeframe, onCle
             type="button"
           >Pagination</button>
           <button
+            aria-pressed={activity.mode === 'infinite'}
+            data-testid="entity-activity-mode-infinite"
+            onClick={() => onSelectMode('infinite')}
+            type="button"
+          >Infinite</button>
+          <button
             aria-pressed={activity.mode === 'timeframe'}
             data-testid="entity-activity-mode-timeframe"
             onClick={() => onSelectMode('timeframe')}
@@ -224,7 +231,7 @@ export function EntityWorkspaceActivityPanel({ activity, onApplyTimeframe, onCle
         ? <div className="entity-workspace-activity-empty">No persisted activity in frames {activity.fromHeight}–{activity.toHeight}.</div>
         : <ol>
             {activity.events.map((event, index) => (
-              <li data-direction={event.direction} data-kind={event.kind} data-type={event.type} key={event.id}>
+              <li data-direction={event.direction} data-event-id={event.id} data-kind={event.kind} data-type={event.type} key={event.id}>
                 <span>{String(index + 1).padStart(2, '0')}</span>
                 <div className="entity-workspace-activity-copy">
                   <strong>{event.title}</strong>
@@ -243,27 +250,38 @@ export function EntityWorkspaceActivityPanel({ activity, onApplyTimeframe, onCle
             ))}
           </ol>}
       <footer>
-        <div className="entity-workspace-activity-newer">
-          <button
-            data-testid="entity-activity-latest"
-            disabled={activity.isLatestPage}
-            onClick={() => onSelectBeforeHeight(null)}
-            type="button"
-          >Latest</button>
-          <button
-            data-testid="entity-activity-newer"
-            disabled={activity.isLatestPage}
-            onClick={onSelectNewerPage}
-            type="button"
-          >Newer</button>
-        </div>
+        {activity.mode === 'infinite'
+          ? <div className="entity-workspace-activity-newer">
+              <strong data-testid="entity-activity-loaded-pages">{activity.loadedPages} windows · {activity.events.length} loaded</strong>
+            </div>
+          : <div className="entity-workspace-activity-newer">
+              <button
+                data-testid="entity-activity-latest"
+                disabled={activity.isLatestPage}
+                onClick={() => onSelectBeforeHeight(null)}
+                type="button"
+              >Latest</button>
+              <button
+                data-testid="entity-activity-newer"
+                disabled={activity.isLatestPage}
+                onClick={onSelectNewerPage}
+                type="button"
+              >Newer</button>
+            </div>}
         <strong>h{activity.fromHeight}–h{activity.toHeight}</strong>
-        <button
-          data-testid="entity-activity-earlier"
-          disabled={activity.nextBeforeHeight === null}
-          onClick={() => onSelectBeforeHeight(activity.nextBeforeHeight)}
-          type="button"
-        >{activity.nextBeforeHeight === null ? 'Origin reached' : `Earlier at h${activity.nextBeforeHeight}`}</button>
+        {activity.mode === 'infinite'
+          ? <button
+              data-testid="entity-activity-load-older"
+              disabled={activity.nextBeforeHeight === null}
+              onClick={onLoadOlder}
+              type="button"
+            >{activity.nextBeforeHeight === null ? 'Origin reached' : `Load older from h${activity.nextBeforeHeight}`}</button>
+          : <button
+              data-testid="entity-activity-earlier"
+              disabled={activity.nextBeforeHeight === null}
+              onClick={() => onSelectBeforeHeight(activity.nextBeforeHeight)}
+              type="button"
+            >{activity.nextBeforeHeight === null ? 'Origin reached' : `Earlier at h${activity.nextBeforeHeight}`}</button>}
       </footer>
     </section>
   );

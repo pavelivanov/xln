@@ -79,6 +79,23 @@ const activityPage = (
   events: [],
 });
 
+const activityEvent = (height: number) => ({
+  counterpartyId: '0xbbbb',
+  direction: 'out',
+  entityId: '0xaaaa',
+  height,
+  id: `runtime-a:${String(height)}:0`,
+  kind: 'offchain',
+  rawType: 'directPayment',
+  runtimeId: 'runtime-a',
+  source: 'runtime_input',
+  status: 'started',
+  subtitle: 'Account 0xbbbb',
+  timestamp: 1_700_000_000 + height,
+  title: 'Payment started',
+  type: 'payment',
+});
+
 describe('React Entity workspace Time Machine', () => {
   test('keeps live and historical height state exact', () => {
     expect(createEntityWorkspaceLiveState(18)).toEqual({
@@ -143,6 +160,40 @@ describe('React Entity workspace Time Machine', () => {
       query: 'Reserve', status: 'selected', toTimestamp: 2_000, types: ['j_event'],
     });
     expect(projection.consensus).toMatchObject({ entityId: '0xaaaa', runtimeHeight: 7, status: 'selected' });
+  });
+
+  test('appends one certified Infinite page through the same historical reader', async () => {
+    const first = await readOpsEntityWorkspaceHistory({
+      activity: { mode: 'infinite' },
+      accountsPage: 0,
+      client: {
+        readActivity: async () => ({
+          ...activityPage(7), events: [activityEvent(7)], fromHeight: 5,
+          nextBeforeHeight: 4, returned: 1, scannedFrames: 3,
+        }),
+        readHistoryFrameBatch: async () => historyBatch(historyFrame(7)),
+      },
+      entityId: '0xaaaa', latestHeight: 18, requestedHeight: 7, runtimeId: 'runtime-a',
+    });
+    const appended = await readOpsEntityWorkspaceHistory({
+      activity: { beforeHeight: 4, mode: 'infinite' },
+      accountsPage: 0,
+      appendActivity: true,
+      client: {
+        readActivity: async () => ({
+          ...activityPage(4), events: [activityEvent(4)], fromHeight: 2,
+          nextBeforeHeight: 1, returned: 1, scannedFrames: 3,
+        }),
+        readHistoryFrameBatch: async () => historyBatch(historyFrame(7)),
+      },
+      entityId: '0xaaaa', latestHeight: 18, previousActivity: first.activity,
+      requestedHeight: 7, runtimeId: 'runtime-a',
+    });
+    expect(appended.activity).toMatchObject({
+      events: [{ id: 'runtime-a:7:0' }, { id: 'runtime-a:4:0' }],
+      fromHeight: 2, loadedPages: 2, requestedBeforeHeight: 4,
+      scannedFrames: 6, toHeight: 7,
+    });
   });
 
   test('rejects page and entity drift before publishing historical state', async () => {

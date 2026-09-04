@@ -5,6 +5,7 @@ import type {
 } from '@xln/core/api/public/runtime-module';
 import {
   buildEntityWorkspaceActivityQuery,
+  type EntityWorkspaceActivity,
   type EntityWorkspaceActivityQueryOptions,
 } from '../../../packages/runtime-client/src/entity-workspace-activity';
 import {
@@ -31,6 +32,8 @@ export async function readOpsEntityWorkspaceHistory(input: Readonly<{
   client: OpsEntityWorkspaceHistoryReader;
   entityId: string;
   latestHeight: number;
+  previousActivity?: EntityWorkspaceActivity;
+  appendActivity?: boolean;
   requestedHeight: number;
   runtimeId: string;
 }>): Promise<OpsEntityWorkspaceProjection> {
@@ -55,5 +58,11 @@ export async function readOpsEntityWorkspaceHistory(input: Readonly<{
   const projection = projectOpsEntityWorkspaceFrame(input.runtimeId, frame);
   const activityQuery = buildEntityWorkspaceActivityQuery(projection.context, input.activity);
   const activity = await input.client.readActivity(activityQuery);
-  return projectOpsEntityWorkspaceActivityPage(projection, activity, input.activity);
+  return projectOpsEntityWorkspaceActivityPage(
+    projection,
+    activity,
+    input.activity,
+    input.previousActivity,
+    input.appendActivity,
+  );
 }

@@ -355,6 +355,7 @@ test('React Entity workspace reads selected context from a real H1 Runtime', { t
       await expect(activityCount).toHaveText(String(allActivityCount));
       await expect(clearActivityFilters).toHaveCount(0);
       const pagedActivityMode = candidatePage.getByTestId('entity-activity-mode-paged');
+      const infiniteActivityMode = candidatePage.getByTestId('entity-activity-mode-infinite');
       const timeframeActivityMode = candidatePage.getByTestId('entity-activity-mode-timeframe');
       await expect(pagedActivityMode).toHaveAttribute('aria-pressed', 'true');
       await timeframeActivityMode.click();
@@ -402,6 +403,27 @@ test('React Entity workspace reads selected context from a real H1 Runtime', { t
       await expect(pagedActivityMode).toHaveAttribute('aria-pressed', 'true');
       await expect(activityFrom).toHaveCount(0);
       await expect(activityCount).toHaveText(String(allActivityCount));
+      await infiniteActivityMode.click();
+      await expect(infiniteActivityMode).toHaveAttribute('aria-pressed', 'true');
+      const initialInfiniteCount = Number(await activityCount.innerText());
+      expect(initialInfiniteCount).toBeGreaterThan(0);
+      expect(initialInfiniteCount).toBeLessThanOrEqual(8);
+      const loadOlderActivity = candidatePage.getByTestId('entity-activity-load-older');
+      await expect(loadOlderActivity).toBeEnabled();
+      await loadOlderActivity.click();
+      await expect.poll(async () => Number(await activityCount.innerText())).toBeGreaterThan(initialInfiniteCount);
+      await expect.poll(async () => Number(await activityCount.innerText()) <= 16).toBe(true);
+      await expect(candidatePage.getByTestId('entity-activity-loaded-pages'))
+        .toHaveText(/^2 windows · \d+ loaded$/);
+      const infiniteEventIds = await activity.locator('li').evaluateAll(
+        (items) => items.map((item) => item.getAttribute('data-event-id')),
+      );
+      expect(new Set(infiniteEventIds).size).toBe(infiniteEventIds.length);
+      await capturePageScreenshot(candidatePage, testInfo, `react-entity-workspace-activity-infinite-${viewport.name}.png`);
+      await pagedActivityMode.click();
+      await expect(pagedActivityMode).toHaveAttribute('aria-pressed', 'true');
+      await expect(activityCount).toHaveText(String(allActivityCount));
+      await expect(loadOlderActivity).toHaveCount(0);
       const latestActivityHeight = Number((await activityThrough.innerText()).replace(/^h/, ''));
       const earlierActivity = candidatePage.getByTestId('entity-activity-earlier');
       await expect(earlierActivity).toBeEnabled();
