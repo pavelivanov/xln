@@ -61,6 +61,10 @@
 .entity-workspace-accounts-panel button:disabled { color: var(--theme-text-muted, #484943); cursor: default; }
 .entity-workspace-accounts-panel button:focus-visible { outline: 2px solid var(--entity-accent-soft); outline-offset: 4px; }
 
+@media (min-width: 761px) and (max-width: 1500px) {
+  .entity-workspace-accounts-panel .account-commitment-detail { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
 @media (max-width: 760px) {
   .entity-workspace-accounts-panel { border-top: 1px solid var(--entity-line); border-left: 0; }
   .entity-workspace-accounts-panel li { grid-template-columns: auto minmax(0, 1fr); }
