@@ -228,10 +228,22 @@ describe('React Entity persisted activity ledger', () => {
     controller.toggleType(earlier, 'error');
     expect(controller.readTypes()).toEqual(['swap', 'error']);
     expect({ historyRefreshes, liveRefreshes }).toEqual({ historyRefreshes: 3, liveRefreshes: 6 });
+    controller.select(earlier, 9);
+    expect(controller.readBeforeHeight()).toBe(9);
+    controller.clearFilters(earlier);
+    expect({
+      beforeHeight: controller.readBeforeHeight(),
+      kind: controller.readKind(),
+      search: controller.readSearch(),
+      types: controller.readTypes(),
+    }).toEqual({ beforeHeight: null, kind: 'onchain', search: '', types: [] });
+    expect({ historyRefreshes, liveRefreshes }).toEqual({ historyRefreshes: 5, liveRefreshes: 6 });
+    controller.clearFilters(earlier);
+    expect({ historyRefreshes, liveRefreshes }).toEqual({ historyRefreshes: 5, liveRefreshes: 6 });
     controller.resetPage();
     expect(controller.readKind()).toBe('onchain');
-    expect(controller.readSearch()).toBe('credit');
-    expect(controller.readTypes()).toEqual(['swap', 'error']);
+    expect(controller.readSearch()).toBe('');
+    expect(controller.readTypes()).toEqual([]);
     controller.reset();
     expect(controller.readBeforeHeight()).toBeNull();
     expect(controller.readKind()).toBe('all');
@@ -289,6 +301,7 @@ describe('React Entity persisted activity ledger', () => {
     expect(panel).toContain('data-testid="entity-activity-latest"');
     expect(panel).toContain('data-testid="entity-activity-newer"');
     expect(panel).toContain('data-testid="entity-activity-search"');
+    expect(panel).toContain('data-testid="entity-activity-clear-filters"');
     expect(panel).toContain('data-testid={`entity-activity-kind-${kind}`}');
     expect(panel).toContain('data-testid={`entity-activity-type-${type}`}');
     expect(source).toContain('client.readActivity(activityQuery)');
@@ -296,6 +309,7 @@ describe('React Entity persisted activity ledger', () => {
     expect(source).toContain('readonly selectNewerActivityPage');
     expect(source).toContain('readonly selectActivityKind');
     expect(source).toContain('readonly selectActivitySearch');
+    expect(source).toContain('readonly clearActivityFilters');
     expect(source).toContain('readonly toggleActivityType');
     expect(history).toContain('input.client.readActivity(activityQuery)');
     expect([panel, source, history].join('\n')).not.toContain('.send(');

@@ -128,6 +128,7 @@ export function OpsEntityWorkspacePage() {
         displayIssue={displaySnapshot.issue}
         displayPreferences={displaySnapshot.preferences}
         hubPolicy={runtimeSnapshot.hubPolicy}
+        onClearActivityFilters={opsEntityWorkspaceSource.clearActivityFilters}
         onRefresh={() => { void opsEntityWorkspaceSource.refresh(); }}
         onSelectAccountsPage={opsEntityWorkspaceSource.selectAccountsPage}
         onSelectActivityBeforeHeight={opsEntityWorkspaceSource.selectActivityPage}

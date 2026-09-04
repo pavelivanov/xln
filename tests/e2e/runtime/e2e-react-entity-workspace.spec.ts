@@ -316,17 +316,20 @@ test('React Entity workspace reads selected context from a real H1 Runtime', { t
       const jEventActivityCount = Number(await activityCount.innerText());
       expect(jEventActivityCount).toBeGreaterThan(0);
       await expect(activity.locator('li[data-type="j_event"]')).toHaveCount(jEventActivityCount);
-      await jEventActivity.click();
-      await expect(jEventActivity).toHaveAttribute('aria-pressed', 'false');
-      await expect(activityCount).toHaveText(String(allActivityCount));
       const activitySearch = candidatePage.getByTestId('entity-activity-search');
       await activitySearch.fill('ReserveUpdated');
       await expect(activity.locator('li')).toHaveCount(3);
       await expect(activity.locator('li strong')).toHaveText([
         'ReserveUpdated', 'ReserveUpdated', 'ReserveUpdated',
       ]);
-      await activitySearch.fill('');
+      await capturePageScreenshot(candidatePage, testInfo, `react-entity-workspace-activity-filters-${viewport.name}.png`);
+      const clearActivityFilters = candidatePage.getByTestId('entity-activity-clear-filters');
+      await expect(clearActivityFilters).toBeVisible();
+      await clearActivityFilters.click();
+      await expect(activitySearch).toHaveValue('');
+      await expect(jEventActivity).toHaveAttribute('aria-pressed', 'false');
       await expect(activityCount).toHaveText(String(allActivityCount));
+      await expect(clearActivityFilters).toHaveCount(0);
       const latestActivityHeight = Number((await activityThrough.innerText()).replace(/^h/, ''));
       const earlierActivity = candidatePage.getByTestId('entity-activity-earlier');
       await expect(earlierActivity).toBeEnabled();
