@@ -27,8 +27,10 @@ import {
   type EntityWorkspaceActivityQueryOptions,
 } from '../../../packages/runtime-client/src/entity-workspace-activity';
 import { createEntityWorkspaceLiveState } from '../../../packages/runtime-client/src/entity-workspace-time-machine';
+import type { EntityWorkspaceProfileDraft } from '../../../packages/runtime-client/src/entity-workspace-profile-update';
 import { OpsEntityWorkspaceActivityController } from './ops-entity-workspace-activity-controller';
 import { OpsEntityWorkspaceHistoryController } from './ops-entity-workspace-history-controller';
+import { OpsEntityWorkspaceProfileCommand } from './ops-entity-workspace-profile-command';
 
 type RuntimeReadSession = Readonly<{
   adapter: RuntimeAdapter;
@@ -90,10 +92,17 @@ export const openOpsEntityRuntimeReadSession = async (
 ): Promise<RuntimeReadSession> => {
   const config = requireOpsEntityRemoteSession(snapshot);
   await import('../../../../core/support/process/runtime-process.ts');
-  const { RemoteRuntimeAdapter } = await import('../../../../core/api/runtime-adapter/remote.ts');
+  const [{ RemoteRuntimeAdapter }, owner] = await Promise.all([
+    import('../../../../core/api/runtime-adapter/remote.ts'),
+    import('./ops-entity-workspace-owner'),
+  ]);
   const adapter = new RemoteRuntimeAdapter();
   try {
-    await adapter.connect({ mode: 'remote', ...config });
+    await adapter.connect({
+      mode: 'remote',
+      ...config,
+      ownerBindingSigner: owner.signOpsEntityWorkspaceOwnerBinding,
+    });
   } catch (error: unknown) {
     adapter.disconnect();
     throw error;
@@ -129,6 +138,7 @@ export class OpsEntityWorkspaceSource {
   private queryClient: OpsRuntimeQueryClient | null = null;
   private readonly historyController: OpsEntityWorkspaceHistoryController;
   private readonly activityController: OpsEntityWorkspaceActivityController;
+  private readonly profileCommand: OpsEntityWorkspaceProfileCommand;
   private generation = 0;
   private accountsPage = 0;
   private started = false;
@@ -156,6 +166,14 @@ export class OpsEntityWorkspaceSource {
       isHistoryActive: () => this.historyController.isActive(),
       refreshHistory: () => this.historyController.reload(),
       refreshLive: () => { void this.observer?.refresh(); },
+    });
+    this.profileCommand = new OpsEntityWorkspaceProfileCommand({
+      isHistoryActive: () => this.historyController.isActive(),
+      readAdapter: () => this.session?.adapter ?? null,
+      readGeneration: () => this.generation,
+      readSnapshot: () => this.snapshot,
+      refresh: () => { void this.observer?.refresh(); },
+      subscribe: this.subscribe,
     });
   }
 
@@ -260,6 +278,9 @@ export class OpsEntityWorkspaceSource {
   readonly clearActivityFilters = (): void => {
     this.activityController.clearFilters(this.snapshot.activity);
   };
+
+  readonly saveProfile = (draft: EntityWorkspaceProfileDraft): Promise<void> =>
+    this.profileCommand.save(draft);
 
   readonly selectHistoryHeight = (height: number): Promise<boolean> => {
     this.activityController.resetPage();

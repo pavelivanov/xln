@@ -133,6 +133,7 @@ export function OpsEntityWorkspacePage() {
         onLoadOlderActivity={opsEntityWorkspaceSource.loadOlderActivity}
         onRefreshActivity={opsEntityWorkspaceSource.refreshActivity}
         onRefresh={() => { void opsEntityWorkspaceSource.refresh(); }}
+        onSaveProfile={opsEntityWorkspaceSource.saveProfile}
         onSelectAccountsPage={opsEntityWorkspaceSource.selectAccountsPage}
         onSelectActivityBeforeHeight={opsEntityWorkspaceSource.selectActivityPage}
         onSelectActivityKind={opsEntityWorkspaceSource.selectActivityKind}

@@ -13,6 +13,7 @@ export type WalletRuntimeFixtureInfo = Readonly<{
   entityId: string;
   counterpartyEntityId: string;
   height: number;
+  walletSeed: string;
   wsUrl: string;
   token: string;
   recovery: Readonly<{
@@ -57,6 +58,7 @@ export const readWalletRuntimeFixture = async (page: Page): Promise<WalletRuntim
   const entityId = String(info['entityId'] || '').trim().toLowerCase();
   const counterpartyEntityId = String(info['counterpartyEntityId'] || '').trim().toLowerCase();
   const height = Number(info['height']);
+  const walletSeed = String(info['walletSeed'] || '').trim();
   const wsUrl = String(info['wsUrl'] || '').trim();
   const token = String(info['token'] || '').trim();
   const recovery = info['recovery'];
@@ -93,7 +95,9 @@ export const readWalletRuntimeFixture = async (page: Page): Promise<WalletRuntim
     throw new Error('WALLET_RUNTIME_FIXTURE_ID_INVALID');
   }
   if (!Number.isSafeInteger(height) || height < 1) throw new Error('WALLET_RUNTIME_FIXTURE_HEIGHT_INVALID');
-  if (!wsUrl.startsWith('ws://127.0.0.1:') || !token.startsWith('xlnra1.')) {
+  if (walletSeed.split(/\s+/u).length !== 12
+    || !wsUrl.startsWith('ws://127.0.0.1:')
+    || !token.startsWith('xlnra1.')) {
     throw new Error('WALLET_RUNTIME_FIXTURE_AUTH_INVALID');
   }
   if (!/^0x[0-9a-f]{40}$/.test(recoveryRuntimeId)
@@ -120,6 +124,7 @@ export const readWalletRuntimeFixture = async (page: Page): Promise<WalletRuntim
     entityId,
     counterpartyEntityId,
     height,
+    walletSeed,
     wsUrl,
     token,
     recovery: {

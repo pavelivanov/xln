@@ -95,7 +95,7 @@ describe('React Entity Settings committed summary', () => {
     })).toThrow('ENTITY_WORKSPACE_SETTINGS_SUMMARY_ENTITY_ID_MISMATCH');
   });
 
-  test('keeps the summary presentation read-only', async () => {
+  test('keeps committed summary projection separate from the owner command callback', async () => {
     const [page, panel, shell] = await Promise.all([
       Bun.file('frontend/apps/ops/src/ops-entity-workspace.tsx').text(),
       Bun.file('frontend/packages/ui/src/entity-workspace-profile-panel.tsx').text(),
@@ -105,7 +105,8 @@ describe('React Entity Settings committed summary', () => {
     expect(shell).toContain('timeMachine={timeMachine}');
     expect(panel).toContain('projectEntityWorkspaceSettingsSummary');
     expect(panel).toContain('Visible reserves');
-    expect(panel).not.toContain('onSave');
+    expect(panel).toContain('onSave={onSaveProfile}');
+    expect(panel).toContain('disabledReason={disabledReason}');
     expect(panel).not.toContain('.send(');
   });
 });
