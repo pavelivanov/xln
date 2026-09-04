@@ -15,8 +15,17 @@ const account = (
   frameHeight: number,
   stateHash: string,
   frameOverrides: Record<string, unknown> = {},
+  stateOverrides: Record<string, unknown> = {},
 ) => ({
-  state: { leftEntity, rightEntity },
+  state: {
+    leftEntity,
+    rightEntity,
+    domain: { chainId: 31_337, depositoryAddress: '0xdepository' },
+    lastFinalizedJHeight: frameHeight + 8,
+    jNonce: frameHeight + 3,
+    disputeConfig: { leftResponseSeconds: 3_600, rightResponseSeconds: 86_400 },
+    ...stateOverrides,
+  },
   currentFrame: {
     height: frameHeight,
     timestamp: 1_700_000_000 + frameHeight,
@@ -54,19 +63,25 @@ const FRAME = frameWithAccounts([
 const CONTEXT = projectEntityWorkspaceContext({ runtimeId: 'runtime-a', frame: FRAME });
 
 describe('Entity workspace Accounts page projection', () => {
-  test('preserves adapter order and projects committed frame headers only', () => {
+  test('preserves adapter order and projects committed Account evidence only', () => {
     expect(projectEntityWorkspaceAccounts({ context: CONTEXT, frame: FRAME })).toEqual({
       status: 'selected',
       entityId: '0xaaaa',
       items: [
         {
-          counterpartyId: '0xbbbb', frameHeight: 4, frameTimestamp: 1_700_000_004,
-          jurisdictionHeight: 14, transactionCount: 1, previousFrameHash: 'genesis',
+          chainId: 31_337, counterpartyId: '0xbbbb', depositoryAddress: '0xdepository',
+          frameHeight: 4, frameTimestamp: 1_700_000_004, jurisdictionHeight: 14,
+          jurisdictionNonce: 7, lastFinalizedJurisdictionHeight: 12,
+          leftResponseSeconds: 3_600, rightResponseSeconds: 86_400,
+          transactionCount: 1, previousFrameHash: 'genesis',
           accountStateRoot: '0xroot4', stateHash: '0xSTATEB',
         },
         {
-          counterpartyId: '0xcccc', frameHeight: 7, frameTimestamp: 1_700_000_007,
-          jurisdictionHeight: 17, transactionCount: 1, previousFrameHash: 'genesis',
+          chainId: 31_337, counterpartyId: '0xcccc', depositoryAddress: '0xdepository',
+          frameHeight: 7, frameTimestamp: 1_700_000_007, jurisdictionHeight: 17,
+          jurisdictionNonce: 10, lastFinalizedJurisdictionHeight: 15,
+          leftResponseSeconds: 3_600, rightResponseSeconds: 86_400,
+          transactionCount: 1, previousFrameHash: 'genesis',
           accountStateRoot: '0xroot7', stateHash: '0xSTATEC',
         },
       ],
@@ -146,6 +161,56 @@ describe('Entity workspace Accounts page projection', () => {
     expect(panel).toContain('dateTime={formatted.dateTime}');
     expect(panel).toContain('title={`Runtime timestamp ${timestamp}`}');
     expect(panel).toContain('formatEntityWorkspaceTimestamp(timestamp)');
+  });
+
+  test('projects exact committed Account protocol context without financial derivation', async () => {
+    const projected = projectEntityWorkspaceAccounts({ context: CONTEXT, frame: FRAME });
+    if (projected.status !== 'selected') throw new Error('TEST_ACCOUNT_PROTOCOL_CONTEXT_MISSING');
+    expect(projected.items[0]).toMatchObject({
+      chainId: 31_337,
+      depositoryAddress: '0xdepository',
+      jurisdictionNonce: 7,
+      lastFinalizedJurisdictionHeight: 12,
+      leftResponseSeconds: 3_600,
+      rightResponseSeconds: 86_400,
+    });
+    const panel = await Bun.file('frontend/packages/ui/src/entity-workspace-accounts-panel.tsx').text();
+    expect(panel).toContain('data-testid="account-protocol-depository"');
+    expect(panel).toContain('data-testid="account-protocol-response-windows"');
+    expect(panel).not.toContain('deriveDelta');
+  });
+
+  test('rejects malformed committed Account protocol context', () => {
+    expect(() => projectEntityWorkspaceAccounts({
+      context: CONTEXT,
+      frame: frameWithAccounts([account('0xaaaa', '0xbbbb', 1, '0xhash', {}, {
+        domain: { chainId: 0, depositoryAddress: '0xdepository' },
+      })]),
+    })).toThrow('ENTITY_WORKSPACE_ACCOUNT_CHAIN_ID_INVALID');
+    expect(() => projectEntityWorkspaceAccounts({
+      context: CONTEXT,
+      frame: frameWithAccounts([account('0xaaaa', '0xbbbb', 1, '0xhash', {}, {
+        domain: { chainId: 31_337, depositoryAddress: '' },
+      })]),
+    })).toThrow('ENTITY_WORKSPACE_ACCOUNT_DEPOSITORY_INVALID');
+    expect(() => projectEntityWorkspaceAccounts({
+      context: CONTEXT,
+      frame: frameWithAccounts([account('0xaaaa', '0xbbbb', 1, '0xhash', {}, { jNonce: 1.5 })]),
+    })).toThrow('ENTITY_WORKSPACE_ACCOUNT_JURISDICTION_NONCE_INVALID');
+    expect(() => projectEntityWorkspaceAccounts({
+      context: CONTEXT,
+      frame: frameWithAccounts([account('0xaaaa', '0xbbbb', 1, '0xhash', {}, { lastFinalizedJHeight: -1 })]),
+    })).toThrow('ENTITY_WORKSPACE_ACCOUNT_FINALIZED_J_HEIGHT_INVALID');
+    expect(() => projectEntityWorkspaceAccounts({
+      context: CONTEXT,
+      frame: frameWithAccounts([account('0xaaaa', '0xbbbb', 1, '0xhash', {}, {
+        disputeConfig: { leftResponseSeconds: -1, rightResponseSeconds: 0 },
+      })]),
+    })).toThrow('ENTITY_WORKSPACE_ACCOUNT_LEFT_RESPONSE_SECONDS_INVALID');
+    expect(() => projectEntityWorkspaceAccounts({
+      context: CONTEXT,
+      frame: frameWithAccounts([account('0xaaaa', '0xbbbb', 1, '0xhash', {}, { disputeConfig: null })]),
+    })).toThrow('ENTITY_WORKSPACE_ACCOUNT_DISPUTE_CONFIG_INVALID');
   });
 
   test('rejects foreign, self, or duplicate bilateral Accounts', () => {
