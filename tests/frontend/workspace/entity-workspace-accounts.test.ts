@@ -7,6 +7,7 @@ import {
 import {
   projectEntityWorkspaceContext,
 } from '../../../frontend/packages/runtime-client/src/entity-workspace-context';
+import { formatEntityWorkspaceTimestamp } from '../../../frontend/packages/ui/src/entity-workspace-display';
 
 const account = (
   leftEntity: string,
@@ -114,6 +115,10 @@ describe('Entity workspace Accounts page projection', () => {
     })).toThrow('ENTITY_WORKSPACE_ACCOUNT_FRAME_TIMESTAMP_INVALID');
     expect(() => projectEntityWorkspaceAccounts({
       context: CONTEXT,
+      frame: frameWithAccounts([account('0xaaaa', '0xbbbb', 1, '0xhash', { timestamp: Number.MAX_SAFE_INTEGER })]),
+    })).toThrow('ENTITY_WORKSPACE_ACCOUNT_FRAME_TIMESTAMP_INVALID');
+    expect(() => projectEntityWorkspaceAccounts({
+      context: CONTEXT,
       frame: frameWithAccounts([account('0xaaaa', '0xbbbb', 1, '0xhash', { jHeight: 1.5 })]),
     })).toThrow('ENTITY_WORKSPACE_ACCOUNT_JURISDICTION_HEIGHT_INVALID');
     expect(() => projectEntityWorkspaceAccounts({
@@ -128,6 +133,19 @@ describe('Entity workspace Accounts page projection', () => {
       context: CONTEXT,
       frame: frameWithAccounts([account('0xaaaa', '0xbbbb', 1, '0xhash', { prevFrameHash: null })]),
     })).toThrow('ENTITY_WORKSPACE_ACCOUNT_PREVIOUS_FRAME_HASH_INVALID');
+  });
+
+  test('renders exact Account-frame timestamps as deterministic UTC evidence', async () => {
+    expect(formatEntityWorkspaceTimestamp(1_700_000_004)).toEqual({
+      dateTime: '1970-01-20T16:13:20.004Z',
+      label: '1970-01-20 16:13:20 UTC',
+    });
+    const panel = await Bun.file('frontend/packages/ui/src/entity-workspace-accounts-panel.tsx').text();
+    expect(panel).toContain('data-testid="account-commitment-timestamp"');
+    expect(panel).toContain('className="account-commitment-timestamp"');
+    expect(panel).toContain('dateTime={formatted.dateTime}');
+    expect(panel).toContain('title={`Runtime timestamp ${timestamp}`}');
+    expect(panel).toContain('formatEntityWorkspaceTimestamp(timestamp)');
   });
 
   test('rejects foreign, self, or duplicate bilateral Accounts', () => {

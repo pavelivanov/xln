@@ -1,11 +1,22 @@
 import type { EntityWorkspaceAccounts } from '../../runtime-client/src/entity-workspace-accounts';
-import { formatAddress } from './entity-workspace-display';
+import { formatAddress, formatEntityWorkspaceTimestamp } from './entity-workspace-display';
 import './entity-workspace-accounts-panel.css';
 
 type EntityWorkspaceAccountsPanelProps = Readonly<{
   accounts: EntityWorkspaceAccounts;
   onSelectPage: (page: number) => void;
 }>;
+
+function AccountCommitmentTimestamp({ timestamp }: Readonly<{ timestamp: number }>) {
+  const formatted = formatEntityWorkspaceTimestamp(timestamp);
+  return (
+    <time
+      data-testid="account-commitment-timestamp"
+      dateTime={formatted.dateTime}
+      title={`Runtime timestamp ${timestamp}`}
+    >{formatted.label}</time>
+  );
+}
 
 export function EntityWorkspaceAccountsPanel({
   accounts,
@@ -35,7 +46,7 @@ export function EntityWorkspaceAccountsPanel({
                 </dl>
                 <dl className="account-commitment-detail" data-testid="account-commitment">
                   <div><dt>J height</dt><dd data-testid="account-commitment-j-height">{account.jurisdictionHeight}</dd></div>
-                  <div><dt>Timestamp</dt><dd>{account.frameTimestamp}</dd></div>
+                  <div className="account-commitment-timestamp"><dt>Timestamp</dt><dd><AccountCommitmentTimestamp timestamp={account.frameTimestamp} /></dd></div>
                   <div><dt>Frame txs</dt><dd>{account.transactionCount}</dd></div>
                   <div className="account-commitment-wide">
                     <dt>Account state root</dt>

@@ -286,6 +286,10 @@ test('React Entity workspace reads selected context from a real H1 Runtime', { t
       await expect(firstCommitment).toBeVisible();
       await expect(firstCommitment.getByTestId('account-commitment-j-height')).toHaveText(/^\d+$/);
       await expect(firstCommitment.getByTestId('account-commitment-root')).not.toHaveText('');
+      const accountTimestamp = firstCommitment.getByTestId('account-commitment-timestamp');
+      await expect(accountTimestamp).toHaveText(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} UTC$/);
+      await expect(accountTimestamp).toHaveAttribute('datetime', /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/);
+      await expect(accountTimestamp).toHaveAttribute('title', /^Runtime timestamp \d+$/);
       const activity = candidatePage.getByTestId('entity-activity-ledger');
       await expect(activity).toBeVisible();
       const activityThrough = candidatePage.getByTestId('entity-activity-through-height');

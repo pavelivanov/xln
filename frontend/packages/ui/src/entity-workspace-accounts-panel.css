@@ -49,6 +49,8 @@
   border-top: 1px solid var(--entity-line);
 }
 .entity-workspace-accounts-panel .account-commitment-detail div { min-width: 0; }
+.entity-workspace-accounts-panel .account-commitment-detail .account-commitment-timestamp { grid-column: span 2; }
+.entity-workspace-accounts-panel .account-commitment-timestamp time { white-space: nowrap; }
 .entity-workspace-accounts-panel .account-commitment-detail .account-commitment-wide { grid-column: 1 / -1; }
 .entity-workspace-accounts-panel .account-commitment-detail dd { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .entity-workspace-accounts-empty { align-self: center; margin: 0; padding: 2rem; color: var(--theme-text-secondary, #777871); font-size: 0.78rem; line-height: 1.6; }
