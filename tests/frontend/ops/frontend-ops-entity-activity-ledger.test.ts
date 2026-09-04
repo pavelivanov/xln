@@ -12,6 +12,7 @@ import {
   formatEntityWorkspaceTimestamp,
   parseEntityWorkspaceLocalDateTime,
 } from '../../../frontend/packages/ui/src/entity-workspace-display';
+import { entityWorkspaceActivityTone } from '../../../frontend/packages/ui/src/entity-workspace-activity-tone';
 
 const context = projectEntityWorkspaceContext({
   runtimeId: 'runtime-a',
@@ -48,6 +49,30 @@ const page = (overrides: Record<string, unknown> = {}) => ({
 });
 
 describe('React Entity persisted activity ledger', () => {
+  test('projects the legacy event-tone precedence from canonical evidence', () => {
+    expect(entityWorkspaceActivityTone({
+      direction: 'in', kind: 'onchain', status: 'error', type: 'error',
+    })).toBe('danger');
+    expect(entityWorkspaceActivityTone({
+      direction: 'out', kind: 'onchain', status: 'confirmed', type: 'payment',
+    })).toBe('chain');
+    expect(entityWorkspaceActivityTone({
+      direction: 'in', kind: 'offchain', status: 'confirmed', type: 'payment',
+    })).toBe('in');
+    expect(entityWorkspaceActivityTone({
+      direction: 'out', kind: 'offchain', status: 'confirmed', type: 'payment',
+    })).toBe('out');
+    expect(entityWorkspaceActivityTone({
+      direction: 'neutral', kind: 'offchain', status: 'confirmed', type: 'cross_swap',
+    })).toBe('cross');
+    expect(entityWorkspaceActivityTone({
+      direction: 'neutral', kind: 'offchain', status: 'confirmed', type: 'swap',
+    })).toBe('swap');
+    expect(entityWorkspaceActivityTone({
+      direction: 'neutral', kind: 'offchain', status: 'observed', type: 'account',
+    })).toBe('neutral');
+  });
+
   test('formats persisted timestamps as deterministic UTC while retaining exact evidence', () => {
     expect(formatEntityWorkspaceTimestamp(1_700_000_000_000)).toEqual({
       dateTime: '2023-11-14T22:13:20.000Z',
@@ -586,6 +611,9 @@ describe('React Entity persisted activity ledger', () => {
     expect(row).toContain('data-testid="entity-activity-amount"');
     expect(row).toContain('data-testid="entity-activity-order"');
     expect(row).toContain('data-testid="entity-activity-hash"');
+    expect(row).toContain('data-testid="entity-activity-event"');
+    expect(row).toContain('data-tone={entityWorkspaceActivityTone(event)}');
+    expect(row).toContain('data-status={event.status}');
     expect(panel).toContain('data-testid="entity-activity-mode-timeframe"');
     expect(panel).toContain('data-testid="entity-activity-mode-infinite"');
     expect(panel).toContain('data-testid="entity-activity-load-older"');
