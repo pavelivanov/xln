@@ -3,9 +3,7 @@ import {
   emptyEntityWorkspaceActivity,
   projectEntityWorkspaceActivity,
   type EntityWorkspaceActivity,
-  type EntityWorkspaceActivityFilterType,
-  type EntityWorkspaceActivityKind,
-  type EntityWorkspaceActivityPageSize,
+  type EntityWorkspaceActivityQueryOptions,
 } from '../../../packages/runtime-client/src/entity-workspace-activity';
 import {
   emptyEntityWorkspaceAccounts,
@@ -99,21 +97,13 @@ export const projectOpsEntityWorkspaceFrame = (
 export const projectOpsEntityWorkspaceActivityPage = (
   projection: OpsEntityWorkspaceProjection,
   page: unknown,
-  beforeHeight?: number,
-  kind?: EntityWorkspaceActivityKind,
-  types?: readonly EntityWorkspaceActivityFilterType[],
-  search?: string,
-  pageSize?: EntityWorkspaceActivityPageSize,
+  options: EntityWorkspaceActivityQueryOptions = {},
 ): OpsEntityWorkspaceProjection => ({
   ...projection,
   activity: projectEntityWorkspaceActivity({
     context: projection.context,
     page,
-    ...(beforeHeight === undefined ? {} : { beforeHeight }),
-    ...(kind === undefined ? {} : { kind }),
-    ...(types === undefined ? {} : { types }),
-    ...(search === undefined ? {} : { search }),
-    ...(pageSize === undefined ? {} : { pageSize }),
+    ...options,
   }),
 });
 

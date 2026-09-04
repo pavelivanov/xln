@@ -11,6 +11,8 @@ export const ENTITY_WORKSPACE_ACTIVITY_PAGE_SIZES = [8, 40, 80, 160] as const;
 export type EntityWorkspaceActivityPageSize = typeof ENTITY_WORKSPACE_ACTIVITY_PAGE_SIZES[number];
 const DEFAULT_ACTIVITY_PAGE_SIZE: EntityWorkspaceActivityPageSize = 8;
 const ACTIVITY_SCAN_LIMIT = 160;
+const ACTIVITY_TIMEFRAME_SCAN_LIMIT = 1_000;
+const ACTIVITY_MODES = ['paged', 'timeframe'] as const;
 const ACTIVITY_FILTER_KINDS = ['all', 'onchain', 'offchain'] as const;
 const ACTIVITY_KINDS = ['onchain', 'offchain'] as const;
 const ACTIVITY_TYPES = [
@@ -22,6 +24,7 @@ const ACTIVITY_SOURCES = ['runtime_input', 'runtime_log', 'j_input'] as const;
 const ACTIVITY_DIRECTIONS = ['in', 'out', 'neutral'] as const;
 
 type ActivityKind = typeof ACTIVITY_KINDS[number];
+export type EntityWorkspaceActivityMode = typeof ACTIVITY_MODES[number];
 export type EntityWorkspaceActivityKind = typeof ACTIVITY_FILTER_KINDS[number];
 export type EntityWorkspaceActivityType = typeof ACTIVITY_TYPES[number];
 export type EntityWorkspaceActivityFilterType = Exclude<EntityWorkspaceActivityType, 'system'>;
@@ -48,7 +51,9 @@ type EmptyEntityWorkspaceActivity = Readonly<{ status: 'empty' }>;
 type SelectedEntityWorkspaceActivity = Readonly<{
   status: 'selected';
   entityId: string;
+  fromTimestamp: number | null;
   kind: EntityWorkspaceActivityKind;
+  mode: EntityWorkspaceActivityMode;
   pageSize: EntityWorkspaceActivityPageSize;
   query: string;
   types: readonly EntityWorkspaceActivityFilterType[];
@@ -58,6 +63,7 @@ type SelectedEntityWorkspaceActivity = Readonly<{
   fromHeight: number;
   toHeight: number;
   scannedFrames: number;
+  toTimestamp: number | null;
   nextBeforeHeight: number | null;
   events: readonly EntityWorkspaceActivityEvent[];
 }>;
@@ -67,6 +73,17 @@ export type EntityWorkspaceActivity =
   | SelectedEntityWorkspaceActivity;
 
 export const emptyEntityWorkspaceActivity = (): EmptyEntityWorkspaceActivity => ({ status: 'empty' });
+
+export type EntityWorkspaceActivityQueryOptions = Readonly<{
+  beforeHeight?: number;
+  fromTimestamp?: number | null;
+  kind?: EntityWorkspaceActivityKind;
+  mode?: EntityWorkspaceActivityMode;
+  pageSize?: EntityWorkspaceActivityPageSize;
+  search?: string;
+  toTimestamp?: number | null;
+  types?: readonly EntityWorkspaceActivityFilterType[];
+}>;
 
 const integer = (value: unknown, code: string, minimum = 0): number => {
   const parsed = requireFiniteNumber(value, code);
@@ -100,12 +117,35 @@ const optionalId = (value: unknown, code: string): string | null => {
   return nonemptyText(value, code).toLowerCase();
 };
 
-const requireTimestamp = (value: unknown): number => {
-  const timestamp = integer(value, 'ENTITY_WORKSPACE_ACTIVITY_EVENT_TIMESTAMP_INVALID');
+const requireTimestamp = (value: unknown, code: string): number => {
+  const timestamp = integer(value, code);
   if (timestamp > 8_640_000_000_000_000) {
-    throw new Error('ENTITY_WORKSPACE_ACTIVITY_EVENT_TIMESTAMP_INVALID');
+    throw new Error(code);
   }
   return timestamp;
+};
+
+const requireOptionalTimestamp = (value: unknown, code: string): number | null =>
+  value === null || value === undefined ? null : requireTimestamp(value, code);
+
+export const requireEntityWorkspaceActivityMode = (value: unknown): EntityWorkspaceActivityMode =>
+  enumValue(value, ACTIVITY_MODES, 'ENTITY_WORKSPACE_ACTIVITY_MODE_INVALID');
+
+export const requireEntityWorkspaceActivityTimeframe = (input: Readonly<{
+  fromTimestamp: unknown;
+  mode: unknown;
+  toTimestamp: unknown;
+}>): Readonly<{ fromTimestamp: number | null; mode: EntityWorkspaceActivityMode; toTimestamp: number | null }> => {
+  const mode = requireEntityWorkspaceActivityMode(input.mode);
+  const fromTimestamp = requireOptionalTimestamp(input.fromTimestamp, 'ENTITY_WORKSPACE_ACTIVITY_FROM_TIMESTAMP_INVALID');
+  const toTimestamp = requireOptionalTimestamp(input.toTimestamp, 'ENTITY_WORKSPACE_ACTIVITY_TO_TIMESTAMP_INVALID');
+  if (mode === 'paged' && (fromTimestamp !== null || toTimestamp !== null)) {
+    throw new Error('ENTITY_WORKSPACE_ACTIVITY_MODE_FILTER_MISMATCH');
+  }
+  if (fromTimestamp !== null && toTimestamp !== null && fromTimestamp > toTimestamp) {
+    throw new Error('ENTITY_WORKSPACE_ACTIVITY_TIMEFRAME_INVALID');
+  }
+  return { fromTimestamp, mode, toTimestamp };
 };
 
 const projectEvent = (
@@ -116,6 +156,8 @@ const projectEvent = (
   requestedKind: EntityWorkspaceActivityKind,
   requestedTypes: readonly EntityWorkspaceActivityFilterType[],
   requestedQuery: string,
+  fromTimestamp: number | null,
+  toTimestamp: number | null,
 ): EntityWorkspaceActivityEvent => {
   const event = requireUnknownRecord(value, 'ENTITY_WORKSPACE_ACTIVITY_EVENT_INVALID');
   const height = integer(event['height'], 'ENTITY_WORKSPACE_ACTIVITY_EVENT_HEIGHT_INVALID');
@@ -151,10 +193,18 @@ const projectEvent = (
   if (requestedQuery && !searchEvidence.includes(requestedQuery.toLowerCase())) {
     throw new Error('ENTITY_WORKSPACE_ACTIVITY_EVENT_QUERY_MISMATCH');
   }
+  const timestamp = requireTimestamp(
+    event['timestamp'],
+    'ENTITY_WORKSPACE_ACTIVITY_EVENT_TIMESTAMP_INVALID',
+  );
+  if ((fromTimestamp !== null && timestamp < fromTimestamp)
+    || (toTimestamp !== null && timestamp > toTimestamp)) {
+    throw new Error('ENTITY_WORKSPACE_ACTIVITY_EVENT_TIMEFRAME_MISMATCH');
+  }
   return {
     id: nonemptyText(event['id'], 'ENTITY_WORKSPACE_ACTIVITY_EVENT_ID_INVALID'),
     height,
-    timestamp: requireTimestamp(event['timestamp']),
+    timestamp,
     kind,
     type,
     source: enumValue(event['source'], ACTIVITY_SOURCES, 'ENTITY_WORKSPACE_ACTIVITY_EVENT_SOURCE_INVALID'),
@@ -185,6 +235,9 @@ const requireFilters = (
   pageSize: EntityWorkspaceActivityPageSize,
   types: readonly EntityWorkspaceActivityFilterType[],
   query: string,
+  fromTimestamp: number | null,
+  toTimestamp: number | null,
+  scanLimit: number,
 ): void => {
   const filters = requireUnknownRecord(value, 'ENTITY_WORKSPACE_ACTIVITY_FILTERS_INVALID');
   if (optionalString(filters['entityId'], 'ENTITY_WORKSPACE_ACTIVITY_FILTER_ENTITY_INVALID')?.trim().toLowerCase() !== context.entityId) {
@@ -199,8 +252,17 @@ const requireFilters = (
   }
   const returnedQuery = optionalString(filters['query'], 'ENTITY_WORKSPACE_ACTIVITY_FILTER_QUERY_INVALID')?.trim() ?? '';
   if (returnedQuery !== query) throw new Error('ENTITY_WORKSPACE_ACTIVITY_FILTER_QUERY_MISMATCH');
+  const returnedFromTimestamp = requireOptionalTimestamp(
+    filters['fromTimestamp'], 'ENTITY_WORKSPACE_ACTIVITY_FILTER_FROM_TIMESTAMP_INVALID',
+  );
+  const returnedToTimestamp = requireOptionalTimestamp(
+    filters['toTimestamp'], 'ENTITY_WORKSPACE_ACTIVITY_FILTER_TO_TIMESTAMP_INVALID',
+  );
+  if (returnedFromTimestamp !== fromTimestamp || returnedToTimestamp !== toTimestamp) {
+    throw new Error('ENTITY_WORKSPACE_ACTIVITY_FILTER_TIMEFRAME_MISMATCH');
+  }
   if (filters['beforeHeight'] !== beforeHeight) throw new Error('ENTITY_WORKSPACE_ACTIVITY_FILTER_HEIGHT_MISMATCH');
-  if (filters['limit'] !== pageSize || filters['scanLimit'] !== ACTIVITY_SCAN_LIMIT) {
+  if (filters['limit'] !== pageSize || filters['scanLimit'] !== scanLimit) {
     throw new Error('ENTITY_WORKSPACE_ACTIVITY_FILTER_BOUNDS_MISMATCH');
   }
 };
@@ -245,57 +307,69 @@ const requireEntityWorkspaceActivityTypes = (
   return types;
 };
 
+const requireActivityQuery = (
+  context: Extract<EntityWorkspaceContext, { status: 'selected' }>,
+  input: EntityWorkspaceActivityQueryOptions,
+) => {
+  const timeframe = requireEntityWorkspaceActivityTimeframe({
+    fromTimestamp: input.fromTimestamp ?? null,
+    mode: input.mode ?? 'paged',
+    toTimestamp: input.toTimestamp ?? null,
+  });
+  return {
+    beforeHeight: requireBeforeHeight(input.beforeHeight ?? context.height, context.height),
+    kind: requireEntityWorkspaceActivityKind(input.kind ?? 'all'),
+    pageSize: requireEntityWorkspaceActivityPageSize(input.pageSize ?? DEFAULT_ACTIVITY_PAGE_SIZE),
+    query: requireEntityWorkspaceActivitySearch(input.search ?? ''),
+    scanLimit: timeframe.mode === 'timeframe' ? ACTIVITY_TIMEFRAME_SCAN_LIMIT : ACTIVITY_SCAN_LIMIT,
+    timeframe,
+    types: requireEntityWorkspaceActivityTypes(input.types ?? []),
+  };
+};
+
 export const buildEntityWorkspaceActivityQuery = (
   context: EntityWorkspaceContext,
-  beforeHeight: number = context.height,
-  kind: EntityWorkspaceActivityKind = 'all',
-  types: readonly EntityWorkspaceActivityFilterType[] = [],
-  search: string = '',
-  pageSize: EntityWorkspaceActivityPageSize = DEFAULT_ACTIVITY_PAGE_SIZE,
+  input: EntityWorkspaceActivityQueryOptions = {},
 ): RuntimeAdapterReadQuery => {
   if (context.status !== 'selected' || context.height < 1) {
     throw new Error('ENTITY_WORKSPACE_ACTIVITY_CONTEXT_REQUIRED');
   }
-  const requestedBeforeHeight = requireBeforeHeight(beforeHeight, context.height);
-  const requestedKind = requireEntityWorkspaceActivityKind(kind);
-  const requestedTypes = requireEntityWorkspaceActivityTypes(types);
-  const requestedQuery = requireEntityWorkspaceActivitySearch(search);
-  const requestedPageSize = requireEntityWorkspaceActivityPageSize(pageSize);
+  const request = requireActivityQuery(context, input);
   return {
-    beforeHeight: requestedBeforeHeight,
+    beforeHeight: request.beforeHeight,
     entityId: context.entityId,
-    kind: requestedKind,
-    limit: requestedPageSize,
-    scanLimit: ACTIVITY_SCAN_LIMIT,
-    ...(requestedTypes.length === 0 ? {} : { types: [...requestedTypes] }),
-    ...(requestedQuery ? { q: requestedQuery } : {}),
+    kind: request.kind,
+    limit: request.pageSize,
+    scanLimit: request.scanLimit,
+    ...(request.types.length === 0 ? {} : { types: [...request.types] }),
+    ...(request.query ? { q: request.query } : {}),
+    ...(request.timeframe.fromTimestamp === null ? {} : { fromTimestamp: request.timeframe.fromTimestamp }),
+    ...(request.timeframe.toTimestamp === null ? {} : { toTimestamp: request.timeframe.toTimestamp }),
   };
 };
 
 export function projectEntityWorkspaceActivity(input: Readonly<{
   beforeHeight?: number;
   context: EntityWorkspaceContext;
+  fromTimestamp?: number | null;
   kind?: EntityWorkspaceActivityKind;
+  mode?: EntityWorkspaceActivityMode;
   page?: unknown;
   pageSize?: EntityWorkspaceActivityPageSize;
   search?: string;
+  toTimestamp?: number | null;
   types?: readonly EntityWorkspaceActivityFilterType[];
 }>): EntityWorkspaceActivity {
   if (input.context.status === 'empty') return emptyEntityWorkspaceActivity();
   const context = input.context;
-  const requestedBeforeHeight = requireBeforeHeight(input.beforeHeight ?? context.height, context.height);
-  const requestedKind = requireEntityWorkspaceActivityKind(input.kind ?? 'all');
-  const requestedTypes = requireEntityWorkspaceActivityTypes(input.types ?? []);
-  const requestedQuery = requireEntityWorkspaceActivitySearch(input.search ?? '');
-  const requestedPageSize = requireEntityWorkspaceActivityPageSize(
-    input.pageSize ?? DEFAULT_ACTIVITY_PAGE_SIZE,
-  );
+  const request = requireActivityQuery(context, input);
   const page = requireUnknownRecord(input.page, 'ENTITY_WORKSPACE_ACTIVITY_PAGE_INVALID');
   if (page['ok'] !== true) throw new Error('ENTITY_WORKSPACE_ACTIVITY_READ_FAILED');
   matchingRuntimeId(page['runtimeId'], context, 'ENTITY_WORKSPACE_ACTIVITY_RUNTIME_MISMATCH');
   requireFilters(
-    page['filters'], context, requestedBeforeHeight, requestedKind,
-    requestedPageSize, requestedTypes, requestedQuery,
+    page['filters'], context, request.beforeHeight, request.kind,
+    request.pageSize, request.types, request.query,
+    request.timeframe.fromTimestamp, request.timeframe.toTimestamp, request.scanLimit,
   );
 
   const latestHeight = integer(page['latestHeight'], 'ENTITY_WORKSPACE_ACTIVITY_LATEST_HEIGHT_INVALID');
@@ -305,7 +379,7 @@ export function projectEntityWorkspaceActivity(input: Readonly<{
   const returned = integer(page['returned'], 'ENTITY_WORKSPACE_ACTIVITY_RETURNED_INVALID');
   const limit = integer(page['limit'], 'ENTITY_WORKSPACE_ACTIVITY_LIMIT_INVALID', 1);
   const scanLimit = integer(page['scanLimit'], 'ENTITY_WORKSPACE_ACTIVITY_SCAN_LIMIT_INVALID', 1);
-  if (limit !== requestedPageSize || scanLimit !== ACTIVITY_SCAN_LIMIT) {
+  if (limit !== request.pageSize || scanLimit !== request.scanLimit) {
     throw new Error('ENTITY_WORKSPACE_ACTIVITY_BOUNDS_MISMATCH');
   }
   if (!Array.isArray(page['events']) || returned !== page['events'].length || returned > limit) {
@@ -317,15 +391,16 @@ export function projectEntityWorkspaceActivity(input: Readonly<{
       throw new Error('ENTITY_WORKSPACE_ACTIVITY_EMPTY_METADATA_MISMATCH');
     }
     return {
-      status: 'selected', entityId: context.entityId, kind: requestedKind,
-      pageSize: requestedPageSize,
-      query: requestedQuery, types: requestedTypes, requestedBeforeHeight,
-      isLatestPage: requestedBeforeHeight === context.height, latestHeight,
+      status: 'selected', entityId: context.entityId, kind: request.kind,
+      fromTimestamp: request.timeframe.fromTimestamp, mode: request.timeframe.mode,
+      pageSize: request.pageSize, query: request.query, toTimestamp: request.timeframe.toTimestamp,
+      types: request.types, requestedBeforeHeight: request.beforeHeight,
+      isLatestPage: request.beforeHeight === context.height, latestHeight,
       fromHeight, toHeight, scannedFrames, nextBeforeHeight: null, events: [],
     };
   }
 
-  const expectedToHeight = Math.min(latestHeight, requestedBeforeHeight);
+  const expectedToHeight = Math.min(latestHeight, request.beforeHeight);
   if (fromHeight < 1 || fromHeight > toHeight || toHeight !== expectedToHeight) {
     throw new Error('ENTITY_WORKSPACE_ACTIVITY_HEIGHT_RANGE_MISMATCH');
   }
@@ -333,15 +408,19 @@ export function projectEntityWorkspaceActivity(input: Readonly<{
     throw new Error('ENTITY_WORKSPACE_ACTIVITY_SCAN_RANGE_MISMATCH');
   }
   const events = page['events'].map((event) =>
-    projectEvent(event, context, fromHeight, toHeight, requestedKind, requestedTypes, requestedQuery));
+    projectEvent(
+      event, context, fromHeight, toHeight, request.kind, request.types,
+      request.query, request.timeframe.fromTimestamp, request.timeframe.toTimestamp,
+    ));
   if (new Set(events.map(({ id }) => id)).size !== events.length) {
     throw new Error('ENTITY_WORKSPACE_ACTIVITY_EVENT_ID_DUPLICATE');
   }
   return {
-    status: 'selected', entityId: context.entityId, kind: requestedKind,
-    pageSize: requestedPageSize,
-    query: requestedQuery, types: requestedTypes, requestedBeforeHeight,
-    isLatestPage: requestedBeforeHeight === context.height, latestHeight,
+    status: 'selected', entityId: context.entityId, kind: request.kind,
+    fromTimestamp: request.timeframe.fromTimestamp, mode: request.timeframe.mode,
+    pageSize: request.pageSize, query: request.query, toTimestamp: request.timeframe.toTimestamp,
+    types: request.types, requestedBeforeHeight: request.beforeHeight,
+    isLatestPage: request.beforeHeight === context.height, latestHeight,
     fromHeight, toHeight, scannedFrames,
     nextBeforeHeight: requireCursor(page['nextBeforeHeight'], fromHeight),
     events,

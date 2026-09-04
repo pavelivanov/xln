@@ -1,12 +1,16 @@
 import {
   requireEntityWorkspaceActivityKind,
+  requireEntityWorkspaceActivityMode,
   requireEntityWorkspaceActivityPageSize,
   requireEntityWorkspaceActivityFilterType,
   requireEntityWorkspaceActivitySearch,
+  requireEntityWorkspaceActivityTimeframe,
   type EntityWorkspaceActivity,
   type EntityWorkspaceActivityFilterType,
   type EntityWorkspaceActivityKind,
+  type EntityWorkspaceActivityMode,
   type EntityWorkspaceActivityPageSize,
+  type EntityWorkspaceActivityQueryOptions,
 } from '../../../packages/runtime-client/src/entity-workspace-activity';
 
 type ActivityControllerDependencies = Readonly<{
@@ -19,18 +23,35 @@ export class OpsEntityWorkspaceActivityController {
   private beforeHeight: number | null = null;
   private cursorIndex = 0;
   private cursorStack: readonly (number | null)[] = [null];
+  private fromTimestamp: number | null = null;
   private kind: EntityWorkspaceActivityKind = 'all';
+  private mode: EntityWorkspaceActivityMode = 'paged';
   private pageSize: EntityWorkspaceActivityPageSize = 8;
   private search = '';
+  private toTimestamp: number | null = null;
   private types: readonly EntityWorkspaceActivityFilterType[] = [];
 
   constructor(private readonly dependencies: ActivityControllerDependencies) {}
 
   readonly readBeforeHeight = (): number | null => this.beforeHeight;
+  readonly readFromTimestamp = (): number | null => this.fromTimestamp;
   readonly readKind = (): EntityWorkspaceActivityKind => this.kind;
+  readonly readMode = (): EntityWorkspaceActivityMode => this.mode;
   readonly readPageSize = (): EntityWorkspaceActivityPageSize => this.pageSize;
   readonly readSearch = (): string => this.search;
+  readonly readToTimestamp = (): number | null => this.toTimestamp;
   readonly readTypes = (): readonly EntityWorkspaceActivityFilterType[] => this.types;
+
+  readonly readQueryOptions = (): EntityWorkspaceActivityQueryOptions => ({
+    ...(this.beforeHeight === null ? {} : { beforeHeight: this.beforeHeight }),
+    fromTimestamp: this.fromTimestamp,
+    kind: this.kind,
+    mode: this.mode,
+    pageSize: this.pageSize,
+    search: this.search,
+    toTimestamp: this.toTimestamp,
+    types: this.types,
+  });
 
   private readonly resetCursor = (): void => {
     this.beforeHeight = null;
@@ -52,9 +73,12 @@ export class OpsEntityWorkspaceActivityController {
 
   readonly reset = (): void => {
     this.resetCursor();
+    this.fromTimestamp = null;
     this.kind = 'all';
+    this.mode = 'paged';
     this.pageSize = 8;
     this.search = '';
+    this.toTimestamp = null;
     this.types = [];
   };
 
@@ -112,6 +136,41 @@ export class OpsEntityWorkspaceActivityController {
     this.refresh();
   };
 
+  readonly selectMode = (
+    activity: EntityWorkspaceActivity,
+    mode: EntityWorkspaceActivityMode,
+  ): void => {
+    if (activity.status !== 'selected') {
+      throw new Error('OPS_ENTITY_ACTIVITY_MODE_CONTEXT_REQUIRED');
+    }
+    const requestedMode = requireEntityWorkspaceActivityMode(mode);
+    if (requestedMode === this.mode) return;
+    this.mode = requestedMode;
+    this.fromTimestamp = null;
+    this.toTimestamp = null;
+    this.resetCursor();
+    this.refresh();
+  };
+
+  readonly applyTimeframe = (
+    activity: EntityWorkspaceActivity,
+    fromTimestamp: number | null,
+    toTimestamp: number | null,
+  ): void => {
+    if (activity.status !== 'selected') {
+      throw new Error('OPS_ENTITY_ACTIVITY_TIMEFRAME_CONTEXT_REQUIRED');
+    }
+    if (this.mode !== 'timeframe') throw new Error('OPS_ENTITY_ACTIVITY_TIMEFRAME_MODE_REQUIRED');
+    const timeframe = requireEntityWorkspaceActivityTimeframe({
+      fromTimestamp, mode: this.mode, toTimestamp,
+    });
+    if (timeframe.fromTimestamp === this.fromTimestamp && timeframe.toTimestamp === this.toTimestamp) return;
+    this.fromTimestamp = timeframe.fromTimestamp;
+    this.toTimestamp = timeframe.toTimestamp;
+    this.resetCursor();
+    this.refresh();
+  };
+
   readonly selectPageSize = (
     activity: EntityWorkspaceActivity,
     pageSize: EntityWorkspaceActivityPageSize,
@@ -156,8 +215,11 @@ export class OpsEntityWorkspaceActivityController {
     if (activity.status !== 'selected') {
       throw new Error('OPS_ENTITY_ACTIVITY_FILTER_CONTEXT_REQUIRED');
     }
-    if (this.search.length === 0 && this.types.length === 0 && this.beforeHeight === null) return;
+    if (this.search.length === 0 && this.types.length === 0
+      && this.fromTimestamp === null && this.toTimestamp === null && this.beforeHeight === null) return;
+    this.fromTimestamp = null;
     this.search = '';
+    this.toTimestamp = null;
     this.types = [];
     this.resetCursor();
     this.refresh();

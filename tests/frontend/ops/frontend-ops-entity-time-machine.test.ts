@@ -59,6 +59,7 @@ const activityPage = (
   types: string[] = [],
   query = '',
   pageSize: 8 | 40 | 80 | 160 = 8,
+  timeframe?: Readonly<{ fromTimestamp: number; toTimestamp: number }>,
 ) => ({
   ok: true as const,
   runtimeId: 'runtime-a',
@@ -68,9 +69,13 @@ const activityPage = (
   scannedFrames: height,
   returned: 0,
   limit: pageSize,
-  scanLimit: 160,
+  scanLimit: timeframe ? 1_000 : 160,
   nextBeforeHeight: null,
-  filters: { entityId: '0xaaaa', kind, query, types, beforeHeight: height, limit: pageSize, scanLimit: 160 },
+  filters: {
+    entityId: '0xaaaa', kind, query, types, beforeHeight: height, limit: pageSize,
+    scanLimit: timeframe ? 1_000 : 160,
+    ...(timeframe ?? {}),
+  },
   events: [],
 });
 
@@ -102,21 +107,23 @@ describe('React Entity workspace Time Machine', () => {
   test('reads and projects one exact bounded historical frame', async () => {
     const queries: unknown[] = [];
     const projection = await readOpsEntityWorkspaceHistory({
+      activity: {
+        fromTimestamp: 1_000, kind: 'offchain', mode: 'timeframe', pageSize: 40,
+        search: 'Reserve', toTimestamp: 2_000, types: ['j_event'],
+      },
       accountsPage: 0,
       client: {
         readActivity: async (query) => {
           queries.push(query);
-          return activityPage(7, 'offchain', ['j_event'], 'Reserve', 40);
+          return activityPage(7, 'offchain', ['j_event'], 'Reserve', 40, {
+            fromTimestamp: 1_000, toTimestamp: 2_000,
+          });
         },
         readHistoryFrameBatch: async (query) => {
           queries.push(query);
           return historyBatch(historyFrame(7));
         },
       },
-      activityKind: 'offchain',
-      activityPageSize: 40,
-      activitySearch: 'Reserve',
-      activityTypes: ['j_event'],
       entityId: '0xaaaa', latestHeight: 18, requestedHeight: 7, runtimeId: 'runtime-a',
     });
     expect(queries).toEqual([
@@ -125,19 +132,22 @@ describe('React Entity workspace Time Machine', () => {
         entityId: '0xaaaa', heights: [7],
       },
       {
-        beforeHeight: 7, entityId: '0xaaaa', kind: 'offchain', limit: 40,
-        q: 'Reserve', scanLimit: 160, types: ['j_event'],
+        beforeHeight: 7, entityId: '0xaaaa', fromTimestamp: 1_000,
+        kind: 'offchain', limit: 40, q: 'Reserve', scanLimit: 1_000,
+        toTimestamp: 2_000, types: ['j_event'],
       },
     ]);
     expect(projection.context).toMatchObject({ entityId: '0xaaaa', height: 7, status: 'selected' });
     expect(projection.activity).toMatchObject({
-      kind: 'offchain', pageSize: 40, query: 'Reserve', status: 'selected', types: ['j_event'],
+      fromTimestamp: 1_000, kind: 'offchain', mode: 'timeframe', pageSize: 40,
+      query: 'Reserve', status: 'selected', toTimestamp: 2_000, types: ['j_event'],
     });
     expect(projection.consensus).toMatchObject({ entityId: '0xaaaa', runtimeHeight: 7, status: 'selected' });
   });
 
   test('rejects page and entity drift before publishing historical state', async () => {
     await expect(readOpsEntityWorkspaceHistory({
+      activity: {},
       accountsPage: 1,
       client: {
         readActivity: async () => activityPage(7),
@@ -146,6 +156,7 @@ describe('React Entity workspace Time Machine', () => {
       entityId: '0xaaaa', latestHeight: 18, requestedHeight: 7, runtimeId: 'runtime-a',
     })).rejects.toThrow('Remote Time Machine page mismatch');
     await expect(readOpsEntityWorkspaceHistory({
+      activity: {},
       accountsPage: 0,
       client: {
         readActivity: async () => activityPage(7),
