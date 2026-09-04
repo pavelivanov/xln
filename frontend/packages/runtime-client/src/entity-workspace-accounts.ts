@@ -59,6 +59,14 @@ const positiveInteger = (value: unknown, code: string): number => {
   return parsed;
 };
 
+const frameTimestamp = (value: unknown): number => {
+  const timestamp = nonnegativeInteger(value, 'ENTITY_WORKSPACE_ACCOUNT_FRAME_TIMESTAMP_INVALID');
+  if (timestamp > 8_640_000_000_000_000) {
+    throw new Error('ENTITY_WORKSPACE_ACCOUNT_FRAME_TIMESTAMP_INVALID');
+  }
+  return timestamp;
+};
+
 const frameLink = (value: unknown): string => {
   if (typeof value !== 'string') throw new Error('ENTITY_WORKSPACE_ACCOUNT_PREVIOUS_FRAME_HASH_INVALID');
   return value.trim();
@@ -78,10 +86,7 @@ const accountFrameEvidence = (
     frame['height'],
     'ENTITY_WORKSPACE_ACCOUNT_FRAME_HEIGHT_INVALID',
   ),
-  frameTimestamp: nonnegativeInteger(
-    frame['timestamp'],
-    'ENTITY_WORKSPACE_ACCOUNT_FRAME_TIMESTAMP_INVALID',
-  ),
+  frameTimestamp: frameTimestamp(frame['timestamp']),
   jurisdictionHeight: nonnegativeInteger(
     frame['jHeight'],
     'ENTITY_WORKSPACE_ACCOUNT_JURISDICTION_HEIGHT_INVALID',
