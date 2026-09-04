@@ -71,7 +71,8 @@
 .entity-workspace-activity-copy small { display: block; margin-top: 0.45rem; color: var(--theme-text-muted, #60615b); }
 .entity-workspace-activity-facts { display: grid; justify-items: end; gap: 0.25rem; min-width: 9rem; text-align: right; }
 .entity-workspace-activity-facts b { color: var(--entity-accent-soft); font: 600 0.58rem/1 "SFMono-Regular", Consolas, monospace; letter-spacing: 0.08em; text-transform: uppercase; }
-.entity-workspace-activity-facts code { color: var(--theme-text-secondary, #95938b); font-size: 0.61rem; }
+.entity-workspace-activity-facts > span { color: var(--theme-text-secondary, #95938b); font: 0.61rem/1.25 "SFMono-Regular", Consolas, monospace; }
+.entity-workspace-activity-facts time { white-space: nowrap; }
 .entity-workspace-activity-facts em { color: var(--theme-text-muted, #5f605a); font: 500 0.53rem/1 "SFMono-Regular", Consolas, monospace; font-style: normal; text-transform: uppercase; }
 .entity-workspace-activity-empty { align-self: center; padding: 2rem clamp(1.5rem, 4vw, 3.5rem); color: var(--theme-text-secondary, #777871); font-size: 0.78rem; line-height: 1.6; border-top: 1px solid var(--entity-line); }
 .entity-workspace-activity-panel > footer { display: grid; grid-template-columns: auto 1fr auto; gap: 1rem; padding: 0.8rem clamp(1.5rem, 4vw, 3.5rem); color: var(--theme-text-muted, #5c5d57); border-top: 1px solid var(--entity-line); }
