@@ -6,6 +6,7 @@ import {
   projectEntityWorkspaceActivity,
 } from '../../../frontend/packages/runtime-client/src/entity-workspace-activity';
 import { projectEntityWorkspaceContext } from '../../../frontend/packages/runtime-client/src/entity-workspace-context';
+import { formatEntityWorkspaceTimestamp } from '../../../frontend/packages/ui/src/entity-workspace-display';
 
 const context = projectEntityWorkspaceContext({
   runtimeId: 'runtime-a',
@@ -40,6 +41,20 @@ const page = (overrides: Record<string, unknown> = {}) => ({
 });
 
 describe('React Entity persisted activity ledger', () => {
+  test('formats persisted timestamps as deterministic UTC while retaining exact evidence', () => {
+    expect(formatEntityWorkspaceTimestamp(1_700_000_000_000)).toEqual({
+      dateTime: '2023-11-14T22:13:20.000Z',
+      label: '2023-11-14 22:13:20 UTC',
+    });
+    expect(formatEntityWorkspaceTimestamp(8_640_000_000_000_000)).toEqual({
+      dateTime: '+275760-09-13T00:00:00.000Z',
+      label: '+275760-09-13 00:00:00 UTC',
+    });
+    expect(() => formatEntityWorkspaceTimestamp(-1)).toThrow('ENTITY_WORKSPACE_TIMESTAMP_INVALID');
+    expect(() => formatEntityWorkspaceTimestamp(Number.MAX_SAFE_INTEGER))
+      .toThrow('ENTITY_WORKSPACE_TIMESTAMP_INVALID');
+  });
+
   test('pins one bounded read to the exact displayed committed frame', () => {
     expect(buildEntityWorkspaceActivityQuery(context)).toEqual({
       beforeHeight: 44, entityId: '0xaaaa', kind: 'all', limit: 8, scanLimit: 160,
@@ -176,6 +191,9 @@ describe('React Entity persisted activity ledger', () => {
     expect(() => projectEntityWorkspaceActivity({ context, page: page({
       events: [event({ source: 'transport' }), event({ id: 'runtime-a:43:0', height: 43 })],
     }) })).toThrow('ENTITY_WORKSPACE_ACTIVITY_EVENT_SOURCE_INVALID');
+    expect(() => projectEntityWorkspaceActivity({ context, page: page({
+      events: [event({ timestamp: Number.MAX_SAFE_INTEGER }), event({ id: 'runtime-a:43:0', height: 43 })],
+    }) })).toThrow('ENTITY_WORKSPACE_ACTIVITY_EVENT_TIMESTAMP_INVALID');
     expect(() => projectEntityWorkspaceActivity({ context, page: page({
       events: [event(), event()],
     }) })).toThrow('ENTITY_WORKSPACE_ACTIVITY_EVENT_ID_DUPLICATE');
@@ -364,6 +382,8 @@ describe('React Entity persisted activity ledger', () => {
     expect(panel).toContain('data-testid="entity-activity-clear-filters"');
     expect(panel).toContain('data-testid="entity-activity-refresh"');
     expect(panel).toContain('data-testid="entity-activity-page-size"');
+    expect(panel).toContain('data-testid="entity-activity-timestamp"');
+    expect(panel).toContain('title={`Runtime timestamp ${timestamp}`}');
     expect(panel).toContain('data-testid={`entity-activity-kind-${kind}`}');
     expect(panel).toContain('data-testid={`entity-activity-type-${type}`}');
     expect(source).toContain('client.readActivity(activityQuery)');
