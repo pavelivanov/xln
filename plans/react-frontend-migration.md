@@ -3374,11 +3374,55 @@ production function sizing passes 1,047 files, diff hygiene is clean, and
 file-size checking reaches only the existing out-of-scope `core/qa/report.ts`
 3001/3000 violation.
 
+The following Account presentation slice renders the already-canonical
+committed frame timestamp as deterministic UTC evidence instead of an opaque
+integer. The adapter boundary now rejects values outside JavaScript's exact
+Date domain before publication. The read-only Account row exposes the full UTC
+label, machine-readable ISO instant, and raw Runtime timestamp without adding
+a clock, inferred chronology, financial derivation, or second Account source.
+
+Focused Account coverage passes 7 / 7 tests with 21 expectations; the wider
+focused Entity workspace batch passes 78 / 78 with 404 expectations. The
+all-surface React-local gate scans 697 files with zero unsafe findings. All
+four React production surfaces build; site/docs/wallet/ops transform 401 / 35 /
+1,860 / 1,644 modules, and the ops workspace CSS/view/Runtime chunks are 40.46 /
+42.43 / 49.35 kB. The canonical frontend check reports zero errors/warnings
+while transforming 4,681 SSR plus 6,432 client modules. The complete ops
+candidate matrix passes 30 / 30 across the required viewports.
+
+The final isolated real-H1 flow passes in 35.0 seconds (36.3 seconds total)
+with candidate `0aab651d7c53`. It verifies a readable UTC Account timestamp,
+its exact ISO `datetime`, and its retained raw Runtime title while completing
+the existing Activity and Time Machine flow. Strict browser health emits no
+console error. Dedicated mobile 390x844, laptop 1366x900, and wide 1920x1080
+screenshots were inspected with both Account timestamps fully visible and no
+clipping or horizontal overflow. Two prior runs stopped before the changed
+Account assertion when the existing Time Machine history read took 8.4 and 7.7
+seconds against a 5-second poll under host load; the passing run completed that
+same backend read in 1.13 seconds, isolating the issue to transient resource
+contention without weakening the check.
+
+The 224-file frontend suite reports 1,340 passes, 17 failures, two errors, and
+7,716 expectations across 1,357 tests because the canonical docs-input test
+timed out at five seconds during that loaded broad run. Its exact L1 rerun
+passes in 1.62 seconds, accounting for the expected new Account pass while the
+established 16-failure plus one-error repository baseline remains unchanged;
+no slice-owned test fails.
+
+Root evidence again passes 26 / 26 deterministic tests with 100,156
+expectations before the documented 60-second Hardhat compiler-cache mutex.
+Downstream soundcheck passes all ten gates; frozen core remains at
+`0x4eccf4492e5d085b24162f86d327e003c36b7e2a90ad527db1653fde391946a7`,
+production function sizing passes 1,047 files, diff hygiene is clean, and
+file-size checking reaches only the existing out-of-scope `core/qa/report.ts`
+3001/3000 violation.
+
 **Current checkpoint:** all retained routes have React application owners;
 wallet parity is complete. `/embed` is the sole partial implementation/browser
 route, and its authorized Entity workspace is the sole remaining WP9
 implementation gap before WP10; display-theme, exact Time Machine, and shared
-xln-guide preference, exact Account commitment evidence, persisted Activity
+xln-guide preference, exact Account commitment evidence with deterministic UTC
+timestamps, persisted Activity
 with strict bidirectional pagination, kind filters, nine event-type filters,
 debounced search, atomic filter clearing, explicit Activity refresh,
 compact plus legacy Activity page sizing, deterministic UTC Activity timestamps,
