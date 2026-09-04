@@ -39,6 +39,13 @@ export class OpsEntityWorkspaceActivityController {
     else this.dependencies.refreshLive();
   };
 
+  readonly reload = (activity: EntityWorkspaceActivity): void => {
+    if (activity.status !== 'selected') {
+      throw new Error('OPS_ENTITY_ACTIVITY_REFRESH_CONTEXT_REQUIRED');
+    }
+    this.refresh();
+  };
+
   readonly reset = (): void => {
     this.resetCursor();
     this.kind = 'all';
