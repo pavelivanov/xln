@@ -170,6 +170,7 @@ type EntityWorkspaceStageWithOwnershipProps = EntityWorkspaceStageProps & Readon
   hubPolicy: EntityWorkspaceHubPolicy;
   onApplyActivityTimeframe: (fromTimestamp: number | null, toTimestamp: number | null) => void;
   onClearActivityFilters: () => void;
+  onLoadOlderActivity: () => void;
   onRefreshActivity: () => void;
   onSelectTheme: (theme: ThemeName) => void;
   onSelectActivityBeforeHeight: (beforeHeight: number | null) => void;
@@ -201,13 +202,13 @@ const readFooterLabel = (
   return 'Unavailable — no remote Runtime selected';
 };
 
-function EntityWorkspaceStage({ activity, accounts, activeTab, consensus, context, displayIssue, displayPreferences, hubPolicy, onApplyActivityTimeframe, onClearActivityFilters, onRefresh, onRefreshActivity, onSelectAccountsPage, onSelectActivityBeforeHeight, onSelectActivityKind, onSelectActivityMode, onSelectActivityPageSize, onSelectActivitySearch, onSelectNewerActivityPage, onSelectTheme, onToggleActivityType, onToggleTimeMachine, onToggleXlnGuide, ownership, profile, readState, reserves, settingsSubview, timeMachine }: EntityWorkspaceStageWithOwnershipProps) {
+function EntityWorkspaceStage({ activity, accounts, activeTab, consensus, context, displayIssue, displayPreferences, hubPolicy, onApplyActivityTimeframe, onClearActivityFilters, onLoadOlderActivity, onRefresh, onRefreshActivity, onSelectAccountsPage, onSelectActivityBeforeHeight, onSelectActivityKind, onSelectActivityMode, onSelectActivityPageSize, onSelectActivitySearch, onSelectNewerActivityPage, onSelectTheme, onToggleActivityType, onToggleTimeMachine, onToggleXlnGuide, ownership, profile, readState, reserves, settingsSubview, timeMachine }: EntityWorkspaceStageWithOwnershipProps) {
   const copy = SECTION_COPY[activeTab];
   const showsActivity = readState.status === 'ready' && context.status === 'selected' && activeTab === 'accounts';
   return (
     <section className="entity-workspace-stage" data-testid="entity-workspace-stage">
       {showsActivity
-        ? <EntityWorkspaceActivityPanel activity={activity} onApplyTimeframe={onApplyActivityTimeframe} onClearFilters={onClearActivityFilters} onRefresh={onRefreshActivity} onSelectBeforeHeight={onSelectActivityBeforeHeight} onSelectKind={onSelectActivityKind} onSelectMode={onSelectActivityMode} onSelectNewerPage={onSelectNewerActivityPage} onSelectPageSize={onSelectActivityPageSize} onSelectSearch={onSelectActivitySearch} onToggleType={onToggleActivityType} />
+        ? <EntityWorkspaceActivityPanel activity={activity} onApplyTimeframe={onApplyActivityTimeframe} onClearFilters={onClearActivityFilters} onLoadOlder={onLoadOlderActivity} onRefresh={onRefreshActivity} onSelectBeforeHeight={onSelectActivityBeforeHeight} onSelectKind={onSelectActivityKind} onSelectMode={onSelectActivityMode} onSelectNewerPage={onSelectNewerActivityPage} onSelectPageSize={onSelectActivityPageSize} onSelectSearch={onSelectActivitySearch} onToggleType={onToggleActivityType} />
         : <header>
             <span>{copy.eyebrow}</span>
             <h2>{copy.title}</h2>
@@ -251,6 +252,7 @@ type EntityWorkspaceShellProps = Readonly<{
   hubPolicy: EntityWorkspaceHubPolicy;
   onApplyActivityTimeframe: (fromTimestamp: number | null, toTimestamp: number | null) => void;
   onClearActivityFilters: () => void;
+  onLoadOlderActivity: () => void;
   onRefresh: () => void;
   onRefreshActivity: () => void;
   onSelectActivityBeforeHeight: (beforeHeight: number | null) => void;
@@ -283,7 +285,7 @@ const readModeLabel = (
   return 'Read boundary';
 };
 
-export function EntityWorkspaceShell({ activity, accounts, activeTab, consensus, context, displayIssue, displayPreferences, hubPolicy, onApplyActivityTimeframe, onClearActivityFilters, onRefresh, onRefreshActivity, onSelectAccountsPage, onSelectActivityBeforeHeight, onSelectActivityKind, onSelectActivityMode, onSelectActivityPageSize, onSelectActivitySearch, onSelectNewerActivityPage, onSelectTheme, onToggleActivityType, onToggleTimeMachine, onToggleXlnGuide, ownership, profile, readState, reserves, settingsSubview, timeMachine }: EntityWorkspaceShellProps) {
+export function EntityWorkspaceShell({ activity, accounts, activeTab, consensus, context, displayIssue, displayPreferences, hubPolicy, onApplyActivityTimeframe, onClearActivityFilters, onLoadOlderActivity, onRefresh, onRefreshActivity, onSelectAccountsPage, onSelectActivityBeforeHeight, onSelectActivityKind, onSelectActivityMode, onSelectActivityPageSize, onSelectActivitySearch, onSelectNewerActivityPage, onSelectTheme, onToggleActivityType, onToggleTimeMachine, onToggleXlnGuide, ownership, profile, readState, reserves, settingsSubview, timeMachine }: EntityWorkspaceShellProps) {
   return (
     <section
       className="entity-workspace"
@@ -328,6 +330,7 @@ export function EntityWorkspaceShell({ activity, accounts, activeTab, consensus,
         hubPolicy={hubPolicy}
         onApplyActivityTimeframe={onApplyActivityTimeframe}
         onClearActivityFilters={onClearActivityFilters}
+        onLoadOlderActivity={onLoadOlderActivity}
         onRefresh={onRefresh}
         onRefreshActivity={onRefreshActivity}
         onSelectAccountsPage={onSelectAccountsPage}

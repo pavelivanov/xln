@@ -20,6 +20,7 @@ type ActivityControllerDependencies = Readonly<{
 }>;
 
 export class OpsEntityWorkspaceActivityController {
+  private appendBeforeHeight: number | null = null;
   private beforeHeight: number | null = null;
   private cursorIndex = 0;
   private cursorStack: readonly (number | null)[] = [null];
@@ -34,6 +35,7 @@ export class OpsEntityWorkspaceActivityController {
   constructor(private readonly dependencies: ActivityControllerDependencies) {}
 
   readonly readBeforeHeight = (): number | null => this.beforeHeight;
+  readonly readAppendBeforeHeight = (): number | null => this.appendBeforeHeight;
   readonly readFromTimestamp = (): number | null => this.fromTimestamp;
   readonly readKind = (): EntityWorkspaceActivityKind => this.kind;
   readonly readMode = (): EntityWorkspaceActivityMode => this.mode;
@@ -54,6 +56,7 @@ export class OpsEntityWorkspaceActivityController {
   });
 
   private readonly resetCursor = (): void => {
+    this.appendBeforeHeight = null;
     this.beforeHeight = null;
     this.cursorIndex = 0;
     this.cursorStack = [null];
@@ -120,6 +123,35 @@ export class OpsEntityWorkspaceActivityController {
     this.cursorIndex -= 1;
     this.beforeHeight = this.cursorStack[this.cursorIndex] ?? null;
     this.refresh();
+  };
+
+  readonly loadMore = (activity: EntityWorkspaceActivity): void => {
+    if (activity.status !== 'selected') {
+      throw new Error('OPS_ENTITY_ACTIVITY_APPEND_CONTEXT_REQUIRED');
+    }
+    if (this.mode !== 'infinite' || activity.mode !== 'infinite') {
+      throw new Error('OPS_ENTITY_ACTIVITY_APPEND_MODE_REQUIRED');
+    }
+    if (activity.nextBeforeHeight === null || this.appendBeforeHeight !== null) return;
+    this.appendBeforeHeight = activity.nextBeforeHeight;
+    this.beforeHeight = activity.nextBeforeHeight;
+    this.refresh();
+  };
+
+  readonly completeAppend = (beforeHeight: number): void => {
+    if (this.appendBeforeHeight !== beforeHeight) {
+      throw new Error('OPS_ENTITY_ACTIVITY_APPEND_COMPLETION_MISMATCH');
+    }
+    this.appendBeforeHeight = null;
+    this.beforeHeight = null;
+  };
+
+  readonly cancelAppend = (beforeHeight: number): void => {
+    if (this.appendBeforeHeight !== beforeHeight) {
+      throw new Error('OPS_ENTITY_ACTIVITY_APPEND_CANCELLATION_MISMATCH');
+    }
+    this.appendBeforeHeight = null;
+    this.beforeHeight = null;
   };
 
   readonly selectKind = (

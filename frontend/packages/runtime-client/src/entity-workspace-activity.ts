@@ -12,7 +12,7 @@ export type EntityWorkspaceActivityPageSize = typeof ENTITY_WORKSPACE_ACTIVITY_P
 const DEFAULT_ACTIVITY_PAGE_SIZE: EntityWorkspaceActivityPageSize = 8;
 const ACTIVITY_SCAN_LIMIT = 160;
 const ACTIVITY_TIMEFRAME_SCAN_LIMIT = 1_000;
-const ACTIVITY_MODES = ['paged', 'timeframe'] as const;
+const ACTIVITY_MODES = ['paged', 'infinite', 'timeframe'] as const;
 const ACTIVITY_FILTER_KINDS = ['all', 'onchain', 'offchain'] as const;
 const ACTIVITY_KINDS = ['onchain', 'offchain'] as const;
 const ACTIVITY_TYPES = [
@@ -53,6 +53,7 @@ type SelectedEntityWorkspaceActivity = Readonly<{
   entityId: string;
   fromTimestamp: number | null;
   kind: EntityWorkspaceActivityKind;
+  loadedPages: number;
   mode: EntityWorkspaceActivityMode;
   pageSize: EntityWorkspaceActivityPageSize;
   query: string;
@@ -139,7 +140,7 @@ export const requireEntityWorkspaceActivityTimeframe = (input: Readonly<{
   const mode = requireEntityWorkspaceActivityMode(input.mode);
   const fromTimestamp = requireOptionalTimestamp(input.fromTimestamp, 'ENTITY_WORKSPACE_ACTIVITY_FROM_TIMESTAMP_INVALID');
   const toTimestamp = requireOptionalTimestamp(input.toTimestamp, 'ENTITY_WORKSPACE_ACTIVITY_TO_TIMESTAMP_INVALID');
-  if (mode === 'paged' && (fromTimestamp !== null || toTimestamp !== null)) {
+  if (mode !== 'timeframe' && (fromTimestamp !== null || toTimestamp !== null)) {
     throw new Error('ENTITY_WORKSPACE_ACTIVITY_MODE_FILTER_MISMATCH');
   }
   if (fromTimestamp !== null && toTimestamp !== null && fromTimestamp > toTimestamp) {
@@ -393,7 +394,8 @@ export function projectEntityWorkspaceActivity(input: Readonly<{
     return {
       status: 'selected', entityId: context.entityId, kind: request.kind,
       fromTimestamp: request.timeframe.fromTimestamp, mode: request.timeframe.mode,
-      pageSize: request.pageSize, query: request.query, toTimestamp: request.timeframe.toTimestamp,
+      loadedPages: 1, pageSize: request.pageSize,
+      query: request.query, toTimestamp: request.timeframe.toTimestamp,
       types: request.types, requestedBeforeHeight: request.beforeHeight,
       isLatestPage: request.beforeHeight === context.height, latestHeight,
       fromHeight, toHeight, scannedFrames, nextBeforeHeight: null, events: [],
@@ -418,11 +420,50 @@ export function projectEntityWorkspaceActivity(input: Readonly<{
   return {
     status: 'selected', entityId: context.entityId, kind: request.kind,
     fromTimestamp: request.timeframe.fromTimestamp, mode: request.timeframe.mode,
-    pageSize: request.pageSize, query: request.query, toTimestamp: request.timeframe.toTimestamp,
+    loadedPages: 1, pageSize: request.pageSize,
+    query: request.query, toTimestamp: request.timeframe.toTimestamp,
     types: request.types, requestedBeforeHeight: request.beforeHeight,
     isLatestPage: request.beforeHeight === context.height, latestHeight,
     fromHeight, toHeight, scannedFrames,
     nextBeforeHeight: requireCursor(page['nextBeforeHeight'], fromHeight),
     events,
+  };
+}
+
+const sameActivityRequest = (
+  left: SelectedEntityWorkspaceActivity,
+  right: SelectedEntityWorkspaceActivity,
+): boolean => left.entityId === right.entityId
+  && left.kind === right.kind
+  && left.mode === 'infinite'
+  && right.mode === 'infinite'
+  && left.pageSize === right.pageSize
+  && left.query === right.query
+  && left.fromTimestamp === right.fromTimestamp
+  && left.toTimestamp === right.toTimestamp
+  && left.types.length === right.types.length
+  && left.types.every((type, index) => type === right.types[index]);
+
+export function appendEntityWorkspaceActivityPage(
+  previous: EntityWorkspaceActivity,
+  next: EntityWorkspaceActivity,
+): EntityWorkspaceActivity {
+  if (previous.status !== 'selected' || next.status !== 'selected' || !sameActivityRequest(previous, next)) {
+    throw new Error('ENTITY_WORKSPACE_ACTIVITY_APPEND_CONTEXT_MISMATCH');
+  }
+  if (previous.nextBeforeHeight === null || next.requestedBeforeHeight !== previous.nextBeforeHeight
+    || next.toHeight !== previous.fromHeight - 1 || next.latestHeight !== previous.latestHeight) {
+    throw new Error('ENTITY_WORKSPACE_ACTIVITY_APPEND_CURSOR_MISMATCH');
+  }
+  const events = [...previous.events, ...next.events];
+  if (new Set(events.map(({ id }) => id)).size !== events.length) {
+    throw new Error('ENTITY_WORKSPACE_ACTIVITY_APPEND_EVENT_DUPLICATE');
+  }
+  return {
+    ...next,
+    events,
+    loadedPages: previous.loadedPages + 1,
+    scannedFrames: previous.scannedFrames + next.scannedFrames,
+    toHeight: previous.toHeight,
   };
 }
