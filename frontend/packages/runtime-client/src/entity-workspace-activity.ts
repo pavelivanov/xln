@@ -32,10 +32,15 @@ type ActivitySource = typeof ACTIVITY_SOURCES[number];
 type ActivityDirection = typeof ACTIVITY_DIRECTIONS[number];
 
 export type EntityWorkspaceActivityEvent = Readonly<{
+  amount: string | null;
   id: string;
   height: number;
+  hash: string | null;
   timestamp: number;
   kind: ActivityKind;
+  orderId: string | null;
+  quoteAmount: string | null;
+  quoteTokenId: number | null;
   type: EntityWorkspaceActivityType;
   source: ActivitySource;
   direction: ActivityDirection;
@@ -43,6 +48,7 @@ export type EntityWorkspaceActivityEvent = Readonly<{
   subtitle: string;
   status: string;
   counterpartyId: string | null;
+  tokenId: number | null;
   rawType: string;
 }>;
 
@@ -129,6 +135,16 @@ const requireTimestamp = (value: unknown, code: string): number => {
 const requireOptionalTimestamp = (value: unknown, code: string): number | null =>
   value === null || value === undefined ? null : requireTimestamp(value, code);
 
+const optionalInteger = (value: unknown, code: string): number | null =>
+  value === undefined ? null : integer(value, code);
+
+const optionalBigIntText = (value: unknown, code: string): string | null => {
+  const text = optionalString(value, code);
+  if (text === undefined) return null;
+  if (!/^-?\d+$/.test(text)) throw new Error(code);
+  return text;
+};
+
 export const requireEntityWorkspaceActivityMode = (value: unknown): EntityWorkspaceActivityMode =>
   enumValue(value, ACTIVITY_MODES, 'ENTITY_WORKSPACE_ACTIVITY_MODE_INVALID');
 
@@ -183,12 +199,16 @@ const projectEvent = (
   const subtitle = nonemptyText(event['subtitle'], 'ENTITY_WORKSPACE_ACTIVITY_EVENT_SUBTITLE_INVALID');
   const status = nonemptyText(event['status'], 'ENTITY_WORKSPACE_ACTIVITY_EVENT_STATUS_INVALID');
   const counterpartyId = optionalId(event['counterpartyId'], 'ENTITY_WORKSPACE_ACTIVITY_EVENT_COUNTERPARTY_INVALID');
+  const amount = optionalBigIntText(event['amount'], 'ENTITY_WORKSPACE_ACTIVITY_EVENT_AMOUNT_INVALID');
+  const tokenId = optionalInteger(event['tokenId'], 'ENTITY_WORKSPACE_ACTIVITY_EVENT_TOKEN_INVALID');
+  const quoteAmount = optionalBigIntText(event['quoteAmount'], 'ENTITY_WORKSPACE_ACTIVITY_EVENT_QUOTE_AMOUNT_INVALID');
+  const quoteTokenId = optionalInteger(event['quoteTokenId'], 'ENTITY_WORKSPACE_ACTIVITY_EVENT_QUOTE_TOKEN_INVALID');
+  const orderId = optionalString(event['orderId'], 'ENTITY_WORKSPACE_ACTIVITY_EVENT_ORDER_INVALID') ?? null;
+  const hash = optionalString(event['hash'], 'ENTITY_WORKSPACE_ACTIVITY_EVENT_HASH_INVALID') ?? null;
   const rawType = nonemptyText(event['rawType'], 'ENTITY_WORKSPACE_ACTIVITY_EVENT_RAW_TYPE_INVALID');
   const searchEvidence = [
     title, subtitle, status, entityId, counterpartyId,
-    optionalString(event['amount'], 'ENTITY_WORKSPACE_ACTIVITY_EVENT_AMOUNT_INVALID'),
-    optionalString(event['orderId'], 'ENTITY_WORKSPACE_ACTIVITY_EVENT_ORDER_INVALID'),
-    optionalString(event['hash'], 'ENTITY_WORKSPACE_ACTIVITY_EVENT_HASH_INVALID'),
+    amount, orderId, hash,
     rawType,
   ].join(' ').toLowerCase();
   if (requestedQuery && !searchEvidence.includes(requestedQuery.toLowerCase())) {
@@ -203,10 +223,15 @@ const projectEvent = (
     throw new Error('ENTITY_WORKSPACE_ACTIVITY_EVENT_TIMEFRAME_MISMATCH');
   }
   return {
+    amount,
     id: nonemptyText(event['id'], 'ENTITY_WORKSPACE_ACTIVITY_EVENT_ID_INVALID'),
     height,
+    hash,
     timestamp,
     kind,
+    orderId,
+    quoteAmount,
+    quoteTokenId,
     type,
     source: enumValue(event['source'], ACTIVITY_SOURCES, 'ENTITY_WORKSPACE_ACTIVITY_EVENT_SOURCE_INVALID'),
     direction: enumValue(event['direction'], ACTIVITY_DIRECTIONS, 'ENTITY_WORKSPACE_ACTIVITY_EVENT_DIRECTION_INVALID'),
@@ -214,6 +239,7 @@ const projectEvent = (
     subtitle,
     status,
     counterpartyId,
+    tokenId,
     rawType,
   };
 };
