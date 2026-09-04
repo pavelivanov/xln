@@ -101,6 +101,7 @@ export const projectOpsEntityWorkspaceActivityPage = (
   beforeHeight?: number,
   kind?: EntityWorkspaceActivityKind,
   types?: readonly EntityWorkspaceActivityFilterType[],
+  search?: string,
 ): OpsEntityWorkspaceProjection => ({
   ...projection,
   activity: projectEntityWorkspaceActivity({
@@ -109,6 +110,7 @@ export const projectOpsEntityWorkspaceActivityPage = (
     ...(beforeHeight === undefined ? {} : { beforeHeight }),
     ...(kind === undefined ? {} : { kind }),
     ...(types === undefined ? {} : { types }),
+    ...(search === undefined ? {} : { search }),
   }),
 });
 

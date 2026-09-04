@@ -3055,13 +3055,47 @@ Downstream soundcheck passes all ten gates; frozen core remains at
 production function sizing passes 1,047 files, and file-size checking reaches
 only the existing out-of-scope `core/qa/report.ts` 3001/3000 violation.
 
+The following Activity search slice adds the legacy view's exact 250ms
+debounce over the canonical adapter `q/query` filter. The browser keeps only
+the draft input; the ops controller owns the normalized active query, resets
+only its certified page cursor stack, and refreshes the active live or Time
+Machine transport. The strict projection requires returned query metadata to
+match exactly and rejects any event whose canonical searchable evidence does
+not contain the requested text.
+
+The direct React workspace chain passes 73 / 73 tests with 490 expectations,
+and the narrower Activity boundary passes 10 / 10 with 70 expectations. The
+all-surface React-local gate scans 695 files with zero unsafe findings. All four
+React production surfaces build; site/docs/wallet/ops transform 401 / 35 /
+1,860 / 1,642 modules, and the ops workspace CSS/view/Runtime chunks are 35.95 /
+36.40 / 42.33 kB. The canonical frontend check reports zero errors/warnings
+while transforming 4,681 SSR plus 6,432 client modules. The complete ops
+candidate matrix passes 30 / 30 across the required viewports.
+
+The isolated real-H1 search flow passes in 31.3 seconds (33.7 seconds total)
+with candidate `e649b5787b26`. It debounces `ReserveUpdated`, projects only the
+three exact matching persisted rows, restores the unfiltered page when
+cleared, and emits no browser-console error. Mobile 390x844, laptop 1366x900,
+and wide 1920x1080 screenshots show a legible search control with no clipping
+or horizontal overflow. The 224-file frontend suite reports 1,331 passes, the
+unchanged 16-failure plus one-error repository baseline, and 7,622 expectations
+across 1,347 tests; no slice-owned test fails.
+
+Root evidence again passes 26 / 26 deterministic tests with 100,156
+expectations before the documented 60-second Hardhat compiler-cache mutex.
+Downstream soundcheck passes all ten gates; frozen core remains at
+`0x4eccf4492e5d085b24162f86d327e003c36b7e2a90ad527db1653fde391946a7`,
+production function sizing passes 1,047 files, and file-size checking reaches
+only the existing out-of-scope `core/qa/report.ts` 3001/3000 violation.
+
 **Current checkpoint:** all retained routes have React application owners;
 wallet parity is complete. `/embed` is the sole partial implementation/browser
 route, and its authorized Entity workspace is the sole remaining WP9
 implementation gap before WP10; display-theme, exact Time Machine, and shared
 xln-guide preference, exact Account commitment evidence, persisted Activity
 with strict bidirectional pagination, kind filters, and nine event-type filters,
-committed Hub-policy, and committed Settings-summary parity are now complete.
+debounced search, committed Hub-policy, and committed Settings-summary parity
+are now complete.
 
 ### WP10 — Authorized canonical cutover
 
