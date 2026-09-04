@@ -27,6 +27,8 @@ const historyFrame = (height: number, accountsPage = 0): RuntimeAdapterViewFrame
     core: {
       config: { mode: 'proposer-based', threshold: 1n, validators: ['0xbbbb'], shares: { '0xbbbb': 1n } },
       entityId: '0xaaaa', height,
+      lastFinalizedJHeight: height,
+      prevFrameHash: `0x${String(height).padStart(64, '0')}`,
       profile: {
         avatar: '', bio: '', entityKind: 'company', isHub: false,
         name: 'Treasury', sectors: [], website: '',

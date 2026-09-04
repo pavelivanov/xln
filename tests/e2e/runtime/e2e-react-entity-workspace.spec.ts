@@ -235,6 +235,12 @@ test('React Entity workspace reads selected context from a real H1 Runtime', { t
       await expect(consensus).toBeVisible();
       await expect(candidatePage.getByTestId('consensus-board-members').locator('li')).not.toHaveCount(0);
       await expect(candidatePage.getByTestId('consensus-account-count')).not.toHaveText('0');
+      await expect(candidatePage.getByTestId('consensus-entity-height')).toHaveText(/^E\d+$/);
+      await expect(candidatePage.getByTestId('consensus-finalized-j-height')).toHaveText(/^J\d+$/);
+      const entityTimestamp = candidatePage.getByTestId('consensus-entity-timestamp');
+      await expect(entityTimestamp).toHaveText(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} UTC$/);
+      await expect(entityTimestamp).toHaveAttribute('datetime', /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/);
+      await expect(candidatePage.getByTestId('consensus-entity-frame-hash')).toHaveAttribute('title', /^\S+$/);
       await expect(consensus.getByText('Committed only')).toBeVisible();
       await capturePageScreenshot(candidatePage, testInfo, `react-entity-workspace-consensus-${viewport.name}.png`);
       await candidatePage.getByRole('link', { name: 'Display', exact: true }).click();
