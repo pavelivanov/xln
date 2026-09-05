@@ -7,23 +7,19 @@
   import { errorLog } from '../../../stores/errorLogStore';
   import { runtimeControllerHandle } from '../../../stores/runtimeControllerStore';
   import { xlnFunctions } from '../../../stores/xlnStore';
-  import { getOpenAccountRebalancePolicyData } from '$lib/utils/onboarding/onboardingPreferences';
   import {
     normalizeEntityId,
-    requireSignerIdForEntity,
   } from '$lib/utils/identity/entityReplica';
   import {
     emptyHubDiscoveryProjection,
-    buildHubOpenAccountRuntimeInput,
     canSubmitHubOpenAccount,
-    ensureHubOpenAccountProfileReady,
     getHubOpenAccountPermissionError,
-    hubDiscoveryJurisdictionKey,
     isSameEntityId,
     normalizeHubEntityId,
     type HubDiscoveryHub,
     type HubDiscoveryProjection,
   } from './hub-discovery-profile';
+  import { connectDiscoveredHub } from './hub-discovery-commands';
   import { compareStableText } from '$lib/utils/stableSort';
   import { RefreshCw, ChevronDown, ChevronUp, Plus, Check, AlertTriangle } from 'lucide-svelte';
 
@@ -74,87 +70,24 @@
     expandedHub = expandedHub === hubId ? null : hubId;
   }
 
-  async function requireHubReadyForOpenAccount(currentEnv: RuntimeReplica | null, ownerEntityId: string, hub: Hub): Promise<void> {
-    await ensureHubOpenAccountProfileReady({
-      env: currentEnv,
-      sourceEntityId: ownerEntityId,
-      hub,
-      timeoutMs: 5_000,
-    });
-  }
-
-  // Connect to hub (open account + extend credit in same frame)
   async function connectToHub(selectedHub: Hub) {
-    if (!entityId) return;
-
     const hubId = normalizeEntityId(selectedHub.entityId);
     if (connectingHubIds.has(hubId)) return;
-    const projectedConnection = hubDiscoveryProjection.connectionByHubId.get(hubId);
-    if (projectedConnection?.isConnected || projectedConnection?.isOpening) return;
-
     connectingHubIds = new Set(connectingHubIds).add(hubId);
     error = '';
-
     try {
-      // Re-resolve at the command boundary. The projection may have changed
-      // after rendering (for example when committed `isHub:false` arrives),
-      // and a stale click must never sign clocks from the removed card.
-      const hub = hubDiscoveryProjection.localHubs.find(candidate =>
-        normalizeEntityId(candidate.entityId) === hubId
-      );
-      if (!hub || hub.metadata.isHub !== true) {
-        throw new Error(`ACCOUNT_DISPUTE_PARTY_ROLE_UNAVAILABLE:${entityId}:${selectedHub.entityId}`);
-      }
-      const currentEnv = actionRuntimeEnv;
-      if (!canOpenHubAccount) throw new Error(openAccountPermissionError || 'Open Account is not available');
-      if (!submitRuntimeInput) throw new Error('Open Account command path is not connected');
-      const entityJurisdiction = hubDiscoveryProjection.entityJurisdictionKey;
-      const hubJurisdiction = hubDiscoveryJurisdictionKey(hub.metadata?.jurisdiction);
-      if (!entityJurisdiction) throw new Error('Entity jurisdiction is still loading');
-      if (!hubJurisdiction || hubJurisdiction !== entityJurisdiction) {
-        throw new Error('Hub belongs to a different or unknown jurisdiction');
-      }
-
-      const signerId = hubDiscoveryProjection.sourceSignerId
-        || (currentEnv ? requireSignerIdForEntity(currentEnv, entityId, 'hub-connect') : '');
-      if (!signerId) throw new Error('No signer available for hub account setup');
-
-      const tokenDecimals = $xlnFunctions.getTokenInfo(1).decimals;
-      const creditAmount = 10_000n * 10n ** BigInt(tokenDecimals);
-      const rebalancePolicy = getOpenAccountRebalancePolicyData(tokenDecimals);
-      const normalizedSourceEntityId = normalizeHubEntityId(entityId);
-      const sourceIsHub = hubDiscoveryProjection.committedRoles.get(normalizedSourceEntityId);
-      if (typeof sourceIsHub !== 'boolean' || hub.metadata.isHub !== true) {
-        throw new Error(`ACCOUNT_DISPUTE_PARTY_ROLE_UNAVAILABLE:${entityId}:${hub.entityId}`);
-      }
-
-      // Preload signed gossip/runtime routing metadata first so the initial
-      // openAccount does not sit in the local pending queue waiting for pubkey discovery.
-      await requireHubReadyForOpenAccount(currentEnv, entityId, hub);
-
-      await submitRuntimeInput(buildHubOpenAccountRuntimeInput({
-        sourceEntityId: entityId,
-        signerId,
-        hubEntityId: hub.entityId,
-        sourceRoleEvidence: {
-          entityId: normalizedSourceEntityId,
-          isHub: sourceIsHub,
-          source: 'committed-profile',
+      await connectDiscoveredHub(hubId, {
+        readContext: () => ({ entityId, env: actionRuntimeEnv, projection: hubDiscoveryProjection,
+          canOpenAccounts: canOpenHubAccount, permissionError: openAccountPermissionError || '' }),
+        readTokenDecimals: () => $xlnFunctions.getTokenInfo(1).decimals,
+        submitRuntimeInput: input => {
+          if (!submitRuntimeInput) throw new Error('Open Account command path is not connected');
+          return submitRuntimeInput(input);
         },
-        hubRoleEvidence: {
-          entityId: normalizeHubEntityId(hub.entityId),
-          isHub: true,
-          source: hub.roleSource,
-        },
-        committedRoles: hubDiscoveryProjection.committedRoles,
-        creditAmount,
-        tokenId: 1,
-        rebalancePolicy,
-      }));
-
+      });
     } catch (err) {
       errorLog.log('Hub connection failed', 'Hub Discovery', { entityId, hubId, err });
-      error = (err as Error)?.message || 'Connection failed';
+      error = err instanceof Error ? err.message : String(err);
     } finally {
       const next = new Set(connectingHubIds);
       next.delete(hubId);

@@ -5,6 +5,16 @@
   align-items: center;
 }
 
+.identity-review.identity-review-opened h1 { font-size: clamp(1.9rem, 4vw, 2.6rem); letter-spacing: -.04em; }
+.identity-review-opened .identity-verified-facts { margin-top: 1.25rem; }
+.identity-review-opened .identity-verified-facts > div { padding-top: .75rem; padding-bottom: .75rem; }
+.identity-review-opened .identity-verified-note { margin-top: 1.25rem; padding-top: .8rem; padding-bottom: .8rem; }
+.identity-review-opened .identity-review-actions .identity-secondary-action { margin-top: 1rem; }
+@media (max-width: 700px) {
+  .identity-review-opened .identity-verified-facts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .identity-review-opened .identity-verified-facts > div:nth-child(2) { grid-column: 1 / -1; grid-row: 2; }
+}
+
 .identity-review-actions .identity-primary-action,
 .identity-review-actions .identity-secondary-action {
   margin-top: 2rem;

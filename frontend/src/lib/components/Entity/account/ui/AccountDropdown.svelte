@@ -5,10 +5,10 @@
    */
   import { createEventDispatcher } from 'svelte';
   import { xlnFunctions, xlnInstance } from '../../../../stores/xlnStore';
-  import type { EntityReplica, AccountReplica } from '$lib/types/ui';
+  import type { EntityReplica } from '$lib/types/ui';
   import Dropdown from '$lib/components/UI/Dropdown.svelte';
   import { entityAvatar } from '$lib/utils/identity/avatar';
-  import { getAccountUiStatus, getAccountUiStatusLabel, type AccountUiStatus } from '$lib/utils/accountStatus';
+  import { buildAccountDropdownItems } from '../account-dropdown-model';
 
   export let replica: EntityReplica | null = null;
   export let selectedAccountId: string | null = null;
@@ -19,48 +19,9 @@
 
   let isOpen = false;
 
-  // Build account list reactively
-  interface AccountItem {
-    id: string;
-    name: string;
-    shortId: string;
-    avatar: string;
-    status: AccountUiStatus;
-    statusLabel: string;
-    pendingCount: number;
-  }
-
   $: xlnReady = !!$xlnInstance;
-  $: accounts = buildAccountList(replica, xlnReady ? $xlnFunctions : null, entityNames);
-
-  function buildAccountList(
-    currentReplica: EntityReplica | null,
-    xlnFuncs: typeof $xlnFunctions | null,
-    names: Map<string, string>,
-  ): AccountItem[] {
-    if (!currentReplica?.state?.accounts) return [];
-
-    const items: AccountItem[] = [];
-    const accountsMap = currentReplica.state.accounts;
-
-    for (const [counterpartyId, account] of accountsMap.entries()) {
-      const acc = account as AccountReplica;
-      const normalizedCounterpartyId = String(counterpartyId || '').trim().toLowerCase();
-      const profileName = names.get(normalizedCounterpartyId) || '';
-      const status = getAccountUiStatus(acc);
-      items.push({
-        id: counterpartyId,
-        name: profileName || counterpartyId,
-        shortId: counterpartyId,
-        avatar: entityAvatar(xlnFuncs, counterpartyId),
-        status,
-        statusLabel: getAccountUiStatusLabel(status),
-        pendingCount: acc.mempool?.length || 0
-      });
-    }
-
-    return items;
-  }
+  $: accounts = buildAccountDropdownItems(replica?.state?.accounts || [], entityNames,
+    id => entityAvatar(xlnReady ? $xlnFunctions : null, id));
 
   $: selectedAccount = accounts.find(acc => acc.id === selectedAccountId);
 

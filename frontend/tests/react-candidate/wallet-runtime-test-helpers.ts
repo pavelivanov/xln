@@ -18,6 +18,7 @@ export type WalletRuntimeFixtureInfo = Readonly<{
   token: string;
   recovery: Readonly<{
     backupFileContents: string;
+    hubDiscovery: Readonly<{ backupFileContents: string; hubEntityId: string; towerUrl: string }>;
     entityId: string;
     runtimeId: string;
     runtimeHeight: number;
@@ -82,6 +83,13 @@ export const readWalletRuntimeFixture = async (page: Page): Promise<WalletRuntim
   const externalTokenSymbol = String(externalInfo['tokenSymbol'] || '').trim();
   const externalInitialBalance = String(externalInfo['initialBalance'] || '').trim();
   const brainVault = recoveryInfo['brainVault'];
+  const hubDiscovery = recoveryInfo['hubDiscovery'];
+  if (!hubDiscovery || typeof hubDiscovery !== 'object' || Array.isArray(hubDiscovery)) throw new Error('HUB_DISCOVERY_FIXTURE_INFO_REQUIRED');
+  const hubDiscoveryInfo = hubDiscovery as Record<string, unknown>;
+  const hubEntityId = String(hubDiscoveryInfo['hubEntityId'] || '');
+  const hubBackup = String(hubDiscoveryInfo['backupFileContents'] || '');
+  const hubTowerUrl = String(hubDiscoveryInfo['towerUrl'] || '');
+  if (!/^0x[0-9a-f]{64}$/.test(hubEntityId) || !hubBackup.startsWith('{') || !/^http:\/\/127\.0\.0\.1:\d+$/.test(hubTowerUrl)) throw new Error('HUB_DISCOVERY_FIXTURE_INFO_INVALID');
   if (!brainVault || typeof brainVault !== 'object' || Array.isArray(brainVault)) {
     throw new Error('WALLET_RECOVERY_FIXTURE_INFO_INVALID');
   }
@@ -129,6 +137,7 @@ export const readWalletRuntimeFixture = async (page: Page): Promise<WalletRuntim
     token,
     recovery: {
       backupFileContents: recoveryBackupFileContents,
+      hubDiscovery: { hubEntityId, backupFileContents: hubBackup, towerUrl: hubTowerUrl },
       entityId: recoveryEntityId,
       runtimeId: recoveryRuntimeId,
       runtimeHeight: recoveryRuntimeHeight,

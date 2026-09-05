@@ -1,0 +1,19 @@
+.workspace-diagnostics-actions { display: flex; flex-wrap: wrap; gap: .5rem; }
+.workspace-diagnostics-content { display: grid; gap: 1.5rem; padding: 1.25rem; }
+.workspace-diagnostics-content h3 { margin: 0 0 .7rem; font-size: .85rem; }
+.workspace-diagnostics-metrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .75rem; margin: 0; }
+.workspace-diagnostics-metrics > div { padding: .85rem; border: 1px solid var(--line); border-radius: 5px; }
+.workspace-diagnostics-metrics dt { color: #aaa9a1; font-size: .7rem; }
+.workspace-diagnostics-metrics dd { margin: .5rem 0 0; font-size: 1.1rem; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.workspace-diagnostics-frames { border: 1px solid var(--line); border-radius: 5px; }
+.workspace-diagnostics-frames article { display: grid; grid-template-columns: minmax(90px, 1fr) auto minmax(170px, auto) auto; align-items: center; gap: .65rem; padding: .65rem; border-bottom: 1px solid var(--line); font: .7rem/1.5 ui-monospace, monospace; }
+.workspace-diagnostics-frames article:last-child { border-bottom: 0; }
+.workspace-diagnostics-frames code { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--amber-soft); }
+.workspace-diagnostics-frames time, .workspace-diagnostics-frames span { color: #aaa9a1; }
+.workspace-diagnostics-content summary { cursor: pointer; font-size: .85rem; }
+.workspace-diagnostics-content pre { max-height: 360px; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; padding: 1rem; background: #090a0c; border: 1px solid var(--line); font: .75rem/1.6 ui-monospace, monospace; }
+@media (max-width: 760px) {
+  .workspace-diagnostics-frames article { grid-template-columns: minmax(0, 1fr) auto; }
+  .workspace-diagnostics-metrics { gap: .4rem; }
+  .workspace-diagnostics-metrics > div { padding: .65rem .5rem; }
+}

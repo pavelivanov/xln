@@ -19,6 +19,7 @@ import {
 import { IdentityRecoveryVerified, IdentityReview } from './identity-recovery';
 import { IdentityBrainVaultProgress } from './identity-brainvault-progress';
 import { IdentityEntryForm } from './identity-entry-form';
+import { WalletExistingSetupGate } from './wallet-onboarding';
 import { createMnemonicWalletOpeningRequest, importWalletIdentityRecoveryFile } from './wallet-identity-opening';
 import { resetWalletRecoveryRehearsal, type WalletRecoveryRehearsalState } from '../../../packages/browser/src/wallet-recovery-rehearsal';
 import {
@@ -32,7 +33,8 @@ import {
 import './styles/identity-onboarding.css';
 export function IdentityOnboarding({
   runtimeState,
-}: Readonly<{ runtimeState: WalletRuntimeSummary['state'] }>) {
+  runtimeId,
+}: Readonly<{ runtimeState: WalletRuntimeSummary['state']; runtimeId: string }>) {
   const [draft, setDraft] = useState<WalletIdentityDraft>(() => (
     createWalletIdentityDraft(window.location.search, DEMO_ACCOUNTS)
   ));
@@ -288,7 +290,7 @@ export function IdentityOnboarding({
     />;
   }
 
-  return <IdentityEntryForm
+  return <WalletExistingSetupGate runtimeId={runtimeId} runtimeState={runtimeState}><IdentityEntryForm
     deriving={deriving}
     draft={draft}
     onDraft={(update) => setDraft(update)}
@@ -299,5 +301,5 @@ export function IdentityOnboarding({
     submissionError={submissionError}
     submitted={submitted}
     validation={validation}
-  />;
+  /></WalletExistingSetupGate>;
 }

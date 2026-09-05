@@ -2,13 +2,13 @@ import type {
   RuntimeAdapter,
   RuntimeAdapterSendResult,
 } from '../../../../core/api/runtime-adapter/types';
-import type { RuntimePaymentInput } from '../../../packages/runtime-client/src/payment-command-types';
+import type { RuntimeInput } from '@xln/core/api/public/runtime-module';
 
 export type WalletPreparedCommand = Readonly<{
   mode: RuntimeAdapter['mode'];
   commandId: string;
   commandSequence: number | null;
-  input: RuntimePaymentInput;
+  input: RuntimeInput;
   runtimeId: string;
   serverFingerprint: string | null;
   durable: boolean;
@@ -23,7 +23,7 @@ type CommandDependencies = Readonly<{
   createCommandId: () => string;
   isJournalUnlocked: (runtimeId: string) => boolean;
   resolveIntent: (options: Readonly<{
-    input: RuntimePaymentInput;
+    input: RuntimeInput;
     runtimeId: string;
     serverFingerprint: string;
     nextCommandSequence: number | null;
@@ -77,7 +77,7 @@ const requireCommandIdentity = (adapter: RuntimeAdapter) => {
 
 export const prepareWalletPaymentCommand = async (
   adapter: RuntimeAdapter,
-  input: RuntimePaymentInput,
+  input: RuntimeInput,
 ): Promise<WalletPreparedCommand> => {
   const dependencies = await loadCommandDependencies();
   const identity = requireCommandIdentity(adapter);

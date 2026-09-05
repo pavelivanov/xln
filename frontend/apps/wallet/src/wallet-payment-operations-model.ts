@@ -83,7 +83,7 @@ export const buildWalletOperationTx = (
   }
   if (draft.kind === 'c2r') {
     const position = account.positions.find((candidate) => candidate.tokenId === draft.tokenId);
-    if (!position || amount > position.collateral) throw new Error('WALLET_OPERATION_COLLATERAL_EXCEEDED');
+    if (!position || amount > position.withdrawableCollateral) throw new Error('WALLET_OPERATION_COLLATERAL_EXCEEDED');
     return {
       type: 'settle_propose',
       data: {

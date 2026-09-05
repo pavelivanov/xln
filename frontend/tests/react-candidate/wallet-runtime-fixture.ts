@@ -10,6 +10,7 @@ import { createWalletRecoveryFixture, waitForWalletFixtureState } from './wallet
 
 type FixtureSocketData = Readonly<{
   type: 'rpc';
+  fixture: 'wallet' | 'dropdown';
   clientIp: string;
   audience: string;
 }>;
@@ -27,6 +28,8 @@ process.env['XLN_DISABLE_RUNTIME_RESTORE'] = '1';
 process.env['XLN_RADAPTER_AUTH_SEED'] = authSeed;
 
 const runtime = await import('../../../core/runtime');
+const { dbRootPath } = await import('../../../core/runtime/replica/platform');
+if (dbRootPath !== databaseRoot) throw new Error(`WALLET_FIXTURE_STORAGE_SCOPE_MISMATCH:${dbRootPath}:${databaseRoot}`);
 const crypto = await import('../../../core/account/crypto');
 const accountConfig = await import('../../../core/account/config/dispute-config');
 const codec = await import('../../../core/api/runtime-adapter/codec');
@@ -36,6 +39,7 @@ const rpc = await import('../../../core/api/server/network/rpc-ws');
 const loopEnvironment = await import('../../../core/runtime/loop/loop-environment');
 const relay = await import('../../../core/network/relay/standalone-server');
 const scenario = await import('../../../core/scenarios/harness/boot');
+const { createJAdapter } = await import('../../../core/jurisdiction/adapter/kernel/factory');
 
 await rm(databaseRoot, { recursive: true, force: true });
 const env = await runtime.main(runtimeSeed);
@@ -50,27 +54,17 @@ crypto.registerSignerKey(
   counterpartySignerId,
   crypto.deriveSignerKeySync(runtimeSeed, '2'),
 );
-const depositoryAddress = `0x${'11'.repeat(20)}`;
-const entityProviderAddress = `0x${'22'.repeat(20)}`;
+const chainAdapter = await createJAdapter({ mode: 'browservm', chainId: 31_337 });
+const { depository: depositoryAddress, entityProvider: entityProviderAddress } = chainAdapter.addresses;
 const jurisdictionName = 'Wallet Browser Fixture';
 const jurisdictionReplica = scenario.createJReplica(env, jurisdictionName, depositoryAddress);
-Object.assign(jurisdictionReplica, {
-  chainId: 31_337,
-  depositoryAddress,
-  entityProviderAddress,
-  rpcs: ['http://127.0.0.1:8545'],
-  contracts: {
-    depository: depositoryAddress,
-    entityProvider: entityProviderAddress,
-    account: `0x${'33'.repeat(20)}`,
-    deltaTransformer: `0x${'44'.repeat(20)}`,
-  },
-});
+scenario.bindScenarioJReplica(env, jurisdictionReplica, chainAdapter);
+chainAdapter.startWatching(env);
 const jurisdiction = scenario.createJurisdictionConfig(
   jurisdictionName,
   depositoryAddress,
   entityProviderAddress,
-  'http://127.0.0.1:8545',
+  'browservm://',
   31_337,
 );
 const config = {
@@ -139,6 +133,16 @@ await commit({
     },
   ],
 });
+await commit({
+  runtimeTxs: [],
+  entityInputs: [
+    { entityId, signerId: runtimeId, entityTxs: [{ type: 'mintReserves', data: { tokenId: 1, amount: 500_000_000n } }] },
+    { entityId: counterpartyEntityId, signerId: counterpartySignerId, entityTxs: [{ type: 'mintReserves', data: { tokenId: 1, amount: 500_000_000n } }] },
+  ],
+});
+await waitForWalletFixtureState('reserves-funded-on-chain', () =>
+  [entityId, counterpartyEntityId].every((owner) => [...env.state.eReplicas.values()]
+    .find((replica) => replica.state.entityId === owner)?.state.reserves.get(1) === 500_000_000n));
 await commit({
   runtimeTxs: [],
   entityInputs: [{
@@ -237,14 +241,48 @@ const handleRpc = rpc.createServerRpcMessageHandler({
   validateRuntimeInputAdmission: runtime.validateRuntimeInputAdmission,
 });
 let server: ReturnType<typeof Bun.serve<FixtureSocketData>>;
+const activeRpcSockets = new Set<ServerWebSocket<FixtureSocketData>>();
+let dropdownFixture: ReturnType<typeof import('./wallet-account-dropdown-fixture').createAccountDropdownFixture> | null = null;
+let dropdownRuntime: typeof env | null = null;
+const socketRuntime = (socket: ServerWebSocket<FixtureSocketData>) => {
+  if (socket.data.fixture === 'wallet') return env;
+  if (!dropdownRuntime) throw new Error('ACCOUNT_DROPDOWN_FIXTURE_NOT_READY');
+  return dropdownRuntime;
+};
 server = Bun.serve<FixtureSocketData>({
   hostname: '127.0.0.1',
   port,
-  fetch(request, bunServer) {
+  async fetch(request, bunServer) {
     const url = new URL(request.url);
+    if (url.pathname === '/account-dropdown-fixture' && request.method === 'POST') {
+      dropdownFixture ??= import('./wallet-account-dropdown-fixture').then(module => module.createAccountDropdownFixture(port));
+      const fixture = await dropdownFixture;
+      dropdownRuntime = fixture.env;
+      return Response.json({ runtimeId: fixture.runtimeId, entityId: fixture.entityId, height: fixture.env.state.height,
+        wsUrl: `ws://127.0.0.1:${port}/dropdown-rpc`,
+        token: auth.deriveRuntimeAdapterCapabilityToken(authSeed, 'full', Date.now() + 60 * 60_000,
+          { audience: fixture.runtimeId, keyId: 'account-dropdown-e2e', tokenId: 'account-dropdown-e2e' }),
+      });
+    }
+    if (url.pathname === '/dropdown-rpc' && dropdownRuntime && bunServer.upgrade(request, {
+      data: { type: 'rpc', fixture: 'dropdown', clientIp: '127.0.0.1', audience: String(dropdownRuntime.runtimeId) },
+    })) {
+      return;
+    }
     if (url.pathname === '/rpc' && bunServer.upgrade(request, {
-      data: { type: 'rpc', clientIp: '127.0.0.1', audience: runtimeId },
+      data: { type: 'rpc', fixture: 'wallet', clientIp: '127.0.0.1', audience: runtimeId },
     })) return;
+    if (url.pathname === '/chain-balances') {
+      const alice = [...env.state.eReplicas.values()].find((replica) => replica.state.entityId === entityId);
+      const account = readAccount(entityId, counterpartyEntityId);
+      if (!alice || !account) throw new Error('WALLET_FIXTURE_ACCOUNT_MISSING');
+      return Response.json({
+        reserve: String(alice.state.reserves.get(1) ?? 0n),
+        collateral: String(account.state.deltas.get(1)?.collateral ?? 0n),
+        chainReserve: String(await chainAdapter.getReserves(entityId, 1)),
+        chainCollateral: String(await chainAdapter.getCollateral(entityId, counterpartyEntityId, 1)),
+      });
+    }
     if (url.pathname === '/info') {
       return Response.json({
         runtimeId,
@@ -261,16 +299,19 @@ server = Bun.serve<FixtureSocketData>({
           runtimeHeight: recoveryFixture.runtimeHeight,
           towerUrl: recoveryFixture.towerUrl,
           rpcUrl: recoveryFixture.rpcUrl,
+          hubDiscovery: recoveryFixture.hubDiscovery,
           external: recoveryFixture.external,
           brainVault: recoveryFixture.brainVault,
         },
       }, { headers: { 'access-control-allow-origin': '*' } });
     }
+    if (url.pathname === '/connections') return Response.json({ active: activeRpcSockets.size });
     return new Response('not found', { status: 404 });
   },
   websocket: {
-    open() {
-      adapterServer.attachRuntimeAdapterTicker(env, loopEnvironment.registerEnvChangeCallback);
+    open(socket: ServerWebSocket<FixtureSocketData>) {
+      activeRpcSockets.add(socket);
+      adapterServer.attachRuntimeAdapterTicker(socketRuntime(socket), loopEnvironment.registerEnvChangeCallback);
     },
     async message(socket: ServerWebSocket<FixtureSocketData>, raw: string | Buffer) {
       try {
@@ -278,12 +319,13 @@ server = Bun.serve<FixtureSocketData>({
           ? codec.decodeRuntimeAdapterBrowserMessage(raw)
           : codec.decodeRuntimeAdapterRequest(raw));
         if (!('id' in decoded)) throw new Error('RADAPTER_CLIENT_REQUEST_REQUIRED');
-        await handleRpc(socket, decoded, env);
+        await handleRpc(socket, decoded, socketRuntime(socket));
       } catch (error: unknown) {
         adapterServer.closeInvalidRuntimeAdapterMessage(socket, error);
       }
     },
     close(socket: ServerWebSocket<FixtureSocketData>) {
+      activeRpcSockets.delete(socket);
       adapterServer.forgetRuntimeAdapterClient(socket);
     },
   },
@@ -294,12 +336,14 @@ const stop = async (): Promise<void> => {
   if (stopping) return;
   stopping = true;
   await server.stop(true);
+  if (dropdownFixture) await (await dropdownFixture).close();
   relayServer.close();
   await runtime.stopP2PAndWait(env, 1_000);
   await runtime.stopRuntimeLoopAndWait(env).catch(() => false);
   await runtime.closeRuntimeDb(env);
   await runtime.closeInfraDb(env);
   await recoveryFixture.close();
+  await chainAdapter.close();
   await rm(databaseRoot, { recursive: true, force: true });
 };
 

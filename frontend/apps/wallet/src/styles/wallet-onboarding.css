@@ -1,0 +1,29 @@
+.wallet-onboarding { border-top: 1px solid var(--line); margin-top: 32px; padding-top: 28px; text-align: left; }
+.wallet-onboarding h2 { font-size: 24px; margin: 0 0 8px; }
+.wallet-onboarding h3 { font-size: 16px; margin: 0 0 14px; }
+.wallet-onboarding header p, .wallet-onboarding-advanced summary span { color: #8f9699; font-size: 13px; line-height: 1.6; }
+.wallet-onboarding fieldset { border: 0; padding: 0; margin: 24px 0 0; min-width: 0; display: grid; gap: 28px; }
+.wallet-onboarding label { display: grid; gap: 8px; font-size: 13px; min-width: 0; }
+.wallet-onboarding input:not([type=checkbox]), .wallet-onboarding select { box-sizing: border-box; width: 100%; min-width: 0; padding: 12px; font: inherit; border: 1px solid #404646; background: #101213; color: #f3f4ef; border-radius: 7px; }
+.wallet-onboarding input:focus-visible, .wallet-onboarding select:focus-visible, .wallet-onboarding summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.wallet-onboarding-limits { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.wallet-onboarding-advanced { border: 1px solid var(--line); border-radius: 9px; padding: 18px; min-width: 0; }
+.wallet-onboarding-advanced summary { cursor: pointer; font-size: 15px; }
+.wallet-onboarding-advanced summary span { display: block; margin: 5px 0 0 15px; }
+.wallet-onboarding-advanced > label, .wallet-onboarding-advanced > section { margin-top: 24px; }
+.wallet-onboarding-jurisdictions { display: grid; gap: 14px; }
+.wallet-onboarding-jurisdictions label, .wallet-onboarding-terms { display: flex !important; align-items: flex-start; gap: 12px !important; line-height: 1.6; }
+.wallet-onboarding input[type=checkbox] { accent-color: var(--accent); flex-shrink: 0; width: 18px; height: 18px; margin: 2px 0 0; }
+.wallet-onboarding-jurisdictions span { min-width: 0; }
+.wallet-onboarding-jurisdictions code { display: block; overflow-wrap: anywhere; color: #8f9699; font-size: 11px; margin-top: 5px; }
+.wallet-onboarding .wallet-recovery-services { margin: 24px 0 0; padding: 20px 0 0; border-bottom: 0; }
+.wallet-onboarding .identity-primary-action { width: fit-content; min-width: 140px; }
+.wallet-onboarding button:disabled, .wallet-onboarding fieldset:disabled { opacity: .65; }
+.wallet-onboarding .wallet-settings-error { overflow-wrap: anywhere; }
+.wallet-onboarding-continue { display: inline-block; margin-top: 24px; }
+.wallet-onboarding-sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+@media (max-width: 700px) {
+  .wallet-onboarding-limits { grid-template-columns: 1fr; }
+  .wallet-onboarding-advanced { padding: 14px; }
+  .wallet-onboarding .identity-primary-action { width: 100%; }
+}

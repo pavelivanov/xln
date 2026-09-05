@@ -1,10 +1,4 @@
-import type {
-  RuntimeAdapterActivityPage,
-  RuntimeAdapter,
-  RuntimeAdapterHistoryFrameBatch,
-  RuntimeAdapterReadQuery,
-  RuntimeAdapterViewFrame,
-} from '@xln/core/api/public/runtime-module';
+import type { RuntimeAdapter, RuntimeAdapterViewFrame } from '@xln/core/api/public/runtime-module';
 import type { RuntimeAdapterStorageSnapshot } from '../../../packages/browser/src/runtime-adapter-session';
 import {
   emptyOpsEntityWorkspaceProjection,
@@ -14,8 +8,6 @@ import {
   type OpsEntityWorkspaceProjection,
   type OpsEntityWorkspaceSourceSnapshot,
 } from './ops-entity-workspace-projection';
-import { RuntimeQueryClient } from '../../../packages/runtime-client/src/runtime-query-client';
-import type { RuntimeQueryResultSchema } from '../../../packages/runtime-client/src/runtime-query-client';
 import { RuntimeQueryObserver } from '../../../packages/runtime-client/src/runtime-query-observer';
 import {
   buildEntityWorkspaceActivityQuery,
@@ -31,6 +23,12 @@ import type { EntityWorkspaceProfileDraft } from '../../../packages/runtime-clie
 import { OpsEntityWorkspaceActivityController } from './ops-entity-workspace-activity-controller';
 import { OpsEntityWorkspaceHistoryController } from './ops-entity-workspace-history-controller';
 import { OpsEntityWorkspaceProfileCommand } from './ops-entity-workspace-profile-command';
+import {
+  createOpsWorkspaceQueryClient,
+  observeOpsWorkspaceQuery,
+  type OpsWorkspaceQueryClient,
+  type OpsWorkspaceReader,
+} from './workspace/ops-workspace-query';
 
 type RuntimeReadSession = Readonly<{
   adapter: RuntimeAdapter;
@@ -46,16 +44,8 @@ type RemoteSessionConfig = Readonly<{
   authKey: string;
 }>;
 
-type OpsRuntimeQueryResults = RuntimeQueryResultSchema & Readonly<{
-  activity: RuntimeAdapterActivityPage;
-  historyFrameBatch: RuntimeAdapterHistoryFrameBatch;
-  viewFrame: RuntimeAdapterViewFrame;
-}>;
-
-type OpsRuntimeQueryClient = RuntimeQueryClient<RuntimeAdapterReadQuery, OpsRuntimeQueryResults>;
-
 const readEntityWorkspaceProjection = async (
-  client: OpsRuntimeQueryClient,
+  client: OpsWorkspaceQueryClient,
   runtimeId: string,
   frame: RuntimeAdapterViewFrame,
   activityOptions: EntityWorkspaceActivityQueryOptions = {},
@@ -135,7 +125,8 @@ export class OpsEntityWorkspaceSource {
   private session: RuntimeReadSession | null = null;
   private observer: RuntimeQueryObserver<OpsEntityWorkspaceProjection> | null = null;
   private observerTeardown: (() => void) | null = null;
-  private queryClient: OpsRuntimeQueryClient | null = null;
+  private queryClient: OpsWorkspaceQueryClient | null = null;
+  private readonly panelQueries = new Set<Readonly<{ destroy: () => void }>>();
   private readonly historyController: OpsEntityWorkspaceHistoryController;
   private readonly activityController: OpsEntityWorkspaceActivityController;
   private readonly profileCommand: OpsEntityWorkspaceProfileCommand;
@@ -179,6 +170,19 @@ export class OpsEntityWorkspaceSource {
 
   readonly getSnapshot = (): OpsEntityWorkspaceSourceSnapshot => this.snapshot;
 
+  readonly getPanelClient = (): OpsWorkspaceQueryClient | null => this.queryClient;
+
+  readonly observePanelQuery = <T>(reader: OpsWorkspaceReader<T>) => {
+    if (!this.session || !this.queryClient) throw new Error('OPS_WORKSPACE_SESSION_UNAVAILABLE');
+    const observer = observeOpsWorkspaceQuery(this.session.adapter, this.queryClient, reader);
+    const destroy = (): void => {
+      observer.destroy();
+      this.panelQueries.delete(observer);
+    };
+    this.panelQueries.add(observer);
+    return { getSnapshot: observer.getSnapshot, subscribe: observer.subscribe, refresh: observer.refresh, destroy };
+  };
+
   readonly subscribe = (listener: () => void): (() => void) => {
     this.listeners.add(listener);
     return () => { this.listeners.delete(listener); };
@@ -217,6 +221,20 @@ export class OpsEntityWorkspaceSource {
   };
 
   readonly refresh = (): Promise<void> => this.observer?.refresh() ?? this.start();
+
+  readonly verifyChain = async (client: OpsWorkspaceQueryClient, signal: AbortSignal): Promise<unknown> => {
+    signal.throwIfAborted();
+    const session = this.session;
+    if (!session || client !== this.queryClient || session.adapter.status !== 'connected') {
+      throw new Error('Runtime adapter is not connected.');
+    }
+    const result = await session.adapter.control('verify-chain');
+    signal.throwIfAborted();
+    if (session !== this.session || client !== this.queryClient) {
+      throw new Error('OPS_WORKSPACE_RUNTIME_CHANGED');
+    }
+    return result;
+  };
 
   readonly selectAccountsPage = (page: number): void => {
     const accounts = this.snapshot.accounts;
@@ -303,12 +321,7 @@ export class OpsEntityWorkspaceSource {
   };
 
   private installObserver(adapter: RuntimeAdapter): void {
-    const client = new RuntimeQueryClient<RuntimeAdapterReadQuery, OpsRuntimeQueryResults>({
-      resolveAdapter: () => adapter,
-      readRuntimeId: () => adapter.runtimeId,
-      readCurrentHeight: () => adapter.currentHeight,
-      createEmptyQuery: () => ({}),
-    });
+    const client = createOpsWorkspaceQueryClient(adapter);
     this.queryClient = client;
     this.publish({
       ...emptyOpsEntityWorkspaceProjection(adapter.runtimeId),
@@ -384,6 +397,8 @@ export class OpsEntityWorkspaceSource {
   };
 
   private releaseRuntimeConnection(): void {
+    for (const query of this.panelQueries) query.destroy();
+    this.panelQueries.clear();
     this.activityController.reset();
     this.observerTeardown?.();
     this.observerTeardown = null;

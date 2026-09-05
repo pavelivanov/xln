@@ -96,6 +96,7 @@
 .wallet-payments-section-heading h2 { color: #e7e9e3; font-size: 1rem; font-weight: 620; }
 
 .wallet-payment-invoice-row { padding: 1rem 0 1.35rem; border-bottom: 1px solid var(--line); }
+.wallet-payment-invoice-row > div.has-invoice { grid-template-columns: minmax(0, 1fr) auto auto; }
 .wallet-payment-invoice-row > label,
 .wallet-payment-form-grid label > span,
 .wallet-receive-builder label > span {

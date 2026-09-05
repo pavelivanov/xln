@@ -2,6 +2,10 @@
   animation: wallet-shell-enter 420ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
 }
 
+.wallet-portfolio-create { margin-top: 1.5rem; border: 1px solid #39403c; border-radius: 5px; padding: .65rem .85rem; color: #edf0e9; background: #161c18; cursor: pointer; font: inherit; font-size: .8rem; }
+.wallet-portfolio-create:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.wallet-portfolio-formation-notice { margin: 1.5rem 0; color: var(--accent); overflow-wrap: anywhere; font-size: .85rem; line-height: 1.6; }
+
 .wallet-portfolio-heading h1 {
   max-width: 12ch;
   margin: 0;
@@ -283,3 +287,4 @@
   line-height: 1.55;
   border-top: 1px solid var(--line);
 }
+.wallet-portfolio-appearance { margin-left: 12px; }

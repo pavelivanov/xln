@@ -1,0 +1,17 @@
+.wallet-account-direct { margin-top: 32px; border-top: 1px solid #35412f; padding-top: 28px; }
+.wallet-account-direct > header > p { color: #aeb6ac; font-size: 12px; margin: 0 0 8px; }
+.wallet-account-direct h3 { font-size: 24px; margin: 0 0 20px; }
+.wallet-account-direct form { display: grid; gap: 16px; }
+.wallet-account-direct form > button { justify-self: start; background: #b1f47a; color: #11180b; border-color: #b1f47a; min-width: 100px; }
+.wallet-account-direct form > button:disabled { opacity: .5; }
+.wallet-entity-input { display: grid; gap: 8px; min-width: 0; }
+.wallet-entity-input label { color: #c0c7bd; font-size: 13px; }
+.wallet-entity-input input { width: 100%; min-width: 0; box-sizing: border-box; border: 1px solid #44513d; border-radius: 6px; padding: 14px; background: #0a0e0a; color: #f0f3ef; font: inherit; }
+.wallet-entity-input input:focus-visible { outline: 2px solid #b1f47a; outline-offset: 2px; }
+.wallet-entity-input ul { margin: 0; padding: 6px; list-style: none; border: 1px solid #35412f; border-radius: 6px; background: #10160e; max-height: 260px; overflow: auto; }
+.wallet-entity-input li { min-width: 0; }
+.wallet-entity-input li > button { width: 100%; border: 0; background: transparent; text-align: left; display: grid; gap: 6px; padding: 12px; }
+.wallet-entity-input li > button[aria-selected="true"] { background: #26351e; }
+.wallet-entity-input code { overflow-wrap: anywhere; white-space: normal; font-size: 12px; }
+.wallet-entity-resolution { color: #aeb6ac; margin: 0; font-size: 12px; min-width: 0; }
+.wallet-account-direct .wallet-hub-error { margin: 0; overflow-wrap: anywhere; }

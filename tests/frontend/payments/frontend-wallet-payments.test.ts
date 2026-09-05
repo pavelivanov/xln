@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 import { readFileSync } from 'node:fs';
+import { formatUnits } from 'ethers';
 
 import { formatTokenAmount, parseTokenAmount } from '../../../core/account/financial-utils';
 import { deriveDelta, getTokenInfo, isLeftEntity } from '../../../core/account/utils';
@@ -15,6 +16,11 @@ import {
   type WalletPaymentMath,
 } from '../../../frontend/apps/wallet/src/wallet-payment-model';
 import { buildWalletOperationTx } from '../../../frontend/apps/wallet/src/wallet-payment-operations-model';
+import {
+  initialWalletPaymentInvoice,
+  readWalletPaymentInvoice,
+  requireWalletPaymentQuoteMatchesDraft,
+} from '../../../frontend/apps/wallet/src/wallet-payment-draft';
 
 const alice = `0x${'11'.repeat(32)}`;
 const bob = `0x${'22'.repeat(32)}`;
@@ -86,6 +92,32 @@ const directRoute = () => ({
 });
 
 describe('React wallet payments', () => {
+  test('rejects submission when the displayed draft or sending Entity changed after quoting', () => {
+    const request = { sourceEntityId: alice, targetEntityId: bob, tokenId: 1, recipientAmount: 25_000_000n, deliveryMode: 'direct' as const };
+    const draft = { targetEntityId: bob, tokenId: 1, amount: '25.0', deliveryMode: 'direct' as const };
+    expect(() => requireWalletPaymentQuoteMatchesDraft(request, draft, alice, parseTokenAmount)).not.toThrow();
+    for (const changed of [
+      { ...draft, amount: '26' },
+      { ...draft, targetEntityId: hub },
+      { ...draft, tokenId: 2 },
+      { ...draft, deliveryMode: 'instant' as const },
+    ]) expect(() => requireWalletPaymentQuoteMatchesDraft(request, changed, alice, parseTokenAmount)).toThrow('Payment details changed');
+    expect(() => requireWalletPaymentQuoteMatchesDraft(request, draft, hub, parseTokenAmount)).toThrow('Payment details changed');
+  });
+
+  test('opens canonical invoice fields and keeps recipient-owned references intact', () => {
+    const projection = decodeWalletPaymentProjection(frame(), math);
+    const uri = `${bob}?token=1&amount=12.5&desc=Lunch&u=table-3`;
+    const result = readWalletPaymentInvoice(`https://xln.finance/app#pay/${encodeURIComponent(uri)}`, projection);
+    expect(result).toMatchObject({ targetEntityId: bob, tokenId: 1, amount: '12.5', description: 'Lunch | uid:table-3', descriptionLocked: true, noteLocked: true });
+    expect(initialWalletPaymentInvoice('', projection)).toEqual({ intent: null, error: '' });
+    expect(initialWalletPaymentInvoice('https://xln.finance/app#pay/%E0%A4%A', projection)).toEqual({
+      intent: null, error: 'Wallet link contains an invalid payment payload',
+    });
+    expect(() => readWalletPaymentInvoice(`${bob}?token=9999`, projection)).toThrow('Invoice asset is not present');
+    expect(() => readWalletPaymentInvoice(hub, projection)).toThrow('blocked by a dispute');
+  });
+
   test('projects command authority, capacity, recipients, and dispute gates', () => {
     const projection = decodeWalletPaymentProjection(frame(), math);
     expect(projection).toMatchObject({
@@ -258,9 +290,9 @@ describe('React wallet payments', () => {
     expect(buildWalletOperationTx({ ...base, kind: 'r2c' }, projection, math)).toMatchObject({
       type: 'r2c', data: { counterpartyId: bob, amount: 25_000_000n },
     });
-    expect(buildWalletOperationTx({ ...base, kind: 'c2r' }, projection, math)).toMatchObject({
+    expect(buildWalletOperationTx({ ...base, kind: 'c2r', amount: '20' }, projection, math)).toMatchObject({
       type: 'settle_propose',
-      data: { counterpartyEntityId: bob, ops: [{ type: 'c2r', amount: 25_000_000n }] },
+      data: { counterpartyEntityId: bob, ops: [{ type: 'c2r', amount: 20_000_000n }] },
     });
     expect(buildWalletOperationTx({
       ...base, kind: 'lend', intentId: 'lend-12345678',
@@ -273,6 +305,28 @@ describe('React wallet payments', () => {
     expect(() => buildWalletOperationTx({
       ...base, kind: 'c2r', amount: '101',
     }, projection, math)).toThrow('WALLET_OPERATION_COLLATERAL_EXCEEDED');
+  });
+
+  test('withdraws only the caller collateral remaining after canonical holds, on either Account side', () => {
+    for (const [owner, peer, leftHold, rightHold, limit] of [
+      [alice, bob, 5_000_000n, 0n, 15_000_000n],
+      [bob, alice, 5_000_000n, 3_000_000n, 77_000_000n],
+      [alice, bob, 21_000_000n, 0n, 0n],
+    ] as const) {
+      const payload = frame();
+      payload.activeEntityId = owner;
+      payload.activeEntity.core.entityId = owner;
+      payload.activeEntity.accounts.items = [account(bob, 'active')];
+      payload.activeEntity.accounts.items[0]!.state.deltas.set(1, { ...delta, leftHold, rightHold });
+      const projection = decodeWalletPaymentProjection(payload, math);
+      const draft = {
+        kind: 'c2r' as const, targetEntityId: peer, tokenId: 1,
+        amount: formatUnits(limit + 1n, 6), termId: '1d' as const, interestBps: 0, intentId: '',
+      };
+      expect(() => buildWalletOperationTx(draft, projection, math)).toThrow('WALLET_OPERATION_COLLATERAL_EXCEEDED');
+      if (limit > 0n) expect(buildWalletOperationTx({ ...draft, amount: formatUnits(limit, 6) }, projection, math))
+        .toMatchObject({ type: 'settle_propose', data: { executorIsLeft: owner === alice, ops: [{ amount: limit }] } });
+    }
   });
 
   test('keeps write identity, reconnect retry, and cleanup at the explicit adapter boundary', () => {

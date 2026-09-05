@@ -16,8 +16,7 @@ import { submitEntityInputs, submitRuntimeInput, xlnFunctions } from "../../../.
 import { runtimeControllerHandle } from "../../../../stores/runtimeControllerStore";
 import { toasts } from "../../../../stores/ui/toastStore";
 import { errorLog } from "../../../../stores/errorLogStore";
-import { getOpenAccountRebalancePolicyData } from "$lib/utils/onboarding/onboardingPreferences";
-import { prewarmCounterpartyProfiles } from "$lib/utils/runtime/p2pPrefetch";
+import { openAccountById } from "../../account/account-open-commands";
 import { requireSignerIdForEntity } from "$lib/utils/identity/entityReplica";
 import { registerDebugSurface } from "$lib/utils/runtime/debugSurface";
 import { getGossipProfiles } from "$lib/utils/identity/entityNaming";
@@ -37,7 +36,8 @@ import EntitySettingsProjectionPanel from "./EntitySettingsProjectionPanel.svelt
 import OwnershipWorkspacePanel from "../../ownership/OwnershipWorkspacePanel.svelte";
 import { buildEntityConsensusSettingsView } from "../entity-consensus-settings";
 import { importJMachineViaRuntime, type JMachineCreateDetail } from "$lib/components/Jurisdiction/import-jmachine-runtime";
-import { OFFCHAIN_FAUCET_REQUEST_TIMEOUT_MS, faucetPendingKey, type FaucetApiResult, type PendingReserveFaucet, readFaucetApiResult, reconcilePendingReserveFaucets } from "../../account/account-faucet";
+import { requestAccountFaucet } from "../../account/account-faucet-command";
+import { faucetPendingKey, type PendingReserveFaucet, readFaucetApiResult, reconcilePendingReserveFaucets } from "../../account/account-faucet";
 import { buildMoveArrowPath, buildMoveRouteSteps, canAddMoveRouteToDraft, getMovePrimaryActionLabel, getMoveRouteKey, isImmediateMoveExecutionRoute, isMoveRouteSupported, moveNeedsExternalRecipient, moveNeedsReserveRecipient, routeRequiresExplicitExternalAllowance, MOVE_ENDPOINT_LABEL, MOVE_ENDPOINTS, type MoveEndpoint } from "../../move-routes";
 import { buildMoveAllowanceContextSignature, buildMoveAllowanceStatusLabel, getMoveRequiredAllowanceAmount, isMoveAllowanceSatisfied } from "../../move/move-allowance";
 import { choosePreferredMoveAssetSymbol, computeMoveSourceAvailableBalanceForEndpoint, getMoveMaxAmountForEndpoint, getPreferredMoveSourceAccountId } from "../../move/move-balance";
@@ -46,7 +46,7 @@ import { createMoveVisualController } from "../../move/move-visual-controller";
 import type { AssetLedgerRow } from "../../asset-ledger";
 import { buildEntityPanelView, findLocalAccountByCounterparty, findReplicaForEntityTab, getCurrentEntityJurisdictionName, getRuntimeEnv, getRuntimeId, isSameJurisdictionEntityInReplicas, isAccountLeftPerspective, materializeAccountView, requireRuntimeEnv } from "../../core/entity-panel-model";
 import { formatAddress, isPlaceholderEntityName, shortHash } from "../entity-panel-display";
-import { buildConfigureTokenOptions, buildMoveEntityOptions, buildMoveHubEntityOptions, buildMoveSourceAccountOptions, buildOpenAccountEntityOptions, isFullEntityId, normalizeWorkspaceAccountId, resolveConfigureTokenId, resolveMoveTargetHubEntityId } from "../entity-panel-options";
+import { buildConfigureTokenOptions, buildMoveEntityOptions, buildMoveHubEntityOptions, buildMoveSourceAccountOptions, buildOpenAccountEntityOptions, normalizeWorkspaceAccountId, resolveConfigureTokenId, resolveMoveTargetHubEntityId } from "../entity-panel-options";
 import { type ExternalWalletReadResult, type ExternalWalletSnapshotSource } from "../../assets/external-wallet-snapshot";
 import { buildExternalWalletStateSyncSignature, buildOnchainReserves, createExternalTokenCatalogLoader, fetchExternalTokenCatalog, isExternalWalletSnapshotTransportFailure, readExternalWalletState, requestExternalWalletSnapshot, resolveExternalWalletSpender } from "../../external-wallet-reader";
 import { ENTITY_WORKSPACE_SECTIONS, buildEntityPanelHashRouteFromState, canonicalizeEntityPanelRoute, getLocationHashParams, getLocationHashRoute, resolveEntityPanelDeepLinkFromLocation, type AccountWorkspaceTab, type AssetWorkspaceTab, type ConfigureWorkspaceTab, type SettingsSubview, type ViewTab } from "../entity-panel-routing";
@@ -54,7 +54,7 @@ import { openDisputedAccountNavigation, returnToAccountsWorkspace, selectAccount
 import { buildEntityActivityAccounts, buildEntityActivityRows, filterEntityActivityRows } from "../../activity/entity-activity";
 import { emptyEntityWorkspaceRuntimeFrameContext, type EntityWorkspaceRuntimeFrameContext } from "../../core/runtime-frame-context";
 import { emptyEntityWorkspaceEmbeddedRuntimeContext, type EntityWorkspaceEmbeddedRuntimeContext } from "../../core/embedded-runtime-context";
-import { buildHubDiscoveryProjection, buildHubDiscoveryRemoteHubsFromRuntimes, buildDirectOpenAccountRuntimeInput, canSubmitHubOpenAccount, emptyHubDiscoveryProjection, getHubOpenAccountPermissionError, type HubDiscoveryProjection } from "../../onboarding/hub-discovery-profile";
+import { buildHubDiscoveryProjection, buildHubDiscoveryRemoteHubsFromRuntimes, canSubmitHubOpenAccount, emptyHubDiscoveryProjection, getHubOpenAccountPermissionError, type HubDiscoveryProjection } from "../../onboarding/hub-discovery-profile";
 import { buildPaymentPanelView, buildPaymentPanelViewFromRuntimeView, emptyPaymentPanelView, type PaymentPanelView } from "../../payments/payment-panel-view";
 import { buildSwapPanelRuntimeView, type SwapPanelRuntimeView } from "../../swap/swap-panel-helpers";
 import { buildAccountSpendableByToken, buildAccountPortfolioData, buildAssetLedger, createEntityAssetValueFormatters, parsePositiveAssetAmount, parseTokenAmountInput } from "../../assets/entity-asset-values";
@@ -1301,55 +1301,13 @@ async function faucetOffchain(hubEntityId: string, tokenId: number = 1) {
   if (pendingOffchainFaucetKeys.has(pendingKey)) return;
   pendingOffchainFaucetKeys = new Set([...pendingOffchainFaucetKeys, pendingKey]);
   try {
-    const requestApiBase = resolveApiBase();
-    const amountStr = tokenMeta.symbol === "WETH" || tokenMeta.symbol === "ETH" ? "0.2" : "100";
-    const runtimeId = getRuntimeId(actionRuntimeEnv);
-    if (!runtimeId) {
-      throw new Error("Runtime is not ready yet (missing runtimeId). Re-open runtime and retry.");
-    }
-    if (!hubEntityId) {
-      throw new Error("Offchain faucet requires a target hub account.");
-    }
     toasts.info(`Funding ${tokenMeta.symbol} account...`);
-    const requestTimeoutMs = OFFCHAIN_FAUCET_REQUEST_TIMEOUT_MS;
-    let response: Response | null = null;
-    let result: FaucetApiResult | null = null;
-    let timeout: ReturnType<typeof setTimeout> | null = null;
-    try {
-      const controller = new AbortController();
-      timeout = setTimeout(() => controller.abort(), requestTimeoutMs);
-      response = await fetch(`${requestApiBase}/api/faucet/offchain`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        signal: controller.signal,
-        body: JSON.stringify({
-          userEntityId: entityId,
-          userRuntimeId: runtimeId,
-          hubEntityId,
-          tokenId,
-          amount: amountStr,
-        }),
-      });
-      result = await readFaucetApiResult(response);
-    } catch (error: unknown) {
-      const aborted = error instanceof DOMException && error.name === "AbortError";
-      const message = aborted ? `Faucet request timed out after ${requestTimeoutMs}ms` : toErrorMessage(error, "Faucet request failed");
-      throw new Error(message);
-    } finally {
-      if (timeout) clearTimeout(timeout);
-    }
-    if (!response?.ok || !result?.success) {
-      const status = response ? response.status : "fetch-error";
-      const code = typeof result?.code === "string" ? result.code : "";
-      logEntityPanelDiagnostic("Offchain faucet rejected", {
-        status,
-        code,
-        error: result?.error || null,
-        details: result?.details || null,
-      });
-      throw new Error(result?.error || `Faucet failed (${status})`);
-    }
-    toasts.success(`Faucet accepted: ${amountStr} ${tokenMeta.symbol}.`);
+    const message = await requestAccountFaucet({
+      apiBase: resolveApiBase(), entityId, runtimeId: getRuntimeId(actionRuntimeEnv) || '',
+      hubEntityId, tokenId, symbol: tokenMeta.symbol, commandsReady: activeCommandsReady,
+      sameJurisdiction: isSameJurisdictionEntityInReplicas(activeReplicas, replica, tab.entityId, entityId, hubEntityId),
+    });
+    toasts.success(message);
   } catch (err) {
     logEntityPanelDiagnostic("Offchain faucet failed", {
       hubEntityId,
@@ -2183,83 +2141,29 @@ async function reserveToCollateral(tokenId: number, amountOverride?: bigint, cou
   }
 }
 async function openAccountWithFullId(targetEntityId: string) {
-  const entityId = replica?.state?.entityId || tab.entityId;
-  const signerId = resolveEntitySigner(entityId, "open-account");
-  const trimmed = targetEntityId.trim().toLowerCase();
-  if (!canOpenAccounts) {
-    toasts.error(openAccountPermissionError || "Open account requires admin runtime access");
-    return;
-  }
-  if (!entityId) {
-    notifyUserActionError("open-account", "Active entity missing for open-account");
-    return;
-  }
-  if (!signerId) {
-    notifyUserActionError("open-account", "Active signer missing for open-account");
-    return;
-  }
-  if (!isFullEntityId(trimmed)) {
-    toasts.error("Full entity ID required (0x + 64 hex chars)");
-    return;
-  }
-  if (trimmed === String(entityId).toLowerCase()) {
-    toasts.error("Cannot open account with yourself");
-    return;
-  }
-  if (!isSameJurisdictionEntityInReplicas(activeReplicas, replica, tab.entityId, entityId, trimmed)) {
-    toasts.error("Accounts can only be opened inside the same jurisdiction");
-    return;
-  }
-  if (accountIds.some((id) => String(id).toLowerCase() === trimmed)) {
-    toasts.info("Account with this entity already exists");
-    return;
-  }
-  if (!activeIsLive) {
-    toasts.error("Open account requires LIVE mode");
-    return;
-  }
   try {
-    const env = getRuntimeEnv(actionRuntimeEnv);
-    const rebalancePolicy = getOpenAccountRebalancePolicyData(getTokenInfo(1).decimals);
-    if (env) await prewarmCounterpartyProfiles(env, [trimmed]);
-    const targetReplica = findReplicaForEntityTab(activeReplicas, trimmed, "");
-    const sourceIsHub = replica?.state?.profile?.isHub;
-    const targetIsHub = targetReplica?.state?.profile?.isHub;
-    // Dispute windows are signed Account state. Gossip labels are not
-    // authority, so direct opening requires both committed Entity profiles.
-    if (typeof sourceIsHub !== "boolean" || typeof targetIsHub !== "boolean") {
-      throw new Error(`ACCOUNT_DISPUTE_PARTY_ROLE_UNAVAILABLE:${entityId}:${trimmed}`);
-    }
-    await submitPanelRuntimeInput(
-      buildDirectOpenAccountRuntimeInput({
-        sourceEntityId: entityId,
-        signerId,
-        targetEntityId: trimmed,
-        sourceRoleEvidence: {
-          entityId,
-          isHub: sourceIsHub,
-          source: 'committed-profile',
-        },
-        targetRoleEvidence: {
-          entityId: trimmed,
-          isHub: targetIsHub,
-          source: 'committed-profile',
-        },
-        committedRoles: new Map([
-          [entityId.toLowerCase(), sourceIsHub],
-          [trimmed.toLowerCase(), targetIsHub],
-        ]),
-        rebalancePolicy,
-      }),
-    );
-    openAccountEntityId = "";
-    toasts.success("Account request sent");
-  } catch (err) {
-    logEntityPanelDiagnostic("Open account failed", {
-      targetEntityId: trimmed,
-      error: toErrorMessage(err, "Open account failed"),
+    const result = await openAccountById(targetEntityId, {
+      readContext: (target) => {
+        const entityId = replica?.state?.entityId || tab.entityId;
+        return {
+          runtimeId: panelView.runtimeId || '', entityId,
+          signerId: resolveEntitySigner(entityId, "open-account"),
+          env: getRuntimeEnv(actionRuntimeEnv), canOpenAccounts,
+          permissionError: openAccountPermissionError || '', activeIsLive,
+          sameJurisdiction: isSameJurisdictionEntityInReplicas(activeReplicas, replica, tab.entityId, entityId, target),
+          hasAccount: accountIds.some(id => id.toLowerCase() === target),
+          sourceIsHub: replica?.state?.profile?.isHub,
+          targetIsHub: findReplicaForEntityTab(activeReplicas, target, "")?.state?.profile?.isHub,
+        };
+      },
+      readTokenDecimals: () => getTokenInfo(1).decimals,
+      submitRuntimeInput: submitPanelRuntimeInput,
     });
-    toasts.error(`Open account failed: ${(err as Error).message}`);
+    if (result === 'already-open') toasts.info("Account with this entity already exists");
+    else { openAccountEntityId = ""; toasts.success("Account request sent"); }
+  } catch (err) {
+    logEntityPanelDiagnostic("Open account failed", { targetEntityId, error: toErrorMessage(err, "Open account failed") });
+    toasts.error("Open account failed: " + toErrorMessage(err, "Open account failed"));
   }
 }
 function confirmDisputeAction(kind: "prepare" | "finalize", counterpartyEntityId: string): boolean {

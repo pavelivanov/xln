@@ -34,9 +34,9 @@ const OpsAiPage = lazy(async () => {
   return { default: module.OpsAiPage };
 });
 
-const OpsEntityWorkspacePage = lazy(async () => {
-  const module = await import('./ops-entity-workspace');
-  return { default: module.OpsEntityWorkspacePage };
+const OpsWorkspacePage = lazy(async () => {
+  const module = await import('./workspace/ops-workspace');
+  return { default: module.OpsWorkspacePage };
 });
 
 export function OpsApp({ page }: Readonly<{ page: OpsPage }>) {
@@ -60,7 +60,7 @@ export function OpsApp({ page }: Readonly<{ page: OpsPage }>) {
     return <Suspense fallback={<main className="candidate-shell">Loading AI console…</main>}><OpsAiPage /></Suspense>;
   }
   if (page.kind === 'workspace') {
-    return <Suspense fallback={<main className="candidate-shell">Loading Entity workspace…</main>}><OpsEntityWorkspacePage /></Suspense>;
+    return <Suspense fallback={<main className="candidate-shell">Loading Entity workspace…</main>}><OpsWorkspacePage /></Suspense>;
   }
   return (
     <CandidateShell

@@ -10,6 +10,9 @@ import {
   type RuntimeQuerySnapshot,
 } from '../../../packages/runtime-client/src/runtime-query-observer';
 import { normalizeEntityIdForRuntimeView } from '../../../packages/runtime-client/src/runtime-view-model';
+import { requireWalletWorkspaceEntity, WalletWorkspaceSelection } from './wallet-workspace-selection';
+import { requireWalletPaymentQuoteMatchesDraft, type WalletPaymentDraft } from './wallet-payment-draft';
+import { buildWalletBatchTx, type WalletBatchAction, type WalletBatchProjection } from './wallet-batch-model';
 import {
   abandonTerminalWalletPaymentCommand,
   executeWalletPaymentCommand,
@@ -80,7 +83,7 @@ export class WalletPaymentSource {
   private pendingCommand: WalletPreparedCommand | null = null;
   private commandBusy = false;
 
-  constructor(private readonly config: RuntimeAdapterStorageSnapshot) {
+  constructor(private readonly config: RuntimeAdapterStorageSnapshot, private readonly selection: WalletWorkspaceSelection) {
     this.snapshot = {
       status: 'connecting',
       message: config.mode === 'remote'
@@ -116,6 +119,7 @@ export class WalletPaymentSource {
       this.adapter = dependencies.adapter;
       this.releaseAdapter = dependencies.release;
       this.math = dependencies.math;
+      this.selectedEntityId = this.selection.bindRuntime(this.adapter.runtimeId);
       this.installObserver(dependencies.adapter, dependencies.math);
     } catch (error: unknown) {
       if (!this.isCurrent(generation)) return;
@@ -141,8 +145,9 @@ export class WalletPaymentSource {
       throw new Error(`WALLET_PAYMENT_ENTITY_UNKNOWN:${normalized}`);
     }
     if (normalized === projection.activeEntityId) return;
-    if (this.pendingCommand) throw new Error('WALLET_PAYMENT_ENTITY_CHANGE_PENDING_COMMAND');
+    if (this.pendingCommand || this.commandBusy) throw new Error('WALLET_PAYMENT_ENTITY_CHANGE_PENDING_COMMAND');
     this.selectedEntityId = normalized;
+    this.selection.selectEntity(this.requireAdapter().runtimeId, normalized);
     this.clearQuote();
     void this.observer?.refresh();
   };
@@ -192,13 +197,14 @@ export class WalletPaymentSource {
     }
   };
 
-  readonly submitQuotedPayment = async (description: string): Promise<void> => {
+  readonly submitQuotedPayment = async (draft: WalletPaymentDraft, description: string): Promise<void> => {
     const projection = this.requireProjection();
     const request = this.quoteRequest;
     const route = this.snapshot.quote.routes[0];
     if (!request || !route || this.snapshot.quote.status !== 'ready') {
       throw new Error('WALLET_PAYMENT_QUOTE_REQUIRED');
     }
+    requireWalletPaymentQuoteMatchesDraft(request, draft, projection.activeEntityId, this.requireMath().parseTokenAmount);
     await this.submitInput(buildWalletPaymentInput({
       projection,
       targetEntityId: request.targetEntityId,
@@ -234,6 +240,12 @@ export class WalletPaymentSource {
     } catch (error: unknown) {
       return walletRuntimeReadErrorMessage(error);
     }
+  };
+
+  readonly submitBatch = async (action: WalletBatchAction, entityId: string, reviewed: WalletBatchProjection): Promise<void> => {
+    const projection = this.requireProjection();
+    if (projection.activeEntityId !== entityId) throw new Error('Batch Entity changed. Review the current Entity.');
+    await this.submitInput(buildWalletEntityTxInput(projection, buildWalletBatchTx(action, projection.batch, reviewed)));
   };
 
   readonly retryPendingCommand = async (): Promise<void> => {
@@ -313,11 +325,12 @@ export class WalletPaymentSource {
   private installObserver(adapter: RuntimeAdapter, math: WalletPaymentMath): void {
     const client = createWalletRuntimeQueryClient(adapter);
     const observer = new RuntimeQueryObserver(
-      async () => decodeWalletPaymentProjection(await client.readViewFrame({
-        accountsLimit: 100,
-        booksLimit: 1,
-        ...(this.selectedEntityId ? { entityId: this.selectedEntityId } : {}),
-      }), math),
+      async () => {
+        const entityId = this.selectedEntityId;
+        return requireWalletWorkspaceEntity(decodeWalletPaymentProjection(await client.readViewFrame({
+          accountsLimit: 100, booksLimit: 1, ...(entityId ? { entityId } : {}),
+        }), math), entityId);
+      },
       {
         readHeight: () => adapter.currentHeight,
         subscribeHeight: (listener) => adapter.onChange(() => listener()),
@@ -345,6 +358,7 @@ export class WalletPaymentSource {
       return;
     }
     const previous = this.snapshot.projection;
+    this.selection.observeEntity(this.requireAdapter().runtimeId, observed.data.activeEntityId, observed.data.accounts.length > 0);
     if (previous && (previous.height !== observed.data.height || previous.activeEntityId !== observed.data.activeEntityId)) {
       this.clearQuote();
     }
@@ -356,11 +370,11 @@ export class WalletPaymentSource {
     await this.executePending(this.pendingCommand).catch(() => undefined);
   }
 
-  private clearQuote(): void {
+  readonly clearQuote = (): void => {
     this.quoteGeneration += 1;
     this.quoteRequest = null;
     this.patch({ quote: idleQuote() });
-  }
+  };
 
   private requireAdapter(): RuntimeAdapter {
     if (!this.adapter || this.adapter.status !== 'connected') throw new Error('WALLET_PAYMENT_RUNTIME_NOT_CONNECTED');
@@ -374,6 +388,10 @@ export class WalletPaymentSource {
 
   private requireProjection(): WalletPaymentProjection {
     if (!this.snapshot.projection?.activeEntityId) throw new Error('WALLET_PAYMENT_ENTITY_UNAVAILABLE');
+    if (this.snapshot.status !== 'ready'
+      || (this.selectedEntityId && this.selectedEntityId !== this.snapshot.projection.activeEntityId)) {
+      throw new Error('WALLET_PAYMENT_ENTITY_VIEW_NOT_READY');
+    }
     return this.snapshot.projection;
   }
 
