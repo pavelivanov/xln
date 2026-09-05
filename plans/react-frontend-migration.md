@@ -1,6 +1,13 @@
 # React frontend migration work plan
 
-**Status:** `IN PROGRESS — WP0–WP6 COMPLETE; WP7 HEALTH + QA + HLT + RUNS + SCENARIOS + AI IMPLEMENTED, WORKSPACE STATE LAYER SVELTE-FREE, PANEL PORTS THROUGH ARCHITECT, REACT DOCKVIEW WRAPPER READY, GRAPH3D LIFECYCLE + RENDERER/PRIMITIVES/EFFECTS/ENTITY/ACCOUNT VISUAL FACTORY/INTERACTION/SELECTION/CAMERA/POINTER+XR DRAG + HOVER MECHANICS + VIEW/SCENE INPUT MODELS EXTRACTED, ENTITY WORKSPACE REACT SHELL/TABS + LIVE RUNTIME CONTEXT + READ-ONLY ASSETS/OWNERSHIP/ACCOUNTS/CONSENSUS/PROFILE READY; WP8 COMPLETE; WP9 HAS 19 COMPLETE / 1 PARTIAL IMPLEMENTATION, 19 COVERED / 1 PARTIAL BROWSER ROUTE, AND 1 AUTHORIZED IMPLEMENTATION GAP; ENTITY ASSETS + ACCOUNT COMMITMENT EVIDENCE + CONSENSUS EVIDENCE + DISPLAY THEME + TIME MACHINE + XLN GUIDE PREFERENCE + HUB POLICY + SETTINGS SUMMARY + PERSISTED ACTIVITY PAGINATION/FILTERING/CLEAR/REFRESH/PAGE-SIZE/TIMESTAMPS/TIMEFRAME/INFINITE COMPLETE`
+**Status:** `IN PROGRESS — FOUR REACT APP ROOTS AND BUILDS IMPLEMENTED; SITE/DOCS IMPLEMENTATIONS PRESENT; WALLET/OPS UI PORTS PARTIAL; DEFAULT FRONTEND STILL SVELTE`
+
+Current scoped status: [React frontend refactor — 2026-09-05](react-frontend-refactor-status-2026-09-05.md).
+Current UI-port sequence: [Finish existing wallet and ops UI ports](wallet-ops-ui-ports.md).
+The owner reaffirmed that this work only refactors the existing frontend into
+separate React apps. Backend API extensions, financial fixes and new product
+features are not additional migration deliverables. Detailed entries below
+include historical checkpoints; their route counts are not completion metrics.
 
 This is the executable work plan for splitting the Svelte frontend into React
 applications. It is intentionally lightweight and should be updated as live
@@ -3634,6 +3641,146 @@ compact plus legacy Activity page sizing, deterministic UTC Activity timestamps,
 strict Activity timeframe filtering, bounded Infinite history, committed Hub-policy, and committed
 Activity amount/reference evidence, semantic Activity event tones, and Settings-summary parity are now complete.
 
+### Wallet flow follow-up — 2026-09-05
+
+**Status:** `IN PROGRESS`; this closes a bounded part of the behavioral gaps
+reported in `plans/implementation-audit-2026-09-04.md`, not WP9 as a whole.
+
+- The React wallet now resolves the retained `accounts/send`,
+  `accounts/receive`, `accounts/swap`, `accounts/activity`, `settings`,
+  `settings/wallet`, `settings/recovery`, and `settings/display` hash links.
+  Supported hashes take precedence over stale query navigation. Hash changes,
+  internal navigation, and back/forward select the corresponding subview;
+  switching payment tools or market/activity preserves the selected Entity
+  and the mounted source's command tracking.
+- Canonical `pay/` links prefill the current form, including the recipient-owned
+  `uid:` note. A replacement invoice replaces the form; malformed payloads and
+  unavailable/disputed recipients or assets show an error. Applied invoice
+  fields stay locked until discarded. The canonical invoice parser owns decoding.
+- Editing a payment draft invalidates its route quote. Submission additionally
+  compares the current Entity, recipient, token, amount, and delivery mode with
+  the quoted request, using canonical amount parsing. A changing Entity view
+  cannot prepare a command before its requested projection is ready. No Runtime
+  transition, financial formula, custody schema, or command protocol changed.
+- The wallet browser runner includes `wallet-navigation.spec.ts`. Fresh real
+  Runtime browser evidence covers direct loading, hash/history navigation,
+  invoice replacement/rejection, stale-quote rejection, a 2 USDC payment,
+  changed displayed capacity, and persisted payment activity. All commands in
+  that test are submitted by clicking the UI; the existing isolated fixture
+  supplies a tab-confined admin session.
+
+Verification on the working tree based on
+`3cfcf11cb90e499215523a76700aabad22d844a0`:
+
+- The eight new canonical-route regressions failed before implementation.
+- Focused wallet model/preferences/recovery plus browser-scope tests:
+  43 passed, 0 failed, 167 assertions across six files.
+- Navigation plus existing transaction browser tests: 15 passed across
+  390×844, 1366×900, and 1920×1080; zero captured console/page errors.
+  After the invoice button layout adjustment, all 9 navigation/payment cases
+  passed again. Final screenshots are in `output/playwright/wallet-flow-final`.
+  All 15 final screenshots were inspected. Visual review scores (out of 10):
+
+  | State | Mobile | Laptop | Wide desktop |
+  | --- | --- | --- | --- |
+  | Receive | 8 | 9 | 9 |
+  | Recovery | 9 | 9 | 9 |
+  | Applied invoice | 8 | 9 | 9 |
+  | Committed payment | 8 | 9 | 9 |
+  | Persisted activity | 8 | 8 | 8 |
+
+  Controls and content fit each viewport. Existing fixed navigation is visible
+  at the captured viewport position in full-page images; activity remains a
+  dense technical history rather than a consumer transaction receipt.
+- `cd frontend && bun run check:react`: all four apps and tooling passed;
+  `bun scripts/build.ts --surface=wallet`: passed in 2.23 seconds.
+- `bun run check`: 26 tests / 100,156 assertions passed, contract artifact sync
+  passed, all 10 soundcheck gates passed; then `rscore:fmt` failed with
+  `/bin/bash: cargo: command not found` (exit 127). Later root gates were not run.
+
+Remaining work includes Ownership and other unported canonical destinations,
+post-creation profile/jurisdiction/hub onboarding, cross-j intent submission,
+settlement approval/execution/broadcast, successful order/fill/cancel evidence,
+and the mounted operator workspace. Profile owner-unlock still needs the
+previously documented custody-adapter scope decision. These are not closed by
+the payment evidence above; production cutover remains separately authorized.
+
+**Settlement prerequisite identified during follow-up (corrected below):** React
+`buildWalletOperationTx` admitted C2R against `position.collateral`, which is
+the entire Account's collateral. The retained `SettlementPanel` uses canonical
+`deriveDelta` output and clamps `outCollateral - outTotalHold` at zero. For
+100 USDC total collateral, 20 USDC left-side collateral, and a 5 USDC left hold,
+the retained left-side limit is 15 USDC; React previously admitted up to 100 USDC.
+This proves a preflight mismatch, not an on-chain unauthorized withdrawal.
+
+The owner approved the bounded financial-validation correction and continued
+settlement implementation with `ok` on 2026-09-05. That approval is satisfied for
+the bound and is not pending again.
+
+### Settlement controls follow-up — 2026-09-05
+
+**Status:** withdrawal bound and normal draft broadcast/clear flow verified;
+bilateral approval/execution remains incomplete at the read-adapter boundary.
+
+- Extracted the retained `max(deriveDelta.outCollateral - outTotalHold, 0)`
+  expression into `frontend/packages/runtime-client/src/withdrawable-collateral.ts`.
+  Both Svelte and React now use this one UI bound. React displays the available
+  withdrawal amount and rejects amounts above it. The regression reproduced
+  acceptance of 15.000001 USDC against a 15 USDC limit before the fix. Coverage
+  includes left/right views, exact limits, one-unit excess and holds above owned
+  collateral. No core financial formula changed.
+- Operations now displays the Runtime's draft/sent batch projection, readable
+  token amounts, expandable operation details and visible failure messages.
+  Controls use the canonical `j_broadcast`, `j_rebroadcast` (10% bump) and
+  `j_clear_batch` commands through the existing idempotent lane. A changed
+  observed batch or Entity is rejected; unresolved commands disable controls.
+  Clear requires explicit UI confirmation, including notice that an already
+  submitted chain transaction may still finalize.
+- The isolated wallet fixture now deploys real BrowserVM contracts and funds
+  reserves through `mintReserves` and committed J events. It no longer names
+  placeholder contracts or the user's localhost:8545 chain. The browser asserts
+  matching Runtime and contract reserve/collateral values after a 50 USDC
+  funding/broadcast flow; cancellation leaves all four balances unchanged.
+- The new browser spec is included in the explicit wallet runner. Existing
+  market activity evidence now traverses older pages for both initial Account
+  and credit events; the real settlement events moved them off page 1. The
+  original event assertions remain required.
+
+Verification:
+
+- Focused frontend tests: **47 passed / 0 failed / 183 assertions / 7 files**.
+- All four React apps plus tooling pass `bun run check:react`; wallet build
+  passes (2.24 seconds). The changed retained Svelte panel also compiles.
+- Normal funding/broadcast, over-limit C2R rejection and confirmed/cancelled
+  clear passed on mobile 390×844, laptop 1366×900 and desktop 1920×1080.
+  The narrow settlement plus corrected history regression passed **4/4**.
+  Final combined settlement/navigation/transaction matrix: **21 passed / 0
+  failed**, 28.7 seconds, with zero captured browser console/page errors.
+- Nine settlement screenshots in `output/playwright/wallet-settlement-final`
+  were inspected: draft review, withdrawal limit and cleared draft at all three
+  viewports. Visual scores: mobile 8/10, laptop 9/10, wide 9/10. Long operation
+  details scroll inside their container; the existing navigation stays fixed.
+- `bun run check`: initial sandbox run could not acquire Hardhat's compiler
+  cache lock. The authorized rerun passed 26 tests / 100,156 assertions,
+  contract artifact synchronization and all 10 soundcheck gates, then failed at
+  `rscore:fmt` with `/bin/bash: cargo: command not found` (127). Later root gates
+  remain unexecuted. No commits, push or production cutover occurred.
+
+**Remaining read-adapter scope:** `compactAccountDocForView` deliberately strips
+`settlementWorkspace` from aggregate and point reads. No existing wallet read
+returns the workspace hash or proposal body needed for exact-hash approval;
+the operator-only settlement-evidence endpoint is about order/ACK evidence and
+does not supply them either. Do not infer approval identity from history or
+invent a UI-owned workspace. A bounded read-only API proposal is in
+`plans/wallet-settlement-read-projection.md`; owner approval was requested and
+is pending. No backend source has been edited.
+
+The current batch read is also compact: recovery batches are absent and R2C
+pair lists can be truncated. The normal-flow browser evidence above does not
+prove failure/recovery batch review or end-to-end rebroadcast. Complete batch
+review needs the same bounded read-adapter scope before release. Settlement
+approval, designated-executor execution and final C2R chain proof are not done.
+
 ### WP10 — Authorized canonical cutover
 
 **Status:** `OWNER AUTHORIZATION REQUIRED`
@@ -3675,21 +3822,68 @@ any mismatch. Never compile on production.
 
 ## Current next actions
 
-1. Resolve the canonical owner-unlock adapter scope before claiming complete
-   profile-command parity: ops currently has no user-facing caller, and its
-   passing command test unlocks the keyring directly. Preserve the existing
-   vault protection/expiry lifecycle; custody-adapter changes need explicit
-   owner authorization. Continue behind the internal candidate route while
-   `/embed` remains canonical.
-2. Owner to assign: two `network-timeline-source` failures
-   (`NETWORK_TRAIL_FRAME_INVALID:1` in the JSON-safe-frame and trail
-   round-trip tests) appeared with the in-flight `core/scenarios` runner
-   changes in the working tree and are collateral from that stream, not the
-   frontend migration.
-3. After remaining workspace parity closes, request explicit WP10 cutover
-   authority and prepare the canonical-consumer change separately.
-4. Keep WP11 as a separately authorized production operation using immutable
-   prebuilt artifacts.
+Current mounted evidence is tracked in the focused checklist: the React
+post-creation form completes manual setup, Formation creates local numbered
+and weighted lazy Entities through retained commands, and manual Hub Discovery
+opens a local Account and reads actual remote Hub details. Direct Open by ID
+now opens a real local Account, shares recipient parsing and commands with
+Svelte, and preserves selection through canonical browser back/forward. The internal ops
+dock hosts Entity, Gossip, Solvency and Runtime Diagnostics. The last full
+wallet matrix, before the Account rail and dropdown increments, is **83 pass / 1 fail**; the existing laptop Activity case exposes
+a backend history-pagination boundary defect. The new appearance/focused
+Account cases pass, including the separate **12/12** targeted matrix. The
+latest ops checkpoint is **42/42**. These counts do not close the remaining
+parity rows. Formation and Hub Discovery share their retained
+commands with Svelte. The focused Account view now mounts local/remote token
+details and retained activity/dispute presentation; active disputed entries
+reach it. Classic/Apple capacity bars and persisted appearance controls are
+now mounted and verified across three viewports, with 50 affected screenshots
+reviewed. The Account rail now mounts six existing consumers (Open, Pay,
+Receive, Swap, Activity and Appearance), and the shell shares Entity selection
+across Assets, Health, Payments and Markets. Focused Account selection survives
+appearance/back. The Assets Account dropdown now preserves the retained >5
+threshold, shared name/avatar/status presentation and complete remote Account
+pagination. Its real independent 26-Account Runtime verifies selection beyond
+the portfolio page, keyboard/outside dismissal, focused return, Entity changes
+and original Runtime restoration. Latest targeted checks pass **58 unit tests /
+221 assertions** and **12 browser cases** across three viewports; all 29
+screenshots were inspected. The prior rail checkpoint passed 73 unit tests /
+304 assertions and 15 browser cases. All four React apps and tooling typecheck
+(759 files, zero unsafe-type findings) and all four apps build. The root check
+again reaches missing `cargo` after its 26 tests, contract sync and ten
+soundchecks. Logs, fixture isolation fixes and scope limits are recorded in
+the focused checklist's Account dropdown checkpoint. The full registered
+90-case wallet matrix has not been run.
+Next are full Account/token/jurisdiction context across action forms and ops,
+and the remaining Move/Lending/History/Manage consumers. Reuse the mounted
+dropdown and selection; verify rapid A → B → A changes while a read is in
+flight. Live pending/disputed dropdown states, live disputed navigation and
+positive local faucet evidence remain open.
+Remote-owner integration, automatic joining and cold reload remain open.
+The Hub backup has an isolated test tower so it cannot replace ordinary
+recovery appointments. Finish artifact-producing checks/builds before starting browser tests.
+Keep the Activity failure recorded: the reader truncates a frame at the event
+limit and advances past its remaining events. Source/trace evidence is in the
+focused checklist's Account appearance checkpoint. Do not hide it with a
+larger page, skip the assertion or rerun the broad matrix unchanged; continue
+independent UI ports while its backend follow-up remains outside this scope.
+
+1. Execute [the wallet/ops UI-port checklist](wallet-ops-ui-ports.md): workspace
+   context and routing, onboarding/settings, Account forms, Ownership, dock
+   panels, Graph3D/playback, then public-route/keyboard/localization integration.
+   Preserve the existing command and vault lifecycle; no new Runtime API or
+   custody policy is required as a general prerequisite to frontend work.
+2. Reproduce and localize the two `network-timeline-source` failures before
+   claiming trail replay parity. The 2026-09-05 planning baseline is 37 pass /
+   2 fail across five narrow suites; both failures concern trail serialization
+   (`NETWORK_TRAIL_FRAME_INVALID:1`). Root cause and scope ownership need
+   verification; do not attribute them to another work stream by assumption.
+3. Close each retained UI action with mounted React/browser evidence, including
+   user-facing unlock. A keyring installed directly by a test is insufficient.
+   Trace a specific missing capability without blocking independent UI ports.
+4. After UI parity, finish framework-dependency isolation and prepare WP10
+   canonical-consumer cutover separately. WP11 remains a separately authorized
+   production operation using immutable prebuilt artifacts.
 
 ## WP5 closure record
 

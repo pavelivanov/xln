@@ -431,7 +431,7 @@ export function buildHubDiscoveryProjection(input: BuildHubDiscoveryProjectionIn
         ...(profile.website ? { website: String(profile.website) } : {}),
         ...(state?.config?.jurisdiction ? { jurisdiction: state.config.jurisdiction } : {}),
         fee: Number((profile as { routingFeePPM?: number })?.routingFeePPM ?? 0),
-        peerCount: state?.accounts instanceof Map ? state.accounts.size : 0,
+        peerCount: state?.accounts ? state.accounts.size : 0,
       },
       runtimeId,
       wsUrl: null,

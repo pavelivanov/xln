@@ -1,0 +1,77 @@
+import { expect, test } from '@playwright/test';
+import { installImportedRuntime, selectWalletFixtureRuntime } from './wallet-runtime-test-helpers';
+import { expectNoBrowserErrors, expectPageContained, observeBrowserErrors, screenshotEvidence } from './browser-evidence';
+
+test('Account dropdown lists every committed relationship and focuses an Account beyond the portfolio page', async ({ page }, testInfo) => {
+  testInfo.setTimeout(120_000);
+  const errors = observeBrowserErrors(page);
+  const fixture = await selectWalletFixtureRuntime(page);
+  await page.goto('/app?portfolio=1');
+  await expect(page.locator('.wallet-portfolio-account')).toHaveCount(1);
+  const initialEntityId = await page.getByLabel('Entity', { exact: true }).inputValue();
+  await expect(page.getByRole('button', { name: 'Select Account', exact: true })).toHaveCount(0);
+  const port = Number(process.env['XLN_REACT_WALLET_FIXTURE_PORT'] || 19092);
+  const response = await page.request.post(`http://127.0.0.1:${port}/account-dropdown-fixture`);
+  expect(response.ok()).toBe(true);
+  const value: unknown = await response.json();
+  if (!value || typeof value !== 'object' || !('runtimeId' in value) || typeof value.runtimeId !== 'string'
+    || !('wsUrl' in value) || typeof value.wsUrl !== 'string' || !('token' in value) || typeof value.token !== 'string'
+    || !('height' in value) || typeof value.height !== 'number') throw new Error('ACCOUNT_DROPDOWN_FIXTURE_INFO_INVALID');
+  await installImportedRuntime(page, { ...fixture, runtimeId: value.runtimeId, wsUrl: value.wsUrl, token: value.token, height: value.height });
+  await page.goto('/app?portfolio=1');
+  await page.getByLabel('Entity', { exact: true }).selectOption({ label: 'Dropdown owner' });
+  const ownerId = await page.getByLabel('Entity', { exact: true }).inputValue();
+  await expect(page.locator('.wallet-portfolio-account')).toHaveCount(25);
+  await page.getByRole('navigation', { name: 'Account pages' }).getByRole('button', { name: 'Next' }).click();
+  await expect(page.locator('.wallet-portfolio-account')).toHaveCount(1);
+  const beyondPageId = await page.locator('.wallet-portfolio-account code').getAttribute('title');
+  if (!beyondPageId) throw new Error('ACCOUNT_DROPDOWN_TEST_COUNTERPARTY_REQUIRED');
+  await page.getByRole('navigation', { name: 'Account pages' }).getByRole('button', { name: 'Previous' }).click();
+  await expect(page.locator('.wallet-portfolio-account')).toHaveCount(25);
+  const trigger = page.getByRole('button', { name: 'Select Account', exact: true });
+  await expect(trigger).toHaveText('26 Accounts▾');
+  await trigger.focus();
+  await trigger.press('Enter');
+  const options = page.getByRole('group', { name: 'Accounts', exact: true });
+  await expect(options.getByRole('button')).toHaveCount(26);
+  await expect(options.locator('.account-dropdown-status')).toHaveText(Array.from({ length: 26 }, () => 'READY'));
+  await expectPageContained(page);
+  await trigger.evaluate(element => { element.scrollIntoView({ block: 'start' }); window.scrollBy(0, -24); });
+  if (testInfo.project.name === 'mobile-390x844') {
+    const bounds = await options.boundingBox();
+    const nav = await page.getByRole('navigation', { name: 'Wallet navigation' }).boundingBox();
+    if (!bounds || !nav) throw new Error('ACCOUNT_DROPDOWN_BOUNDS_REQUIRED');
+    expect(bounds.y).toBeGreaterThanOrEqual(0);
+    expect(bounds.y + bounds.height).toBeLessThan(nav.y);
+  }
+  const expandedPath = testInfo.outputPath('account-dropdown-expanded.png');
+  await page.screenshot({ animations: 'disabled', path: expandedPath });
+  await testInfo.attach('account-dropdown-expanded', { contentType: 'image/png', path: expandedPath });
+  await trigger.press('Escape');
+  await expect(trigger).toBeFocused();
+  await expect(options).toHaveCount(0);
+  await trigger.click();
+  const target = options.locator(`[data-account-id="${beyondPageId}"]`);
+  await target.focus();
+  await target.press('Enter');
+  await expect(page.getByTestId('account-panel')).toHaveAttribute('data-counterparty-id', beyondPageId);
+  await expect(page.getByTestId('account-panel').getByRole('heading', { level: 1 })).toBeVisible();
+  await expectPageContained(page);
+  await screenshotEvidence(page, testInfo, 'account-dropdown-focused');
+  await page.getByTestId('account-panel-back').click();
+  await expect(page.getByRole('heading', { name: 'Activity', exact: true })).toBeVisible();
+  await expect(page.getByLabel('Entity', { exact: true })).toHaveValue(ownerId);
+  await page.getByRole('link', { name: 'Assets', exact: true }).click();
+  await expect(trigger).toBeVisible();
+  await trigger.click();
+  await page.getByRole('heading', { name: 'Assets & accounts' }).click();
+  await expect(options).toHaveCount(0);
+  await page.getByLabel('Entity', { exact: true }).selectOption({ label: 'Dropdown peer 1' });
+  await expect(page.locator('.wallet-portfolio-account')).toHaveCount(1);
+  await expect(trigger).toHaveCount(0);
+  await installImportedRuntime(page, fixture);
+  await page.goto('/app?portfolio=1');
+  await expect(page.getByLabel('Entity', { exact: true })).toHaveValue(initialEntityId);
+  await expect(trigger).toHaveCount(0);
+  expectNoBrowserErrors(errors);
+});

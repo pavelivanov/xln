@@ -189,15 +189,19 @@ test('onboarding creates every jurisdiction entity but only requires advertised 
 
 test('OnboardingPanel uses injected runtime projection and RuntimeInput helpers', () => {
   const source = readFileSync('frontend/src/lib/components/Entity/onboarding/OnboardingPanel.svelte', 'utf8');
+  const setup = readFileSync('frontend/src/lib/components/Entity/onboarding/onboarding-setup.ts', 'utf8');
+  const joins = readFileSync('frontend/src/lib/components/Entity/onboarding/onboarding-hub-join.ts', 'utf8');
   const parent = readFileSync('frontend/src/lib/view/UserModePanel.svelte', 'utf8');
+  const projection = readFileSync('frontend/src/lib/components/Entity/onboarding/onboarding-runtime-projection.ts', 'utf8');
 
   expect(source).toContain('export let runtimeProjection: OnboardingRuntimeProjection');
   expect(source).toContain('emptyOnboardingRuntimeProjection');
-  expect(source).toContain('buildOnboardingProfileRuntimeInput');
-  expect(source).toContain('buildOnboardingHubOpenRuntimeInput');
-  expect(source).toContain('selectAdvertisedAutoJoinCandidates');
-  expect(source).toContain('submitRuntimeInput(buildOnboardingProfileRuntimeInput');
-  expect(source).toContain('submitRuntimeInput(buildOnboardingHubOpenRuntimeInput');
+  expect(source).toContain('finishOnboardingSetup(');
+  expect(source).toContain('createOnboardingHubJoinCommands({');
+  expect(source).toContain('readProjection: () => runtimeProjection');
+  expect(setup).toContain('submitRuntimeInput(buildOnboardingProfileRuntimeInput');
+  expect(joins).toContain('submitRuntimeInput(buildOnboardingHubOpenRuntimeInput');
+  expect(joins).toContain('selectAdvertisedAutoJoinCandidates');
   expect(source).not.toContain('export let runtimeEnv');
   expect(source).not.toContain('liveEnvResolver');
   expect(source).not.toContain('resolveOnboardingEnv');
@@ -209,16 +213,19 @@ test('OnboardingPanel uses injected runtime projection and RuntimeInput helpers'
   expect(source).not.toContain("type: 'profile-update'");
 
   expect(parent).toContain('const onboardingRuntimeProjection = $derived.by');
+  expect(parent).toContain('buildOnboardingRuntimeProjection({');
   expect(parent).toContain('runtimeProjection={onboardingRuntimeProjection}');
-  expect(parent).toContain('const accountCounterpartiesByEntityId: Record<string, string[]> = {};');
-  expect(parent).toContain('const hubCandidates: OnboardingHubCandidate[] = [];');
+  expect(projection).toContain('const accountCounterpartiesByEntityId: Record<string, string[]> = {};');
+  expect(projection).toContain('const hubCandidates: OnboardingHubCandidate[] = [];');
+  expect(projection).toContain("typeof isHub !== 'boolean'");
 });
 
 test('OnboardingPanel never hides hub discovery or default-policy failures', () => {
   const source = readFileSync('frontend/src/lib/components/Entity/onboarding/OnboardingPanel.svelte', 'utf8');
+  const joins = readFileSync('frontend/src/lib/components/Entity/onboarding/onboarding-hub-join.ts', 'utf8');
   const inputSource = readFileSync('frontend/src/lib/components/Entity/onboarding/onboarding-runtime-input.ts', 'utf8');
 
-  expect(source).toContain('ONBOARDING_HUB_DISCOVERY_FAILED');
+  expect(joins).toContain('ONBOARDING_HUB_DISCOVERY_FAILED');
   expect(inputSource).toContain('ONBOARDING_HUB_CAPACITY_INSUFFICIENT');
   expect(source).toContain('policyDefaultsNotice');
   expect(source).toContain('data-testid="onboarding-policy-defaults-notice"');

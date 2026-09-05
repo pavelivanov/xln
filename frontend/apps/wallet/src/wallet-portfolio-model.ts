@@ -1,3 +1,4 @@
+import { withdrawableCollateral } from '../../../packages/runtime-client/src/withdrawable-collateral';
 import {
   normalizeRequiredRuntimeEntityId,
   optionalRuntimeInteger,
@@ -23,6 +24,8 @@ export type WalletPortfolioDelta = Readonly<{
 
 type WalletDerivedDelta = Readonly<{
   collateral: bigint;
+  outCollateral: bigint;
+  outTotalHold: bigint;
   outCapacity: bigint;
   inCapacity: bigint;
   ownCreditLimit: bigint;
@@ -52,6 +55,8 @@ export type WalletPortfolioPosition = Readonly<{
   inboundCapacityLabel: string;
   collateral: bigint;
   collateralLabel: string;
+  withdrawableCollateral: bigint;
+  withdrawableCollateralLabel: string;
   ownCreditLimit: bigint;
   ownCreditLimitLabel: string;
   peerCreditLimit: bigint;
@@ -125,6 +130,7 @@ const decodePosition = (
   const tokenId = requireRuntimeInteger(tokenIdValue, 'WALLET_PORTFOLIO_TOKEN_ID', 1);
   const derived = math.deriveDelta(decodeDelta(deltaValue, tokenId), isLeft);
   const token = math.getTokenInfo(tokenId);
+  const withdrawable = withdrawableCollateral(derived);
   return {
     tokenId,
     symbol: token.symbol,
@@ -134,6 +140,8 @@ const decodePosition = (
     inboundCapacityLabel: math.formatTokenAmount(tokenId, derived.inCapacity),
     collateral: derived.collateral,
     collateralLabel: math.formatTokenAmount(tokenId, derived.collateral),
+    withdrawableCollateral: withdrawable,
+    withdrawableCollateralLabel: math.formatTokenAmount(tokenId, withdrawable),
     ownCreditLimit: derived.ownCreditLimit,
     ownCreditLimitLabel: math.formatTokenAmount(tokenId, derived.ownCreditLimit),
     peerCreditLimit: derived.peerCreditLimit,

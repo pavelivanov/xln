@@ -11,6 +11,7 @@ import type { EntityReadView } from '$lib/components/Entity/core/entity-panel-ty
   import AccountList from '../account/ui/AccountList.svelte';
   import AccountOpenPanel from '../account/ui/AccountOpenPanel.svelte';
   import AccountWorkspaceRail from './AccountWorkspaceRail.svelte';
+  import { ACCOUNT_WORKSPACE_TABS, accountWorkspaceTabsForAccounts } from '../../../../../packages/runtime-client/src/account-workspace-tabs';
   import EntityActivityPanel from '../activity/EntityActivityPanel.svelte';
   import LendingPanel from '../payments/LendingPanel.svelte';
   import { isAccountTxKindAvailable } from '@xln/core/account/tx/admission-policy';
@@ -198,26 +199,20 @@ import type { EntityReadView } from '$lib/components/Entity/core/entity-panel-ty
   // outside the production profile (core/account/tx/admission-policy.ts), so the
   // tab exists only when the profile admits lending_fund.
   const lendingAvailable = isAccountTxKindAvailable('lending_fund');
-  const accountWorkspaceTabs: IconTabConfig<AccountWorkspaceTab>[] = [
-    { id: 'open', icon: PlusCircle, label: 'Open Account' },
-    { id: 'send', icon: ArrowUpRight, label: 'Pay' },
-    { id: 'receive', icon: ArrowDownLeft, label: 'Receive' },
-    { id: 'swap', icon: Repeat, label: 'Swap' },
-    { id: 'move', icon: Landmark, label: 'Move' },
-    ...(lendingAvailable ? [{ id: 'lending' as const, icon: Banknote, label: 'Lending' }] : []),
-    { id: 'history', icon: Activity, label: 'History' },
-    { id: 'configure', icon: SettingsIcon, label: 'Manage' },
-    { id: 'activity', icon: Activity, label: 'Activity' },
-    { id: 'appearance', icon: SlidersHorizontal, label: 'Appearance' },
-  ];
+  const accountWorkspaceIcons: Record<AccountWorkspaceTab, ComponentType> = {
+    open: PlusCircle, send: ArrowUpRight, receive: ArrowDownLeft, swap: Repeat,
+    move: Landmark, lending: Banknote, history: Activity, configure: SettingsIcon,
+    activity: Activity, appearance: SlidersHorizontal,
+  };
+  const accountWorkspaceTabs: IconTabConfig<AccountWorkspaceTab>[] = ACCOUNT_WORKSPACE_TABS
+    .filter(tab => tab.id !== 'lending' || lendingAvailable)
+    .map(tab => ({ ...tab, icon: accountWorkspaceIcons[tab.id] }));
   const accountWorkspacePrimaryTabIds: AccountWorkspaceTab[] = [
     'open', 'send', 'receive', 'swap', 'move', ...(lendingAvailable ? ['lending' as const] : []),
   ];
 
   $: hasWorkspaceAccounts = workspaceAccountIds.length > 0;
-  $: visibleAccountWorkspaceTabs = hasWorkspaceAccounts
-    ? accountWorkspaceTabs
-    : accountWorkspaceTabs.filter((tabConfig) => tabConfig.id === 'open');
+  $: visibleAccountWorkspaceTabs = [...accountWorkspaceTabsForAccounts(accountWorkspaceTabs, hasWorkspaceAccounts)];
   $: if (!hasWorkspaceAccounts && accountWorkspaceTab !== 'open') {
     accountWorkspaceTab = 'open';
   }

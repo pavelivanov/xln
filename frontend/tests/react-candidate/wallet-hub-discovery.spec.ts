@@ -1,0 +1,73 @@
+import { expect, test } from '@playwright/test';
+import { expectNoBrowserErrors, expectPageContained, observeBrowserErrors, screenshotEvidence } from './browser-evidence';
+import { finishOpenedWalletSetup, restoreLocalWallet } from './wallet-onboarding-test-helpers';
+import { selectWalletFixtureRuntime } from './wallet-runtime-test-helpers';
+
+test('Hub Discovery opens a real local Account and retains its committed connection state', async ({ page }, testInfo) => {
+  testInfo.setTimeout(150_000);
+  const errors = observeBrowserErrors(page);
+  const fixture = await restoreLocalWallet(page, 'hub-discovery');
+  await finishOpenedWalletSetup(page);
+  await page.getByRole('link', { name: 'Continue to assets' }).click();
+  await page.getByLabel('Entity', { exact: true }).selectOption(fixture.recovery.entityId);
+  await expect(page.getByLabel('Entity', { exact: true }).locator(`option[value="${fixture.recovery.hubDiscovery.hubEntityId}"]`)).toHaveCount(1);
+  const hubName = await page.getByLabel('Entity', { exact: true }).locator(`option[value="${fixture.recovery.hubDiscovery.hubEntityId}"]`).innerText();
+  await page.getByRole('button', { name: 'Open Account', exact: true }).click();
+  const panel = page.getByTestId('hub-discovery-panel');
+  const hub = panel.locator(`[data-hub-entity-id="${fixture.recovery.hubDiscovery.hubEntityId}"]`);
+  await expect(hub).toHaveAttribute('data-connection-state', 'closed');
+  await hub.getByRole('button', { name: 'Details', exact: true }).click();
+  await expect(hub.getByText('Entity ID', { exact: true })).toBeVisible();
+  await hub.locator('summary').filter({ hasText: 'Raw Profile' }).click();
+  await expect(hub.locator('pre')).toContainText(hubName);
+  await expect(hub.locator('pre')).toContainText('"isHub": true');
+  await expectPageContained(page);
+  await screenshotEvidence(page, testInfo, 'wallet-hub-discovery-details');
+  await hub.getByRole('button', { name: '+ Connect', exact: true }).click();
+  await expect(hub).toHaveAttribute('data-connection-state', 'open', { timeout: 30_000 });
+  await expect(hub.getByTestId('hub-connect-button')).toHaveCount(0);
+  await hub.getByRole('button', { name: 'Hide', exact: true }).click();
+  await screenshotEvidence(page, testInfo, 'wallet-hub-discovery-open');
+  await panel.getByRole('button', { name: 'Refresh hubs', exact: true }).click();
+  await expect(hub).toHaveAttribute('data-connection-state', 'open');
+  await panel.getByRole('button', { name: '← Back to assets' }).click();
+  await expect(page.getByLabel('Accounts', { exact: true }).getByText(hubName, { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Open Account', exact: true }).click();
+  await expect(hub).toHaveAttribute('data-connection-state', 'open');
+  expectNoBrowserErrors(errors);
+});
+
+test('Hub Discovery reads the selected remote Runtime and its already open Account', async ({ page }, testInfo) => {
+  const errors = observeBrowserErrors(page);
+  const fixture = await selectWalletFixtureRuntime(page);
+  await page.goto('/app?portfolio=1', { waitUntil: 'domcontentloaded' });
+  await page.getByLabel('Entity', { exact: true }).selectOption(fixture.entityId);
+  await page.getByRole('button', { name: 'Open Account', exact: true }).click();
+  const panel = page.getByTestId('hub-discovery-panel');
+  const hub = panel.locator(`[data-hub-entity-id="${fixture.counterpartyEntityId}"]`);
+  await expect(hub).toHaveAttribute('data-connection-state', 'open');
+  await hub.getByRole('button', { name: 'Details', exact: true }).click();
+  await expect(hub.getByText(fixture.runtimeId, { exact: true })).toBeVisible();
+  await expect(hub.locator('dl > div').filter({ has: page.getByText('Fee', { exact: true }) }).locator('dd')).toHaveText('0.01 bps');
+  await expect(hub.locator('dl > div').filter({ has: page.getByText('Peers', { exact: true }) }).locator('dd')).toHaveText('1');
+  await expect(hub.locator('dl > div').filter({ has: page.getByText('Last updated', { exact: true }) }).locator('dd')).not.toContainText('1970');
+  await expect(hub.getByText('Counterparty committed by the isolated candidate Runtime.', { exact: true })).toBeVisible();
+  await expect(hub.getByTestId('hub-connect-button')).toHaveCount(0);
+  await expectPageContained(page);
+  await screenshotEvidence(page, testInfo, 'wallet-hub-discovery-remote');
+  if (testInfo.project.name === 'mobile-390x844') {
+    const runtimeId = hub.getByText(fixture.runtimeId, { exact: true });
+    await runtimeId.evaluate(element => element.scrollIntoView({ block: 'center' }));
+    const bounds = await runtimeId.boundingBox();
+    const navigation = await page.getByRole('navigation', { name: 'Wallet navigation' }).boundingBox();
+    if (!bounds || !navigation) throw new Error('HUB_DETAILS_VIEWPORT_BOUNDS_UNAVAILABLE');
+    expect(bounds.y).toBeGreaterThanOrEqual(0);
+    expect(bounds.y + bounds.height).toBeLessThan(navigation.y);
+    const path = testInfo.outputPath('wallet-hub-discovery-remote-viewport.png');
+    await page.screenshot({ animations: 'disabled', path });
+    await testInfo.attach('hub-discovery-remote-viewport', { contentType: 'image/png', path });
+  }
+  await panel.getByRole('button', { name: '← Back to assets' }).click();
+  await expect(page.getByLabel('Entity', { exact: true })).toHaveValue(fixture.entityId);
+  expectNoBrowserErrors(errors);
+});

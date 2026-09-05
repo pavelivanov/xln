@@ -7,6 +7,7 @@ import {
   WALLET_APP_LINKS,
 } from '../../../frontend/apps/wallet/src/app-shell-model';
 import { walletPageMetadata } from '../../../frontend/apps/wallet/src/wallet-model';
+import { resolveWalletAppRoute, walletPaymentTabHref } from '../../../frontend/apps/wallet/src/wallet-navigation-model';
 
 describe('React wallet app shell', () => {
   test('exposes only working navigation destinations', () => {
@@ -70,6 +71,21 @@ describe('React wallet app shell', () => {
     expect(resolveWalletAppView('?markets=1')).toBe('markets');
   });
 
+  test.each([
+    ['#accounts/send', 'payments'],
+    ['#accounts/receive', 'payments'],
+    ['#accounts/swap', 'markets'],
+    ['#accounts/activity', 'markets'],
+    ['#accounts/appearance', 'portfolio'],
+    ['#settings', 'settings'],
+    ['#settings/wallet', 'settings'],
+    ['#settings/recovery', 'settings'],
+    ['#settings/display', 'settings'],
+  ] as const)('opens the retained %s destination over stale query navigation', (hash, view) => {
+    expect(resolveWalletAppView('', hash)).toBe(view);
+    expect(resolveWalletAppView('?portfolio=1', hash)).toBe(view);
+  });
+
   test('requires complete tab-confined authority for a remote Runtime', () => {
     expect(resolveWalletRuntimeSummary({
       mode: 'remote', wsUrl: 'wss://runtime.example/rpc', access: 'admin', sessionKey: null,
@@ -85,6 +101,24 @@ describe('React wallet app shell', () => {
       authorityLabel: 'Admin session',
       state: 'remote-ready',
     });
+  });
+
+  test('retains canonical subviews and invoice payload casing', () => {
+    expect(resolveWalletAppRoute('', '#accounts/open')).toEqual({ view: 'portfolio', section: 'open' });
+    expect(resolveWalletAppRoute('', '#accounts/appearance')).toEqual({ view: 'portfolio', section: 'appearance' });
+    expect(resolveWalletAppRoute('', '#accounts')).toEqual({ view: 'portfolio', section: 'open' });
+    expect(resolveWalletAppRoute('?portfolio=1')).toEqual({ view: 'portfolio', section: 'assets' });
+    expect(resolveWalletAppRoute('', '#accounts/receive')).toEqual({ view: 'payments', tab: 'receive', invoice: '' });
+    expect(resolveWalletAppRoute('', '#accounts/activity')).toEqual({ view: 'markets', tab: 'activity' });
+    expect(resolveWalletAppRoute('', '#settings/recovery')).toEqual({ view: 'settings', section: 'recovery' });
+    expect(resolveWalletAppRoute('', '#settings/display')).toEqual({ view: 'settings', section: 'preferences' });
+    expect(resolveWalletAppRoute('?markets=1', '#pay/ABC%3Fdesc%3DLunch')).toEqual({
+      view: 'payments', tab: 'send', invoice: 'https://xln.finance/app#pay/ABC%3Fdesc%3DLunch',
+    });
+    for (const tab of ['send', 'receive', 'operations', 'external'] as const) {
+      const url = new URL(walletPaymentTabHref(tab), 'https://xln.finance');
+      expect(resolveWalletAppRoute(url.search, url.hash)).toEqual({ view: 'payments', tab, invoice: '' });
+    }
   });
 
   test('publishes route-specific document metadata', () => {

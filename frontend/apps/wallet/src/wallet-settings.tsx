@@ -10,6 +10,8 @@ import {
 } from './wallet-settings-model';
 import type { WalletRuntimeSummary } from './app-shell-model';
 import { WalletRecoveryServices } from './wallet-recovery-services';
+import { navigateWallet } from './wallet-navigation';
+import type { WalletSettingsSection } from './wallet-navigation-model';
 import './styles/wallet-settings.css';
 
 const WORKER_CAPS = [1, 2, 3, 4, 5, 6, 7, 8] as const;
@@ -17,9 +19,11 @@ const WORKER_CAPS = [1, 2, 3, 4, 5, 6, 7, 8] as const;
 export function WalletSettings({
   onAuthSchemeChange,
   runtimeState,
+  section,
 }: Readonly<{
   onAuthSchemeChange: (scheme: WalletAuthScheme) => void;
   runtimeState: WalletRuntimeSummary['state'];
+  section: WalletSettingsSection;
 }>) {
   const [preferences, setPreferences] = useState(() => readWalletPreferences(localStorage));
   const [status, setStatus] = useState('');
@@ -63,6 +67,11 @@ export function WalletSettings({
         <p>Device-local preferences and recovery services for the active Runtime.</p>
       </header>
 
+      <nav className="wallet-settings-tabs" aria-label="Settings sections">
+        <button aria-current={section === 'preferences' || section === 'all' ? 'page' : undefined} onClick={() => navigateWallet('/app#settings/display')} type="button">Preferences</button>
+        <button aria-current={section === 'recovery' ? 'page' : undefined} onClick={() => navigateWallet('/app#settings/recovery')} type="button">Recovery</button>
+      </nav>
+      {section !== 'recovery' ? <>
       <div className="wallet-settings-list">
         <fieldset className="wallet-preference-row">
           <legend>Identity appearance</legend>
@@ -103,7 +112,8 @@ export function WalletSettings({
       </p>
       {status ? <p className="wallet-settings-status" aria-live="polite">{status}</p> : null}
       {error ? <p className="wallet-settings-error" role="alert">{error}</p> : null}
-      <WalletRecoveryServices runtimeState={runtimeState} />
+      </> : null}
+      {section !== 'preferences' ? <WalletRecoveryServices runtimeState={runtimeState} /> : null}
     </section>
   );
 }

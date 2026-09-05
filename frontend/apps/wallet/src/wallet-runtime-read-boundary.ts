@@ -3,8 +3,9 @@ import type {
   RuntimeAdapterConfig,
   RuntimeAdapterReadQuery,
 } from '../../../../core/api/runtime-adapter/types';
+import type { RuntimeAdapterViewFrame } from '@xln/core/api/public/runtime-module';
 import type { RuntimeAdapterStorageSnapshot } from '../../../packages/browser/src/runtime-adapter-session';
-import { RuntimeQueryClient } from '../../../packages/runtime-client/src/runtime-query-client';
+import { RuntimeQueryClient, type RuntimeQueryResultSchema } from '../../../packages/runtime-client/src/runtime-query-client';
 import type { WalletPortfolioMath } from './wallet-portfolio-model';
 import { startWalletEmbeddedRuntime } from './wallet-embedded-runtime';
 
@@ -147,7 +148,7 @@ export const loadWalletMarketMath = async (): Promise<WalletMarketMath> => {
 
 export const createWalletRuntimeQueryClient = (
   adapter: RuntimeAdapter,
-): RuntimeQueryClient<RuntimeAdapterReadQuery> => new RuntimeQueryClient({
+): RuntimeQueryClient<RuntimeAdapterReadQuery, RuntimeQueryResultSchema & { viewFrame: RuntimeAdapterViewFrame }> => new RuntimeQueryClient({
   resolveAdapter: () => adapter,
   readRuntimeId: () => adapter.runtimeId,
   readCurrentHeight: () => adapter.currentHeight,

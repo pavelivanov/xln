@@ -5,7 +5,7 @@
   Features: Jurisdiction, numbered/lazy identity, validators with weights, threshold.
 -->
 <script lang="ts">
-  import { isTronChainId, type ConsensusConfig } from '@xln/core/api/public/runtime-module';
+  import { isTronChainId } from '@xln/core/api/public/runtime-module';
   import { getXLN, registerActiveNumberedEntities, submitRuntimeInput } from '../../../stores/xlnStore';
   import { errorLog } from '../../../stores/errorLogStore';
   import { activeRuntime } from '../../../stores/vault/vaultStore';
@@ -14,9 +14,10 @@
   import { Plus, X, Shield, Hash, UserRound, UsersRound, Zap } from 'lucide-svelte';
   import {
     emptyFormationRuntimeProjection,
-    hasProjectedEntityId,
     type FormationRuntimeProjection,
   } from './formation-runtime-projection';
+
+  import { createFormationEntity } from './formation-commands';
 
   export let onCreated: ((entityId: string) => void) | undefined = undefined;
   export let runtimeProjection: FormationRuntimeProjection = emptyFormationRuntimeProjection();
@@ -124,137 +125,25 @@
     userModifiedThreshold = true;
   }
 
-  function formatShortId(id: string): string {
-    return id || '';
-  }
-
-  function requireSharedEntitySeed(seed: string | undefined): string {
-    if (!seed) throw new Error('NUMBERED_ENTITY_SHARED_SEED_REQUIRED');
-    return seed;
-  }
-
   async function createEntity() {
-    if (!selectedJurisdiction) {
-      error = 'Select a jurisdiction';
-      return;
-    }
-
-    if (formationValidators.some(validator => !validator.name.trim())) {
-      error = 'All validators must have names';
-      return;
-    }
-
     creating = true;
     error = '';
     success = '';
-
     try {
-      const xln = await getXLN();
-      if (!xln) throw new Error('XLN not initialized');
-
-      const boardMembers = formationValidators.map((validator) => ({
-        name: validator.name.trim(),
-        weight: Number(validator.weight),
-      }));
-      const thresholdBigInt = BigInt(threshold);
-      if (boardMembers.some((member) => !Number.isInteger(member.weight) || member.weight <= 0 || member.weight > 0xffff)) {
-        throw new Error('Every board weight must be an integer from 1 to 65535');
-      }
-      if (!Number.isInteger(threshold) || threshold <= 0 || threshold > totalWeight) {
-        throw new Error(`Board threshold must be between 1 and ${totalWeight}`);
-      }
-
-      // Get jurisdiction config
-      const jurisdictionReplica = selectableJurisdictions.find(j => j.name === selectedJurisdiction);
-      if (!jurisdictionReplica) {
-        throw new Error('Selected jurisdiction not found');
-      }
-
-      let entityId: string;
-      let config: ConsensusConfig;
-      let numberedImported = false;
-
-      if (entityType === 'lazy') {
-        // Lazy entity - ID is hash of quorum
-        entityId = xln.generateLazyEntityId(boardMembers, thresholdBigInt);
-
-        // Check for duplicates
-        if (hasProjectedEntityId(runtimeProjection, entityId)) {
-          throw new Error(`This validator configuration already exists! Entity ${formatShortId(entityId)} is in use.`);
-        }
-
-        const result = xln.createLazyEntity(entityName, boardMembers, thresholdBigInt, jurisdictionReplica);
-        config = result.config;
-      } else {
-        // Numbered entity - on-chain registration
-        const registrationSignerId = mySignerAddress.trim().toLowerCase();
-        if (!registrationSignerId) {
-          throw new Error('NUMBERED_ENTITY_ACTIVE_WALLET_SIGNER_REQUIRED');
-        }
-        const vaultRuntimeId = String(vault?.id || '').trim().toLowerCase();
-        const localSignerId = boardMembers.some(
-          member => member.name.toLowerCase() === registrationSignerId,
-        ) ? registrationSignerId : null;
-        const ownership = localSignerId === null
-          ? { localSignerId: null, entitySeed: null }
-          : {
-              localSignerId,
-              entitySeed: xln.canonicalEntitySeed(requireSharedEntitySeed(vault?.seed)),
-            };
-        const registration = await registerActiveNumberedEntities(
-          {
-            jurisdictionRef: selectedJurisdiction,
-            payerSignerId: registrationSignerId,
-            entities: [{
-              name: entityName,
-              validators: boardMembers,
-              threshold: thresholdBigInt,
-              ...ownership,
-              profileName: entityName,
-            }],
-          },
-          vaultRuntimeId,
-        );
-        const creation = registration.entities[0];
-        if (!creation) throw new Error('NUMBERED_ENTITY_REGISTRATION_RESULT_MISSING');
-        config = creation.config;
-        entityId = creation.entityId;
-        numberedImported = creation.imported;
-      }
-
-      const localSignerId = mySignerAddress.toLowerCase();
-      const localBoardIndex = config.validators.findIndex(
-        (member) => member.toLowerCase() === localSignerId,
-      );
-      if (entityType === 'lazy' && localBoardIndex >= 0) {
-        if (!vault?.seed) throw new Error('ENTITY_IMPORT_RUNTIME_SEED_REQUIRED');
-        await submitRuntimeInput({
-          runtimeTxs: [xln.importEntity({
-            entityId,
-            signerId: localSignerId,
-            entitySeed: vault.seed,
-            data: {
-              config,
-              isProposer: localBoardIndex === 0,
-              profileName: entityName,
-            },
-          })],
-          entityInputs: [],
-        });
-        tabOperations.addTab(entityId, localSignerId, selectedJurisdiction);
-        success = `Entity created: ${formatShortId(entityId)}`;
-      } else if (entityType === 'numbered' && numberedImported) {
-        tabOperations.addTab(entityId, localSignerId, selectedJurisdiction);
-        success = `Entity created: ${formatShortId(entityId)}`;
-      } else {
-        success = `Board created: ${formatShortId(entityId)}. Import this configuration in a member wallet.`;
-      }
-
-      // Callback
-      if (onCreated) onCreated(entityId);
-      // Reset form
+      const result = await createFormationEntity({
+        entityType, entityName, selectedJurisdiction,
+        validators: formationValidators, threshold,
+      }, {
+        getRuntimeModule: getXLN,
+        readAuthority: () => ({ runtimeId: vault?.id || '', signerId: mySignerAddress, ...(vault?.seed ? { seed: vault.seed } : {}) }),
+        readProjection: () => ({ ...runtimeProjection, jurisdictions: selectableJurisdictions }),
+        registerNumberedEntities: (input, runtimeId) => registerActiveNumberedEntities(input, runtimeId),
+        submitRuntimeInput,
+        onImported: (entityId, signerId, jurisdiction) => { tabOperations.addTab(entityId, signerId, jurisdiction); },
+      });
+      success = result.message;
+      if (onCreated) onCreated(result.entityId);
       resetForm();
-
     } catch (err) {
       errorLog.log('Entity creation failed', 'Formation Panel', { entityName, entityType, selectedJurisdiction, err });
       error = err instanceof Error ? err.message : 'Creation failed';

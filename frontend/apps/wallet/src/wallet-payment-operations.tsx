@@ -6,6 +6,7 @@ import type {
   WalletOperationKind,
 } from './wallet-payment-operations-model';
 import type { WalletPaymentSource, WalletPaymentSourceSnapshot } from './wallet-payment-source';
+import { WalletPaymentBatch } from './wallet-payment-batch';
 
 const operationCopy: Record<WalletOperationKind, Readonly<{
   label: string;
@@ -51,6 +52,8 @@ export function WalletPaymentOperations({
   const selectedTokenId = tokenId || projection.tokens[0]?.tokenId || 0;
   const busy = snapshot.command.status === 'submitting' || snapshot.command.status === 'pending';
   const isLending = kind === 'lend' || kind === 'borrow';
+  const selectedPosition = projection.accounts.find((account) => account.counterpartyId === selectedTarget)
+    ?.positions.find((position) => position.tokenId === selectedTokenId);
 
   const submit = async (): Promise<void> => {
     setError('');
@@ -72,7 +75,7 @@ export function WalletPaymentOperations({
   };
 
   return (
-    <section className="wallet-payments-pane" aria-labelledby="wallet-operations-title">
+    <><section className="wallet-payments-pane" aria-labelledby="wallet-operations-title">
       <div className="wallet-payments-section-heading">
         <div><p>03</p><h2 id="wallet-operations-title">Account operations</h2></div>
         <span>One explicit Runtime command</span>
@@ -130,6 +133,9 @@ export function WalletPaymentOperations({
       </div>
 
       {kind === 'c2r' ? (
+        <p className="wallet-withdrawable">Available to withdraw: {selectedPosition?.withdrawableCollateralLabel ?? '0'}. Pending holds are excluded.</p>
+      ) : null}
+      {kind === 'c2r' ? (
         <p className="wallet-operation-note">This creates a settlement proposal only. Peer approval, execution, and J-batch broadcast remain separate committed steps.</p>
       ) : null}
       {isLending ? (
@@ -146,6 +152,6 @@ export function WalletPaymentOperations({
           {operationCopy[kind].action}
         </button>
       </div>
-    </section>
+    </section><WalletPaymentBatch projection={projection} snapshot={snapshot} source={source} /></>
   );
 }

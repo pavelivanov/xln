@@ -9,7 +9,6 @@ import { EntityWorkspaceShell } from '../../../packages/ui/src/entity-workspace-
 import { EntityWorkspaceTimeMachine } from '../../../packages/ui/src/entity-workspace-time-machine';
 import { opsDisplayPreferencesSource } from './ops-display-preferences';
 import { opsEntityWorkspaceSource } from './ops-entity-workspace-runtime';
-import { OpsShell } from './ops-shell';
 
 const subscribeToHash = (onStoreChange: () => void): (() => void) => {
   window.addEventListener('hashchange', onStoreChange);
@@ -32,7 +31,7 @@ const replaceTimeMachineHash = (
 const errorMessage = (error: unknown): string =>
   error instanceof Error ? error.message : String(error || 'History read failed');
 
-export function OpsEntityWorkspacePage() {
+export function OpsEntityWorkspaceView() {
   const appliedHistoryLink = useRef('');
   const [historyLinkIssue, setHistoryLinkIssue] = useState('');
   const hash = useSyncExternalStore(subscribeToHash, readHash, () => '');
@@ -118,7 +117,7 @@ export function OpsEntityWorkspacePage() {
     replaceTimeMachineHash(null);
   };
   return (
-    <OpsShell activePath="/embed">
+    <>
       <EntityWorkspaceShell
         activity={runtimeSnapshot.activity}
         accounts={runtimeSnapshot.accounts}
@@ -160,6 +159,6 @@ export function OpsEntityWorkspacePage() {
           state={runtimeSnapshot.timeMachine}
         />
       ) : null}
-    </OpsShell>
+    </>
   );
 }

@@ -5,6 +5,7 @@ import type {
 } from '../../../packages/runtime-client/src/payment-command-types';
 
 import { buildPaymentRuntimeInput } from '../../../packages/runtime-client/src/payment-command';
+import { decodeWalletBatch, type WalletBatchProjection } from './wallet-batch-model';
 import {
   decodeWalletPortfolioProjection,
   type WalletPortfolioAccount,
@@ -38,6 +39,7 @@ export type WalletPaymentProjection = Readonly<{
   recipients: readonly Readonly<{ entityId: string; label: string; blocked: boolean }>[];
   tokens: readonly WalletPaymentToken[];
   accounts: readonly WalletPortfolioAccount[];
+  batch: WalletBatchProjection;
 }>;
 
 export type WalletPaymentRoute = Readonly<{
@@ -93,6 +95,7 @@ export const decodeWalletPaymentProjection = (
     recipients: [],
     tokens: [],
     accounts: [],
+    batch: decodeWalletBatch(undefined, math),
   };
   const active = requireRuntimeRecord(frame['activeEntity'], 'WALLET_PAYMENT_ACTIVE_ENTITY');
   const core = requireRuntimeRecord(active['core'], 'WALLET_PAYMENT_ACTIVE_CORE');
@@ -115,6 +118,7 @@ export const decodeWalletPaymentProjection = (
       spendableLabel: math.formatTokenAmount(asset.tokenId, asset.reserve + asset.accountSpendable),
     })),
     accounts: portfolio.accounts,
+    batch: decodeWalletBatch(core['jBatchState'], math),
   };
 };
 

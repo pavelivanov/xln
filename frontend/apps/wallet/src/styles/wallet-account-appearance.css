@@ -1,0 +1,18 @@
+.wallet-account-appearance { max-width: 800px; margin: 0 auto; padding: 48px 24px 112px; color: var(--wallet-text); }
+.wallet-account-appearance h1 { margin: 36px 0; font-size: clamp(28px, 4vw, 42px); letter-spacing: -.035em; }
+.wallet-account-appearance h2 { margin: 0; font-size: 21px; }
+.wallet-account-appearance p { color: #a5ada7; line-height: 1.6; }
+.wallet-account-appearance section { border-top: 1px solid #303930; padding: 28px 0; }
+.wallet-account-appearance button, .wallet-account-appearance select { border: 1px solid #394039; border-radius: 5px; padding: 10px 14px; color: #f3f5f0; background: #171d18; font: inherit; cursor: pointer; }
+.wallet-account-appearance :is(button, select, input):focus-visible { outline: 2px solid #a5f07b; outline-offset: 3px; }
+.wallet-account-appearance button[aria-pressed=true] { border-color: #a5f07b; background: #263d1e; color: #d9ffc4; }
+.wallet-account-appearance fieldset { border: 0; margin: 24px 0; padding: 0; display: flex; flex-wrap: wrap; gap: 10px; }
+.wallet-account-appearance legend { padding: 0 0 12px; font-size: 14px; color: #a5ada7; }
+.wallet-account-style { display: grid; gap: 12px; margin: 24px 0; }
+.wallet-account-scale { display: flex; justify-content: space-between; gap: 12px; font-size: 14px; margin: 28px 0 18px; }
+.wallet-account-appearance input[type=range] { width: 100%; accent-color: #a5f07b; }
+.wallet-account-scale-bounds { display: flex; justify-content: space-between; color: #a5ada7; font-size: 12px; margin-top: 8px; }
+.wallet-account-effect { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 18px 0; border-bottom: 1px solid #232b24; cursor: pointer; }
+.wallet-account-effect small { display: block; color: #a5ada7; font-size: 12px; line-height: 1.5; margin-top: 6px; }
+.wallet-account-effect input { width: 18px; height: 18px; flex: 0 0 auto; accent-color: #a5f07b; }
+@media (max-width: 650px) { .wallet-account-appearance { padding: 32px 16px 112px; } }

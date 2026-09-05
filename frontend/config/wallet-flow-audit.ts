@@ -27,6 +27,99 @@ export type WalletRequirementAudit = Readonly<{
 
 export const WALLET_FLOW_AUDIT = [
   {
+    id: 'account-dropdown',
+    pathname: '/app', search: '?portfolio=1', page: 'app', view: 'portfolio',
+    sources: ['frontend/apps/wallet/src/wallet-account-dropdown.tsx', 'frontend/apps/wallet/src/wallet-account-dropdown-source.ts',
+      'frontend/packages/ui/src/account-dropdown.tsx', 'frontend/src/lib/components/Entity/account/account-dropdown-model.ts'],
+    tests: ['frontend/tests/react-candidate/wallet-account-dropdown.spec.ts', 'tests/frontend/account/account-dropdown-model.test.ts'],
+  },
+  {
+    id: 'account-rail-and-entity-selection',
+    pathname: '/app', search: '?portfolio=1', page: 'app', view: 'portfolio',
+    sources: [
+      'frontend/apps/wallet/src/wallet-workspace-selection.ts',
+      'frontend/apps/wallet/src/wallet-account-rail.tsx',
+      'frontend/packages/ui/src/account-workspace-rail.tsx',
+      'frontend/packages/runtime-client/src/account-workspace-tabs.ts',
+    ],
+    tests: ['frontend/tests/react-candidate/wallet-account-rail.spec.ts', 'tests/frontend/account/wallet-workspace-selection.test.ts'],
+  },
+  {
+    id: 'account-appearance',
+    pathname: '/app', search: '?portfolio=1', page: 'app', view: 'portfolio',
+    sources: [
+      'frontend/apps/wallet/src/wallet-account-appearance.tsx',
+      'frontend/apps/wallet/src/wallet-account-appearance-source.ts',
+      'frontend/apps/wallet/src/wallet-account-summary.tsx',
+      'frontend/packages/ui/src/rcpan/delta-capacity-bar-model.ts',
+      'frontend/packages/ui/src/rcpan/delta-capacity-bar.tsx',
+      'frontend/packages/ui/src/rcpan/delta-apple.tsx',
+    ],
+    tests: ['frontend/tests/react-candidate/wallet-account-appearance.spec.ts', 'tests/frontend/account/account-bar-presentation.test.ts'],
+  },
+  {
+    id: 'focused-account-view',
+    pathname: '/app', search: '?portfolio=1', page: 'app', view: 'portfolio',
+    sources: [
+      'frontend/apps/wallet/src/wallet-account-view.tsx',
+      'frontend/apps/wallet/src/wallet-account-token.tsx',
+      'frontend/apps/wallet/src/wallet-account-activity.tsx',
+      'frontend/apps/wallet/src/wallet-account-view-source.ts',
+      'frontend/src/lib/components/Entity/account/account-focused-view.ts',
+      'frontend/src/lib/components/Entity/account/account-activity-presentation.ts',
+      'frontend/src/lib/components/Entity/account/account-faucet-command.ts',
+    ],
+    tests: ['frontend/tests/react-candidate/wallet-account-view.spec.ts', 'tests/frontend/account/account-workspace-navigation.test.ts'],
+  },
+  {
+    id: 'direct-account-opening',
+    pathname: '/app', search: '?portfolio=1', page: 'app', view: 'portfolio',
+    sources: [
+      'frontend/apps/wallet/src/wallet-account-open.tsx',
+      'frontend/apps/wallet/src/wallet-entity-input.tsx',
+      'frontend/apps/wallet/src/wallet-hub-discovery-source.ts',
+      'frontend/apps/wallet/src/wallet-navigation-model.ts',
+      'frontend/bridges/wallet-canonical-hub-discovery.ts',
+      'frontend/src/lib/components/Entity/account/account-open-commands.ts',
+      'frontend/src/lib/components/shared/entity-input-model.ts',
+    ],
+    tests: ['tests/frontend/assets/entity-input-model.test.ts', 'frontend/tests/react-candidate/wallet-account-open.spec.ts'],
+  },
+  {
+    id: 'manual-hub-discovery',
+    pathname: '/app', search: '?portfolio=1', page: 'app', view: 'portfolio',
+    sources: [
+      'frontend/apps/wallet/src/wallet-hub-discovery.tsx',
+      'frontend/apps/wallet/src/wallet-hub-discovery-source.ts',
+      'frontend/bridges/wallet-canonical-hub-discovery.ts',
+      'frontend/src/lib/components/Entity/onboarding/hub-discovery-commands.ts',
+      'frontend/src/lib/components/Entity/onboarding/hub-discovery-profile.ts',
+    ],
+    tests: ['tests/frontend/onboarding/hub-discovery-profile.test.ts', 'frontend/tests/react-candidate/wallet-hub-discovery.spec.ts'],
+  },
+  {
+    id: 'entity-formation',
+    pathname: '/app', search: '?portfolio=1', page: 'app', view: 'portfolio',
+    sources: [
+      'frontend/apps/wallet/src/wallet-formation.tsx',
+      'frontend/bridges/wallet-canonical-formation.ts',
+      'frontend/src/lib/components/Entity/onboarding/formation-commands.ts',
+      'frontend/src/lib/components/Entity/onboarding/formation-runtime-projection.ts',
+    ],
+    tests: ['frontend/tests/react-candidate/wallet-formation.spec.ts'],
+  },
+  {
+    id: 'post-creation-profile-and-preferences',
+    pathname: '/app', search: '?setup=1', page: 'app', view: 'identity',
+    sources: [
+      'frontend/apps/wallet/src/wallet-onboarding.tsx',
+      'frontend/bridges/wallet-canonical-onboarding.ts',
+      'frontend/src/lib/components/Entity/onboarding/onboarding-setup.ts',
+      'frontend/src/lib/components/Entity/onboarding/onboarding-hub-join.ts',
+    ],
+    tests: ['frontend/tests/react-candidate/wallet-onboarding.spec.ts'],
+  },
+  {
     id: 'embedded-runtime-boot',
     pathname: '/app',
     search: '',
@@ -331,9 +424,9 @@ export const WALLET_FLOW_DEFERRALS = [
   {
     id: 'wallet-creation-and-onboarding',
     destination: 'WP9',
-    evidenceSource: 'frontend/apps/wallet/src/identity-recovery.tsx',
-    evidenceMarker: 'No wallet has been created and no secret has left this form.',
-    reason: 'Canonical identity creation and recovery-service onboarding are live; post-creation profile, jurisdiction, and hub-join remain in WP9.',
+    evidenceSource: 'frontend/bridges/wallet-canonical-onboarding.ts',
+    evidenceMarker: 'createOnboardingHubJoinCommands',
+    reason: 'React post-creation setup, Entity Formation and manual Hub Discovery are mounted. Local Hub Account opening and remote discovery reads are verified. Successful automatic hub joining, remote owner command integration and full reload parity remain open.',
   },
   {
     id: 'canonical-cutover',

@@ -5,6 +5,7 @@ import {
   type RuntimeQuerySnapshot,
 } from '../../../packages/runtime-client/src/runtime-query-observer';
 import { normalizeEntityIdForRuntimeView } from '../../../packages/runtime-client/src/runtime-view-model';
+import { requireWalletWorkspaceEntity, WalletWorkspaceSelection } from './wallet-workspace-selection';
 import {
   decodeWalletFinancialHealthProjection,
   readWalletFrameActiveEntityId,
@@ -65,7 +66,7 @@ export class WalletFinancialHealthSource {
   private historyCursors: Array<number | null> = [null];
   private historyPage = 0;
 
-  constructor(private readonly config: RuntimeAdapterStorageSnapshot) {
+  constructor(private readonly config: RuntimeAdapterStorageSnapshot, private readonly selection: WalletWorkspaceSelection) {
     this.snapshot = {
       status: 'connecting',
       message: config.mode === 'remote' ? 'Connecting to the selected Runtime…' : 'Starting the local Runtime…',
@@ -97,6 +98,7 @@ export class WalletFinancialHealthSource {
       }
       this.adapter = dependencies.adapter;
       this.releaseAdapter = dependencies.release;
+      this.selectedEntityId = this.selection.bindRuntime(this.adapter.runtimeId);
       this.installObserver(dependencies.adapter, dependencies.math);
     } catch (error: unknown) {
       if (!this.isCurrent(generation)) return;
@@ -116,6 +118,8 @@ export class WalletFinancialHealthSource {
     }
     if (normalized === this.selectedEntityId || normalized === projection.activeEntityId) return;
     this.selectedEntityId = normalized;
+    if (!this.adapter) throw new Error('WALLET_HEALTH_RUNTIME_REQUIRED');
+    this.selection.selectEntity(this.adapter.runtimeId, normalized);
     this.accountsPage = 0;
     this.resetHistory();
     void this.observer?.refresh();
@@ -159,6 +163,7 @@ export class WalletFinancialHealthSource {
   ): void {
     const client = createWalletRuntimeQueryClient(adapter);
     const observer = new RuntimeQueryObserver(async () => {
+      const entityId = this.selectedEntityId;
       const solvency = await client.readSolvencySummary();
       const height = readWalletSolvencyHeight(solvency);
       const frame = await client.readViewFrame({
@@ -166,7 +171,7 @@ export class WalletFinancialHealthSource {
         accountsLimit: 100,
         booksLimit: 1,
         accountsPage: this.accountsPage,
-        ...(this.selectedEntityId ? { entityId: this.selectedEntityId } : {}),
+        ...(entityId ? { entityId } : {}),
       });
       const activeEntityId = readWalletFrameActiveEntityId(frame);
       const activity = activeEntityId ? await client.readActivity({
@@ -176,12 +181,12 @@ export class WalletFinancialHealthSource {
         scanLimit: 250,
         beforeHeight: this.historyCursors[this.historyPage] ?? height + 1,
       }) : null;
-      return decodeWalletFinancialHealthProjection({
+      return requireWalletWorkspaceEntity(decodeWalletFinancialHealthProjection({
         frame,
         solvency,
         activity,
         historyPage: this.historyPage,
-      }, math);
+      }, math), entityId);
     }, {
       readHeight: () => adapter.currentHeight,
       subscribeHeight: (listener) => adapter.onChange(() => listener()),
@@ -195,6 +200,10 @@ export class WalletFinancialHealthSource {
   private readonly syncObserver = (): void => {
     if (!this.observer) return;
     const snapshot = observerSnapshot(this.observer.getSnapshot());
+    if (snapshot.status === 'ready') {
+      if (!this.adapter) throw new Error('WALLET_HEALTH_RUNTIME_REQUIRED');
+      this.selection.observeEntity(this.adapter.runtimeId, snapshot.projection.activeEntityId, snapshot.projection.accountsTotal > 0);
+    }
     if (snapshot.status === 'error' && this.adapter?.status === 'error') {
       this.started = false;
       this.generation += 1;

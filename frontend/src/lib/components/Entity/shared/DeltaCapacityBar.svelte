@@ -1,5 +1,6 @@
 <script lang="ts">
   import { createEventDispatcher, onDestroy } from 'svelte';
+  import { buildDeltaCapacityBarModel } from '../../../../../packages/ui/src/rcpan/delta-capacity-bar-model';
   import { settings } from '$lib/stores/settingsStore';
   import type { DeltaCapacityBarPresentation, DeltaParts, DeltaVisualScale } from './delta-types';
 
@@ -14,116 +15,7 @@
 
   const dispatch = createEventDispatcher<{ activate: void }>();
 
-  const CENTER_GAP_PX = 10;
-  const SIDES_GAP_PX = 10;
-  const MIN_VISIBLE_SIDE_PX = 0;
-  const CREDIT_GRADIENT_MAX_PX = 300;
-
-  $: outTotal = derived.outOwnCredit + derived.outCollateral + derived.outPeerCredit;
-  $: inTotal = derived.inOwnCredit + derived.inCollateral + derived.inPeerCredit;
-  $: halfMax = outTotal > inTotal ? outTotal : inTotal;
-
-  // Settings flags
-  $: creditGradient = presentation?.creditGradient ?? $settings.barCreditGradient ?? true;
-  $: animTransition = presentation?.animations?.transition ?? $settings.barAnimTransition ?? true;
-  $: animSweep = presentation?.animations?.sweep ?? $settings.barAnimSweep ?? false;
-  $: animGlow = presentation?.animations?.glow ?? $settings.barAnimGlow ?? false;
-  $: animRipple = presentation?.animations?.ripple ?? $settings.barAnimRipple ?? false;
-
-  $: transitionMs = durationMs('transition', presentation?.durationsMs?.transition, 400);
-  $: sweepMs = durationMs('sweep', presentation?.durationsMs?.sweep, 700);
-  $: glowMs = durationMs('glow', presentation?.durationsMs?.glow, 600);
-  $: rippleMs = durationMs('ripple', presentation?.durationsMs?.ripple, 800);
-  $: stripeMs = durationMs('stripe', presentation?.durationsMs?.stripe, 800);
-  $: settlingMs = durationMs('settling', presentation?.durationsMs?.settling, 1000);
-
-  $: creditColor = presentation?.colors?.credit ?? 'rgba(255, 255, 255, 0.75)';
-  $: collateralColor = presentation?.colors?.collateral ?? '#22c55e';
-  $: debtColor = presentation?.colors?.debt ?? '#ef4444';
-  $: trackColor = presentation?.colors?.track ?? 'rgba(39, 39, 42, 0.9)';
-  $: deltaColor = presentation?.colors?.delta ?? '#dc6b6b';
-  $: deltaShadow = presentation?.colors?.delta
-    ? `color-mix(in srgb, ${deltaColor} 30%, transparent)`
-    : 'rgba(220, 107, 107, 0.3)';
-  $: presentationStyle = [
-    `--bar-h:${heightPx}px`,
-    `--center-gap:${CENTER_GAP_PX}px`,
-    `--sides-gap:${SIDES_GAP_PX}px`,
-    `--bar-credit-color:${creditColor}`,
-    `--bar-collateral-color:${collateralColor}`,
-    `--bar-debt-color:${debtColor}`,
-    `--bar-track-color:${trackColor}`,
-    `--bar-delta-color:${deltaColor}`,
-    `--bar-delta-shadow:${deltaShadow}`,
-    `--bar-transition-duration:${transitionMs}ms`,
-    `--bar-sweep-duration:${sweepMs}ms`,
-    `--bar-glow-duration:${glowMs}ms`,
-    `--bar-ripple-duration:${rippleMs}ms`,
-    `--bar-stripe-duration:${stripeMs}ms`,
-    `--bar-settling-duration:${settlingMs}ms`
-  ].join(';');
-
-  $: outVisualOwnUsd = visualScale?.outOwnCreditUsd ?? 0;
-  $: outVisualCollUsd = visualScale?.outCollateralUsd ?? 0;
-  $: outVisualDebtUsd = visualScale?.outPeerCreditUsd ?? 0;
-  $: inVisualOwnUsd = visualScale?.inOwnCreditUsd ?? 0;
-  $: inVisualCollUsd = visualScale?.inCollateralUsd ?? 0;
-  $: inVisualCreditUsd = visualScale?.inPeerCreditUsd ?? 0;
-  $: hasVisualScale = visualScale !== null;
-  $: usdPerPx = $settings.accountBarUsdPerPx ?? 100;
-  $: visualUsdPerPx = usdPerPx * 2;
-  $: outOwnWidthPx = widthPxForUsd(outVisualOwnUsd, visualUsdPerPx);
-  $: outCollWidthPx = widthPxForUsd(outVisualCollUsd, visualUsdPerPx);
-  $: outDebtWidthPx = widthPxForUsd(outVisualDebtUsd, visualUsdPerPx);
-  $: inOwnWidthPx = widthPxForUsd(inVisualOwnUsd, visualUsdPerPx);
-  $: inCollWidthPx = widthPxForUsd(inVisualCollUsd, visualUsdPerPx);
-  $: inCreditWidthPx = widthPxForUsd(inVisualCreditUsd, visualUsdPerPx);
-  $: outWidthPx = widthPxForUsd(visualScale?.outCapacityUsd ?? 0, visualUsdPerPx);
-  $: inWidthPx = widthPxForUsd(visualScale?.inCapacityUsd ?? 0, visualUsdPerPx);
-  $: outCenterWidthStyle = shellWidthStyle(outWidthPx, CENTER_GAP_PX);
-  $: inCenterWidthStyle = shellWidthStyle(inWidthPx, CENTER_GAP_PX);
-  $: outSideWidthStyle = shellWidthStyle(outWidthPx, SIDES_GAP_PX);
-  $: inSideWidthStyle = shellWidthStyle(inWidthPx, SIDES_GAP_PX);
-
-  function pctOf(value: bigint, base: bigint): number {
-    return base > 0n ? Number((value * 10000n) / base) / 100 : 0;
-  }
-
-  function durationMs(name: string, value: number | undefined, defaultValue: number): number {
-    if (value === undefined) return defaultValue;
-    if (!Number.isFinite(value) || value < 0) {
-      throw new Error(`DeltaCapacityBar ${name} duration must be a finite non-negative number`);
-    }
-    return value;
-  }
-
-  function widthPxForUsd(valueUsd: number, usdPerPixel: number): number {
-    if (!Number.isFinite(valueUsd) || valueUsd <= 0 || !Number.isFinite(usdPerPixel) || usdPerPixel <= 0) return 0;
-    return Math.max(MIN_VISIBLE_SIDE_PX, Math.round((valueUsd / usdPerPixel) * 100) / 100);
-  }
-
-  function shellWidthStyle(widthPx: number, gapPx: number): string {
-    return `width:min(${widthPx}px, calc(50% - ${gapPx / 2}px));max-width:calc(50% - ${gapPx / 2}px)`;
-  }
-
-  function segmentWidthStyle(widthPx: number): string {
-    return `width:${Math.max(0, widthPx)}px`;
-  }
-
-  function creditSegStyle(widthPx: number): string {
-    const w = Math.max(0, widthPx);
-    if (creditGradient && w > CREDIT_GRADIENT_MAX_PX) {
-      return `width:${CREDIT_GRADIENT_MAX_PX}px;-webkit-mask-image:linear-gradient(to right,black 80%,transparent 100%);mask-image:linear-gradient(to right,black 80%,transparent 100%)`;
-    }
-    return `width:${w}px`;
-  }
-
-  function creditPctStyle(pct: number): string {
-    if (creditGradient && pct > 60) {
-      return `width:${pct}%;-webkit-mask-image:linear-gradient(to right,black 70%,transparent 100%);mask-image:linear-gradient(to right,black 70%,transparent 100%)`;
-    }
-    return `width:${pct}%`;
-  }
+  $: ({ outTotal, inTotal, halfMax, animTransition, animSweep, animGlow, animRipple, sweepMs, glowMs, rippleMs, presentationStyle, outVisualDebtUsd, hasVisualScale, outOwnWidthPx, outCollWidthPx, outDebtWidthPx, inOwnWidthPx, inCollWidthPx, inCreditWidthPx, outWidthPx, inWidthPx, outCenterWidthStyle, inCenterWidthStyle, outSideWidthStyle, inSideWidthStyle, pctOf, segmentWidthStyle, creditSegStyle, creditPctStyle } = buildDeltaCapacityBarModel({ derived, heightPx, visualScale, presentation, settings: $settings }));
 
   // Sweep animation: trigger on capacity change (right-to-left = inbound from hub)
   let sweepActive = false;
