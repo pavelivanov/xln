@@ -7,6 +7,7 @@ import {
   screenshotEvidence,
 } from './browser-evidence';
 import { selectWalletFixtureRuntime } from './wallet-runtime-test-helpers';
+import { expectWalletHistoryEvents } from './wallet-history-test-helpers';
 
 test('wallet portfolio renders a real committed bilateral Account', async ({ page }, testInfo) => {
   const errors = observeBrowserErrors(page);
@@ -45,8 +46,7 @@ test('wallet financial health renders committed Account and activity evidence', 
   await expect(page.getByRole('heading', { name: 'Dispute lifecycle' })).toBeVisible();
   await expect(page.getByText('1 Accounts · page 1')).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Committed history' })).toBeVisible();
-  await expect(page.getByText('Account opened')).toBeVisible();
-  await expect(page.getByText('extendCredit').first()).toBeVisible();
+  await expectWalletHistoryEvents(page, ['Account opened', 'extendCredit']);
   await expectPageContained(page);
   await screenshotEvidence(page, testInfo, 'wallet-financial-health-populated');
   expectNoBrowserErrors(errors);

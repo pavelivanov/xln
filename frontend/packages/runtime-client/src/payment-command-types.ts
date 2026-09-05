@@ -42,6 +42,8 @@ export type RuntimePaymentEntityTx =
       data: Readonly<{ receivingEntity: string; tokenId: number; amount: bigint }>;
     }>
   | Readonly<{ type: 'j_broadcast'; data: Readonly<Record<string, never>> }>
+  | Readonly<{ type: 'j_rebroadcast'; data: Readonly<{ gasBumpBps: number }> }>
+  | Readonly<{ type: 'j_clear_batch'; data: Readonly<{ reason: string }> }>
   | Readonly<{
       type: 'r2c';
       data: Readonly<{ counterpartyId: string; tokenId: number; amount: bigint }>;

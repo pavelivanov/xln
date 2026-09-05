@@ -4,6 +4,8 @@ The React frontend migration is active and may start from the current branch.
 These documents are working implementation guidance, not approval gates:
 
 - [Migration work plan](react-frontend-migration.md)
+- [Finish wallet and ops UI ports](wallet-ops-ui-ports.md)
+- [Scoped refactor status](react-frontend-refactor-status-2026-09-05.md)
 - [Technical decisions](react-frontend-migration-decisions.md)
 
 ## Goal
@@ -45,9 +47,10 @@ to finish, not a reason to block unrelated scaffolding or migration slices.
 
 | Artifact | Status | Next action |
 |---|---|---|
-| [Migration work plan](react-frontend-migration.md) | `IN PROGRESS — WP0–WP6 + WP8 COMPLETE; WP7 WORKSPACE PARTIAL; WP9 HAS 19 COMPLETE / 1 PARTIAL IMPLEMENTATION, 19 COVERED / 1 PARTIAL BROWSER ROUTE, AND 1 AUTHORIZED GAP` | Profile submission and committed observation are verified after test-driven unlock, but ops has no user-facing owner-unlock flow. Resolve the canonical custody-adapter scope before claiming profile-command parity; remaining Entity workspace commands stay behind the internal candidate route. |
+| [Migration work plan](react-frontend-migration.md) | `IN PROGRESS — FOUR APP ROOTS BUILD; WALLET/OPS UI PARTIAL; DEFAULT FRONTEND STILL SVELTE` | Finish retained UI behavior using the focused checklist; route declarations do not measure completion. |
+| [Wallet and ops UI ports](wallet-ops-ui-ports.md) | `IN PROGRESS — ACCOUNT DROPDOWN, SIX RAIL CONSUMERS AND SHARED WALLET ENTITY SELECTION; UI PARITY PARTIAL` | Latest targeted checks: 58 unit tests and 12 browser cases pass; 29 screenshots reviewed. Dropdown verifies 26 real Accounts across two pages. Last full wallet matrix, before rail/dropdown: 83 pass / 1 fail from a backend history-pagination defect; full registered 90 cases not run; latest ops checkpoint: 42/42. Next: Account/token action context and remaining forms, then onboarding/Ownership and remaining ops context/panels. |
+| [Scoped refactor status](react-frontend-refactor-status-2026-09-05.md) | `CURRENT SCOPE BASELINE — 2026-09-05` | Keep backend extensions and financial follow-ups outside the frontend refactor. |
 | [Technical decisions](react-frontend-migration-decisions.md) | `ACTIVE` | Use the recorded application, route, build, and coexistence decisions. |
-| Frontend implementation | `IN PROGRESS — 19 COMPLETE / 1 PARTIAL IMPLEMENTATION; 19 COVERED / 1 PARTIAL BROWSER ROUTE` | Continue `/embed` parity without crossing Runtime, consensus, contract, or financial authority boundaries. |
 
 WP9 parity follows application completion; WP10 cutover and WP11 production
 activation remain separately owner-authorized.

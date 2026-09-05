@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { RuntimePaymentDeliveryMode } from '../../../packages/runtime-client/src/payment-command-types';
 
-import { parseXlnInvoice } from '../../../packages/runtime-client/src/xln-invoice';
+import { initialWalletPaymentInvoice, readWalletPaymentInvoice } from './wallet-payment-draft';
 import type { WalletPaymentProjection } from './wallet-payment-model';
 import type { WalletPaymentSource, WalletPaymentSourceSnapshot } from './wallet-payment-source';
 
@@ -16,53 +16,68 @@ const deliveryModes: ReadonlyArray<Readonly<{
   { id: 'trusted', label: 'Trusted', detail: 'One fee-free gateway only' },
 ];
 
-const initialInvoice = (): string => {
-  const hash = window.location.hash.replace(/^#/, '');
-  if (!hash.toLowerCase().startsWith('pay/')) return '';
-  try {
-    return decodeURIComponent(hash.slice(4));
-  } catch {
-    return '';
-  }
-};
-
 export function WalletPaymentSend({
+  invoiceLink,
   projection,
   snapshot,
   source,
 }: Readonly<{
+  invoiceLink: string;
   projection: WalletPaymentProjection;
   snapshot: WalletPaymentSourceSnapshot;
   source: WalletPaymentSource;
 }>) {
-  const [recipient, setRecipient] = useState('');
-  const [tokenId, setTokenId] = useState(0);
-  const [amount, setAmount] = useState('');
-  const [description, setDescription] = useState('');
+  const [initial] = useState(() => initialWalletPaymentInvoice(invoiceLink, projection));
+  const [intent, setIntent] = useState(initial.intent);
+  const [recipient, setRecipient] = useState(initial.intent?.targetEntityId ?? '');
+  const [tokenId, setTokenId] = useState(initial.intent?.tokenId ?? 0);
+  const [amount, setAmount] = useState(initial.intent?.amount ?? '');
+  const [description, setDescription] = useState(initial.intent?.description ?? '');
   const [deliveryMode, setDeliveryMode] = useState<RuntimePaymentDeliveryMode>('instant');
-  const [invoice, setInvoice] = useState(initialInvoice);
+  const [invoice, setInvoice] = useState(initial.intent?.canonicalUri ?? invoiceLink);
+  const [invoiceError, setInvoiceError] = useState(initial.error);
   const [formError, setFormError] = useState('');
   const selectedRecipient = recipient || projection.recipients[0]?.entityId || '';
   const selectedTokenId = tokenId || projection.tokens[0]?.tokenId || 0;
-  const busy = snapshot.quote.status === 'loading'
+  const invoiceDirty = Boolean(invoice.trim() && invoice !== intent?.canonicalUri);
+  const busy = snapshot.status !== 'ready' || snapshot.quote.status === 'loading'
     || snapshot.command.status === 'submitting'
     || snapshot.command.status === 'pending';
 
+  // A remounted Send form has a new draft; retain command tracking in the parent,
+  // but never carry a quote across invoice, Entity, or subview changes.
+  useEffect(() => {
+    source.clearQuote();
+    return source.clearQuote;
+  }, [source]);
+
   const applyInvoice = (): void => {
+    source.clearQuote();
     try {
-      const parsed = parseXlnInvoice(invoice);
-      if (!projection.recipients.some(({ entityId }) => entityId === parsed.targetEntityId)) {
-        throw new Error('Invoice recipient is not present in this committed Runtime view.');
-      }
+      const parsed = readWalletPaymentInvoice(invoice, projection);
+      setIntent(parsed);
       setRecipient(parsed.targetEntityId);
-      if (parsed.tokenId) setTokenId(parsed.tokenId);
-      if (parsed.amount) setAmount(parsed.amount);
-      if (parsed.description) setDescription(parsed.description);
+      setTokenId(parsed.tokenId ?? 0);
+      setAmount(parsed.amount);
+      setDescription(parsed.description);
       setInvoice(parsed.canonicalUri);
+      setInvoiceError('');
       setFormError('');
     } catch (error: unknown) {
-      setFormError(error instanceof Error ? error.message : String(error));
+      setInvoiceError(error instanceof Error ? error.message : String(error));
     }
+  };
+
+  const discardInvoice = (): void => {
+    source.clearQuote();
+    setIntent(null);
+    setInvoice('');
+    setInvoiceError('');
+    setFormError('');
+    setRecipient('');
+    setTokenId(0);
+    setAmount('');
+    setDescription('');
   };
 
   const quote = async (): Promise<void> => {
@@ -82,7 +97,7 @@ export function WalletPaymentSend({
   const submit = async (): Promise<void> => {
     setFormError('');
     try {
-      await source.submitQuotedPayment(description);
+      await source.submitQuotedPayment({ targetEntityId: selectedRecipient, tokenId: selectedTokenId, amount, deliveryMode }, description);
     } catch (error: unknown) {
       setFormError(error instanceof Error ? error.message : String(error));
     }
@@ -98,21 +113,24 @@ export function WalletPaymentSend({
 
       <div className="wallet-payment-invoice-row">
         <label htmlFor="wallet-payment-invoice">Recipient or invoice</label>
-        <div>
+        <div className={invoice || intent ? 'has-invoice' : undefined}>
           <input
+            disabled={busy}
             id="wallet-payment-invoice"
-            onChange={(event) => setInvoice(event.target.value)}
+            onChange={(event) => { source.clearQuote(); setInvoice(event.target.value); }}
             placeholder="Entity ID, invoice, wallet link, or xln:// link"
             value={invoice}
           />
           <button disabled={!invoice.trim() || busy} onClick={applyInvoice} type="button">Apply invoice</button>
+          {invoice || intent ? <button disabled={busy} onClick={discardInvoice} type="button">Discard invoice</button> : null}
         </div>
+        {invoiceDirty && !invoiceError ? <p className="wallet-operation-note" role="status">Apply or discard the invoice before requesting a route.</p> : null}
       </div>
 
       <div className="wallet-payment-form-grid">
         <label>
           <span>Recipient</span>
-          <select disabled={busy} onChange={(event) => setRecipient(event.target.value)} value={selectedRecipient}>
+          <select disabled={busy || intent !== null} onChange={(event) => { source.clearQuote(); setRecipient(event.target.value); }} value={selectedRecipient}>
             {projection.recipients.map((option) => (
               <option disabled={option.blocked} key={option.entityId} value={option.entityId}>
                 {option.label}{option.blocked ? ' · dispute gate' : ''}
@@ -122,7 +140,7 @@ export function WalletPaymentSend({
         </label>
         <label>
           <span>Asset</span>
-          <select disabled={busy} onChange={(event) => setTokenId(Number(event.target.value))} value={selectedTokenId}>
+          <select disabled={busy || intent?.tokenId != null} onChange={(event) => { source.clearQuote(); setTokenId(Number(event.target.value)); }} value={selectedTokenId}>
             {projection.tokens.map((token) => (
               <option key={token.tokenId} value={token.tokenId}>{token.symbol} · {token.spendableLabel} visible</option>
             ))}
@@ -130,11 +148,11 @@ export function WalletPaymentSend({
         </label>
         <label>
           <span>Recipient amount</span>
-          <input disabled={busy} inputMode="decimal" onChange={(event) => setAmount(event.target.value)} placeholder="0.00" value={amount} />
+          <input disabled={busy || Boolean(intent?.amount)} inputMode="decimal" onChange={(event) => { source.clearQuote(); setAmount(event.target.value); }} placeholder="0.00" value={amount} />
         </label>
         <label>
           <span>Description</span>
-          <input disabled={busy} maxLength={200} onChange={(event) => setDescription(event.target.value)} placeholder="Optional, committed with the payment" value={description} />
+          <input disabled={busy || Boolean(intent?.descriptionLocked)} maxLength={200} onChange={(event) => { source.clearQuote(); setDescription(event.target.value); }} placeholder="Optional, committed with the payment" value={description} />
         </label>
       </div>
 
@@ -142,14 +160,14 @@ export function WalletPaymentSend({
         <legend>Delivery</legend>
         {deliveryModes.map((mode) => (
           <label className={deliveryMode === mode.id ? 'is-selected' : ''} key={mode.id}>
-            <input checked={deliveryMode === mode.id} name="wallet-payment-mode" onChange={() => setDeliveryMode(mode.id)} type="radio" />
+            <input checked={deliveryMode === mode.id} name="wallet-payment-mode" onChange={() => { source.clearQuote(); setDeliveryMode(mode.id); }} type="radio" />
             <strong>{mode.label}</strong><span>{mode.detail}</span>
           </label>
         ))}
       </fieldset>
 
-      {formError || snapshot.quote.status === 'error' ? (
-        <p className="wallet-payment-error" role="alert">{formError || snapshot.quote.message}</p>
+      {invoiceError || formError || snapshot.quote.status === 'error' ? (
+        <p className="wallet-payment-error" role="alert">{invoiceError || formError || snapshot.quote.message}</p>
       ) : null}
 
       {route ? (
@@ -168,10 +186,10 @@ export function WalletPaymentSend({
       ) : null}
 
       <div className="wallet-payment-actions">
-        <button disabled={busy || !selectedRecipient || !selectedTokenId || !amount.trim()} onClick={() => void quote()} type="button">
+        <button disabled={busy || invoiceDirty || Boolean(invoiceError) || !selectedRecipient || !selectedTokenId || !amount.trim()} onClick={() => void quote()} type="button">
           {snapshot.quote.status === 'loading' ? 'Finding route…' : 'Find route'}
         </button>
-        <button className="is-primary" disabled={busy || !route} onClick={() => void submit()} type="button">Submit quoted payment</button>
+        <button className="is-primary" disabled={busy || invoiceDirty || Boolean(invoiceError) || !route} onClick={() => void submit()} type="button">Submit quoted payment</button>
       </div>
     </section>
   );

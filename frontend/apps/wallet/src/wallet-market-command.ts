@@ -22,6 +22,7 @@ const paymentProjection = (projection: WalletMarketProjection): WalletPaymentPro
   recipients: projection.recipients,
   tokens: projection.tokens,
   accounts: projection.accounts,
+  batch: projection.batch,
 });
 
 const requireHubCapacity = (

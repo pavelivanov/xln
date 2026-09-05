@@ -1,4 +1,4 @@
-import { useEffect, useState, useSyncExternalStore } from 'react';
+import { lazy, Suspense, useEffect, useState, useSyncExternalStore } from 'react';
 
 import { readRuntimeAdapterStorageSnapshot } from '../../../packages/browser/src/runtime-adapter-session';
 import type {
@@ -7,8 +7,18 @@ import type {
   WalletPortfolioProjection,
 } from './wallet-portfolio-model';
 import { WalletPortfolioSource } from './wallet-portfolio-source';
+import { showsAccountDropdown } from '../../../src/lib/components/Entity/account/account-dropdown-model';
+import type { WalletWorkspaceSelection } from './wallet-workspace-selection';
+import { navigateWallet } from './wallet-navigation';
+import { openDisputedAccountNavigation, returnToAccountsWorkspace, selectAccountNavigation } from '../../../src/lib/components/Entity/account/account-workspace-navigation';
 import './styles/wallet-portfolio.css';
 import './styles/wallet-portfolio-responsive.css';
+
+const WalletFormation = lazy(async () => ({ default: (await import('./wallet-formation')).WalletFormation }));
+const WalletHubDiscovery = lazy(async () => ({ default: (await import('./wallet-hub-discovery')).WalletHubDiscovery }));
+const WalletFocusedAccount = lazy(async () => ({ default: (await import('./wallet-account-view')).WalletFocusedAccount }));
+const WalletAccountAppearance = lazy(async () => ({ default: (await import('./wallet-account-appearance')).WalletAccountAppearance }));
+const WalletAccountDropdown = lazy(async () => ({ default: (await import('./wallet-account-dropdown')).WalletAccountDropdown }));
 
 const shortEntityId = (entityId: string): string =>
   entityId.length > 18 ? `${entityId.slice(0, 10)}…${entityId.slice(-6)}` : entityId;
@@ -56,7 +66,7 @@ function PortfolioAssets({ assets }: Readonly<{ assets: readonly WalletPortfolio
   );
 }
 
-function PortfolioAccount({ account }: Readonly<{ account: WalletPortfolioAccount }>) {
+function PortfolioAccount({ account, onSelect }: Readonly<{ account: WalletPortfolioAccount; onSelect: (id: string) => void }>) {
   return (
     <article className="wallet-portfolio-account">
       <header>
@@ -78,6 +88,7 @@ function PortfolioAccount({ account }: Readonly<{ account: WalletPortfolioAccoun
           <div><dt>We granted peer</dt><dd>{position.peerCreditLimitLabel}</dd></div>
         </dl>
       ))}
+      <button className="wallet-portfolio-create" type="button" onClick={() => onSelect(account.counterpartyId)}>View Account</button>
     </article>
   );
 }
@@ -85,9 +96,11 @@ function PortfolioAccount({ account }: Readonly<{ account: WalletPortfolioAccoun
 function PortfolioAccounts({
   projection,
   selectPage,
+  onSelect,
 }: Readonly<{
   projection: WalletPortfolioProjection;
   selectPage: (page: number) => void;
+  onSelect: (id: string) => void;
 }>) {
   return (
     <section className="wallet-portfolio-section" aria-labelledby="wallet-accounts-title">
@@ -99,7 +112,7 @@ function PortfolioAccounts({
         <p className="wallet-portfolio-empty">No committed bilateral Accounts for this Entity.</p>
       ) : <div className="wallet-portfolio-account-list">
         {projection.accounts.map((account) => (
-          <PortfolioAccount account={account} key={account.counterpartyId} />
+          <PortfolioAccount account={account} key={account.counterpartyId} onSelect={onSelect} />
         ))}
       </div>}
       {projection.accountsPageCount > 1 ? (
@@ -125,10 +138,14 @@ function PortfolioContent({
   projection,
   refreshing,
   source,
+  openAccount,
+  selectAccount,
 }: Readonly<{
   projection: WalletPortfolioProjection;
   refreshing: boolean;
   source: WalletPortfolioSource;
+  openAccount: () => void;
+  selectAccount: (id: string) => void;
 }>) {
   return (
     <>
@@ -155,21 +172,68 @@ function PortfolioContent({
         </div>
         <PortfolioAssets assets={projection.assets} />
       </section>
-      <PortfolioAccounts projection={projection} selectPage={source.selectAccountsPage} />
+      {showsAccountDropdown(projection.accountsTotal) ? <Suspense fallback={<p>Loading Accounts…</p>}>
+        <WalletAccountDropdown key={`${source.getRuntimeId()}:${projection.activeEntityId}`} adapter={source.requireAdapter()} entityId={projection.activeEntityId} onSelect={selectAccount} />
+      </Suspense> : null}
+      <PortfolioAccounts projection={projection} selectPage={source.selectAccountsPage} onSelect={selectAccount} />
+      <button className="wallet-portfolio-create" type="button" onClick={openAccount}>Open Account</button>
+      <button className="wallet-portfolio-create wallet-portfolio-appearance" type="button" onClick={() => navigateWallet('/app#accounts/appearance')}>Account appearance</button>
     </>
   );
 }
 
-export function WalletPortfolio() {
+export function WalletPortfolio({ section = 'assets', workspaceSelection }: Readonly<{
+  section?: 'assets' | 'open' | 'appearance'; workspaceSelection: WalletWorkspaceSelection;
+}>) {
+  const [creatingEntity, setCreatingEntity] = useState(false);
+  const [formationNotice, setFormationNotice] = useState('');
+  const { focusedAccountId } = useSyncExternalStore(workspaceSelection.subscribe, workspaceSelection.getSnapshot, workspaceSelection.getSnapshot);
   const [source] = useState(() => new WalletPortfolioSource(
     readRuntimeAdapterStorageSnapshot({ durable: localStorage, session: sessionStorage }),
+    workspaceSelection,
   ));
   const snapshot = useSyncExternalStore(source.subscribe, source.getSnapshot, source.getSnapshot);
 
   useEffect(() => {
     void source.start();
-    return source.stop;
-  }, [source]);
+    return () => { source.stop(); workspaceSelection.closeAccount(); };
+  }, [source, workspaceSelection]);
+
+  const accountIds = snapshot.projection?.accounts.map(account => account.counterpartyId) || [];
+  const selectAccount = (id: string) => {
+    const projection = snapshot.projection;
+    if (!projection) throw new Error('WALLET_WORKSPACE_ACCOUNT_PROJECTION_REQUIRED');
+    const selected = selectAccountNavigation(accountIds, id).selectedAccountId;
+    if (selected) workspaceSelection.focusAccount(source.getRuntimeId(), projection.activeEntityId, selected);
+  };
+  const returnToWorkspace = (tab: 'open' | 'activity') => {
+    const patch = returnToAccountsWorkspace({ selectedAccountId: focusedAccountId }, accountIds, tab);
+    workspaceSelection.closeAccount();
+    navigateWallet(`/app#accounts/${patch.accountWorkspaceTab}`);
+  };
+  if (section === 'appearance') return <Suspense fallback={<p>Loading Account appearance…</p>}>
+    <WalletAccountAppearance onBack={() => navigateWallet('/app?portfolio=1')} />
+  </Suspense>;
+  if (focusedAccountId && snapshot.projection) return <Suspense fallback={<p>Loading Account…</p>}>
+    <WalletFocusedAccount key={`${source.getRuntimeId()}:${snapshot.projection.activeEntityId}:${focusedAccountId}`}
+      adapter={source.requireAdapter()} entityId={snapshot.projection.activeEntityId} counterpartyId={focusedAccountId}
+      onBack={() => returnToWorkspace('activity')} onWorkspace={() => returnToWorkspace('open')} />
+  </Suspense>;
+
+  if (creatingEntity && snapshot.projection) return <Suspense fallback={<p>Loading Entity formation…</p>}>
+    <WalletFormation runtimeId={source.getRuntimeId()} onBack={() => setCreatingEntity(false)} onCreated={result => {
+      setFormationNotice(result.message); setCreatingEntity(false); void source.refresh();
+    }} />
+  </Suspense>;
+
+  if (section === 'open' && snapshot.projection) return <Suspense fallback={<p>Loading counterparties…</p>}>
+    <WalletHubDiscovery key={`${source.getRuntimeId()}:${snapshot.projection.activeEntityId}`} adapter={source.requireAdapter()} entityId={snapshot.projection.activeEntityId}
+      onOpenDisputed={id => {
+        const selected = openDisputedAccountNavigation(id).selectedAccountId;
+        if (selected) selectAccount(selected);
+      }}
+      onBack={() => { navigateWallet('/app?portfolio=1'); void source.refresh(); }} />
+  </Suspense>;
 
   return (
     <section className="wallet-portfolio" aria-labelledby="wallet-portfolio-title">
@@ -178,11 +242,15 @@ export function WalletPortfolio() {
         <h1 id="wallet-portfolio-title">Assets &amp; accounts</h1>
         <p>Committed balances from the selected Runtime. No optimistic or sample values.</p>
       </header>
+      {snapshot.projection ? <button className="wallet-portfolio-create" type="button" onClick={() => { setFormationNotice(''); setCreatingEntity(true); }}>Create Entity</button> : null}
+      {formationNotice ? <p className="wallet-portfolio-formation-notice" role="status">{formationNotice}</p> : null}
       {snapshot.projection ? (
         <PortfolioContent
           projection={snapshot.projection}
           refreshing={snapshot.status === 'loading'}
           source={source}
+          openAccount={() => navigateWallet('/app#accounts/open')}
+          selectAccount={selectAccount}
         />
       ) : (
         <PortfolioUnavailable
@@ -193,7 +261,7 @@ export function WalletPortfolio() {
         />
       )}
       <p className="wallet-portfolio-boundary">
-        Credit and capacity values use the canonical bilateral deriveDelta perspective. This read-only slice sends no Runtime inputs.
+        Credit and capacity values reflect the selected Entity’s side of each Account.
       </p>
     </section>
   );

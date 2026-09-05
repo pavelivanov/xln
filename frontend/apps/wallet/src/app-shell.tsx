@@ -3,18 +3,22 @@ import { lazy, Suspense, useEffect, useState, useSyncExternalStore, type MouseEv
 import { readRuntimeAdapterStorageSnapshot } from '../../../packages/browser/src/runtime-adapter-session';
 import type { WalletAuthScheme } from '../../../packages/browser/src/wallet-runtime-preferences';
 import {
-  resolveWalletAppView,
   resolveWalletRuntimeSummary,
   WALLET_APP_LINKS,
   type WalletRuntimeSummary,
 } from './app-shell-model';
 import { IdentityOnboarding } from './identity-onboarding';
+import { WalletExistingSetupGate } from './wallet-onboarding';
 import { WalletDiagnostics } from './wallet-diagnostics';
 import { WalletFinancialHealth } from './wallet-financial-health';
 import { WalletMarkets } from './wallet-markets';
 import { WalletPayments } from './wallet-payments';
 import { WalletPortfolio } from './wallet-portfolio';
+import { WalletWorkspaceSelection } from './wallet-workspace-selection';
+import { WalletAccountRail } from './wallet-account-rail';
 import { WalletSettings } from './wallet-settings';
+import { navigateWallet, useWalletRoute } from './wallet-navigation';
+import { walletPaymentTabHref } from './wallet-navigation-model';
 import { readWalletPreferences } from './wallet-settings-model';
 import {
   getWalletEmbeddedRuntimeSnapshot,
@@ -111,13 +115,15 @@ function WalletRuntimeBoundary({ runtime }: Readonly<{ runtime: WalletRuntimeSum
 }
 
 export function WalletAppShell() {
+  const [workspaceSelection] = useState(() => new WalletWorkspaceSelection());
   const [, setEnvironmentRevision] = useState(0);
   const embedded = useSyncExternalStore(
     subscribeWalletEmbeddedRuntime,
     getWalletEmbeddedRuntimeSnapshot,
     getWalletEmbeddedRuntimeSnapshot,
   );
-  const [view, setView] = useState(() => resolveWalletAppView(window.location.search, window.location.hash));
+  const route = useWalletRoute();
+  const view = route.view;
   const [authScheme, setAuthScheme] = useState<WalletAuthScheme>(() => (
     readWalletPreferences(localStorage).authScheme
   ));
@@ -137,18 +143,10 @@ export function WalletAppShell() {
     };
   }, [view]);
 
-  useEffect(() => {
-    const syncView = () => setView(resolveWalletAppView(window.location.search, window.location.hash));
-    window.addEventListener('popstate', syncView);
-    return () => window.removeEventListener('popstate', syncView);
-  }, []);
-
   const navigate: WalletNavigate = (event, href) => {
     if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
     event.preventDefault();
-    window.history.pushState(window.history.state, '', href);
-    setView(resolveWalletAppView(window.location.search, window.location.hash));
-    window.scrollTo({ top: 0, behavior: 'auto' });
+    navigateWallet(href);
   };
 
   return (
@@ -184,17 +182,18 @@ export function WalletAppShell() {
           {runtime.state === 'local-standby' || runtime.state === 'local-error' ? (
             <WalletRuntimeBoundary runtime={runtime} />
           ) : (
-            <>
-              {view === 'identity' ? <IdentityOnboarding runtimeState={runtime.state} /> : null}
-              {view === 'portfolio' ? <WalletPortfolio /> : null}
-              {view === 'health' ? <WalletFinancialHealth /> : null}
-              {view === 'payments' ? <WalletPayments /> : null}
-              {view === 'markets' ? <WalletMarkets /> : null}
-              {view === 'settings' ? <WalletSettings onAuthSchemeChange={setAuthScheme} runtimeState={runtime.state} /> : null}
+            <WalletExistingSetupGate runtimeId={view === 'identity' || view === 'scenario-preview' ? '' : embedded.runtimeId} runtimeState={runtime.state}>
+              <WalletAccountRail route={route} selection={workspaceSelection} />
+              {view === 'identity' ? <IdentityOnboarding runtimeId={embedded.runtimeId} runtimeState={runtime.state} /> : null}
+              {route.view === 'portfolio' ? <WalletPortfolio section={route.section} workspaceSelection={workspaceSelection} /> : null}
+              {view === 'health' ? <WalletFinancialHealth workspaceSelection={workspaceSelection} /> : null}
+              {route.view === 'payments' ? <WalletPayments workspaceSelection={workspaceSelection} tab={route.tab} invoice={route.invoice} onTabChange={(tab) => navigateWallet(walletPaymentTabHref(tab))} /> : null}
+              {route.view === 'markets' ? <WalletMarkets workspaceSelection={workspaceSelection} tab={route.tab} onTabChange={(tab) => navigateWallet(`/app#accounts/${tab === 'market' ? 'swap' : 'activity'}`)} /> : null}
+              {route.view === 'settings' ? <WalletSettings section={route.section} onAuthSchemeChange={setAuthScheme} runtimeState={runtime.state} /> : null}
               {view === 'diagnostics' ? <WalletDiagnostics runtime={runtime} /> : null}
               {view === 'scenario-preview' ? <Suspense fallback={<p>Loading scenario preview…</p>}><WalletScenarioPreview /></Suspense> : null}
               {view === 'overview' ? <WalletOverview navigate={navigate} runtime={runtime} /> : null}
-            </>
+            </WalletExistingSetupGate>
           )}
         </div>
       </div>

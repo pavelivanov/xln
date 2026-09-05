@@ -1,5 +1,6 @@
 import type { RuntimeAdapterStorageSnapshot } from '../../../packages/browser/src/runtime-adapter-session';
 import type { WalletEmbeddedRuntimeSessionSnapshot } from '../../../packages/browser/src/wallet-embedded-runtime-session';
+import { resolveWalletAppRoute } from './wallet-navigation-model';
 
 export const WALLET_APP_LINKS = [
   { href: '/app', label: 'Overview', view: 'overview' },
@@ -17,17 +18,8 @@ export const WALLET_APP_LINKS = [
 
 export type WalletAppView = 'overview' | 'portfolio' | 'health' | 'payments' | 'markets' | 'identity' | 'settings' | 'diagnostics' | 'scenario-preview';
 
-export const resolveWalletAppView = (search: string, hash = ''): WalletAppView => {
-  const params = new URLSearchParams(search);
-  if (params.get('locktest') === '1' && params.get('scenarioPreview') === '1') return 'scenario-preview';
-  if (params.get('setup') === '1' || params.has('demo')) return 'identity';
-  if (params.get('portfolio') === '1') return 'portfolio';
-  if (params.get('health') === '1') return 'health';
-  if (params.get('payments') === '1' || hash.toLowerCase().startsWith('#pay/')) return 'payments';
-  if (params.get('markets') === '1') return 'markets';
-  if (params.get('settings') === '1') return 'settings';
-  return params.get('diagnostics') === '1' ? 'diagnostics' : 'overview';
-};
+export const resolveWalletAppView = (search: string, hash = ''): WalletAppView =>
+  resolveWalletAppRoute(search, hash).view;
 
 export type WalletRuntimeSummary = Readonly<{
   modeLabel: 'Local Runtime starting' | 'Local Runtime' | 'Local Runtime standby' | 'Local Runtime error' | 'Remote Runtime';

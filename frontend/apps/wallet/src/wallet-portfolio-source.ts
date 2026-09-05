@@ -5,6 +5,7 @@ import {
   type RuntimeQuerySnapshot,
 } from '../../../packages/runtime-client/src/runtime-query-observer';
 import { normalizeEntityIdForRuntimeView } from '../../../packages/runtime-client/src/runtime-view-model';
+import { requireWalletWorkspaceEntity, WalletWorkspaceSelection } from './wallet-workspace-selection';
 import {
   decodeWalletPortfolioProjection,
   type WalletPortfolioMath,
@@ -66,7 +67,7 @@ export class WalletPortfolioSource {
   private selectedEntityId = '';
   private accountsPage = 0;
 
-  constructor(private readonly config: RuntimeAdapterStorageSnapshot) {
+  constructor(private readonly config: RuntimeAdapterStorageSnapshot, private readonly selection: WalletWorkspaceSelection) {
     this.snapshot = {
       status: 'connecting',
       message: config.mode === 'remote' ? 'Connecting to the selected Runtime…' : 'Starting the local Runtime…',
@@ -75,6 +76,13 @@ export class WalletPortfolioSource {
   }
 
   readonly getSnapshot = (): WalletPortfolioSourceSnapshot => this.snapshot;
+
+  readonly getRuntimeId = (): string => this.adapter?.runtimeId ?? '';
+
+  readonly requireAdapter = (): RuntimeAdapter => {
+    if (!this.adapter) throw new Error('WALLET_PORTFOLIO_RUNTIME_REQUIRED');
+    return this.adapter;
+  };
 
   readonly subscribe = (listener: () => void): (() => void) => {
     this.listeners.add(listener);
@@ -98,6 +106,7 @@ export class WalletPortfolioSource {
       }
       this.adapter = dependencies.adapter;
       this.releaseAdapter = dependencies.release;
+      this.selectedEntityId = this.selection.bindRuntime(this.adapter.runtimeId);
       this.installObserver(this.adapter, dependencies.math);
     } catch (error: unknown) {
       if (!this.isCurrent(generation)) return;
@@ -117,6 +126,7 @@ export class WalletPortfolioSource {
     }
     if (normalized === this.selectedEntityId || normalized === projection.activeEntityId) return;
     this.selectedEntityId = normalized;
+    this.selection.selectEntity(this.requireAdapter().runtimeId, normalized);
     this.accountsPage = 0;
     void this.observer?.refresh();
   };
@@ -150,12 +160,13 @@ export class WalletPortfolioSource {
   private installObserver(adapter: RuntimeAdapter, math: WalletPortfolioMath): void {
     const client = createWalletRuntimeQueryClient(adapter);
     const observer = new RuntimeQueryObserver(
-      async () => decodeWalletPortfolioProjection(await client.readViewFrame({
-        accountsLimit: 25,
-        booksLimit: 1,
-        accountsPage: this.accountsPage,
-        ...(this.selectedEntityId ? { entityId: this.selectedEntityId } : {}),
-      }), math),
+      async () => {
+        const entityId = this.selectedEntityId;
+        return requireWalletWorkspaceEntity(decodeWalletPortfolioProjection(await client.readViewFrame({
+          accountsLimit: 25, booksLimit: 1, accountsPage: this.accountsPage,
+          ...(entityId ? { entityId } : {}),
+        }), math), entityId);
+      },
       {
         readHeight: () => adapter.currentHeight,
         subscribeHeight: (listener) => adapter.onChange(() => listener()),
@@ -170,6 +181,9 @@ export class WalletPortfolioSource {
   private readonly syncObserver = (): void => {
     if (!this.observer) return;
     const snapshot = observerSnapshot(this.observer.getSnapshot());
+    if (snapshot.status === 'ready') {
+      this.selection.observeEntity(this.requireAdapter().runtimeId, snapshot.projection.activeEntityId, snapshot.projection.accountsTotal > 0);
+    }
     if (snapshot.status === 'error' && this.adapter?.status === 'error') {
       this.started = false;
       this.generation += 1;

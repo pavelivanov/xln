@@ -10,8 +10,18 @@ export const CANDIDATE_BROWSER_TEST_FILES = {
     'tests/react-candidate/wallet.spec.ts',
     'tests/react-candidate/wallet-financial.spec.ts',
     'tests/react-candidate/wallet-transactions.spec.ts',
+    'tests/react-candidate/wallet-navigation.spec.ts',
+    'tests/react-candidate/wallet-settlement.spec.ts',
+    'tests/react-candidate/wallet-onboarding.spec.ts',
+    'tests/react-candidate/wallet-formation.spec.ts',
+    'tests/react-candidate/wallet-hub-discovery.spec.ts',
+    'tests/react-candidate/wallet-account-open.spec.ts',
+    'tests/react-candidate/wallet-account-view.spec.ts',
+    'tests/react-candidate/wallet-account-appearance.spec.ts',
+    'tests/react-candidate/wallet-account-rail.spec.ts',
+    'tests/react-candidate/wallet-account-dropdown.spec.ts',
   ],
-  ops: ['tests/react-candidate/ops.spec.ts'],
+  ops: ['tests/react-candidate/ops.spec.ts', 'tests/react-candidate/ops-workspace-panels.spec.ts'],
 } as const satisfies Readonly<Record<SurfaceId, readonly string[]>>;
 
 export const CANDIDATE_BROWSER_READY_PATHS = {

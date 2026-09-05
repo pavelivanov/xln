@@ -8,6 +8,7 @@
 -->
 <script lang="ts">
   import { tick } from 'svelte';
+  import { parseEntityInput as parseSharedEntityInput } from './entity-input-model';
   import { createEventDispatcher } from 'svelte';
   import type { Profile as GossipProfile } from '@xln/core/api/public/runtime-module';
   import { xlnFunctions } from '../../stores/xlnStore';
@@ -45,10 +46,6 @@
     return `${base}-option-${normalized}`;
   }
 
-  function getGossipProfiles(): GossipProfile[] {
-    return activeProfiles;
-  }
-
   function getKnownEntityName(id: string): string {
     const norm = normalizeEntityId(id);
     if (!norm) return '';
@@ -57,116 +54,8 @@
     return profile.name.trim();
   }
 
-  function lookupEntityFromGossip(query: string): string | null {
-    const profiles = getGossipProfiles();
-    const queryLower = query.toLowerCase();
-
-    // Search by short ID (first 4 hex chars)
-    for (const profile of profiles) {
-      const entityId = profile.entityId;
-      if (!entityId) continue;
-      const shortId = entityId.slice(2, 6).toLowerCase(); // First 4 hex chars
-      if (shortId === queryLower) return entityId;
-    }
-
-    // Search by name
-    for (const profile of profiles) {
-      const name = profile.name?.toLowerCase();
-      if (name === queryLower) return profile.entityId;
-    }
-
-    return null;
-  }
-
-  // Universal entity ID parser (simplified version)
-  function parseEntityInput(input: string): { entityId: string; shortId: string; resolved: boolean } {
-    const trimmed = input.trim();
-    if (!trimmed) return { entityId: '', shortId: '', resolved: false };
-
-    const invoiceMatch = trimmed.match(/^(0x[0-9a-fA-F]{64})\?.+$/);
-    if (invoiceMatch?.[1]) {
-      const entityId = invoiceMatch[1].toLowerCase();
-      return {
-        entityId,
-        shortId: getShortIdFromHex(entityId),
-        resolved: true,
-      };
-    }
-
-    // Full 32-byte hex
-    if (/^0x[0-9a-fA-F]{64}$/.test(trimmed)) {
-      return {
-        entityId: trimmed.toLowerCase(),
-        shortId: getShortIdFromHex(trimmed),
-        resolved: true
-      };
-    }
-
-    if (strictValueInput) {
-      return { entityId: trimmed, shortId: '', resolved: false };
-    }
-
-    // Short hex (4 chars) with optional #
-    const shortMatch = trimmed.match(/^#?([0-9a-fA-F]{4})$/i);
-    if (shortMatch) {
-      const short = shortMatch[1]!.toLowerCase();
-      const found = lookupEntityFromGossip(short);
-      if (found) {
-        return { entityId: found, shortId: short.toUpperCase(), resolved: true };
-      }
-      // Also check entities list
-      const match = entities.find(id => id.slice(2, 6).toLowerCase() === short);
-      if (match) {
-        return { entityId: match, shortId: short.toUpperCase(), resolved: true };
-      }
-      return { entityId: '', shortId: short.toUpperCase(), resolved: false };
-    }
-
-    // Numbered entity: #5 or just 5
-    const numMatch = trimmed.match(/^#?(\d+)$/);
-    if (numMatch) {
-      const num = BigInt(numMatch[1]!);
-      const THRESHOLD = BigInt(256 ** 6);
-      if (num >= 0n && num < THRESHOLD) {
-        const entityId = '0x' + num.toString(16).padStart(64, '0');
-        return { entityId, shortId: num.toString(), resolved: true };
-      }
-    }
-
-    // Named entity: @alice or alice
-    const nameMatch = trimmed.match(/^@?([a-zA-Z][a-zA-Z0-9_.-]*)$/);
-    if (nameMatch) {
-      const name = nameMatch[1]!.toLowerCase();
-      const found = lookupEntityFromGossip(name);
-      if (found) {
-        return { entityId: found, shortId: name, resolved: true };
-      }
-      return { entityId: '', shortId: name, resolved: false };
-    }
-
-    // Partial hex (less than 64 chars)
-    if (/^0x[0-9a-fA-F]+$/.test(trimmed) && trimmed.length >= 6) {
-      return {
-        entityId: trimmed.toLowerCase(),
-        shortId: trimmed.slice(2, 6).toUpperCase(),
-        resolved: false
-      };
-    }
-
-    return { entityId: trimmed, shortId: '', resolved: false };
-  }
-
-  function getShortIdFromHex(hex: string): string {
-    const clean = hex.replace('0x', '').toLowerCase();
-    // Check if numbered entity
-    try {
-      const value = BigInt('0x' + clean);
-      const THRESHOLD = BigInt(256 ** 6);
-      if (value >= 0n && value < THRESHOLD) {
-        return value.toString();
-      }
-    } catch { /* ignore */ }
-    return clean.slice(0, 4).toUpperCase();
+  function parseEntityInput(input: string) {
+    return parseSharedEntityInput(input, { entities, profiles: activeProfiles, strictValueInput });
   }
 
   function getCompactEntityId(id: string): string {

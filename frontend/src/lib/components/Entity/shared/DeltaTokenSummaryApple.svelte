@@ -1,5 +1,7 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
+  import { buildDeltaAppleModel } from '../../../../../packages/ui/src/rcpan/delta-apple-model';
+  import { iconForSymbol } from '../../../../../packages/ui/src/rcpan/delta-token-format';
   import { settings } from '$lib/stores/settingsStore';
   import type { DeltaParts } from './delta-types';
 
@@ -19,41 +21,10 @@
   let open = expanded;
   $: open = expanded;
 
-  function iconForSymbol(rawSymbol: string): { text: string; cls: string } {
-    const s = String(rawSymbol || '').toUpperCase();
-    if (s === 'USDC') return { text: '$', cls: 'usdc' };
-    if (s === 'USDT') return { text: '$', cls: 'usdt' };
-    if (s === 'WETH' || s === 'ETH') return { text: 'E', cls: 'weth' };
-    return { text: s.slice(0, 1) || 'T', cls: 'other' };
-  }
   $: icon = iconForSymbol(symbol);
 
-  const num = (b: bigint | undefined): number => (b == null ? 0 : Number(b));
-  function fmt(b: bigint | undefined): string {
-    const v = num(b) / 10 ** decimals;
-    if (v === 0) return '0';
-    if (v >= 1000) return v.toLocaleString('en-US', { maximumFractionDigits: 0 });
-    if (v >= 1) return v.toLocaleString('en-US', { maximumFractionDigits: 2 });
-    return v.toLocaleString('en-US', { maximumFractionDigits: 4 });
-  }
-
-  $: outCap = num(derived.outCapacity);
-  $: inCap = num(derived.inCapacity);
-  $: total = outCap + inCap;
-  $: empty = total <= 0;
-  $: pct = (x: number): number => (total > 0 ? Math.max(0, Math.min(100, (x / total) * 100)) : 0);
-  $: markerPct = total > 0 ? pct(outCap) : 50;
-  $: collStartPct = pct(outCap - num(derived.outCollateral));
-  $: collEndPct = pct(outCap + num(derived.inCollateral));
-  $: collWidthPct = Math.max(0, collEndPct - collStartPct);
-  $: pipsFilled = empty ? 0 : Math.max(1, Math.min(8, Math.round((markerPct / 100) * 8)));
-  $: outPct = markerPct;
-  $: inPct = Math.max(0, 100 - markerPct);
+  $: ({ empty, markerPct, collStartPct, collWidthPct, pipsFilled, outPct, inPct, sendCredit, recvCredit, collateralTotal, fmt } = buildDeltaAppleModel(derived, decimals));
   $: barStyle = $settings.accountBarStyle ?? 'hairline';
-
-  $: sendCredit = (derived.outOwnCredit ?? 0n) + (derived.outPeerCredit ?? 0n);
-  $: recvCredit = (derived.inOwnCredit ?? 0n) + (derived.inPeerCredit ?? 0n);
-  $: collateralTotal = (derived.outCollateral ?? 0n) + (derived.inCollateral ?? 0n);
 
   function toggle(): void {
     open = !open;

@@ -4,17 +4,21 @@ import { readRuntimeAdapterStorageSnapshot } from '../../../packages/browser/src
 import { WalletMarketActivityView } from './wallet-market-activity-view';
 import { WalletMarketPane } from './wallet-market-pane';
 import { WalletMarketSource } from './wallet-market-source';
+import type { WalletMarketTab } from './wallet-navigation-model';
+import type { WalletWorkspaceSelection } from './wallet-workspace-selection';
 import './styles/wallet-markets.css';
 import './styles/wallet-markets-responsive.css';
 
-type MarketTab = 'market' | 'activity';
-
-export function WalletMarkets() {
+export function WalletMarkets({ tab, onTabChange, workspaceSelection }: Readonly<{
+  workspaceSelection: WalletWorkspaceSelection;
+  tab: WalletMarketTab;
+  onTabChange: (tab: WalletMarketTab) => void;
+}>) {
   const [source] = useState(() => new WalletMarketSource(
     readRuntimeAdapterStorageSnapshot({ durable: localStorage, session: sessionStorage }),
+    workspaceSelection,
   ));
   const snapshot = useSyncExternalStore(source.subscribe, source.getSnapshot, source.getSnapshot);
-  const [tab, setTab] = useState<MarketTab>('market');
   const [retryError, setRetryError] = useState('');
 
   useEffect(() => {
@@ -66,8 +70,8 @@ export function WalletMarkets() {
           ) : null}
 
           <nav className="wallet-market-tabs" aria-label="Market tools">
-            <button aria-current={tab === 'market' ? 'page' : undefined} className={tab === 'market' ? 'is-current' : ''} onClick={() => setTab('market')} type="button">Market</button>
-            <button aria-current={tab === 'activity' ? 'page' : undefined} className={tab === 'activity' ? 'is-current' : ''} onClick={() => setTab('activity')} type="button">Activity</button>
+            <button aria-current={tab === 'market' ? 'page' : undefined} className={tab === 'market' ? 'is-current' : ''} onClick={() => onTabChange('market')} type="button">Market</button>
+            <button aria-current={tab === 'activity' ? 'page' : undefined} className={tab === 'activity' ? 'is-current' : ''} onClick={() => onTabChange('activity')} type="button">Activity</button>
           </nav>
           {tab === 'market' ? <WalletMarketPane projection={projection} snapshot={snapshot} source={source} /> : null}
           {tab === 'activity' ? <WalletMarketActivityView projection={projection} source={source} /> : null}

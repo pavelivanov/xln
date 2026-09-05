@@ -1,16 +1,9 @@
 <script lang="ts">
+  import { stripTrailingSymbol } from '../../../../../packages/ui/src/rcpan/delta-token-format';
   import type { AccountTokenDetailRow } from './account-token-details';
 
   export let detail: AccountTokenDetailRow;
   export let formatTokenAmount: ((tokenId: number, value: bigint) => string) | null = null;
-
-  function stripTrailingSymbol(rawAmount: string, rawSymbol: string): string {
-    const amount = String(rawAmount || '').replace(/\s+/g, ' ').trim();
-    const symbol = String(rawSymbol || '').trim();
-    if (!amount || !symbol) return amount;
-    const escaped = symbol.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    return amount.replace(new RegExp(`\\s+${escaped}\\s*$`, 'i'), '').trim();
-  }
 
   function formatTokenNumberOnly(value: bigint): string {
     const raw = formatTokenAmount ? formatTokenAmount(detail.tokenId, value) : value.toString();

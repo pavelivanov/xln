@@ -1,0 +1,284 @@
+
+  .wallet-delta-classic {
+    display: block;
+    width: 100%;
+    padding: 0;
+    border: 0;
+    position: relative;
+    appearance: none;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    text-align: initial;
+  }
+
+  .wallet-delta-classic.interactive {
+    cursor: pointer;
+  }
+
+  .wallet-delta-classic.interactive:focus-visible {
+    outline: 2px solid rgba(251, 191, 36, 0.78);
+    outline-offset: 4px;
+    border-radius: 6px;
+  }
+
+  .wallet-delta-classic .track {
+    display: block;
+    width: 100%;
+    height: var(--bar-h);
+    border-radius: 999px;
+    background: var(--bar-track-color);
+    box-shadow: inset 0 0 0 0.5px rgba(82, 82, 91, 0.35);
+  }
+
+  .wallet-delta-classic .axis,
+  .wallet-delta-classic .mid {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: var(--center-gap);
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    z-index: 4;
+  }
+
+  .wallet-delta-classic .axis {
+    left: 50%;
+    transform: translateX(-50%);
+  }
+
+  .wallet-delta-classic .bar {
+    width: 100%;
+    height: var(--bar-h);
+    display: flex;
+    align-items: center;
+    position: relative;
+  }
+
+  .wallet-delta-classic .bar.empty {
+    border-radius: 999px;
+    background: var(--bar-track-color);
+    box-shadow: inset 0 0 0 0.5px rgba(82, 82, 91, 0.35);
+    opacity: 0.45;
+  }
+
+  .wallet-delta-classic .bar.one-sided {
+    border-radius: 999px;
+    overflow: hidden;
+    background: var(--bar-track-color);
+    box-shadow: inset 0 0 0 0.5px rgba(82, 82, 91, 0.35);
+    display: flex;
+    align-items: stretch;
+  }
+
+  .wallet-delta-classic .bar.split-center {
+    justify-content: center;
+  }
+
+  .wallet-delta-classic .shell {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    min-width: 0;
+    border-radius: 999px;
+    overflow: hidden;
+    display: flex;
+    align-items: stretch;
+    background: transparent;
+    box-shadow: none;
+    z-index: 2;
+  }
+
+  /* Smooth width transition when enabled */
+  .wallet-delta-classic.anim-transition .shell,
+  .wallet-delta-classic.anim-transition .seg,
+  .wallet-delta-classic.anim-transition .half {
+    transition: width var(--bar-transition-duration) ease-out;
+  }
+
+  .wallet-delta-classic.visual-center .shell.out.center-shell {
+    right: calc(50% + var(--center-gap) / 2);
+    justify-content: flex-end;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .wallet-delta-classic.visual-center .shell.in.center-shell {
+    left: calc(50% + var(--center-gap) / 2);
+    justify-content: flex-start;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .wallet-delta-classic.visual-sides .shell.out.side-shell {
+    left: 0;
+    justify-content: flex-start;
+  }
+
+  .wallet-delta-classic.visual-sides .shell.in.side-shell {
+    right: 0;
+    justify-content: flex-end;
+  }
+
+  .wallet-delta-classic .half {
+    display: flex;
+    align-items: stretch;
+    height: 100%;
+    overflow: hidden;
+    min-width: 0;
+    flex: 1 1 auto;
+    background: transparent;
+    box-shadow: none;
+    border-radius: 999px;
+  }
+
+  .wallet-delta-classic .half.out {
+    justify-content: flex-end;
+  }
+
+  .wallet-delta-classic .half.in {
+    justify-content: flex-start;
+  }
+
+  .wallet-delta-classic .mid {
+    flex: 0 0 auto;
+  }
+
+  .wallet-delta-classic .mid.one-sided-sep {
+    width: 12px;
+    background: transparent;
+    transform: translateX(-6px);
+  }
+
+  /* Delta boundary — subtle cut mark */
+  .wallet-delta-classic .delta-cut {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 1.5px;
+    height: calc(var(--bar-h) + 6px);
+    background: var(--bar-delta-color);
+    border-radius: 0;
+    box-shadow: 0 0 3px var(--bar-delta-shadow);
+    z-index: 5;
+    pointer-events: none;
+  }
+
+  .wallet-delta-classic .seg {
+    min-width: 1px;
+    height: 100%;
+    opacity: 0.92;
+  }
+
+  /* credit = bright white — peer credit promise */
+  .wallet-delta-classic .seg.credit {
+    background: var(--bar-credit-color);
+  }
+
+  /* coll = electric green — hard collateral */
+  .wallet-delta-classic .seg.coll {
+    background: var(--bar-collateral-color);
+  }
+
+  /* debt = hot red — uncollateralized exposure */
+  .wallet-delta-classic .seg.debt {
+    background: var(--bar-debt-color);
+  }
+
+  .wallet-delta-classic .seg.debt.striped {
+    background: repeating-linear-gradient(
+      -45deg,
+      #f43f5e 0px,
+      #f43f5e 3px,
+      #fbbf24 3px,
+      #fbbf24 6px
+    );
+    background-size: 8px 8px;
+    animation: stripe-scroll var(--bar-stripe-duration) linear infinite;
+  }
+
+  .wallet-delta-classic .seg.debt.settling {
+    background: linear-gradient(180deg, #fbbf24, #f59e0b);
+    animation: settling-pulse var(--bar-settling-duration) ease-in-out infinite;
+  }
+
+  /* ── Glow animation ── */
+  .wallet-delta-classic.anim-glow .shell,
+  .wallet-delta-classic.anim-glow .bar:not(.empty) {
+    animation: bar-glow var(--bar-glow-duration) ease-out;
+  }
+
+  @keyframes bar-glow {
+    0% { filter: brightness(1.8) drop-shadow(0 0 8px rgba(34, 197, 94, 0.5)); }
+    100% { filter: brightness(1) drop-shadow(0 0 0 transparent); }
+  }
+
+  /* ── Sweep animation (right-to-left = inbound from hub to user) ── */
+  .wallet-delta-classic .sweep-line {
+    position: absolute;
+    top: -1px;
+    bottom: -1px;
+    width: 30px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.6), rgba(251, 191, 36, 0.3), transparent);
+    z-index: 10;
+    animation: sweep-rtl var(--bar-sweep-duration) ease-out forwards;
+    pointer-events: none;
+  }
+
+  @keyframes sweep-rtl {
+    0% { right: -30px; opacity: 1; }
+    100% { right: 100%; opacity: 0; }
+  }
+
+  /* ── Ripple animation (expanding ring from center) ── */
+  .wallet-delta-classic .ripple-ring {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    border: 2px solid rgba(251, 191, 36, 0.6);
+    transform: translate(-50%, -50%);
+    z-index: 10;
+    animation: ripple-expand var(--bar-ripple-duration) ease-out forwards;
+    pointer-events: none;
+  }
+
+  @keyframes ripple-expand {
+    0% { width: 10px; height: 10px; opacity: 1; border-width: 2px; }
+    100% { width: 200px; height: 40px; opacity: 0; border-width: 1px; }
+  }
+
+  @keyframes stripe-scroll {
+    0% { background-position: 0 0; }
+    100% { background-position: 8px 8px; }
+  }
+
+  @keyframes settling-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.55; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .wallet-delta-classic.anim-transition .shell,
+    .wallet-delta-classic.anim-transition .seg,
+    .wallet-delta-classic.anim-transition .half {
+      transition: none;
+    }
+
+    .wallet-delta-classic.anim-glow .shell,
+    .wallet-delta-classic.anim-glow .bar:not(.empty),
+    .wallet-delta-classic .seg.debt.striped,
+    .wallet-delta-classic .seg.debt.settling {
+      animation: none;
+    }
+
+    .wallet-delta-classic .sweep-line,
+    .wallet-delta-classic .ripple-ring {
+      display: none;
+    }
+  }

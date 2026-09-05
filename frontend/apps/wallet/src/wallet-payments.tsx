@@ -5,10 +5,10 @@ import { WalletPaymentOperations } from './wallet-payment-operations';
 import { WalletPaymentReceive } from './wallet-payment-receive';
 import { WalletPaymentSend } from './wallet-payment-send';
 import { WalletPaymentSource } from './wallet-payment-source';
+import type { WalletPaymentTab } from './wallet-navigation-model';
+import type { WalletWorkspaceSelection } from './wallet-workspace-selection';
 import './styles/wallet-payments.css';
 import './styles/wallet-payments-responsive.css';
-
-type PaymentTab = 'send' | 'receive' | 'operations' | 'external';
 
 const WalletPaymentExternal = lazy(async () => {
   const module = await import('./wallet-payment-external');
@@ -35,12 +35,17 @@ function PaymentsUnavailable({
   );
 }
 
-export function WalletPayments() {
+export function WalletPayments({ tab, invoice, onTabChange, workspaceSelection }: Readonly<{
+  workspaceSelection: WalletWorkspaceSelection;
+  tab: WalletPaymentTab;
+  invoice: string;
+  onTabChange: (tab: WalletPaymentTab) => void;
+}>) {
   const [source] = useState(() => new WalletPaymentSource(
     readRuntimeAdapterStorageSnapshot({ durable: localStorage, session: sessionStorage }),
+    workspaceSelection,
   ));
   const snapshot = useSyncExternalStore(source.subscribe, source.getSnapshot, source.getSnapshot);
-  const [tab, setTab] = useState<PaymentTab>('send');
   const [retryError, setRetryError] = useState('');
 
   useEffect(() => {
@@ -102,7 +107,7 @@ export function WalletPayments() {
 
           <nav className="wallet-payment-tabs" aria-label="Payment tools">
             {(['send', 'receive', 'operations', 'external'] as const).map((option) => (
-              <button aria-current={tab === option ? 'page' : undefined} className={tab === option ? 'is-current' : ''} key={option} onClick={() => setTab(option)} type="button">
+              <button aria-current={tab === option ? 'page' : undefined} className={tab === option ? 'is-current' : ''} key={option} onClick={() => onTabChange(option)} type="button">
                 {option[0]?.toUpperCase() + option.slice(1)}
               </button>
             ))}
@@ -118,7 +123,7 @@ export function WalletPayments() {
             </Suspense>
           ) : projection.recipients.length > 0 && projection.tokens.length > 0 ? (
             <>
-              {tab === 'send' ? <WalletPaymentSend projection={projection} snapshot={snapshot} source={source} /> : null}
+              {tab === 'send' ? <WalletPaymentSend key={`${projection.activeEntityId}:${invoice}`} invoiceLink={invoice} projection={projection} snapshot={snapshot} source={source} /> : null}
               {tab === 'receive' ? <WalletPaymentReceive projection={projection} source={source} /> : null}
               {tab === 'operations' ? <WalletPaymentOperations projection={projection} snapshot={snapshot} source={source} /> : null}
             </>

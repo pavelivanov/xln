@@ -22,15 +22,10 @@
     hydrateJurisdictionPolicyDefaults,
     readHubJoinPreference,
     readSavedCollateralPolicy,
-    writeHubJoinPreference,
-    writeSavedCollateralPolicy,
-    getOpenAccountRebalancePolicyData,
   } from '../../../utils/onboarding/onboardingPreferences';
   import {
     readOnboardingComplete,
-    writeOnboardingCompleteForEntities,
   } from '../../../utils/onboarding/onboardingState';
-  import { normalizeEntityId } from '../../../utils/identity/entityReplica';
   import {
     getManualRecoveryTowers,
     inferRecoveryTowerSetupMode,
@@ -48,26 +43,24 @@
     type RuntimeRecoveryDiscoveryStatus,
   } from '../../../utils/recovery/recoveryDiscoveryStatus';
   import {
-    assertCommittedAutoJoinCount,
-    buildOnboardingHubOpenRuntimeInput,
-    buildOnboardingProfileRuntimeInput,
     emptyOnboardingRuntimeProjection,
-    selectAdvertisedAutoJoinCandidates,
-    type OnboardingHubCandidate,
-    type OnboardingRuntimeTarget,
     type OnboardingRuntimeProjection,
   } from './onboarding-runtime-input';
-  import { hubDiscoveryJurisdictionKey } from './hub-discovery-profile';
-  import { readJsonUnknown, rejectExtraKeys, requireFiniteNumber, requireString, requireUnknownRecord } from '$lib/utils/boundary';
-  import type {
-    AccountRoleEvidence,
-    AccountRoleEvidenceSource,
-  } from '@xln/core/account/config/dispute-config';
+  import type { OnboardingTarget } from './onboarding-hub-discovery';
+  import { createOnboardingHubJoinCommands } from './onboarding-hub-join';
+  import { finishOnboardingSetup, toUsdInt } from './onboarding-setup';
+  import { hasAnyOnboardingCounterpartyAccount, resolveOnboardingTargets } from './onboarding-targets';
 
   export let entityId: string = '';
   export let runtimeProjection: OnboardingRuntimeProjection = emptyOnboardingRuntimeProjection();
 
   const dispatch = createEventDispatcher();
+  const { queueAutoHubJoins } = createOnboardingHubJoinCommands({
+    readProjection: () => runtimeProjection,
+    readTokenDecimals: () => $xlnFunctions.getTokenInfo(1).decimals,
+    resolveApiBase: resolveConfiguredApiBase,
+    submitRuntimeInput,
+  });
 
   let termsAccepted = true;
   let displayName = '';
@@ -108,110 +101,6 @@
   ];
 
   const HUB_JOIN_STORAGE_KEY = 'xln-hub-join-preference';
-
-  const toUsdInt = (value: number, defaultValue: number): number => {
-    const parsed = Number(value);
-    if (!Number.isFinite(parsed)) return defaultValue;
-    return Math.max(0, Math.floor(parsed));
-  };
-
-  const parseJoinCount = (pref: HubJoinPreference): number =>
-    pref === 'manual' ? 0 : Number(pref);
-
-  const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-
-  type PublicHubResponse = {
-    ok: true;
-    count: number;
-    serverTime: number;
-    hubs: Array<{
-      entityId: string;
-      roleSource: AccountRoleEvidenceSource;
-      metadata: {
-        isHub: true;
-        jurisdiction?: { name: string; chainId?: number; depositoryAddress?: string; entityProviderAddress?: string };
-      };
-    }>;
-  };
-
-  const decodePublicHubResponse = (value: unknown): PublicHubResponse => {
-    const record = requireUnknownRecord(value, 'PUBLIC_HUB_RESPONSE_INVALID');
-    rejectExtraKeys(record, ['ok', 'count', 'serverTime', 'hubs'], 'PUBLIC_HUB_RESPONSE_EXTRA_FIELD');
-    if (record['ok'] !== true || !Array.isArray(record['hubs'])) throw new Error('PUBLIC_HUB_RESPONSE_SHAPE_INVALID');
-    const hubs = record['hubs'].map((value) => {
-      const hub = requireUnknownRecord(value, 'PUBLIC_HUB_INVALID');
-      rejectExtraKeys(hub, ['entityId', 'runtimeId', 'name', 'bio', 'website', 'wsUrl', 'publicAccounts', 'metadata', 'lastUpdated', 'online', 'roleSource'], 'PUBLIC_HUB_EXTRA_FIELD');
-      const metadata = requireUnknownRecord(hub['metadata'], 'PUBLIC_HUB_METADATA_INVALID');
-      rejectExtraKeys(metadata, ['isHub', 'jurisdiction'], 'PUBLIC_HUB_METADATA_EXTRA_FIELD');
-      if (metadata['isHub'] !== true || (hub['roleSource'] !== 'operator-config' && hub['roleSource'] !== 'verified-gossip-profile')) throw new Error('PUBLIC_HUB_AUTHORITY_INVALID');
-      const rawJurisdiction = metadata['jurisdiction'];
-      let jurisdiction: PublicHubResponse['hubs'][number]['metadata']['jurisdiction'];
-      if (rawJurisdiction !== undefined) {
-        const item = requireUnknownRecord(rawJurisdiction, 'PUBLIC_HUB_JURISDICTION_INVALID');
-        rejectExtraKeys(item, ['name', 'chainId', 'depositoryAddress', 'entityProviderAddress'], 'PUBLIC_HUB_JURISDICTION_EXTRA_FIELD');
-        jurisdiction = {
-          name: requireString(item['name'], 'PUBLIC_HUB_JURISDICTION_NAME_INVALID'),
-          ...(item['chainId'] === undefined ? {} : { chainId: requireFiniteNumber(item['chainId'], 'PUBLIC_HUB_JURISDICTION_CHAIN_ID_INVALID') }),
-          ...(item['depositoryAddress'] === undefined ? {} : { depositoryAddress: requireString(item['depositoryAddress'], 'PUBLIC_HUB_JURISDICTION_DEPOSITORY_INVALID') }),
-          ...(item['entityProviderAddress'] === undefined ? {} : { entityProviderAddress: requireString(item['entityProviderAddress'], 'PUBLIC_HUB_JURISDICTION_PROVIDER_INVALID') }),
-        };
-      }
-      const decoded: PublicHubResponse['hubs'][number] = {
-        entityId: requireString(hub['entityId'], 'PUBLIC_HUB_ENTITY_ID_INVALID'),
-        roleSource: hub['roleSource'] === 'operator-config' ? 'operator-config' : 'verified-gossip-profile',
-        metadata: { isHub: true, ...(jurisdiction === undefined ? {} : { jurisdiction }) },
-      };
-      return decoded;
-    });
-    return { ok: true, count: requireFiniteNumber(record['count'], 'PUBLIC_HUB_COUNT_INVALID'), serverTime: requireFiniteNumber(record['serverTime'], 'PUBLIC_HUB_SERVER_TIME_INVALID'), hubs };
-  };
-
-  type OnboardingTarget = OnboardingRuntimeTarget & { jurisdiction: string };
-
-  function getRuntimeOnboardingTargets(): OnboardingTarget[] {
-    const targets: OnboardingTarget[] = [];
-    const seen = new Set<string>();
-    const add = (
-      rawEntityId: unknown,
-      rawSignerId: unknown,
-      isHub: boolean,
-      rawJurisdiction: unknown = '',
-      rawJurisdictionKey: unknown = '',
-    ) => {
-      const nextEntityId = normalizeEntityId(String(rawEntityId || ''));
-      const nextSignerId = String(rawSignerId || '').trim().toLowerCase();
-      if (!nextEntityId || !nextSignerId) return;
-      const key = `${nextEntityId}:${nextSignerId}`;
-      if (seen.has(key)) return;
-      const runtimeSigner = ($activeRuntime?.signers || []).find((signer) =>
-        normalizeEntityId(signer.entityId || '') === nextEntityId
-        || String(signer.address || '').trim().toLowerCase() === nextSignerId
-      );
-      const jurisdiction = String(rawJurisdiction || runtimeSigner?.jurisdiction || 'Primary').trim() || 'Primary';
-      const jurisdictionKey = String(rawJurisdictionKey || '').trim();
-      const target = {
-        entityId: nextEntityId,
-        signerId: nextSignerId,
-        isHub,
-        roleSource: 'committed-profile' as const,
-        jurisdiction,
-        ...(jurisdictionKey ? { jurisdictionKey } : {}),
-      };
-      seen.add(key);
-      targets.push(target);
-    };
-
-    for (const target of runtimeProjection.targets || []) {
-      add(target.entityId, target.signerId, target.isHub, target.jurisdiction, target.jurisdictionKey);
-    }
-    return targets;
-  }
-
-  function hasAnyCounterpartyAccount(targetEntityId: string): boolean {
-    const normalizedEntityId = normalizeEntityId(targetEntityId);
-    if (!normalizedEntityId) return false;
-    return (runtimeProjection.accountCounterpartiesByEntityId[normalizedEntityId] || []).length > 0;
-  }
 
   const hasSavedHubJoinPreference = (): boolean =>
     typeof localStorage !== 'undefined' && localStorage.getItem(HUB_JOIN_STORAGE_KEY) !== null;
@@ -443,344 +332,24 @@
     }
   });
 
-  function targetJurisdictionMatches(target: OnboardingTarget, candidate: OnboardingHubCandidate): boolean {
-    const targetKey = String(target.jurisdictionKey || '').trim();
-    const candidateKey = String(candidate.jurisdictionKey || hubDiscoveryJurisdictionKey(candidate.jurisdiction)).trim();
-    if (targetKey && candidateKey) return targetKey === candidateKey;
-    const targetName = String(target.jurisdiction || '').trim().toLowerCase();
-    const candidateName = String(candidate.jurisdiction || '').trim().toLowerCase();
-    return Boolean(targetName && candidateName && targetName === candidateName);
-  }
-
-  function hasProjectedCounterpartyAccount(targetEntityId: string, counterpartyEntityId: string): boolean {
-    const normalizedEntityId = normalizeEntityId(targetEntityId);
-    const normalizedCounterpartyId = normalizeEntityId(counterpartyEntityId);
-    if (!normalizedEntityId || !normalizedCounterpartyId) return false;
-    return (runtimeProjection.accountCounterpartiesByEntityId[normalizedEntityId] || [])
-      .some((candidate) => normalizeEntityId(candidate) === normalizedCounterpartyId);
-  }
-
-  type HubDiscovery = {
-    advertisedHubEntityIds: string[];
-    eligibleHubEntityIds: string[];
-    roleEvidenceByEntityId: Record<string, AccountRoleEvidence>;
-  };
-
-  const emptyHubDiscovery = (): HubDiscovery => ({
-    advertisedHubEntityIds: [],
-    eligibleHubEntityIds: [],
-    roleEvidenceByEntityId: {},
-  });
-
-  function authenticatedHubEvidence(
-    entityId: string,
-    source: AccountRoleEvidenceSource | undefined,
-  ): AccountRoleEvidence {
-    const normalized = normalizeEntityId(entityId);
-    const committed = runtimeProjection.committedRolesByEntityId[normalized];
-    if (typeof committed === 'boolean') {
-      if (!committed) throw new Error(`ONBOARDING_HUB_COMMITTED_ROLE_CONFLICT:${normalized}`);
-      return { entityId: normalized, isHub: true, source: 'committed-profile' };
-    }
-    if (source !== 'verified-gossip-profile' && source !== 'operator-config') {
-      throw new Error(`ONBOARDING_HUB_ROLE_SOURCE_INVALID:${normalized}:${String(source)}`);
-    }
-    return { entityId: normalized, isHub: true, source };
-  }
-
-  function getProjectedHubDiscovery(target: OnboardingTarget): HubDiscovery {
-    const advertisedHubEntityIds: string[] = [];
-    const eligibleHubEntityIds: string[] = [];
-    const roleEvidenceByEntityId: Record<string, AccountRoleEvidence> = {};
-    const add = (value: unknown, source: AccountRoleEvidenceSource | undefined) => {
-      const id = String(value || '').trim();
-      if (!id) return;
-      if (normalizeEntityId(id) === normalizeEntityId(target.entityId)) return;
-      const normalized = normalizeEntityId(id);
-      roleEvidenceByEntityId[normalized] = authenticatedHubEvidence(normalized, source);
-      if (!advertisedHubEntityIds.some(existing => normalizeEntityId(existing) === normalizeEntityId(id))) {
-        advertisedHubEntityIds.push(id);
-      }
-      if (
-        !hasProjectedCounterpartyAccount(target.entityId, id)
-        && !eligibleHubEntityIds.some(existing => normalizeEntityId(existing) === normalizeEntityId(id))
-      ) {
-        eligibleHubEntityIds.push(id);
-      }
-    };
-
-    for (const candidate of runtimeProjection.hubCandidates || []) {
-      if (candidate.isHub !== true) continue;
-      if (!targetJurisdictionMatches(target, candidate)) continue;
-      add(candidate.entityId, candidate.roleSource);
-    }
-
-    return { advertisedHubEntityIds, eligibleHubEntityIds, roleEvidenceByEntityId };
-  }
-
-  async function fetchPublicHubDiscovery(target: OnboardingTarget): Promise<HubDiscovery> {
-    if (typeof window === 'undefined') {
-      return emptyHubDiscovery();
-    }
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 1200);
-    try {
-      const apiBase = resolveConfiguredApiBase(window.location.origin);
-      const url = new URL('/api/hubs', apiBase);
-      url.searchParams.set('ts', String(Date.now()));
-      const response = await fetch(url.toString(), { cache: 'no-store', signal: controller.signal });
-      if (!response.ok) throw new Error(`HTTP_${response.status}`);
-      const payload = decodePublicHubResponse(await readJsonUnknown(response));
-      const advertisedHubEntityIds: string[] = [];
-      const eligibleHubEntityIds: string[] = [];
-      const roleEvidenceByEntityId: Record<string, AccountRoleEvidence> = {};
-      for (const hub of payload.hubs) {
-        const normalized = normalizeEntityId(hub.entityId);
-        if (!normalized || normalized === normalizeEntityId(target.entityId)) continue;
-        const jurisdiction = hub.metadata.jurisdiction?.name ?? '';
-        const jurisdictionKey = hubDiscoveryJurisdictionKey(hub.metadata.jurisdiction);
-        const evidence = authenticatedHubEvidence(normalized, hub.roleSource);
-        const candidate: OnboardingHubCandidate = {
-          entityId: hub.entityId,
-          isHub: true,
-          roleSource: evidence.source,
-          ...(jurisdiction ? { jurisdiction } : {}),
-          ...(jurisdictionKey ? { jurisdictionKey } : {}),
-        };
-        if (!targetJurisdictionMatches(target, candidate)) continue;
-        roleEvidenceByEntityId[normalized] = evidence;
-        if (!advertisedHubEntityIds.some(existing => normalizeEntityId(existing) === normalized)) {
-          advertisedHubEntityIds.push(hub.entityId);
-        }
-        if (
-          !hasProjectedCounterpartyAccount(target.entityId, hub.entityId)
-          && !eligibleHubEntityIds.some(existing => normalizeEntityId(existing) === normalized)
-        ) {
-          eligibleHubEntityIds.push(hub.entityId);
-        }
-      }
-      return { advertisedHubEntityIds, eligibleHubEntityIds, roleEvidenceByEntityId };
-    } finally {
-      clearTimeout(timer);
-    }
-  }
-
-  async function queueAutoHubJoinsForTarget(
-    joinCount: number,
-    target: OnboardingTarget,
-  ): Promise<{ joined: number; required: boolean }> {
-    if (joinCount <= 0 || !target.entityId || !target.signerId) {
-      return { joined: 0, required: false };
-    }
-
-    const waitForCandidates = async (): Promise<{
-      required: boolean;
-      hubEntityIds: string[];
-      roleEvidenceByEntityId: Record<string, AccountRoleEvidence>;
-    }> => {
-      const timeoutMs = 3_000;
-      const pollMs = 100;
-      const startedAt = Date.now();
-      let best: HubDiscovery = emptyHubDiscovery();
-      let discoveryFailure = '';
-
-      while (Date.now() - startedAt < timeoutMs) {
-        const projected = getProjectedHubDiscovery(target);
-        let publicDiscovery: HubDiscovery | null = null;
-        try {
-          publicDiscovery = await fetchPublicHubDiscovery(target);
-          discoveryFailure = '';
-        } catch (discoveryError) {
-          discoveryFailure = discoveryError instanceof Error
-            ? discoveryError.message
-            : String(discoveryError);
-        }
-
-        const mergeIds = (...groups: string[][]): string[] =>
-          Array.from(new Map(groups.flat().map(id => [normalizeEntityId(id), id])).values());
-        const current: HubDiscovery = {
-          advertisedHubEntityIds: mergeIds(
-            projected.advertisedHubEntityIds,
-            publicDiscovery?.advertisedHubEntityIds || [],
-          ),
-          eligibleHubEntityIds: mergeIds(
-            projected.eligibleHubEntityIds,
-            publicDiscovery?.eligibleHubEntityIds || [],
-          ).filter((hubId) => !hasProjectedCounterpartyAccount(target.entityId, hubId)),
-          roleEvidenceByEntityId: {
-            ...publicDiscovery?.roleEvidenceByEntityId,
-            ...projected.roleEvidenceByEntityId,
-          },
-        };
-        best = {
-          advertisedHubEntityIds: mergeIds(
-            best.advertisedHubEntityIds,
-            current.advertisedHubEntityIds,
-          ),
-          eligibleHubEntityIds: current.eligibleHubEntityIds.length > best.eligibleHubEntityIds.length
-            ? current.eligibleHubEntityIds
-            : best.eligibleHubEntityIds,
-          roleEvidenceByEntityId: {
-            ...best.roleEvidenceByEntityId,
-            ...current.roleEvidenceByEntityId,
-          },
-        };
-
-        // A successful public discovery with no hub for this jurisdiction is
-        // authoritative availability, not an onboarding failure. The sibling
-        // Entity was already created and profiled above; there is simply no
-        // bilateral hub account to open yet.
-        if (publicDiscovery && current.advertisedHubEntityIds.length === 0) {
-          return { required: false, hubEntityIds: [], roleEvidenceByEntityId: {} };
-        }
-        if (current.eligibleHubEntityIds.length >= joinCount) {
-          return {
-            ...selectAdvertisedAutoJoinCandidates({
-            requested: joinCount,
-            advertisedHubEntityIds: current.advertisedHubEntityIds,
-            eligibleHubEntityIds: current.eligibleHubEntityIds,
-            }),
-            roleEvidenceByEntityId: current.roleEvidenceByEntityId,
-          };
-        }
-        await sleep(pollMs);
-      }
-
-      if (best.eligibleHubEntityIds.length < joinCount) {
-        if (discoveryFailure) {
-          throw new Error(
-            `ONBOARDING_HUB_DISCOVERY_FAILED:requested=${joinCount}:found=${best.eligibleHubEntityIds.length}:cause=${discoveryFailure}`,
-          );
-        }
-      }
-      return {
-        ...selectAdvertisedAutoJoinCandidates({
-          requested: joinCount,
-          advertisedHubEntityIds: best.advertisedHubEntityIds,
-          eligibleHubEntityIds: best.eligibleHubEntityIds,
-        }),
-        roleEvidenceByEntityId: best.roleEvidenceByEntityId,
-      };
-    };
-
-    const tokenDecimals = $xlnFunctions.getTokenInfo(1).decimals;
-    const rebalancePolicy = getOpenAccountRebalancePolicyData(tokenDecimals);
-    if (!rebalancePolicy) return { joined: 0, required: false };
-
-    const selection = await waitForCandidates();
-    if (!selection.required) return { joined: 0, required: false };
-    const readyCandidates = selection.hubEntityIds
-      .filter((hubId) => !hasProjectedCounterpartyAccount(target.entityId, hubId));
-
-    const creditAmount = 10_000n * 10n ** BigInt(tokenDecimals);
-    await submitRuntimeInput(buildOnboardingHubOpenRuntimeInput({
-      target,
-      hubEntityIds: readyCandidates,
-      hubRoleEvidenceByEntityId: Object.fromEntries(readyCandidates.map((hubEntityId) => {
-        const evidence = selection.roleEvidenceByEntityId[normalizeEntityId(hubEntityId)];
-        if (!evidence) throw new Error(`ONBOARDING_HUB_ROLE_MISSING:${hubEntityId}`);
-        return [hubEntityId, evidence];
-      })),
-      committedRolesByEntityId: runtimeProjection.committedRolesByEntityId,
-      creditAmount,
-      tokenId: 1,
-      rebalancePolicy,
-    }));
-
-    return { joined: readyCandidates.length, required: true };
-  }
-
-  async function queueAutoHubJoins(
-    joinCount: number,
-    targets: OnboardingTarget[],
-  ): Promise<{ joined: number; requiredTargets: number }> {
-    // Each lane owns an independent bilateral account set. Primary and cross-j
-    // sibling entities must both open committed hub accounts during onboarding;
-    // otherwise the UI can select a sibling that exists but cannot route.
-    let joined = 0;
-    let requiredTargets = 0;
-    for (const target of targets) {
-      const result = await queueAutoHubJoinsForTarget(joinCount, target);
-      joined += result.joined;
-      if (result.required) requiredTargets += 1;
-    }
-    return { joined, requiredTargets };
-  }
-
-  async function waitForEnabledOnboardingTargets(): Promise<{
-    allTargets: OnboardingTarget[];
-    targets: OnboardingTarget[];
-  }> {
-    const deadline = Date.now() + 3_000;
-    let allTargets: OnboardingTarget[] = [];
-    let targets: OnboardingTarget[] = [];
-    while (Date.now() < deadline) {
-      allTargets = getRuntimeOnboardingTargets();
-      targets = allTargets.filter(isTargetJurisdictionEnabled);
-      if (targets.length > 0) return { allTargets, targets };
-      await sleep(100);
-    }
-    return { allTargets, targets };
-  }
-
   async function finish() {
     if (!canFinish || submitting) return;
     submitting = true;
     error = '';
 
     try {
-      const cleanDisplayName = displayName.trim();
-      let allTargets = getRuntimeOnboardingTargets();
-      let targets = allTargets.filter(isTargetJurisdictionEnabled);
-      if (targets.length === 0) {
-        ({ allTargets, targets } = await waitForEnabledOnboardingTargets());
-      }
-      if (targets.length === 0) {
-        throw new Error('Select at least one jurisdiction to register automatically');
-      }
-
-      const policyData = writeSavedCollateralPolicy({
-        mode: 'autopilot',
-        softLimitUsd: toUsdInt(softLimitUsd, defaultSoftLimitUsd),
-        hardLimitUsd: toUsdInt(hardLimitUsd, defaultHardLimitUsd),
-        maxFeeUsd: toUsdInt(maxFeeUsd, defaultMaxFeeUsd),
+      const result = await finishOnboardingSetup({
+        entityId, displayName, softLimitUsd, hardLimitUsd, maxFeeUsd,
+        defaultSoftLimitUsd, defaultHardLimitUsd, defaultMaxFeeUsd, autoJoinHubs,
+      }, {
+        readTargets: () => resolveOnboardingTargets(runtimeProjection, $activeRuntime?.signers || []),
+        isTargetJurisdictionEnabled,
+        hasAnyCounterpartyAccount: (id) => hasAnyOnboardingCounterpartyAccount(runtimeProjection, id),
+        submitRuntimeInput,
+        saveRecoveryConfig,
+        queueAutoHubJoins,
       });
-      const savedJoinPreference = writeHubJoinPreference(autoJoinHubs);
-
-      await submitRuntimeInput(buildOnboardingProfileRuntimeInput({
-        targets,
-        displayName: cleanDisplayName,
-      }));
-
-      // Recovery must be committed before opening hub accounts. Account opens create
-      // usable bilateral state; with a configured tower, the runtime backup barrier
-      // must already be installed before those committed frames can leave the device.
-      await saveRecoveryConfig();
-
-      const autoJoinCount = parseJoinCount(savedJoinPreference);
-      const autoJoinTargets = autoJoinCount > 0
-        ? targets.filter((target) => !hasAnyCounterpartyAccount(target.entityId))
-        : targets;
-      const autoJoinResult = await queueAutoHubJoins(autoJoinCount, autoJoinTargets);
-      const autoJoinedCount = autoJoinResult.joined;
-      assertCommittedAutoJoinCount({
-        requestedPerTarget: autoJoinCount,
-        targetCount: autoJoinResult.requiredTargets,
-        committedCount: autoJoinedCount,
-      });
-
-      const completedEntityIds = allTargets.map((target) => target.entityId);
-      writeOnboardingCompleteForEntities(completedEntityIds.length > 0 ? completedEntityIds : [entityId], true);
-      localStorage.setItem('xln-display-name', cleanDisplayName);
-
-      dispatch('complete', {
-        displayName: cleanDisplayName,
-        softLimitUsd: policyData.softLimitUsd,
-        hardLimitUsd: policyData.hardLimitUsd,
-        maxFeeUsd: policyData.maxFeeUsd,
-        autoJoinHubs: savedJoinPreference,
-        autoJoinedCount,
-      });
+      dispatch('complete', result);
     } catch (err) {
       error = err instanceof Error ? err.message : 'Setup failed';
       submitting = false;
@@ -929,7 +498,7 @@
         <section class="setup-section recovery-check-compact" data-testid="runtime-recovery-check-status">
           <div class="recovery-check-copy">
             <span>Checked {recoveryDiscoveryStatus.checkedTowers} watchtower{recoveryDiscoveryStatus.checkedTowers === 1 ? '' : 's'}; found {recoveryDiscoveryStatus.backupCount} encrypted backup{recoveryDiscoveryStatus.backupCount === 1 ? '' : 's'}.</span>
-            {#each recoveryDiscoveryFailureLabels as failureLabel}<small>{failureLabel}</small>{/each}
+            {#each recoveryDiscoveryFailureLabels as failureLabel}<small data-testid="runtime-recovery-check-failures">{failureLabel}</small>{/each}
           </div>
           <button type="button" class="mini-action" disabled={recoveryUploadBusy} on:click={triggerRecoveryBackupFilePicker}>
             {recoveryUploadBusy ? 'Loading backup…' : 'Import runtime backup'}

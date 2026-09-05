@@ -75,8 +75,26 @@ test('wallet markets read the committed hub book and persisted activity', async 
 
   await page.getByRole('button', { name: 'Activity' }).click();
   await expect(page.getByRole('heading', { name: 'Activity' })).toBeVisible();
-  await expect(page.getByText('Account opened')).toBeVisible();
-  await expect(page.getByText('extendCredit').first()).toBeVisible();
+  // Real chain transactions add persisted events; initial Account creation may
+  // now be on an older page. Exercise pagination rather than assuming page 1.
+  const activity = page.getByRole('region', { name: 'Activity', exact: true });
+  const remainingEvents = new Set(['Account opened', 'extendCredit']);
+  for (let pageIndex = 0; pageIndex < 20; pageIndex += 1) {
+    for (const title of remainingEvents) {
+      const event = activity.getByText(title, { exact: true }).first();
+      if (await event.isVisible()) {
+        await expect(event).toBeVisible();
+        remainingEvents.delete(title);
+      }
+    }
+    if (remainingEvents.size === 0) break;
+    const older = activity.getByRole('button', { name: 'Older', exact: true });
+    await expect(older).toBeEnabled();
+    const currentPage = await activity.locator('footer span').innerText();
+    await older.click();
+    await expect(activity.locator('footer span')).not.toHaveText(currentPage);
+  }
+  expect([...remainingEvents], 'both initial committed events remain accessible through Activity').toEqual([]);
   await expectPageContained(page);
   await screenshotEvidence(page, testInfo, 'wallet-market-activity');
   expectNoBrowserErrors(errors);

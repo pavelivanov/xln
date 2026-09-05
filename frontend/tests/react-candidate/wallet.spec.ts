@@ -15,6 +15,8 @@ import {
   screenshotEvidence,
 } from './browser-evidence';
 import { installImportedRuntime, readWalletRuntimeFixture } from './wallet-runtime-test-helpers';
+import { finishOpenedWalletSetup } from './wallet-onboarding-test-helpers';
+import { expectWalletHistoryEvents } from './wallet-history-test-helpers';
 
 const FIRST_MNEMONIC = 'test test test test test test test test test test test junk';
 const SECOND_MNEMONIC = 'abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about';
@@ -164,6 +166,7 @@ test('wallet derives and opens a canonical Brain Vault outside React state', asy
   expect(storage).not.toContain(BRAINVAULT_MNEMONIC);
   await page.getByRole('button', { name: 'Restore selected backup' }).click();
   await expect(page.getByRole('heading', { name: 'Wallet opened' })).toBeVisible({ timeout: 90_000 });
+  await finishOpenedWalletSetup(page);
   await expect(page.getByText('Active Runtime 0x93bab14ed871462d414a7c0357bf1a76de741397.', { exact: false })).toBeVisible();
   await expectPageContained(page);
   await screenshotEvidence(page, testInfo, 'wallet-brainvault-opened');
@@ -239,6 +242,7 @@ test('wallet restores a canonical backup and enrolls recovery services', async (
   expect(storage).not.toContain(FIRST_MNEMONIC);
   await page.getByRole('button', { name: 'Restore selected backup' }).click();
   await expect(page.getByRole('heading', { name: 'Wallet opened' })).toBeVisible({ timeout: 90_000 });
+  await finishOpenedWalletSetup(page);
   await expect(page.getByText(`Active Runtime ${fixture.recovery.runtimeId}.`, { exact: false })).toBeVisible();
   await expectPageContained(page);
   await screenshotEvidence(page, testInfo, 'wallet-canonical-recovery-opened');
@@ -332,6 +336,7 @@ test('wallet binds its recovered signer to real external transfers and reserve d
   await expect(page.getByRole('heading', { name: 'Choose a backup' })).toBeVisible({ timeout: 90_000 });
   await page.getByRole('button', { name: 'Restore selected backup' }).click();
   await expect(page.getByRole('heading', { name: 'Wallet opened' })).toBeVisible({ timeout: 90_000 });
+  await finishOpenedWalletSetup(page);
 
   await page.getByRole('link', { name: 'Payments', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Payments' })).toBeVisible({ timeout: 90_000 });
@@ -437,7 +442,15 @@ test('address route selects an imported Runtime and renders committed directory,
   expect(detailResponse?.ok(), 'document response for imported Runtime detail').toBe(true);
   await expect(page.getByRole('heading', { name: 'Public Entity record' })).toBeVisible({ timeout: 90_000 });
   await expect(page.getByText('Browser Alice')).toBeVisible();
-  await expect(page.getByText('profile-update')).toBeVisible();
+  await expect(page.getByTestId('wallet-address-history').locator('article').first()).toBeVisible();
+  if (await page.getByText('profile-update', { exact: true }).isVisible()) {
+    await expect(page.getByText('profile-update', { exact: true })).toBeVisible();
+  } else {
+    await page.getByRole('link', { name: 'Older activity is available in Financial health' }).click();
+    await expectWalletHistoryEvents(page, ['profile-update']);
+    await page.goBack();
+    await expect(page.getByRole('heading', { name: 'Public Entity record' })).toBeVisible();
+  }
   await expect(page.getByText('Committed history')).toBeVisible();
   await expectPageContained(page);
   await screenshotEvidence(page, testInfo, 'wallet-address-history-populated');

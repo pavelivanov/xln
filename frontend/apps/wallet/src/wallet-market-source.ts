@@ -5,6 +5,7 @@ import {
   type RuntimeQuerySnapshot,
 } from '../../../packages/runtime-client/src/runtime-query-observer';
 import { normalizeEntityIdForRuntimeView } from '../../../packages/runtime-client/src/runtime-view-model';
+import { requireWalletWorkspaceEntity, WalletWorkspaceSelection } from './wallet-workspace-selection';
 import {
   abandonTerminalWalletPaymentCommand,
   executeWalletPaymentCommand,
@@ -91,7 +92,7 @@ export class WalletMarketSource {
   private pendingCommand: WalletPreparedCommand | null = null;
   private commandBusy = false;
 
-  constructor(private readonly config: RuntimeAdapterStorageSnapshot) {
+  constructor(private readonly config: RuntimeAdapterStorageSnapshot, private readonly selection: WalletWorkspaceSelection) {
     this.snapshot = {
       status: 'connecting',
       message: config.mode === 'remote'
@@ -130,6 +131,7 @@ export class WalletMarketSource {
       this.releaseAdapter = dependencies.release;
       this.dependencies = dependencies;
       this.marketMath = marketMath;
+      this.selectedEntityId = this.selection.bindRuntime(this.adapter.runtimeId);
       this.installObserver(dependencies);
     } catch (error: unknown) {
       if (!this.isCurrent(generation)) return;
@@ -156,6 +158,7 @@ export class WalletMarketSource {
     if (normalized === projection.activeEntityId) return;
     this.requireNoPendingCommand('WALLET_MARKET_ENTITY_CHANGE_PENDING_COMMAND');
     this.selectedEntityId = normalized;
+    this.selection.selectEntity(this.requireAdapter().runtimeId, normalized);
     this.selectedHubId = '';
     this.selectedPairId = '';
     this.resetActivity();
@@ -234,12 +237,14 @@ export class WalletMarketSource {
     const { adapter, math } = dependencies;
     const client = createWalletRuntimeQueryClient(adapter);
     const observer = new RuntimeQueryObserver(async () => {
+      const entityId = this.selectedEntityId;
       const activeFrame = await client.readViewFrame({
         accountsLimit: 100,
         booksLimit: 1,
-        ...(this.selectedEntityId ? { entityId: this.selectedEntityId } : {}),
+        ...(entityId ? { entityId } : {}),
       });
       const context = decodeWalletMarketContext(activeFrame, math);
+      requireWalletWorkspaceEntity(context.payment, entityId);
       const activeEntityId = context.payment.activeEntityId;
       if (!activeEntityId) throw new Error('WALLET_MARKET_ENTITY_UNAVAILABLE');
       const selectedHubId = context.hubs.some((hub) => hub.entityId === this.selectedHubId)
@@ -294,6 +299,7 @@ export class WalletMarketSource {
       return;
     }
     this.selectedHubId = observed.data.selectedHubId;
+    this.selection.observeEntity(this.requireAdapter().runtimeId, observed.data.activeEntityId, observed.data.accounts.length > 0);
     this.selectedPairId = observed.data.selectedPairId;
     this.patch({ status: 'ready', message: '', projection: observed.data });
   };

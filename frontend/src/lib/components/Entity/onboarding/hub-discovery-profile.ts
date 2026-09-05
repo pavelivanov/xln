@@ -316,7 +316,7 @@ function findAccountForCounterparty(
 ): AccountReplica | null {
   const accounts = ownerReplica?.state?.accounts;
   const target = normalizeHubEntityId(counterpartyEntityId);
-  if (!target || !(accounts instanceof Map)) return null;
+  if (!target || !accounts) return null;
   const direct = accounts.get(target) ?? accounts.get(counterpartyEntityId);
   if (direct) return direct;
   for (const [key, account] of accounts.entries()) {
@@ -345,7 +345,7 @@ function buildAccountConnectionStates(
   ownerEntityId: string,
 ): Map<string, HubDiscoveryConnectionState> {
   const accounts = ownerReplica?.state?.accounts;
-  if (!(accounts instanceof Map)) return new Map();
+  if (!accounts) return new Map();
 
   const owner = normalizeHubEntityId(ownerEntityId);
   const states = new Map<string, HubDiscoveryConnectionState>();
@@ -429,7 +429,7 @@ export function buildHubDiscoveryProjection(input: BuildHubDiscoveryProjectionIn
         ...(profile.website ? { website: String(profile.website) } : {}),
         ...(state?.config?.jurisdiction ? { jurisdiction: state.config.jurisdiction } : {}),
         fee: Number((profile as { routingFeePPM?: number })?.routingFeePPM ?? 0),
-        peerCount: state?.accounts instanceof Map ? state.accounts.size : 0,
+        peerCount: state?.accounts ? state.accounts.size : 0,
       },
       runtimeId,
       wsUrl: null,

@@ -21,6 +21,7 @@
   .wallet-payments-section-heading { display: grid; gap: 0.55rem; }
   .wallet-payments-section-heading > span { margin-left: 2rem; }
   .wallet-payment-invoice-row > div,
+  .wallet-payment-invoice-row > div.has-invoice,
   .wallet-payment-form-grid,
   .wallet-receive-builder,
   .wallet-operation-form { grid-template-columns: 1fr; }

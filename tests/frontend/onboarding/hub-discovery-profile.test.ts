@@ -622,6 +622,8 @@ test('hub discovery projection marks uncommitted account as opening', () => {
 
 test('HubDiscoveryPanel renders a supplied projection instead of scanning eReplicas', () => {
   const source = readFileSync('frontend/src/lib/components/Entity/onboarding/HubDiscoveryPanel.svelte', 'utf8');
+  const commands = readFileSync('frontend/src/lib/components/Entity/onboarding/hub-discovery-commands.ts', 'utf8');
+  const directCommands = readFileSync('frontend/src/lib/components/Entity/account/account-open-commands.ts', 'utf8');
   const profile = readFileSync('frontend/src/lib/components/Entity/onboarding/hub-discovery-profile.ts', 'utf8');
   const accountOpen = readFileSync('frontend/src/lib/components/Entity/account/ui/AccountOpenPanel.svelte', 'utf8');
   const accountWorkspace = readFileSync('frontend/src/lib/components/Entity/workspace/AccountWorkspaceView.svelte', 'utf8');
@@ -629,8 +631,10 @@ test('HubDiscoveryPanel renders a supplied projection instead of scanning eRepli
   expect(source).toContain('export let hubDiscoveryProjection');
   expect(source).toContain('export let canOpenAccounts = true');
   expect(source).toContain('export let submitRuntimeInput');
-  expect(source).toContain('hubDiscoveryProjection.sourceSignerId');
-  expect(source).toContain('ensureHubOpenAccountProfileReady({');
+  expect(source).toContain('connectDiscoveredHub(hubId, {');
+  expect(source).toContain('projection: hubDiscoveryProjection');
+  expect(commands).toContain('context.projection.sourceSignerId');
+  expect(commands).toContain('ensureHubOpenAccountProfileReady({');
   expect(source).toContain("import { runtimeControllerHandle } from '../../../stores/runtimeControllerStore'");
   expect(source).toContain('adapterMode: $runtimeControllerHandle.mode');
   expect(source).toContain('authLevel: $runtimeControllerHandle.authLevel');
@@ -642,10 +646,10 @@ test('HubDiscoveryPanel renders a supplied projection instead of scanning eRepli
   expect(profile).toContain('remoteHubs?: readonly HubDiscoveryRemoteHub[]');
   expect(profile).toContain('for (const profile of input.profiles ?? [])');
   expect(profile).toContain('for (const remoteHub of input.remoteHubs ?? [])');
-  expect(source).toContain('projectedConnection?.isConnected || projectedConnection?.isOpening');
-  expect(source).toContain('buildHubOpenAccountRuntimeInput');
-  expect(source).toContain('hubDiscoveryProjection.localHubs.find');
-  expect(source).toContain('await submitRuntimeInput(buildHubOpenAccountRuntimeInput');
+  expect(commands).toContain('connection?.isConnected || connection?.isOpening');
+  expect(commands).toContain('buildHubOpenAccountRuntimeInput');
+  expect(commands).toContain('context.projection.localHubs.find');
+  expect(commands).toContain('await deps.submitRuntimeInput(buildHubOpenAccountRuntimeInput');
   expect(source).toContain('{:else if entityId && canOpenHubAccount}');
   expect(source).not.toContain("throw new Error('Environment not ready')");
   expect(source).not.toContain('const currentEnv = actionRuntimeEnv;\\n      if (!currentEnv)');
@@ -672,9 +676,11 @@ test('HubDiscoveryPanel renders a supplied projection instead of scanning eRepli
   expect(tabs).toContain('profiles: directoryPanelView.profiles?.length ? directoryPanelView.profiles : panelProfiles');
   expect(tabs).toMatch(/import \{ runtimes \} from ["']\.\.\/\.\.\/\.\.\/\.\.\/stores\/runtimeStore["']/);
   expect(tabs).toContain('remoteHubs: remoteHubCandidates');
-  expect(tabs).toContain('if (!canOpenAccounts)');
-  expect(tabs).toContain('buildDirectOpenAccountRuntimeInput');
-  expect(tabs).toMatch(/await submitPanelRuntimeInput\(\s*buildDirectOpenAccountRuntimeInput/);
+  expect(directCommands).toContain('if (!context.canOpenAccounts)');
+  expect(directCommands).toContain('buildDirectOpenAccountRuntimeInput');
+  expect(directCommands).toMatch(/await dependencies.submitRuntimeInput\(buildDirectOpenAccountRuntimeInput/);
+  expect(tabs).toContain('await openAccountById(targetEntityId, {');
+  expect(tabs).toContain('submitRuntimeInput: submitPanelRuntimeInput');
   expect(tabs).toContain('{canOpenAccounts}');
   expect(tabs).toContain('submitRuntimeInput={submitPanelRuntimeInput}');
   const directOpenStart = tabs.indexOf('async function openAccountWithFullId');

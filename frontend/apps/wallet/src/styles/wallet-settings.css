@@ -23,6 +23,27 @@
   border-top: 1px solid var(--line);
 }
 
+.wallet-settings-tabs {
+  display: flex;
+  gap: 1rem;
+  margin-top: 2rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.wallet-settings-tabs button {
+  padding: 0.8rem 0;
+  color: inherit;
+  cursor: pointer;
+  background: transparent;
+  border: 0;
+  border-bottom: 2px solid transparent;
+}
+
+.wallet-settings-tabs button[aria-current="page"] {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
 .wallet-preference-row {
   display: grid;
   grid-template-columns: minmax(14rem, 0.8fr) minmax(18rem, 1.2fr);

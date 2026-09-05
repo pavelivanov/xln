@@ -10,6 +10,7 @@
   import TokenSelect from '../../shared/TokenSelect.svelte';
   import ActivityHistoryPanel from './ActivityHistoryPanel.svelte';
   import { requireTokenDecimals } from '../token-metadata';
+  import { withdrawableCollateral } from '../../../../../packages/runtime-client/src/withdrawable-collateral';
 
   export let entityId: string;
   export let replica: EntityReplica | null = null;
@@ -614,8 +615,7 @@
   function getWorkspaceWithdrawableCollateral(currentTokenId: number): bigint {
     const derived = getWorkspaceDerivedDelta(currentTokenId);
     if (!derived) return 0n;
-    const hold = derived.outTotalHold ?? 0n;
-    return derived.outCollateral > hold ? derived.outCollateral - hold : 0n;
+    return withdrawableCollateral(derived);
   }
 
   function isLocalExecutorForWorkspace(counterparty: string, account: AccountReplica | null): boolean {

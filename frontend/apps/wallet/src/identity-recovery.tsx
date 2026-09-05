@@ -5,7 +5,7 @@ import { walletIdentityModeLabel, walletRecoveryFileErrorMessage } from './ident
 import type { WalletCanonicalRecoveryDiscoveryView } from '../../../packages/browser/src/wallet-runtime-opening';
 import type { WalletIdentityMode } from '../../../packages/browser/src/wallet-identity-entry';
 import type { WalletRuntimeSummary } from './app-shell-model';
-import { WalletRecoveryServices } from './wallet-recovery-services';
+import { WalletPostCreationSetup } from './wallet-onboarding';
 import './styles/identity-recovery.css';
 
 type IdentityReviewProps = Readonly<{
@@ -109,7 +109,7 @@ export function IdentityRecoveryVerified({
     }
   };
   return (
-    <section className="identity-review" aria-labelledby="identity-verified-title">
+    <section className={opened ? 'identity-review identity-review-opened' : 'identity-review'} aria-labelledby="identity-verified-title">
       <p className="wallet-shell-eyebrow">{opened ? 'Runtime ready' : choosingRecovery ? 'Recovery found' : brainVault ? 'Derivation complete' : 'Recovery verified'}</p>
       <h1 id="identity-verified-title">{opened ? 'Wallet opened' : choosingRecovery ? 'Choose a backup' : brainVault ? 'Brain Vault ready' : 'The same wallet returned'}</h1>
       <p>{opened
@@ -164,9 +164,7 @@ export function IdentityRecoveryVerified({
       {openingError ? <p className="identity-opening-error" role="alert">{openingError}</p> : null}
       {fileError ? <p className="identity-opening-error" role="alert">{fileError}</p> : null}
       <div className="identity-review-actions">
-        {opened ? (
-          <a className="identity-primary-action" href="/app?portfolio=1">Continue to assets</a>
-        ) : openingError ? null : (
+        {opened || openingError ? null : (
           <button className="identity-primary-action" disabled={opening || importingFile} onClick={onOpen} type="button">
             {opening
               ? choosingRecovery ? 'Restoring backup…' : 'Checking recovery…'
@@ -194,7 +192,7 @@ export function IdentityRecoveryVerified({
         ref={backupFileInput}
         type="file"
       />
-      {opened ? <WalletRecoveryServices runtimeState={runtimeState} /> : null}
+      {opened ? <WalletPostCreationSetup key={openedRuntimeId} runtimeId={openedRuntimeId} runtimeState={runtimeState} /> : null}
     </section>
   );
 }

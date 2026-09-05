@@ -4,6 +4,7 @@ import { join } from 'node:path';
 import { Wallet, hexlify } from 'ethers';
 
 import { createBrowserVmRpcFixture } from './browser-vm-rpc-fixture';
+import { buildWalletFixtureHubTxs } from './wallet-runtime-fixture-topology';
 
 export const WALLET_RECOVERY_FIXTURE_MNEMONIC =
   'test test test test test test test test test test test junk';
@@ -17,6 +18,7 @@ export type WalletRecoveryFixture = Readonly<{
   runtimeHeight: number;
   towerUrl: string;
   rpcUrl: string;
+  hubDiscovery: Readonly<{ backupFileContents: string; hubEntityId: string; towerUrl: string }>;
   external: Readonly<{
     recipient: string;
     tokenAddress: string;
@@ -151,6 +153,32 @@ export const createWalletRecoveryFixture = async (
     createAppointment(WALLET_RECOVERY_FIXTURE_MNEMONIC, 'mnemonic'),
     createAppointment(WALLET_BRAINVAULT_FIXTURE_MNEMONIC, 'brainvault'),
   ]);
+  // A separate encrypted fixture snapshot provisions a real local Hub. The
+  // ordinary recovery/tower snapshots stay at their original committed height.
+  const owner = [...mnemonic.env.state.eReplicas.values()].find(replica => replica.entityId === mnemonic.entityId);
+  if (!owner?.state.config.jurisdiction) throw new Error('HUB_DISCOVERY_FIXTURE_JURISDICTION_REQUIRED');
+  const crypto = await import('../../../core/account/crypto');
+  const hubSignerId = crypto.deriveSignerAddressSync(WALLET_RECOVERY_FIXTURE_MNEMONIC, '2').toLowerCase();
+  crypto.registerSignerKey(mnemonic.env, hubSignerId, crypto.deriveSignerKeySync(WALLET_RECOVERY_FIXTURE_MNEMONIC, '2'));
+  const hub = { entityId: runtime.generateLazyEntityId([hubSignerId], 1n),
+    config: runtime.createLazyEntity('Browser Hub', [hubSignerId], 1n, owner.state.config.jurisdiction).config };
+  runtime.enqueueRuntimeInput(mnemonic.env, { runtimeTxs: [runtime.importEntity({
+    entityId: hub.entityId, signerId: hubSignerId, entitySeed: WALLET_RECOVERY_FIXTURE_MNEMONIC,
+    data: { config: hub.config, isProposer: true, profileName: 'Browser Hub' },
+  })], entityInputs: [] });
+  await runtime.processRuntime(mnemonic.env);
+  runtime.startRuntimeLoop(mnemonic.env);
+  runtime.enqueueRuntimeInput(mnemonic.env, { runtimeTxs: [], entityInputs: [{
+    entityId: hub.entityId, signerId: hubSignerId, entityTxs: buildWalletFixtureHubTxs(hub.entityId),
+  }] });
+  await waitForWalletFixtureState('hub-profile-committed', () => [...mnemonic.env.state.eReplicas.values()]
+    .some(replica => replica.entityId === hub.entityId && replica.state.profile.isHub === true));
+  await runtime.stopRuntimeLoopAndWait(mnemonic.env);
+  const hubBundle = runtime.buildRuntimeRecoveryBundle(mnemonic.env, { signers: [{
+    index: 0, derivationIndex: 0, address: mnemonic.runtimeId, name: 'Signer 1',
+    entityId: mnemonic.entityId, jurisdiction: 'React Recovery mnemonic',
+  }, { index: 1, derivationIndex: 1, address: hubSignerId, name: 'Hub signer', entityId: hub.entityId, jurisdiction: 'React Recovery mnemonic' }] });
+  const hubEncrypted = await runtime.encryptRuntimeRecoveryBundle(hubBundle, WALLET_RECOVERY_FIXTURE_MNEMONIC);
   const initialExternalBalance = 125_000_000n;
   if (!chainAdapter.fundSignerWallet) throw new Error('WALLET_RECOVERY_FIXTURE_FAUCET_REQUIRED');
   await chainAdapter.fundSignerWallet(mnemonic.runtimeId, initialExternalBalance, 'USDC');
@@ -205,6 +233,14 @@ export const createWalletRecoveryFixture = async (
     }
   }
 
+  // Opening the two-signer backup legitimately uploads a newer recovery
+  // appointment. Isolate its tower so later ordinary recovery tests cannot
+  // select that newer backup for the same mnemonic/lookup key.
+  const hubTower = watchtower.startStandaloneWatchtowerServer({
+    host: '127.0.0.1', port: 0, towerId: 'react-hub-discovery-recovery',
+    dbPath: join(towerRoot, 'hub-discovery.level'),
+    maxStoredBytesPerLookupKey: 4 * 1024 * 1024,
+  });
   return {
     backupFileContents: serialization.serializeTaggedJson({
       version: 1,
@@ -215,6 +251,8 @@ export const createWalletRecoveryFixture = async (
     runtimeHeight: mnemonic.bundle.runtimeHeight,
     towerUrl,
     rpcUrl,
+    hubDiscovery: { hubEntityId: hub.entityId, towerUrl: `http://127.0.0.1:${hubTower.server.port}`,
+      backupFileContents: serialization.serializeTaggedJson({ version: 1, bundles: [hubEncrypted] }) },
     external: {
       recipient: externalRecipient,
       tokenAddress: token.address.toLowerCase(),
@@ -230,6 +268,7 @@ export const createWalletRecoveryFixture = async (
       runtimeHeight: brainVault.bundle.runtimeHeight,
     },
     close: async () => {
+      await hubTower.close();
       await tower.close();
       await closeAppointments();
       await rpcFixture.close();

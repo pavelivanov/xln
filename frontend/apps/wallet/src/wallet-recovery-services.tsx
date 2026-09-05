@@ -36,7 +36,11 @@ const mutationFromView = (
 
 export function WalletRecoveryServices({
   runtimeState,
-}: Readonly<{ runtimeState: WalletRuntimeSummary['state'] }>) {
+  onDraftChange,
+}: Readonly<{
+  runtimeState: WalletRuntimeSummary['state'];
+  onDraftChange?: (draft: WalletRecoveryServicesMutation | null) => void;
+}>) {
   const [view, setView] = useState<WalletRecoveryServicesView | null>(null);
   const [manualUrl, setManualUrl] = useState('');
   const [manualRole, setManualRole] = useState<WalletRecoveryServiceRole>('blind_backup');
@@ -64,6 +68,11 @@ export function WalletRecoveryServices({
       .catch((failure: unknown) => { if (active) setError(recoveryErrorMessage(failure)); });
     return () => { active = false; };
   }, [runtimeState]);
+
+  useEffect(() => {
+    onDraftChange?.(view?.state === 'ready' && view.writable && !busy && !error
+      ? mutationFromView(view) : null);
+  }, [view, busy, error, onDraftChange]);
 
   const preview = async (mutation: WalletRecoveryServicesMutation): Promise<boolean> => {
     setBusy(true);
@@ -191,12 +200,14 @@ export function WalletRecoveryServices({
           <button disabled={disabled} onClick={addService} type="button">Add service</button>
         </div>
 
-        <button className="wallet-recovery-save" disabled={disabled} onClick={() => void save()} type="button">{busy ? 'Saving…' : 'Save recovery services'}</button>
+        {onDraftChange
+          ? <p className="wallet-recovery-unavailable">These settings are saved when you finish account setup.</p>
+          : <button className="wallet-recovery-save" disabled={disabled} onClick={() => void save()} type="button">{busy ? 'Saving…' : 'Save recovery services'}</button>}
         {!view.writable ? <p className="wallet-settings-error" role="alert">{view.blockedReason}</p> : null}
         {status ? <p className="wallet-settings-status" aria-live="polite">{status}</p> : null}
         {error ? <p className="wallet-settings-error" role="alert">{error}</p> : null}
       </section>
-      <WalletPushWake refreshKey={savedRevision} runtimeState={runtimeState} />
+      {onDraftChange ? null : <WalletPushWake refreshKey={savedRevision} runtimeState={runtimeState} />}
     </>
   );
 }
