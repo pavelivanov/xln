@@ -134,6 +134,7 @@ Work from leaf modules toward lifecycle owners. Inspect importers first. Move on
 | I07 open | Extract active Runtime/controller/command bridge glue from `xlnStore.ts` and `runtimeControllerStore.ts` after I04–I06d. | Runtime switching and final teardown preserve one owner; commands use the canonical bus and reject stale context. |
 | I08 open | Remove remaining app-to-retained-tree imports and React `$lib` alias after I01–I07. | `tests/frontend/tooling/frontend-shared-boundaries.test.ts` passes unchanged, including the core-import contract. Resolve current Solvency/DB decoder ownership properly. No transitive Svelte dependency remains in React artifacts. |
 | I08a done — `tests/frontend/tooling/frontend-generated-inputs.test.ts` | Declare the canonical Account worker emitted alongside the Runtime bundle and publish both exact artifacts to Wallet/Ops. | Real Ops preparation passes; 26 generated-input/assembly/gateway tests (152 assertions) and React tooling typecheck pass. The strict undeclared-output rejection is preserved. |
+| I08b done — `output/plan-execution-20260906/svelte-scope-after.log` | Bind the retained Svelte checker to its exact Svelte config while React tooling keeps checking all four Vite configs. | False React-config failures reduced 4 → 0; all 19 existing Svelte type errors remain byte-identical. 7 scope tests / 25 assertions and React tooling typecheck pass. |
 
 ### Final verification — separate runs, concrete outputs
 
