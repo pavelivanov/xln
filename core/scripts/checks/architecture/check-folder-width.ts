@@ -52,6 +52,8 @@ const EXCLUDED_REPOSITORY_PATHS: ReadonlySet<string> = new Set([
   'brainvault',
   'data/tmp',
   'db',
+  // All four React builds and their prepared inputs are generated here.
+  'frontend/.artifacts',
   'frontend/.svelte-kit',
   'frontend/.svelte-kit-dev-http',
   'frontend/.svelte-kit-dev-https',

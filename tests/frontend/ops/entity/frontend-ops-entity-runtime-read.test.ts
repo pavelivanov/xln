@@ -216,11 +216,11 @@ describe('React Entity workspace Runtime read boundary', () => {
       Bun.file('frontend/apps/ops/src/entity-workspace/ops-entity-workspace-projection.ts').text(),
     ]);
     expect(main).toContain("page.kind === 'workspace'");
-    expect(main).toContain("import('./ops-entity-workspace-runtime')");
+    expect(main).toContain("import('./entity-workspace/ops-entity-workspace-runtime')");
     expect(page).toContain('opsEntityWorkspaceSource.subscribe');
     expect(runtime).toContain("window.addEventListener('pagehide'");
     expect(runtime).toContain('if (!event.persisted) opsEntityWorkspaceSource.stop()');
-    expect(source).toContain("import('../../../bridges/ops-canonical-owner')");
+    expect(source).toContain("import('../../../../bridges/ops-canonical-owner')");
     expect(source).toContain("import('./ops-entity-workspace-owner')");
     expect(source).toContain('accountsLimit: 8');
     expect(source).toContain('accountsPage: this.accountsPage');

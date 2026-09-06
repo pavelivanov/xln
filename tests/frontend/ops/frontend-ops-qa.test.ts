@@ -108,8 +108,8 @@ describe('React ops QA lifecycle wiring', () => {
       Bun.file('frontend/apps/ops/src/qa/ops-qa-runtime.ts').text(),
     ]);
 
-    expect(app).toContain("import('./ops-qa')");
-    expect(main).toContain("import('./ops-qa-runtime')");
+    expect(app).toContain("import('./qa/ops-qa')");
+    expect(main).toContain("import('./qa/ops-qa-runtime')");
     expect(source).toContain('Promise.all');
     expect(source).toContain('15_000');
     expect(source).toContain('refreshController?.abort()');

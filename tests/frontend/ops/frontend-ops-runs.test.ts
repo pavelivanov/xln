@@ -71,8 +71,8 @@ describe('React ops runs source', () => {
       Bun.file('frontend/apps/ops/src/main.tsx').text(),
       Bun.file('frontend/apps/ops/src/runs/ops-runs-runtime.ts').text(),
     ]);
-    expect(app).toContain("import('./ops-runs')");
-    expect(main).toContain("import('./ops-runs-runtime')");
+    expect(app).toContain("import('./runs/ops-runs')");
+    expect(main).toContain("import('./runs/ops-runs-runtime')");
     expect(runtime).toContain("addEventListener('pagehide'");
     expect(runtime).toContain('opsRunsSource.stop()');
   });

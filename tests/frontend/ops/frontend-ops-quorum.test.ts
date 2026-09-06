@@ -90,7 +90,7 @@ describe('React ops quorum ownership', () => {
       Bun.file('frontend/src/routes/qa/quorum/+page.ts').text(),
       Bun.file('frontend/src/routes/qa/quorum/+page.svelte').text(),
     ]);
-    expect(app).toContain("import('./ops-quorum')");
+    expect(app).toContain("import('./quorum/ops-quorum')");
     expect(svelteLoad).toContain('decodeQuorumRegistry(registry)');
     expect(svelteLoad).not.toContain('as QuorumRegistry');
     expect(sveltePage).toContain('buildQuorumView');

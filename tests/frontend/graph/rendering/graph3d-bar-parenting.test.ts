@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import { readFileSync } from 'node:fs';
 // `three` is a frontend-only dependency; the root test runner has no copy of its own.
-import * as THREE from '../../../frontend/node_modules/three';
+import * as THREE from '../../../../frontend/node_modules/three';
 
 import { createAccountBars } from '../../../../frontend/src/lib/network3d/AccountBarRenderer';
 import { toDerivedAccountData } from '../../../../frontend/src/lib/network3d/derivedAccount';

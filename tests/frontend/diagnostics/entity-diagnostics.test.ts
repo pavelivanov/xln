@@ -24,7 +24,7 @@ const diagnosticFiles = [
   },
   {
     path: 'frontend/src/lib/components/Entity/onboarding/formation/FormationPanel.svelte',
-    importLine: "import { errorLog } from '../../../stores/errorLogStore';",
+    importLine: "import { errorLog } from '../../../../stores/errorLogStore';",
     logLine: "errorLog.log('Entity creation failed', 'Formation Panel'",
   },
   {

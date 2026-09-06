@@ -141,9 +141,9 @@ describe('React wallet assets and accounts projection', () => {
     expect(source).toContain('createWalletRuntimeQueryClient');
     expect(source).toContain('RuntimeQueryObserver');
     expect(boundary).toContain('RuntimeQueryClient');
-    expect(boundary).toContain("import('../../../../core/api/runtime-adapter/remote.ts')");
+    expect(boundary).toContain("import('../../../../../core/api/runtime-adapter/remote.ts')");
     expect(boundary.indexOf("import('../../../../core/support/process/runtime-process.ts')"))
-      .toBeLessThan(boundary.indexOf("import('../../../../core/api/runtime-adapter/remote.ts')"));
+      .toBeLessThan(boundary.indexOf("import('../../../../../core/api/runtime-adapter/remote.ts')"));
     expect(boundary).toContain('catch (error: unknown)');
     expect(boundary).toContain('adapter.disconnect()');
     expect(source).toContain('this.observer?.destroy()');
