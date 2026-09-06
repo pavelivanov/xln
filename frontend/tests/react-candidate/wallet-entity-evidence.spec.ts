@@ -77,7 +77,8 @@ test('Ownership reads real released shares, refreshes and discards a delayed rea
   await entity.selectOption(company.entityId);
   await expect(shares.getByTestId('ownership-control-reserve')).toHaveText('80');
   await expect(shares.getByTestId('ownership-dividend-reserve')).toHaveText('40');
-  await expect(shares).toContainText('Share release status is not exposed by this Runtime read.');
+  await expect(shares.getByTestId('ownership-confirmed-nonce')).toHaveText('Confirmed action nonce 1');
+  await expect(shares.getByTestId('ownership-release-status')).toHaveText('No pending share release.');
   await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
   await screenshotEvidence(page, testInfo, 'wallet-ownership-shares-refreshed');
   expectNoBrowserErrors(errors);
