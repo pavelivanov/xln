@@ -1,9 +1,9 @@
 import { useWorkspaceTranslation } from '../../../../bridges/workspace-localization-react';
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
-import { buildCommandPaletteSuggestions, localizeCommandPaletteSuggestion, type CommandPaletteCommand, type CommandPaletteSuggestion } from '../../../../packages/ui/src/command-palette-suggestions';
-import { readOpsGossipDirectory } from './ops-workspace-query';
-import { useWorkspaceQuery } from './use-workspace-query';
-import { workspaceNetwork } from './ops-workspace-playback';
+import { buildCommandPaletteSuggestions, localizeCommandPaletteSuggestion, type CommandPaletteCommand, type CommandPaletteSuggestion } from '../../../../packages/ui/src/workspace/command-palette-suggestions';
+import { readOpsGossipDirectory } from './session/ops-workspace-query';
+import { useWorkspaceQuery } from './session/use-workspace-query';
+import { workspaceNetwork } from './session/ops-workspace-playback';
 
 export function OpsCommandPalette({ onCommand }: Readonly<{ onCommand: (command: CommandPaletteCommand) => void }>) {
   const { t } = useWorkspaceTranslation();

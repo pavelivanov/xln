@@ -5,7 +5,7 @@ import {
   CONTENT_SECURITY_POLICY_DIRECTIVES,
   CONTENT_SECURITY_POLICY_HTML_ATTRIBUTE,
   renderContentSecurityPolicy,
-} from '../../../frontend/config/content-security-policy.js';
+} from '../../../frontend/config/security/content-security-policy.js';
 import { getReactContentSecurityPolicy } from '../../../frontend/config/create-react-app-config';
 import svelteConfig from '../../../frontend/svelte.config.js';
 

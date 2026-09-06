@@ -3,7 +3,7 @@ import type { RuntimeReplica } from '@xln/core/api/public/runtime-module';
 import {
   buildSolvencyProjection as projectSolvencyCalculation,
   type SolvencyProjection,
-} from '../../../../../packages/runtime-client/src/solvency-panel-view';
+} from '../../../../../packages/runtime-client/src/panels/solvency-panel-view';
 
 export type { SolvencyProjection };
 

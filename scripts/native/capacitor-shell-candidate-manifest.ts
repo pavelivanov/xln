@@ -7,7 +7,7 @@ import { assertNativeWalletContentSecurityPolicy, createNativeCapacitorConfig } 
 import {
   snapshotRegularTree as snapshotTree,
   type RegularTreeFile,
-} from './regular-tree';
+} from './policy/regular-tree';
 import { verifyNativeWalletCandidateDirectory } from './wallet-candidate-manifest';
 
 export const CAPACITOR_SHELL_CANDIDATE_SCHEMA_VERSION = 1 as const;
@@ -17,7 +17,7 @@ export const CAPACITOR_SHELL_CANDIDATE_ROOT = resolve(
   '../../frontend/.artifacts/capacitor-shell-candidates',
 );
 
-export type { RegularTreeFile } from './regular-tree';
+export type { RegularTreeFile } from './policy/regular-tree';
 
 type SourceShellDigests = Readonly<{ ios: string; android: string }>;
 

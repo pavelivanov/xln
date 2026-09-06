@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { createGraph3dFpsOverlayView } from '../../../../packages/runtime-client/src/graph3d-viewport-view';
+  import { createGraph3dFpsOverlayView } from '../../../../packages/runtime-client/src/graph/graph3d-viewport-view';
 
   export let renderFps = 0;
   export let frameTime = 0;

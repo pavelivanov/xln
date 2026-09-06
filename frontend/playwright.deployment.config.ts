@@ -24,7 +24,7 @@ export default defineConfig({
     trace: 'retain-on-failure',
   },
   webServer: {
-    command: 'bun scripts/deployment-candidate-smoke-server.ts',
+    command: 'bun scripts/deployment/deployment-candidate-smoke-server.ts',
     url: `${baseURL}/__xln-deployment/state`,
     reuseExistingServer: false,
     timeout: 120_000,

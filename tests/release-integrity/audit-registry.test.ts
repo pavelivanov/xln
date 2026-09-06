@@ -92,13 +92,13 @@ describe('canonical audit registry', () => {
       'frontend/src/lib/stores/network/paymentSpotlightStore.ts',
       'frontend/src/lib/stores/network/paymentTerminalMonitor.ts',
       'frontend/src/lib/view/View.svelte',
-      'frontend/packages/runtime-client/src/xln-invoice.ts',
+      'frontend/packages/runtime-client/src/payments/xln-invoice.ts',
     ];
     const tests = [
       'tests/e2e-payment.spec.ts',
       'tests/frontend/payments/payment-panel-view.test.ts',
       'tests/frontend/payments/payment-terminal-monitor.test.ts',
-      'tests/frontend/runtime/runtime-command-bus.test.ts',
+      'tests/frontend/runtime/session/runtime-command-bus.test.ts',
       'core/__tests__/development/frontend/frontend-xln-invoice.test.ts',
     ];
     const owns = (path: string, globs: readonly string[]): boolean =>

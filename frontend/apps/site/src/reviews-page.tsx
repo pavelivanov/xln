@@ -4,7 +4,7 @@ import {
   getReviewText,
   REVIEW_MODELS,
   REVIEW_PROMPTS,
-} from '../../../packages/ui/src/reviews-model';
+} from '../../../packages/ui/src/content/reviews-model';
 import { SiteFooter, SiteShell } from './site-shell';
 
 type PromptSelectorProps = Readonly<{

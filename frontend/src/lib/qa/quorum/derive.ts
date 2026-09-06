@@ -1,5 +1,5 @@
-export { decodeQuorumRegistry, interactionsFromRegistry } from '../../../../packages/runtime-client/src/qa-quorum-registry';
-export type { QuorumRegistry } from '../../../../packages/runtime-client/src/qa-quorum-registry';
+export { decodeQuorumRegistry, interactionsFromRegistry } from '../../../../packages/runtime-client/src/qa/quorum/qa-quorum-registry';
+export type { QuorumRegistry } from '../../../../packages/runtime-client/src/qa/quorum/qa-quorum-registry';
 export {
   buildQuorumView,
   formatQuorumDate,
@@ -9,4 +9,4 @@ export {
   quorumVerdictLabel,
   shortQuorumSha,
   summarizeModels,
-} from '../../../../packages/runtime-client/src/qa-quorum-model';
+} from '../../../../packages/runtime-client/src/qa/quorum/qa-quorum-model';

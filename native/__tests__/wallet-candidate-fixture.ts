@@ -3,7 +3,7 @@ import { lstat, mkdir, mkdtemp, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 
-import { CONTENT_SECURITY_POLICY_HTML_ATTRIBUTE } from '../../frontend/config/content-security-policy.js';
+import { CONTENT_SECURITY_POLICY_HTML_ATTRIBUTE } from '../../frontend/config/security/content-security-policy.js';
 import { compareStableText, safeStringify } from '../../core/protocol/serialization';
 import { NATIVE_WALLET_CANDIDATE_MANIFEST } from '../../scripts/native/wallet-candidate-manifest';
 

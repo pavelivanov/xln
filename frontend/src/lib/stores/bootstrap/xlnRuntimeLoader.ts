@@ -1,7 +1,7 @@
 import { writable } from 'svelte/store';
 import type { XLNModule } from '@xln/core/api/public/runtime-module';
 import { isXLNModuleLoaded } from '@xln/core/api/public/runtime-module-guard';
-import { createBrowserRuntimeModuleLoader } from '../../../../packages/browser/src/runtime-module-loader';
+import { createBrowserRuntimeModuleLoader } from '../../../../packages/browser/src/runtime/session/runtime-module-loader';
 import { registerDebugSurface } from '$lib/utils/runtime/debugSurface';
 import '$lib/utils/runtime/wireDebug';
 

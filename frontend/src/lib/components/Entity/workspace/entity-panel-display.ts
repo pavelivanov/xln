@@ -1,1 +1,1 @@
-export * from '../../../../../packages/ui/src/entity-workspace-display';
+export * from '../../../../../packages/ui/src/entity/settings/entity-workspace-display';

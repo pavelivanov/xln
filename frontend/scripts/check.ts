@@ -1,13 +1,13 @@
 import { fileURLToPath } from 'node:url';
 import type { SurfaceId } from '../config/surfaces';
-import { runCommands, type CommandSpec } from './command-runner';
+import { runCommands, type CommandSpec } from './shared/command-runner';
 import { createBuildCommands } from './build';
-import { parseCheckRequest, selectChangedSurfaces, type CheckRequest } from './check-request';
+import { parseCheckRequest, selectChangedSurfaces, type CheckRequest } from './checks/check-request';
 
-export { parseCheckRequest, selectChangedSurfaces } from './check-request';
+export { parseCheckRequest, selectChangedSurfaces } from './checks/check-request';
 
 export const createLocalCheckCommands = (surfaceIds: readonly SurfaceId[]): readonly CommandSpec[] => [
-  { label: 'frontend-unsafe-types', argv: ['bun', 'scripts/check-unsafe-types.ts'] },
+  { label: 'frontend-unsafe-types', argv: ['bun', 'scripts/checks/check-unsafe-types.ts'] },
   { label: 'react-tooling', argv: ['bunx', 'tsc', '-p', 'tsconfig.react-tooling.json'] },
   ...surfaceIds.map(surfaceId => ({ label: `react-${surfaceId}`, argv: ['bunx', 'tsc', '-p', `apps/${surfaceId}/tsconfig.json`] })),
 ];
@@ -17,7 +17,7 @@ export const createCheckCommands = (request: CheckRequest): readonly CommandSpec
   if (request.level === 'local' || request.surfaceIds.length === 0) return commands;
   if (request.level === 'frontend') commands.push({ label: 'frontend-contracts', cwd: fileURLToPath(new URL('../..', import.meta.url)), argv: [
     'bun', 'test', 'tests/frontend/tooling/frontend-route-ownership.test.ts',
-    'tests/frontend/tooling/frontend-candidate-assembly.test.ts',
+    'tests/frontend/tooling/build/frontend-candidate-assembly.test.ts',
     'tests/frontend/tooling/frontend-platform-inventory.test.ts',
     'tests/frontend/tooling/frontend-shared-boundaries.test.ts',
   ] });

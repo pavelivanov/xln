@@ -1,5 +1,5 @@
 import { expect, test } from 'bun:test';
-import { CONTENT_SECURITY_POLICY_DIRECTIVES } from '../../../frontend/config/content-security-policy.js';
+import { CONTENT_SECURITY_POLICY_DIRECTIVES } from '../../../frontend/config/security/content-security-policy.js';
 import svelteConfig from '../../../frontend/svelte.config.js';
 import { runtimeHttpOriginFromWsUrl } from '../../../frontend/src/lib/utils/runtime/wsUrl';
 import { readFileSync } from 'node:fs';

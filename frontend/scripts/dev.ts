@@ -1,8 +1,8 @@
 import { fileURLToPath } from 'node:url';
 
 import { getSurface, type SurfaceId } from '../config/surfaces';
-import { prepareGeneratedInputs } from './generated-inputs';
-import { parseSurfaceSelection } from './surface-selection';
+import { prepareGeneratedInputs } from './inputs/generated-inputs';
+import { parseSurfaceSelection } from './shared/surface-selection';
 
 const FRONTEND_ROOT = fileURLToPath(new URL('..', import.meta.url));
 const REPOSITORY_ROOT = fileURLToPath(new URL('../..', import.meta.url));
@@ -40,7 +40,7 @@ export const createDevelopmentProcessSpecs = (
     },
     ...(runtimeFixtureEnabled ? [{
       label: 'wallet-address-runtime-fixture',
-      argv: ['bun', 'tests/react-candidate/wallet-runtime-fixture.ts'],
+      argv: ['bun', 'tests/react-candidate/wallet/fixtures/wallet-runtime-fixture.ts'],
       gatewayAware: false,
     }] : []),
   ];

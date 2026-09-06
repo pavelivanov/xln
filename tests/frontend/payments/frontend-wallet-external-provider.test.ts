@@ -1,8 +1,8 @@
 import { describe, expect, test } from 'bun:test';
 import { readFileSync } from 'node:fs';
 
-import { buildWalletEntityTxsInput } from '../../../frontend/apps/wallet/src/wallet-payment-model';
-import type { WalletPaymentProjection } from '../../../frontend/apps/wallet/src/wallet-payment-model';
+import { buildWalletEntityTxsInput } from '../../../frontend/apps/wallet/src/payments/wallet-payment-model';
+import type { WalletPaymentProjection } from '../../../frontend/apps/wallet/src/payments/wallet-payment-model';
 import {
   encodeWalletExternalRecipient,
   formatWalletExternalAmount,
@@ -11,7 +11,7 @@ import {
   walletExternalBindingMatches,
   walletExternalCompletionMessage,
   type WalletExternalProviderBinding,
-} from '../../../frontend/packages/browser/src/wallet-external-provider';
+} from '../../../frontend/packages/browser/src/wallet/wallet-external-provider';
 
 const entityId = `0x${'11'.repeat(32)}`;
 const signerId = `0x${'22'.repeat(20)}`;
@@ -78,8 +78,8 @@ describe('React wallet external provider', () => {
       { type: 'j_broadcast', data: {} },
     ]).entityInputs[0]?.entityTxs.map(({ type }) => type)).toEqual(['r2e', 'j_broadcast']);
 
-    const bridge = readFileSync('frontend/bridges/wallet-canonical-external-provider.ts', 'utf8');
-    const react = readFileSync('frontend/apps/wallet/src/wallet-payment-external.tsx', 'utf8');
+    const bridge = readFileSync('frontend/bridges/wallet/wallet-canonical-external-provider.ts', 'utf8');
+    const react = readFileSync('frontend/apps/wallet/src/payments/wallet-payment-external.tsx', 'utf8');
     expect(bridge.match(/assertCurrent\(request\.binding\)/g)).toHaveLength(4);
     expect(bridge).toContain('EXTERNAL_WALLET_APPROVAL_POSTCONDITION_FAILED');
     expect(bridge).toContain('walletExternalBindingMatches');

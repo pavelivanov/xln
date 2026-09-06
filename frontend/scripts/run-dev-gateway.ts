@@ -29,7 +29,7 @@ const run = async (): Promise<void> => {
   await runCommand([
     'bun',
     'build',
-    'scripts/dev-gateway.ts',
+    'scripts/dev/dev-gateway.ts',
     '--target=node',
     '--outfile',
     GATEWAY_OUTPUT,

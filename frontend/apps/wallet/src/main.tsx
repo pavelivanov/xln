@@ -16,7 +16,7 @@ document.title = metadata.title;
 description.content = metadata.description;
 
 if (page.kind === 'app' && resolveWalletAppView(window.location.search, window.location.hash) === 'scenario-preview') {
-  void import('./wallet-scenario-preview-runtime').then(module => module.startWalletScenarioPreviewRuntime());
+  void import('./scenario-preview/wallet-scenario-preview-runtime').then(module => module.startWalletScenarioPreviewRuntime());
 }
 
 createRoot(rootElement).render(

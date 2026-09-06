@@ -8,7 +8,7 @@
     formatSolvencyAmount,
     getSolvencyStatusView,
     shortenSolvencyAddress,
-  } from '../../../../../packages/runtime-client/src/solvency-panel-view';
+  } from '../../../../../packages/runtime-client/src/panels/solvency-panel-view';
 
   const emptyEnv = readable<RuntimeReplica | null>(null);
 

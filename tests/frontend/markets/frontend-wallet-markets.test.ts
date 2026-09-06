@@ -12,10 +12,10 @@ import {
   getStaticSwapTokenDimensions,
   prepareSwapOrderForDimensions,
 } from '../../../core/orderbook/types';
-import { buildWalletMarketCancelInput, buildWalletMarketOrderInput } from '../../../frontend/apps/wallet/src/wallet-market-command';
-import { decodeWalletMarketProjection } from '../../../frontend/apps/wallet/src/wallet-market-model';
-import type { WalletPaymentMath } from '../../../frontend/apps/wallet/src/wallet-payment-model';
-import type { WalletMarketMath } from '../../../frontend/apps/wallet/src/wallet-runtime-read-boundary';
+import { buildWalletMarketCancelInput, buildWalletMarketOrderInput } from '../../../frontend/apps/wallet/src/markets/wallet-market-command';
+import { decodeWalletMarketProjection } from '../../../frontend/apps/wallet/src/markets/wallet-market-model';
+import type { WalletPaymentMath } from '../../../frontend/apps/wallet/src/payments/wallet-payment-model';
+import type { WalletMarketMath } from '../../../frontend/apps/wallet/src/runtime/wallet-runtime-read-boundary';
 
 const alice = `0x${'11'.repeat(32)}`;
 const hub = `0x${'22'.repeat(32)}`;
@@ -235,8 +235,8 @@ describe('React wallet markets', () => {
   });
 
   test('keeps Runtime reads, idempotent command identity, cleanup, and React subscriptions explicit', () => {
-    const source = readFileSync('frontend/apps/wallet/src/wallet-market-source.ts', 'utf8');
-    const view = readFileSync('frontend/apps/wallet/src/wallet-markets.tsx', 'utf8');
+    const source = readFileSync('frontend/apps/wallet/src/markets/wallet-market-source.ts', 'utf8');
+    const view = readFileSync('frontend/apps/wallet/src/markets/wallet-markets.tsx', 'utf8');
     expect(source).toContain('client.readViewFrame');
     expect(source).toContain('client.readActivity');
     expect(source).toContain('prepareWalletPaymentCommand');

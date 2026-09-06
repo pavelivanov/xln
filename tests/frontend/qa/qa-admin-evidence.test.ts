@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { normalizeQaAdminHealth } from '../../../frontend/packages/runtime-client/src/qa-admin-evidence';
+import { normalizeQaAdminHealth } from '../../../frontend/packages/runtime-client/src/qa/evidence/qa-admin-evidence';
 
 describe('QA admin health projection', () => {
   test('projects runtime, relay and watchtower evidence from the public health boundary', () => {

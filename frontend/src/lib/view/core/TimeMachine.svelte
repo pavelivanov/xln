@@ -4,7 +4,7 @@
   import type { RuntimeReplica, EnvSnapshot, JReplica, RuntimeAdapterViewFrame, XLNModule } from '@xln/core/api/public/runtime-module';
   import type { JAdapter } from '@xln/core/jurisdiction/adapter';
   import { DISPLAY } from '@xln/core/config/constants';
-  import { ENTITY_WORKSPACE_TIME_MACHINE_HASH } from '../../../../packages/runtime-client/src/entity-workspace-time-machine';
+  import { ENTITY_WORKSPACE_TIME_MACHINE_HASH } from '../../../../packages/runtime-client/src/entity/entity-workspace-time-machine';
   import FrameSubtitle from '../../components/TimeMachine/FrameSubtitle.svelte';
   import NetworkMachineTimeline from './NetworkMachineTimeline.svelte';
   import { runtimeGraphScope } from '$lib/stores/network/runtimeGraphControlStore';

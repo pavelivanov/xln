@@ -53,7 +53,7 @@
   import OnboardingPanel from '$lib/components/Entity/onboarding/OnboardingPanel.svelte';
   import RuntimeCreation from '$lib/components/Views/RuntimeCreation.svelte';
   import JurisdictionPanel from './panels/JurisdictionPanel.svelte';
-  import FormationPanel from '$lib/components/Entity/onboarding/FormationPanel.svelte';
+  import FormationPanel from '$lib/components/Entity/onboarding/formation/FormationPanel.svelte';
   import AddJMachine from '$lib/components/Jurisdiction/AddJMachine.svelte';
   import {
     importJMachineViaRuntime,
@@ -66,7 +66,7 @@
   import {
     buildFormationRuntimeProjection,
     type FormationRuntimeProjection,
-  } from '$lib/components/Entity/onboarding/formation-runtime-projection';
+  } from '$lib/components/Entity/onboarding/formation/formation-runtime-projection';
 
   type RuntimeFrame = RuntimeReplica | EnvSnapshot;
   type JurisdictionLike = { name: string };

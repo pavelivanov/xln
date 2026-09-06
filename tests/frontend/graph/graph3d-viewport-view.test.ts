@@ -6,7 +6,7 @@ import {
   createGraph3dFpsOverlayView,
   createGraph3dViewportStatusView,
   createGraph3dVrHudView,
-} from '../../../frontend/packages/runtime-client/src/graph3d-viewport-view';
+} from '../../../frontend/packages/runtime-client/src/graph/graph3d-viewport-view';
 
 describe('Graph3D viewport presentation model', () => {
   test('pins the exact merged-view reference options', () => {

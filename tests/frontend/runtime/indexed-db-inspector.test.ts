@@ -1,6 +1,6 @@
 import { expect, test } from 'bun:test';
 import { encodeBinaryPayload } from '../../../core/protocol/serialization/binary-codec';
-import { decodeBlob, decodeKeyBlob, renderBlobPretty } from '../../../frontend/packages/runtime-client/src/indexed-db-inspector-value';
+import { decodeBlob, decodeKeyBlob, renderBlobPretty } from '../../../frontend/packages/runtime-client/src/storage/indexed-db-inspector-value';
 
 test('inspector decodes a canonical storage key and binary payload without losing bigint values', () => {
   expect(decodeKeyBlob(new Uint8Array([0x20])).label).toBe('head');

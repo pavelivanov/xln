@@ -1,1 +1,1 @@
-export * from '../../../packages/ui/src/market-cap-page-model';
+export * from '../../../packages/ui/src/content/market-cap-page-model';

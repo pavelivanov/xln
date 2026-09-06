@@ -8,9 +8,9 @@ import {
   createPackagedShellCandidatePlan,
   verifyPackagedShellCandidateDirectory,
 } from '../../scripts/native/packaged-shell-candidate-manifest';
-import { verifyPackagedShellPolicy } from '../../scripts/native/packaged-shell-policy';
+import { verifyPackagedShellPolicy } from '../../scripts/native/policy/packaged-shell-policy';
 import { copyPackagedShellCandidate } from '../../scripts/native/copy-packaged-shell-candidate';
-import { snapshotRegularTree } from '../../scripts/native/regular-tree';
+import { snapshotRegularTree } from '../../scripts/native/policy/regular-tree';
 import {
   createNativeWalletStageFixture,
   fixturePathExists,

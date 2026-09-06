@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import { formatTokenAmount } from '../../../core/account/financial-utils';
 import { initJBatch } from '../../../core/jurisdiction/machine/batch';
-import { buildWalletBatchTx, decodeWalletBatch } from '../../../frontend/apps/wallet/src/wallet-batch-model';
+import { buildWalletBatchTx, decodeWalletBatch } from '../../../frontend/apps/wallet/src/commands/wallet-batch-model';
 
 describe('wallet jurisdiction batch controls', () => {
   test('reviews all returned operations and refuses a changed draft', () => {

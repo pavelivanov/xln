@@ -51,7 +51,7 @@ describe('frontend check output', () => {
     try {
       mkdirSync(join(fixtureFrontend, 'static', 'contracts'), { recursive: true });
       writeFileSync(join(fixtureFrontend, 'copy-static-files.js'), readFileSync(join(repoRoot, 'frontend/copy-static-files.js')));
-      writeFileSync(join(fixtureFrontend, 'docs-catalog.js'), readFileSync(join(repoRoot, 'frontend/docs-catalog.js')));
+      writeFileSync(join(fixtureFrontend, 'docs-catalog.js'), readFileSync(join(repoRoot, 'frontend/scripts/docs/docs-catalog.js')));
       for (const contract of [
         'Account',
         'Depository',

@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 
-import { buildQaPerformanceTrend } from '../../../frontend/packages/runtime-client/src/qa-performance-trend';
-import type { QaHistoryEntry } from '../../../frontend/packages/runtime-client/src/qa-types';
+import { buildQaPerformanceTrend } from '../../../frontend/packages/runtime-client/src/qa/evidence/qa-performance-trend';
+import type { QaHistoryEntry } from '../../../frontend/packages/runtime-client/src/qa/evidence/qa-types';
 
 const row = (
   runId: string,

@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import { readFileSync } from 'node:fs';
 
-import { WalletNodeMnemonicRevealCoordinator } from '../../../frontend/packages/browser/src/wallet-node-mnemonic-reveal';
+import { WalletNodeMnemonicRevealCoordinator } from '../../../frontend/packages/browser/src/identity/wallet-node-mnemonic-reveal';
 
 type Recovery = Readonly<{ mnemonic24: string }>;
 
@@ -131,7 +131,7 @@ describe('browser wallet node mnemonic reveal', () => {
 
   test('keeps adapter access and secret publication in the Svelte event flow', () => {
     const boundary = readFileSync(
-      'frontend/packages/browser/src/wallet-node-mnemonic-reveal.ts',
+      'frontend/packages/browser/src/identity/wallet-node-mnemonic-reveal.ts',
       'utf8',
     );
     const view = readFileSync(

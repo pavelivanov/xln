@@ -7,7 +7,7 @@ import https from 'node:https';
 import { execSync } from 'node:child_process';
 import { resolve } from 'node:path';
 import { URL, fileURLToPath } from 'node:url';
-import { configureWsProxyLifecycle } from './vite-ws-proxy-lifecycle';
+import { configureWsProxyLifecycle } from './config/server/vite-ws-proxy-lifecycle';
 
 /**
  * HTTPS CONFIGURATION (DEV-ONLY)

@@ -18,7 +18,7 @@ if (unknownArgs.length > 0) {
 const gates: Gate[] = [
   { name: 'eslint-ratchet', command: ['bun', 'core/scripts/checks/architecture/check-eslint-ratchet.ts'] },
   { name: 'unsafe-types', command: ['bun', 'core/scripts/checks/architecture/check-unsafe-types.ts'] },
-  { name: 'frontend-unsafe-types', command: ['bun', 'frontend/scripts/check-unsafe-types.ts'] },
+  { name: 'frontend-unsafe-types', command: ['bun', 'frontend/scripts/checks/check-unsafe-types.ts'] },
   { name: 'determinism', command: ['bun', 'core/scripts/checks/architecture/check-determinism.ts', '--static-only'] },
   { name: 'no-weak-collections', command: ['bun', 'core/scripts/checks/policy/check-no-weak-collections.ts'] },
   { name: 'runtime-dependencies', command: ['bun', 'core/scripts/checks/architecture/check-runtime-dependencies.ts'] },

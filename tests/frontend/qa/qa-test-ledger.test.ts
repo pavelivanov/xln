@@ -1,12 +1,12 @@
 import { describe, expect, test } from 'bun:test';
 
-import type { QaTestLedgerEntry } from '../../../frontend/packages/runtime-client/src/qa-types';
+import type { QaTestLedgerEntry } from '../../../frontend/packages/runtime-client/src/qa/evidence/qa-types';
 import {
   filterQaTestLedger,
   sortQaTestLedger,
   summarizeQaTestLedger,
   type QaTestLedgerSortKey,
-} from '../../../frontend/packages/runtime-client/src/qa-test-ledger';
+} from '../../../frontend/packages/runtime-client/src/qa/evidence/qa-test-ledger';
 
 const rows: QaTestLedgerEntry[] = [
   {

@@ -1,1 +1,1 @@
-export * from '../../../packages/runtime-client/src/qa-performance-trend';
+export * from '../../../packages/runtime-client/src/qa/evidence/qa-performance-trend';

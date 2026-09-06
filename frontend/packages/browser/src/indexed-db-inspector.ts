@@ -1,5 +1,5 @@
-import { decodeBlob, decodeKeyBlob } from '../../runtime-client/src/indexed-db-inspector-value';
-import type { DbEntryView, IndexedDbMeta } from '../../runtime-client/src/indexed-db-inspector-key';
+import { decodeBlob, decodeKeyBlob } from '../../runtime-client/src/storage/indexed-db-inspector-value';
+import type { DbEntryView, IndexedDbMeta } from '../../runtime-client/src/storage/indexed-db-inspector-key';
 
 const requireIndexedDb = (): IDBFactory => {
   if (typeof indexedDB === 'undefined') throw new Error('IndexedDB is not available');

@@ -5,9 +5,9 @@ import {
   buildCommandPaletteView,
   buildCommandPaletteViewFromRuntimeView,
   findCommandPaletteEntities,
-} from '../../frontend/packages/ui/src/command-palette-view';
+} from '../../frontend/packages/ui/src/workspace/command-palette-view';
 
-import { buildCommandPaletteSuggestions } from '../../frontend/packages/ui/src/command-palette-suggestions';
+import { buildCommandPaletteSuggestions } from '../../frontend/packages/ui/src/workspace/command-palette-suggestions';
 
 const A = `0x${'11'.repeat(32)}`;
 const B = `0x${'22'.repeat(32)}`;

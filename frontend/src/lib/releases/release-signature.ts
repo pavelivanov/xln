@@ -1,1 +1,1 @@
-export * from '../../../packages/ui/src/release-signature';
+export * from '../../../packages/ui/src/releases/release-signature';

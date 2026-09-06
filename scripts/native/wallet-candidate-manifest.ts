@@ -3,7 +3,7 @@ import { lstat, readFile, readdir } from 'node:fs/promises';
 import { basename, join, relative, sep } from 'node:path';
 
 import { compareStableText, safeStringify } from '../../core/protocol/serialization';
-import type { CandidateReleaseManifest } from '../../frontend/scripts/candidate-release';
+import type { CandidateReleaseManifest } from '../../frontend/scripts/release/candidate-release';
 
 export const NATIVE_WALLET_CANDIDATE_SCHEMA_VERSION = 1 as const;
 export const NATIVE_WALLET_CANDIDATE_MANIFEST = 'native-wallet-candidate.json';

@@ -1,31 +1,31 @@
 import { fileURLToPath } from 'node:url';
 
 import { SURFACE_IDS, type SurfaceId } from '../config/surfaces';
-import { parseSurfaceSelection } from './surface-selection';
+import { parseSurfaceSelection } from './shared/surface-selection';
 
 export const CANDIDATE_BROWSER_TEST_FILES = {
   site: ['tests/react-candidate/site.spec.ts', 'tests/react-candidate/site-routes.spec.ts'],
   docs: ['tests/react-candidate/docs.spec.ts'],
-  wallet: ['tests/react-candidate/wallet-localization.spec.ts',
+  wallet: ['tests/react-candidate/wallet/wallet-localization.spec.ts',
     'tests/react-candidate/wallet.spec.ts',
-    'tests/react-candidate/wallet-financial.spec.ts',
-    'tests/react-candidate/wallet-transactions.spec.ts',
-    'tests/react-candidate/wallet-navigation.spec.ts',
-    'tests/react-candidate/wallet-settlement.spec.ts',
-    'tests/react-candidate/wallet-onboarding.spec.ts',
-    'tests/react-candidate/wallet-formation.spec.ts',
-    'tests/react-candidate/wallet-hub-discovery.spec.ts',
-    'tests/react-candidate/wallet-account-open.spec.ts',
-    'tests/react-candidate/wallet-account-view.spec.ts',
-    'tests/react-candidate/wallet-account-appearance.spec.ts',
-    'tests/react-candidate/wallet-account-rail.spec.ts',
-    'tests/react-candidate/wallet-account-dropdown.spec.ts',
-    'tests/react-candidate/wallet-entity-selection.spec.ts',
-    'tests/react-candidate/wallet-account-workspace.spec.ts',
-    'tests/react-candidate/wallet-account-commands.spec.ts',
-    'tests/react-candidate/wallet-entity-evidence.spec.ts',
+    'tests/react-candidate/wallet/wallet-financial.spec.ts',
+    'tests/react-candidate/wallet/wallet-transactions.spec.ts',
+    'tests/react-candidate/wallet/wallet-navigation.spec.ts',
+    'tests/react-candidate/wallet/wallet-settlement.spec.ts',
+    'tests/react-candidate/wallet/onboarding/wallet-onboarding.spec.ts',
+    'tests/react-candidate/wallet/onboarding/wallet-formation.spec.ts',
+    'tests/react-candidate/wallet/onboarding/wallet-hub-discovery.spec.ts',
+    'tests/react-candidate/wallet/account/wallet-account-open.spec.ts',
+    'tests/react-candidate/wallet/account/wallet-account-view.spec.ts',
+    'tests/react-candidate/wallet/account/wallet-account-appearance.spec.ts',
+    'tests/react-candidate/wallet/account/wallet-account-rail.spec.ts',
+    'tests/react-candidate/wallet/account/wallet-account-dropdown.spec.ts',
+    'tests/react-candidate/wallet/wallet-entity-selection.spec.ts',
+    'tests/react-candidate/wallet/account/wallet-account-workspace.spec.ts',
+    'tests/react-candidate/wallet/account/wallet-account-commands.spec.ts',
+    'tests/react-candidate/wallet/wallet-entity-evidence.spec.ts',
   ],
-  ops: ['tests/react-candidate/ops.spec.ts', 'tests/react-candidate/ops-command-palette.spec.ts', 'tests/react-candidate/ops-public-embed.spec.ts', 'tests/react-candidate/ops-workspace-localization.spec.ts', 'tests/react-candidate/ops-workspace-panels.spec.ts', 'tests/react-candidate/ops-workspace-session.spec.ts', 'tests/react-candidate/ops-workspace-graph.spec.ts', 'tests/react-candidate/ops-owner-unlock.spec.ts', 'tests/react-candidate/ops-local-owner-unlock.spec.ts', 'tests/react-candidate/ops-workspace-guide.spec.ts', 'tests/react-candidate/ops-workspace-local-panels.spec.ts', 'tests/react-candidate/ops-workspace-database.spec.ts', 'tests/react-candidate/ops-runtime-manager.spec.ts', 'tests/react-candidate/ops-workspace-settings.spec.ts', 'tests/react-candidate/ops-workspace-wallet.spec.ts', 'tests/react-candidate/ops-workspace-jurisdiction.spec.ts', 'tests/react-candidate/ops-workspace-architect.spec.ts', 'tests/react-candidate/ops-workspace-brainvault.spec.ts'],
+  ops: ['tests/react-candidate/ops/ops.spec.ts', 'tests/react-candidate/ops/workspace/ops-command-palette.spec.ts', 'tests/react-candidate/ops/ops-public-embed.spec.ts', 'tests/react-candidate/ops/workspace/ops-workspace-localization.spec.ts', 'tests/react-candidate/ops/panels/ops-workspace-panels.spec.ts', 'tests/react-candidate/ops/workspace/ops-workspace-session.spec.ts', 'tests/react-candidate/ops/panels/ops-workspace-graph.spec.ts', 'tests/react-candidate/ops/owner/ops-owner-unlock.spec.ts', 'tests/react-candidate/ops/owner/ops-local-owner-unlock.spec.ts', 'tests/react-candidate/ops/panels/ops-workspace-guide.spec.ts', 'tests/react-candidate/ops/panels/ops-workspace-local-panels.spec.ts', 'tests/react-candidate/ops/panels/ops-workspace-database.spec.ts', 'tests/react-candidate/ops/workspace/ops-runtime-manager.spec.ts', 'tests/react-candidate/ops/workspace/ops-workspace-settings.spec.ts', 'tests/react-candidate/ops/panels/ops-workspace-wallet.spec.ts', 'tests/react-candidate/ops/panels/ops-workspace-jurisdiction.spec.ts', 'tests/react-candidate/ops/panels/ops-workspace-architect.spec.ts', 'tests/react-candidate/ops/panels/ops-workspace-brainvault.spec.ts'],
 } as const satisfies Readonly<Record<SurfaceId, readonly string[]>>;
 
 export const CANDIDATE_BROWSER_READY_PATHS = {

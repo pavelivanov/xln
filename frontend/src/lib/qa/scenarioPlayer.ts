@@ -1,1 +1,1 @@
-export * from '../../../packages/runtime-client/src/qa-scenario-player';
+export * from '../../../packages/runtime-client/src/qa/qa-scenario-player';

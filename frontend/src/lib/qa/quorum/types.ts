@@ -8,4 +8,4 @@ export type {
   QuorumReviewChain,
   QuorumVerdict,
   QuorumView,
-} from '../../../../packages/runtime-client/src/qa-quorum-types';
+} from '../../../../packages/runtime-client/src/qa/quorum/qa-quorum-types';

@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import type { EnvSnapshot, RuntimeReplica, XLNModule } from '../../../core/api/public/runtime-module';
 
-import { createRuntimeScenarioSource } from '../../../frontend/packages/browser/src/runtime-scenario-source';
+import { createRuntimeScenarioSource } from '../../../frontend/packages/browser/src/runtime/session/runtime-scenario-source';
 
 const frames = [1, 2].map(height => ({
   state: { height, eReplicas: new Map() },

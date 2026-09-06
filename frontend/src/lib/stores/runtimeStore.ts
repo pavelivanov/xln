@@ -30,16 +30,16 @@ import {
   writeEmbeddedRuntimeAdapterSession,
   writeRemoteRuntimeAdapterSession,
   type RuntimeAdapterStorageSnapshot,
-} from '../../../packages/browser/src/runtime-adapter-session';
+} from '../../../packages/browser/src/runtime/session/runtime-adapter-session';
 import {
   createRuntimeSelectionCoordinator,
   type RuntimeSelectionLease,
-} from '../../../packages/runtime-client/src/runtime-selection';
+} from '../../../packages/runtime-client/src/runtime/runtime-selection';
 import {
   activateEmbeddedRuntimeTarget,
   activateRemoteRuntimeTarget,
   type RuntimeActivationTarget,
-} from '../../../packages/runtime-client/src/runtime-adapter-activation';
+} from '../../../packages/runtime-client/src/runtime/runtime-adapter-activation';
 
 export type { RuntimeSelectionLease };
 

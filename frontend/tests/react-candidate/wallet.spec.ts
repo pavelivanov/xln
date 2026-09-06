@@ -5,8 +5,8 @@ import {
   RUNTIME_ADAPTER_AUTH_KEY,
   RUNTIME_ADAPTER_MODE_KEY,
   RUNTIME_ADAPTER_WS_KEY,
-} from '../../packages/browser/src/runtime-adapter-session';
-import { WALLET_VAULT_STORAGE_KEY } from '../../packages/browser/src/wallet-vault-storage';
+} from '../../packages/browser/src/runtime/session/runtime-adapter-session';
+import { WALLET_VAULT_STORAGE_KEY } from '../../packages/browser/src/wallet/wallet-vault-storage';
 
 import {
   expectNoBrowserErrors,
@@ -14,9 +14,9 @@ import {
   observeBrowserErrors,
   screenshotEvidence,
 } from './browser-evidence';
-import { installImportedRuntime, readWalletRuntimeFixture } from './wallet-runtime-test-helpers';
-import { finishOpenedWalletSetup } from './wallet-onboarding-test-helpers';
-import { expectWalletHistoryEvents } from './wallet-history-test-helpers';
+import { installImportedRuntime, readWalletRuntimeFixture } from './wallet/fixtures/wallet-runtime-test-helpers';
+import { finishOpenedWalletSetup } from './wallet/onboarding/wallet-onboarding-test-helpers';
+import { expectWalletHistoryEvents } from './wallet/fixtures/wallet-history-test-helpers';
 
 const FIRST_MNEMONIC = 'test test test test test test test test test test test junk';
 const SECOND_MNEMONIC = 'abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about';

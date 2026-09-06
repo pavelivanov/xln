@@ -3,7 +3,7 @@ import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { Plugin, UserConfig } from 'vite';
 
-import { CONTENT_SECURITY_POLICY } from './content-security-policy.js';
+import { CONTENT_SECURITY_POLICY } from './security/content-security-policy.js';
 import {
   parseDevelopmentGatewayPort,
   parseDevelopmentPortOffset,

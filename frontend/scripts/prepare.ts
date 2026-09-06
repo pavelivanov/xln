@@ -1,7 +1,7 @@
 import { fileURLToPath } from 'node:url';
 
-import { prepareGeneratedInputs } from './generated-inputs';
-import { parseSurfaceSelection } from './surface-selection';
+import { prepareGeneratedInputs } from './inputs/generated-inputs';
+import { parseSurfaceSelection } from './shared/surface-selection';
 
 const FRONTEND_ROOT = fileURLToPath(new URL('..', import.meta.url));
 const REPOSITORY_ROOT = fileURLToPath(new URL('../..', import.meta.url));

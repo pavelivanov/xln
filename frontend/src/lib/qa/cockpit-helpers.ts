@@ -1,1 +1,1 @@
-export * from '../../../packages/runtime-client/src/qa-cockpit-helpers';
+export * from '../../../packages/runtime-client/src/qa/evidence/qa-cockpit-helpers';

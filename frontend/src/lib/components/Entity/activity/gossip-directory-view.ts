@@ -6,4 +6,4 @@ export {
   getGossipDirectoryDisplayName,
   type GossipDirectoryProfile,
   type GossipDirectoryView,
-} from '../../../../../packages/runtime-client/src/gossip-panel-view';
+} from '../../../../../packages/runtime-client/src/panels/gossip-panel-view';

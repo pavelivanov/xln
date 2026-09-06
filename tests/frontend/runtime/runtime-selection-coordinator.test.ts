@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import {
   createRuntimeSelectionCoordinator,
   type RuntimeSelectionLease,
-} from '../../../frontend/packages/runtime-client/src/runtime-selection';
+} from '../../../frontend/packages/runtime-client/src/runtime/runtime-selection';
 
 const deferred = <T>() => {
   let resolve!: (value: T) => void;
@@ -98,7 +98,7 @@ describe('runtime-client selection coordinator', () => {
   });
 
   test('keeps the Svelte store as the activation adapter', () => {
-    const boundary = readFileSync('frontend/packages/runtime-client/src/runtime-selection.ts', 'utf8');
+    const boundary = readFileSync('frontend/packages/runtime-client/src/runtime/runtime-selection.ts', 'utf8');
     const store = readFileSync('frontend/src/lib/stores/runtimeStore.ts', 'utf8');
 
     expect(boundary).not.toContain('svelte');

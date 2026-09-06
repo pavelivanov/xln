@@ -1,5 +1,5 @@
 import { expect, test } from 'bun:test';
-import { requireDraftToken, walletDraftPayment } from '../../../frontend/apps/wallet/src/wallet-command-draft';
+import { requireDraftToken, walletDraftPayment } from '../../../frontend/apps/wallet/src/commands/wallet-command-draft';
 
 test('Wallet drafts resolve symbols against the selected projection and reject missing or ambiguous assets', () => {
   const tokens = [{ tokenId: 7, symbol: 'USDC' }, { tokenId: 21, symbol: 'WETH' }];

@@ -17,12 +17,12 @@
     buildScenarioFrameVisual as buildFrameVisual,
     focusScenarioFrameIndex as focusFrameIndex,
     formatScenarioBuilderText as formatBuilderText,
-  } from '../../../../packages/runtime-client/src/scenario-player-model';
+  } from '../../../../packages/runtime-client/src/scenario/scenario-player-model';
   import {
     formatScenarioError as formatErrorMessage,
     recordBrowserScenario,
     stopScenarioPreviewInfra as stopPreviewInfra,
-  } from '../../../../packages/runtime-client/src/scenario-runtime';
+  } from '../../../../packages/runtime-client/src/scenario/scenario-runtime';
 
   let selectedScenarioId = defaultScenarioId;
   let selectedScenario = scenarioOptions.find((scenario) => scenario.id === defaultScenarioId)!;

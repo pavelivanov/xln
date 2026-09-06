@@ -25,7 +25,7 @@ import {
   getDocOrder,
   isFeaturedDoc,
   normalizeDocId,
-} from './docs-catalog.js';
+} from './scripts/docs/docs-catalog.js';
 
 const FRONTEND_DIR = dirname(fileURLToPath(import.meta.url));
 const fromFrontend = (...parts) => resolve(FRONTEND_DIR, ...parts);

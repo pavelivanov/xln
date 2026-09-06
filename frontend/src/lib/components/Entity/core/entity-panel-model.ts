@@ -8,7 +8,7 @@ import type {
 } from '@xln/core/api/public/runtime-module';
 import type { AccountReadView, EntityReadState, EntityReadView } from './entity-panel-types';
 import { unwrapLiveRuntimeEnv } from '$lib/utils/runtime/liveRuntimeEnv';
-import { projectEntityWorkspaceContext } from '../../../../../packages/runtime-client/src/entity-workspace-context';
+import { projectEntityWorkspaceContext } from '../../../../../packages/runtime-client/src/entity/entity-workspace-context';
 
 export function materializeReplicaView<T extends EntityReadView>(candidate: T | null | undefined): T | null {
   if (!candidate) return null;

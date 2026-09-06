@@ -1,6 +1,6 @@
 import { expect, test } from 'bun:test';
 import { buildAccountDisputeDeadline } from '../../../frontend/src/lib/components/Entity/account/account-focused-view';
-import { createAccountActivityPresentation } from '../../../frontend/src/lib/components/Entity/account/account-activity-presentation';
+import { createAccountActivityPresentation } from '../../../frontend/src/lib/components/Entity/account/activity/account-activity-presentation';
 import { requestAccountFaucet, type AccountFaucetRequest } from '../../../frontend/src/lib/components/Entity/account/account-faucet-command';
 
 test('focused dispute countdown uses observed Unix seconds and rounds a remaining partial second up', () => {

@@ -1,1 +1,1 @@
-export * from '../../../../packages/runtime-client/src/runtime-failure';
+export * from '../../../../packages/runtime-client/src/runtime/runtime-failure';

@@ -24,36 +24,36 @@ import {
   runtimeViewTracksHeightAdvance,
   type RuntimeViewHistoryScanState,
   type RuntimeViewPageInfo,
-} from '../../../packages/runtime-client/src/runtime-view-model';
+} from '../../../packages/runtime-client/src/runtime/view/runtime-view-model';
 import {
   RuntimeViewCatchupCoordinator,
   runtimeViewCatchupRetryDelayMs,
-} from '../../../packages/runtime-client/src/runtime-view-catchup';
+} from '../../../packages/runtime-client/src/runtime/view/runtime-view-catchup';
 import {
   RuntimeViewSelectionCoordinator,
   type RuntimeViewPageKind,
   type RuntimeViewSelection,
-} from '../../../packages/runtime-client/src/runtime-view-selection';
+} from '../../../packages/runtime-client/src/runtime/view/runtime-view-selection';
 import {
   RuntimeViewRefreshCoordinator,
   type RuntimeViewRefreshTarget,
-} from '../../../packages/runtime-client/src/runtime-view-refresh';
+} from '../../../packages/runtime-client/src/runtime/view/runtime-view-refresh';
 import {
   RuntimeViewLoader,
-} from '../../../packages/runtime-client/src/runtime-view-loader';
+} from '../../../packages/runtime-client/src/runtime/view/runtime-view-loader';
 import {
   RuntimeViewProjectionReader,
-} from '../../../packages/runtime-client/src/runtime-view-projections';
+} from '../../../packages/runtime-client/src/runtime/view/runtime-view-projections';
 import {
   RuntimeViewPublicationCoordinator,
-} from '../../../packages/runtime-client/src/runtime-view-publication';
+} from '../../../packages/runtime-client/src/runtime/view/runtime-view-publication';
 import {
   advanceRuntimeViewHeight,
   createEmptyRuntimeViewState,
   runtimeViewErrorMessage,
   selectRuntimeViewHeight,
   type RuntimeViewState,
-} from '../../../packages/runtime-client/src/runtime-view-state';
+} from '../../../packages/runtime-client/src/runtime/view/runtime-view-state';
 
 export {
   assertRuntimeViewIsLive,

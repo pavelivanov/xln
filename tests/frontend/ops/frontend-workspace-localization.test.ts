@@ -10,7 +10,7 @@ import de from '../../../frontend/src/lib/i18n/locales/de.json';
 import fr from '../../../frontend/src/lib/i18n/locales/fr.json';
 import tr from '../../../frontend/src/lib/i18n/locales/tr.json';
 import { readWorkspaceLocale, setWorkspaceLocale, t } from '../../../frontend/bridges/workspace-localization';
-import { buildCommandPaletteSuggestions, localizeCommandPaletteSuggestion } from '../../../frontend/packages/ui/src/command-palette-suggestions';
+import { buildCommandPaletteSuggestions, localizeCommandPaletteSuggestion } from '../../../frontend/packages/ui/src/workspace/command-palette-suggestions';
 import { isWorkspaceDefaultPanelTitle, workspacePanelTitle } from '../../../frontend/apps/ops/src/workspace/ops-panel-title';
 import { WALLET_APP_LINKS } from '../../../frontend/apps/wallet/src/app-shell-model';
 

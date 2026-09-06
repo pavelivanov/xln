@@ -4,8 +4,8 @@ import { basename, join, resolve } from 'node:path';
 
 import { compareStableText, safeStringify } from '../../core/protocol/serialization';
 import { assertNativeWalletContentSecurityPolicy } from './capacitor-candidate';
-import { verifyPackagedShellPolicy } from './packaged-shell-policy';
-import { snapshotRegularTree, type RegularTreeFile } from './regular-tree';
+import { verifyPackagedShellPolicy } from './policy/packaged-shell-policy';
+import { snapshotRegularTree, type RegularTreeFile } from './policy/regular-tree';
 import {
   NATIVE_WALLET_CANDIDATE_MANIFEST,
   verifyNativeWalletCandidateDirectory,

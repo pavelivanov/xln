@@ -23,8 +23,8 @@ import { registerDebugSurface } from '$lib/utils/runtime/debugSurface';
 import {
   RuntimeQueryClient as RuntimeQueryClientBoundary,
   clearRuntimeQueryCache,
-} from '../../../packages/runtime-client/src/runtime-query-client';
-import { RuntimeQueryObserver } from '../../../packages/runtime-client/src/runtime-query-observer';
+} from '../../../packages/runtime-client/src/runtime/query/runtime-query-client';
+import { RuntimeQueryObserver } from '../../../packages/runtime-client/src/runtime/query/runtime-query-observer';
 
 export { clearRuntimeQueryCache };
 

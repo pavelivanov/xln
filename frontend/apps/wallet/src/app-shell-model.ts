@@ -1,6 +1,6 @@
-import type { RuntimeAdapterStorageSnapshot } from '../../../packages/browser/src/runtime-adapter-session';
-import type { WalletEmbeddedRuntimeSessionSnapshot } from '../../../packages/browser/src/wallet-embedded-runtime-session';
-import { resolveWalletAppRoute } from './wallet-navigation-model';
+import type { RuntimeAdapterStorageSnapshot } from '../../../packages/browser/src/runtime/session/runtime-adapter-session';
+import type { WalletEmbeddedRuntimeSessionSnapshot } from '../../../packages/browser/src/runtime/wallet-embedded-runtime-session';
+import { resolveWalletAppRoute } from './navigation/wallet-navigation-model';
 
 export const WALLET_APP_LINKS = [
   { href: '/app', label: 'Overview', view: 'overview' },

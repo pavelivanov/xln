@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { PassThrough } from 'node:stream';
 import type { Page } from '@playwright/test';
-import { configureWsProxyLifecycle } from '../../../../frontend/vite-ws-proxy-lifecycle';
+import { configureWsProxyLifecycle } from '../../../../frontend/config/server/vite-ws-proxy-lifecycle';
 import {
   quiesceRuntimePage,
   resetRuntimePageQuiescence,

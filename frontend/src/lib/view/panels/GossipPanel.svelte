@@ -6,7 +6,7 @@
     emptyGossipDirectoryView,
     filterGossipDirectoryProfiles,
     getGossipDirectoryDisplayName,
-  } from '../../../../packages/runtime-client/src/gossip-panel-view';
+  } from '../../../../packages/runtime-client/src/panels/gossip-panel-view';
   import { runtimeControllerHandle } from '$lib/stores/runtimeControllerStore';
   import { createRuntimeQueryStore } from '$lib/stores/runtimeQueryClient';
 

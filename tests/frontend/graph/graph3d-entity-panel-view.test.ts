@@ -6,7 +6,7 @@ import {
   createGraph3dEntityPanelView,
   graph3dEntityBigInt,
   selectGraph3dEntityFrame,
-} from '../../../frontend/packages/runtime-client/src/graph3d-entity-panel-view';
+} from '../../../frontend/packages/runtime-client/src/graph/graph3d-entity-panel-view';
 
 const liveFrame = (eReplicas: unknown): RuntimeReplica => ({ state: { eReplicas } } as never);
 const historyFrame = (id: string, eReplicas: unknown = new Map()): EnvSnapshot => ({
@@ -104,7 +104,7 @@ describe('Graph3D entity mini-panel view model', () => {
   test('keeps stores and rendering in Svelte while delegating deterministic projection', () => {
     const source = readFileSync('frontend/src/lib/view/components/EntityMiniPanel.svelte', 'utf8');
 
-    expect(source).toContain("from '../../../../packages/runtime-client/src/graph3d-entity-panel-view'");
+    expect(source).toContain("from '../../../../packages/runtime-client/src/graph/graph3d-entity-panel-view'");
     expect(source).toContain('createGraph3dEntityPanelView({');
     expect(source).toContain('$runtimeFrameEnv');
     expect(source).toContain("dispatch('action'");

@@ -7,7 +7,7 @@ import {
   selectWalletIdentityMode,
   type WalletIdentityEntryState,
   type WalletIdentityMode,
-} from '../../../frontend/packages/browser/src/wallet-identity-entry';
+} from '../../../frontend/packages/browser/src/identity/wallet-identity-entry';
 
 const identityState = (
   mode: WalletIdentityMode,
@@ -137,7 +137,7 @@ describe('browser wallet identity entry', () => {
 
   test('keeps focus and field publication in the canonical Svelte view', () => {
     const boundary = readFileSync(
-      'frontend/packages/browser/src/wallet-identity-entry.ts',
+      'frontend/packages/browser/src/identity/wallet-identity-entry.ts',
       'utf8',
     );
     const view = readFileSync(

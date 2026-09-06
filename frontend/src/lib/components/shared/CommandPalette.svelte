@@ -17,9 +17,9 @@
   import {
     emptyCommandPaletteView,
     type CommandPaletteView,
-  } from '../../../../packages/ui/src/command-palette-view';
+  } from '../../../../packages/ui/src/workspace/command-palette-view';
 
-  import { buildCommandPaletteSuggestions } from '../../../../packages/ui/src/command-palette-suggestions';
+  import { buildCommandPaletteSuggestions } from '../../../../packages/ui/src/workspace/command-palette-suggestions';
 
   export let isOpen = false;
   export let commandPaletteView: CommandPaletteView = emptyCommandPaletteView();

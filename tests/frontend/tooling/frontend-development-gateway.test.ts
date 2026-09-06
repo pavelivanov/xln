@@ -20,7 +20,7 @@ import {
 import {
   createDevelopmentGateway,
   resolveDevelopmentProxyOwner,
-} from '../../../frontend/scripts/dev-gateway';
+} from '../../../frontend/scripts/dev/dev-gateway';
 import {
   createDevelopmentProcessSpecs,
   getDevelopmentExitFailure,
@@ -314,7 +314,7 @@ describe('React development gateway', () => {
       });
       expect(createDevelopmentProcessSpecs(['wallet']).at(-1)).toEqual({
         label: 'wallet-address-runtime-fixture',
-        argv: ['bun', 'tests/react-candidate/wallet-runtime-fixture.ts'],
+        argv: ['bun', 'tests/react-candidate/wallet/fixtures/wallet-runtime-fixture.ts'],
         gatewayAware: false,
       });
       expect(createDevelopmentProcessSpecs(['ops']).at(-2)).toEqual({
@@ -325,7 +325,7 @@ describe('React development gateway', () => {
       });
       expect(createDevelopmentProcessSpecs(['ops']).at(-1)).toEqual({
         label: 'wallet-address-runtime-fixture',
-        argv: ['bun', 'tests/react-candidate/wallet-runtime-fixture.ts'],
+        argv: ['bun', 'tests/react-candidate/wallet/fixtures/wallet-runtime-fixture.ts'],
         gatewayAware: false,
       });
       expect(createDevelopmentProcessSpecs(['site'])).toHaveLength(2);

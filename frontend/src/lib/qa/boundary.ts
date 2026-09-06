@@ -1,1 +1,1 @@
-export * from '../../../packages/runtime-client/src/qa-boundary';
+export * from '../../../packages/runtime-client/src/qa/evidence/qa-boundary';

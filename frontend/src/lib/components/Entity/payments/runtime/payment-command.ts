@@ -1,1 +1,1 @@
-export { buildPaymentRuntimeInput } from '../../../../../../packages/runtime-client/src/payment-command';
+export { buildPaymentRuntimeInput } from '../../../../../../packages/runtime-client/src/payments/payment-command';

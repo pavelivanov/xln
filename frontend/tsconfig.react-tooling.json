@@ -11,15 +11,15 @@
     "config/create-react-app-config.ts",
     "config/surfaces.ts",
     "scripts/build.ts",
-    "scripts/candidate-release.ts",
+    "scripts/release/candidate-release.ts",
     "scripts/check.ts",
-    "scripts/command-runner.ts",
-    "scripts/dev-gateway.ts",
+    "scripts/shared/command-runner.ts",
+    "scripts/dev/dev-gateway.ts",
     "scripts/dev.ts",
-    "scripts/generated-input-manifest.ts",
-    "scripts/generated-inputs.ts",
+    "scripts/inputs/generated-input-manifest.ts",
+    "scripts/inputs/generated-inputs.ts",
     "scripts/prepare.ts",
     "scripts/run-dev-gateway.ts",
-    "scripts/surface-selection.ts"
+    "scripts/shared/surface-selection.ts"
   ]
 }

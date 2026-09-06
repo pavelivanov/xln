@@ -1,32 +1,32 @@
 import { lazy, Suspense, useEffect, useState, useSyncExternalStore, type MouseEvent as ReactMouseEvent } from 'react';
 import { useWorkspaceTranslation } from '../../../bridges/workspace-localization-react';
 
-import { readRuntimeAdapterStorageSnapshot } from '../../../packages/browser/src/runtime-adapter-session';
-import type { WalletAuthScheme } from '../../../packages/browser/src/wallet-runtime-preferences';
+import { readRuntimeAdapterStorageSnapshot } from '../../../packages/browser/src/runtime/session/runtime-adapter-session';
+import type { WalletAuthScheme } from '../../../packages/browser/src/runtime/wallet-runtime-preferences';
 import {
   resolveWalletRuntimeSummary,
   WALLET_APP_LINKS,
   type WalletRuntimeSummary,
 } from './app-shell-model';
-import { IdentityOnboarding } from './identity-onboarding';
-import { WalletExistingSetupGate } from './wallet-onboarding';
-import { WalletDiagnostics } from './wallet-diagnostics';
-import { WalletFinancialHealth } from './wallet-financial-health';
-import { WalletMarkets } from './wallet-markets';
-import { WalletPayments } from './wallet-payments';
-import { WalletPortfolio } from './wallet-portfolio';
-import { WalletWorkspaceSelection } from './wallet-workspace-selection';
-import { WalletAccountRail } from './wallet-account-rail';
-import { WalletAccountWorkspace } from './wallet-account-workspace';
-import { WalletSettings } from './wallet-settings';
-import { navigateWallet, useWalletRoute } from './wallet-navigation';
-import { walletPaymentTabHref } from './wallet-navigation-model';
-import { readWalletPreferences } from './wallet-settings-model';
+import { IdentityOnboarding } from './identity/identity-onboarding';
+import { WalletExistingSetupGate } from './onboarding/wallet-onboarding';
+import { WalletDiagnostics } from './diagnostics/wallet-diagnostics';
+import { WalletFinancialHealth } from './financial-health/wallet-financial-health';
+import { WalletMarkets } from './markets/wallet-markets';
+import { WalletPayments } from './payments/wallet-payments';
+import { WalletPortfolio } from './portfolio/wallet-portfolio';
+import { WalletWorkspaceSelection } from './runtime/wallet-workspace-selection';
+import { WalletAccountRail } from './account/wallet-account-rail';
+import { WalletAccountWorkspace } from './account/wallet-account-workspace';
+import { WalletSettings } from './settings/wallet-settings';
+import { navigateWallet, useWalletRoute } from './navigation/wallet-navigation';
+import { walletPaymentTabHref } from './navigation/wallet-navigation-model';
+import { readWalletPreferences } from './settings/wallet-settings-model';
 import {
   getWalletEmbeddedRuntimeSnapshot,
   startWalletEmbeddedRuntime,
   subscribeWalletEmbeddedRuntime,
-} from './wallet-embedded-runtime';
+} from './runtime/wallet-embedded-runtime';
 import './styles/app-shell.css';
 
 const readRuntimeConfig = () =>
@@ -35,7 +35,7 @@ const readRuntimeConfig = () =>
 let runtimeInitializationStarted = false;
 
 const WalletScenarioPreview = lazy(async () => {
-  const module = await import('./wallet-scenario-preview');
+  const module = await import('./scenario-preview/wallet-scenario-preview');
   return { default: module.WalletScenarioPreview };
 });
 

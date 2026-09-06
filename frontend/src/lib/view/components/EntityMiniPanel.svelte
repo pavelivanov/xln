@@ -8,7 +8,7 @@
   import { createEventDispatcher } from 'svelte';
   import type { Writable } from 'svelte/store';
   import type { RuntimeReplica, EnvSnapshot } from '@xln/core/api/public/runtime-module';
-  import { createGraph3dEntityPanelView } from '../../../../packages/runtime-client/src/graph3d-entity-panel-view';
+  import { createGraph3dEntityPanelView } from '../../../../packages/runtime-client/src/graph/graph3d-entity-panel-view';
   import { formatTokenAmount } from './entity/shared/formatters';
   import { getTokenInfo } from '@xln/core/account/utils';
 

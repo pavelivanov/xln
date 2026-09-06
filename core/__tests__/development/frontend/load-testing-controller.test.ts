@@ -3,11 +3,11 @@ import { describe, expect, test } from 'bun:test';
 import {
   createLoadTestingController,
   selectExternalSwapLevel,
-} from '../../../../frontend/src/lib/components/Entity/account/load-testing-controller';
+} from '../../../../frontend/src/lib/components/Entity/account/load-testing/load-testing-controller';
 import {
   LoadTestScheduler,
   type LoadTestSchedulerSnapshot,
-} from '../../../../frontend/src/lib/components/Entity/account/load-testing-scheduler';
+} from '../../../../frontend/src/lib/components/Entity/account/load-testing/load-testing-scheduler';
 import type { PaymentPanelView } from '../../../../frontend/src/lib/components/Entity/payments/payment-panel-view';
 import type { DeriveDeltaFn } from '../../../../frontend/src/lib/components/Entity/payment-routing';
 import { applyCommand, createBook } from '../../../orderbook';
