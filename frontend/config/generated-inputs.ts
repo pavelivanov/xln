@@ -126,6 +126,7 @@ export const GENERATED_INPUTS: readonly GeneratedInputDefinition[] = [
     sourcePaths: [
       'scripts/build-runtime.sh',
       'core/api/public',
+      'core/rscore/ts-worker',
     ],
     outputNamespace: 'wallet-runtime-bundle',
     producer: {
@@ -135,7 +136,10 @@ export const GENERATED_INPUTS: readonly GeneratedInputDefinition[] = [
       outputPath: 'runtime.js',
       environment: {},
       copies: [],
-      outputRoutes: [{ kind: 'exact', pathname: '/runtime.js' }],
+      outputRoutes: [
+        { kind: 'exact', pathname: '/runtime.js' },
+        { kind: 'exact', pathname: '/account-worker.js' },
+      ],
     },
   },
   {
