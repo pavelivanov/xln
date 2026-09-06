@@ -163,6 +163,10 @@ describe('React development gateway', () => {
     expect(resolveDevelopmentGatewayRequest('/runtime.js')).toEqual({
       kind: 'proxy', owner: 'wallet', rewrite: 'app-base',
     });
+    const accountWorker = resolveDevelopmentGatewayRequest('/account-worker.js');
+    expect(accountWorker).toEqual({ kind: 'proxy', owner: 'wallet', rewrite: 'app-base' });
+    if (accountWorker.kind !== 'proxy') throw new Error('TEST_ACCOUNT_WORKER_PROXY_REQUIRED');
+    expect(rewriteDevelopmentGatewayUrl('/account-worker.js', accountWorker)).toBe('/__app/wallet/account-worker.js');
     expect(resolveDevelopmentGatewayRequest('/scenarios/catalog.json')).toEqual({
       kind: 'proxy', owner: 'ops', rewrite: 'app-base',
     });

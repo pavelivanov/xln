@@ -133,6 +133,7 @@ Work from leaf modules toward lifecycle owners. Inspect importers first. Move on
 | I06d open | Move backup/recovery-service orchestration after I06c. | Existing backup, recovery selection and push-wake evidence passes with unchanged formats and storage. |
 | I07 open | Extract active Runtime/controller/command bridge glue from `xlnStore.ts` and `runtimeControllerStore.ts` after I04–I06d. | Runtime switching and final teardown preserve one owner; commands use the canonical bus and reject stale context. |
 | I08 open | Remove remaining app-to-retained-tree imports and React `$lib` alias after I01–I07. | `tests/frontend/tooling/frontend-shared-boundaries.test.ts` passes unchanged, including the core-import contract. Resolve current Solvency/DB decoder ownership properly. No transitive Svelte dependency remains in React artifacts. |
+| I08a done — `tests/frontend/tooling/frontend-generated-inputs.test.ts` | Declare the canonical Account worker emitted alongside the Runtime bundle and publish both exact artifacts to Wallet/Ops. | Real Ops preparation passes; 26 generated-input/assembly/gateway tests (152 assertions) and React tooling typecheck pass. The strict undeclared-output rejection is preserved. |
 
 ### Final verification — separate runs, concrete outputs
 
