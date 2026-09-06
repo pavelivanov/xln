@@ -13,7 +13,7 @@ test('workspace language and guide retain preferences, keyboard placement and fo
   await expect(locale.locator('option')).toHaveCount(10);
   await locale.selectOption('ru');
   await expect(page.locator('html')).toHaveAttribute('lang', 'ru');
-  await expect(locale.locator('..')).toContainText('Язык');
+  await expect(locale.locator('..')).toContainText('\u042f\u0437\u044b\u043a');
   await page.reload();
   await expect(locale).toHaveValue('ru');
   const guide = page.getByTestId('xln-mascot-toggle');
