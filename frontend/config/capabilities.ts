@@ -541,6 +541,7 @@ export const CAPABILITIES = [
       'frontend/apps/ops/src/workspace/ops-workspace-playback.ts',
       'frontend/apps/ops/src/workspace/ops-workspace-timeline.tsx',
       'frontend/apps/ops/src/workspace/ops-workspace-guide.tsx',
+      'frontend/packages/ui/src/mascot-geometry.ts',
       'frontend/apps/ops/src/workspace/ops-guide-chat.tsx',
       'frontend/apps/ops/src/workspace/ops-locale-selector.tsx',
       'frontend/apps/ops/src/workspace/use-workspace-environment.ts',

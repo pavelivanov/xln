@@ -14,7 +14,7 @@ import { errorLog } from './errorLogStore';
 import {
   DEFAULT_XLN_MASCOT_DOCK,
   normalizeXlnMascotDock,
-} from '$lib/components/XlnMascot/mascot-geometry';
+} from '../../../packages/ui/src/mascot-geometry';
 
 const VALID_BAR_COLOR_MODES: readonly BarColorMode[] = ['rgy', 'theme', 'token'] as const;
 const VALID_ACCOUNT_DELTA_VIEW_MODES: readonly AccountDeltaViewMode[] = ['per-token', 'aggregated'] as const;

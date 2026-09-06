@@ -11,6 +11,8 @@ import type { EntityInput } from '@xln/core/entity/types';
 import type { FrameLogEntry } from '@xln/core/types/logging';
 import type { ThemeName } from '../../../packages/ui/src/theme-model';
 
+import type { XlnMascotDockPlacement } from '../../../packages/ui/src/mascot-geometry';
+
 export type LogLevel = FrameLogEntry['level'];
 
 // Re-export commonly used backend types for convenience
@@ -110,14 +112,6 @@ export interface UiSettingsExport {
   barAnimGlow: boolean;
   barAnimDeltaFlash: boolean;
   barAnimRipple: boolean;
-}
-
-export type XlnMascotDockSide = 'left' | 'right' | 'top' | 'bottom';
-
-export interface XlnMascotDockPlacement {
-  version: 1;
-  side: XlnMascotDockSide;
-  offsetRatio: number;
 }
 
 export type AccountSkin = 'classic' | 'apple';

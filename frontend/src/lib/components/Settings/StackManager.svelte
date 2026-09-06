@@ -14,6 +14,7 @@
     defaultStackStablecoinKind,
     deployStack,
     fetchStackManagerStatus,
+    requireStackManagerProbe,
     type StackManagerDeployResult,
     type StackManagerProbe,
     type StackManagerStatus,
@@ -140,11 +141,7 @@
       const response = await fetchStackManagerStatus(runtimeApiOrigin, rpcUrl.trim(), signerId, runtimeAdminCapability);
       status = response.status;
       signerIds = response.signerIds;
-      if (!signerIds.includes(signerId)) throw new Error('STACK_MANAGER_SIGNER_NOT_OWNED');
-      if (!response.probe) throw new Error('STACK_MANAGER_RPC_PROBE_MISSING');
-      if (response.probe.rpcUrl !== rpcUrl.trim()) throw new Error('STACK_MANAGER_PROBE_RPC_MISMATCH');
-      if (response.probe.signerId !== signerId) throw new Error('STACK_MANAGER_PROBE_SIGNER_MISMATCH');
-      probe = response.probe;
+      probe = requireStackManagerProbe(response, rpcUrl.trim(), signerId);
       confirmations = probe.chainId === 31_337 || probe.chainId === 1_337 ? 1 : 12;
       if (!stablecoinEdited) stablecoinKind = defaultStackStablecoinKind(probe.chainId);
     } catch (value) {
