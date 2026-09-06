@@ -4,7 +4,7 @@ import {
   deriveEthereumAddress,
   deriveKey,
   entropyToMnemonic,
-} from '../../brainvault/core.ts';
+} from '../../brainvault/src/core/index.ts';
 import type {
   WalletBrainVaultDerivationInput,
   WalletBrainVaultDerivedMaterial,

@@ -1,4 +1,4 @@
-import { BRAINVAULT_V1 } from '../../../../brainvault/primitives/spec.ts';
+import { BRAINVAULT_V1 } from '../../../../brainvault/src/core/primitives/spec.ts';
 import type { DemoAccount } from '../../../packages/ui/src/demo-accounts';
 import type {
   WalletIdentityEntryState,
@@ -94,7 +94,7 @@ export const normalizeWalletIdentityMnemonic = normalizeMnemonicPhrase;
 export const deriveWalletIdentityMnemonicAddress = async (
   mnemonicInput: string,
 ): Promise<string> => {
-  const { deriveEthereumAddress } = await import('../../../../brainvault/core.ts');
+  const { deriveEthereumAddress } = await import('../../../../brainvault/src/core/index.ts');
   try {
     return await deriveEthereumAddress(normalizeWalletIdentityMnemonic(mnemonicInput));
   } catch (error: unknown) {

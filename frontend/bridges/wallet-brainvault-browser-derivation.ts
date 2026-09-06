@@ -3,7 +3,7 @@ import {
   BRAINVAULT_V1_SPEC_ID,
   getShardCount,
   hexToBytes,
-} from '../../brainvault/core.ts';
+} from '../../brainvault/src/core/index.ts';
 import type {
   WalletBrainVaultDerivationInput,
   WalletBrainVaultDerivationProgress,
