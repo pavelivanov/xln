@@ -273,7 +273,7 @@ describe('frontend generated input preparation', () => {
     expect(await readFile(join(frontendRoot, '.artifacts/public/wallet/runtime.js'), 'utf8')).toBe('runtime');
   });
 
-  test('builds the canonical Runtime browser bundle as a deterministic wallet input', async () => {
+  test('builds the canonical Runtime and Account worker bundles for both browser consumers', async () => {
     const { frontendRoot } = await createWorkspace();
     const runtimeDefinition = PREPARED_GENERATED_INPUTS.find(({ id }) => id === 'wallet-runtime-bundle');
     if (runtimeDefinition === undefined) throw new Error('TEST_RUNTIME_INPUT_DEFINITION_MISSING');
@@ -281,24 +281,27 @@ describe('frontend generated input preparation', () => {
     const first = await prepareGeneratedInputs(
       REPOSITORY_ROOT,
       frontendRoot,
-      ['wallet'],
+      ['wallet', 'ops'],
       [runtimeDefinition],
     );
     const second = await prepareGeneratedInputs(
       REPOSITORY_ROOT,
       frontendRoot,
-      ['wallet'],
+      ['wallet', 'ops'],
       [runtimeDefinition],
     );
-    const publicBundle = await readFile(join(frontendRoot, '.artifacts/public/wallet/runtime.js'));
-
     expect(second).toEqual(first);
-    expect(first[0]?.files).toEqual([expect.objectContaining({
-      destinationPath: 'runtime.js',
-      sourcePath: 'command:wallet-runtime-bundle',
-    })]);
-    expect(first[0]?.files[0]?.size).toBeGreaterThan(1_000_000);
-    expect(publicBundle.byteLength).toBe(first[0]?.files[0]?.size);
+    const files = first[0]?.files ?? [];
+    expect(files.map(({ destinationPath }) => destinationPath)).toEqual(['account-worker.js', 'runtime.js']);
+    for (const file of files) {
+      expect(file.sourcePath).toBe('command:wallet-runtime-bundle');
+      expect(file.size).toBeGreaterThan(1_000_000);
+      const payload = await readFile(join(frontendRoot, '.artifacts/inputs/wallet-runtime-bundle/files', file.destinationPath));
+      for (const consumer of ['wallet', 'ops']) {
+        const published = await readFile(join(frontendRoot, '.artifacts/public', consumer, file.destinationPath));
+        expect(published).toEqual(payload);
+      }
+    }
   });
 
   test('prepares the canonical docs catalog without a retired docs-static source', async () => {
