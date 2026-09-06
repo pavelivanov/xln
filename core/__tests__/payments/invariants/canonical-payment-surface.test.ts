@@ -101,7 +101,10 @@ test('each payment operation retains one explicit canonical transaction path', (
   expect(ENTITY_TX_TYPES.includes('lendingRepay')).toBe(true);
   expect(ENTITY_TX_TYPES.includes('lendingClosePosition')).toBe(true);
 
-  const paymentCommand = source('frontend/src/lib/components/Entity/payments/runtime/payment-command.ts');
+  expect(source('frontend/src/lib/components/Entity/payments/runtime/payment-command.ts').trim())
+    .toBe("export { buildPaymentRuntimeInput } from '../../../../../../packages/runtime-client/src/payment-command';");
+
+  const paymentCommand = source('frontend/packages/runtime-client/src/payment-command.ts');
   expect(paymentCommand).toContain("const isDirect = input.deliveryMode === 'direct';");
   expect(paymentCommand).toContain("const isTrusted = input.deliveryMode === 'trusted';");
   expect(paymentCommand).toContain('const usesDirectPayment = isDirect || isTrusted;');
@@ -173,7 +176,7 @@ test('four payment modes stay distinct while retired swap alternatives fail loud
   for (const mode of ['direct', 'instant', 'async', 'trusted']) {
     expect(paymentPanel).toContain(`value: '${mode}'`);
   }
-  expect(source('frontend/src/lib/components/Entity/payments/runtime/payment-command.ts'))
+  expect(source('frontend/packages/runtime-client/src/payment-command.ts'))
     .toContain("type: 'directPayment'");
 });
 
