@@ -6,9 +6,10 @@ import { OpsRuntimePolicies } from './ops-runtime-policies';
 import { SettingsRange } from './ops-settings-range';
 import { OpsSettingsCamera } from './ops-settings-camera';
 import { OpsConsolePanel } from './ops-console-panel';
+import { OpsStackManager } from './ops-stack-manager';
 import { OpsSettingsPresentation } from './ops-settings-presentation';
 
-const categories = ['Storage', 'Scene', 'Camera', 'Entities', 'Performance', 'Console', 'Presentation'] as const;
+const categories = ['Storage', 'Stack Manager', 'Scene', 'Camera', 'Entities', 'Performance', 'Console', 'Presentation'] as const;
 type Category = typeof categories[number];
 type NumericKey = { [K in keyof ViewSettings]: ViewSettings[K] extends number ? K : never }[keyof ViewSettings];
 
@@ -29,6 +30,7 @@ export function OpsSettingsPanel() {
     {issue || display.issue ? <p role="alert">{issue || display.issue}</p> : null}
     <div className="ops-settings-content" key={category}>
       {category === 'Storage' ? <OpsRuntimePolicies kind="storage" /> : null}
+      {category === 'Stack Manager' ? <OpsStackManager /> : null}
       {category === 'Scene' ? <>
         <h3>Scene</h3><label className="ops-settings-toggle"><input type="checkbox" checked={display.preferences.showXlnMascot} onChange={event => apply(() => opsDisplayPreferencesSource.setXlnGuideVisibility(event.currentTarget.checked))} /> Show xln guide</label>
         {range('gridSize', 'Grid size', 100, 2000, 50)}{range('gridDivisions', 'Grid divisions', 1, 200, 1)}{range('gridOpacity', 'Grid opacity', 0, 1, 0.05)}

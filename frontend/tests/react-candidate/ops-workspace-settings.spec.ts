@@ -156,3 +156,59 @@ test('recorded Settings control the retained scene and camera without editing Ru
   await expectPageContained(page);
   expectNoBrowserErrors(errors);
 });
+
+
+test('Stack Manager inspects the real daemon signer and exact RPC, rejects failures and clears stale probes', async ({ page }, testInfo) => {
+  const { installImportedRuntime, readWalletRuntimeFixture } = await import('./wallet-runtime-test-helpers');
+  const errors = observeBrowserErrors(page);
+  const fixture = await readWalletRuntimeFixture(page);
+  await openWorkspaceStorageOrigin(page);
+  await installImportedRuntime(page, fixture);
+  await page.goto('/__app/ops/entity-workspace');
+  await page.getByRole('button', { name: 'Open Settings panel', exact: true }).click();
+  const settings = page.getByTestId('workspace-settings');
+  await settings.getByRole('button', { name: 'Stack Manager', exact: true }).click();
+  const stack = settings.getByTestId('workspace-stack-manager');
+  await expect(stack.getByTestId('stack-manager-phase')).toHaveText('Deployment phase: idle');
+  const signer = await stack.getByTestId('stack-manager-signer').inputValue();
+  expect(signer).toMatch(/^0x[0-9a-f]{40}$/);
+  await stack.getByTestId('stack-manager-rpc').fill(fixture.recovery.rpcUrl);
+  await stack.getByRole('button', { name: 'Probe RPC', exact: true }).click();
+  await expect(stack.getByTestId('stack-manager-probe')).toContainText(fixture.recovery.rpcUrl);
+  await expect(stack.getByTestId('stack-manager-probe')).toContainText(signer);
+  await stack.getByTestId('stack-manager-probe').scrollIntoViewIfNeeded();
+  await screenshotEvidence(page, testInfo, 'ops-settings-stack-manager-probe');
+  expectNoBrowserErrors(errors);
+  await stack.getByTestId('stack-manager-rpc').fill('file:///invalid-rpc');
+  await expect(stack.getByTestId('stack-manager-probe')).toHaveCount(0);
+  await stack.getByRole('button', { name: 'Probe RPC', exact: true }).click();
+  await expect(stack.getByRole('alert')).toHaveText('STACK_MANAGER_STATUS_HTTP_400');
+  await screenshotEvidence(page, testInfo, 'ops-settings-stack-manager-error');
+  expect(errors.pageErrors).toEqual([]);
+  expect(errors.consoleErrors).toEqual(['Failed to load resource: the server responded with a status of 400 (Bad Request)']);
+  await stack.getByRole('button', { name: 'Refresh Runtime signers', exact: true }).click();
+  await expect(stack.getByTestId('stack-manager-phase')).toBeVisible();
+  await expect(stack.getByRole('alert')).toHaveCount(0);
+  await settings.getByRole('button', { name: 'Scene', exact: true }).click();
+  await settings.getByRole('button', { name: 'Stack Manager', exact: true }).click();
+  await expect(stack.getByTestId('stack-manager-phase')).toBeVisible();
+  await expect(stack.getByTestId('stack-manager-rpc')).toHaveValue('');
+  await expect(stack.getByTestId('stack-manager-probe')).toHaveCount(0);
+  expect(await stack.innerText()).not.toContain(fixture.token);
+  await expectPageContained(page);
+});
+
+test('Stack Manager does not inspect a daemon from an in-browser Runtime', async ({ page }, testInfo) => {
+  const errors = observeBrowserErrors(page);
+  await openWorkspaceStorageOrigin(page);
+  await page.evaluate(() => localStorage.setItem('xln-runtime-adapter-mode', 'embedded'));
+  await page.goto('/__app/ops/entity-workspace');
+  await page.getByRole('button', { name: 'Open Settings panel', exact: true }).click();
+  await page.getByTestId('workspace-settings').getByRole('button', { name: 'Stack Manager', exact: true }).click();
+  const stack = page.getByTestId('workspace-stack-manager');
+  await expect(stack.getByRole('status')).toContainText('Stack Manager requires a daemon Runtime.');
+  await expect(stack.getByRole('button', { name: 'Probe RPC', exact: true })).toHaveCount(0);
+  await screenshotEvidence(page, testInfo, 'ops-settings-stack-manager-embedded');
+  await expectPageContained(page);
+  expectNoBrowserErrors(errors);
+});
