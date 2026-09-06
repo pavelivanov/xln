@@ -52,7 +52,9 @@ Sources: `frontend/src/lib/components/Entity/` is the retained reference; `front
 
 | ID / status | Small task and starting point | Pass condition / focused evidence |
 |---|---|---|
-| W01 open | Port Ownership share-balance/status refresh from `ownership/ownership-flow.ts` into the existing `wallet-entity-evidence.tsx` destination. | Selected Entity's actual shares render; refresh and Entity reversal discard stale reads. Extend `wallet-entity-evidence.spec.ts`. |
+| W01 blocked B7 — shares done W01a | Finish Ownership share-balance/status refresh; independent shares are verified in W01a, compact remote action status remains W01b. | Do not claim remote action nonce/status from an omitted field. |
+| W01a done — `output/plan-execution-20260906/w01-browser/` | Read the selected Entity's actual share reserves through retained catalog/projection helpers; refresh and discard stale reads across Entity reversal. | Real registered Entity releases and commits 80 control / 40 dividend shares. 6 browser cases pass across all three viewports with screenshots/F12 inspected; 12 model tests / 30 assertions pass. After fixture integration, Wallet 1/1 and Ops 2/2 laptop checks pass. Reload preserves canonical transient-selection behavior. Missing action status is explicitly unavailable. |
+| W01b blocked B7 | Verify the actual confirmed action nonce and release status through the compact remote read. | Exact nonce-1 regression remains registered in `wallet-entity-evidence.spec.ts`; no skip, fake zero, or weakened assertion. |
 | W02 open | Port Ownership share release through the retained builder. Depends W01. | Review/cancel submits nothing; submit reaches the committed release for the selected Entity. Extend W01 spec. |
 | W03 open | Port Ownership proposal, including eligible takeover target selection. Depends W01. | Existing eligibility and authority checks hold; the proposed board is observed after submission. Extend W01 spec. |
 | W04 open | Port Ownership activation. Depends W03. | Activation remains unavailable until the canonical conditions hold; the committed current board refreshes. Extend W01 spec. |
@@ -178,6 +180,7 @@ Keep each failure visible. Resolve frontend causes locally; ask before a protect
 | B4 | Remote `graph-frame` wire encoding rejects `PersistentAccountStateMap` with `XLN_BINARY_CODEC_UNSUPPORTED`. A narrow core adapter-projection fix awaits scope approval. | G05. |
 | B5 | Canonical assistant proxy's local AI upstream is offline. | L03 successful streaming evidence; offline UI is verified. |
 | B6 | Root check on I01a fails `check:frontend-file-size`: unchanged `core/qa/report.ts` has 3,001 lines (limit 3,000). Concurrent contract compilation exceeded the command budget and was terminated; later gates did not run. Installed Cargo 1.94.1 works with its toolchain bin directory on PATH. Evidence: `output/plan-execution-20260906/i01-root-check.log`. | V09. Protected core cleanup needs separate scope; preserve the failing gate and do not repeat unchanged broad runs. |
+| B7 | `compactEntityCoreForRemote` in `core/api/runtime-adapter/resolve.ts:1159` omits `entityProviderActionState` despite a real confirmed release nonce of 1. Frontend shows unavailable status; exact nonce regression remains failing. Evidence: `output/plan-execution-20260906/w01-browser/status-boundary/`. | W01b and remote Ownership action-status evidence. Protected adapter projection fix requires separate owner scope; no backend change is included. |
 
 ## Commands
 
