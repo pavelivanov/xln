@@ -113,7 +113,7 @@ describe('React ops HLT control model', () => {
   });
 
   test('rejects invalid selector and payment-range state before POST', () => {
-    expect(() => readOpsHltMode('legacy')).toThrow('OPS_HLT_MODE_INVALID:legacy');
+    expect(() => readOpsHltMode('unsupported')).toThrow('OPS_HLT_MODE_INVALID:unsupported');
     expect(() => readOpsHltReplayMode('fast')).toThrow('OPS_HLT_REPLAY_MODE_INVALID:fast');
     expect(() => buildOpsHltConfig({ ...OPS_HLT_DEFAULT_CONTROLS, paymentAmountMin: 200, paymentAmountMax: 100 }))
       .toThrow('OPS_HLT_PAYMENT_RANGE_INVALID');

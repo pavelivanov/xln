@@ -65,7 +65,7 @@ describe('Graph3D shared renderer boundary', () => {
     expect(disposals).toBe(1);
   });
 
-  test('moves renderer ownership out of the legacy Svelte tree', () => {
+  test('moves renderer ownership out of the retained Svelte tree', () => {
     const panel = readFileSync('frontend/src/lib/view/panels/graph3d/Graph3DPanel.svelte', 'utf8');
     const visuals = readFileSync('frontend/src/lib/view/panels/graph3d/graph3d-visuals.ts', 'utf8');
 

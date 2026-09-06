@@ -44,8 +44,8 @@ describe('Jurisdiction panel view model', () => {
     expect(formatJurisdictionEthAmount(-1_200_000_000_000_000_000n, 30)).toBe('-1.2 ETH');
   });
 
-  test('deduplicates BrowserVM tokens ahead of fallback metadata and sorts by token id', () => {
-    const fallbackCalls: number[] = [];
+  test('deduplicates BrowserVM tokens ahead of catalog metadata and sorts by token id', () => {
+    const catalogCalls: number[] = [];
     const options = buildJurisdictionTokenOptions({
       browserTokens: [
         { tokenId: 2, symbol: 'TWO', decimals: 6, address: '0xtwo' },
@@ -53,8 +53,8 @@ describe('Jurisdiction panel view model', () => {
       ],
       reserveTokenIds: [3, 2],
       collateralTokenIds: [1, 3],
-      getFallbackTokenInfo: (tokenId) => {
-        fallbackCalls.push(tokenId);
+      getCatalogTokenInfo: (tokenId) => {
+        catalogCalls.push(tokenId);
         return { symbol: `T${tokenId}`, decimals: tokenId, name: `Token ${tokenId}` };
       },
     });
@@ -62,13 +62,13 @@ describe('Jurisdiction panel view model', () => {
     expect(options.map(({ tokenId }) => tokenId)).toEqual([1, 2, 3]);
     expect(options[1]).toMatchObject({ symbol: 'TWO', address: '0xtwo' });
     expect(options[0]).toMatchObject({ symbol: 'T1', address: undefined });
-    expect(fallbackCalls).toEqual([3, 1]);
+    expect(catalogCalls).toEqual([3, 1]);
   });
 
-  test('preserves token selection, metadata fallback, and row filtering semantics', () => {
+  test('preserves token selection, catalog metadata lookup, and row filtering semantics', () => {
     const options = buildJurisdictionTokenOptions({
       browserTokens: [], reserveTokenIds: [3, 1], collateralTokenIds: [],
-      getFallbackTokenInfo: (tokenId) => ({ symbol: `T${tokenId}`, decimals: 6 }),
+      getCatalogTokenInfo: (tokenId) => ({ symbol: `T${tokenId}`, decimals: 6 }),
     });
     expect(selectJurisdictionTokenIdText(options, '')).toBe('1');
     expect(selectJurisdictionTokenIdText(options, '3')).toBe('3');

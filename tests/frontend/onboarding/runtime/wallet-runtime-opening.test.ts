@@ -106,7 +106,7 @@ describe('browser wallet Runtime opening', () => {
     });
   });
 
-  test('uses the canonical fallback label and skips onboarding for demo login', () => {
+  test('uses the canonical address-derived label and skips onboarding for demo login', () => {
     expect(resolveWalletRuntimeOpeningPlan(openingInput({
       name: '',
       labelOverride: '   ',

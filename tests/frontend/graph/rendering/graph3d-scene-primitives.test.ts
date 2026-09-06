@@ -74,9 +74,9 @@ describe('Graph3D shared scene primitives', () => {
     })).toBeNull();
   });
 
-  test('moves scene primitives out of the legacy visual factory', () => {
+  test('moves scene primitives out of the retained visual factory', () => {
     const shared = readFileSync('frontend/packages/ui/src/graph/graph3d-scene-primitives.ts', 'utf8');
-    const legacy = readFileSync('frontend/src/lib/view/panels/graph3d/graph3d-visuals.ts', 'utf8');
+    const retained = readFileSync('frontend/src/lib/view/panels/graph3d/graph3d-visuals.ts', 'utf8');
     const panel = readFileSync('frontend/src/lib/view/panels/graph3d/Graph3DPanel.svelte', 'utf8');
 
     for (const symbol of [
@@ -86,7 +86,7 @@ describe('Graph3D shared scene primitives', () => {
       'buildSimpleRadialLayout',
     ]) {
       expect(shared).toContain(`export function ${symbol}`);
-      expect(legacy).not.toContain(`export function ${symbol}`);
+      expect(retained).not.toContain(`export function ${symbol}`);
     }
     expect(panel).toContain('packages/ui/src/graph/graph3d-scene-primitives');
   });

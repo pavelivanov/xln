@@ -113,9 +113,9 @@ describe('Graph3D shared entity visuals', () => {
     expect((persistedPosition.mesh.material as THREE.MeshLambertMaterial).emissiveIntensity).toBe(1.5);
   }));
 
-  test('moves entity construction out of the legacy visual factory', () => {
+  test('moves entity construction out of the retained visual factory', () => {
     const shared = readFileSync('frontend/packages/ui/src/graph/graph3d-entity-visuals.ts', 'utf8');
-    const legacy = readFileSync('frontend/src/lib/view/panels/graph3d/graph3d-visuals.ts', 'utf8');
+    const retained = readFileSync('frontend/src/lib/view/panels/graph3d/graph3d-visuals.ts', 'utf8');
     const panel = readFileSync('frontend/src/lib/view/panels/graph3d/Graph3DPanel.svelte', 'utf8');
 
     for (const symbol of [
@@ -126,7 +126,7 @@ describe('Graph3D shared entity visuals', () => {
       'createGraphEntityNode',
     ]) {
       expect(shared).toContain(`export function ${symbol}`);
-      expect(legacy).not.toContain(`export function ${symbol}`);
+      expect(retained).not.toContain(`export function ${symbol}`);
     }
     expect(panel).toContain('packages/ui/src/graph/graph3d-entity-visuals');
   });

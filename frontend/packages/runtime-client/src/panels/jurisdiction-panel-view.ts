@@ -80,7 +80,7 @@ export const buildJurisdictionTokenOptions = (input: {
   browserTokens: readonly BrowserVMTokenInfo[];
   reserveTokenIds: readonly number[];
   collateralTokenIds: readonly number[];
-  getFallbackTokenInfo: (tokenId: number) => JurisdictionTokenInfo;
+  getCatalogTokenInfo: (tokenId: number) => JurisdictionTokenInfo;
 }): JurisdictionTokenOption[] => {
   const options = new Map<number, JurisdictionTokenOption>();
   for (const token of input.browserTokens) {
@@ -93,9 +93,9 @@ export const buildJurisdictionTokenOptions = (input: {
       name: token.name,
     });
   }
-  const addFallback = (tokenId: number): void => {
+  const addCatalogToken = (tokenId: number): void => {
     if (options.has(tokenId)) return;
-    const info = input.getFallbackTokenInfo(tokenId);
+    const info = input.getCatalogTokenInfo(tokenId);
     options.set(tokenId, {
       tokenId,
       symbol: info.symbol,
@@ -104,8 +104,8 @@ export const buildJurisdictionTokenOptions = (input: {
       name: info.name,
     });
   };
-  input.reserveTokenIds.forEach(addFallback);
-  input.collateralTokenIds.forEach(addFallback);
+  input.reserveTokenIds.forEach(addCatalogToken);
+  input.collateralTokenIds.forEach(addCatalogToken);
   return [...options.values()].sort((left, right) => left.tokenId - right.tokenId);
 };
 
@@ -128,12 +128,12 @@ export const parseJurisdictionTokenId = (selectedTokenIdText: string): number | 
 export const selectJurisdictionTokenMeta = (
   options: readonly JurisdictionTokenOption[],
   selectedTokenId: number | null,
-  getFallbackTokenInfo: (tokenId: number) => JurisdictionTokenInfo,
+  getCatalogTokenInfo: (tokenId: number) => JurisdictionTokenInfo,
 ): JurisdictionTokenOption | null => {
   if (selectedTokenId === null) return null;
   const option = options.find(({ tokenId }) => tokenId === selectedTokenId);
   if (option) return option;
-  const info = getFallbackTokenInfo(selectedTokenId);
+  const info = getCatalogTokenInfo(selectedTokenId);
   return {
     tokenId: selectedTokenId,
     symbol: info.symbol,
