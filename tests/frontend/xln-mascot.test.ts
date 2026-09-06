@@ -8,7 +8,7 @@ import {
   resolveMascotPoint,
   resolveMascotViewport,
   snapMascotToEdge,
-} from '../../frontend/src/lib/components/XlnMascot/mascot-geometry';
+} from '../../frontend/packages/ui/src/mascot-geometry';
 import {
   parseAssistantSseLine,
   streamXlnAssistantReply,

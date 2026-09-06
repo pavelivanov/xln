@@ -15,7 +15,7 @@
     snapMascotToEdge,
     type MascotPoint,
     type MascotViewport,
-  } from './mascot-geometry';
+  } from '../../../../packages/ui/src/mascot-geometry';
   import type { XlnAssistantMessage } from '$lib/ai/xln-assistant-client';
 
   let mounted = false;

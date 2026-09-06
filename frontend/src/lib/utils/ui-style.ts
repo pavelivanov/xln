@@ -21,7 +21,7 @@ import { THEME_NAMES } from '../../../packages/ui/src/theme-model';
 import {
   DEFAULT_XLN_MASCOT_DOCK,
   normalizeXlnMascotDock,
-} from '$lib/components/XlnMascot/mascot-geometry';
+} from '../../../packages/ui/src/mascot-geometry';
 
 const VALID_DENSITY: readonly UIDensityMode[] = ['compact', 'comfortable', 'roomy'] as const;
 const VALID_RADIUS: readonly UIRadiusMode[] = ['sharp', 'soft', 'pill'] as const;
