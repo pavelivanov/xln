@@ -22,7 +22,7 @@ describe('React Entity workspace shell', () => {
     expect(resolveEntityPanelDeepLinkFromLocation({ hash: '#unknown', search: '' }).activeTab).toBeUndefined();
   });
 
-  test('uses shared navigation and a cleaned-up browser subscription without legacy imports', async () => {
+  test('uses shared navigation and a cleaned-up browser subscription without retained imports', async () => {
     const [page, shell, activity, accounts, consensus, display, profile, reserves, settingsStage] = await Promise.all([
       Bun.file('frontend/apps/ops/src/ops-entity-workspace.tsx').text(),
       Bun.file('frontend/packages/ui/src/entity-workspace-shell.tsx').text(),

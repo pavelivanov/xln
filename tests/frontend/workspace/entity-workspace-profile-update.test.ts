@@ -43,7 +43,7 @@ describe('Entity workspace profile update command', () => {
   });
 
   test('keeps Svelte and React on one command shape and the authenticated remote lane', async () => {
-    const [legacy, command, editor, panel, owner, source, page] = await Promise.all([
+    const [retained, command, editor, panel, owner, source, page] = await Promise.all([
       Bun.file('frontend/src/lib/components/Entity/workspace/shell/EntityPanelTabs.svelte').text(),
       Bun.file('frontend/apps/ops/src/ops-entity-workspace-profile-command.ts').text(),
       Bun.file('frontend/packages/ui/src/entity-workspace-profile-editor.tsx').text(),
@@ -52,8 +52,8 @@ describe('Entity workspace profile update command', () => {
       Bun.file('frontend/apps/ops/src/ops-entity-workspace-source.ts').text(),
       Bun.file('frontend/apps/ops/src/ops-entity-workspace.tsx').text(),
     ]);
-    expect(legacy).toContain('buildEntityWorkspaceProfileUpdateInput');
-    expect(legacy).not.toMatch(/type: ["']profile-update["'] as const/);
+    expect(retained).toContain('buildEntityWorkspaceProfileUpdateInput');
+    expect(retained).not.toMatch(/type: ["']profile-update["'] as const/);
     expect(editor).toContain('data-testid="settings-profile-editor"');
     expect(editor).toContain('Profile committed to the selected Entity.');
     expect(panel).toContain('disabledReason={disabledReason}');

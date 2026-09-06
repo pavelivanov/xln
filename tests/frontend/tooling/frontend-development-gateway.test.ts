@@ -132,7 +132,7 @@ afterEach(async () => {
 });
 
 describe('React development gateway', () => {
-  test('keeps edge behavior ahead of application fallbacks', () => {
+  test('keeps edge behavior ahead of application routing', () => {
     expect(resolveDevelopmentGatewayRequest('/admin')).toEqual({
       kind: 'redirect', status: 308, location: '/health',
     });

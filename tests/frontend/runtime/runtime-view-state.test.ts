@@ -131,7 +131,7 @@ describe('runtime-client RuntimeView state boundary', () => {
     expect(view.loading).toBe(false);
   });
 
-  test('keeps historical success pinned and normalizes fallback Entity identity', () => {
+  test('keeps historical success pinned and normalizes summary-derived Entity identity', () => {
     const view = createSuccessRuntimeViewState<TestHead, TestEntity, TestActiveFrame>(
       handle({ height: 20 }),
       7,

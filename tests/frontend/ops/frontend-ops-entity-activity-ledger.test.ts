@@ -49,7 +49,7 @@ const page = (overrides: Record<string, unknown> = {}) => ({
 });
 
 describe('React Entity persisted activity ledger', () => {
-  test('projects the legacy event-tone precedence from canonical evidence', () => {
+  test('projects the retained event-tone precedence from canonical evidence', () => {
     expect(entityWorkspaceActivityTone({
       direction: 'in', kind: 'onchain', status: 'error', type: 'error',
     })).toBe('danger');
@@ -459,7 +459,7 @@ describe('React Entity persisted activity ledger', () => {
       .toEqual({ beforeHeight: null, historyRefreshes: 2, liveRefreshes: 2 });
   });
 
-  test('owns the compact plus legacy page sizes and resets only the certified cursor', () => {
+  test('owns the compact plus retained page sizes and resets only the certified cursor', () => {
     let historyActive = false;
     let historyRefreshes = 0;
     let liveRefreshes = 0;

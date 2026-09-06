@@ -52,14 +52,14 @@ describe('Graph3D shared visual effects', () => {
 
   test('moves live effects to shared UI and removes the unused random ripple', () => {
     const shared = readFileSync('frontend/packages/ui/src/graph3d-visual-effects.ts', 'utf8');
-    const legacy = readFileSync('frontend/src/lib/view/panels/graph3d/graph3d-visuals.ts', 'utf8');
+    const retained = readFileSync('frontend/src/lib/view/panels/graph3d/graph3d-visuals.ts', 'utf8');
     const panel = readFileSync('frontend/src/lib/view/panels/graph3d/Graph3DPanel.svelte', 'utf8');
 
     expect(shared).toContain('export function createDirectionalLightningMesh');
     expect(shared).toContain('export function createBroadcastRippleMesh');
-    expect(legacy).not.toContain('createDirectionalLightningMesh');
-    expect(legacy).not.toContain('createBroadcastRippleMesh');
-    expect(legacy).not.toContain('createGraphRippleMesh');
+    expect(retained).not.toContain('createDirectionalLightningMesh');
+    expect(retained).not.toContain('createBroadcastRippleMesh');
+    expect(retained).not.toContain('createGraphRippleMesh');
     expect(panel).toContain('packages/ui/src/graph3d-visual-effects');
   });
 });
