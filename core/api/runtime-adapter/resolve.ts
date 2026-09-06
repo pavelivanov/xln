@@ -1170,6 +1170,9 @@ const compactEntityCoreForRemote = (core: RuntimeAdapterEntityCoreDoc): RuntimeA
     proposals: new Map(Array.from(core.proposals.entries()).slice(-20)),
     reserves: compactMapHead(core.reserves, 100) ?? new Map(),
     lastFinalizedJHeight: core.lastFinalizedJHeight,
+    // Bounded committed intent contains public action parameters; signing and
+    // submission evidence belong to separate Runtime-owned state.
+    ...withDefinedProp('entityProviderActionState', core.entityProviderActionState),
     paybook: {
       entries: compactMapTail(core.paybook.entries, 20) ?? new Map(),
       feesEarned: core.paybook.feesEarned,

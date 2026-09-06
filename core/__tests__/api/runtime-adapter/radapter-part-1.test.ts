@@ -37,6 +37,7 @@ import {
   assertRuntimeAdapterGraphFrameWireBudget,
   resolveRuntimeAdapterRead,
   type RuntimeAdapterGraphFrame,
+  type RuntimeAdapterViewFrame,
 } from '../../../api/runtime-adapter/resolve';
 
 import { decryptRuntimeRecoveryBundle, deriveRuntimeRecoveryLookupKey } from '../../../storage/recovery/bundle/crypto';
@@ -80,6 +81,8 @@ import type {
 } from '../../../storage/types';
 
 import type { AccountTx, CrossJurisdictionSwapRoute, Delta, EntityReplica, RuntimeReplica, RuntimeInput } from '../../../runtime/types';
+
+import type { EntityProviderActionState } from '../../../types/entity-provider-actions';
 
 import type { BookState } from '../../../orderbook';
 
@@ -646,6 +649,56 @@ test('runtime adapter resolver reads live head and entity paths', async () => {
   expect(accounts.items).toHaveLength(1);
   expect(accounts.items[0]?.currentHeight).toBe(1);
   expect(accounts.nextCursor).toBe(null);
+});
+
+test('runtime adapter compact reads preserve exact confirmed EntityProvider action state', async () => {
+  const env = makeEnv();
+  const replica = env.state.eReplicas.get(`${entityId}:signer`)!;
+  const state: EntityProviderActionState = { version: 1, confirmedNonce: 1n, generation: 1 };
+  replica.state.entityProviderActionState = state;
+  const entity = await resolveRuntimeAdapterRead<{ entityProviderActionState?: EntityProviderActionState }>(
+    { env }, `entity/${entityId}`,
+  );
+  const frame = await resolveRuntimeAdapterRead<RuntimeAdapterViewFrame>({ env }, 'view-frame', { entityId });
+  expect(entity.entityProviderActionState).toEqual(state);
+  expect(frame.activeEntity?.core.entityProviderActionState).toEqual(state);
+  expect(entity.entityProviderActionState).not.toBe(state);
+  state.confirmedNonce = 2n;
+  expect(entity.entityProviderActionState?.confirmedNonce).toBe(1n);
+  expect(frame.activeEntity?.core.entityProviderActionState?.confirmedNonce).toBe(1n);
+  delete replica.state.entityProviderActionState;
+  const absent = await resolveRuntimeAdapterRead({ env }, `entity/${entityId}`);
+  expect(absent).not.toHaveProperty('entityProviderActionState');
+});
+
+test('runtime adapter compact reads retain a detached pending share release intent', async () => {
+  const env = makeEnv();
+  const replica = env.state.eReplicas.get(`${entityId}:signer`)!;
+  const state: EntityProviderActionState = {
+    version: 1, confirmedNonce: 1n, generation: 2,
+    pending: {
+      version: 1, entityId, entityNumber: BigInt(entityId), chainId: 31337n,
+      entityProviderAddress: '0x0000000000000000000000000000000000000001',
+      boardEpoch: 1n, actionNonce: 2n, actionHash: `0x${'12'.repeat(32)}`,
+      generation: 2, createdAt: 700,
+      payload: { kind: 'releaseControlShares', release: {
+        recipientAddress: '0x0000000000000000000000000000000000000002',
+        controlAmount: 80n, dividendAmount: 40n, purpose: 'Entity treasury issuance',
+      } },
+    },
+  };
+  replica.state.entityProviderActionState = state;
+  const entity = await resolveRuntimeAdapterRead<{ entityProviderActionState?: EntityProviderActionState }>(
+    { env }, `entity/${entityId}`,
+  );
+  const frame = await resolveRuntimeAdapterRead<RuntimeAdapterViewFrame>({ env }, 'view-frame', { entityId });
+  expect(entity.entityProviderActionState).toEqual(state);
+  expect(frame.activeEntity?.core.entityProviderActionState).toEqual(state);
+  expect(entity.entityProviderActionState?.pending?.payload).not.toBe(state.pending?.payload);
+  expect(frame.activeEntity?.core.entityProviderActionState?.pending?.payload).not.toBe(state.pending?.payload);
+  delete state.pending;
+  expect(entity.entityProviderActionState?.pending?.actionNonce).toBe(2n);
+  expect(frame.activeEntity?.core.entityProviderActionState?.pending?.payload.kind).toBe('releaseControlShares');
 });
 
 test('runtime adapter direct read paths return compact read snapshots', async () => {
