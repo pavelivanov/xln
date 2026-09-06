@@ -4,7 +4,7 @@ import { expect, test, type WebSocket } from '@playwright/test';
 import { expectNoBrowserErrors, expectPageContained, observeBrowserErrors, screenshotEvidence } from '../../browser-evidence';
 import { installImportedRuntime, readWalletRuntimeFixture } from '../../wallet/fixtures/wallet-runtime-test-helpers';
 
-test('workspace panels preserve unavailable Runtime state without opening a connection', async ({ page }, testInfo) => {
+test('workspace panels preserve unavailable Runtime state without opening a connection', { tag: '@resilience' }, async ({ page }, testInfo) => {
   const errors = observeBrowserErrors(page);
   await page.goto('/__app/ops/entity-workspace', { waitUntil: 'networkidle' });
   await page.getByRole('button', { name: 'Open Gossip panel' }).click();
@@ -22,7 +22,7 @@ test('workspace panels preserve unavailable Runtime state without opening a conn
   expectNoBrowserErrors(errors);
 });
 
-test('Runtime Diagnostics verifies real persisted storage and releases its panel state on close', async ({ page }, testInfo) => {
+test('Runtime Diagnostics verifies real persisted storage and releases its panel state on close', { tag: '@functional' }, async ({ page }, testInfo) => {
   const errors = observeBrowserErrors(page);
   const fixture = await readWalletRuntimeFixture(page);
   await openWorkspaceStorageOrigin(page);
@@ -66,7 +66,7 @@ test('Runtime Diagnostics verifies real persisted storage and releases its panel
   expectNoBrowserErrors(errors);
 });
 
-test('docked directory and solvency read the selected real Runtime and reopen cleanly', async ({ page, context }, testInfo) => {
+test('docked directory and solvency read the selected real Runtime and reopen cleanly', { tag: '@functional' }, async ({ page, context }, testInfo) => {
   const errors = observeBrowserErrors(page);
   const fixture = await readWalletRuntimeFixture(page);
   await openWorkspaceStorageOrigin(page);

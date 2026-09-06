@@ -6,9 +6,10 @@
 // never full RuntimeReplica documents.
 
 import type { EnvSnapshot } from '@xln/core/api/public/runtime-module';
-import type { FrameLogEntry, LogCategory, LogLevel } from '@xln/core/types/logging';
+import type { FrameLogEntry, LogCategory } from '@xln/core/types/logging';
 
-export type { FrameLogEntry, LogCategory, LogLevel };
+export type { FrameLogEntry, LogCategory };
+export type LogLevel = FrameLogEntry['level'];
 
 export type RuntimeIoDeltaLike = { collateral?: unknown };
 export type RuntimeIoAccountLike = {

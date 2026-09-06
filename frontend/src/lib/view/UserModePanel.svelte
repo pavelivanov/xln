@@ -694,7 +694,6 @@
     <OnboardingPanel
       entityId={selectedEntityId}
       runtimeProjection={onboardingRuntimeProjection}
-      daemonCustody={isRemoteRuntime}
       on:complete={handleOnboardingComplete}
     />
   </main>

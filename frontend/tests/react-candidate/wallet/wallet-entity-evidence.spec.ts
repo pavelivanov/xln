@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test';
 import { expectNoBrowserErrors, expectPageContained, observeBrowserErrors, screenshotEvidence } from '../browser-evidence';
 import { selectWalletFixtureRuntime } from './fixtures/wallet-runtime-test-helpers';
 
-test('Ownership and Consensus deep links follow the selected real Entity', async ({ page }, testInfo) => {
+test('Ownership and Consensus deep links follow the selected real Entity', { tag: '@functional' }, async ({ page }, testInfo) => {
   const errors = observeBrowserErrors(page);
   const fixture = await selectWalletFixtureRuntime(page);
   await page.goto('/app#ownership');
@@ -27,7 +27,7 @@ test('Ownership and Consensus deep links follow the selected real Entity', async
   expectNoBrowserErrors(errors);
 });
 
-test('Ownership reads real released shares, refreshes and discards a delayed read across Entity reversal', async ({ page }, testInfo) => {
+test('Ownership reads real released shares, refreshes and discards a delayed read across Entity reversal', { tag: '@resilience' }, async ({ page }, testInfo) => {
   const errors = observeBrowserErrors(page);
   const fixture = await selectWalletFixtureRuntime(page);
   const port = Number(process.env['XLN_REACT_WALLET_FIXTURE_PORT'] || 19092);
@@ -85,7 +85,7 @@ test('Ownership reads real released shares, refreshes and discards a delayed rea
 });
 
 
-test('Ownership exposes the exact confirmed release nonce from the real Runtime', async ({ page }) => {
+test('Ownership exposes the exact confirmed release nonce from the real Runtime', { tag: '@functional' }, async ({ page }) => {
   await selectWalletFixtureRuntime(page);
   const port = Number(process.env['XLN_REACT_WALLET_FIXTURE_PORT'] || 19092);
   const response = await page.request.post(`http://127.0.0.1:${port}/ownership-fixture`);

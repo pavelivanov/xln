@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 import { expectNoBrowserErrors, expectPageContained, observeBrowserErrors, openWorkspaceStorageOrigin, screenshotEvidence } from '../browser-evidence';
 
-test('public embed retains the canonical full layout through focus, reload, internal inspection, and reset', async ({ page }, testInfo) => {
+test('public embed retains the canonical full layout through focus, reload, internal inspection, and reset', { tag: '@functional' }, async ({ page }, testInfo) => {
   const errors = observeBrowserErrors(page);
   await page.goto('/embed');
   await expect(page).toHaveTitle('xln — Embedded Workspace');
@@ -57,7 +57,7 @@ test('public embed retains the canonical full layout through focus, reload, inte
   expectNoBrowserErrors(errors);
 });
 
-test('public embed autoplay advances the real recording and pauses on explicit frame selection', async ({ page }, testInfo) => {
+test('public embed autoplay advances the real recording and pauses on explicit frame selection', { tag: '@functional' }, async ({ page }, testInfo) => {
   testInfo.setTimeout(120_000);
   const errors = observeBrowserErrors(page);
   await page.goto('/embed?scenario=ahb&autoplay=1&speed=4');
@@ -74,7 +74,7 @@ test('public embed autoplay advances the real recording and pauses on explicit f
   expectNoBrowserErrors(errors);
 });
 
-test('public embed reports malformed trail input visibly while retaining the workspace', async ({ page }, testInfo) => {
+test('public embed reports malformed trail input visibly while retaining the workspace', { tag: '@resilience' }, async ({ page }, testInfo) => {
   const errors = observeBrowserErrors(page);
   await page.goto('/embed#trail=not-a-recorded-trail');
   await expect(page.getByTestId('workspace-network-timeline').getByRole('alert')).not.toBeEmpty();
@@ -86,7 +86,7 @@ test('public embed reports malformed trail input visibly while retaining the wor
   expectNoBrowserErrors(errors);
 });
 
-test('public embed diagnoses a corrupt saved layout and resets the complete workspace', async ({ page }, testInfo) => {
+test('public embed diagnoses a corrupt saved layout and resets the complete workspace', { tag: '@resilience' }, async ({ page }, testInfo) => {
   const errors = observeBrowserErrors(page);
   await openWorkspaceStorageOrigin(page);
   await page.evaluate(() => localStorage.setItem('xln-workspace-layout', '{corrupt-layout'));

@@ -9,7 +9,7 @@ const openTool = async (wallet: Locator, id: string): Promise<void> => {
   await wallet.getByTestId(`account-workspace-tab-${id}`).filter({ visible: true }).click();
 };
 
-test('docked Wallet borrows one Runtime across Account, payment and market navigation', async ({ page }, testInfo) => {
+test('docked Wallet borrows one Runtime across Account, payment and market navigation', { tag: '@functional' }, async ({ page }, testInfo) => {
   const errors = observeBrowserErrors(page);
   const fixture = await readWalletRuntimeFixture(page);
   await openWorkspaceStorageOrigin(page);
@@ -74,7 +74,7 @@ test('docked Wallet borrows one Runtime across Account, payment and market navig
   expectNoBrowserErrors(errors);
 });
 
-test('docked Wallet follows the selected scenario without mounting live commands', async ({ page }, testInfo) => {
+test('docked Wallet follows the selected scenario without mounting live commands', { tag: '@functional' }, async ({ page }, testInfo) => {
   testInfo.setTimeout(120_000);
   const errors = observeBrowserErrors(page);
   await page.goto('/__app/ops/entity-workspace?scenario=ahb');

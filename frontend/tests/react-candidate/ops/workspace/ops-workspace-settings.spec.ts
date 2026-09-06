@@ -3,7 +3,7 @@ import { expect, test } from '@playwright/test';
 import { expectNoBrowserErrors, expectPageContained, observeBrowserErrors, screenshotEvidence } from '../../browser-evidence';
 import { screenshotGraphEvidence } from '../../graph-evidence';
 
-test('operator Settings save exact local policies and retain them across panel reopen', async ({ page }, testInfo) => {
+test('operator Settings save exact local policies and retain them across panel reopen', { tag: '@functional' }, async ({ page }, testInfo) => {
   testInfo.setTimeout(90_000);
   const errors = observeBrowserErrors(page);
   await openWorkspaceStorageOrigin(page);
@@ -15,11 +15,13 @@ test('operator Settings save exact local policies and retain them across panel r
   await page.getByRole('button', { name: 'Open Settings panel', exact: true }).click();
   const settings = page.getByTestId('workspace-settings');
   await expect(settings.getByTestId('storage-wal-gib')).toBeVisible({ timeout: 45_000 });
-  await settings.getByTestId('storage-common-gib').fill('2');
-  await settings.getByTestId('storage-history-frames').fill('7.5');
+  await expect(settings.getByTestId('storage-common-gib')).toHaveCount(0);
+  await expect(settings.getByTestId('storage-history-gib')).toHaveCount(0);
+  await expect(settings.getByTestId('storage-history-frames')).toHaveCount(0);
+  await settings.getByTestId('storage-wal-gib').fill('0.0000000001');
   await settings.getByTestId('storage-limits-save').click();
-  await expect(settings.getByRole('alert')).toHaveText('Retained frames must be a positive integer');
-  await settings.getByTestId('storage-history-frames').fill('750');
+  await expect(settings.getByRole('alert')).toHaveText('WAL epoch limit must be a positive GiB value with an exact byte count');
+  await settings.getByTestId('storage-wal-gib').fill('2');
   await settings.getByTestId('storage-limits-save').click();
   await expect(settings.getByRole('status')).toContainText('Storage policy saved');
   await expect(settings.getByTestId('storage-wal-gib')).toHaveValue('2');
@@ -34,14 +36,12 @@ test('operator Settings save exact local policies and retain them across panel r
   await screenshotEvidence(page, testInfo, 'ops-settings-performance');
   await settings.getByRole('button', { name: 'Storage', exact: true }).click();
   await expect(settings.getByTestId('storage-wal-gib')).toHaveValue('2');
-  await expect(settings.getByTestId('storage-history-frames')).toHaveValue('750');
   await settings.getByTestId('storage-wal-gib').fill('');
   await settings.getByTestId('storage-limits-save').click();
   await expect(settings.getByRole('status')).toContainText('Storage policy saved');
   await page.locator('.dv-default-tab').filter({ hasText: /^Settings$/ }).locator('.dv-default-tab-action').click();
   await page.getByRole('button', { name: 'Open Settings panel', exact: true }).click();
   await expect(settings.getByTestId('storage-wal-gib')).toHaveValue('');
-  await expect(settings.getByTestId('storage-history-gib')).toHaveValue('2');
   await settings.getByRole('button', { name: 'Performance', exact: true }).click();
   await expect(settings.getByTestId('perf-clone-ms')).toHaveValue('0.000125');
   await expect(settings.getByTestId('perf-clone-mib')).toHaveValue('1.25');
@@ -50,7 +50,7 @@ test('operator Settings save exact local policies and retain them across panel r
   expectNoBrowserErrors(errors);
 });
 
-test('presentation config filters the real recording and applies caption and camera cues', async ({ page }, testInfo) => {
+test('presentation config filters the real recording and applies caption and camera cues', { tag: '@functional' }, async ({ page }, testInfo) => {
   testInfo.setTimeout(120_000);
   const errors = observeBrowserErrors(page);
   await page.goto('/__app/ops/entity-workspace?scenario=ahb');
@@ -107,7 +107,7 @@ test('presentation config filters the real recording and applies caption and cam
   expectNoBrowserErrors(errors);
 });
 
-test('recorded Settings control the retained scene and camera without editing Runtime policy', async ({ page }, testInfo) => {
+test('recorded Settings control the retained scene and camera without editing Runtime policy', { tag: '@functional' }, async ({ page }, testInfo) => {
   testInfo.setTimeout(120_000);
   const errors = observeBrowserErrors(page);
   await page.goto('/__app/ops/entity-workspace?scenario=ahb');
@@ -158,7 +158,7 @@ test('recorded Settings control the retained scene and camera without editing Ru
 });
 
 
-test('Stack Manager inspects the real daemon signer and exact RPC, rejects failures and clears stale probes', async ({ page }, testInfo) => {
+test('Stack Manager inspects the real daemon signer and exact RPC, rejects failures and clears stale probes', { tag: '@resilience' }, async ({ page }, testInfo) => {
   const { installImportedRuntime, readWalletRuntimeFixture } = await import('../../wallet/fixtures/wallet-runtime-test-helpers');
   const errors = observeBrowserErrors(page);
   const fixture = await readWalletRuntimeFixture(page);
@@ -198,7 +198,7 @@ test('Stack Manager inspects the real daemon signer and exact RPC, rejects failu
   await expectPageContained(page);
 });
 
-test('Stack Manager does not inspect a daemon from an in-browser Runtime', async ({ page }, testInfo) => {
+test('Stack Manager does not inspect a daemon from an in-browser Runtime', { tag: '@functional' }, async ({ page }, testInfo) => {
   const errors = observeBrowserErrors(page);
   await openWorkspaceStorageOrigin(page);
   await page.evaluate(() => localStorage.setItem('xln-runtime-adapter-mode', 'embedded'));

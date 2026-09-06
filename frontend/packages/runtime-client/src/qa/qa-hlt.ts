@@ -66,6 +66,8 @@ const requireString = (record: Record<string, unknown>, key: string, code: strin
 const decodeLedgerRun = (value: unknown, index: number): HltLedgerRun => {
   const record = requireUnknownRecord(value, `HLT_LEDGER_RUN_INVALID:${index}`);
   const status = record['status'];
+  const engine = record['engine'];
+  if (engine !== 'ts' && engine !== 'rust') throw new Error(`HLT_LEDGER_ENGINE_INVALID:${index}`);
   if (status !== 'green' && status !== 'red') throw new Error(`HLT_LEDGER_STATUS_INVALID:${index}`);
   return {
     at: requireString(record, 'at', `HLT_LEDGER_AT_INVALID:${index}`),
@@ -76,6 +78,7 @@ const decodeLedgerRun = (value: unknown, index: number): HltLedgerRun => {
     paymentsTps: requireNumber(record, 'paymentsTps', `HLT_LEDGER_PAY_TPS_INVALID:${index}`),
     swapsTps: requireNumber(record, 'swapsTps', `HLT_LEDGER_SWAP_TPS_INVALID:${index}`),
     status,
+    engine,
   };
 };
 
@@ -115,8 +118,6 @@ const decodeSwap = (value: unknown): HltSwapCard => {
     offeredSwapRate: requireNumber(record, 'offeredSwapRate', 'HLT_SWAP_OFFERED_INVALID'),
     submitted: requireNumber(record, 'submitted', 'HLT_SWAP_SUBMITTED_INVALID'),
     matched: requireNumber(record, 'matched', 'HLT_SWAP_MATCHED_INVALID'),
-    fullySettled: requireNumber(record, 'fullySettled', 'HLT_SWAP_SETTLED_INVALID'),
-    stp: requireNumber(record, 'stp', 'HLT_SWAP_STP_INVALID'),
     sourceDispatchP95Ms: requireNumber(record, 'sourceDispatchP95Ms', 'HLT_SWAP_SOURCE_P95_INVALID'),
     sourceDispatchMaxMs: requireNumber(record, 'sourceDispatchMaxMs', 'HLT_SWAP_SOURCE_MAX_INVALID'),
     sourceAckMaxMs: requireNumber(record, 'sourceAckMaxMs', 'HLT_SWAP_ACK_MAX_INVALID'),
@@ -163,8 +164,16 @@ const decodeReplayTrial = (value: unknown, index: number): HltReplayTrialCard =>
     throw new Error(`HLT_REPLAY_OFFERED_INVALID:${index}`);
   }
   if (record['equivalent'] !== true) throw new Error(`HLT_REPLAY_EQUIVALENCE_INVALID:${index}`);
+  const engine = record['engine'];
+  if (engine !== null && engine !== 'ts' && engine !== 'rust') throw new Error(`HLT_REPLAY_ENGINE_INVALID:${index}`);
+  const workers = record['workers'];
+  if (workers !== null && (typeof workers !== 'number' || !Number.isSafeInteger(workers) || workers < 1)) {
+    throw new Error(`HLT_REPLAY_WORKERS_INVALID:${index}`);
+  }
   return {
     offeredTps,
+    engine,
+    workers,
     frames: requireNumber(record, 'frames', `HLT_REPLAY_FRAMES_INVALID:${index}`),
     accountInputs: requireNumber(record, 'accountInputs', `HLT_REPLAY_INPUTS_INVALID:${index}`),
     accountTxs: requireNumber(record, 'accountTxs', `HLT_REPLAY_TXS_INVALID:${index}`),

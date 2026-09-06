@@ -229,6 +229,8 @@ describe('network timeline source', () => {
 
     expect(frame.runtimeId).toBe('demo');
     expect(frame.height).toBe(1);
+    expect(frame.head.retainedWalBytes).toBe(0);
+    expect(frame.head).not.toHaveProperty('retainedHistoryBytes');
     expect(frame.entities[0]?.summary.label).toBe('Alice');
     expect(frame.entities[0]?.accounts.items[0]).toMatchObject({
       leftEntity: '0xalice',

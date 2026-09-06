@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 import { expectNoBrowserErrors, expectPageContained, observeBrowserErrors, screenshotEvidence } from '../browser-evidence';
 
-test('wallet navigation consumes the retained workspace locale through navigation and reload', async ({ page }, testInfo) => {
+test('wallet navigation consumes the retained workspace locale through navigation and reload', { tag: '@functional' }, async ({ page }, testInfo) => {
   const errors = observeBrowserErrors(page);
   await page.addInitScript(() => {
     if (!localStorage.getItem('xln-locale')) localStorage.setItem('xln-locale', 'ru');

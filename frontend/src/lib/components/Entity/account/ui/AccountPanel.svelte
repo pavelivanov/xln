@@ -47,7 +47,7 @@
   $: hasCommittedFrame = Number(account.currentFrame?.height ?? account.currentHeight ?? 0) > 0;
   $: showTokenDetails = hasCommittedFrame && tokenDetails.length > 0;
   $: activityRows = buildAccountActivityRows(account, entityId);
-  $: ({ formatTimestamp, txTypeLabel, txKindTone, buildActionParams } = createAccountActivityPresentation({ entityNames, htlcNotes: replica?.htlcNotes, activeXlnFunctions }));
+  $: ({ formatTimestamp, txTypeLabel, txKindTone, buildActionParams } = createAccountActivityPresentation({ entityNames, payments: replica?.state.paybook.entries, activeXlnFunctions }));
   $: allActivityTypes = (() => {
     const typeSet = new Set<string>();
     for (const row of activityRows) {

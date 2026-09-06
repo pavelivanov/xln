@@ -1,5 +1,5 @@
 import type { AccountReplica, AccountTx } from '@xln/core/api/public/runtime-module';
-import type { EntityReplica } from '$lib/types/ui';
+import type { EntityReplica, EntityState } from '$lib/types/ui';
 import { isAccountLeftPerspective } from '../shared/account-token-details';
 
 export type AccountActivityRow = {
@@ -74,27 +74,22 @@ export function buildAccountDisputeDeadline(
 export function buildAccountDisputeView(account: AccountReplica, replica: EntityReplica | null, counterpartyId: string, nowMs: number) {
   const activeDispute = account.activeDispute ?? null;
   const deadlineView = buildAccountDisputeDeadline(activeDispute, nowMs);
-  const pendingSecretAckInfo = (() => {
-    const routes = replica?.state?.htlcRoutes;
-    if (!(routes instanceof Map)) return null;
-    const counterpartyNorm = String(counterpartyId || '').toLowerCase();
-    let count = 0;
-    let deadline = Number.POSITIVE_INFINITY;
-    for (const route of routes.values()) {
-      if (!route?.secretAckPending) continue;
-      const inboundEntity = String(route.inboundEntity || '').toLowerCase();
-      if (!inboundEntity || inboundEntity !== counterpartyNorm) continue;
-      const routeDeadline = Number(route.secretAckDeadlineAt || 0);
-      if (!Number.isFinite(routeDeadline) || routeDeadline <= 0) continue;
-      count += 1;
-      if (routeDeadline < deadline) deadline = routeDeadline;
-    }
-    if (count === 0 || !Number.isFinite(deadline)) return null;
-    return {
-      count,
-      secondsLeft: Math.max(0, Math.ceil((deadline - nowMs) / 1000)),
-    };
-  })();
+  const pendingSecretAckInfo = buildPendingSecretAckInfo(replica?.state.paybook, counterpartyId, nowMs);
 
   return { activeDispute, ...deadlineView, pendingSecretAckInfo };
+}
+
+export function buildPendingSecretAckInfo(paybook: EntityState['paybook'] | undefined, counterpartyId: string, nowMs: number) {
+  if (!paybook) return null;
+  const counterpartyNorm = counterpartyId.toLowerCase();
+  let count = 0;
+  let deadline = Number.POSITIVE_INFINITY;
+  for (const payment of paybook.entries.values()) {
+    if (!payment.secretAckPending || payment.inboundEntity?.toLowerCase() !== counterpartyNorm) continue;
+    const paymentDeadline = payment.secretAckDeadlineAt;
+    if (paymentDeadline === undefined || !Number.isFinite(paymentDeadline) || paymentDeadline <= 0) continue;
+    count += 1;
+    deadline = Math.min(deadline, paymentDeadline);
+  }
+  return count === 0 ? null : { count, secondsLeft: Math.max(0, Math.ceil((deadline - nowMs) / 1000)) };
 }

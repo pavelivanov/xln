@@ -1,3 +1,4 @@
+import type { PaybookEntry } from '@xln/core/entity/types';
 import type { AccountTx } from '@xln/core/api/public/runtime-module';
 
 export type AccountActionParam = {
@@ -8,12 +9,12 @@ export type AccountActionParam = {
 type ActionParam = AccountActionParam;
 export type AccountActivityPresentationInput = Readonly<{
   entityNames: ReadonlyMap<string, string>;
-  htlcNotes?: ReadonlyMap<string, string> | undefined;
+  payments?: ReadonlyMap<string, PaybookEntry> | undefined;
   activeXlnFunctions: { getTokenInfo?: (id: number) => { symbol?: string } | null | undefined; formatTokenAmount?: (id: number, value: bigint) => string } | null | undefined;
 }>;
 
 // Extracted from AccountPanel: display formatting only, never command input.
-export function createAccountActivityPresentation({ entityNames, htlcNotes, activeXlnFunctions }: AccountActivityPresentationInput) {
+export function createAccountActivityPresentation({ entityNames, payments, activeXlnFunctions }: AccountActivityPresentationInput) {
   function formatTimestamp(ms: number): string {
     if (!ms) return '';
     const d = new Date(ms);
@@ -210,13 +211,9 @@ export function createAccountActivityPresentation({ entityNames, htlcNotes, acti
   }
 
   function getHtlcNote(data: Record<string, unknown>): string | null {
-    const notes = htlcNotes;
-    if (!(notes instanceof Map)) return null;
     const hashlock = typeof data['hashlock'] === 'string' ? data['hashlock'] : '';
-    if (hashlock) {
-      const hashNote = notes.get(`hashlock:${hashlock}`);
-      if (typeof hashNote === 'string' && hashNote.trim()) return hashNote.trim();
-    }
+    const description = payments?.get(hashlock)?.description?.trim();
+    if (description) return description;
     return null;
   }
 

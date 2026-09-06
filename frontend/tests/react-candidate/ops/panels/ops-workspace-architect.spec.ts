@@ -3,7 +3,7 @@ import { expect, test, type WebSocket } from '@playwright/test';
 import { expectNoBrowserErrors, expectPageContained, observeBrowserErrors, screenshotEvidence } from '../../browser-evidence';
 import { installImportedRuntime, readWalletRuntimeFixture } from '../../wallet/fixtures/wallet-runtime-test-helpers';
 
-test('Architect records into shared playback and returns to the unchanged connected Wallet', async ({ page }, testInfo) => {
+test('Architect records into shared playback and returns to the unchanged connected Wallet', { tag: '@functional' }, async ({ page }, testInfo) => {
   testInfo.setTimeout(120_000);
   const errors = observeBrowserErrors(page);
   const fixture = await readWalletRuntimeFixture(page);

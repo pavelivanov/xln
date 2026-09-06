@@ -129,31 +129,18 @@ describe('browser wallet node mnemonic reveal', () => {
     expect(await run).toEqual({ status: 'cancelled', latest: false });
   });
 
-  test('keeps adapter access and secret publication in the Svelte event flow', () => {
-    const boundary = readFileSync(
-      'frontend/packages/browser/src/identity/wallet-node-mnemonic-reveal.ts',
-      'utf8',
-    );
-    const view = readFileSync(
-      'frontend/src/lib/components/Views/RuntimeCreation.svelte',
-      'utf8',
-    );
-    const guardIndex = view.indexOf("phase !== 'node-ready'");
-    const runIndex = view.indexOf('const outcome = await walletNodeMnemonicReveal.run({');
-
-    expect(boundary).not.toContain('svelte');
-    expect(boundary).not.toContain('getRuntimeControllerAdapter');
-    expect(boundary).not.toContain('mnemonic24');
-    expect(view).toContain('new WalletNodeMnemonicRevealCoordinator<RuntimeAdapterBrainVaultRecovery>()');
-    expect(view).toContain('reveal: () => adapter.revealBrainVaultMnemonic()');
-    expect(view).toContain("phase === 'node-ready'");
-    expect(view).toContain('nodeDerivationResult === expectedResult');
-    expect(view).toContain('getRuntimeControllerAdapter() === adapter');
-    expect(view).toContain('revealedNodeMnemonic = outcome.recovery.mnemonic24');
-    expect(view).toContain('if (outcome.latest) revealingNodeMnemonic = false');
-    expect(view).toContain('walletNodeMnemonicReveal.invalidate()');
-    expect(view).not.toContain('nodeRevealRunToken');
-    expect(guardIndex).toBeGreaterThan(-1);
-    expect(runIndex).toBeGreaterThan(guardIndex);
+  test('node wallet entry cannot request or retain remote recovery material and keeps local cleanup', () => {
+    const view = readFileSync('frontend/src/lib/components/Views/RuntimeCreation.svelte', 'utf8');
+    expect(view).toContain('Recovery material stays in the owner-only node state and is never delivered to this browser.');
+    expect(view).not.toContain('revealBrainVaultMnemonic');
+    expect(view).not.toContain('revealedNodeMnemonic');
+    const cleanup = view.slice(view.indexOf('function clearDerivedWalletMaterial()'), view.indexOf('function closeWalletEntry()'));
+    expect(cleanup).toContain("mnemonic24 = ''");
+    expect(cleanup).toContain("mnemonic12 = ''");
+    expect(cleanup).toContain("devicePassphrase = ''");
+    expect(cleanup).toContain('wipeShardResults()');
+    expect(cleanup).toContain("passphrase = ''");
+    expect(cleanup).toContain("mnemonicInput = ''");
+    expect(view.slice(view.indexOf('onDestroy(() =>'))).toContain('clearSensitiveWalletMaterial()');
   });
 });

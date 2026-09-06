@@ -13,7 +13,7 @@ import {
   readWalletRuntimeFixture,
 } from '../wallet/fixtures/wallet-runtime-test-helpers';
 
-test('ops candidate renders without browser errors', async ({ page }, testInfo) => {
+test('ops candidate renders without browser errors', { tag: '@functional' }, async ({ page }, testInfo) => {
   const errors = observeBrowserErrors(page);
   const response = await page.goto('/embed', { waitUntil: 'networkidle' });
   expect(response?.ok(), 'document response for /embed').toBe(true);
@@ -31,7 +31,7 @@ const unavailableOpsRoutes = [
 ] as const;
 
 for (const route of unavailableOpsRoutes) {
-  test(`${route.pathname} exposes its unavailable upstream without browser errors`, async ({ page }, testInfo) => {
+  test(`${route.pathname} exposes its unavailable upstream without browser errors`, { tag: '@resilience' }, async ({ page }, testInfo) => {
     await readWalletRuntimeFixture(page);
     const errors = observeBrowserErrors(page);
     const response = await page.goto(route.pathname, { waitUntil: 'networkidle' });
@@ -48,7 +48,7 @@ for (const route of unavailableOpsRoutes) {
   });
 }
 
-test('ops HLT lazy chunk is browser-safe', async ({ page }) => {
+test('ops HLT lazy chunk is browser-safe', { tag: '@functional' }, async ({ page }) => {
   const errors = observeBrowserErrors(page);
   await page.goto('/embed', { waitUntil: 'networkidle' });
   const exportType = await page.evaluate(async (moduleUrl) => {
@@ -59,7 +59,7 @@ test('ops HLT lazy chunk is browser-safe', async ({ page }) => {
   expectNoBrowserErrors(errors);
 });
 
-test('quorum evidence supports filtering and selection without browser errors', async ({ page }, testInfo) => {
+test('quorum evidence supports filtering and selection without browser errors', { tag: '@functional' }, async ({ page }, testInfo) => {
   const errors = observeBrowserErrors(page);
   const response = await page.goto('/qa/quorum', { waitUntil: 'networkidle' });
   expect(response?.ok()).toBe(true);
@@ -78,7 +78,7 @@ test('quorum evidence supports filtering and selection without browser errors', 
   expectNoBrowserErrors(errors);
 });
 
-test('entity workspace tabs follow canonical hash routes', async ({ page }, testInfo) => {
+test('entity workspace tabs follow canonical hash routes', { tag: '@functional' }, async ({ page }, testInfo) => {
   const errors = observeBrowserErrors(page);
   await page.goto('/__app/ops/entity-workspace#settings/network', { waitUntil: 'networkidle' });
   await expect(page.getByTestId('entity-workspace-shell')).toHaveAttribute('data-active-tab', 'settings');
@@ -92,7 +92,7 @@ test('entity workspace tabs follow canonical hash routes', async ({ page }, test
   expectNoBrowserErrors(errors);
 });
 
-test('profile owner command resolves only after the isolated Runtime commits it', async ({ page }, testInfo) => {
+test('profile owner command resolves only after the isolated Runtime commits it', { tag: '@functional' }, async ({ page }, testInfo) => {
   test.setTimeout(90_000);
   const errors = observeBrowserErrors(page);
   const fixture = await readWalletRuntimeFixture(page);
@@ -128,7 +128,7 @@ test('profile owner command resolves only after the isolated Runtime commits it'
   expectNoBrowserErrors(errors);
 });
 
-test('ai console reports the unavailable local AI service without browser errors', async ({ page }, testInfo) => {
+test('ai console reports the unavailable local AI service without browser errors', { tag: '@resilience' }, async ({ page }, testInfo) => {
   const errors = observeBrowserErrors(page);
   const response = await page.goto('/ai', { waitUntil: 'networkidle' });
   expect(response?.ok()).toBe(true);
@@ -145,7 +145,7 @@ test('ai console reports the unavailable local AI service without browser errors
   for (const error of errors.consoleErrors) expect(error).toContain('ERR_CONNECTION_REFUSED');
 });
 
-test('runs reports an unavailable QA upstream without swallowing the failure', async ({ page }, testInfo) => {
+test('runs reports an unavailable QA upstream without swallowing the failure', { tag: '@resilience' }, async ({ page }, testInfo) => {
   await readWalletRuntimeFixture(page);
   const errors = observeBrowserErrors(page);
   const response = await page.goto('/runs', { waitUntil: 'networkidle' });
@@ -160,7 +160,7 @@ test('runs reports an unavailable QA upstream without swallowing the failure', a
   ]);
 });
 
-test('scenarios execute within the isolated ops surface', async ({ page }, testInfo) => {
+test('scenarios execute within the isolated ops surface', { tag: '@functional' }, async ({ page }, testInfo) => {
   test.setTimeout(120_000);
   const errors = observeBrowserErrors(page);
   const rpcRequests: string[] = [];

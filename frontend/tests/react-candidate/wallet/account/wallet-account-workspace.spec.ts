@@ -11,7 +11,7 @@ const openTool = async (page: Page, id: string) => {
   await page.getByRole('navigation', { name: 'Account workspace', exact: true }).getByTestId(`account-workspace-tab-${id}`).filter({ visible: true }).click();
 };
 
-test('Manage preserves focused Account and token context and commits credit and token commands', async ({ page }, testInfo) => {
+test('Manage preserves focused Account and token context and commits credit and token commands', { tag: '@functional' }, async ({ page }, testInfo) => {
   test.setTimeout(120000);
   const errors = observeBrowserErrors(page), fixture = await selectWalletFixtureRuntime(page);
   await page.goto('/app?portfolio=1');
@@ -53,7 +53,7 @@ test('Manage preserves focused Account and token context and commits credit and 
   expectNoBrowserErrors(errors);
 });
 
-test('Lending renders real API state and preserves its own selection across Account tools', async ({ page }, testInfo) => {
+test('Lending renders real API state and preserves its own selection across Account tools', { tag: '@functional' }, async ({ page }, testInfo) => {
   const errors = observeBrowserErrors(page), fixture = await selectWalletFixtureRuntime(page);
   await page.goto('/app#accounts/lending');
   await page.getByLabel('Entity', { exact: true }).selectOption(fixture.entityId);
@@ -67,7 +67,7 @@ test('Lending renders real API state and preserves its own selection across Acco
   expectNoBrowserErrors(errors);
 });
 
-test('Account tools discard stale Entity reads during rapid selection reversal', async ({ page }, testInfo) => {
+test('Account tools discard stale Entity reads during rapid selection reversal', { tag: '@resilience' }, async ({ page }, testInfo) => {
   const errors = observeBrowserErrors(page), fixture = await selectWalletFixtureRuntime(page);
   await page.goto('/app#accounts/configure');
   for (const tab of ['configure', 'move', 'lending', 'history']) {
@@ -90,7 +90,7 @@ test('Account tools discard stale Entity reads during rapid selection reversal',
   expectNoBrowserErrors(errors);
 });
 
-test('Move uses the recovered external signer for transfer, allowance and a real deposit draft', async ({ page }, testInfo) => {
+test('Move uses the recovered external signer for transfer, allowance and a real deposit draft', { tag: '@functional' }, async ({ page }, testInfo) => {
   test.setTimeout(150000);
   const errors = observeBrowserErrors(page), fixture = await restoreLocalWallet(page);
   await finishOpenedWalletSetup(page);
@@ -118,7 +118,7 @@ test('Move uses the recovered external signer for transfer, allowance and a real
   expectNoBrowserErrors(errors);
 });
 
-test('Manage runs and stops the retained local load controls and prepares a real dispute', async ({ page }, testInfo) => {
+test('Manage runs and stops the retained local load controls and prepares a real dispute', { tag: '@functional' }, async ({ page }, testInfo) => {
   test.setTimeout(150000);
   const errors = observeBrowserErrors(page), fixture = await restoreLocalWallet(page, 'hub-discovery');
   await finishOpenedWalletSetup(page);
@@ -150,7 +150,7 @@ test('Manage runs and stops the retained local load controls and prepares a real
   expectNoBrowserErrors(errors);
 });
 
-test('Move selects routes with pointer and keyboard, queues a real draft and cancels batch clearing', async ({ page }, testInfo) => {
+test('Move selects routes with pointer and keyboard, queues a real draft and cancels batch clearing', { tag: '@functional' }, async ({ page }, testInfo) => {
   test.setTimeout(120000);
   const errors = observeBrowserErrors(page), fixture = await selectWalletFixtureRuntime(page);
   await page.goto('/app#accounts/move');
@@ -186,7 +186,7 @@ test('Move selects routes with pointer and keyboard, queues a real draft and can
   expectNoBrowserErrors(errors);
 });
 
-test('History reads real events through filters and modes with Entity context', async ({ page }, testInfo) => {
+test('History reads real events through filters and modes with Entity context', { tag: '@functional' }, async ({ page }, testInfo) => {
   test.setTimeout(120000);
   const errors = observeBrowserErrors(page), fixture = await selectWalletFixtureRuntime(page);
   await page.goto('/app#accounts/history');
@@ -227,7 +227,7 @@ test('History reads real events through filters and modes with Entity context', 
   expectNoBrowserErrors(errors);
 });
 
-test('Lending commits a pool, loan and full repayment using the selected Hub and asset', async ({ page }, testInfo) => {
+test('Lending commits a pool, loan and full repayment using the selected Hub and asset', { tag: '@functional' }, async ({ page }, testInfo) => {
   test.setTimeout(120000);
   const errors = observeBrowserErrors(page), fixture = await selectWalletFixtureRuntime(page);
   await page.goto('/app#accounts/lending');
