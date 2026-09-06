@@ -8,7 +8,7 @@
 -->
 <script lang="ts">
   import { tick } from 'svelte';
-  import { parseEntityInput as parseSharedEntityInput } from './entity-input-model';
+  import { parseEntityInput as parseSharedEntityInput } from '../../../../packages/ui/src/entity-input-model';
   import { createEventDispatcher } from 'svelte';
   import type { Profile as GossipProfile } from '@xln/core/api/public/runtime-module';
   import { xlnFunctions } from '../../stores/xlnStore';

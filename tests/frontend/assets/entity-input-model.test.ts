@@ -1,5 +1,5 @@
 import { expect, test } from 'bun:test';
-import { getShortIdFromHex, parseEntityInput } from '../../../frontend/src/lib/components/shared/entity-input-model';
+import { getShortIdFromHex, parseEntityInput } from '../../../frontend/packages/ui/src/entity-input-model';
 
 const ALICE = `0xabcd${'11'.repeat(30)}`;
 const BOB = `0x9876${'22'.repeat(30)}`;

@@ -1,6 +1,6 @@
 import type { WalletOpenDraft } from './wallet-command-draft';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
-import { parseEntityInput } from '../../../src/lib/components/shared/entity-input-model';
+import { parseEntityInput } from '../../../packages/ui/src/entity-input-model';
 import { WalletEntityInput } from './wallet-entity-input';
 import type { WalletHubDiscoverySnapshot, WalletHubDiscoverySource } from './wallet-hub-discovery-source';
 import './styles/wallet-account-open.css';

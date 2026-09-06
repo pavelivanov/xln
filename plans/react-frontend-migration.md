@@ -33,7 +33,7 @@ Four-app local checks and targeted browser flows have passed. This is not a full
 ## How to execute one task
 
 1. Pick the next ready row. Trace its reachable Svelte control, existing helper/command and current React consumer before editing. If already implemented, verify and close it; do not rewrite it.
-2. Change one user operation or one dependency family. If a row needs multiple independent changes, split it into child IDs before coding. Keep a single task active; unrelated blocked rows do not stop it.
+2. Change one user operation or one dependency family. If a row needs multiple independent changes, split it into child IDs before coding. Keep one task per worktree and one implementer per area; independent tasks may run in parallel. The coordinator alone updates task rows during serial PR integration, after refreshing from the latest merged plan. Unrelated blocked rows do not stop ready work.
 3. Reproduce the specific missing/broken behavior. Reuse real isolated Runtime/BrowserVM state; no fake success, mocks or alternate financial logic. Never read live state as historical evidence.
 4. Run narrow model/command checks, then one exact browser flow for visible changes. Assert committed results, cancellation/rejection and context ownership as relevant. Inspect screenshots and browser errors at 390×844, 1366×900 and 1920×1080.
 5. Mark the row `done` only with code and passing relevant evidence. Replace its status with `done — test/log path`; use `blocked Bn — exact failure` for dependencies. Keep evidence under `output/` or existing QA storage, not as another plan. Update typed inventories when their sources/capabilities change.
@@ -121,7 +121,8 @@ Work from leaf modules toward lifecycle owners. Inspect importers first. Move on
 
 | ID / status | Small task and starting point | Pass condition / dependencies |
 |---|---|---|
-| I01 open | Move framework-neutral display/format/navigation helpers still imported from `frontend/src/lib/` into their actual shared owners. | Affected apps use the new owner; old implementation is removed; corresponding narrow model tests pass. Split by helper family. |
+| I01 open | Move remaining framework-neutral display/format/navigation helper families into their shared owners; Entity input is closed in I01a. | Split remaining families into separate task worktrees; update both consumers and remove each old implementation. |
+| I01a done — `tests/frontend/assets/entity-input-model.test.ts`; `output/plan-execution-20260906/i01-model-tests.log` | Move Entity input parsing/display to `frontend/packages/ui/src/entity-input-model.ts`. | Implementation bytes preserved; retained and React consumers plus inventory use the shared owner. 7 tests / 324 assertions and strict helper typecheck pass. Wallet typecheck has 19 diagnostics identical to baseline; root integration remains blocked B6. |
 | I02 open | Move graph projection/layout/timeline helpers and neutral network stores to shared packages. | Graph/playback consumers no longer depend on the retained tree; scenario/trail tests preserve exact frames and cleanup. |
 | I03 open | Move locale and display-preference state to a neutral owner; retain catalog and storage contracts. | Both UIs consume the same state; locale/preferences/reload tests pass without transitive Svelte stores in that family. |
 | I04 open | Extract vault metadata/selection subscriptions from `vaultStore.ts`. | Stable snapshots and selection behavior remain; no secret persistence or schema change. Existing vault/selection tests pass. |
@@ -170,7 +171,7 @@ Keep each failure visible. Resolve frontend causes locally; ask before a protect
 | B3 | Compact remote settlement reads omit fields needed for complete review/approval/execution. | Remote portions of W09–W11. Preserve local work and genuine existing restrictions; no new projection API is authorized here. |
 | B4 | Remote `graph-frame` wire encoding rejects `PersistentAccountStateMap` with `XLN_BINARY_CODEC_UNSUPPORTED`. A narrow core adapter-projection fix awaits scope approval. | G05. |
 | B5 | Canonical assistant proxy's local AI upstream is offline. | L03 successful streaming evidence; offline UI is verified. |
-| B6 | Root gate stops at `cargo: command not found`, after BrainVault, contract parity and soundchecks pass. | V09. Resolve the toolchain/environment first; do not repeat unchanged broad runs. |
+| B6 | Root check on I01a fails `check:frontend-file-size`: unchanged `core/qa/report.ts` has 3,001 lines (limit 3,000). Concurrent contract compilation exceeded the command budget and was terminated; later gates did not run. Installed Cargo 1.94.1 works with its toolchain bin directory on PATH. Evidence: `output/plan-execution-20260906/i01-root-check.log`. | V09. Protected core cleanup needs separate scope; preserve the failing gate and do not repeat unchanged broad runs. |
 
 ## Commands
 
