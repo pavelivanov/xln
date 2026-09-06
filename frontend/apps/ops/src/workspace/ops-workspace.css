@@ -291,3 +291,5 @@
 .ops-command-palette small, .ops-command-palette footer { color: #a6b2bd; }
 .ops-command-palette footer { margin-top: 16px; font-size: 12px; line-height: 1.5; }
 .ops-command-palette [role="alert"] { color: #ff9a9a; overflow-wrap: anywhere; }
+
+.ops-stack-manager .ops-settings-input select { min-width: 0; width: 100%; box-sizing: border-box; }

@@ -271,6 +271,18 @@ export const fetchStackManagerStatus = async (
   });
   return decodeStackManagerStatusResponse(await responseJson(response, 'STACK_MANAGER_STATUS'));
 };
+// Probe evidence is meaningful only for the exact requested endpoint and an
+// owned signer; another valid-looking response must never authorize deployment.
+export const requireStackManagerProbe = (
+  response: StackManagerStatusResponse, rpcUrl: string, signerId: string,
+): StackManagerProbe => {
+  if (!response.signerIds.includes(signerId)) throw new Error('STACK_MANAGER_SIGNER_NOT_OWNED');
+  if (!response.probe) throw new Error('STACK_MANAGER_RPC_PROBE_MISSING');
+  if (response.probe.rpcUrl !== rpcUrl) throw new Error('STACK_MANAGER_PROBE_RPC_MISMATCH');
+  if (response.probe.signerId !== signerId) throw new Error('STACK_MANAGER_PROBE_SIGNER_MISMATCH');
+  return response.probe;
+};
+
 export const deployStack = async (
   runtimeApiOrigin: string,
   request: StackManagerDeployRequest,

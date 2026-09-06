@@ -8,6 +8,7 @@ import {
   decodeStackManagerStatusResponse,
   deployStack,
   fetchStackManagerStatus,
+  requireStackManagerProbe,
 } from '../../../frontend/src/lib/components/Settings/stack-manager-client';
 import { createJurisdictionGossipAnnouncement } from '../../../core/jurisdiction/gossip/announcement';
 
@@ -81,6 +82,19 @@ describe('Stack Manager browser boundary', () => {
       ...valid,
       signerIds: [MIXED_CASE_ADDRESS],
     })).toThrow('STACK_MANAGER_SIGNER_ID_NOT_CANONICAL');
+  });
+
+  test('requires probe evidence for the exact RPC and an owned requested signer', () => {
+    const rpcUrl = 'https://arb.example/rpc';
+    const response = decodeStackManagerStatusResponse({
+      ok: true, status: { phase: 'idle', active: false, updatedAt: '2026-08-14T08:00:00.000Z' },
+      signerIds: [ADDRESS], probe: { rpcUrl, chainId: 42161, signerId: ADDRESS, nativeBalanceWei: '0' },
+    });
+    expect(requireStackManagerProbe(response, rpcUrl, ADDRESS)).toBe(response.probe!);
+    expect(() => requireStackManagerProbe(response, rpcUrl, SIGNER)).toThrow('STACK_MANAGER_SIGNER_NOT_OWNED');
+    expect(() => requireStackManagerProbe({ ok: true, status: response.status, signerIds: response.signerIds }, rpcUrl, ADDRESS)).toThrow('STACK_MANAGER_RPC_PROBE_MISSING');
+    expect(() => requireStackManagerProbe(response, 'https://other.example/rpc', ADDRESS)).toThrow('STACK_MANAGER_PROBE_RPC_MISMATCH');
+    expect(() => requireStackManagerProbe({ ...response, probe: { ...response.probe!, signerId: SIGNER } }, rpcUrl, ADDRESS)).toThrow('STACK_MANAGER_PROBE_SIGNER_MISMATCH');
   });
 
   test('decodes canonical V1 deployment evidence and publication state', () => {
