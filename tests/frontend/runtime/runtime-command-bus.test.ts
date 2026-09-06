@@ -732,6 +732,7 @@ test('server-side credit requests publish upstream runtime ingress receipts', ()
 test('credit and collateral configure forms submit RuntimeInput through shared command path', () => {
   const creditSource = readFileSync('frontend/src/lib/components/Entity/account/ui/CreditForm.svelte', 'utf8');
   const collateralSource = readFileSync('frontend/src/lib/components/Entity/account/ui/CollateralForm.svelte', 'utf8');
+  const collateralPolicySource = readFileSync('frontend/src/lib/components/Entity/account/collateral-request.ts', 'utf8');
   const configureSource = readFileSync('frontend/src/lib/components/Entity/account/ui/AccountConfigurePanel.svelte', 'utf8');
   const accountWorkspaceSource = readFileSync('frontend/src/lib/components/Entity/workspace/AccountWorkspaceView.svelte', 'utf8');
   const resolverSource = readFileSync('core/api/runtime-adapter/resolve.ts', 'utf8');
@@ -750,8 +751,10 @@ test('credit and collateral configure forms submit RuntimeInput through shared c
   expect(accountWorkspaceSource).toContain('<AccountConfigurePanel');
   expect(accountWorkspaceSource).toContain('{submitRuntimeInput}');
   expect(collateralSource).toContain('resolveProjectedCounterpartyPolicy');
-  expect(collateralSource).toContain('rebalanceFeePolicies');
-  expect(resolverSource).toContain('compact.state.rebalanceFeePolicies = doc.state.rebalanceFeePolicies');
+  expect(collateralSource).toContain('resolveCollateralFeePolicy(account, ownerEntityId, tokenId)');
+  expect(collateralPolicySource).toContain('account.state.rebalanceFeePolicies');
+  expect(resolverSource).toContain('const rebalanceFeePolicies = compactMapHead(doc.state.rebalanceFeePolicies, 100)');
+  expect(resolverSource).toContain('compact.state.rebalanceFeePolicies = rebalanceFeePolicies');
 });
 
 test('payment panel submits RuntimeInput through shared command path', () => {

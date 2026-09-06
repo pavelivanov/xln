@@ -9,6 +9,7 @@
   import { runtimeControllerHandle, runtimeAdapterHeight } from '$lib/stores/runtimeControllerStore';
   import { runtimeQueryClient } from '$lib/stores/runtimeQueryClient';
   import { settings } from '$lib/stores/settingsStore';
+  import { dedupeHistoryEvents as dedupe } from '../account/activity-history-events';
   import { xlnFunctions } from '$lib/stores/xlnStore';
   import {
     Calendar,
@@ -73,42 +74,6 @@
   let activityLoadVersion = 0;
 
   const normalizeRuntimeId = (value: string | undefined): string => String(value || '').trim().toLowerCase();
-
-  function semanticKey(event: ActivityEvent): string {
-    const rawType = String(event.rawType || '');
-    if (event.source === 'runtime_log' && rawType.startsWith('Htlc') && event.hash) {
-      return [
-        event.runtimeId || '',
-        event.source,
-        rawType,
-        event.entityId || '',
-        event.counterpartyId || '',
-        event.direction,
-        event.hash,
-        event.amount || '',
-        event.tokenId ?? '',
-      ].join('|');
-    }
-    return event.id;
-  }
-
-  function dedupe(input: ActivityEvent[]): ActivityEvent[] {
-    const byKey = new Map<string, ActivityEvent>();
-    for (const event of input) {
-      const key = semanticKey(event);
-      const existing = byKey.get(key);
-      if (!existing) {
-        byKey.set(key, event);
-        continue;
-      }
-
-      const eventHappenedEarlier =
-        event.timestamp < existing.timestamp ||
-        (event.timestamp === existing.timestamp && event.height < existing.height);
-      if (eventHappenedEarlier) byKey.set(key, event);
-    }
-    return Array.from(byKey.values()).sort((a, b) => b.timestamp - a.timestamp || b.height - a.height);
-  }
 
   function localToTimestamp(value: string): number | undefined {
     if (!value) return undefined;

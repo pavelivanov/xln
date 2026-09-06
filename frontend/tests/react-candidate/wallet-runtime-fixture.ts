@@ -254,6 +254,38 @@ server = Bun.serve<FixtureSocketData>({
   port,
   async fetch(request, bunServer) {
     const url = new URL(request.url);
+    const apiHeaders = { 'access-control-allow-origin': '*', 'access-control-allow-methods': 'GET, POST, OPTIONS', 'access-control-allow-headers': 'content-type', 'content-type': 'application/json' };
+    if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: apiHeaders });
+    if (url.pathname === '/api/lending/state') {
+      const { handleLendingStateRequest } = await import('../../../core/api/server/entities/lending');
+      const requestedHub = url.searchParams.get('hubEntityId');
+      const dropdownEntities = dropdownRuntime ? [...dropdownRuntime.state.eReplicas.values()].map(replica => replica.state.entityId) : [];
+      const readDropdown = dropdownRuntime && requestedHub && dropdownEntities.includes(requestedHub);
+      return handleLendingStateRequest({ req: request, env: readDropdown ? dropdownRuntime : env,
+        headers: apiHeaders, activeHubEntityIds: readDropdown ? dropdownEntities : [counterpartyEntityId] });
+    }
+    if (url.pathname === '/api/credit/request') {
+      const { handleCreditRequest } = await import('../../../core/api/server/faucet/credit');
+      return handleCreditRequest({ req: request, env, headers: apiHeaders, activeHubEntityIds: [counterpartyEntityId],
+        enqueueRuntimeInput: runtime.enqueueRuntimeInput, validateRuntimeInputAdmission: runtime.validateRuntimeInputAdmission, getCurrentRuntimeHeight: env => env ? env.state.height : 0 });
+    }
+    if (url.pathname === '/account-tool-state') {
+      if (url.searchParams.get('dump') === '1') return new Response(runtime.safeStringify(env.state), { headers: apiHeaders });
+      const owner = url.searchParams.get('entityId') || entityId;
+      const peer = url.searchParams.get('accountId') || counterpartyEntityId;
+      const account = readAccount(owner, peer);
+      if (!account) throw new Error('ACCOUNT_TOOL_FIXTURE_ACCOUNT_MISSING');
+      const tokenId = Number(url.searchParams.get('tokenId') || 1);
+      const delta = account.state.deltas.get(tokenId);
+      const derived = delta ? runtime.deriveDelta(delta, owner.toLowerCase() < peer.toLowerCase()) : null;
+      const policy = account.state.rebalanceFeePolicies?.get(tokenId)?.[runtime.isLeftEntity(owner, peer) ? 'right' : 'left'];
+      const request = account.state.requestedRebalanceFeeState.get(tokenId);
+      return Response.json({ height: env.state.height, tokenIds: [...account.state.deltas.keys()], tokenDecimals: runtime.getTokenInfo(tokenId).decimals, status: account.status,
+        ownCreditLimit: derived ? derived.ownCreditLimit.toString() : null, peerCreditLimit: derived ? derived.peerCreditLimit.toString() : null,
+        peerFeePolicy: policy ? { policyVersion: policy.policyVersion, baseFee: String(policy.baseFee), gasFee: String(policy.gasFee), liquidityFeeBps: String(policy.liquidityFeeBps) } : null,
+        collateralRequest: request ? { amount: String(request.requestedAmount), feePaid: String(request.feePaidUpfront), feeTokenId: request.feeTokenId, policyVersion: request.policyVersion } : null,
+        collateral: delta ? delta.collateral.toString() : null, settlement: account.state.settlementWorkspace ? runtime.safeStringify(account.state.settlementWorkspace) : null });
+    }
     if (url.pathname === '/account-dropdown-fixture' && request.method === 'POST') {
       dropdownFixture ??= import('./wallet-account-dropdown-fixture').then(module => module.createAccountDropdownFixture(port));
       const fixture = await dropdownFixture;

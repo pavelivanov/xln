@@ -32,6 +32,7 @@ function HealthUnavailable({
 }
 
 export function WalletFinancialHealth({ workspaceSelection }: Readonly<{ workspaceSelection: WalletWorkspaceSelection }>) {
+  const { entityId } = useSyncExternalStore(workspaceSelection.subscribe, workspaceSelection.getSnapshot, workspaceSelection.getSnapshot);
   const [source] = useState(() => new WalletFinancialHealthSource(
     readRuntimeAdapterStorageSnapshot({ durable: localStorage, session: sessionStorage }),
     workspaceSelection,
@@ -55,7 +56,7 @@ export function WalletFinancialHealth({ workspaceSelection }: Readonly<{ workspa
         <>
           <div className="wallet-health-context">
             <label htmlFor="wallet-health-entity">Entity</label>
-            <select id="wallet-health-entity" onChange={(event) => source.selectEntity(event.target.value)} value={projection.activeEntityId}>
+            <select id="wallet-health-entity" onChange={(event) => source.selectEntity(event.target.value)} value={entityId || projection.activeEntityId}>
               {projection.entities.map((entity) => <option key={entity.entityId} value={entity.entityId}>{entity.label}</option>)}
             </select>
             <span>Committed height {projection.height}</span>
@@ -63,10 +64,12 @@ export function WalletFinancialHealth({ workspaceSelection }: Readonly<{ workspa
               {snapshot.status === 'loading' ? 'Refreshing…' : 'Refresh'}
             </button>
           </div>
+          {entityId && entityId !== projection.activeEntityId ? <p role="status">Loading selected Entity…</p> : <>
           <WalletDebtSection groups={projection.debtGroups} />
           <WalletSolvencySection projection={projection} />
           <WalletDisputesSection busy={snapshot.status === 'loading'} projection={projection} selectPage={source.selectAccountsPage} />
           <WalletHistorySection busy={snapshot.status === 'loading'} projection={projection} newer={source.selectNewerHistory} older={source.selectOlderHistory} />
+          </>}
         </>
       ) : <HealthUnavailable error={snapshot.status === 'error'} message={snapshot.message} retry={() => void source.refresh()} />}
       <p className="wallet-health-boundary">

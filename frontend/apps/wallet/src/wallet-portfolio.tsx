@@ -136,12 +136,14 @@ function PortfolioAccounts({
 
 function PortfolioContent({
   projection,
+  selectedEntityId,
   refreshing,
   source,
   openAccount,
   selectAccount,
 }: Readonly<{
   projection: WalletPortfolioProjection;
+  selectedEntityId: string;
   refreshing: boolean;
   source: WalletPortfolioSource;
   openAccount: () => void;
@@ -154,7 +156,7 @@ function PortfolioContent({
         <select
           id="wallet-portfolio-entity"
           onChange={(event) => source.selectEntity(event.target.value)}
-          value={projection.activeEntityId}
+          value={selectedEntityId}
         >
           {projection.entities.map((entity) => (
             <option key={entity.entityId} value={entity.entityId}>{entity.label}</option>
@@ -165,6 +167,7 @@ function PortfolioContent({
           {refreshing ? 'Refreshing…' : 'Refresh'}
         </button>
       </div>
+      {selectedEntityId !== projection.activeEntityId ? <p role="status">Loading selected Entity…</p> : <>
       <section className="wallet-portfolio-section" aria-labelledby="wallet-assets-title">
         <div className="wallet-portfolio-section-heading">
           <div><p>01</p><h2 id="wallet-assets-title">Assets</h2></div>
@@ -178,6 +181,7 @@ function PortfolioContent({
       <PortfolioAccounts projection={projection} selectPage={source.selectAccountsPage} onSelect={selectAccount} />
       <button className="wallet-portfolio-create" type="button" onClick={openAccount}>Open Account</button>
       <button className="wallet-portfolio-create wallet-portfolio-appearance" type="button" onClick={() => navigateWallet('/app#accounts/appearance')}>Account appearance</button>
+      </>}
     </>
   );
 }
@@ -187,7 +191,7 @@ export function WalletPortfolio({ section = 'assets', workspaceSelection }: Read
 }>) {
   const [creatingEntity, setCreatingEntity] = useState(false);
   const [formationNotice, setFormationNotice] = useState('');
-  const { focusedAccountId } = useSyncExternalStore(workspaceSelection.subscribe, workspaceSelection.getSnapshot, workspaceSelection.getSnapshot);
+  const { focusedAccountId, entityId } = useSyncExternalStore(workspaceSelection.subscribe, workspaceSelection.getSnapshot, workspaceSelection.getSnapshot);
   const [source] = useState(() => new WalletPortfolioSource(
     readRuntimeAdapterStorageSnapshot({ durable: localStorage, session: sessionStorage }),
     workspaceSelection,
@@ -242,11 +246,12 @@ export function WalletPortfolio({ section = 'assets', workspaceSelection }: Read
         <h1 id="wallet-portfolio-title">Assets &amp; accounts</h1>
         <p>Committed balances from the selected Runtime. No optimistic or sample values.</p>
       </header>
-      {snapshot.projection ? <button className="wallet-portfolio-create" type="button" onClick={() => { setFormationNotice(''); setCreatingEntity(true); }}>Create Entity</button> : null}
+      {snapshot.projection ? <button className="wallet-portfolio-create" type="button" disabled={snapshot.status !== 'ready'} onClick={() => { setFormationNotice(''); setCreatingEntity(true); }}>Create Entity</button> : null}
       {formationNotice ? <p className="wallet-portfolio-formation-notice" role="status">{formationNotice}</p> : null}
       {snapshot.projection ? (
         <PortfolioContent
           projection={snapshot.projection}
+          selectedEntityId={entityId || snapshot.projection.activeEntityId}
           refreshing={snapshot.status === 'loading'}
           source={source}
           openAccount={() => navigateWallet('/app#accounts/open')}

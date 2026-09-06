@@ -151,11 +151,11 @@ export class WalletMarketSource {
 
   readonly selectEntity = (entityId: string): void => {
     const normalized = normalizeEntityIdForRuntimeView(entityId);
-    const projection = this.requireProjection();
-    if (!projection.entities.some((entity) => entity.entityId === normalized)) {
+    const projection = this.snapshot.projection;
+    if (!projection?.entities.some((entity) => entity.entityId === normalized)) {
       throw new Error(`WALLET_MARKET_ENTITY_UNKNOWN:${normalized}`);
     }
-    if (normalized === projection.activeEntityId) return;
+    if (normalized === (this.selectedEntityId || projection.activeEntityId)) return;
     this.requireNoPendingCommand('WALLET_MARKET_ENTITY_CHANGE_PENDING_COMMAND');
     this.selectedEntityId = normalized;
     this.selection.selectEntity(this.requireAdapter().runtimeId, normalized);
@@ -415,6 +415,10 @@ export class WalletMarketSource {
 
   private requireProjection(): WalletMarketProjection {
     if (!this.snapshot.projection?.activeEntityId) throw new Error('WALLET_MARKET_ENTITY_UNAVAILABLE');
+    if (this.snapshot.status !== 'ready'
+      || (this.selectedEntityId && this.selectedEntityId !== this.snapshot.projection.activeEntityId)) {
+      throw new Error('WALLET_MARKET_ENTITY_VIEW_NOT_READY');
+    }
     return this.snapshot.projection;
   }
 

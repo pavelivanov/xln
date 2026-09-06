@@ -8,6 +8,30 @@ import {
 } from '../../packages/browser/src/runtime-adapter-session';
 import { REMOTE_RUNTIME_IMPORT_STORAGE_KEY } from '../../packages/browser/src/remote-runtime-import';
 
+export const readWalletFixtureChainBalances = async (page: Page) => {
+  const port = Number(process.env['XLN_REACT_WALLET_FIXTURE_PORT'] || 19092);
+  const response = await page.request.get(`http://127.0.0.1:${port}/chain-balances`);
+  expect(response.ok()).toBe(true);
+  const result: unknown = await response.json();
+  if (!result || typeof result !== 'object' || Array.isArray(result)) throw new Error('WALLET_CHAIN_BALANCES_INVALID');
+  const record = result as Record<string, unknown>;
+  const amount = (key: string): bigint => {
+    const raw = record[key];
+    if (typeof raw !== 'string' || !/^\d+$/.test(raw)) throw new Error(`WALLET_CHAIN_BALANCE_INVALID:${key}`);
+    return BigInt(raw);
+  };
+  return { reserve: amount('reserve'), collateral: amount('collateral'), chainReserve: amount('chainReserve'), chainCollateral: amount('chainCollateral') };
+};
+
+export const readWalletAccountToolState = async (page: Page, entityId: string, accountId: string, tokenId = 1) => {
+  const port = Number(process.env['XLN_REACT_WALLET_FIXTURE_PORT'] || 19092);
+  const response = await page.request.get(`http://127.0.0.1:${port}/account-tool-state?entityId=${entityId}&accountId=${accountId}&tokenId=${tokenId}`);
+  expect(response.ok()).toBe(true);
+  const result: unknown = await response.json();
+  if (!result || typeof result !== 'object' || Array.isArray(result)) throw new Error('ACCOUNT_TOOLS_STATE_INVALID');
+  return result as Record<string, unknown>;
+};
+
 export type WalletRuntimeFixtureInfo = Readonly<{
   runtimeId: string;
   entityId: string;

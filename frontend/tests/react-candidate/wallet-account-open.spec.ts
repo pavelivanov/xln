@@ -67,7 +67,7 @@ test('direct Account opening resolves recipients, rejects invalid targets and co
   await screenshotEvidence(page, testInfo, 'wallet-account-open-committed');
   await page.getByRole('button', { name: '← Back to assets' }).click();
   await expect(page.getByLabel('Entity', { exact: true })).toHaveValue(fixture.recovery.entityId);
-  await expect(page.locator('.account-rail-desktop a')).toHaveCount(6);
+  await expect(page.locator('.account-rail-desktop a')).toHaveCount(10);
   await page.goBack();
   await expect(form).toBeVisible();
   await expect(hub).toHaveAttribute('data-connection-state', 'open');

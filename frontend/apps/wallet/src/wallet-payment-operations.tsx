@@ -7,6 +7,7 @@ import type {
 } from './wallet-payment-operations-model';
 import type { WalletPaymentSource, WalletPaymentSourceSnapshot } from './wallet-payment-source';
 import { WalletPaymentBatch } from './wallet-payment-batch';
+import { createWalletLendingIntentId } from './wallet-lending-model';
 
 const operationCopy: Record<WalletOperationKind, Readonly<{
   label: string;
@@ -50,7 +51,7 @@ export function WalletPaymentOperations({
     ? target
     : options[0]?.entityId || '';
   const selectedTokenId = tokenId || projection.tokens[0]?.tokenId || 0;
-  const busy = snapshot.command.status === 'submitting' || snapshot.command.status === 'pending';
+  const busy = snapshot.status !== 'ready' || snapshot.command.status === 'submitting' || snapshot.command.status === 'pending';
   const isLending = kind === 'lend' || kind === 'borrow';
   const selectedPosition = projection.accounts.find((account) => account.counterpartyId === selectedTarget)
     ?.positions.find((position) => position.tokenId === selectedTokenId);
@@ -58,7 +59,7 @@ export function WalletPaymentOperations({
   const submit = async (): Promise<void> => {
     setError('');
     try {
-      const intentId = isLending ? `${kind}-${crypto.randomUUID()}` : '';
+      const intentId = kind === 'lend' || kind === 'borrow' ? createWalletLendingIntentId(kind) : '';
       await source.submitOperation({
         kind,
         targetEntityId: selectedTarget,

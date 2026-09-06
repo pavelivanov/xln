@@ -4,7 +4,7 @@ import type { WalletMarketProjection } from './wallet-market-model';
 import type { WalletMarketSource, WalletMarketSourceSnapshot } from './wallet-market-source';
 
 const commandBusy = (snapshot: WalletMarketSourceSnapshot): boolean =>
-  snapshot.command.status === 'submitting' || snapshot.command.status === 'pending';
+  snapshot.status !== 'ready' || snapshot.command.status === 'submitting' || snapshot.command.status === 'pending';
 
 const shortId = (value: string): string => value.length > 16
   ? `${value.slice(0, 8)}…${value.slice(-6)}`

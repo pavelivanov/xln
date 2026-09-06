@@ -3,8 +3,9 @@
 Scope: split the existing frontend into separate React applications while
 preserving existing behavior. No new product features, financial rules,
 Runtime APIs, contracts, custody behavior or production deployment are part of
-this status. Based on `main` at `3cfcf11cb90e499215523a76700aabad22d844a0` plus
-the current uncommitted frontend work.
+this status. Based on `main` at `81416cc91263cb2d2756f3e26acfcae10750d774`,
+pushed to `fork/main`, plus the subsequent uncommitted Entity selection fix
+and Manage/Move/Lending/History ports.
 
 ## Overall status
 
@@ -22,7 +23,7 @@ the earlier “19 complete / 1 partial” headline overstates completion.
 | --- | --- | --- | --- |
 | `site` | React implementation present | Seven public site routes, own Vite/TypeScript root and assets | Final regression check when switching default outputs |
 | `docs` | React implementation present | Docs reader, catalog, search model and generated content | Complete interaction parity evidence for search, history and anchors |
-| `wallet` | Partially migrated | React shell, setup/Formation/Hub Discovery, direct opening, focused Account details and appearance; paginated Account dropdown and six Account rail destinations; shared Entity selection across assets, health, payments and markets; activity, settings, recovery and canonical navigation | Move/Lending/History/Manage and Account/token/jurisdiction context across action forms and ops; live disputed/faucet, automatic hub join and remote-owner/reload evidence; Ownership and settings parity; retained Svelte store dependencies |
+| `wallet` | Partially migrated | React shell, setup/Formation/Hub Discovery, direct opening, focused Account details and appearance; paginated Account dropdown and all ten rail destinations; Manage/Move/Lending/History with full Account context; shared Entity selection across assets, health, payments and markets; activity, settings, recovery and canonical navigation | Backend Lending admission dependency; remaining settlement/debt/activity controls and ops action context; live disputed/faucet, automatic hub join and remote-owner/reload evidence; Ownership and settings parity; retained Svelte store dependencies |
 | `ops` | Partially migrated | Health, QA/HLT/quorum, runs, scenarios, AI and an internal dock hosting Entity read views, Gossip, Solvency and Runtime Diagnostics | Mount the complete existing workspace at `/embed`; finish its panel registry, local/scenario context, Graph3D and remaining actions; finish existing keyboard/localization behavior |
 
 Evidence: [app ownership and routes](/Users/p/Projects/xln/frontend/config/surfaces.ts),
@@ -57,8 +58,8 @@ missing-live-Runtime guard; local acceptance/commitment remains unverified.
 Classic capacity bars and all five Apple styles now render through shared
 display models. The existing appearance route exposes persisted layout, skin,
 scale and effect controls. Keyboard expansion, preference reload and effects
-triggered by a real isolated payment are verified. Six Account rail destinations
-now navigate to existing React consumers; desktop/mobile keyboard behavior and
+triggered by a real isolated payment are verified. All ten Account rail destinations
+now navigate to React consumers; desktop/mobile keyboard behavior and
 the empty-Account restriction are verified. A shell-owned UI context preserves
 Entity selection across Assets, Health, Payments and Markets, and focused
 Account selection through appearance/back. Assets now mounts the retained
@@ -66,9 +67,18 @@ Account dropdown above five Accounts, sharing name/avatar/status formatting
 with Svelte and loading all remote Account pages. A real 26-Account flow
 verifies selecting beyond the portfolio's first page, keyboard dismissal,
 focused-view return, Entity changes and original Runtime restoration. Live
-pending/disputed dropdown statuses are not browser-verified. Four remaining
-rail destinations, full action-level Account/token/jurisdiction context and
-Entity Activity presentation remain open. Successful automatic joining,
+pending/disputed dropdown statuses are not browser-verified. Rapid A → B → A
+selection during remote reads is now verified across all four wallet consumers;
+the last choice wins, old Entity content is hidden during a switch and payment/
+market actions stay disabled during refresh. Manage, Move, Lending and History
+now load full Account context, retain independently owned tool selections and
+discard stale Entity reads. Manage consumes the focused Account beyond the
+first remote page. The tools use the retained commands, math and provider
+authority. Lending API reads work, but live funding is deliberately rejected
+by the existing Account profile (`ACCOUNT_TX_KIND_OUT_OF_PROFILE:lending_fund`);
+the positive lifecycle test remains failing. Backend changes need owner scope
+approval. Remaining settlement/debt/activity controls and ops action context
+stay open. Successful automatic joining,
 remote-owner integration and cold reload parity remain open. See the
 [implementation checkpoints](wallet-ops-ui-ports.md).
 
@@ -98,12 +108,45 @@ deployments.
 Evidence: [frontend commands](/Users/p/Projects/xln/frontend/package.json),
 [assembly](/Users/p/Projects/xln/frontend/scripts/assemble.ts),
 [CI](/Users/p/Projects/xln/.github/workflows/build-and-test.yml:96).
-Seven files under `frontend/bridges/wallet-canonical-*` still import
+Eight files under `frontend/bridges/wallet-canonical-*` still import
 `svelte/store`, and React wallet sources actively consume those bridges.
 
 ## Verification
 
-- Latest dropdown/model/selection/navigation/read-source/observer/tooling checks:
+- Further command evidence on 2026-09-06: **6 browser cases** prove Move r2c
+  chain finality and fresh Manage collateral requests/prepaid fees on both
+  Account sides in USDC/WETH/USDT. **12 screenshots inspected**, 8/10 per
+  viewport. **12 command-builder tests / 52 assertions**, **3 inventory tests /
+  285 assertions**, and wallet/tooling typecheck pass. The retained command-bus
+  file has a preexisting missing-export load failure; its owned configure-source
+  case passes separately (**20 assertions**) after following the shared helper.
+  Evidence: `output/account-tools-qa/*commands*` and `*boundary*`. Lending's
+  backend admission and the root Cargo gate remain unresolved.
+- Follow-up on 2026-09-06: History Clear filters preserves view mode, kind and
+  page size; Lending shares retained default-token selection. The 26th
+  Account reaches both Manage and Lending; direct opening exposes ten tabs.
+  **15 narrow tests / 58 assertions** and **9 browser cases** pass across all
+  three sizes. **34 additional screenshots inspected**, rated 8/10 per size.
+  Wallet/tooling typechecks, wallet build and Svelte check pass. Latest logs:
+  `output/account-tools-qa/xln-account-tools-parity-*.log`. Live Lending's
+  backend admission blocker remains open.
+- Latest Account-tool checks: **33 unit tests / 125 assertions**, **24 targeted
+  browser cases** across mobile/laptop/wide desktop, plus **3 final Move
+  reruns** after extracting shared Entity input styles. Console checks pass;
+  **63 screenshots inspected**, rated 8/10 at each viewport. Contact sheets,
+  final Move originals and logs: `output/account-tools-qa/`. Real effects
+  include credit/add-token commits, external transfer/approval, deposit and
+  collateral drafts, embedded load start/stop and dispute-start drafting.
+  Lending's separate positive lifecycle test fails at the existing Account
+  admission gate; no backend change, bypass, skip or fake state was added.
+  Wallet/tooling typechecks, unsafe-type checks, wallet build and Svelte check
+  (0 errors/warnings) pass. These targeted passes do not claim the full wallet
+  matrix or remaining collateral/settlement/dispute lifecycle evidence.
+- Latest selection/observer/portfolio/payment/market/health/navigation/browser-scope
+  checks: **61 tests pass**, 244 assertions across eight files, in two batches:
+  `/tmp/xln-entity-selection-unit.log` and
+  `/tmp/xln-entity-selection-unit-market-health.log`.
+  Previous dropdown/model/selection/navigation/read-source/observer/tooling checks:
   **58 tests pass**, 221 assertions across nine files:
   `/tmp/xln-account-dropdown-unit-final.log`.
   Previous selection/navigation/read-source/payment/market/health/tooling checks:
@@ -116,7 +159,16 @@ Seven files under `frontend/bridges/wallet-canonical-*` still import
   Earlier onboarding/parser/options/navigation/portfolio/tooling checkpoint:
   **254 pass**, 1,305 assertions across 35 files:
   `/tmp/xln-direct-account-unit-final2.log`.
-- Latest targeted wallet browser checks: **12/12 pass in 1.1 minutes** across
+- Latest targeted wallet browser checks: **24/24 pass in 37.0 s** across three
+  viewports: twelve rapid Entity reversal cases, three Account rail cases and
+  nine navigation/invoice/quote/committed-payment cases:
+  `/tmp/xln-entity-selection-browser-final.log`. All **37 screenshots** were
+  inspected and rated 8/10 at each viewport; artifacts are preserved in
+  `output/playwright/react-entity-selection-final`. Browser-error and containment
+  assertions pass. The regression was reproduced before the fix against the
+  real Runtime; it fabricates no read responses. See the
+  [Entity selection checkpoint](wallet-ops-ui-ports.md#entity-selection-checkpoint--2026-09-05).
+- Previous targeted wallet browser checks: **12/12 pass in 1.1 minutes** across
   three viewports: new Account dropdown, existing rail and focused Account
   flows, including the local focused view:
   `/tmp/xln-account-dropdown-browser-final.log`. All **29 screenshots** were
@@ -147,7 +199,7 @@ Seven files under `frontend/bridges/wallet-canonical-*` still import
   the [Account appearance checkpoint](wallet-ops-ui-ports.md#account-capacity-bars-and-appearance-checkpoint--2026-09-05).
   No backend changes or weakened assertions were made. The preceding focused
   Account matrix was 78/78; that historical result does not supersede this
-  unresolved failure. The registered matrix now has 90 cases; the full 90-case
+  unresolved failure. The registered matrix now has 102 cases; the full 102-case
   matrix has not been run.
 - Previous focused appearance and Account browser checks: **12/12 pass** in 1.2 minutes:
   `/tmp/xln-account-appearance-browser-l2.log`. All corresponding full-matrix
@@ -161,22 +213,26 @@ Seven files under `frontend/bridges/wallet-canonical-*` still import
   Console/page-error assertions pass for these flows. Remote-owner mutation,
   successful local faucet funding, live disputed navigation and cold reload remain unproven;
   passing tests do not close incomplete UI rows.
-- Latest ops browser checkpoint (not rerun for the wallet dropdown): **42/42 passed** in 46.0 seconds, covering
+- Latest ops browser checkpoint (not rerun for the wallet selection fix): **42/42 passed** in 46.0 seconds, covering
   the internal dock and existing ops routes. Six diagnostics screenshots
   inspected: `/tmp/xln-ops-diagnostics-browser-matrix.log`. Focused
   diagnostics/query/source tests: 49 passed, 418 assertions.
-- Latest all-app build: **4/4 passed**. Site 825 ms, docs 349 ms,
+- Latest wallet build passes in **2.39 s**:
+  `/tmp/xln-entity-selection-build.log`. Existing chunk warnings remain.
+  Previous all-app build: **4/4 passed**. Site 825 ms, docs 349 ms,
   wallet 2.21 s, ops 2.07 s: `/tmp/xln-account-dropdown-build.log`.
   Existing chunk warnings remain.
-- Latest strict React checks: **4/4 apps plus tooling passed**:
+- Latest wallet and tooling strict checks pass, scanning **759 files with zero
+  unsafe-type findings**: `/tmp/xln-entity-selection-react-final.log`.
+  Previous strict React checks: **4/4 apps plus tooling passed**:
   `/tmp/xln-account-dropdown-react-final.log`; wallet/tooling were checked
   again after fixture isolation in `/tmp/xln-account-dropdown-react-isolation.log`.
-  The check scans 759 files, with zero unsafe-type findings. Svelte has zero diagnostic
+  The check scans 759 files, with zero unsafe-type findings. Previous Svelte check has zero diagnostic
   errors/warnings: `/tmp/xln-account-dropdown-svelte-stable.log`; the scanner
   still prints configuration messages for the separate React Vite roots.
 - Latest root `bun run check`: 26 tests / 100,156 assertions, contract sync and
   ten soundchecks pass; missing `cargo` stops the next gate (127):
-  `/tmp/xln-account-dropdown-root-final.log`.
+  `output/account-tools-qa/xln-account-tools-parity-root.log`.
   Later root gates did not run. Root verification remains open.
 
 Earlier verification logs: `/tmp/xln-settlement-react-final.log`,
@@ -191,9 +247,11 @@ The first item now has an executable
 React targets, dependencies and behavioral acceptance checks. Planning does
 not change the partial implementation status above.
 
-1. Finish the existing wallet and ops UI ports. Next: selected
-   Account/token/jurisdiction context across action forms and ops, and the remaining Manage/Move/Lending/History
-   consumers. Then complete onboarding/settings/Ownership, ops local/scenario
+1. Finish the existing wallet and ops UI ports. Manage/Move/Lending/History
+   and their wallet Account context are mounted; resolve or explicitly defer
+   the backend Lending admission dependency. Next: remaining settlement/debt/
+   activity controls and ops action context. Then complete
+   onboarding/settings/Ownership, ops local/scenario
    context and panels, Graph3D/playback and public `/embed` integration.
 2. Move shared lifecycle/store adapters out of Svelte dependencies without
    changing storage, custody or Runtime behavior.
@@ -213,5 +271,6 @@ extending its backend does not.
 
 The Runtime API proposal is inactive following the owner's scope clarification.
 No API changes have been made. Subsequent implementation has stayed within the
-existing frontend ports and their verification. Work remains uncommitted; the
-canonical Svelte application is still the production default.
+existing frontend ports and their verification. The ports checkpoint is committed
+and pushed as `81416cc91`; the subsequent Entity selection fix remains uncommitted.
+The canonical Svelte application is still the production default.

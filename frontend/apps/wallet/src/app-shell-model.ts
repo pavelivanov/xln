@@ -16,7 +16,7 @@ export const WALLET_APP_LINKS = [
   { href: '/docs', label: 'Docs', view: null },
 ] as const;
 
-export type WalletAppView = 'overview' | 'portfolio' | 'health' | 'payments' | 'markets' | 'identity' | 'settings' | 'diagnostics' | 'scenario-preview';
+export type WalletAppView = 'overview' | 'portfolio' | 'health' | 'payments' | 'markets' | 'identity' | 'settings' | 'diagnostics' | 'scenario-preview' | 'account-tools';
 
 export const resolveWalletAppView = (search: string, hash = ''): WalletAppView =>
   resolveWalletAppRoute(search, hash).view;

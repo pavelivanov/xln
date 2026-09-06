@@ -41,6 +41,7 @@ export function WalletPayments({ tab, invoice, onTabChange, workspaceSelection }
   invoice: string;
   onTabChange: (tab: WalletPaymentTab) => void;
 }>) {
+  const { entityId } = useSyncExternalStore(workspaceSelection.subscribe, workspaceSelection.getSnapshot, workspaceSelection.getSnapshot);
   const [source] = useState(() => new WalletPaymentSource(
     readRuntimeAdapterStorageSnapshot({ durable: localStorage, session: sessionStorage }),
     workspaceSelection,
@@ -80,7 +81,7 @@ export function WalletPayments({ tab, invoice, onTabChange, workspaceSelection }
               disabled={snapshot.command.status === 'pending' || snapshot.command.status === 'submitting'}
               id="wallet-payments-entity"
               onChange={(event) => source.selectEntity(event.target.value)}
-              value={projection.activeEntityId}
+              value={entityId || projection.activeEntityId}
             >
               {projection.entities.map((entity) => <option key={entity.entityId} value={entity.entityId}>{entity.label}</option>)}
             </select>
@@ -112,7 +113,7 @@ export function WalletPayments({ tab, invoice, onTabChange, workspaceSelection }
               </button>
             ))}
           </nav>
-          {tab === 'external' ? (
+          {entityId && entityId !== projection.activeEntityId ? <p role="status">Loading selected Entity…</p> : tab === 'external' ? (
             <Suspense fallback={<p className="wallet-payments-empty" role="status">Loading the local authority bridge…</p>}>
               <WalletPaymentExternal
                 key={`${projection.activeEntityId}:${projection.signerId}`}

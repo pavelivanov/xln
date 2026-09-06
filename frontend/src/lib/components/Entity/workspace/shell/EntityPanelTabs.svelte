@@ -40,7 +40,7 @@ import { requestAccountFaucet } from "../../account/account-faucet-command";
 import { faucetPendingKey, type PendingReserveFaucet, readFaucetApiResult, reconcilePendingReserveFaucets } from "../../account/account-faucet";
 import { buildMoveArrowPath, buildMoveRouteSteps, canAddMoveRouteToDraft, getMovePrimaryActionLabel, getMoveRouteKey, isImmediateMoveExecutionRoute, isMoveRouteSupported, moveNeedsExternalRecipient, moveNeedsReserveRecipient, routeRequiresExplicitExternalAllowance, MOVE_ENDPOINT_LABEL, MOVE_ENDPOINTS, type MoveEndpoint } from "../../move-routes";
 import { buildMoveAllowanceContextSignature, buildMoveAllowanceStatusLabel, getMoveRequiredAllowanceAmount, isMoveAllowanceSatisfied } from "../../move/move-allowance";
-import { choosePreferredMoveAssetSymbol, computeMoveSourceAvailableBalanceForEndpoint, getMoveMaxAmountForEndpoint, getPreferredMoveSourceAccountId } from "../../move/move-balance";
+import { choosePreferredMoveAssetSymbol, computeMoveSourceAvailableBalanceForEndpoint, getMoveMaxAmountForEndpoint, getPreferredMoveSourceAccountId, sumOpenMoveDebt } from "../../move/move-balance";
 import { getMoveValidationErrorForContext, type MoveValidationMode } from "../../move/move-validation";
 import { createMoveVisualController } from "../../move/move-visual-controller";
 import type { AssetLedgerRow } from "../../asset-ledger";
@@ -323,14 +323,7 @@ function getMoveDraftReserveDelta(tokenId: number): bigint {
 }
 function getOpenOutgoingDebtForToken(tokenId: number): bigint {
   const bucket = replica?.state?.outDebtsByToken?.get?.(tokenId);
-  if (!bucket) return 0n;
-  let total = 0n;
-  for (const debt of bucket.values()) {
-    if (debt.status === "open") {
-      total += BigInt(debt.remainingAmount || 0);
-    }
-  }
-  return total;
+  return sumOpenMoveDebt(bucket ? bucket.values() : []);
 }
 function getMoveMaxAmount(from: MoveEndpoint, reserveToken: ReserveTransferAsset | null, externalToken: ExternalToken | null, sourceAccountId: string): bigint | null {
   return getMoveMaxAmountForEndpoint({

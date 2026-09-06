@@ -1,4 +1,5 @@
 import { normalizeEntityIdForRuntimeView } from '../../../packages/runtime-client/src/runtime-view-model';
+import { emptyWalletAccountToolSelection, type WalletAccountToolSelection } from './wallet-account-tool-selection';
 
 export type WalletWorkspaceSelectionSnapshot = Readonly<{
   runtimeId: string;
@@ -26,9 +27,17 @@ export const requireWalletWorkspaceEntity = <T extends { activeEntityId: string 
 // through route changes; it never persists state or owns a Runtime connection.
 export class WalletWorkspaceSelection {
   private snapshot = emptySelection();
+  private tools = emptyWalletAccountToolSelection();
   private readonly listeners = new Set<() => void>();
 
   readonly getSnapshot = (): WalletWorkspaceSelectionSnapshot => this.snapshot;
+  readonly getAccountTools = (): WalletAccountToolSelection => this.tools;
+  readonly selectAccountTool = <K extends keyof WalletAccountToolSelection>(runtimeId: string, entityId: string, tool: K, value: WalletAccountToolSelection[K]): void => {
+    this.requireRuntime(runtimeId);
+    if (entityId !== this.snapshot.entityId) throw new Error('WALLET_WORKSPACE_TOOL_ENTITY_MISMATCH');
+    this.tools = { ...this.tools, [tool]: value };
+    for (const listener of this.listeners) listener();
+  };
   readonly subscribe = (listener: () => void): (() => void) => {
     this.listeners.add(listener);
     return () => { this.listeners.delete(listener); };
@@ -73,6 +82,7 @@ export class WalletWorkspaceSelection {
   }
 
   private publish(snapshot: WalletWorkspaceSelectionSnapshot): void {
+    if (snapshot.runtimeId !== this.snapshot.runtimeId || snapshot.entityId !== this.snapshot.entityId) this.tools = emptyWalletAccountToolSelection();
     this.snapshot = snapshot;
     for (const listener of this.listeners) listener();
   }

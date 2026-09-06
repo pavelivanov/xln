@@ -124,7 +124,7 @@ export class WalletPortfolioSource {
     if (!projection?.entities.some((entity) => entity.entityId === normalized)) {
       throw new Error(`WALLET_PORTFOLIO_ENTITY_UNKNOWN:${normalized}`);
     }
-    if (normalized === this.selectedEntityId || normalized === projection.activeEntityId) return;
+    if (normalized === (this.selectedEntityId || projection.activeEntityId)) return;
     this.selectedEntityId = normalized;
     this.selection.selectEntity(this.requireAdapter().runtimeId, normalized);
     this.accountsPage = 0;

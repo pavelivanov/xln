@@ -11,7 +11,7 @@
   } from '$lib/utils/identity/entityReplica';
   import BigIntInput from '../../../Common/BigIntInput.svelte';
   import EntitySelect from '../../workspace/shell/EntitySelect.svelte';
-  import { amountToUsd } from '$lib/utils/assetPricing';
+  import { resolveCollateralFeePolicy, collateralRequestFee, collateralRentEstimate } from '../collateral-request';
   import { requireTokenDecimals } from '../../token-metadata';
 
   export let entityId: string;
@@ -36,7 +36,6 @@
   let overCollateralMinutes = 30;
   let submitting = false;
 
-  const OVERCOLLATERAL_RENT_RATE_USD_PER_100_PER_HOUR = 1;
   const usdFormatter = new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: 'USD',
@@ -96,13 +95,7 @@
     return activeXlnFunctions?.formatTokenAmount?.(selectedTokenId, amount) || amount.toString();
   }
 
-  $: overCollateralUsd = amountToUsd(
-    overCollateralAmount,
-    selectedTokenDecimals,
-    tokenSymbol(selectedTokenId),
-  );
-  $: overCollateralRentRateUsdPerHour = overCollateralUsd * (OVERCOLLATERAL_RENT_RATE_USD_PER_100_PER_HOUR / 100);
-  $: overCollateralRentCostUsd = overCollateralRentRateUsdPerHour * (overCollateralMinutes / 60);
+  $: overCollateralRentCostUsd = collateralRentEstimate(overCollateralAmount, selectedTokenDecimals, tokenSymbol(selectedTokenId), overCollateralMinutes);
   $: {
     const key = `${normalizeEntityId(effectiveCounterparty)}:${selectedTokenId}`;
     if (key !== lastPrefillKey) {
@@ -137,30 +130,14 @@
     ownerEntityId: string,
     tokenId: number,
   ): CounterpartyFeePolicy | null {
-    if (!account) return null;
-    const owner = normalizeEntityId(ownerEntityId);
-    const side = owner === normalizeEntityId(account.state.leftEntity)
-      ? 'right'
-      : owner === normalizeEntityId(account.state.rightEntity)
-        ? 'left'
-        : null;
-    if (!side) return null;
-    const policy = account.state.rebalanceFeePolicies?.get(tokenId)?.[side];
-    if (!policy) return null;
-    return {
-      policyVersion: policy.policyVersion,
-      baseFee: policy.baseFee,
-      liquidityFeeBps: policy.liquidityFeeBps,
-      gasFee: policy.gasFee,
-    };
+    return resolveCollateralFeePolicy(account, ownerEntityId, tokenId);
   }
 
   $: projectedFeePolicy = activeEnv
     ? resolveCounterpartyPolicy(activeEnv, entityId, effectiveCounterparty, selectedTokenId)
     : resolveProjectedCounterpartyPolicy(accountOverride, entityId, selectedTokenId);
   $: projectedFeeAmount = projectedFeePolicy
-    ? projectedFeePolicy.baseFee + projectedFeePolicy.gasFee +
-      ((collateralAmount * projectedFeePolicy.liquidityFeeBps) / 10000n)
+    ? collateralRequestFee(projectedFeePolicy, collateralAmount)
     : 0n;
   $: projectedNetCollateral = collateralAmount > projectedFeeAmount
     ? collateralAmount - projectedFeeAmount
@@ -205,10 +182,7 @@
       if (feePolicy.baseFee < 0n || feePolicy.gasFee < 0n || feePolicy.liquidityFeeBps < 0n) {
         throw new Error('Counterparty rebalance fee policy contains negative values.');
       }
-      const feeAmount =
-        feePolicy.baseFee +
-        feePolicy.gasFee +
-        ((collateralAmount * feePolicy.liquidityFeeBps) / 10000n);
+      const feeAmount = collateralRequestFee(feePolicy, collateralAmount);
       if (feeAmount < 0n) {
         throw new Error('Computed rebalance fee is negative. Counterparty policy is invalid.');
       }

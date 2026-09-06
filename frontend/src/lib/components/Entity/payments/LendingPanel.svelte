@@ -14,6 +14,7 @@
   import EntitySelect from '../workspace/shell/EntitySelect.svelte';
   import { requireTokenDecimals } from '../token-metadata';
   import { parseJsonUnknown, requireUnknownRecord } from '$lib/utils/boundary';
+  import { buildLendingTokenOptions } from './lending-token-options';
 
   export let entityId: string;
   export let replica: EntityReplica | null = null;
@@ -115,22 +116,10 @@
   $: canSubmit = isLive && !!selectedHubEntityId && !!normalizedEntityId && !submitting;
 
   function buildTokenOptions(): Array<{ id: number; symbol: string }> {
-    const ids = new Set<number>();
     const account = selectedHubEntityId
       ? replica?.state?.accounts?.get?.(selectedHubEntityId)
       : null;
-    for (const key of account?.state.deltas?.keys?.() ?? []) {
-      const id = Number(key);
-      if (Number.isInteger(id) && id > 0) ids.add(id);
-    }
-    if (ids.size === 0) {
-      ids.add(1);
-      ids.add(2);
-      ids.add(3);
-    }
-    return Array.from(ids.values())
-      .sort((left, right) => tokenSymbol(left).localeCompare(tokenSymbol(right)) || left - right)
-      .map((id) => ({ id, symbol: tokenSymbol(id) }));
+    return buildLendingTokenOptions(account?.state.deltas?.keys?.() ?? [], tokenSymbol);
   }
 
   function tokenSymbol(tokenId: number): string {
