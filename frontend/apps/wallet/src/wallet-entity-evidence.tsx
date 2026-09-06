@@ -6,9 +6,12 @@ import { projectEntityWorkspaceConsensusEvidence } from '../../../packages/runti
 import { EntityWorkspaceOwnershipPanel } from '../../../packages/ui/src/entity-workspace-ownership-panel';
 import { EntityWorkspaceConsensusPanel } from '../../../packages/ui/src/entity-workspace-consensus-panel';
 import '../../../packages/ui/src/entity-workspace-shell.css';
+import type { WalletPaymentSource } from './wallet-payment-source';
+import { WalletOwnershipShares } from './wallet-ownership-shares';
 
-export function WalletEntityEvidence({ context: account, tab }: Readonly<{
+export function WalletEntityEvidence({ context: account, tab, source }: Readonly<{
   context: WalletAccountContext;
+  source: WalletPaymentSource;
   tab: 'ownership' | 'consensus';
 }>) {
   const { frame, runtimeId } = account;
@@ -23,7 +26,7 @@ export function WalletEntityEvidence({ context: account, tab }: Readonly<{
     </nav>
     {tab === 'ownership' ? <>
       <EntityWorkspaceOwnershipPanel ownership={ownership} />
-      <p>Share issuance and board changes are available in the canonical workspace.</p>
+      <WalletOwnershipShares key={`${runtimeId}:${account.entityId}`} source={source} entityId={account.entityId} apiBase={account.apiBase} />
     </> : <EntityWorkspaceConsensusPanel evidence={evidence} />}
   </div>;
 }
