@@ -1,6 +1,6 @@
 import { useId, useState, type KeyboardEvent, type Ref } from 'react';
 import { compareStableText } from '../../../src/lib/utils/stableSort';
-import { parseEntityInput, type EntityInputProfile } from '../../../src/lib/components/shared/entity-input-model';
+import { parseEntityInput, type EntityInputProfile } from '../../../packages/ui/src/entity-input-model';
 import './styles/wallet-entity-input.css';
 
 export function WalletEntityInput({ value, onChange, entities, profiles, disabled, label = 'Recipient', inputRef }: Readonly<{
