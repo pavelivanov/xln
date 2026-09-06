@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test';
 import { expectNoBrowserErrors, expectPageContained, observeBrowserErrors, screenshotEvidence } from './browser-evidence';
 import { finishOpenedWalletSetup, restoreLocalWallet } from './wallet-onboarding-test-helpers';
 
-test('Formation creates numbered and weighted lazy Entities through the existing wallet commands', async ({ page }, testInfo) => {
+test('Formation creates numbered and weighted lazy Entities through the existing wallet commands', { tag: '@functional' }, async ({ page }, testInfo) => {
   testInfo.setTimeout(150_000);
   const errors = observeBrowserErrors(page);
   const fixture = await restoreLocalWallet(page);

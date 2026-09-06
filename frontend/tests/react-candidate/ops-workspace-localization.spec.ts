@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 import { expectNoBrowserErrors, expectPageContained, observeBrowserErrors, screenshotEvidence } from './browser-evidence';
 
-test('workspace locale updates controls, retained and new panels, and survives reload without internal layout writes', async ({ page }, testInfo) => {
+test('workspace locale updates controls, retained and new panels, and survives reload without internal layout writes', { tag: '@functional' }, async ({ page }, testInfo) => {
   const errors = observeBrowserErrors(page);
   await page.goto('/embed');
   await expect(page.locator('.dv-tab')).toHaveCount(14);

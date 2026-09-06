@@ -7,7 +7,7 @@ import {
   screenshotEvidence,
 } from './browser-evidence';
 
-test('hub-collapse executes and reconstructs the wallet preview', async ({ page }, testInfo) => {
+test('hub-collapse executes and reconstructs the wallet preview', { tag: '@resilience' }, async ({ page }, testInfo) => {
   test.setTimeout(120_000);
   const errors = observeBrowserErrors(page);
   const rpcRequests: string[] = [];

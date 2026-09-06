@@ -3,7 +3,7 @@ import { expect, test } from '@playwright/test';
 import { expectNoBrowserErrors, expectPageContained, observeBrowserErrors, screenshotEvidence } from './browser-evidence';
 import { selectWalletFixtureRuntime } from './wallet-runtime-test-helpers';
 
-test('wallet canonical links select subviews and retain Entity through hash and history navigation', async ({ page }, testInfo) => {
+test('wallet canonical links select subviews and retain Entity through hash and history navigation', { tag: '@functional' }, async ({ page }, testInfo) => {
   const errors = observeBrowserErrors(page);
   const fixture = await selectWalletFixtureRuntime(page);
   await page.goto('/app?portfolio=1#accounts/receive', { waitUntil: 'domcontentloaded' });
@@ -47,7 +47,7 @@ test('wallet canonical links select subviews and retain Entity through hash and 
   expectNoBrowserErrors(errors);
 });
 
-test('wallet invoice links prefill the current form and reject malformed replacement links', async ({ page }, testInfo) => {
+test('wallet invoice links prefill the current form and reject malformed replacement links', { tag: '@functional' }, async ({ page }, testInfo) => {
   const errors = observeBrowserErrors(page);
   const fixture = await selectWalletFixtureRuntime(page);
   await page.goto('/app#accounts/send', { waitUntil: 'domcontentloaded' });
@@ -77,7 +77,7 @@ test('wallet invoice links prefill the current form and reject malformed replace
   expectNoBrowserErrors(errors);
 });
 
-test('wallet submits only the refreshed payment quote and observes committed activity', async ({ page }, testInfo) => {
+test('wallet submits only the refreshed payment quote and observes committed activity', { tag: '@functional' }, async ({ page }, testInfo) => {
   const errors = observeBrowserErrors(page);
   const fixture = await selectWalletFixtureRuntime(page);
   await page.goto('/app#accounts/send', { waitUntil: 'domcontentloaded' });

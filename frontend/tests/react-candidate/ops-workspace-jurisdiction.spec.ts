@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 import { expectNoBrowserErrors, expectPageContained, observeBrowserErrors, screenshotEvidence } from './browser-evidence';
 
-test('Jurisdiction preserves exact recorded observations across frame and Entity selection', async ({ page }, testInfo) => {
+test('Jurisdiction preserves exact recorded observations across frame and Entity selection', { tag: '@functional' }, async ({ page }, testInfo) => {
   testInfo.setTimeout(120_000);
   const errors = observeBrowserErrors(page);
   await page.goto('/__app/ops/entity-workspace?scenario=ahb');
@@ -42,7 +42,7 @@ test('Jurisdiction preserves exact recorded observations across frame and Entity
 });
 
 
-test('Graph Jurisdiction pointer and keyboard navigation retain the selected panel', async ({ page }, testInfo) => {
+test('Graph Jurisdiction pointer and keyboard navigation retain the selected panel', { tag: '@functional' }, async ({ page }, testInfo) => {
   testInfo.setTimeout(120_000);
   const errors = observeBrowserErrors(page);
   await page.goto('/__app/ops/entity-workspace?scenario=ahb');

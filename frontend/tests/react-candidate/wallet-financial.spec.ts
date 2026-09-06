@@ -9,7 +9,7 @@ import {
 import { selectWalletFixtureRuntime } from './wallet-runtime-test-helpers';
 import { expectWalletHistoryEvents } from './wallet-history-test-helpers';
 
-test('wallet portfolio renders a real committed bilateral Account', async ({ page }, testInfo) => {
+test('wallet portfolio renders a real committed bilateral Account', { tag: '@functional' }, async ({ page }, testInfo) => {
   const errors = observeBrowserErrors(page);
   const fixture = await selectWalletFixtureRuntime(page);
   const response = await page.goto('/app?portfolio=1', { waitUntil: 'domcontentloaded' });
@@ -30,7 +30,7 @@ test('wallet portfolio renders a real committed bilateral Account', async ({ pag
   expectNoBrowserErrors(errors);
 });
 
-test('wallet financial health renders committed Account and activity evidence', async ({ page }, testInfo) => {
+test('wallet financial health renders committed Account and activity evidence', { tag: '@functional' }, async ({ page }, testInfo) => {
   const errors = observeBrowserErrors(page);
   const fixture = await selectWalletFixtureRuntime(page);
   const response = await page.goto('/app?health=1', { waitUntil: 'domcontentloaded' });

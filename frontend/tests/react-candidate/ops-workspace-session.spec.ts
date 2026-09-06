@@ -4,7 +4,7 @@ import { expect, test, type WebSocket } from '@playwright/test';
 import { expectNoBrowserErrors, expectPageContained, observeBrowserErrors, screenshotEvidence } from './browser-evidence';
 import { installImportedRuntime, readWalletRuntimeFixture } from './wallet-runtime-test-helpers';
 
-test('Entity panels keep independent selection, navigation and history on one real Runtime connection', async ({ page }, testInfo) => {
+test('Entity panels keep independent selection, navigation and history on one real Runtime connection', { tag: '@functional' }, async ({ page }, testInfo) => {
   const errors = observeBrowserErrors(page);
   const fixture = await readWalletRuntimeFixture(page);
   await openWorkspaceStorageOrigin(page);

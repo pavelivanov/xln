@@ -3,7 +3,7 @@ import { expectNoBrowserErrors, expectPageContained, observeBrowserErrors, scree
 import { finishOpenedWalletSetup, restoreLocalWallet } from './wallet-onboarding-test-helpers';
 import { selectWalletFixtureRuntime } from './wallet-runtime-test-helpers';
 
-test('direct Account opening resolves recipients, rejects invalid targets and commits through the retained command', async ({ page }, testInfo) => {
+test('direct Account opening resolves recipients, rejects invalid targets and commits through the retained command', { tag: '@functional' }, async ({ page }, testInfo) => {
   testInfo.setTimeout(150_000);
   const errors = observeBrowserErrors(page);
   const fixture = await restoreLocalWallet(page, 'hub-discovery');
@@ -76,7 +76,7 @@ test('direct Account opening resolves recipients, rejects invalid targets and co
   expectNoBrowserErrors(errors);
 });
 
-test('direct Account opening reads the exact existing remote Account and keeps self rejection', async ({ page }, testInfo) => {
+test('direct Account opening reads the exact existing remote Account and keeps self rejection', { tag: '@functional' }, async ({ page }, testInfo) => {
   const errors = observeBrowserErrors(page);
   const fixture = await selectWalletFixtureRuntime(page);
   await page.goto('/app?portfolio=1', { waitUntil: 'domcontentloaded' });

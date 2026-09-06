@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test';
 import { expectNoBrowserErrors, expectPageContained, observeBrowserErrors, screenshotEvidence } from './browser-evidence';
 import { readWalletRuntimeFixture } from './wallet-runtime-test-helpers';
 
-test('visible Runtime attach and selection update existing panels without restarting the browser Runtime', async ({ page }, testInfo) => {
+test('visible Runtime attach and selection update existing panels without restarting the browser Runtime', { tag: '@functional' }, async ({ page }, testInfo) => {
   testInfo.setTimeout(90_000);
   const errors = observeBrowserErrors(page);
   const fixture = await readWalletRuntimeFixture(page);
@@ -42,7 +42,7 @@ test('visible Runtime attach and selection update existing panels without restar
   expectNoBrowserErrors(errors);
 });
 
-test('Runtime Manager exposes expiry, retry and bulk validation using real fixture capabilities', async ({ page }, testInfo) => {
+test('Runtime Manager exposes expiry, retry and bulk validation using real fixture capabilities', { tag: '@resilience' }, async ({ page }, testInfo) => {
   const errors = observeBrowserErrors(page);
   const fixture = await readWalletRuntimeFixture(page);
   await page.goto('/__app/ops/entity-workspace');

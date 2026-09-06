@@ -4,7 +4,7 @@ import { expectNoBrowserErrors, expectPageContained, observeBrowserErrors, scree
 import { installImportedRuntime, readWalletRuntimeFixture } from './wallet-runtime-test-helpers';
 import { installOpsOwnerMetadata } from './ops-owner-test-helpers';
 
-test('owner unlock rejects another wallet, protects secrets, and revokes a cached owner lane on lock and expiry', async ({ page }, testInfo) => {
+test('owner unlock rejects another wallet, protects secrets, and revokes a cached owner lane on lock and expiry', { tag: '@resilience' }, async ({ page }, testInfo) => {
   const errors = observeBrowserErrors(page);
   await page.clock.install();
   const fixture = await readWalletRuntimeFixture(page);

@@ -3,7 +3,7 @@ import { expectNoBrowserErrors, expectPageContained, observeBrowserErrors, scree
 import { selectWalletFixtureRuntime } from './wallet-runtime-test-helpers';
 import { finishOpenedWalletSetup, restoreLocalWallet } from './wallet-onboarding-test-helpers';
 
-test('focused Account shows the exact remote credit perspective and returns to activity', async ({ page }, testInfo) => {
+test('focused Account shows the exact remote credit perspective and returns to activity', { tag: '@functional' }, async ({ page }, testInfo) => {
   const errors = observeBrowserErrors(page);
   const fixture = await selectWalletFixtureRuntime(page);
   await page.goto('/app?portfolio=1', { waitUntil: 'domcontentloaded' });
@@ -61,7 +61,7 @@ test('focused Account shows the exact remote credit perspective and returns to a
   expectNoBrowserErrors(errors);
 });
 
-test('focused Account reads a real locally opened Account without starting another Runtime', async ({ page }, testInfo) => {
+test('focused Account reads a real locally opened Account without starting another Runtime', { tag: '@functional' }, async ({ page }, testInfo) => {
   testInfo.setTimeout(150_000);
   const errors = observeBrowserErrors(page);
   const fixture = await restoreLocalWallet(page, 'hub-discovery');

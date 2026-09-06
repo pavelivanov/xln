@@ -28,7 +28,7 @@ const control = async (page: Page, path: string, expectedStatus = 200): Promise<
   return response;
 };
 
-test('selects, rejects, activates, and rolls back immutable releases at one origin', async ({ page }) => {
+test('selects, rejects, activates, and rolls back immutable releases at one origin', { tag: '@resilience' }, async ({ page }) => {
   test.setTimeout(120_000);
   const consoleFailures: string[] = [];
   page.on('console', (message) => {

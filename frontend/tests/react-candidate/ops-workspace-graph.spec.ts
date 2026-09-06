@@ -4,7 +4,7 @@ import { expectNoBrowserErrors, expectPageContained, observeBrowserErrors, scree
 import { screenshotGraphEvidence } from './graph-evidence';
 import { installImportedRuntime, readWalletRuntimeFixture } from './wallet-runtime-test-helpers';
 
-test('Graph3D shares the real Runtime and retains a replay timeline across close and reopen', async ({ page }, testInfo) => {
+test('Graph3D shares the real Runtime and retains a replay timeline across close and reopen', { tag: '@functional' }, async ({ page }, testInfo) => {
   const errors = observeBrowserErrors(page);
   const fixture = await readWalletRuntimeFixture(page);
   await openWorkspaceStorageOrigin(page);
@@ -37,7 +37,7 @@ test('Graph3D shares the real Runtime and retains a replay timeline across close
   expectNoBrowserErrors(errors);
 });
 
-test('scenario playback boots without a wallet or live connection', async ({ page, context }, testInfo) => {
+test('scenario playback boots without a wallet or live connection', { tag: '@functional' }, async ({ page, context }, testInfo) => {
   testInfo.setTimeout(120_000);
   const errors = observeBrowserErrors(page);
   await page.goto('/embed?scenario=ahb&speed=2');
@@ -79,7 +79,7 @@ test('scenario playback boots without a wallet or live connection', async ({ pag
   expectNoBrowserErrors(errors);
 });
 
-test('Graph3D retains camera and view controls without overwriting the full workspace layout', async ({ page }, testInfo) => {
+test('Graph3D retains camera and view controls without overwriting the full workspace layout', { tag: '@functional' }, async ({ page }, testInfo) => {
   testInfo.setTimeout(120_000);
   const errors = observeBrowserErrors(page);
   await openWorkspaceStorageOrigin(page);
@@ -140,7 +140,7 @@ test('Graph3D retains camera and view controls without overwriting the full work
   expectNoBrowserErrors(errors);
 });
 
-test('Graph3D drags an Entity with real pointer input and opens it on double click', async ({ page }, testInfo) => {
+test('Graph3D drags an Entity with real pointer input and opens it on double click', { tag: '@functional' }, async ({ page }, testInfo) => {
   testInfo.setTimeout(120_000);
   page.setDefaultTimeout(15_000);
   const errors = observeBrowserErrors(page);

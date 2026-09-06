@@ -10,7 +10,7 @@ const selectRail = async (page: Page, id: string): Promise<void> => {
   await link.press('Enter');
 };
 
-test('Account rail keeps the nondefault Entity across wallet consumers and browser history', async ({ page }, testInfo) => {
+test('Account rail keeps the nondefault Entity across wallet consumers and browser history', { tag: '@functional' }, async ({ page }, testInfo) => {
   const errors = observeBrowserErrors(page);
   const fixture = await selectWalletFixtureRuntime(page);
   await page.goto('/app?portfolio=1', { waitUntil: 'domcontentloaded' });

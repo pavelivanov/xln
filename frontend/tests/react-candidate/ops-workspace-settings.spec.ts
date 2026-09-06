@@ -3,7 +3,7 @@ import { expect, test } from '@playwright/test';
 import { expectNoBrowserErrors, expectPageContained, observeBrowserErrors, screenshotEvidence } from './browser-evidence';
 import { screenshotGraphEvidence } from './graph-evidence';
 
-test('operator Settings save exact local policies and retain them across panel reopen', async ({ page }, testInfo) => {
+test('operator Settings save exact local policies and retain them across panel reopen', { tag: '@functional' }, async ({ page }, testInfo) => {
   testInfo.setTimeout(90_000);
   const errors = observeBrowserErrors(page);
   await openWorkspaceStorageOrigin(page);
@@ -50,7 +50,7 @@ test('operator Settings save exact local policies and retain them across panel r
   expectNoBrowserErrors(errors);
 });
 
-test('presentation config filters the real recording and applies caption and camera cues', async ({ page }, testInfo) => {
+test('presentation config filters the real recording and applies caption and camera cues', { tag: '@functional' }, async ({ page }, testInfo) => {
   testInfo.setTimeout(120_000);
   const errors = observeBrowserErrors(page);
   await page.goto('/__app/ops/entity-workspace?scenario=ahb');
@@ -107,7 +107,7 @@ test('presentation config filters the real recording and applies caption and cam
   expectNoBrowserErrors(errors);
 });
 
-test('recorded Settings control the retained scene and camera without editing Runtime policy', async ({ page }, testInfo) => {
+test('recorded Settings control the retained scene and camera without editing Runtime policy', { tag: '@functional' }, async ({ page }, testInfo) => {
   testInfo.setTimeout(120_000);
   const errors = observeBrowserErrors(page);
   await page.goto('/__app/ops/entity-workspace?scenario=ahb');
@@ -158,7 +158,7 @@ test('recorded Settings control the retained scene and camera without editing Ru
 });
 
 
-test('Stack Manager inspects the real daemon signer and exact RPC, rejects failures and clears stale probes', async ({ page }, testInfo) => {
+test('Stack Manager inspects the real daemon signer and exact RPC, rejects failures and clears stale probes', { tag: '@resilience' }, async ({ page }, testInfo) => {
   const { installImportedRuntime, readWalletRuntimeFixture } = await import('./wallet-runtime-test-helpers');
   const errors = observeBrowserErrors(page);
   const fixture = await readWalletRuntimeFixture(page);
@@ -198,7 +198,7 @@ test('Stack Manager inspects the real daemon signer and exact RPC, rejects failu
   await expectPageContained(page);
 });
 
-test('Stack Manager does not inspect a daemon from an in-browser Runtime', async ({ page }, testInfo) => {
+test('Stack Manager does not inspect a daemon from an in-browser Runtime', { tag: '@functional' }, async ({ page }, testInfo) => {
   const errors = observeBrowserErrors(page);
   await openWorkspaceStorageOrigin(page);
   await page.evaluate(() => localStorage.setItem('xln-runtime-adapter-mode', 'embedded'));
