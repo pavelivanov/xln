@@ -31,6 +31,7 @@ import {
   createWalletRuntimeQueryClient,
   loadWalletMarketMath,
   loadWalletRuntimeReadDependencies,
+  type WalletRuntimeReadLoader,
   walletRuntimeReadErrorMessage,
   type WalletMarketMath,
   type WalletRuntimeReadDependencies,
@@ -92,7 +93,7 @@ export class WalletMarketSource {
   private pendingCommand: WalletPreparedCommand | null = null;
   private commandBusy = false;
 
-  constructor(private readonly config: RuntimeAdapterStorageSnapshot, private readonly selection: WalletWorkspaceSelection) {
+  constructor(private readonly config: RuntimeAdapterStorageSnapshot, private readonly selection: WalletWorkspaceSelection, private readonly loadRuntime: WalletRuntimeReadLoader = loadWalletRuntimeReadDependencies) {
     this.snapshot = {
       status: 'connecting',
       message: config.mode === 'remote'
@@ -120,7 +121,7 @@ export class WalletMarketSource {
     });
     try {
       const [dependencies, marketMath] = await Promise.all([
-        loadWalletRuntimeReadDependencies(this.config),
+        this.loadRuntime(this.config),
         loadWalletMarketMath(),
       ]);
       if (!this.isCurrent(generation)) {

@@ -15,7 +15,7 @@ const emptySnapshot = { data: null, error: null, loading: true, height: 0 } as c
 const readEmpty = () => emptySnapshot;
 const subscribeEmpty = () => () => {};
 
-export function useWorkspaceQuery<T>(reader: OpsWorkspaceReader<T>) {
+export function useWorkspaceQuery<T>(reader: OpsWorkspaceReader<T>, enabled = true) {
   const client = useSyncExternalStore(
     opsEntityWorkspaceSource.subscribe, opsEntityWorkspaceSource.getPanelClient, () => null,
   );
@@ -25,19 +25,20 @@ export function useWorkspaceQuery<T>(reader: OpsWorkspaceReader<T>) {
   );
   const [query, setQuery] = useState<Readonly<{
     client: OpsWorkspaceQueryClient;
+    reader: OpsWorkspaceReader<T>;
     observer: PanelQuery<T>;
   }> | null>(null);
 
   useEffect(() => {
-    if (!client) { setQuery(null); return; }
+    if (!client || !enabled) { setQuery(null); return; }
     const observer = opsEntityWorkspaceSource.observePanelQuery(reader);
-    setQuery({ client, observer });
+    setQuery({ client, reader, observer });
     return observer.destroy;
-  }, [client, reader]);
+  }, [client, reader, enabled]);
 
   // A replaced or disconnected Runtime never renders the old panel's data,
   // including the render before the new subscription effect has run.
-  const observer = query?.client === client ? query?.observer : null;
+  const observer = enabled && query?.client === client && query?.reader === reader ? query.observer : null;
   const snapshot = useSyncExternalStore(
     observer?.subscribe ?? subscribeEmpty,
     observer?.getSnapshot ?? readEmpty,

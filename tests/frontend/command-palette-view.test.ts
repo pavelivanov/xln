@@ -5,7 +5,9 @@ import {
   buildCommandPaletteView,
   buildCommandPaletteViewFromRuntimeView,
   findCommandPaletteEntities,
-} from '../../frontend/src/lib/components/shared/command-palette-view';
+} from '../../frontend/packages/ui/src/command-palette-view';
+
+import { buildCommandPaletteSuggestions } from '../../frontend/packages/ui/src/command-palette-suggestions';
 
 const A = `0x${'11'.repeat(32)}`;
 const B = `0x${'22'.repeat(32)}`;
@@ -67,7 +69,7 @@ test('CommandPalette consumes CommandPaletteView instead of owning runtime env r
   const view = readFileSync('frontend/src/lib/view/View.svelte', 'utf8');
 
   expect(palette).toContain('export let commandPaletteView: CommandPaletteView');
-  expect(palette).toContain('findCommandPaletteEntities');
+  expect(palette).toContain('buildCommandPaletteSuggestions');
   expect(palette).not.toContain('xlnEnvironment');
   expect(palette).not.toContain('xlnFunctions');
   expect(palette).not.toContain('env.state.eReplicas');
@@ -75,4 +77,22 @@ test('CommandPalette consumes CommandPaletteView instead of owning runtime env r
   expect(view).toContain('buildCommandPaletteView(viewEnv)');
   expect(view).toContain('buildCommandPaletteViewFromRuntimeView');
   expect(view).toContain('{commandPaletteView}');
+});
+
+
+test('shared palette suggestions retain payment and swap drafts without submitting commands', () => {
+  const view = { entities: [{ id: A, name: 'Alice', isHub: false }] };
+  expect(buildCommandPaletteSuggestions('pay 12 usdc to @alice', view)[0]?.action).toEqual({
+    type: 'command', command: { type: 'pay', args: { amount: '12', token: 'USDC', recipientId: A, recipientName: 'Alice' } },
+  });
+  expect(buildCommandPaletteSuggestions('swap 0.5 weth for usdc', view)[0]?.action).toEqual({
+    type: 'command', command: { type: 'swap', args: { amount: '0.5', fromToken: 'WETH', toToken: 'USDC' } },
+  });
+  expect(buildCommandPaletteSuggestions('pay 12 usdc to nobody', view)[0]?.action).toEqual({ type: 'hint' });
+  expect(buildCommandPaletteSuggestions('open alice', view)[0]?.action).toEqual({
+    type: 'command', command: { type: 'open', args: { entityId: A, name: 'Alice' } },
+  });
+  expect(buildCommandPaletteSuggestions('bal', view)[0]?.action).toEqual({
+    type: 'command', command: { type: 'navigate', args: { tab: 'assets' } },
+  });
 });

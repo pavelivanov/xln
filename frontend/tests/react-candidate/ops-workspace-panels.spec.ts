@@ -1,3 +1,4 @@
+import { openWorkspaceStorageOrigin } from './browser-evidence';
 import { expect, test, type WebSocket } from '@playwright/test';
 
 import { expectNoBrowserErrors, expectPageContained, observeBrowserErrors, screenshotEvidence } from './browser-evidence';
@@ -7,13 +8,13 @@ test('workspace panels preserve unavailable Runtime state without opening a conn
   const errors = observeBrowserErrors(page);
   await page.goto('/__app/ops/entity-workspace', { waitUntil: 'networkidle' });
   await page.getByRole('button', { name: 'Open Gossip panel' }).click();
-  await expect(page.getByTestId('runtime-gossip-panel')).toContainText('Select a remote Runtime');
+  await expect(page.getByTestId('runtime-gossip-panel')).toContainText('Select a local or remote Runtime');
   await page.getByRole('button', { name: 'Open Solvency panel' }).click();
-  await expect(page.getByTestId('solvency-panel')).toContainText('Select a remote Runtime');
+  await expect(page.getByTestId('solvency-panel')).toContainText('Select a local or remote Runtime');
   await expect(page.getByTestId('solvency-status')).toHaveCount(0);
   await page.getByRole('button', { name: 'Open Runtime Diagnostics panel' }).click();
   const diagnostics = page.getByTestId('runtime-diagnostics-panel');
-  await expect(diagnostics).toContainText('Select a remote Runtime');
+  await expect(diagnostics).toContainText('Select a local or remote Runtime');
   await expect(diagnostics.getByRole('button', { name: 'Verify chain' })).toBeDisabled();
   await expect(diagnostics.getByTestId('runtime-diagnostics-persisted')).toHaveCount(0);
   await expectPageContained(page);
@@ -24,7 +25,7 @@ test('workspace panels preserve unavailable Runtime state without opening a conn
 test('Runtime Diagnostics verifies real persisted storage and releases its panel state on close', async ({ page }, testInfo) => {
   const errors = observeBrowserErrors(page);
   const fixture = await readWalletRuntimeFixture(page);
-  await page.goto('/embed', { waitUntil: 'domcontentloaded' });
+  await openWorkspaceStorageOrigin(page);
   await installImportedRuntime(page, fixture);
   const runtimeSockets: WebSocket[] = [];
   page.on('websocket', socket => { if (socket.url() === fixture.wsUrl) runtimeSockets.push(socket); });
@@ -55,7 +56,7 @@ test('Runtime Diagnostics verifies real persisted storage and releases its panel
   await expect(diagnostics.getByTestId('runtime-diagnostics-frame').first()).toBeVisible();
   await expect(result).toHaveCount(0);
   expect(runtimeSockets).toHaveLength(1);
-  await page.goto('/embed', { waitUntil: 'networkidle' });
+  await openWorkspaceStorageOrigin(page);
   await expect.poll(async () => {
     const response = await page.request.get(fixture.wsUrl.replace('ws:', 'http:').replace('/rpc', '/connections'));
     const value: unknown = await response.json();
@@ -68,7 +69,7 @@ test('Runtime Diagnostics verifies real persisted storage and releases its panel
 test('docked directory and solvency read the selected real Runtime and reopen cleanly', async ({ page, context }, testInfo) => {
   const errors = observeBrowserErrors(page);
   const fixture = await readWalletRuntimeFixture(page);
-  await page.goto('/embed', { waitUntil: 'domcontentloaded' });
+  await openWorkspaceStorageOrigin(page);
   await installImportedRuntime(page, fixture);
   await context.grantPermissions(['clipboard-read', 'clipboard-write']);
   const runtimeSockets: WebSocket[] = [];
@@ -113,7 +114,7 @@ test('docked directory and solvency read the selected real Runtime and reopen cl
   await expect(page.getByTestId('entity-workspace-shell')).toHaveAttribute('data-active-tab', 'accounts');
   expect(runtimeSockets).toHaveLength(1);
   await screenshotEvidence(page, testInfo, 'ops-workspace-entity');
-  await page.goto('/embed', { waitUntil: 'networkidle' });
+  await openWorkspaceStorageOrigin(page);
   // Observe closure at the server: the page's old CDP WebSocket handle can
   // stop receiving events once its document has been detached by navigation.
   await expect.poll(async () => {

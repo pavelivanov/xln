@@ -38,6 +38,7 @@ import {
 import {
   createWalletRuntimeQueryClient,
   loadWalletRuntimeReadDependencies,
+  type WalletRuntimeReadLoader,
   walletRuntimeReadErrorMessage,
 } from './wallet-runtime-read-boundary';
 
@@ -84,7 +85,7 @@ export class WalletPaymentSource {
   private pendingCommand: WalletPreparedCommand | null = null;
   private commandBusy = false;
 
-  constructor(private readonly config: RuntimeAdapterStorageSnapshot, private readonly selection: WalletWorkspaceSelection) {
+  constructor(private readonly config: RuntimeAdapterStorageSnapshot, private readonly selection: WalletWorkspaceSelection, private readonly loadRuntime: WalletRuntimeReadLoader = loadWalletRuntimeReadDependencies) {
     this.snapshot = {
       status: 'connecting',
       message: config.mode === 'remote'
@@ -112,7 +113,7 @@ export class WalletPaymentSource {
       message: this.config.mode === 'remote' ? 'Connecting to the selected Runtime…' : 'Starting the local Runtime…',
     });
     try {
-      const dependencies = await loadWalletRuntimeReadDependencies(this.config);
+      const dependencies = await this.loadRuntime(this.config);
       if (!this.isCurrent(generation)) {
         dependencies.release();
         return;

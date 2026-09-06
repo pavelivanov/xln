@@ -274,23 +274,24 @@ describe('network timeline source', () => {
   test('a trail survives a URL round trip with its bigints and maps intact', async () => {
     // Deltas are bigints inside a Map — plain JSON drops both, and a demo without deltas
     // renders as bare spheres with no credit or collateral.
-    const trail = {
-      version: 1 as const,
-      runtimeId: 'demo',
-      index: { runtimeId: 'demo', frames: [{ runtimeId: 'demo', height: 1, timestamp: 10, stateHash: 's', materialized: true, graphChanged: true }] },
-      frames: {
-        '1': {
-          runtimeId: 'demo',
-          height: 1,
-          entities: [{
-            summary: { entityId: '0xalice', label: 'Alice' },
-            core: { reserves: new Map([[1, 5_000n]]) },
-            accounts: { items: [{ leftEntity: '0xalice', rightEntity: '0xhub', deltas: new Map([[1, { collateral: 10n, offdelta: -3n }]]) }] },
-          }],
-        },
+    const source = scenarioNetworkTimelineSource('demo', [{
+      state: {
+        height: 1, timestamp: 10,
+        eReplicas: new Map([['0xalice:s', {
+          entityId: '0xalice', signerId: 's',
+          state: {
+            profile: { name: 'Alice', isHub: false },
+            reserves: new Map([[1, 5_000n]]),
+            accounts: new Map([['0xhub', {
+              currentHeight: 1,
+              state: { deltas: new Map([[1, { collateral: 10n, offdelta: -3n }]]) },
+            }]]),
+          },
+        }]]),
       },
-      activity: [],
-    } as never;
+      runtimeInput: { runtimeTxs: [], jInputs: [], entityInputs: [] },
+    }] as never);
+    const trail = await recordNetworkTrail(source);
 
     const encoded = await encodeNetworkTrailForHash(trail);
     expect(encoded).not.toMatch(/[+/=]/); // URL-safe: survives being pasted into a hash

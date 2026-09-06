@@ -6,7 +6,7 @@ import { parseSurfaceSelection } from './surface-selection';
 export const CANDIDATE_BROWSER_TEST_FILES = {
   site: ['tests/react-candidate/site.spec.ts', 'tests/react-candidate/site-routes.spec.ts'],
   docs: ['tests/react-candidate/docs.spec.ts'],
-  wallet: [
+  wallet: ['tests/react-candidate/wallet-localization.spec.ts',
     'tests/react-candidate/wallet.spec.ts',
     'tests/react-candidate/wallet-financial.spec.ts',
     'tests/react-candidate/wallet-transactions.spec.ts',
@@ -23,8 +23,9 @@ export const CANDIDATE_BROWSER_TEST_FILES = {
     'tests/react-candidate/wallet-entity-selection.spec.ts',
     'tests/react-candidate/wallet-account-workspace.spec.ts',
     'tests/react-candidate/wallet-account-commands.spec.ts',
+    'tests/react-candidate/wallet-entity-evidence.spec.ts',
   ],
-  ops: ['tests/react-candidate/ops.spec.ts', 'tests/react-candidate/ops-workspace-panels.spec.ts'],
+  ops: ['tests/react-candidate/ops.spec.ts', 'tests/react-candidate/ops-command-palette.spec.ts', 'tests/react-candidate/ops-public-embed.spec.ts', 'tests/react-candidate/ops-workspace-localization.spec.ts', 'tests/react-candidate/ops-workspace-panels.spec.ts', 'tests/react-candidate/ops-workspace-session.spec.ts', 'tests/react-candidate/ops-workspace-graph.spec.ts', 'tests/react-candidate/ops-owner-unlock.spec.ts', 'tests/react-candidate/ops-local-owner-unlock.spec.ts', 'tests/react-candidate/ops-workspace-guide.spec.ts', 'tests/react-candidate/ops-workspace-local-panels.spec.ts', 'tests/react-candidate/ops-workspace-database.spec.ts', 'tests/react-candidate/ops-runtime-manager.spec.ts', 'tests/react-candidate/ops-workspace-settings.spec.ts', 'tests/react-candidate/ops-workspace-wallet.spec.ts', 'tests/react-candidate/ops-workspace-jurisdiction.spec.ts', 'tests/react-candidate/ops-workspace-architect.spec.ts', 'tests/react-candidate/ops-workspace-brainvault.spec.ts'],
 } as const satisfies Readonly<Record<SurfaceId, readonly string[]>>;
 
 export const CANDIDATE_BROWSER_READY_PATHS = {
@@ -50,7 +51,7 @@ export const parseCandidateBrowserSurface = (rawValue: string | undefined): Surf
 export const createCandidateBrowserCommand = (
   surfaceIds: readonly SurfaceId[],
 ): CandidateBrowserCommand => {
-  const selectedSurface = surfaceIds.length === 1 ? surfaceIds[0] : null;
+  const selectedSurface = surfaceIds.length === 1 ? surfaceIds[0] ?? null : null;
   if (
     selectedSurface === null
     && (surfaceIds.length !== SURFACE_IDS.length

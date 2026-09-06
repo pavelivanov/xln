@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 import { readFileSync } from 'node:fs';
+import { createDefaultDelta } from '../../../core/account/state/delta';
 import {
   mergeRuntimeGraphProjections,
   projectRuntimeGraphFrame,
@@ -231,7 +232,7 @@ describe('RuntimeGraphProjection', () => {
     expect(result.source).toMatchObject({ runtimeId: 'remote-a', timestamp: 1_234 });
   });
 
-  test('remote graph-frame projects every local and summary-only peer node', () => {
+  test('graph-frame projects every node and validates the detached Account delta map', () => {
     const frame = {
       height: 9,
       timestamp: 1_234,
@@ -249,7 +250,7 @@ describe('RuntimeGraphProjection', () => {
             items: [{
               leftEntity: 'a',
               rightEntity: 'b',
-              deltas: new Map(),
+              deltas: new Map([[1, createDefaultDelta(1, { left: 25n, right: 50n })]]),
               currentHeight: 7,
               currentFrame: { height: 7, accountStateRoot: 'root-a' },
             }],
@@ -269,6 +270,8 @@ describe('RuntimeGraphProjection', () => {
     expect(result.nodes.find((item) => item.entityId === 'a')).toMatchObject({ signerId: 'alice-signer' });
     expect(result.nodes.find((item) => item.entityId === 'b')).toMatchObject({ label: 'Bob', core: null });
     expect(result.accounts).toHaveLength(1);
+    expect(result.accounts[0]?.account.state.deltas).toBeInstanceOf(Map);
+    expect(result.accounts[0]?.account.state.deltas.get(1)).toEqual(createDefaultDelta(1, { left: 25n, right: 50n }));
     expect(result.accounts[0]).toMatchObject({ accountId: 'a:b', observerEntityId: 'a', height: 7 });
     expect(result.source).toMatchObject({ runtimeId: 'remote-a', timestamp: 1_234 });
   });

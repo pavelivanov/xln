@@ -1,4 +1,6 @@
-import { lazy, Suspense, useEffect, useState, useSyncExternalStore } from 'react';
+import { walletDraftPayment, type WalletPayDraft, type WalletPaymentPrefill } from './wallet-command-draft';
+import { useWalletRuntimeLoader } from "./wallet-runtime-scope";
+import { lazy, Suspense, useEffect, useRef, useState, useSyncExternalStore } from 'react';
 
 import { readRuntimeAdapterStorageSnapshot } from '../../../packages/browser/src/runtime-adapter-session';
 import { WalletPaymentOperations } from './wallet-payment-operations';
@@ -35,19 +37,23 @@ function PaymentsUnavailable({
   );
 }
 
-export function WalletPayments({ tab, invoice, onTabChange, workspaceSelection }: Readonly<{
+export function WalletPayments({ tab, invoice, onTabChange, workspaceSelection, draft }: Readonly<{
   workspaceSelection: WalletWorkspaceSelection;
   tab: WalletPaymentTab;
   invoice: string;
+  draft?: WalletPayDraft | undefined;
   onTabChange: (tab: WalletPaymentTab) => void;
 }>) {
   const { entityId } = useSyncExternalStore(workspaceSelection.subscribe, workspaceSelection.getSnapshot, workspaceSelection.getSnapshot);
+  const loadRuntime = useWalletRuntimeLoader();
   const [source] = useState(() => new WalletPaymentSource(
     readRuntimeAdapterStorageSnapshot({ durable: localStorage, session: sessionStorage }),
     workspaceSelection,
+    loadRuntime,
   ));
   const snapshot = useSyncExternalStore(source.subscribe, source.getSnapshot, source.getSnapshot);
   const [retryError, setRetryError] = useState('');
+  const draftFailure = useRef<HTMLParagraphElement>(null);
 
   useEffect(() => {
     void source.start();
@@ -64,7 +70,17 @@ export function WalletPayments({ tab, invoice, onTabChange, workspaceSelection }
   };
 
   const projection = snapshot.projection;
+  let prefill: WalletPaymentPrefill | undefined;
+  let draftError = '';
+  if (draft && projection) {
+    try { prefill = walletDraftPayment(draft, projection.tokens); }
+    catch (cause) { draftError = cause instanceof Error ? cause.message : String(cause); }
+  }
   const commandVisible = snapshot.command.status !== 'idle';
+  useEffect(() => {
+    if (!draftError || !draftFailure.current) return;
+    draftFailure.current.focus({ preventScroll: true }); draftFailure.current.scrollIntoView({ block: 'center' });
+  }, [draftError]);
   return (
     <section className="wallet-payments" aria-labelledby="wallet-payments-title">
       <header className="wallet-payments-heading">
@@ -124,7 +140,7 @@ export function WalletPayments({ tab, invoice, onTabChange, workspaceSelection }
             </Suspense>
           ) : projection.recipients.length > 0 && projection.tokens.length > 0 ? (
             <>
-              {tab === 'send' ? <WalletPaymentSend key={`${projection.activeEntityId}:${invoice}`} invoiceLink={invoice} projection={projection} snapshot={snapshot} source={source} /> : null}
+              {tab === 'send' ? draftError ? <p ref={draftFailure} tabIndex={-1} role="alert">{draftError}</p> : <WalletPaymentSend key={`${projection.activeEntityId}:${invoice}:${draft?.id ?? ''}`} invoiceLink={invoice} prefill={prefill} projection={projection} snapshot={snapshot} source={source} /> : null}
               {tab === 'receive' ? <WalletPaymentReceive projection={projection} source={source} /> : null}
               {tab === 'operations' ? <WalletPaymentOperations projection={projection} snapshot={snapshot} source={source} /> : null}
             </>

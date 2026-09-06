@@ -16,9 +16,10 @@
   import { fly, fade } from 'svelte/transition';
   import {
     emptyCommandPaletteView,
-    findCommandPaletteEntities,
     type CommandPaletteView,
-  } from './command-palette-view';
+  } from '../../../../packages/ui/src/command-palette-view';
+
+  import { buildCommandPaletteSuggestions } from '../../../../packages/ui/src/command-palette-suggestions';
 
   export let isOpen = false;
   export let commandPaletteView: CommandPaletteView = emptyCommandPaletteView();
@@ -43,116 +44,13 @@
   $: suggestions = buildSuggestions(inputValue, commandPaletteView);
 
   function buildSuggestions(query: string, view: CommandPaletteView): Suggestion[] {
-    if (!query.trim()) return defaultSuggestions();
-    const q = query.trim().toLowerCase();
-    const results: Suggestion[] = [];
-
-    // pay <amount> <token> to <name>
-    const payMatch = q.match(/^pay\s+(\d+(?:\.\d+)?)\s*(\w+)?\s*(?:to\s+)?@?(.+)?$/i);
-    if (payMatch) {
-      const amount = payMatch[1] || '';
-      const token = (payMatch[2] || 'usdc').toUpperCase();
-      const recipient = payMatch[3]?.trim() || '';
-      if (recipient) {
-        const matches = findCommandPaletteEntities(recipient, view);
-        for (const m of matches.slice(0, 3)) {
-          results.push({
-            id: `pay-${m.id}`,
-            icon: '↗',
-            label: `Pay ${amount} ${token} to ${m.name}`,
-            sublabel: `Send via bilateral account`,
-            action: () => dispatch('command', { type: 'pay', args: { amount, token, recipientId: m.id, recipientName: m.name } }),
-          });
-        }
-      }
-      if (results.length === 0) {
-        results.push({
-          id: 'pay-hint',
-          icon: '↗',
-          label: `Pay ${amount} ${token}${recipient ? ` to ${recipient}` : ''}`,
-          sublabel: recipient ? 'No matching entity found' : 'Add recipient: pay 100 usdc to @name',
-          action: () => {},
-        });
-      }
-    }
-
-    // swap <amount> <token> for <token>
-    const swapMatch = q.match(/^swap\s+(\d+(?:\.\d+)?)\s*(\w+)?\s*(?:for|to|->|→)\s*(\w+)?/i);
-    if (swapMatch) {
-      const amount = swapMatch[1] || '';
-      const fromToken = (swapMatch[2] || 'usdc').toUpperCase();
-      const toToken = (swapMatch[3] || 'weth').toUpperCase();
-      results.push({
-        id: 'swap',
-        icon: '⇄',
-        label: `Swap ${amount} ${fromToken} → ${toToken}`,
-        sublabel: 'Open swap panel with prefilled amounts',
-        action: () => dispatch('command', { type: 'swap', args: { amount, fromToken, toToken } }),
-      });
-    }
-
-    // open <hub>
-    const openMatch = q.match(/^open\s+(.+)/i);
-    if (openMatch) {
-      const hubQuery = openMatch[1]?.trim() ?? '';
-      const matches = findCommandPaletteEntities(hubQuery, view);
-      for (const m of matches.slice(0, 3)) {
-        results.push({
-          id: `open-${m.id}`,
-          icon: '+',
-          label: `Open account with ${m.name}`,
-          sublabel: m.id.slice(0, 10) + '...',
-          action: () => dispatch('command', { type: 'open', args: { entityId: m.id, name: m.name } }),
-        });
-      }
-    }
-
-    // balance / bal
-    if (/^bal(ance)?$/i.test(q)) {
-      results.push({
-        id: 'balance',
-        icon: '$',
-        label: 'Show balances',
-        sublabel: 'Switch to Assets tab',
-        action: () => dispatch('command', { type: 'navigate', args: { tab: 'assets' } }),
-      });
-    }
-
-    // settings
-    if (/^set(tings)?$/i.test(q)) {
-      results.push({
-        id: 'settings',
-        icon: '⚙',
-        label: 'Open Settings',
-        sublabel: 'Wallet, appearance, J-machines',
-        action: () => dispatch('command', { type: 'navigate', args: { tab: 'settings' } }),
-      });
-    }
-
-    // If no command matches, search the entity index by name.
-    if (results.length === 0 && q.length >= 2) {
-      const matches = findCommandPaletteEntities(q, view);
-      for (const m of matches.slice(0, 5)) {
-        results.push({
-          id: `entity-${m.id}`,
-          icon: '◉',
-          label: m.name,
-          sublabel: `${m.id.slice(0, 10)}... · ${m.isHub ? 'Hub' : 'Entity'}`,
-          action: () => dispatch('command', { type: 'explore', args: { entityId: m.id } }),
-        });
-      }
-    }
-
-    return results;
-  }
-
-  function defaultSuggestions(): Suggestion[] {
-    return [
-      { id: 'pay', icon: '↗', label: 'Pay', sublabel: 'pay 100 usdc to @name', action: () => { inputValue = 'pay '; } },
-      { id: 'swap', icon: '⇄', label: 'Swap', sublabel: 'swap 0.5 weth for usdc', action: () => { inputValue = 'swap '; } },
-      { id: 'balance', icon: '$', label: 'Balances', sublabel: 'View your assets', action: () => dispatch('command', { type: 'navigate', args: { tab: 'assets' } }) },
-      { id: 'settings', icon: '⚙', label: 'Settings', sublabel: 'Wallet & appearance', action: () => dispatch('command', { type: 'navigate', args: { tab: 'settings' } }) },
-    ];
+    return buildCommandPaletteSuggestions(query, view).map(suggestion => ({
+      ...suggestion,
+      action: () => {
+        if (suggestion.action.type === 'input') inputValue = suggestion.action.value;
+        else if (suggestion.action.type === 'command') dispatch('command', suggestion.action.command);
+      },
+    }));
   }
 
   function handleKeydown(event: KeyboardEvent) {

@@ -210,11 +210,12 @@ describe('React development gateway', () => {
     expect(admin.headers.get('location')).toBe('/health');
   });
 
-  test('forwards per-application HMR WebSocket upgrades', async () => {
+  test.each(['/__hmr/docs', '/relay'])('forwards WebSocket upgrades to %s independently of edge HTTP', async (upgradePath) => {
     let upstreamReached = false;
+    const websocketTarget = createWebSocketTarget(() => { upstreamReached = true; });
     const targets = {
       ...await createTargets(),
-      docs: createWebSocketTarget(() => { upstreamReached = true; }),
+      docs: websocketTarget,
     };
 
     const port = nextTestPort;
@@ -225,6 +226,7 @@ describe('React development gateway', () => {
         ...process.env,
         XLN_REACT_GATEWAY_PORT: String(port),
         XLN_REACT_EDGE_TARGET: targets.edge,
+        XLN_REACT_EDGE_WEBSOCKET_TARGET: websocketTarget,
         XLN_REACT_SITE_TARGET: targets.site,
         XLN_REACT_DOCS_TARGET: targets.docs,
         XLN_REACT_WALLET_TARGET: targets.wallet,
@@ -235,6 +237,7 @@ describe('React development gateway', () => {
     });
     gatewayProcesses.push(gateway);
     await waitForGateway(gateway);
+    expect(await (await fetch(`http://127.0.0.1:${port}/api/assistant/models`)).text()).toBe('edge:/api/assistant/models');
     const response = await new Promise<string>((resolve, reject) => {
       const socket = createConnection({ host: '127.0.0.1', port });
       let received = '';
@@ -244,7 +247,7 @@ describe('React development gateway', () => {
       }, 1_000);
       socket.once('error', reject);
       socket.once('connect', () => socket.write(
-        'GET /__hmr/docs HTTP/1.1\r\n' +
+        `GET ${upgradePath} HTTP/1.1\r\n` +
         `Host: 127.0.0.1:${port}\r\n` +
         'Connection: Upgrade\r\nUpgrade: websocket\r\n' +
         'Sec-WebSocket-Version: 13\r\nSec-WebSocket-Key: eGxuLWdhdGV3YXktdGVzdA==\r\n\r\n',
@@ -303,7 +306,7 @@ describe('React development gateway', () => {
         label: 'same-origin-gateway',
         argv: ['bun', 'scripts/run-dev-gateway.ts'],
         gatewayAware: false,
-        environment: { XLN_REACT_EDGE_TARGET: 'http://127.0.0.1:19095' },
+        environment: { XLN_REACT_EDGE_TARGET: 'http://127.0.0.1:19092', XLN_REACT_EDGE_WEBSOCKET_TARGET: 'http://127.0.0.1:19095' },
       });
       expect(createDevelopmentProcessSpecs(['wallet']).at(-1)).toEqual({
         label: 'wallet-address-runtime-fixture',
@@ -314,7 +317,7 @@ describe('React development gateway', () => {
         label: 'same-origin-gateway',
         argv: ['bun', 'scripts/run-dev-gateway.ts'],
         gatewayAware: false,
-        environment: { XLN_REACT_WALLET_PROXY_OWNER: 'ops' },
+        environment: { XLN_REACT_EDGE_TARGET: 'http://127.0.0.1:19092', XLN_REACT_EDGE_WEBSOCKET_TARGET: 'http://127.0.0.1:19095', XLN_REACT_WALLET_PROXY_OWNER: 'ops' },
       });
       expect(createDevelopmentProcessSpecs(['ops']).at(-1)).toEqual({
         label: 'wallet-address-runtime-fixture',
@@ -322,6 +325,10 @@ describe('React development gateway', () => {
         gatewayAware: false,
       });
       expect(createDevelopmentProcessSpecs(['site'])).toHaveLength(2);
+      const all = createDevelopmentProcessSpecs(SURFACE_IDS);
+      expect(all.filter(spec => spec.label === 'wallet-address-runtime-fixture')).toHaveLength(1);
+      expect(all.find(spec => spec.label === 'same-origin-gateway')?.environment)
+        .toEqual({ XLN_REACT_EDGE_TARGET: 'http://127.0.0.1:19092', XLN_REACT_EDGE_WEBSOCKET_TARGET: 'http://127.0.0.1:19095' });
     } finally {
       delete process.env['XLN_REACT_WALLET_ADDRESS_FIXTURE'];
     }

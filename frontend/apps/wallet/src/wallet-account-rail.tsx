@@ -1,13 +1,14 @@
 import { useSyncExternalStore } from 'react';
 import { ACCOUNT_WORKSPACE_TABS, accountWorkspaceTabsForAccounts } from '../../../packages/runtime-client/src/account-workspace-tabs';
 import { AccountWorkspaceRail } from '../../../packages/ui/src/account-workspace-rail';
-import { navigateWallet } from './wallet-navigation';
+import { useWalletNavigation } from './wallet-navigation';
 import type { WalletAppRoute } from './wallet-navigation-model';
 import type { WalletWorkspaceSelection } from './wallet-workspace-selection';
 
 const tabs = ACCOUNT_WORKSPACE_TABS.map(tab => ({ ...tab, href: `/app#accounts/${tab.id}` }));
 
 export function WalletAccountRail({ route, selection }: Readonly<{ route: WalletAppRoute; selection: WalletWorkspaceSelection }>) {
+  const navigateWallet = useWalletNavigation();
   const context = useSyncExternalStore(selection.subscribe, selection.getSnapshot, selection.getSnapshot);
   if (!context.entityId || (route.view !== 'portfolio' && route.view !== 'payments' && route.view !== 'markets' && route.view !== 'account-tools')) return null;
   if (route.view === 'portfolio' && route.section !== 'appearance' && context.focusedAccountId) return null;

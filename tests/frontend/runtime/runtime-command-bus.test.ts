@@ -45,7 +45,10 @@ test('runtime command bus records pending accepted observed committed error rece
   expect(source).toContain('receiptId: `runtime-command-${++receiptSequence}`');
 	  expect(source).toContain('acceptedAtHeight');
   expect(source).toContain('committedAtHeight');
-	  expect(source).not.toContain('commitAcceptedRuntimeCommands');
+  expect(source).not.toContain('upstreamReceiptId');
+  expect(source).not.toContain('statusUrl');
+  expect(source).not.toContain('commitAcceptedRuntimeCommands');
+  expect(source).not.toContain('recordRuntimeIngressReceipt');
   expect(source).toContain('classifyRuntimeFailure');
   expect(source).toContain('failureKind: RuntimeFailureKind | null');
   expect(source).toContain("status: receipt.mode === 'remote' ? 'observed' : 'committed'");
@@ -105,6 +108,8 @@ test('runtime command bus transitions receipts from pending to accepted committe
   expect(committed.receipt.mode).toBe('embedded');
   expect(committed.receipt.acceptedAtHeight).toBe(5);
   expect(committed.receipt.committedAtHeight).toBe(6);
+  expect(committed.receipt).not.toHaveProperty('upstreamReceiptId');
+  expect(committed.receipt).not.toHaveProperty('statusUrl');
   expect(readStore(runtimeCommandReceipts)).toHaveLength(1);
 
   const remoteAccepted = await submitRuntimeCommand({
@@ -463,6 +468,12 @@ test('remote command journal retains exact payload and status until observed', a
   expect(await listUnresolvedRemoteRuntimeCommandIntents(runtimeId, SIGNED_SERVER_FINGERPRINT)).toEqual([]);
 });
 
+test('server results cannot synthesize command receipts or durable receipt URLs', () => {
+  const source = readFileSync('frontend/src/lib/stores/commands/runtimeCommandBus.ts', 'utf8');
+  expect(source).not.toContain('recordRuntimeIngressReceipt');
+  expect(source).not.toContain('statusUrl');
+  expect(source).not.toContain('upstreamReceiptId');
+});
 
 test('xlnStore routes RuntimeInput mutations through RuntimeCommandBus', () => {
   const source = readFileSync('frontend/src/lib/stores/xlnStore.ts', 'utf8');
@@ -475,6 +486,7 @@ test('xlnStore routes RuntimeInput mutations through RuntimeCommandBus', () => {
 	  expect(source).toContain('const observeRemoteRuntimeCommand');
 	  expect(routeSource).toContain('commandSequence: receipt.commandSequence');
 	  expect(routeSource).toContain('await observeRemoteRuntimeCommand(remoteAdapter, input, {');
+	  expect(source).not.toContain('statusUrl');
 	  expect(source).toContain('waitForObservedRemoteCommand({ adapter, input, command, isCurrent, accepted: progress.accepted })');
 	  expect(source).toContain('progress.observed');
 	  expect(routeSource).toContain('progress.committed');
@@ -664,11 +676,14 @@ test('public mutation exports no longer accept caller-owned RuntimeReplica', () 
 // (`recordRuntimeIngressReceipt`, `result.receipt`, `result.statusUrl`). What
 // survives is the server-side credit request itself, gated on the remote
 // controller handle.
-test('server-side credit requests post through the remote runtime controller handle', () => {
+test('server-side credit requests validate the result without synthesizing ingress receipts', () => {
   const source = readFileSync('frontend/src/lib/components/Entity/account/ui/CreditForm.svelte', 'utf8');
 
+  expect(source).not.toContain('recordRuntimeIngressReceipt');
   expect(source).toContain('runtimeControllerHandle');
   expect(source).toContain("fetch(`${apiBase}/api/credit/request`");
+  expect(source).toContain('!response.ok || result.success !== true');
+  expect(source).not.toContain('statusUrl');
 });
 
 test('credit and collateral configure forms submit RuntimeInput through shared command path', () => {
@@ -714,7 +729,7 @@ test('payment panel submits RuntimeInput through shared command path', () => {
   expect(sharedPaymentCommandSource).toContain('entityInputs: [{');
   expect(sharedPaymentCommandSource).toContain('jInputs: [],');
   expect(paymentSource).toContain('pendingPaymentCommandId');
-  expect(paymentSource).toContain('Payment submission pending');
+  expect(paymentSource).toContain('Submission pending...');
   expect(paymentSource).toContain("failure.kind === 'defer'");
   expect(paymentSource).toContain('latestReceipt.receiptId !== priorRuntimeReceiptId');
   expect(paymentSource).not.toContain('submitEntityInputs');
@@ -744,11 +759,18 @@ test('lending mutations use the signer runtime command path instead of unauthent
 // no longer returns `receipt`/`statusUrl`, `FaucetApiResult` no longer decodes
 // them, and `recordServerIngressReceipt` is gone from the panel. The surviving
 // invariant is the faucet readiness gate.
-test('server-side faucet actions are gated on runtime readiness', () => {
+test('server-side faucet results retain readiness guards without synthesizing ingress receipts', () => {
   const panelSource = readFileSync('frontend/src/lib/components/Entity/workspace/shell/EntityPanelTabs.svelte', 'utf8');
+  const faucetSource = readFileSync('frontend/src/lib/components/Entity/account/account-faucet.ts', 'utf8');
   const assetFaucetSource = readFileSync('frontend/src/lib/components/Entity/assets/AssetFaucetCard.svelte', 'utf8');
   const assetsSource = readFileSync('frontend/src/lib/components/Entity/assets/EntityAssetsTab.svelte', 'utf8');
 
+  expect(faucetSource).not.toContain('receipt?: {');
+  expect(faucetSource).toContain('decodeFaucetApiResult');
+  expect(panelSource).not.toContain('recordRuntimeIngressReceipt');
+  expect(panelSource).not.toContain('function recordServerIngressReceipt');
+  expect(panelSource).not.toContain('recordServerIngressReceipt(result);');
+  expect(panelSource).not.toContain('statusUrl: result.statusUrl ?? null');
   expect(panelSource).toMatch(/notifyUserActionError\(["']asset-faucet["'], ["']Runtime is not ready for financial actions["']\)/);
   expect(panelSource).toMatch(/notifyUserActionError\(["']offchain-faucet["'], ["']Runtime is not ready for financial actions["']\)/);
   expect(assetFaucetSource).toContain('export let ready = false');
@@ -781,6 +803,7 @@ test('entity workspace renders latest runtime command receipt status', () => {
   expect(source).toContain('isActionableRuntimeReceipt');
   expect(source).not.toContain('$runtimeCommandLatestReceipt.committedAtHeight');
   expect(source).not.toContain('$runtimeCommandLatestReceipt.acceptedAtHeight');
+  expect(source).not.toContain('upstreamReceiptId');
 });
 
 test('entity panel never promotes UI reads or transaction responses into J-prefix inputs', () => {

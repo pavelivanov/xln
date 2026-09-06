@@ -10,7 +10,7 @@ import {
 } from './wallet-settings-model';
 import type { WalletRuntimeSummary } from './app-shell-model';
 import { WalletRecoveryServices } from './wallet-recovery-services';
-import { navigateWallet } from './wallet-navigation';
+import { useWalletNavigation } from './wallet-navigation';
 import type { WalletSettingsSection } from './wallet-navigation-model';
 import './styles/wallet-settings.css';
 
@@ -25,6 +25,7 @@ export function WalletSettings({
   runtimeState: WalletRuntimeSummary['state'];
   section: WalletSettingsSection;
 }>) {
+  const navigateWallet = useWalletNavigation();
   const [preferences, setPreferences] = useState(() => readWalletPreferences(localStorage));
   const [status, setStatus] = useState('');
   const [error, setError] = useState('');
@@ -70,6 +71,7 @@ export function WalletSettings({
       <nav className="wallet-settings-tabs" aria-label="Settings sections">
         <button aria-current={section === 'preferences' || section === 'all' ? 'page' : undefined} onClick={() => navigateWallet('/app#settings/display')} type="button">Preferences</button>
         <button aria-current={section === 'recovery' ? 'page' : undefined} onClick={() => navigateWallet('/app#settings/recovery')} type="button">Recovery</button>
+        <button onClick={() => navigateWallet('/app#settings/consensus')} type="button">Consensus</button>
       </nav>
       {section !== 'recovery' ? <>
       <div className="wallet-settings-list">

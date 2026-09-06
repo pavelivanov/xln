@@ -1,4 +1,5 @@
 import { lazy, Suspense, useEffect, useState, useSyncExternalStore, type MouseEvent as ReactMouseEvent } from 'react';
+import { useWorkspaceTranslation } from '../../../bridges/workspace-localization-react';
 
 import { readRuntimeAdapterStorageSnapshot } from '../../../packages/browser/src/runtime-adapter-session';
 import type { WalletAuthScheme } from '../../../packages/browser/src/wallet-runtime-preferences';
@@ -116,6 +117,8 @@ function WalletRuntimeBoundary({ runtime }: Readonly<{ runtime: WalletRuntimeSum
 }
 
 export function WalletAppShell() {
+  const { locale, t } = useWorkspaceTranslation();
+  useEffect(() => { document.documentElement.lang = locale; }, [locale]);
   const [workspaceSelection] = useState(() => new WalletWorkspaceSelection());
   const [, setEnvironmentRevision] = useState(0);
   const embedded = useSyncExternalStore(
@@ -163,7 +166,7 @@ export function WalletAppShell() {
               key={link.href}
               onClick={link.view ? (event) => navigate(event, link.href) : undefined}
             >
-              {link.label}
+              {t(`walletNavigation.${link.label}`)}
             </a>
           ))}
         </nav>
@@ -172,7 +175,7 @@ export function WalletAppShell() {
 
       <div className="wallet-shell-canvas">
         <header className="wallet-shell-topbar">
-          <span>Wallet</span>
+          <span>{t('workspace.wallet')}</span>
           <span className={`wallet-shell-runtime-state is-${runtime.state}`}>
             <span aria-hidden="true" />
             {view === 'scenario-preview' ? 'Scenario preview' : runtime.modeLabel}
@@ -185,7 +188,7 @@ export function WalletAppShell() {
           ) : (
             <WalletExistingSetupGate runtimeId={view === 'identity' || view === 'scenario-preview' ? '' : embedded.runtimeId} runtimeState={runtime.state}>
               <WalletAccountRail route={route} selection={workspaceSelection} />
-              {route.view === 'account-tools' ? <WalletAccountWorkspace tab={route.tab} selection={workspaceSelection} /> : null}
+              {route.view === 'account-tools' || route.view === 'entity-tools' ? <WalletAccountWorkspace tab={route.tab} selection={workspaceSelection} /> : null}
               {view === 'identity' ? <IdentityOnboarding runtimeId={embedded.runtimeId} runtimeState={runtime.state} /> : null}
               {route.view === 'portfolio' ? <WalletPortfolio section={route.section} workspaceSelection={workspaceSelection} /> : null}
               {view === 'health' ? <WalletFinancialHealth workspaceSelection={workspaceSelection} /> : null}

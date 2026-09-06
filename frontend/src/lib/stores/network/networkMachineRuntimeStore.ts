@@ -1,4 +1,4 @@
-import type { RuntimeActivityEvent, RuntimeAdapterGraphFrame } from '@xln/core/api/public/runtime-module';
+import type { EnvSnapshot, RuntimeActivityEvent, RuntimeAdapterGraphFrame } from '@xln/core/api/public/runtime-module';
 import { compileNetworkMachine, type NetworkMachine, type NetworkMachineStep } from '$lib/network3d/networkMachine';
 import {
   disconnectNetworkTimelineReaders,
@@ -12,10 +12,11 @@ import {
   type NetworkTrail,
 } from '$lib/network3d/timeline/networkTimelineSource';
 import { getXLN } from '../bootstrap/xlnRuntimeLoader';
-import { networkMachineConfig, networkMachineOperations } from './networkMachineStore';
+import { networkMachineConfig } from './networkMachineStore';
 import { runtimes } from '../runtimeStore';
 import { createObservableStore, readStoreValue } from '$lib/utils/observableStore';
 import type { RuntimeTimelineIndex } from '$lib/network3d/timeline/runtimeGraphTimeline';
+import { projectScenarioSolvency } from '../../../../packages/runtime-client/src/scenario-solvency';
 
 export type NetworkMachineRuntimeState = {
   loading: boolean;
@@ -76,17 +77,40 @@ const requireSource = (runtimeId: string): NetworkTimelineSource => {
   return source;
 };
 
-const installSourceCues = (source: NetworkTimelineSource): void => {
-  networkMachineOperations.replace({
-    ...get(networkMachineConfig),
-    runtimeIds: [source.runtimeId],
-    cues: source.cues ?? [],
-  });
-};
-
 export const networkMachineRuntimeOperations = {
+  async readSelectedSolvency() {
+    const step = networkMachineRuntime.get().selectedStep;
+    if (!step) throw new Error('NETWORK_MACHINE_STEP_REQUIRED');
+    const source = requireSource(step.activeRuntimeId);
+    if (!source.readSolvency) throw new Error('This portable trail has no full state for asset conservation.');
+    return source.readSolvency(step.event.height);
+  },
+  readSelectedSourceKind(): NetworkTimelineSource['kind'] | null {
+    const step = networkMachineRuntime.get().selectedStep;
+    return step ? requireSource(step.activeRuntimeId).kind : null;
+  },
+  readSelectedSnapshot(): EnvSnapshot | null {
+    const step = networkMachineRuntime.get().selectedStep;
+    if (!step) return null;
+    const source = requireSource(step.activeRuntimeId);
+    return source.readSnapshot ? source.readSnapshot(step.event.height) : null;
+  },
+
+  readSelectedSnapshotHistory(): EnvSnapshot[] {
+    const current = networkMachineRuntime.get();
+    const step = current.selectedStep;
+    if (!step) return [];
+    const source = requireSource(step.activeRuntimeId);
+    const read = source.readSnapshot;
+    if (!read) return [];
+    const index = current.indexes.find(entry => entry.runtimeId === step.activeRuntimeId);
+    if (!index) throw new Error('NETWORK_MACHINE_SELECTED_INDEX_MISSING');
+    return index.frames.filter(frame => frame.height <= step.event.height).map(frame => read(frame.height));
+  },
+
   async refresh(): Promise<NetworkMachine> {
     const requestId = ++refreshRequestId;
+    selectionRequestId += 1;
     networkMachineRuntime.update((state) => ({ ...state, loading: true, error: null }));
     try {
       const runtimeMap = readStoreValue(runtimes);
@@ -115,23 +139,27 @@ export const networkMachineRuntimeOperations = {
     }
   },
 
-  /** Replay a recorded trail. Portable demos take this path — no runtime, no scenario run. */
-  async loadTrail(trail: NetworkTrail): Promise<NetworkMachine> {
+  /** Read leases supplied by a host share its existing Runtime connections. */
+  async loadSources(sources: NetworkTimelineSource[]): Promise<NetworkMachine> {
     const requestId = ++refreshRequestId;
+    selectionRequestId += 1;
     networkMachineRuntime.update((state) => ({ ...state, loading: true, error: null }));
     try {
-      const source = trailNetworkTimelineSource(trail);
-      installSourceCues(source);
-      const indexes = [await source.readIndex()];
+      const indexes = await Promise.all(sources.map(source => source.readIndex()));
       const machine = compileCurrent(indexes);
       if (requestId !== refreshRequestId) return machine;
-      setSources([source]);
+      setSources(sources);
       networkMachineRuntime.set({ ...emptyState(), indexes, machine });
       return machine;
     } catch (error) {
       if (requestId === refreshRequestId) networkMachineRuntime.update((state) => ({ ...state, loading: false, error: message(error) }));
       throw error;
     }
+  },
+
+  /** Replay a recorded trail. Portable demos need no Runtime or wallet. */
+  async loadTrail(trail: NetworkTrail): Promise<NetworkMachine> {
+    return this.loadSources([trailNetworkTimelineSource(trail)]);
   },
 
   /** Freeze whatever is loaded into a portable trail. Single-source machines only. */
@@ -151,16 +179,18 @@ export const networkMachineRuntimeOperations = {
    */
   async loadScenario(key: string): Promise<NetworkMachine> {
     const requestId = ++refreshRequestId;
+    selectionRequestId += 1;
     const scenarioKey = String(key || '').trim();
     if (!scenarioKey) throw new Error('NETWORK_MACHINE_SCENARIO_KEY_REQUIRED');
     networkMachineRuntime.update((state) => ({ ...state, loading: true, error: null }));
     try {
       const xln = await getXLN();
       const runtimeId = `scenario:${scenarioKey}`.toLowerCase();
-      const recording = await xln.recordScenario(scenarioKey as never, xln.createEmptyEnv());
+      const key = xln.scenarioKeys.find(candidate => candidate === scenarioKey);
+      if (!key) throw new Error(`SCENARIO_UNKNOWN:${scenarioKey}`);
+      const recording = await xln.recordScenario(key, xln.createEmptyEnv());
       if (recording.frames.length === 0) throw new Error(`NETWORK_MACHINE_SCENARIO_EMPTY:${scenarioKey}`);
-      const source = scenarioNetworkTimelineSource(runtimeId, recording.frames);
-      installSourceCues(source);
+      const source = scenarioNetworkTimelineSource(runtimeId, recording.frames, snapshot => projectScenarioSolvency(recording.env, snapshot));
       const indexes = [await source.readIndex()];
       const machine = compileCurrent(indexes);
       if (requestId !== refreshRequestId) return machine;

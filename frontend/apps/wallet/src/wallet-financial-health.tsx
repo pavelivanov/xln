@@ -1,3 +1,4 @@
+import { useWalletRuntimeLoader } from "./wallet-runtime-scope";
 import { useEffect, useState, useSyncExternalStore } from 'react';
 
 import { readRuntimeAdapterStorageSnapshot } from '../../../packages/browser/src/runtime-adapter-session';
@@ -33,9 +34,11 @@ function HealthUnavailable({
 
 export function WalletFinancialHealth({ workspaceSelection }: Readonly<{ workspaceSelection: WalletWorkspaceSelection }>) {
   const { entityId } = useSyncExternalStore(workspaceSelection.subscribe, workspaceSelection.getSnapshot, workspaceSelection.getSnapshot);
+  const loadRuntime = useWalletRuntimeLoader();
   const [source] = useState(() => new WalletFinancialHealthSource(
     readRuntimeAdapterStorageSnapshot({ durable: localStorage, session: sessionStorage }),
     workspaceSelection,
+    loadRuntime,
   ));
   const snapshot = useSyncExternalStore(source.subscribe, source.getSnapshot, source.getSnapshot);
 

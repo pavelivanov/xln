@@ -1,3 +1,4 @@
+import type { WalletOpenDraft } from './wallet-command-draft';
 import { useEffect, useState, useSyncExternalStore } from 'react';
 import type { RuntimeAdapter } from '@xln/core/api/public/runtime-module';
 import type { HubDiscoveryHub } from '../../../src/lib/components/Entity/onboarding/hub-discovery-profile';
@@ -31,7 +32,7 @@ function HubDetails({ hub, source }: Readonly<{ hub: HubDiscoveryHub; source: Wa
   </div>;
 }
 
-export function WalletHubDiscovery({ adapter, entityId, onBack, onOpenDisputed }: Readonly<{ adapter: RuntimeAdapter; entityId: string; onBack: () => void; onOpenDisputed: (id: string) => void }>) {
+export function WalletHubDiscovery({ adapter, entityId, onBack, onOpenDisputed, draft }: Readonly<{ draft?: WalletOpenDraft | undefined; adapter: RuntimeAdapter; entityId: string; onBack: () => void; onOpenDisputed: (id: string) => void }>) {
   const [source] = useState(() => new WalletHubDiscoverySource(adapter, entityId));
   const snapshot = useSyncExternalStore(source.subscribe, source.getSnapshot, source.getSnapshot);
   const [expanded, setExpanded] = useState('');
@@ -60,7 +61,7 @@ export function WalletHubDiscovery({ adapter, entityId, onBack, onOpenDisputed }
         {expanded === hub.entityId ? <HubDetails hub={hub} source={source} /> : null}
       </article>;
     })}</div>
-    <WalletDirectAccountOpen source={source} snapshot={snapshot} />
+    <WalletDirectAccountOpen draft={draft} source={source} snapshot={snapshot} />
     {snapshot.disputed.length ? <section className="wallet-disputed-accounts" aria-label="Disputed Accounts">
       <h2>Disputed Accounts</h2><p>Hidden from the main list. Finalized disputes permanently close the account.</p>
       {snapshot.disputed.map(item => <article key={item.counterpartyId}><div><code>{item.counterpartyId}</code>

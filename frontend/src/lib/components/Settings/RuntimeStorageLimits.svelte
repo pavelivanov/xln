@@ -1,71 +1,33 @@
 <script lang="ts">
   import type { Writable } from 'svelte/store';
   import type { RuntimeReplica } from '@xln/core/runtime/types';
-
-  const GIB = 1024 ** 3;
-
+  import { buildStoragePolicy, readStoragePolicyFields, displayStorageGiB } from '../../../../packages/runtime-client/src/operator-policy-settings';
   export let runtimeFrameEnv: Writable<RuntimeReplica | null>;
-
-  let loadedRuntimeId = '';
-  let walEpochGiB = '';
-  let status = '';
-  let error = '';
-
-  const formatGiB = (bytes: number | undefined): string =>
-    bytes === undefined || bytes === Number.MAX_SAFE_INTEGER
-      ? ''
-      : String(Number((bytes / GIB).toFixed(6)));
-
+  let loadedRuntimeId = '', commonGiB = '', walEpochGiB = '', historyViewGiB = '', historyRetainFrames = '';
+  let status = '', error = '';
   const loadRuntime = (env: RuntimeReplica | null): void => {
     const runtimeId = String(env?.runtimeId || env?.dbNamespace || '');
     if (!env || runtimeId === loadedRuntimeId) return;
     loadedRuntimeId = runtimeId;
-    const storage = env.runtimeConfig?.storage;
-    walEpochGiB = formatGiB(storage?.epochMaxBytes);
-    status = '';
-    error = '';
+    ({ commonGiB, walEpochGiB, historyViewGiB, historyRetainFrames } = readStoragePolicyFields(env.runtimeConfig?.storage));
+    status = ''; error = '';
   };
-
-  const parseGiB = (raw: string, label: string): number | undefined => {
-    const value = raw.trim();
-    if (!value) return undefined;
-    const gib = Number(value);
-    const bytes = gib * GIB;
-    if (!Number.isFinite(gib) || gib <= 0 || !Number.isSafeInteger(bytes)) {
-      throw new Error(`${label} must be a positive GiB value`);
-    }
-    return bytes;
-  };
-
-  const writeOptional = (
-    target: Record<string, unknown>,
-    key: string,
-    value: number | undefined,
-  ): void => {
-    if (value === undefined) delete target[key];
-    else target[key] = value;
-  };
-
   function applyLimits(): void {
     try {
-      const epochMaxBytes = parseGiB(walEpochGiB, 'WAL epoch limit');
       runtimeFrameEnv.update(env => {
         if (!env) throw new Error('No Runtime is selected');
-        const storage = { ...(env.runtimeConfig.storage ?? {}) } as Record<string, unknown> &
-          NonNullable<NonNullable<RuntimeReplica['runtimeConfig']>['storage']>;
-        writeOptional(storage, 'epochMaxBytes', epochMaxBytes);
-        env.runtimeConfig.storage = storage;
+        const storage = buildStoragePolicy(env.runtimeConfig?.storage, { commonGiB, walEpochGiB, historyViewGiB, historyRetainFrames });
+        env.runtimeConfig = { ...env.runtimeConfig, storage };
+        walEpochGiB = displayStorageGiB(storage.epochMaxBytes);
+        historyViewGiB = displayStorageGiB(storage.historyViewMaxBytes);
         return env;
       });
-      walEpochGiB = formatGiB(epochMaxBytes);
-      error = '';
+      commonGiB = ''; error = '';
       status = 'Storage policy saved. It applies from the next Runtime frame.';
     } catch (cause) {
-      status = '';
-      error = cause instanceof Error ? cause.message : String(cause);
+      status = ''; error = cause instanceof Error ? cause.message : String(cause);
     }
   }
-
   $: loadRuntime($runtimeFrameEnv);
 </script>
 
@@ -73,15 +35,30 @@
   <header>
     <div>
       <h4>Runtime storage policy</h4>
-      <p>Blank means unlimited. The WAL is the only retained Runtime history.</p>
+      <p>Blank means unlimited. Limits are local operator policy, never consensus state.</p>
     </div>
   </header>
 
   <div class="limit-grid">
     <label>
+      <span>Common limit per archival store</span>
+      <input bind:value={commonGiB} inputmode="decimal" placeholder="Unlimited" data-testid="storage-common-gib" />
+      <small>GiB · fills both blank limits below</small>
+    </label>
+    <label>
       <span>WAL epoch rollover</span>
       <input bind:value={walEpochGiB} inputmode="decimal" placeholder="Unlimited" data-testid="storage-wal-gib" />
       <small>GiB · closes the epoch at a durable checkpoint</small>
+    </label>
+    <label>
+      <span>Materialized history view</span>
+      <input bind:value={historyViewGiB} inputmode="decimal" placeholder="Unlimited" data-testid="storage-history-gib" />
+      <small>GiB · rebuildable from WAL</small>
+    </label>
+    <label>
+      <span>Runtime history frames</span>
+      <input bind:value={historyRetainFrames} inputmode="numeric" placeholder="Unlimited" data-testid="storage-history-frames" />
+      <small>1 = latest only · 2 = latest plus one previous</small>
     </label>
   </div>
 

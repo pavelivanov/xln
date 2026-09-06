@@ -60,7 +60,7 @@ export function OpsApp({ page }: Readonly<{ page: OpsPage }>) {
     return <Suspense fallback={<main className="candidate-shell">Loading AI console…</main>}><OpsAiPage /></Suspense>;
   }
   if (page.kind === 'workspace') {
-    return <Suspense fallback={<main className="candidate-shell">Loading Entity workspace…</main>}><OpsWorkspacePage /></Suspense>;
+    return <Suspense fallback={<main className="candidate-shell">Loading workspace…</main>}><OpsWorkspacePage publicEmbed={page.pathname === '/embed'} /></Suspense>;
   }
   return (
     <CandidateShell

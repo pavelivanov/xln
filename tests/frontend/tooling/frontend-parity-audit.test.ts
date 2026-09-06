@@ -68,7 +68,7 @@ describe('WP9 retained-route and capability parity audit', () => {
       }
     }
     expect(CUTOVER_CHECKLIST.filter(({ status }) => status === 'verified').map(({ id }) => id))
-      .toEqual(['per-surface-browser-evidence', 'immutable-candidate-release', 'whole-release-rollback']);
+      .toEqual(['immutable-candidate-release', 'whole-release-rollback']);
     expect(CUTOVER_CHECKLIST.filter(({ status }) => status === 'owner-authorized-wp10')).toHaveLength(3);
     for (const item of CUTOVER_CHECKLIST) expect(existsSync(item.evidence)).toBe(true);
   });
@@ -78,8 +78,8 @@ describe('WP9 retained-route and capability parity audit', () => {
       schemaVersion: 1,
       routes: {
         total: 20,
-        implementation: { complete: 19, partial: 1 },
-        browserEvidence: { covered: 19, partial: 1 },
+        implementation: { complete: 18, partial: 2 },
+        browserEvidence: { covered: 18, partial: 2 },
       },
       capabilities: { total: 12, accounted: 12 },
     });

@@ -8,12 +8,13 @@ export type WalletPaymentTab = 'send' | 'receive' | 'operations' | 'external';
 export type WalletMarketTab = 'market' | 'activity';
 export type WalletSettingsSection = 'all' | 'preferences' | 'recovery';
 export type WalletAppRoute =
+  | Readonly<{ view: 'entity-tools'; tab: 'ownership' | 'consensus' }>
   | Readonly<{ view: 'account-tools'; tab: 'configure' | 'move' | 'lending' | 'history' }>
   | Readonly<{ view: 'payments'; tab: WalletPaymentTab; invoice: string }>
   | Readonly<{ view: 'markets'; tab: WalletMarketTab }>
   | Readonly<{ view: 'settings'; section: WalletSettingsSection }>
   | Readonly<{ view: 'portfolio'; section: 'assets' | 'open' | 'appearance' }>
-  | Readonly<{ view: Exclude<WalletAppView, 'payments' | 'markets' | 'settings' | 'portfolio' | 'account-tools'> }>;
+  | Readonly<{ view: Exclude<WalletAppView, 'payments' | 'markets' | 'settings' | 'portfolio' | 'account-tools' | 'entity-tools'> }>;
 
 export const resolveWalletAppRoute = (search: string, hash = ''): WalletAppRoute => {
   const params = new URLSearchParams(search);
@@ -23,6 +24,8 @@ export const resolveWalletAppRoute = (search: string, hash = ''): WalletAppRoute
     return { view: 'payments', tab: 'send', invoice: `https://xln.finance/app${hash}` };
   }
   const route = canonicalizeEntityPanelRoute(rawRoute);
+  if (route === 'ownership') return { view: 'entity-tools', tab: 'ownership' };
+  if (route === 'settings/consensus') return { view: 'entity-tools', tab: 'consensus' };
   if (route === 'accounts/configure' || route === 'accounts/move' || route === 'accounts/lending' || route === 'accounts/history') {
     const tab = route === 'accounts/configure' ? 'configure' : route === 'accounts/move' ? 'move' : route === 'accounts/lending' ? 'lending' : 'history';
     return { view: 'account-tools', tab };

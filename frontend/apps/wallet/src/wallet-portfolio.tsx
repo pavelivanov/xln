@@ -1,3 +1,5 @@
+import type { WalletOpenDraft } from './wallet-command-draft';
+import { useWalletRuntimeLoader } from "./wallet-runtime-scope";
 import { lazy, Suspense, useEffect, useState, useSyncExternalStore } from 'react';
 
 import { readRuntimeAdapterStorageSnapshot } from '../../../packages/browser/src/runtime-adapter-session';
@@ -9,7 +11,7 @@ import type {
 import { WalletPortfolioSource } from './wallet-portfolio-source';
 import { showsAccountDropdown } from '../../../src/lib/components/Entity/account/account-dropdown-model';
 import type { WalletWorkspaceSelection } from './wallet-workspace-selection';
-import { navigateWallet } from './wallet-navigation';
+import { useWalletNavigation } from './wallet-navigation';
 import { openDisputedAccountNavigation, returnToAccountsWorkspace, selectAccountNavigation } from '../../../src/lib/components/Entity/account/account-workspace-navigation';
 import './styles/wallet-portfolio.css';
 import './styles/wallet-portfolio-responsive.css';
@@ -149,6 +151,7 @@ function PortfolioContent({
   openAccount: () => void;
   selectAccount: (id: string) => void;
 }>) {
+  const navigateWallet = useWalletNavigation();
   return (
     <>
       <div className="wallet-portfolio-context">
@@ -186,15 +189,18 @@ function PortfolioContent({
   );
 }
 
-export function WalletPortfolio({ section = 'assets', workspaceSelection }: Readonly<{
-  section?: 'assets' | 'open' | 'appearance'; workspaceSelection: WalletWorkspaceSelection;
+export function WalletPortfolio({ section = 'assets', workspaceSelection, draft }: Readonly<{
+  draft?: WalletOpenDraft | undefined; section?: 'assets' | 'open' | 'appearance'; workspaceSelection: WalletWorkspaceSelection;
 }>) {
+  const navigateWallet = useWalletNavigation();
   const [creatingEntity, setCreatingEntity] = useState(false);
   const [formationNotice, setFormationNotice] = useState('');
   const { focusedAccountId, entityId } = useSyncExternalStore(workspaceSelection.subscribe, workspaceSelection.getSnapshot, workspaceSelection.getSnapshot);
+  const loadRuntime = useWalletRuntimeLoader();
   const [source] = useState(() => new WalletPortfolioSource(
     readRuntimeAdapterStorageSnapshot({ durable: localStorage, session: sessionStorage }),
     workspaceSelection,
+    loadRuntime,
   ));
   const snapshot = useSyncExternalStore(source.subscribe, source.getSnapshot, source.getSnapshot);
 
@@ -231,7 +237,7 @@ export function WalletPortfolio({ section = 'assets', workspaceSelection }: Read
   </Suspense>;
 
   if (section === 'open' && snapshot.projection) return <Suspense fallback={<p>Loading counterparties…</p>}>
-    <WalletHubDiscovery key={`${source.getRuntimeId()}:${snapshot.projection.activeEntityId}`} adapter={source.requireAdapter()} entityId={snapshot.projection.activeEntityId}
+    <WalletHubDiscovery draft={draft} key={`${source.getRuntimeId()}:${snapshot.projection.activeEntityId}`} adapter={source.requireAdapter()} entityId={snapshot.projection.activeEntityId}
       onOpenDisputed={id => {
         const selected = openDisputedAccountNavigation(id).selectedAccountId;
         if (selected) selectAccount(selected);
@@ -247,6 +253,7 @@ export function WalletPortfolio({ section = 'assets', workspaceSelection }: Read
         <p>Committed balances from the selected Runtime. No optimistic or sample values.</p>
       </header>
       {snapshot.projection ? <button className="wallet-portfolio-create" type="button" disabled={snapshot.status !== 'ready'} onClick={() => { setFormationNotice(''); setCreatingEntity(true); }}>Create Entity</button> : null}
+      {snapshot.projection ? <button className="wallet-portfolio-create" type="button" onClick={() => navigateWallet('/app#ownership')}>Ownership</button> : null}
       {formationNotice ? <p className="wallet-portfolio-formation-notice" role="status">{formationNotice}</p> : null}
       {snapshot.projection ? (
         <PortfolioContent

@@ -17,6 +17,10 @@
 .wallet-account-jurisdiction { padding-bottom: 24px; border-bottom: 1px solid #303930; font-size: 12px; }
 .wallet-tool-tabs { display: flex; flex-wrap: wrap; gap: 8px; margin: 24px 0; }
 .wallet-tool-tabs button { font-size: 12px; }
+.wallet-entity-evidence { --entity-line: #303930; --entity-accent: #a5f07b; --entity-accent-soft: #d9ffc4; }
+.wallet-entity-evidence .wallet-tool-tabs a { display: inline-flex; align-items: center; min-height: 40px; padding: 8px 12px; border-bottom: 2px solid transparent; color: #a5ada7; font-size: 13px; text-decoration: none; }
+.wallet-entity-evidence .wallet-tool-tabs a[aria-current=page] { border-color: #a5f07b; color: #d9ffc4; }
+.wallet-entity-evidence .wallet-tool-tabs a:focus-visible { outline: 2px solid #a5f07b; outline-offset: 3px; }
 .wallet-account-workspace .wallet-tool-fields { display: flex; flex-wrap: wrap; gap: 18px; align-items: end; margin: 24px 0; }
 .wallet-tool-fields > label { flex: 1 1 180px; }
 .wallet-tool-fields > .wallet-entity-input { flex: 1 1 240px; min-width: 0; }

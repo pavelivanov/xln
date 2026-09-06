@@ -1,4 +1,4 @@
-import { get } from 'svelte/store';
+import { readStoreValue } from '../src/lib/utils/observableStore';
 import { getAddress, getBytes, isAddress, Wallet, ZeroAddress } from 'ethers';
 
 import type { JAdapter, RuntimeReplica } from '@xln/core/api/public/runtime-module';
@@ -38,7 +38,7 @@ const ENTITY_PATTERN = /^0x[0-9a-f]{64}$/;
 const normalize = (value: unknown): string => String(value || '').trim().toLowerCase();
 
 const activeRuntime = (): Runtime | null => {
-  const state = get(runtimesState);
+  const state = readStoreValue(runtimesState);
   const activeId = normalize(state.activeRuntimeId);
   return Object.values(state.runtimes).find((runtime) => normalize(runtime.id) === activeId) ?? null;
 };
@@ -49,7 +49,7 @@ const activeSigner = (runtime: Runtime): Signer | null => (
 
 const liveRuntimeEnv = (runtime: Runtime): RuntimeReplica | null => {
   const runtimeId = normalize(runtime.id);
-  const entry = get(runtimeRegistry).get(runtimeId);
+  const entry = readStoreValue(runtimeRegistry).get(runtimeId);
   if (!entry || entry.type !== 'local' || !entry.env) return null;
   const env = (unwrapLiveRuntimeEnv(entry.env) ?? entry.env) as RuntimeReplica;
   const envRuntimeId = normalize(env.runtimeId);

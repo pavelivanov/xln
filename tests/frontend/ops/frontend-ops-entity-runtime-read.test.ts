@@ -152,8 +152,8 @@ describe('React Entity workspace Runtime read boundary', () => {
       .toThrow('OPS_ENTITY_REMOTE_AUTH_REQUIRED');
   });
 
-  test('keeps embedded or missing sessions explicitly unavailable without starting a Runtime', async () => {
-    const config = { mode: 'embedded', wsUrl: null, access: null, sessionKey: null };
+  test('keeps missing sessions explicitly unavailable without starting a Runtime', async () => {
+    const config = { mode: null, wsUrl: null, access: null, sessionKey: null };
     const source = new OpsEntityWorkspaceSource(config);
     expect(initialOpsEntityWorkspaceSnapshot(config)).toMatchObject({
       context: { status: 'empty', runtimeId: null },
@@ -161,6 +161,11 @@ describe('React Entity workspace Runtime read boundary', () => {
     });
     await source.start();
     expect(source.getSnapshot().readState.status).toBe('unavailable');
+  });
+
+  test('admits an explicitly selected local Runtime through the shared browser session', () => {
+    expect(initialOpsEntityWorkspaceSnapshot({ mode: 'embedded', wsUrl: null, access: null, sessionKey: null }))
+      .toMatchObject({ readState: { status: 'connecting' }, context: { status: 'empty' } });
   });
 
   test('projects loading, ready, and fail-loud observer states without stale identity', () => {
@@ -215,7 +220,7 @@ describe('React Entity workspace Runtime read boundary', () => {
     expect(page).toContain('opsEntityWorkspaceSource.subscribe');
     expect(runtime).toContain("window.addEventListener('pagehide'");
     expect(runtime).toContain('if (!event.persisted) opsEntityWorkspaceSource.stop()');
-    expect(source).toContain("import('../../../../core/api/runtime-adapter/remote.ts')");
+    expect(source).toContain("import('../../../bridges/ops-canonical-owner')");
     expect(source).toContain("import('./ops-entity-workspace-owner')");
     expect(source).toContain('accountsLimit: 8');
     expect(source).toContain('accountsPage: this.accountsPage');

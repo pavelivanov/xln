@@ -1,3 +1,4 @@
+import { useWalletRuntimeLoader } from "./wallet-runtime-scope";
 import { useEffect, useState, useSyncExternalStore } from 'react';
 import { readRuntimeAdapterStorageSnapshot } from '../../../packages/browser/src/runtime-adapter-session';
 import { WalletPaymentSource } from './wallet-payment-source';
@@ -9,10 +10,11 @@ import { WalletMove } from './wallet-move';
 import { WalletLending } from './wallet-lending';
 import { WalletHistory } from './wallet-history';
 import { WalletPaymentBatch } from './wallet-payment-batch';
+import { WalletEntityEvidence } from './wallet-entity-evidence';
 import './styles/wallet-account-workspace.css';
 
-export type WalletAccountTool = 'configure' | 'move' | 'lending' | 'history';
-const titles = { configure: 'Manage Account', move: 'Move', lending: 'Lending', history: 'History' };
+export type WalletAccountTool = 'configure' | 'move' | 'lending' | 'history' | 'ownership' | 'consensus';
+const titles = { configure: 'Manage Account', move: 'Move', lending: 'Lending', history: 'History', ownership: 'Ownership', consensus: 'Consensus' };
 
 function AccountTool({ tab, source, projection, selection }: Readonly<{
   tab: WalletAccountTool; source: WalletPaymentSource; projection: WalletPaymentProjection; selection: WalletWorkspaceSelection;
@@ -25,24 +27,26 @@ function AccountTool({ tab, source, projection, selection }: Readonly<{
   return <>
     <p className="wallet-account-jurisdiction">Jurisdiction: {context.jurisdiction || 'Unassigned'}</p>
     {snapshot.error ? <p role="alert">{snapshot.error}</p> : null}
+    {tab === 'ownership' || tab === 'consensus' ? <WalletEntityEvidence context={context} tab={tab} /> : null}
     {tab === 'configure' ? <WalletManage context={context} source={source} selection={selection} /> : null}
     {tab === 'move' ? <WalletMove context={context} source={source} projection={projection} selection={selection} /> : null}
     {tab === 'lending' ? <WalletLending context={context} source={source} selection={selection} /> : null}
     {tab === 'history' ? <WalletHistory context={context} source={source} /> : null}
-    {tab !== 'move' && (projection.batch.draft.length > 0 || projection.batch.sentHash) ? <WalletPaymentBatch projection={projection} snapshot={payment} source={source} /> : null}
+    {tab !== 'move' && tab !== 'ownership' && tab !== 'consensus' && (projection.batch.draft.length > 0 || projection.batch.sentHash) ? <WalletPaymentBatch projection={projection} snapshot={payment} source={source} /> : null}
   </>;
 }
 
 export function WalletAccountWorkspace({ tab, selection }: Readonly<{ tab: WalletAccountTool; selection: WalletWorkspaceSelection }>) {
   const selected = useSyncExternalStore(selection.subscribe, selection.getSnapshot, selection.getSnapshot);
-  const [source] = useState(() => new WalletPaymentSource(readRuntimeAdapterStorageSnapshot({ durable: localStorage, session: sessionStorage }), selection));
+  const loadRuntime = useWalletRuntimeLoader();
+  const [source] = useState(() => new WalletPaymentSource(readRuntimeAdapterStorageSnapshot({ durable: localStorage, session: sessionStorage }), selection, loadRuntime));
   const snapshot = useSyncExternalStore(source.subscribe, source.getSnapshot, source.getSnapshot);
   const [error, setError] = useState('');
   useEffect(() => { void source.start(); return source.stop; }, [source]);
   const projection = snapshot.projection;
   const busy = snapshot.command.status === 'submitting' || snapshot.command.status === 'pending';
   return <section className="wallet-account-workspace" aria-label={titles[tab]}>
-    <header><p>Account workspace</p><h1>{titles[tab]}</h1></header>
+    <header><p>{tab === 'ownership' || tab === 'consensus' ? 'Entity workspace' : 'Account workspace'}</p><h1>{titles[tab]}</h1></header>
     {projection ? <>
       <div className="wallet-account-context">
         <label>Entity<select aria-label="Entity" value={selected.entityId || projection.activeEntityId} disabled={busy} onChange={event => source.selectEntity(event.target.value)}>

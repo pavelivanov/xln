@@ -1,4 +1,4 @@
-import { get } from 'svelte/store';
+import { readStoreValue } from '../src/lib/utils/observableStore';
 import { isTronChainId } from '@xln/core/api/public/runtime-module';
 import { activeRuntime, vaultOperations } from '../src/lib/stores/vault/vaultStore';
 import { getXLN, registerActiveNumberedEntities, submitRuntimeInput, xlnEnvironment } from '../src/lib/stores/xlnStore';
@@ -10,8 +10,8 @@ import type { WalletFormationRequest, WalletFormationResult, WalletFormationView
 
 const normalize = (value: string) => value.trim().toLowerCase();
 const readCurrent = (runtimeId: string) => {
-  const vault = get(activeRuntime);
-  const frame = get(xlnEnvironment);
+  const vault = readStoreValue(activeRuntime);
+  const frame = readStoreValue(xlnEnvironment);
   if (!vault || normalize(vault.id) !== normalize(runtimeId)) return null;
   if (!frame || normalize(String(frame.runtimeId || '')) !== normalize(runtimeId)) return null;
   const signer = vault.signers[vault.activeSignerIndex];

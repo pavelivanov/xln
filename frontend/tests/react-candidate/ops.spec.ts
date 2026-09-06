@@ -1,8 +1,9 @@
+import { openWorkspaceStorageOrigin } from './browser-evidence';
+import { installOpsOwnerMetadata, unlockOpsOwnerVisibly } from './ops-owner-test-helpers';
 import { expect, test } from '@playwright/test';
 
 import {
   expectNoBrowserErrors,
-  expectOnlyProxyFailures,
   expectPageContained,
   observeBrowserErrors,
   screenshotEvidence,
@@ -16,20 +17,22 @@ test('ops candidate renders without browser errors', async ({ page }, testInfo) 
   const errors = observeBrowserErrors(page);
   const response = await page.goto('/embed', { waitUntil: 'networkidle' });
   expect(response?.ok(), 'document response for /embed').toBe(true);
-  await expect(page.getByRole('heading', { name: 'Ops, independently built.' })).toBeVisible();
+  await expect(page.getByTestId('ops-workspace')).toHaveAttribute('data-host', 'public');
+  await expect(page.locator('.dv-tab')).toHaveCount(14);
   await expectPageContained(page);
   await screenshotEvidence(page, testInfo, 'ops');
   expectNoBrowserErrors(errors);
 });
 
 const unavailableOpsRoutes = [
-  { id: 'ops-health', pathname: '/health', heading: 'System health', failure: 'OPS_HEALTH_HTTP_502' },
-  { id: 'ops-qa', pathname: '/qa', heading: 'Test Cockpit', failure: 'OPS_QA_HTTP_502' },
-  { id: 'ops-hlt', pathname: '/qa/hlt', heading: 'HLT', failure: 'DEVELOPMENT_GATEWAY_PROXY_FAILED' },
+  { id: 'ops-health', pathname: '/health', heading: 'System health', failure: 'OPS_HEALTH_HTTP_404' },
+  { id: 'ops-qa', pathname: '/qa', heading: 'Test Cockpit', failure: 'OPS_QA_HTTP_404' },
+  { id: 'ops-hlt', pathname: '/qa/hlt', heading: 'HLT', failure: 'NOT_FOUND' },
 ] as const;
 
 for (const route of unavailableOpsRoutes) {
   test(`${route.pathname} exposes its unavailable upstream without browser errors`, async ({ page }, testInfo) => {
+    await readWalletRuntimeFixture(page);
     const errors = observeBrowserErrors(page);
     const response = await page.goto(route.pathname, { waitUntil: 'networkidle' });
     expect(response?.ok()).toBe(true);
@@ -37,7 +40,11 @@ for (const route of unavailableOpsRoutes) {
     await expect(page.getByRole('alert')).toContainText(route.failure);
     await expectPageContained(page);
     await screenshotEvidence(page, testInfo, route.id);
-    expectOnlyProxyFailures(errors);
+    // The isolated edge is reachable; these operator APIs are absent from its
+    // real Wallet fixture. Require that exact failure, not a relay HTML response.
+    expect(errors.pageErrors).toEqual([]);
+    expect(errors.consoleErrors.length).toBeGreaterThan(0);
+    for (const error of errors.consoleErrors) expect(error).toContain('status of 404');
   });
 }
 
@@ -89,8 +96,9 @@ test('profile owner command resolves only after the isolated Runtime commits it'
   test.setTimeout(90_000);
   const errors = observeBrowserErrors(page);
   const fixture = await readWalletRuntimeFixture(page);
-  await page.goto('/embed', { waitUntil: 'domcontentloaded' });
+  await openWorkspaceStorageOrigin(page);
   await installImportedRuntime(page, fixture);
+  await installOpsOwnerMetadata(page, fixture);
   const response = await page.goto('/__app/ops/entity-workspace#settings', { waitUntil: 'domcontentloaded' });
   expect(response?.ok(), 'document response for Entity workspace').toBe(true);
 
@@ -99,13 +107,7 @@ test('profile owner command resolves only after the isolated Runtime commits it'
   const save = page.getByTestId('settings-profile-save');
   const nextName = `React owner ${testInfo.project.name}`;
   await expect(editor).toBeVisible({ timeout: 30_000 });
-  await page.evaluate(async ({ runtimeId, walletSeed }) => {
-    const ownerModulePath = '/__app/ops/src/ops-entity-workspace-owner.ts';
-    const owner = await import(/* @vite-ignore */ ownerModulePath) as Readonly<{
-      unlockOpsEntityWorkspaceOwner: (id: string, seed: string) => Promise<void>;
-    }>;
-    await owner.unlockOpsEntityWorkspaceOwner(runtimeId, walletSeed);
-  }, { runtimeId: fixture.runtimeId, walletSeed: fixture.walletSeed });
+  await unlockOpsOwnerVisibly(page, fixture.walletSeed);
   await expect(nameInput).toBeEnabled();
   await expect(save).toBeDisabled();
   await nameInput.fill(nextName);
@@ -144,16 +146,17 @@ test('ai console reports the unavailable local AI service without browser errors
 });
 
 test('runs reports an unavailable QA upstream without swallowing the failure', async ({ page }, testInfo) => {
+  await readWalletRuntimeFixture(page);
   const errors = observeBrowserErrors(page);
   const response = await page.goto('/runs', { waitUntil: 'networkidle' });
   expect(response?.ok()).toBe(true);
   await expect(page.getByRole('heading', { name: 'Runs Ledger' })).toBeVisible();
-  await expect(page.getByTestId('runs-error')).toContainText('OPS_RUNS_HTTP_502');
+  await expect(page.getByTestId('runs-error')).toContainText('OPS_RUNS_HTTP_404');
   await expectPageContained(page);
   await screenshotEvidence(page, testInfo, 'ops-runs-upstream-unavailable');
   expect(errors.pageErrors).toEqual([]);
   expect(errors.consoleErrors).toEqual([
-    expect.stringContaining('Failed to load resource: the server responded with a status of 502'),
+    expect.stringContaining('Failed to load resource: the server responded with a status of 404'),
   ]);
 });
 

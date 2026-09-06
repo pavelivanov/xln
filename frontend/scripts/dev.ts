@@ -18,9 +18,7 @@ export const createDevelopmentProcessSpecs = (
   surfaceIds: readonly SurfaceId[],
 ): readonly DevelopmentProcessSpec[] => {
   const runtimeFixtureEnabled = process.env['XLN_REACT_WALLET_ADDRESS_FIXTURE'] === '1'
-    && surfaceIds.length === 1
-    && (surfaceIds[0] === 'wallet' || surfaceIds[0] === 'ops');
-  const walletFixtureEnabled = runtimeFixtureEnabled && surfaceIds[0] === 'wallet';
+    && surfaceIds.some(id => id === 'wallet' || id === 'ops');
   return [
     ...surfaceIds.map((surfaceId) => ({
       label: `vite-${getSurface(surfaceId).id}`,
@@ -31,15 +29,14 @@ export const createDevelopmentProcessSpecs = (
       label: 'same-origin-gateway',
       argv: ['bun', 'scripts/run-dev-gateway.ts'],
       gatewayAware: false,
-      ...(walletFixtureEnabled
-        ? { environment: {
-            XLN_REACT_EDGE_TARGET: `http://127.0.0.1:${Number(process.env['XLN_REACT_WALLET_FIXTURE_PORT'] || 19092) + 3}`,
-          } }
-        : surfaceIds.length === 1 && surfaceIds[0] === 'site'
-        ? { environment: { XLN_REACT_DOCS_PROXY_OWNER: 'site' } }
-        : surfaceIds.length === 1 && surfaceIds[0] === 'ops'
-          ? { environment: { XLN_REACT_WALLET_PROXY_OWNER: 'ops' } }
-        : {}),
+      ...(runtimeFixtureEnabled || (surfaceIds.length === 1 && ['site', 'ops'].includes(surfaceIds[0] ?? '')) ? { environment: {
+        ...(runtimeFixtureEnabled ? {
+            XLN_REACT_EDGE_TARGET: `http://127.0.0.1:${Number(process.env['XLN_REACT_WALLET_FIXTURE_PORT'] || 19092)}`,
+            XLN_REACT_EDGE_WEBSOCKET_TARGET: `http://127.0.0.1:${Number(process.env['XLN_REACT_WALLET_FIXTURE_PORT'] || 19092) + 3}`,
+        } : {}),
+        ...(surfaceIds.length === 1 && surfaceIds[0] === 'site' ? { XLN_REACT_DOCS_PROXY_OWNER: 'site' } : {}),
+        ...(surfaceIds.length === 1 && surfaceIds[0] === 'ops' ? { XLN_REACT_WALLET_PROXY_OWNER: 'ops' } : {}),
+      } } : {}),
     },
     ...(runtimeFixtureEnabled ? [{
       label: 'wallet-address-runtime-fixture',

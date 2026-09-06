@@ -5,7 +5,7 @@ import { resolveEntityPanelDeepLinkFromLocation } from '../../../frontend/packag
 
 describe('React Entity workspace shell', () => {
   test('owns the isolated candidate route with explicit metadata', () => {
-    expect(resolveOpsPage('/embed')).toEqual({ kind: 'pending', pathname: '/embed' });
+    expect(resolveOpsPage('/embed')).toEqual({ kind: 'workspace', pathname: '/embed' });
     const page = resolveOpsPage('/__app/ops/entity-workspace');
     expect(page).toEqual({ kind: 'workspace', pathname: '/__app/ops/entity-workspace' });
     expect(opsPageMetadata(page)).toEqual({
@@ -56,7 +56,7 @@ describe('React Entity workspace shell', () => {
     expect(activity).toContain('Exact Runtime activity at or before the displayed committed frame');
     expect(accounts).not.toContain('deriveDelta');
     expect(accounts).not.toContain('CreditLimit');
-    expect(consensus).toContain('Validator-local proposals, votes, locks, and certificates are not exposed');
+    expect(consensus).toContain('This view shows committed state. In-flight proposals, votes and locks are not included.');
     expect(consensus).not.toContain('pendingLeaderCertificate');
     expect(consensus).not.toContain('leaderVotes');
     expect(display).toContain('settings-theme-select');

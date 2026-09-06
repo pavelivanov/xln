@@ -22,8 +22,9 @@ describe('React wallet WP6 flow audit', () => {
     for (const flow of WALLET_FLOW_AUDIT) {
       expect(resolveWalletPage(flow.pathname).kind).toBe(flow.page);
       if (flow.view) {
-        expect(resolveWalletAppView(flow.search)).toBe(flow.view);
-        if (flow.view !== 'overview') expect(linkedViews.has(flow.view)).toBe(true);
+        const hash = 'hash' in flow ? flow.hash : '';
+        expect(resolveWalletAppView(flow.search, hash)).toBe(flow.view);
+        if (flow.view !== 'overview') expect(linkedViews.has(flow.view) || hash.startsWith('#')).toBe(true);
       }
       for (const path of [...flow.sources, ...flow.tests]) expect(existsSync(path)).toBe(true);
     }
@@ -35,7 +36,8 @@ describe('React wallet WP6 flow audit', () => {
     const flowIds = new Set(WALLET_FLOW_AUDIT.map(({ id }) => id));
     const deferralIds = new Set(WALLET_FLOW_DEFERRALS.map(({ id }) => id));
     for (const requirement of WALLET_REQUIREMENT_AUDIT) {
-      expect(requirement.disposition === 'implemented'
+      if (requirement.disposition === 'partial') expect(requirement.remaining?.length).toBeGreaterThan(20);
+      expect(requirement.disposition !== 'deferred'
         ? flowIds.has(requirement.evidenceId)
         : deferralIds.has(requirement.evidenceId)).toBe(true);
     }

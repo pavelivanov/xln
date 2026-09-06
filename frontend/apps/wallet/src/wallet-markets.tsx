@@ -1,3 +1,5 @@
+import type { WalletSwapDraft } from './wallet-command-draft';
+import { useWalletRuntimeLoader } from "./wallet-runtime-scope";
 import { useEffect, useState, useSyncExternalStore } from 'react';
 
 import { readRuntimeAdapterStorageSnapshot } from '../../../packages/browser/src/runtime-adapter-session';
@@ -9,15 +11,18 @@ import type { WalletWorkspaceSelection } from './wallet-workspace-selection';
 import './styles/wallet-markets.css';
 import './styles/wallet-markets-responsive.css';
 
-export function WalletMarkets({ tab, onTabChange, workspaceSelection }: Readonly<{
+export function WalletMarkets({ tab, onTabChange, workspaceSelection, draft }: Readonly<{
   workspaceSelection: WalletWorkspaceSelection;
   tab: WalletMarketTab;
+  draft?: WalletSwapDraft | undefined;
   onTabChange: (tab: WalletMarketTab) => void;
 }>) {
   const { entityId } = useSyncExternalStore(workspaceSelection.subscribe, workspaceSelection.getSnapshot, workspaceSelection.getSnapshot);
+  const loadRuntime = useWalletRuntimeLoader();
   const [source] = useState(() => new WalletMarketSource(
     readRuntimeAdapterStorageSnapshot({ durable: localStorage, session: sessionStorage }),
     workspaceSelection,
+    loadRuntime,
   ));
   const snapshot = useSyncExternalStore(source.subscribe, source.getSnapshot, source.getSnapshot);
   const [retryError, setRetryError] = useState('');
@@ -75,7 +80,7 @@ export function WalletMarkets({ tab, onTabChange, workspaceSelection }: Readonly
             <button aria-current={tab === 'activity' ? 'page' : undefined} className={tab === 'activity' ? 'is-current' : ''} onClick={() => onTabChange('activity')} type="button">Activity</button>
           </nav>
           {entityId && entityId !== projection.activeEntityId ? <p role="status">Loading selected Entity…</p> : <>
-          {tab === 'market' ? <WalletMarketPane projection={projection} snapshot={snapshot} source={source} /> : null}
+          {tab === 'market' ? <WalletMarketPane draft={draft} projection={projection} snapshot={snapshot} source={source} /> : null}
           {tab === 'activity' ? <WalletMarketActivityView projection={projection} source={source} /> : null}
           </>}
         </>

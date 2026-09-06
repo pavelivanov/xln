@@ -94,7 +94,7 @@ describe('React ops health evidence', () => {
   test('owns health while the QA cockpit is routed to its React surface', () => {
     expect(resolveOpsPage('/health')).toEqual({ kind: 'health', pathname: '/health' });
     expect(resolveOpsPage('/qa')).toEqual({ kind: 'qa', pathname: '/qa' });
-    expect(resolveOpsPage('/embed')).toEqual({ kind: 'pending', pathname: '/embed' });
+    expect(resolveOpsPage('/embed')).toEqual({ kind: 'workspace', pathname: '/embed' });
   });
 });
 

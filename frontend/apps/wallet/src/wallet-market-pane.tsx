@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { requireDraftToken, type WalletSwapDraft } from './wallet-command-draft';
+import { useEffect, useRef, useState } from 'react';
 
 import type { WalletMarketProjection } from './wallet-market-model';
 import type { WalletMarketSource, WalletMarketSourceSnapshot } from './wallet-market-source';
@@ -18,10 +19,12 @@ export function WalletMarketPane({
   projection,
   snapshot,
   source,
+  draft,
 }: Readonly<{
   projection: WalletMarketProjection;
   snapshot: WalletMarketSourceSnapshot;
   source: WalletMarketSource;
+  draft?: WalletSwapDraft | undefined;
 }>) {
   const selectedPair = projection.pairs.find(({ pairId }) => pairId === projection.selectedPairId) ?? null;
   const pairTokens = selectedPair
@@ -33,14 +36,37 @@ export function WalletMarketPane({
   const [wantAmount, setWantAmount] = useState('');
   const [timeInForce, setTimeInForce] = useState<0 | 1 | 2>(0);
   const [error, setError] = useState('');
+  const appliedDraft = useRef<number | null>(null);
+  const draftField = useRef<HTMLInputElement>(null);
+  const previousPair = useRef(selectedPair?.pairId);
 
   useEffect(() => {
+    if (previousPair.current === selectedPair?.pairId) return;
+    previousPair.current = selectedPair?.pairId;
     if (!selectedPair) return;
     setGiveTokenId(selectedPair.baseTokenId);
     setWantTokenId(selectedPair.quoteTokenId);
     setGiveAmount('');
     setWantAmount('');
   }, [selectedPair?.pairId]);
+
+  useEffect(() => {
+    if (!draft || appliedDraft.current === draft.id || snapshot.status !== 'ready') return;
+    try {
+      if (commandBusy(snapshot)) throw new Error('Finish the pending Wallet command before applying a swap draft.');
+      const give = requireDraftToken(projection.tokens, draft.args.fromToken);
+      const want = requireDraftToken(projection.tokens, draft.args.toToken);
+      const pair = projection.pairs.find(pair => pair.baseTokenId !== pair.quoteTokenId &&
+        [pair.baseTokenId, pair.quoteTokenId].includes(give.tokenId) &&
+        [pair.baseTokenId, pair.quoteTokenId].includes(want.tokenId));
+      if (give.tokenId === want.tokenId || !pair) throw new Error('The selected Hub has no committed pair for this swap draft.');
+      if (pair.pairId !== projection.selectedPairId) { source.selectPair(pair.pairId); return; }
+      setGiveTokenId(give.tokenId); setWantTokenId(want.tokenId);
+      setGiveAmount(draft.args.amount); setWantAmount(''); setError('');
+      appliedDraft.current = draft.id;
+      if (draftField.current) { draftField.current.focus({ preventScroll: true }); draftField.current.scrollIntoView({ block: 'center' }); }
+    } catch (cause) { appliedDraft.current = draft.id; setError(cause instanceof Error ? cause.message : String(cause)); }
+  }, [draft, projection, snapshot, source]);
 
   const flip = (): void => {
     setGiveTokenId(wantTokenId);
@@ -146,7 +172,7 @@ export function WalletMarketPane({
 
           <section className="wallet-order-ticket" aria-labelledby="wallet-order-ticket-title">
             <header><p className="wallet-shell-eyebrow">Canonical limit</p><h2 id="wallet-order-ticket-title">Place or cross</h2></header>
-            <label><span>Give</span><div><input inputMode="decimal" onChange={(event) => setGiveAmount(event.target.value)} placeholder="0.00" value={giveAmount} /><select onChange={(event) => setGiveTokenId(Number(event.target.value))} value={giveTokenId}>{pairTokens.map((token) => <option key={token.tokenId} value={token.tokenId}>{token.symbol}</option>)}</select></div></label>
+            <label><span>Give</span><div><input ref={draftField} inputMode="decimal" onChange={(event) => setGiveAmount(event.target.value)} placeholder="0.00" value={giveAmount} /><select onChange={(event) => setGiveTokenId(Number(event.target.value))} value={giveTokenId}>{pairTokens.map((token) => <option key={token.tokenId} value={token.tokenId}>{token.symbol}</option>)}</select></div></label>
             <button className="wallet-market-flip" onClick={flip} type="button">Reverse direction <span aria-hidden="true">⇅</span></button>
             <label><span>Receive at least</span><div><input inputMode="decimal" onChange={(event) => setWantAmount(event.target.value)} placeholder="0.00" value={wantAmount} /><select onChange={(event) => setWantTokenId(Number(event.target.value))} value={wantTokenId}>{pairTokens.map((token) => <option key={token.tokenId} value={token.tokenId}>{token.symbol}</option>)}</select></div></label>
             <fieldset>

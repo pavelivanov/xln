@@ -267,7 +267,7 @@ describe('React ops ai source', () => {
   test('owns /ai routes, metadata, and lazy runtime wiring', async () => {
     expect(resolveOpsPage('/ai')).toEqual({ kind: 'ai', pathname: '/ai' });
     expect(resolveOpsPage('/ai/chat-9')).toEqual({ kind: 'ai', pathname: '/ai/chat-9' });
-    expect(resolveOpsPage('/embed')).toEqual({ kind: 'pending', pathname: '/embed' });
+    expect(resolveOpsPage('/embed')).toEqual({ kind: 'workspace', pathname: '/embed' });
     expect(opsPageMetadata(resolveOpsPage('/ai')).title).toBe('xln AI Console');
     const [app, main, runtime] = await Promise.all([
       Bun.file('frontend/apps/ops/src/ops-app.tsx').text(),

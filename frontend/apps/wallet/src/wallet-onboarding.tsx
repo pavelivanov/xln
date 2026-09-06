@@ -6,7 +6,7 @@ import { toUsdInt, type OnboardingSetupDraft } from '../../../src/lib/components
 import type { WalletRuntimeSummary } from './app-shell-model';
 import { finishWalletOnboarding, loadWalletOnboarding } from './wallet-onboarding-source';
 import { WalletRecoveryServices } from './wallet-recovery-services';
-import { navigateWallet } from './wallet-navigation';
+import { useWalletNavigation } from './wallet-navigation';
 import { hasPersistedWalletVault } from '../../../packages/browser/src/wallet-vault-storage';
 import './styles/wallet-onboarding.css';
 
@@ -123,6 +123,7 @@ export function WalletPostCreationSetup({ runtimeId, runtimeState, fallback }: R
   runtimeState: WalletRuntimeSummary['state'];
   fallback?: ReactNode;
 }>) {
+  const navigateWallet = useWalletNavigation();
   const [view, setView] = useState<WalletOnboardingView | null>(null);
   const [error, setError] = useState('');
   const [result, setResult] = useState<WalletOnboardingResult | null>(null);

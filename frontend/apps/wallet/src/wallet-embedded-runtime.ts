@@ -1,7 +1,5 @@
 import type { RuntimeAdapter } from '../../../../core/api/public/runtime-module';
-import { createActiveTabLockController } from '../../../packages/browser/src/active-tab-lock';
 import {
-  createWalletEmbeddedRuntimeSession,
   type WalletEmbeddedRuntimeSessionSnapshot,
 } from '../../../packages/browser/src/wallet-embedded-runtime-session';
 import type {
@@ -18,39 +16,18 @@ import type {
   WalletBrainVaultPreparedView,
 } from '../../../packages/browser/src/wallet-brainvault-opening';
 
-const activeTabLock = createActiveTabLockController({ publishState: () => {} });
-let pageUnloadFence: () => void = () => {};
-let pagehideInstalled = false;
+import {
+  browserRuntimeSession as session,
+  installPagehideFence,
+  setPageUnloadFence,
+  startBrowserRuntime,
+} from '../../../bridges/browser-runtime-session';
+
 let discardCanonicalRecovery: ((token?: string) => void) | null = null;
 let discardCanonicalBrainVault: ((token?: string) => void) | null = null;
 let recoveryFileImportRevision = 0;
 
-const setPageUnloadFence = (fence: () => void): void => {
-  pageUnloadFence = fence;
-};
-
-const session = createWalletEmbeddedRuntimeSession<RuntimeAdapter>({
-  acquireLock: handler => activeTabLock.initializeActiveTabLock(handler),
-  boot: async () => {
-    const bootstrap = await import('./wallet-embedded-runtime-bootstrap');
-    return bootstrap.bootWalletEmbeddedRuntime(setPageUnloadFence);
-  },
-});
-
-const handlePageHide = (event: PageTransitionEvent): void => {
-  if (!event.persisted) pageUnloadFence();
-};
-
-const installPagehideFence = (): void => {
-  if (pagehideInstalled || typeof window === 'undefined') return;
-  window.addEventListener('pagehide', handlePageHide);
-  pagehideInstalled = true;
-};
-
-export const startWalletEmbeddedRuntime = async (): Promise<RuntimeAdapter> => {
-  installPagehideFence();
-  return session.start();
-};
+export const startWalletEmbeddedRuntime = startBrowserRuntime;
 
 const openDiscoveredWalletRuntime = async (
   request: WalletCanonicalRuntimeOpeningRequest,
