@@ -62,7 +62,7 @@ describe('gossip panel view model', () => {
     expect(filterGossipDirectoryProfiles(profiles, '')).not.toBe(profiles);
   });
 
-  test('preserves empty and identity fallback presentation semantics', () => {
+  test('preserves empty and identity-derived display names', () => {
     expect(emptyGossipDirectoryView()).toEqual({
       profiles: [], profileCount: 0, hubCount: 0, lastRefreshAt: 0,
     });

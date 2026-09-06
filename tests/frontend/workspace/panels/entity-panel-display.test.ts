@@ -22,7 +22,7 @@ describe('entity panel display helpers', () => {
     expect(shortHash('0x1234567890abcdef1234567890abcdef12345678')).toBe('0x12345678...345678');
   });
 
-  test('keeps the legacy display module as a shared-package facade', () => {
+  test('keeps the retained display module as a shared-package facade', () => {
     const shared = readFileSync('frontend/packages/ui/src/entity/settings/entity-workspace-display.ts', 'utf8');
     const facade = readFileSync('frontend/src/lib/components/Entity/workspace/entity-panel-display.ts', 'utf8');
     expect(shared).not.toContain('frontend/src');

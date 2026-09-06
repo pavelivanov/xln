@@ -39,7 +39,7 @@ const createStores = () => ({
 describe('browser Runtime adapter session', () => {
   test('persists remote configuration while confining authority to the tab', () => {
     const stores = createStores();
-    stores.durable.setItem(RUNTIME_ADAPTER_AUTH_KEY, 'legacy-secret');
+    stores.durable.setItem(RUNTIME_ADAPTER_AUTH_KEY, 'misplaced-durable-secret');
     writeRemoteRuntimeAdapterSession(stores, {
       wsUrl: ' wss://runtime.example/rpc ',
       access: 'admin',
@@ -91,7 +91,7 @@ describe('browser Runtime adapter session', () => {
 
   test('reads and restores authority only through tab storage', () => {
     const stores = createStores();
-    stores.durable.setItem(RUNTIME_ADAPTER_AUTH_KEY, 'legacy-secret');
+    stores.durable.setItem(RUNTIME_ADAPTER_AUTH_KEY, 'misplaced-durable-secret');
     writeRemoteRuntimeAdapterAuth(stores, ' restored-capability ');
 
     expect(stores.durable.getItem(RUNTIME_ADAPTER_AUTH_KEY)).toBeNull();
@@ -122,7 +122,7 @@ describe('browser Runtime adapter session', () => {
     });
     const snapshot = readRuntimeAdapterStorageSnapshot(stores);
     writeEmbeddedRuntimeAdapterSession(stores);
-    stores.durable.setItem(RUNTIME_ADAPTER_AUTH_KEY, 'legacy-secret');
+    stores.durable.setItem(RUNTIME_ADAPTER_AUTH_KEY, 'misplaced-durable-secret');
     restoreRuntimeAdapterStorageSnapshot(stores, snapshot);
 
     expect(readRuntimeAdapterStorageSnapshot(stores)).toEqual(snapshot);

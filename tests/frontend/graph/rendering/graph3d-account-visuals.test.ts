@@ -210,18 +210,18 @@ describe('Graph3D shared Account visuals', () => {
 
   test('moves Account visual orchestration while keeping financial bar derivation canonical', () => {
     const shared = readFileSync('frontend/packages/ui/src/graph/graph3d-account-visuals.ts', 'utf8');
-    const legacy = readFileSync('frontend/src/lib/view/panels/graph3d/graph3d-visuals.ts', 'utf8');
+    const retained = readFileSync('frontend/src/lib/view/panels/graph3d/graph3d-visuals.ts', 'utf8');
     const canonicalBars = readFileSync('frontend/src/lib/network3d/AccountBarRenderer.ts', 'utf8');
 
     expect(shared).toContain('export function buildGraphAccountVisuals');
     expect(shared).toContain('export function createAccountMempoolBoxes');
     expect(shared).not.toContain('deriveDelta');
-    expect(legacy).toContain('createAccountBars(');
-    expect(legacy).toContain('buildSharedGraphAccountVisuals');
-    expect(legacy).not.toContain('const leftAccount =');
-    expect(legacy).not.toContain('function createMempoolBox');
-    expect(legacy).not.toContain('export function createAccountMempoolBoxes');
-    expect(legacy).toContain('packages/ui/src/graph/graph3d-account-visuals');
+    expect(retained).toContain('createAccountBars(');
+    expect(retained).toContain('buildSharedGraphAccountVisuals');
+    expect(retained).not.toContain('const leftAccount =');
+    expect(retained).not.toContain('function createMempoolBox');
+    expect(retained).not.toContain('export function createAccountMempoolBoxes');
+    expect(retained).toContain('packages/ui/src/graph/graph3d-account-visuals');
     expect(canonicalBars).toContain('toDerivedAccountData(xlnFunctions.deriveDelta(delta, fromIsLeft))');
   });
 });

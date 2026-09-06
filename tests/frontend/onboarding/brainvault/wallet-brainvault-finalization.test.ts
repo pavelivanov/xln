@@ -67,7 +67,7 @@ describe('browser wallet BrainVault finalization', () => {
     })).toEqual({ status: 'commit', recoveryLabel: 'Alice Vault' });
   });
 
-  test('preserves the address-derived fallback recovery label', () => {
+  test('preserves the address-derived recovery label', () => {
     expect(resolveWalletBrainVaultFinalizationCommit({
       isCurrentRun: true,
       name: '   ',

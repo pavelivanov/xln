@@ -194,7 +194,7 @@ describe('frontend generated input preparation', () => {
 
   test('runs command producers inside their isolated payload and validates declared routes', async () => {
     const { repositoryRoot, frontendRoot } = await createWorkspace();
-    await writeSource(repositoryRoot, 'frontend/static/docs-static/legacy.md', 'legacy');
+    await writeSource(repositoryRoot, 'frontend/static/docs-static/unrelated.md', 'unrelated');
     const command: CommandGeneratedInputDefinition = {
       id: 'docs-command-fixture',
       owner: 'docs',
@@ -232,7 +232,7 @@ describe('frontend generated input preparation', () => {
     expect(first[0]?.files.map(({ destinationPath }) => destinationPath)).toEqual([
       'docs-catalog/audit-protocol.md',
       'docs-catalog/audit/advisor.md',
-      'docs-static/legacy.md',
+      'docs-static/unrelated.md',
       'llms.txt',
     ]);
     expect(await readFile(
@@ -320,7 +320,7 @@ describe('frontend generated input preparation', () => {
     expect(paths.some((pathname) => pathname.startsWith('docs-static/'))).toBe(false);
   });
 
-  test('keeps the legacy docs generator isolated and accepts a deterministic timestamp', async () => {
+  test('keeps the retained docs generator isolated and accepts a deterministic timestamp', async () => {
     const { frontendRoot } = await createWorkspace();
     const outputRoot = join(frontendRoot, 'docs-generator-output');
     const child = Bun.spawn([

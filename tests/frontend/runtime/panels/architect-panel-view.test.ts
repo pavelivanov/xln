@@ -19,12 +19,12 @@ describe('Architect panel view model', () => {
       '0xbob:main',
       '0xalice:secondary',
       'plain-entity',
-      ':fallback',
-    ])).toEqual(['0xalice', '0xbob', 'plain-entity', ':fallback']);
+      ':empty-prefix',
+    ])).toEqual(['0xalice', '0xbob', 'plain-entity', ':empty-prefix']);
     expect(listArchitectEntityIds([])).toEqual([]);
   });
 
-  test('finds scenario frame markers case-insensitively and preserves fallback line zero', () => {
+  test('finds scenario frame markers case-insensitively and preserves line zero for an absent marker', () => {
     const scenario = [
       '// setup',
       '// Frame 7: payment',

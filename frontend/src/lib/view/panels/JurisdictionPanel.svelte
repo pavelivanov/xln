@@ -351,7 +351,7 @@
     browserTokens: browserVmTokens,
     reserveTokenIds: reserves.map(({ tokenId }) => tokenId),
     collateralTokenIds: collaterals.map(({ tokenId }) => tokenId),
-    getFallbackTokenInfo: (tokenId) => $xlnFunctions.getTokenInfo(tokenId),
+    getCatalogTokenInfo: (tokenId) => $xlnFunctions.getTokenInfo(tokenId),
   }));
 
   $effect(() => {
