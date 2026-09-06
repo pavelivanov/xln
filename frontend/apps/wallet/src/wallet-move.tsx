@@ -7,7 +7,7 @@ import { getMovePrimaryActionLabel, MOVE_ENDPOINT_LABEL, routeRequiresExplicitEx
 import { getMoveMaxAmountForEndpoint, getPreferredMoveSourceAccountId, sumOpenMoveDebt } from '../../../src/lib/components/Entity/move/move-balance';
 import { getMoveValidationErrorForContext } from '../../../src/lib/components/Entity/move/move-validation';
 import { buildMoveHubEntityOptions } from '../../../src/lib/components/Entity/workspace/entity-panel-options';
-import { parseEntityInput } from '../../../src/lib/components/shared/entity-input-model';
+import { parseEntityInput } from '../../../packages/ui/src/entity-input-model';
 import { WalletEntityInput } from './wallet-entity-input';
 import { parsePositiveAssetAmount } from '../../../src/lib/components/Entity/assets/entity-asset-values';
 import { WalletExternalProviderSource } from './wallet-external-provider-source';

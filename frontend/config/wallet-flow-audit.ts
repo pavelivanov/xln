@@ -103,7 +103,7 @@ export const WALLET_FLOW_AUDIT = [
       'frontend/apps/wallet/src/wallet-navigation-model.ts',
       'frontend/bridges/wallet-canonical-hub-discovery.ts',
       'frontend/src/lib/components/Entity/account/account-open-commands.ts',
-      'frontend/src/lib/components/shared/entity-input-model.ts',
+      'frontend/packages/ui/src/entity-input-model.ts',
     ],
     tests: ['tests/frontend/assets/entity-input-model.test.ts', 'frontend/tests/react-candidate/wallet-account-open.spec.ts'],
   },
