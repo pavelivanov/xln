@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 import { readFileSync } from 'node:fs';
-import * as THREE from '../../../frontend/node_modules/three';
+import * as THREE from '../../../../frontend/node_modules/three';
 import type { Delta } from '../../../../core/types/account';
 import { classifyBilateralState, getAccountBarVisual } from '../../../../core/account/view-state';
 

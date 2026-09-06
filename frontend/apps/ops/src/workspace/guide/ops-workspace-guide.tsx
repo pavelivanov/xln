@@ -4,7 +4,7 @@ import { DEFAULT_XLN_MASCOT_DOCK, clampMascotPoint, moveMascotDock, normalizeXln
 import { parseJsonUnknown, isUnknownRecord } from '../../../../../packages/runtime-client/src/boundary';
 import type { XlnAssistantMessage } from '../../../../../src/lib/ai/xln-assistant-client';
 import { OpsGuideChat } from './ops-guide-chat';
-import mascotMark from '../../../../static/img/l.png';
+import mascotMark from '../../../../../static/img/l.png';
 
 const viewport = () => {
   const visual = window.visualViewport;

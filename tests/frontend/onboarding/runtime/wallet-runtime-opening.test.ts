@@ -198,7 +198,7 @@ describe('browser wallet Runtime opening', () => {
     expect(reactRuntime.indexOf('if (discovery.candidates.length > 0)'))
       .toBeLessThan(reactRuntime.lastIndexOf("return openDiscoveredWalletRuntime(request, discovery, '');"));
     expect(reactBootstrap).toContain('hasPersistedWalletVault(localStorage)');
-    expect(reactBootstrap).toContain("await import('./wallet-canonical-vault-runtime')");
+    expect(reactBootstrap).toContain("await import('../wallet/wallet-canonical-vault-runtime')");
     expect(vault).toContain("import { WALLET_VAULT_STORAGE_KEY } from '../../../../packages/browser/src/wallet/wallet-vault-storage';");
     expect(vault).not.toContain("const VAULT_STORAGE_KEY = 'xln-vaults'");
   });

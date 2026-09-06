@@ -274,8 +274,8 @@ describe('React ops ai source', () => {
       Bun.file('frontend/apps/ops/src/main.tsx').text(),
       Bun.file('frontend/apps/ops/src/ai/ops-ai-runtime.ts').text(),
     ]);
-    expect(app).toContain("import('./ops-ai')");
-    expect(main).toContain("import('./ops-ai-runtime')");
+    expect(app).toContain("import('./ai/ops-ai')");
+    expect(main).toContain("import('./ai/ops-ai-runtime')");
     expect(runtime).toContain("addEventListener('pagehide'");
     expect(runtime).toContain('opsAiSource.stop()');
   });

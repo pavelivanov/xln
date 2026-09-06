@@ -71,7 +71,7 @@ describe('React scenario Runtime ownership', () => {
     expect(runtime).toContain("addEventListener('pagehide'");
     expect(runtime).toContain('opsScenariosSource.stop()');
     expect(walletRuntime).toContain('startFromPreviewSearch(window.location.search)');
-    expect(walletShell).toContain("import('./wallet-scenario-preview')");
+    expect(walletShell).toContain("import('./scenario-preview/wallet-scenario-preview')");
     expect(walletShell).toContain("view !== 'scenario-preview'");
   });
 
@@ -81,8 +81,8 @@ describe('React scenario Runtime ownership', () => {
       Bun.file('frontend/apps/ops/src/main.tsx').text(),
       Bun.file('frontend/apps/wallet/src/main.tsx').text(),
     ]);
-    expect(app).toContain("import('./ops-scenarios')");
-    expect(opsMain).toContain("import('./ops-scenarios-runtime')");
-    expect(walletMain).toContain("import('./wallet-scenario-preview-runtime')");
+    expect(app).toContain("import('./scenarios/ops-scenarios')");
+    expect(opsMain).toContain("import('./scenarios/ops-scenarios-runtime')");
+    expect(walletMain).toContain("import('./scenario-preview/wallet-scenario-preview-runtime')");
   });
 });

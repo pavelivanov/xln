@@ -106,6 +106,22 @@ describe('repository source folder-width invariant', () => {
     ]);
   });
 
+  test('excludes generated React chunks while keeping neighboring first-party folders strict', () => {
+    const root = makeRoot();
+    addTypeScriptFiles(join(root, 'frontend/.artifacts/wallet/assets/wallet'), 69);
+    addTypeScriptFiles(join(root, 'frontend/.artifacts-source'), 11);
+    addTypeScriptFiles(join(root, 'frontend/apps/wallet/src'), 11);
+    addTypeScriptFiles(join(root, 'other/.artifacts'), 11);
+
+    const widths = collectFolderWidths(root);
+    expect(widths.some(entry => entry.path.startsWith('frontend/.artifacts/'))).toBe(false);
+    expect(evaluateFolderWidths(widths, {})).toEqual([
+      'FOLDER_TOO_WIDE frontend/.artifacts-source:11 > 10',
+      'FOLDER_TOO_WIDE frontend/apps/wallet/src:11 > 10',
+      'FOLDER_TOO_WIDE other/.artifacts:11 > 10',
+    ]);
+  });
+
   test('the repository has only the exact declared source-folder debt', () => {
     const repoRoot = resolve(import.meta.dir, '../..');
     const widths = collectFolderWidths(repoRoot);

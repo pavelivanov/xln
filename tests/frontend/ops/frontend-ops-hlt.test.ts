@@ -209,6 +209,6 @@ describe('React ops HLT evidence', () => {
     expect(source).toContain('1_000');
     expect(runtime).toContain("addEventListener('pagehide'");
     expect(runtime).toContain('opsHltSource.stop()');
-    expect(app).toContain("import('./ops-hlt')");
+    expect(app).toContain("import('./hlt/ops-hlt')");
   });
 });

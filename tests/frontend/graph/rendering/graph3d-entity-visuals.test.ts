@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 import { readFileSync } from 'node:fs';
-import * as THREE from '../../../frontend/node_modules/three';
+import * as THREE from '../../../../frontend/node_modules/three';
 
 import {
   createEntityLabel,

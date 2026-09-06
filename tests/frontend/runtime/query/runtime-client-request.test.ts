@@ -128,7 +128,7 @@ describe('runtime-client remote request boundary', () => {
     expect(connection).not.toContain('const RUNTIME_PARAM_KEYS');
     expect(legacyWsUrl).toContain("from '../../../../packages/runtime-client/src/runtime/ws-url'");
     expect(legacyWsUrl).not.toContain('const normalizeLoopbackHost');
-    expect(requestBoundary).toContain("from '../../../../core/config/remote-runtime'");
+    expect(requestBoundary).toContain("from '@xln/core/config/remote-runtime'");
     expect(requestBoundary).not.toContain("from '../../../../core/config/constants'");
   });
 });
