@@ -39,7 +39,7 @@ const siteRoutes: readonly SiteRouteEvidence[] = [
 ];
 
 for (const route of siteRoutes) {
-  test(`${route.pathname} exposes its complete site state`, async ({ page }, testInfo) => {
+  test(`${route.pathname} exposes its complete site state`, { tag: '@functional' }, async ({ page }, testInfo) => {
     await page.emulateMedia({ reducedMotion: 'reduce' });
     const errors = observeBrowserErrors(page);
     const response = await page.goto(route.pathname, { waitUntil: 'networkidle' });

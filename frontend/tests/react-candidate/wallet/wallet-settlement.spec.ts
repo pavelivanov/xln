@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test';
 import { expectNoBrowserErrors, expectPageContained, observeBrowserErrors, screenshotEvidence } from '../browser-evidence';
 import { readWalletFixtureChainBalances as balances, selectWalletFixtureRuntime } from './fixtures/wallet-runtime-test-helpers';
 
-test('wallet funds collateral through reviewed batch broadcast and real chain finality', async ({ page }, testInfo) => {
+test('wallet funds collateral through reviewed batch broadcast and real chain finality', { tag: '@functional' }, async ({ page }, testInfo) => {
   test.setTimeout(120_000);
   const errors = observeBrowserErrors(page);
   const fixture = await selectWalletFixtureRuntime(page);
@@ -40,7 +40,7 @@ test('wallet funds collateral through reviewed batch broadcast and real chain fi
   expectNoBrowserErrors(errors);
 });
 
-test('wallet clears only after confirmation and leaves chain balances unchanged', async ({ page }, testInfo) => {
+test('wallet clears only after confirmation and leaves chain balances unchanged', { tag: '@functional' }, async ({ page }, testInfo) => {
   test.setTimeout(120_000);
   const errors = observeBrowserErrors(page);
   const fixture = await selectWalletFixtureRuntime(page);

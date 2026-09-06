@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test';
 import { expectNoBrowserErrors, expectPageContained, observeBrowserErrors, screenshotEvidence } from '../../browser-evidence';
 import { selectWalletFixtureRuntime } from '../fixtures/wallet-runtime-test-helpers';
 
-test('Account appearance persists retained controls and renders every skin on a real Account', async ({ page }, testInfo) => {
+test('Account appearance persists retained controls and renders every skin on a real Account', { tag: '@functional' }, async ({ page }, testInfo) => {
   testInfo.setTimeout(120_000);
   const errors = observeBrowserErrors(page);
   const fixture = await selectWalletFixtureRuntime(page);
@@ -91,7 +91,7 @@ test('Account appearance persists retained controls and renders every skin on a 
   expectNoBrowserErrors(errors);
 });
 
-test('Account bar effects follow a real committed payment and stop after their duration', async ({ page }, testInfo) => {
+test('Account bar effects follow a real committed payment and stop after their duration', { tag: '@functional' }, async ({ page }, testInfo) => {
   testInfo.setTimeout(120_000);
   const errors = observeBrowserErrors(page);
   const fixture = await selectWalletFixtureRuntime(page);

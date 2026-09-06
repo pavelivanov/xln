@@ -8,7 +8,7 @@ import {
 } from '../browser-evidence';
 import { selectWalletFixtureRuntime } from './fixtures/wallet-runtime-test-helpers';
 
-test('wallet payments quote committed capacity and build recipient-owned tools', async ({ page }, testInfo) => {
+test('wallet payments quote committed capacity and build recipient-owned tools', { tag: '@functional' }, async ({ page }, testInfo) => {
   const errors = observeBrowserErrors(page);
   const fixture = await selectWalletFixtureRuntime(page);
   const response = await page.goto('/app?payments=1', { waitUntil: 'domcontentloaded' });
@@ -52,7 +52,7 @@ test('wallet payments quote committed capacity and build recipient-owned tools',
   expectNoBrowserErrors(errors);
 });
 
-test('wallet markets read the committed hub book and persisted activity', async ({ page }, testInfo) => {
+test('wallet markets read the committed hub book and persisted activity', { tag: '@functional' }, async ({ page }, testInfo) => {
   const errors = observeBrowserErrors(page);
   const fixture = await selectWalletFixtureRuntime(page);
   const response = await page.goto('/app?markets=1', { waitUntil: 'domcontentloaded' });

@@ -23,7 +23,7 @@ const SECOND_MNEMONIC = 'abandon abandon abandon abandon abandon abandon abandon
 const INVALID_MNEMONIC = 'test test test test test test test test test test test test';
 const BRAINVAULT_MNEMONIC = 'milk click novel require across cousin good chair street mouse crash movie same daughter air quote total pride crop mention focus sick slice hole';
 
-test('wallet candidate renders without browser errors', async ({ page }, testInfo) => {
+test('wallet candidate renders without browser errors', { tag: '@functional' }, async ({ page }, testInfo) => {
   const errors = observeBrowserErrors(page);
   const response = await page.goto('/testnet', { waitUntil: 'networkidle' });
   expect(response?.ok(), 'document response for /testnet').toBe(true);
@@ -33,7 +33,7 @@ test('wallet candidate renders without browser errors', async ({ page }, testInf
   expectNoBrowserErrors(errors);
 });
 
-test('wallet app renders within the isolated wallet surface', async ({ page }, testInfo) => {
+test('wallet app renders within the isolated wallet surface', { tag: '@functional' }, async ({ page }, testInfo) => {
   const errors = observeBrowserErrors(page);
   const response = await page.goto('/app', { waitUntil: 'networkidle' });
   expect(response?.ok(), 'document response for /app').toBe(true);
@@ -44,7 +44,7 @@ test('wallet app renders within the isolated wallet surface', async ({ page }, t
   expectNoBrowserErrors(errors);
 });
 
-test('wallet app rehearses mnemonic recovery without creating or persisting a wallet', async ({ page }, testInfo) => {
+test('wallet app rehearses mnemonic recovery without creating or persisting a wallet', { tag: '@functional' }, async ({ page }, testInfo) => {
   const errors = observeBrowserErrors(page);
   const response = await page.goto('/app?setup=1', { waitUntil: 'domcontentloaded' });
   expect(response?.ok(), 'document response for identity rehearsal').toBe(true);
@@ -94,7 +94,7 @@ test('wallet app rehearses mnemonic recovery without creating or persisting a wa
   expectNoBrowserErrors(errors);
 });
 
-test('wallet derives and opens a canonical Brain Vault outside React state', async ({ page }, testInfo) => {
+test('wallet derives and opens a canonical Brain Vault outside React state', { tag: '@functional' }, async ({ page }, testInfo) => {
   testInfo.setTimeout(180_000);
   const errors = observeBrowserErrors(page);
   const fixture = await readWalletRuntimeFixture(page);
@@ -173,7 +173,7 @@ test('wallet derives and opens a canonical Brain Vault outside React state', asy
   expectNoBrowserErrors(errors);
 });
 
-test('wallet restores a canonical backup and enrolls recovery services', async ({ page }, testInfo) => {
+test('wallet restores a canonical backup and enrolls recovery services', { tag: '@functional' }, async ({ page }, testInfo) => {
   testInfo.setTimeout(180_000);
   const errors = observeBrowserErrors(page);
   const fixture = await readWalletRuntimeFixture(page);
@@ -299,7 +299,7 @@ test('wallet restores a canonical backup and enrolls recovery services', async (
   expectNoBrowserErrors(errors);
 });
 
-test('wallet binds its recovered signer to real external transfers and reserve deposits', async ({ page }, testInfo) => {
+test('wallet binds its recovered signer to real external transfers and reserve deposits', { tag: '@functional' }, async ({ page }, testInfo) => {
   testInfo.setTimeout(240_000);
   const depositAmount = testInfo.project.name === 'mobile-390x844'
     ? '2'
@@ -384,7 +384,7 @@ test('wallet binds its recovered signer to real external transfers and reserve d
   expectNoBrowserErrors(errors);
 });
 
-test('address directory reads the isolated wallet Runtime', async ({ page }, testInfo) => {
+test('address directory reads the isolated wallet Runtime', { tag: '@functional' }, async ({ page }, testInfo) => {
   const errors = observeBrowserErrors(page);
   const response = await page.goto('/address', { waitUntil: 'domcontentloaded' });
   expect(response?.ok(), 'document response for /address').toBe(true);
@@ -397,7 +397,7 @@ test('address directory reads the isolated wallet Runtime', async ({ page }, tes
   expectNoBrowserErrors(errors);
 });
 
-test('address detail surfaces a missing valid Entity without browser errors', async ({ page }, testInfo) => {
+test('address detail surfaces a missing valid Entity without browser errors', { tag: '@functional' }, async ({ page }, testInfo) => {
   const errors = observeBrowserErrors(page);
   const missingEntityId = `0x${'f'.repeat(64)}`;
   const response = await page.goto(`/address/${missingEntityId}`, { waitUntil: 'domcontentloaded' });
@@ -409,7 +409,7 @@ test('address detail surfaces a missing valid Entity without browser errors', as
   expectNoBrowserErrors(errors);
 });
 
-test('address route selects an imported Runtime and renders committed directory, detail, and history', async ({ page }, testInfo) => {
+test('address route selects an imported Runtime and renders committed directory, detail, and history', { tag: '@functional' }, async ({ page }, testInfo) => {
   const errors = observeBrowserErrors(page);
   const fixture = await readWalletRuntimeFixture(page);
   await page.goto('/testnet', { waitUntil: 'domcontentloaded' });

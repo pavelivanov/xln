@@ -3,7 +3,7 @@ import { expect, test } from '@playwright/test';
 import { readWalletRuntimeFixture } from '../../wallet/fixtures/wallet-runtime-test-helpers';
 import { expectNoBrowserErrors, expectPageContained, observeBrowserErrors, screenshotEvidence } from '../../browser-evidence';
 
-test('workspace language and guide retain preferences, keyboard placement and focus', async ({ page }, testInfo) => {
+test('workspace language and guide retain preferences, keyboard placement and focus', { tag: '@functional' }, async ({ page }, testInfo) => {
   await readWalletRuntimeFixture(page);
   const errors = observeBrowserErrors(page);
   await openWorkspaceStorageOrigin(page);

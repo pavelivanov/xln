@@ -9,7 +9,7 @@ const surfaces = [
   { query: 'markets=1', heading: 'Markets', section: '.wallet-markets' },
 ] as const;
 
-for (const surface of surfaces) test(`${surface.heading} keeps the latest Entity when selection reverses before a real read returns`, async ({ page }, testInfo) => {
+for (const surface of surfaces) test(`${surface.heading} keeps the latest Entity when selection reverses before a real read returns`, { tag: '@resilience' }, async ({ page }, testInfo) => {
   const errors = observeBrowserErrors(page);
   const fixture = await selectWalletFixtureRuntime(page);
   await page.goto(`/app?${surface.query}`);

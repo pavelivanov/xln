@@ -2,7 +2,7 @@ import { openWorkspaceStorageOrigin } from '../../browser-evidence';
 import { expect, test } from '@playwright/test';
 import { expectNoBrowserErrors, expectPageContained, observeBrowserErrors, screenshotEvidence } from '../../browser-evidence';
 
-test('database inspector pages, searches and switches isolated browser stores without writing', async ({ page }, testInfo) => {
+test('database inspector pages, searches and switches isolated browser stores without writing', { tag: '@functional' }, async ({ page }, testInfo) => {
   const errors = observeBrowserErrors(page);
   await openWorkspaceStorageOrigin(page);
   await page.evaluate(async () => {

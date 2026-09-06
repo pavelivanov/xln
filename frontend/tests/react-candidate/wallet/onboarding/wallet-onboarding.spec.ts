@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test';
 import { expectNoBrowserErrors, expectPageContained, observeBrowserErrors, screenshotEvidence } from '../../browser-evidence';
 import { restoreLocalWallet } from './wallet-onboarding-test-helpers';
 
-test('post-creation setup validates preferences, exposes discovery failure and commits manual setup', async ({ page }, testInfo) => {
+test('post-creation setup validates preferences, exposes discovery failure and commits manual setup', { tag: '@functional' }, async ({ page }, testInfo) => {
   testInfo.setTimeout(150_000);
   const errors = observeBrowserErrors(page);
   const fixture = await restoreLocalWallet(page);

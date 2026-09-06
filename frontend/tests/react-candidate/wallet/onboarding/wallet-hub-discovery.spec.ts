@@ -3,7 +3,7 @@ import { expectNoBrowserErrors, expectPageContained, observeBrowserErrors, scree
 import { finishOpenedWalletSetup, restoreLocalWallet } from './wallet-onboarding-test-helpers';
 import { selectWalletFixtureRuntime } from '../fixtures/wallet-runtime-test-helpers';
 
-test('Hub Discovery opens a real local Account and retains its committed connection state', async ({ page }, testInfo) => {
+test('Hub Discovery opens a real local Account and retains its committed connection state', { tag: '@functional' }, async ({ page }, testInfo) => {
   testInfo.setTimeout(150_000);
   const errors = observeBrowserErrors(page);
   const fixture = await restoreLocalWallet(page, 'hub-discovery');
@@ -37,7 +37,7 @@ test('Hub Discovery opens a real local Account and retains its committed connect
   expectNoBrowserErrors(errors);
 });
 
-test('Hub Discovery reads the selected remote Runtime and its already open Account', async ({ page }, testInfo) => {
+test('Hub Discovery reads the selected remote Runtime and its already open Account', { tag: '@functional' }, async ({ page }, testInfo) => {
   const errors = observeBrowserErrors(page);
   const fixture = await selectWalletFixtureRuntime(page);
   await page.goto('/app?portfolio=1', { waitUntil: 'domcontentloaded' });

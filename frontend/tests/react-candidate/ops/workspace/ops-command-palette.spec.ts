@@ -11,7 +11,7 @@ const command = async (page: Page, text: string): Promise<void> => {
   await dialog.getByRole('combobox').press('Enter');
 };
 
-test('palette opens editable payment, swap and Account drafts in the retained selected Wallet', async ({ page }, testInfo) => {
+test('palette opens editable payment, swap and Account drafts in the retained selected Wallet', { tag: '@functional' }, async ({ page }, testInfo) => {
   const errors = observeBrowserErrors(page);
   const fixture = await readWalletRuntimeFixture(page);
   await openWorkspaceStorageOrigin(page);
@@ -74,7 +74,7 @@ test('palette opens editable payment, swap and Account drafts in the retained se
   expectNoBrowserErrors(errors);
 });
 
-test('public palette searches the recorded frame, preserves focus navigation, and rejects live drafts', async ({ page }, testInfo) => {
+test('public palette searches the recorded frame, preserves focus navigation, and rejects live drafts', { tag: '@functional' }, async ({ page }, testInfo) => {
   testInfo.setTimeout(120_000);
   const errors = observeBrowserErrors(page);
   await page.goto('/embed?scenario=ahb');

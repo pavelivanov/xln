@@ -4,7 +4,7 @@ import { expectNoBrowserErrors, expectPageContained, observeBrowserErrors, scree
 import { readWalletRuntimeFixture } from '../../wallet/fixtures/wallet-runtime-test-helpers';
 import { installOpsOwnerMetadata } from './ops-owner-test-helpers';
 
-test('local restoration failure keeps unlocked keys revocable without claiming a ready Runtime', async ({ page }, testInfo) => {
+test('local restoration failure keeps unlocked keys revocable without claiming a ready Runtime', { tag: '@resilience' }, async ({ page }, testInfo) => {
   testInfo.setTimeout(90_000);
   const errors = observeBrowserErrors(page);
   const fixture = await readWalletRuntimeFixture(page);
@@ -30,7 +30,7 @@ test('local restoration failure keeps unlocked keys revocable without claiming a
   expectNoBrowserErrors(errors);
 });
 
-test('a locked local vault visibly unlocks through the shared Runtime session and relocks', async ({ page }, testInfo) => {
+test('a locked local vault visibly unlocks through the shared Runtime session and relocks', { tag: '@functional' }, async ({ page }, testInfo) => {
   testInfo.setTimeout(120_000);
   const errors = observeBrowserErrors(page);
   const fixture = await readWalletRuntimeFixture(page);

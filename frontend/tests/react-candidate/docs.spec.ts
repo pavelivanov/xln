@@ -7,7 +7,7 @@ import {
   screenshotEvidence,
 } from './browser-evidence';
 
-test('docs candidate renders without browser errors', async ({ page }, testInfo) => {
+test('docs candidate renders without browser errors', { tag: '@functional' }, async ({ page }, testInfo) => {
   const errors = observeBrowserErrors(page);
   const response = await page.goto('/docs', { waitUntil: 'networkidle' });
   expect(response?.ok(), 'document response for /docs').toBe(true);

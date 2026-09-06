@@ -3,7 +3,7 @@ import { expect, test } from '@playwright/test';
 import { expectNoBrowserErrors, expectPageContained, observeBrowserErrors, screenshotEvidence } from '../../browser-evidence';
 import { installImportedRuntime, readWalletRuntimeFixture } from '../../wallet/fixtures/wallet-runtime-test-helpers';
 
-test('recorded Gossip and Entity panels follow scenario selection without a live Runtime', async ({ page }, testInfo) => {
+test('recorded Gossip and Entity panels follow scenario selection without a live Runtime', { tag: '@functional' }, async ({ page }, testInfo) => {
   testInfo.setTimeout(120_000);
   const errors = observeBrowserErrors(page);
   await page.goto('/__app/ops/entity-workspace?scenario=ahb');
@@ -52,7 +52,7 @@ test('recorded Gossip and Entity panels follow scenario selection without a live
   expectNoBrowserErrors(errors);
 });
 
-test('scenario Console, Runtime I/O and J-Machine inspection follow the shared frame', async ({ page, context }, testInfo) => {
+test('scenario Console, Runtime I/O and J-Machine inspection follow the shared frame', { tag: '@functional' }, async ({ page, context }, testInfo) => {
   testInfo.setTimeout(120_000);
   const errors = observeBrowserErrors(page);
   await context.grantPermissions(['clipboard-read', 'clipboard-write']);
@@ -100,7 +100,7 @@ test('scenario Console, Runtime I/O and J-Machine inspection follow the shared f
   expectNoBrowserErrors(errors);
 });
 
-test('local-only inspectors remain restricted remotely and Entity Audit shares the selected session', async ({ page }, testInfo) => {
+test('local-only inspectors remain restricted remotely and Entity Audit shares the selected session', { tag: '@functional' }, async ({ page }, testInfo) => {
   const errors = observeBrowserErrors(page);
   const fixture = await readWalletRuntimeFixture(page);
   await openWorkspaceStorageOrigin(page);
@@ -122,7 +122,7 @@ test('local-only inspectors remain restricted remotely and Entity Audit shares t
 });
 
 
-test('local panels share the explicitly selected browser Runtime across close and reopen', async ({ page }, testInfo) => {
+test('local panels share the explicitly selected browser Runtime across close and reopen', { tag: '@functional' }, async ({ page }, testInfo) => {
   const errors = observeBrowserErrors(page);
   await openWorkspaceStorageOrigin(page);
   await page.evaluate(() => localStorage.setItem('xln-runtime-adapter-mode', 'embedded'));
