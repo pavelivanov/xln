@@ -36,7 +36,7 @@ export const readCanonicalAccountView = async (adapter: RuntimeAdapter, entityId
     tokens: account ? buildAccountTokenDetails(account.state, entityId, xln) : [],
     activity: account ? buildAccountActivityRows(account, entityId) : [],
     disputed: buildDisputedAccountViews(panel.replica.state.accounts),
-    presentation: { entityNames: panel.entityNames, htlcNotes: panel.replica.htlcNotes, activeXlnFunctions: xln },
+    presentation: { entityNames: panel.entityNames, payments: panel.replica.state.paybook.entries, activeXlnFunctions: xln },
     formatTokenAmount: xln.formatTokenAmount, apiBase: resolveConfiguredApiBase(window.location.origin),
     // The retained faucet reads its Runtime id from the live action env.
     // Remote UserModePanel supplies no live env; preserve that guard instead
