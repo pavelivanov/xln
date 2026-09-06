@@ -1,21 +1,6 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 import { expectNoBrowserErrors, expectPageContained, observeBrowserErrors, screenshotEvidence } from './browser-evidence';
-import { selectWalletFixtureRuntime } from './wallet-runtime-test-helpers';
-
-const balances = async (page: Page) => {
-  const port = Number(process.env['XLN_REACT_WALLET_FIXTURE_PORT'] || 19092);
-  const response = await page.request.get(`http://127.0.0.1:${port}/chain-balances`);
-  expect(response.ok()).toBe(true);
-  const result: unknown = await response.json();
-  if (!result || typeof result !== 'object' || Array.isArray(result)) throw new Error('WALLET_CHAIN_BALANCES_INVALID');
-  const record = result as Record<string, unknown>;
-  const amount = (key: string): bigint => {
-    const raw = record[key];
-    if (typeof raw !== 'string' || !/^\d+$/.test(raw)) throw new Error(`WALLET_CHAIN_BALANCE_INVALID:${key}`);
-    return BigInt(raw);
-  };
-  return { reserve: amount('reserve'), collateral: amount('collateral'), chainReserve: amount('chainReserve'), chainCollateral: amount('chainCollateral') };
-};
+import { readWalletFixtureChainBalances as balances, selectWalletFixtureRuntime } from './wallet-runtime-test-helpers';
 
 test('wallet funds collateral through reviewed batch broadcast and real chain finality', async ({ page }, testInfo) => {
   test.setTimeout(120_000);

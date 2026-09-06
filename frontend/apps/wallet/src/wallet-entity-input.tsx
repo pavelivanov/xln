@@ -1,10 +1,11 @@
 import { useId, useState, type KeyboardEvent } from 'react';
 import { compareStableText } from '../../../src/lib/utils/stableSort';
 import { parseEntityInput, type EntityInputProfile } from '../../../src/lib/components/shared/entity-input-model';
+import './styles/wallet-entity-input.css';
 
-export function WalletEntityInput({ value, onChange, entities, profiles, disabled }: Readonly<{
+export function WalletEntityInput({ value, onChange, entities, profiles, disabled, label = 'Recipient' }: Readonly<{
   value: string; onChange: (value: string) => void; entities: readonly string[];
-  profiles: readonly EntityInputProfile[]; disabled: boolean;
+  profiles: readonly EntityInputProfile[]; disabled: boolean; label?: string;
 }>) {
   const listId = useId();
   const [open, setOpen] = useState(false);
@@ -27,7 +28,7 @@ export function WalletEntityInput({ value, onChange, entities, profiles, disable
     }
   };
   return <div className="wallet-entity-input" onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget)) setOpen(false); }}>
-    <label htmlFor={`${listId}-input`}>Recipient</label>
+    <label htmlFor={`${listId}-input`}>{label}</label>
     <input id={`${listId}-input`} role="combobox" aria-autocomplete="list" aria-expanded={open}
       aria-controls={listId} aria-activedescendant={open && options.length ? `${listId}-${selectedIndex}` : undefined}
       aria-describedby={`${listId}-resolution`} value={value} disabled={disabled} autoComplete="off" spellCheck={false}

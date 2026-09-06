@@ -17,6 +17,61 @@ Implementation does not wait for Gate A/Gate B, approval manifests, immutable
 review records, child plans, a clean global baseline, or a green root gate.
 Those retired governance prerequisites are not part of this plan.
 
+### Current Account tools checkpoint — 2026-09-05
+
+Manage, Move, Lending and History now mount at their retained `#accounts/*`
+routes. All ten Account rail destinations have React consumers. The new
+workspace reads the selected Entity's complete Account context, preserves
+Manage's focused Account, keeps Move/Lending selections independent, and
+discards stale Entity responses. The bridge keeps committed UI state detached
+while using the existing live adapter for authorized effects.
+
+Verification: 33 narrow tests; wallet React typecheck/build; Svelte check with
+0 errors; 24 browser cases across 390×844, 1366×900 and 1920×1080, followed by
+3 Move reruns after extracting the shared Entity input styles. All 63
+screenshots were inspected, rated 8/10 per viewport; contact sheets, final
+Move originals and logs are retained under `output/account-tools-qa/`. Real effects
+include credit/add-token commits, credit-request response, external transfer
+and allowance, deposit/collateral drafts, local load start/stop, and dispute
+start drafting with prepare/finalize cancellation. See the detailed checkpoint
+in [wallet/ops UI ports](wallet-ops-ui-ports.md).
+
+Lending's separate live pool/loan/repayment test remains failing:
+`ACCOUNT_TX_KIND_OUT_OF_PROFILE:lending_fund`. The rejection is intentional in
+`core/account/tx/admission-policy.ts` and mirrored by the Rust profile. It is
+not a frontend routing or serialization failure. No admission bypass, fake
+pool state or backend change was introduced. Owner scope input was requested;
+this dependency prevents claiming complete live Lending parity.
+
+The root `bun run check` passed its Brain Vault, contract artifact and ten
+soundcheck gates, then stopped at `rscore:fmt` because `cargo` is unavailable.
+The initial sandbox compiler-download failure was resolved by rerunning the
+exact artifact check with network access. Contract artifacts have no diff.
+The broader migration, W6 settlement completion, remaining ops context,
+default-tooling switch and production activation remain open.
+
+Follow-up on 2026-09-06: History Clear filters now preserves kind, mode and
+page size, matching its retained owner. Lending's token selector is shared
+with Svelte, including the default assets before deltas exist. The 26th
+Account is verified in both Manage and Lending; direct Account opening
+verifies all ten rail destinations. The follow-up passes 15 narrow tests /
+58 assertions, 9 browser cases at three viewports, wallet/tooling typechecks
+(775 files, zero unsafe-type findings), wallet build and Svelte check
+(0 errors/warnings). All 34 new screenshots were inspected. See the focused
+plan's follow-up checkpoint and `output/account-tools-qa/*parity*` evidence.
+Root verification again stops at missing `cargo` after the earlier gates pass.
+The backend Lending admission decision remains unresolved.
+
+Further command evidence on 2026-09-06 adds six passing browser cases:
+Move reserve-to-Account broadcast reaches matching Runtime/chain finality;
+Manage commits fresh collateral requests and exact prepaid peer fees on both
+Account sides across USDC/WETH/USDT. All 12 screenshots were inspected.
+Twelve command-builder tests and three inventory tests pass. The retained
+command-bus file cannot load its removed `recordRuntimeIngressReceipt` import;
+the updated configure-source case passes independently with 20 assertions.
+See the focused plan's command-completion checkpoint for evidence and limits.
+These checks leave the backend Lending scope decision and root Cargo gate open.
+
 ## Outcomes
 
 1. Create independently owned `site`, `docs`, `wallet`, and `ops` applications.
@@ -3845,20 +3900,29 @@ appearance/back. The Assets Account dropdown now preserves the retained >5
 threshold, shared name/avatar/status presentation and complete remote Account
 pagination. Its real independent 26-Account Runtime verifies selection beyond
 the portfolio page, keyboard/outside dismissal, focused return, Entity changes
-and original Runtime restoration. Latest targeted checks pass **58 unit tests /
-221 assertions** and **12 browser cases** across three viewports; all 29
-screenshots were inspected. The prior rail checkpoint passed 73 unit tests /
-304 assertions and 15 browser cases. All four React apps and tooling typecheck
-(759 files, zero unsafe-type findings) and all four apps build. The root check
-again reaches missing `cargo` after its 26 tests, contract sync and ten
-soundchecks. Logs, fixture isolation fixes and scope limits are recorded in
-the focused checklist's Account dropdown checkpoint. The full registered
-90-case wallet matrix has not been run.
-Next are full Account/token/jurisdiction context across action forms and ops,
-and the remaining Move/Lending/History/Manage consumers. Reuse the mounted
-dropdown and selection; verify rapid A → B → A changes while a read is in
-flight. Live pending/disputed dropdown states, live disputed navigation and
-positive local faucet evidence remain open.
+and original Runtime restoration. The existing ports were committed and pushed
+to `fork/main` as `81416cc91263cb2d2756f3e26acfcae10750d774`.
+The subsequent Entity selection fix remains uncommitted: rapid A → B → A
+changes during real reads now preserve the latest choice across Assets,
+Health, Payments and Markets. Old Entity content is hidden during a switch;
+payment/market controls stay disabled during refresh. Latest targeted checks
+pass **61 unit tests / 244 assertions** and **24 browser cases in 37.0 s**
+across three viewports; all **37 screenshots** were inspected. Wallet and
+tooling typecheck (759 files, zero unsafe-type findings), and wallet builds in
+2.39 s. The previous dropdown checkpoint passed 58 unit tests / 221 assertions,
+12 browser cases, 29 screenshot reviews and all four app checks/builds. The
+root check again reaches missing `cargo` after its 26 tests, contract sync and
+ten soundchecks: `/tmp/xln-entity-selection-root-final.log`. Logs, reproduction
+and scope limits are recorded in the focused checklist's Entity selection
+checkpoint. The full wallet matrix has not been rerun after the Account increments.
+The later Account tools checkpoint at the top of this plan supersedes the
+six-consumer state above: Manage/Move/Lending/History now mount with complete
+wallet Account context and independently owned tool selections. Their narrow
+tests and 24 targeted browser cases pass; a separate live Lending lifecycle
+case remains failing at the intentional Account admission profile. Preserve
+that failure pending owner scope input. Remaining work is settlement/debt/
+activity controls and ops action context. Live pending/disputed dropdown
+states, live disputed navigation and positive local faucet evidence remain open.
 Remote-owner integration, automatic joining and cold reload remain open.
 The Hub backup has an isolated test tower so it cannot replace ordinary
 recovery appointments. Finish artifact-producing checks/builds before starting browser tests.

@@ -20,6 +20,9 @@ export const CANDIDATE_BROWSER_TEST_FILES = {
     'tests/react-candidate/wallet-account-appearance.spec.ts',
     'tests/react-candidate/wallet-account-rail.spec.ts',
     'tests/react-candidate/wallet-account-dropdown.spec.ts',
+    'tests/react-candidate/wallet-entity-selection.spec.ts',
+    'tests/react-candidate/wallet-account-workspace.spec.ts',
+    'tests/react-candidate/wallet-account-commands.spec.ts',
   ],
   ops: ['tests/react-candidate/ops.spec.ts', 'tests/react-candidate/ops-workspace-panels.spec.ts'],
 } as const satisfies Readonly<Record<SurfaceId, readonly string[]>>;

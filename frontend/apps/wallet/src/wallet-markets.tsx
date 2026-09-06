@@ -14,6 +14,7 @@ export function WalletMarkets({ tab, onTabChange, workspaceSelection }: Readonly
   tab: WalletMarketTab;
   onTabChange: (tab: WalletMarketTab) => void;
 }>) {
+  const { entityId } = useSyncExternalStore(workspaceSelection.subscribe, workspaceSelection.getSnapshot, workspaceSelection.getSnapshot);
   const [source] = useState(() => new WalletMarketSource(
     readRuntimeAdapterStorageSnapshot({ durable: localStorage, session: sessionStorage }),
     workspaceSelection,
@@ -52,7 +53,7 @@ export function WalletMarkets({ tab, onTabChange, workspaceSelection }: Readonly
               disabled={snapshot.command.status === 'submitting' || snapshot.command.status === 'pending'}
               id="wallet-markets-entity"
               onChange={(event) => source.selectEntity(event.target.value)}
-              value={projection.activeEntityId}
+              value={entityId || projection.activeEntityId}
             >
               {projection.entities.map((entity) => <option key={entity.entityId} value={entity.entityId}>{entity.label}</option>)}
             </select>
@@ -73,8 +74,10 @@ export function WalletMarkets({ tab, onTabChange, workspaceSelection }: Readonly
             <button aria-current={tab === 'market' ? 'page' : undefined} className={tab === 'market' ? 'is-current' : ''} onClick={() => onTabChange('market')} type="button">Market</button>
             <button aria-current={tab === 'activity' ? 'page' : undefined} className={tab === 'activity' ? 'is-current' : ''} onClick={() => onTabChange('activity')} type="button">Activity</button>
           </nav>
+          {entityId && entityId !== projection.activeEntityId ? <p role="status">Loading selected Entity…</p> : <>
           {tab === 'market' ? <WalletMarketPane projection={projection} snapshot={snapshot} source={source} /> : null}
           {tab === 'activity' ? <WalletMarketActivityView projection={projection} source={source} /> : null}
+          </>}
         </>
       ) : (
         <section className="wallet-market-unavailable" role={snapshot.status === 'error' ? 'alert' : 'status'}>

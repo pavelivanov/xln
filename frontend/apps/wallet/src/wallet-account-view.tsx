@@ -43,6 +43,7 @@ export function WalletFocusedAccount({ adapter, entityId, counterpartyId, onBack
   const committed = account ? Number(account.currentFrame?.height ?? account.currentHeight ?? 0) > 0 : false;
   return <section className="wallet-account-view" data-testid="account-panel" data-counterparty-id={counterpartyId}>
     <div className="wallet-account-view-actions"><button type="button" data-testid="account-panel-back" onClick={onBack}>← Back to Entity</button>
+      <button type="button" onClick={() => navigateWallet('/app#accounts/configure')}>Manage</button>
       <button type="button" onClick={() => navigateWallet('/app#accounts/appearance')}>Appearance</button></div>
     <header className="wallet-account-heading"><p>Account</p><h1>{view?.counterpartyName || counterpartyId}</h1><code>{counterpartyId}</code>
       {view ? <span className="wallet-account-relay" data-status={view.relayStatus}>Relay {view.relayStatus}</span> : null}</header>

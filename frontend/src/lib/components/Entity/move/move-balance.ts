@@ -9,6 +9,12 @@ export type MoveBalanceRow = {
 export type MoveReserveToken = { tokenId: number } | null;
 export type MoveExternalToken = { balance: bigint } | null;
 
+export function sumOpenMoveDebt(debts: Iterable<Readonly<{ status: string; remainingAmount: bigint }>>): bigint {
+  let total = 0n;
+  for (const debt of debts) if (debt.status === 'open') total += debt.remainingAmount;
+  return total;
+}
+
 export function getMoveMaxAmountForEndpoint(input: {
   from: MoveEndpoint;
   reserveToken: MoveReserveToken;

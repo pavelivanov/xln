@@ -116,7 +116,7 @@ export class WalletFinancialHealthSource {
     if (!projection?.entities.some((entity) => entity.entityId === normalized)) {
       throw new Error(`WALLET_HEALTH_ENTITY_UNKNOWN:${normalized}`);
     }
-    if (normalized === this.selectedEntityId || normalized === projection.activeEntityId) return;
+    if (normalized === (this.selectedEntityId || projection.activeEntityId)) return;
     this.selectedEntityId = normalized;
     if (!this.adapter) throw new Error('WALLET_HEALTH_RUNTIME_REQUIRED');
     this.selection.selectEntity(this.adapter.runtimeId, normalized);

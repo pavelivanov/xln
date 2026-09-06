@@ -16,6 +16,7 @@ import { WalletPayments } from './wallet-payments';
 import { WalletPortfolio } from './wallet-portfolio';
 import { WalletWorkspaceSelection } from './wallet-workspace-selection';
 import { WalletAccountRail } from './wallet-account-rail';
+import { WalletAccountWorkspace } from './wallet-account-workspace';
 import { WalletSettings } from './wallet-settings';
 import { navigateWallet, useWalletRoute } from './wallet-navigation';
 import { walletPaymentTabHref } from './wallet-navigation-model';
@@ -184,6 +185,7 @@ export function WalletAppShell() {
           ) : (
             <WalletExistingSetupGate runtimeId={view === 'identity' || view === 'scenario-preview' ? '' : embedded.runtimeId} runtimeState={runtime.state}>
               <WalletAccountRail route={route} selection={workspaceSelection} />
+              {route.view === 'account-tools' ? <WalletAccountWorkspace tab={route.tab} selection={workspaceSelection} /> : null}
               {view === 'identity' ? <IdentityOnboarding runtimeId={embedded.runtimeId} runtimeState={runtime.state} /> : null}
               {route.view === 'portfolio' ? <WalletPortfolio section={route.section} workspaceSelection={workspaceSelection} /> : null}
               {view === 'health' ? <WalletFinancialHealth workspaceSelection={workspaceSelection} /> : null}

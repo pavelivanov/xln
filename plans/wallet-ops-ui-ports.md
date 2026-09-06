@@ -1,15 +1,148 @@
 # Finish the existing wallet and ops UI ports
 
-**Status:** IN PROGRESS — Account dropdown, six Account rail consumers and shared wallet Entity selection mounted, alongside four dock panels, setup, Formation, opening, focused Account details and appearance; UI parity remains incomplete.
+**Status:** IN PROGRESS — all ten wallet Account rail consumers are mounted, including Manage/Move/Lending/History and their Account context. Lending's live command flow is blocked by the existing Account admission profile; full wallet/ops parity remains incomplete.
 **Scope:** the existing wallet and ops screens, rewritten and connected in React.
 **Prepared:** 2026-09-05, `main` at `3cfcf11cb90e499215523a76700aabad22d844a0`
 plus the uncommitted frontend changes already present in this checkout.
+
+**Latest checkpoint:** the existing ports were committed and pushed to
+`fork/main` as `81416cc91263cb2d2756f3e26acfcae10750d774`. The subsequent Entity
+selection fix and the Account tools checkpoint below are verified within their stated limits and remain uncommitted.
 **Effort:** large; several independently verifiable increments. No percentage
 estimate is justified by the current evidence.
 
 This is the focused execution checklist for the UI-port portion of
 [the migration work plan](react-frontend-migration.md). It does not replace the
 larger migration or declare it finished when these ports are complete.
+
+## Account tools checkpoint — 2026-09-05
+
+Manage, Move, Lending and History mount at the retained `#accounts/configure`,
+`#accounts/move`, `#accounts/lending` and `#accounts/history` routes. The rail
+now has ten React consumers. `wallet-account-context.ts` loads every Account
+page for the selected Entity, rejects inconsistent pages, and discards stale
+responses. The bridge derives financial displays from committed projections;
+live adapters remain at the existing command/provider boundary. Manage uses
+the focused Account, including the 26th relationship. Move and Lending retain
+their own Account/recipient/token choices and reset them on Entity/Runtime
+changes. Rapid A → B → A switching is covered for all four tools.
+
+- Manage mounts all six retained tabs. Credit extension and token addition
+  commit on a real Runtime; the credit-request endpoint reports the actual
+  already-satisfied state. Collateral policy, fee and rent calculations are
+  shared with Svelte. Embedded load start/stop and dispute-start drafting are
+  verified; remote load controls preserve the embedded-only restriction.
+  Prepare/finalize and batch-clear cancellation are covered.
+- Move reuses the canonical builders, preferred source and balance/debt
+  helpers for every draft route. Pointer dragging, keyboard selection,
+  manual-counterparty confirmation, insufficient balance and draft clearing
+  are covered. A real signer executes an external transfer and allowance;
+  external deposit and reserve-to-Account drafts are inspected. Shared Entity
+  inputs now own their styles so direct Move navigation does not depend on
+  opening the Account form first.
+- Lending reads the real hub API, validates response scope and amounts, and
+  submits the retained lend/borrow/repay intents with valid identifiers. Its
+  positive lifecycle test currently fails at
+  `ACCOUNT_TX_KIND_OUT_OF_PROFILE:lending_fund`. Account admission deliberately
+  excludes these kinds because the Rust profile cannot hash them. This is an
+  existing backend dependency, not permission to lift admission or fabricate
+  pool state. The test remains registered and failing; owner scope input was
+  requested before any backend change.
+- History mounts the retained type/search/time filters, page sizes,
+  paged/infinite modes, refresh and navigation, using the existing read API.
+  Semantic HTLC deduplication is shared with Svelte. The separately recorded
+  backend within-frame pagination defect remains unresolved.
+
+Verification on the uncommitted frontend candidate: **33 unit tests / 125
+assertions**, **24 targeted browser cases** across 390×844, 1366×900 and
+1920×1080, followed by **3 Move cases** after the shared input-style fix.
+Browser console checks pass. The 54 first-run screenshots and 9 final Move
+screenshots were inspected; each viewport scores **8/10**, with no remaining
+clipping or horizontal overflow in these states. Contact sheets, the final
+Move originals and logs are retained under `output/account-tools-qa/`.
+The separate live Lending test fails with the admission error above. These
+targeted passes do not claim a green full wallet matrix or complete W6
+settlement/collateral/on-chain dispute lifecycle evidence.
+
+The final source/inventory check adds **3 passing audit tests / 284 assertions**.
+Wallet/tooling typechecks (774 files, zero unsafe-type findings), wallet build
+and Svelte check (0 errors, 0 warnings) pass. Final typecheck/build/inventory
+logs end in `-final.log` under the evidence directory above.
+Root `bun run check` passes 26 Brain Vault tests /
+100,156 assertions, contract artifacts and ten soundchecks, then stops at
+`rscore:fmt`: `/bin/bash: cargo: command not found`. See
+`output/account-tools-qa/xln-account-tools-root-check2.log`. An initial
+sandbox compiler-download failure was resolved with the exact artifact gate
+outside the sandbox. No core, contract or frozen-manifest bytes changed;
+the user's active stack was not restarted.
+
+### Follow-up parity verification — 2026-09-06
+
+The completion audit compared the mounted controls with their retained Svelte
+owners and found a History behavior mismatch: Clear filters reset kind, mode
+and page size. The browser reproduced that reset. Clearing now preserves
+those view choices while removing search, event-type and time restrictions.
+Lending now shares the retained Account-token/default-asset selector with
+Svelte, including numeric tie ordering. Its empty-token branch has a pure
+model test; the real newly opened Account fixture already contains default
+token deltas, so that fixture is not evidence for the empty-token branch.
+
+The 26-Account browser flow now selects its final relationship in Lending as
+well as Manage and reads that isolated Runtime's actual empty pool/loan state.
+The fixture's existing Lending API handler selects the matching real Runtime;
+no response or financial state is fabricated. The direct-opening regression
+now expects the intentionally expanded ten-tab rail after commitment.
+
+Latest evidence: **15 narrow tests / 58 assertions**, **3 laptop cases in
+18.9 s**, then **6 mobile/wide cases in 38.1 s**. All **34 follow-up screenshots**
+were inspected, rated **8/10** at each viewport with no clipping/overflow.
+Wallet/tooling typechecks pass (**775 files**, zero unsafe-type findings),
+wallet build passes in **2.57 s**, and Svelte reports **0 errors / 0 warnings**.
+Logs use `output/account-tools-qa/xln-account-tools-parity-*.log`; screenshot
+originals and contact sheets use `parity-laptop*` and `parity-viewports*` there.
+
+The first reproduction attempt never reached UI: its isolated RPC watcher
+timed out and the fixture exited. The exact retry reproduced the History
+regression. That failure is retained in the reproduction log, not counted as
+an application failure or a passing test. Root `bun run check` was rerun for
+the changed candidate: 26 tests / 100,156 assertions, contract artifacts and
+ten soundchecks pass; `cargo` is still missing at `rscore:fmt`. Core,
+contracts and `frozen-core.json` remain unchanged. Live Lending's separately
+registered positive lifecycle still requires the owner scope decision above.
+
+### Command completion evidence — 2026-09-06
+
+`wallet-account-commands.spec.ts` now proves Move's reserve-to-Account path
+through draft review, broadcast, real chain finality and exact matching
+Runtime/chain reserve and collateral balances. Manage's collateral form
+submits a new request using the committed peer policy and verifies the exact
+net amount, prepaid fee, fee token and policy version on both Account sides.
+The three viewports cover USDC, WETH and USDT independently; the test first
+grants fee capacity through Manage and rejects an already-pending request as
+test setup, so it cannot pass by observing a previous viewport's request.
+This proves request commitment, not subsequent hub collateral completion.
+
+The new cases pass **2/2 on laptop (5.1 s)** and **4/4 on mobile/wide (9.2 s)**;
+all **12 screenshots** were inspected, rated **8/10** per viewport. Command
+builder tests pass **12/12, 52 assertions**; flow inventory tests pass **3/3,
+285 assertions**; wallet/tooling typecheck passes with **775 files, zero
+unsafe-type findings**. Logs and originals/contact sheets are under
+`output/account-tools-qa/` with `commands-*` names.
+
+The retained command-bus test file has a preexisting load failure: it imports
+the removed `recordRuntimeIngressReceipt` export. The owned configure-source
+assertion was updated to follow the extracted collateral helper and current
+bounded policy projection, then copied verbatim into an isolated temporary
+test to run without that unrelated import: **1 pass, 20 assertions**. The full
+test file still fails to load; no export was reintroduced or failing test
+disabled. Its failure and the isolated result are both retained in the logs.
+
+The broader root result remains the recorded missing-`cargo` failure; `cargo`
+was rechecked and is still unavailable. No production code changed in this
+verification increment. Isolated test servers have exited, and no core,
+contract or frozen-manifest bytes changed. Complete live Lending is still
+blocked on the unchanged Account/Rust admission profile and owner scope
+decision. The requested goal must not be marked complete from these passes.
 
 ## Outcome and boundaries
 
@@ -76,7 +209,7 @@ W/O ledger below defines the retained sources and complete acceptance scope.
 
 | Order | Deliverable | Evidence required to close it |
 |---|---|---|
-| 1 | Selected Account/token/jurisdiction context across action forms and ops; remaining Manage, Move, Lending and History destinations; settlement and debt/activity controls | Reuse the mounted dropdown and rail; reach each retained action through its real route, preserve selection and permissions, observe committed results, cancellation and errors on isolated state |
+| 1 | Resolve or explicitly defer the backend Lending admission dependency; finish settlement/debt/activity controls and ops action context | Preserve the mounted Manage/Move/Lending/History ports; verify remaining committed settlement/collateral/on-chain results through existing authority, cancellation and error paths |
 | 2 | Remaining onboarding, identity/settings and Ownership controls | Successful automatic join, remote-owner and reload flows; visible lock/unlock/recovery controls; existing Ownership actions through retained helpers |
 | 3 | Complete ops context and panel registry | Independent local/remote/scenario and Entity panel contexts, remaining real panels, retained restrictions, subscriptions and close/reopen cleanup |
 | 4 | Graph3D/playback, `/embed`, layout restoration, keyboard and localization | Real graph interactions and scenario/trail URLs; stored layout and focus behavior; all retained locale/keyboard controls |
@@ -87,8 +220,8 @@ their scaffolding. Within order 3, finish the session/context boundary before
 adding panels that require local or scenario state. Order 4's `/embed` route
 switch belongs to the React candidate; default-frontend cutover is separate.
 
-Three recorded verification gaps stay visible throughout: backend Activity
-pagination, the two unlocalized network-trail failures, and missing `cargo`
+Recorded verification gaps stay visible throughout: backend Lending admission,
+backend Activity pagination, the two unlocalized network-trail failures, and missing `cargo`
 for later root gates. They do not stop independent UI ports. Resolve only
 frontend-owned causes under this plan and record exact external dependencies;
 do not weaken existing tests or extend backend scope to make them pass.
@@ -102,11 +235,11 @@ components and command handlers when implementing its row.
 
 | ID | Existing surface and source | React work remaining | Current state |
 |---|---|---|---|
-| W1 | `src/lib/view/UserModePanel.svelte`; `components/Entity/workspace/shell/ContextSwitcher.svelte` under `src/lib/` | Complete Runtime/signer/jurisdiction and action-level Account/token context, including ops; empty/locked/disconnected/history states and remaining retained routes | Entity selection shared across Assets, Health, Payments and Markets; focused Account survives appearance round trip; full context parity remains partial |
+| W1 | `src/lib/view/UserModePanel.svelte`; `components/Entity/workspace/shell/ContextSwitcher.svelte` under `src/lib/` | Complete Runtime/signer/jurisdiction and action-level Account/token context, including ops; empty/locked/disconnected/history states and remaining retained routes | Entity selection shared across Assets, Health, Payments and Markets, including rapid reversal during reads; focused Account survives appearance round trip; full context parity remains partial |
 | W2 | `src/lib/components/Entity/onboarding/OnboardingPanel.svelte`, `FormationPanel.svelte`, `HubDiscoveryPanel.svelte` | Finish successful automatic hub joining, remote-owner Formation/Hub Discovery integration and full reload parity; preserve mounted setup, Formation and manual discovery | Local setup, Formation and Hub Connect verified against a real Runtime; remote Hub reads verified; W2 remains partial |
-| W3 | `src/lib/components/Entity/workspace/AccountWorkspaceView.svelte`, `AccountWorkspaceRail.svelte`; `account/ui/AccountPanel.svelte`, `AccountDropdown.svelte` under `src/lib/components/Entity/` | Selected Account/token wiring across action forms and ops; mount Move/Lending/History/Manage as their consumers land; remaining Entity Activity and live disputed/faucet evidence | Wallet Assets dropdown preserves the >5 threshold, full paginated Account list and retained status formatting; six real rail tabs, focused details/activity, Classic/Apple bars, appearance and disputed-entry action mounted; complete workspace parity remains open |
-| W4 | `src/lib/components/Entity/account/ui/AccountConfigurePanel.svelte` and its children | Extend/request credit, collateral, add token, existing load-testing controls and dispute prepare/finalize UI; retain live/auth restrictions and confirmations | Some operations present; complete configuration UI missing |
-| W5 | `src/lib/components/Entity/MoveWorkspace.svelte`; `payments/LendingPanel.svelte` under the same Entity directory | Existing Move selectors, pointer/touch interaction, allowance controls, lending and their command/result wiring | Partial payment-operation coverage |
+| W3 | `src/lib/components/Entity/workspace/AccountWorkspaceView.svelte`, `AccountWorkspaceRail.svelte`; `account/ui/AccountPanel.svelte`, `AccountDropdown.svelte` under `src/lib/components/Entity/` | Remaining ops action context, Entity Activity and live disputed/faucet evidence | All ten wallet rail tabs mounted; Manage consumes the focused Account including the 26th relationship; Move/Lending own independent selectors; Entity reversal verified across the new tools. Complete workspace parity remains open |
+| W4 | `src/lib/components/Entity/account/ui/AccountConfigurePanel.svelte` and its children | Subsequent hub collateral completion and on-chain dispute finalization evidence | All six Manage tabs mounted. Credit/add-token commits, credit-request response, fresh collateral request/prepaid fee on both sides in three assets, local load start/stop, dispute-start draft and prepare/finalize cancellation verified. Shared fee/rent helpers and existing command authority retained |
+| W5 | `src/lib/components/Entity/MoveWorkspace.svelte`; `payments/LendingPanel.svelte` under the same Entity directory | Resolve the out-of-scope Lending admission dependency; remaining bilateral settlement completion evidence belongs with W6 | Move route dragging/keyboard, recipient resolution/manual confirmation, balance/allowance validation, real signer transfer/approval and deposit/r2c drafts mounted. Move r2c broadcast verifies exact Runtime and chain finality. Lending API reads, forms and repayment command wired; live funding rejected by the current Account profile |
 | W6 | `src/lib/components/Entity/payments/SettlementPanel.svelte`, `PendingBatchNotice.svelte` | Port remaining settlement proposal/review/approval/execution controls and batch notices using existing data/command paths; preserve implemented draft broadcast/clear work | Normal batch controls present; settlement parity incomplete |
 | W7 | `src/lib/components/Entity/ownership/OwnershipWorkspacePanel.svelte`, `OwnershipPanel.svelte`, `ownership-flow.ts` | Share balances/release, eligible takeover selection, status refresh, proposal and activation controls through the existing helper functions | Read projection only |
 | W8 | `src/lib/components/Entity/assets/DebtPanel.svelte`; retained assets and activity panels | Close missing debt/dispute drill-downs and actions; verify full asset/Account history navigation and filters | React portfolio/health/activity present |
@@ -846,11 +979,77 @@ the open backend Activity page-boundary defect. Ops remains at its historical
 dropdowns; live pending/disputed transitions and a local 26-Account dropdown
 are not claimed. W1/W3 remain partial.
 
-**Next increment:** connect selected Account/token/jurisdiction to the existing
+**Next at that checkpoint:** connect selected Account/token/jurisdiction to the existing
 action forms and ops consumers, then mount Manage/Move/Lending/History with
 their retained commands. Reuse the mounted dropdown and shared selection.
 Verify rapid A → B → A selection while reads are in flight; ordinary Entity
 switching and Runtime restoration do not prove that concurrency case.
+
+### Entity selection checkpoint — 2026-09-05
+
+The existing frontend ports were committed as
+`81416cc91263cb2d2756f3e26acfcae10750d774` and pushed to the owner's configured
+`fork/main`. The pre-push root check again reached missing `cargo`; the commit
+is explicitly a WIP checkpoint, not a release or completed migration.
+
+The next narrow browser test reproduced a real selection race: from Entity A,
+selecting B and then A before the remote read returned left Assets displaying
+B. Four sources compared the new choice with the old displayed projection,
+which incorrectly treated the final A choice as redundant. They now compare
+against the latest requested Entity first. Assets, Health, Payments and Markets
+selectors reflect that request immediately and replace content belonging to
+another Entity with a loading status. Payment/market controls remain disabled
+while refreshing, and the market source rejects actions against a view that
+is not ready. Existing pending-command guards remain in place.
+
+The regression dispatches two native select changes in one browser task,
+before the real WebSocket responses can return. It asserts both intermediate
+selection/loading states, the final A projection and selection after route
+navigation. No response is intercepted or fabricated. No Runtime API, command,
+financial formula, storage or fixture implementation changed.
+
+**Verification of this increment:**
+
+- Reproduction before the fix: Assets failed with B selected instead of A;
+  `/tmp/xln-entity-selection-reproduce.log`. The run stopped after that first
+  failure; artifacts are in `output/playwright/react-entity-selection-reproduce`.
+  The four focused laptop cases pass after the fix in 6.1 s:
+  `/tmp/xln-entity-selection-browser-l1.log`.
+- Targeted selection, observer, portfolio, payment, market, health, navigation
+  and browser-scope checks: **61 pass / 244 assertions / eight files**, in two
+  batches: `/tmp/xln-entity-selection-unit.log` and
+  `/tmp/xln-entity-selection-unit-market-health.log`.
+- Final combined browser run: **24/24 pass in 37.0 s** at 390×844, 1366×900
+  and 1920×1080: `/tmp/xln-entity-selection-browser-final.log`. This covers
+  twelve selection-reversal cases, three Account rail cases and nine existing
+  navigation/invoice/quote/committed-payment cases. Console/page-error and
+  containment assertions pass. All **37 screenshots inspected**, rated
+  **8/10 at each viewport**: twelve selection, ten rail and fifteen navigation
+  captures. The retained layouts remain legible; full-page captures retain
+  the existing fixed-navigation stitching. Artifacts:
+  `output/playwright/react-entity-selection-final`.
+- Wallet and tooling strict checks pass: **759 files / zero unsafe-type
+  findings**, `/tmp/xln-entity-selection-react-final.log`. Wallet builds in
+  **2.39 s**, `/tmp/xln-entity-selection-build.log`, with existing chunk
+  warnings. Other apps and Svelte were not rerun for this wallet-only change;
+  their preceding checkpoint remains recorded above.
+- Root `bun run check`: **26 tests / 100,156 assertions**, contract sync and
+  ten soundchecks pass; missing `cargo` stops the next gate at 127:
+  `/tmp/xln-entity-selection-root-final.log`. Later gates did not run.
+
+The registered wallet matrix now has **102 cases**; the full 102-case matrix
+was not run. The latest full result remains **83 pass / 1 fail** with the
+unresolved backend Activity page-boundary defect. Ops remains at its historical
+42/42 checkpoint. These results close the rapid Entity reversal regression;
+they do not close W1/W3 or the remaining UI ports.
+
+**Next increment:** mount the retained Manage/Move/Lending/History consumers
+and connect their Account/token/jurisdiction context. Preserve each form's
+selection ownership: retained Send owns its recipient, Receive owns its asset,
+Swap owns its hub/pair, and Move/Lending have their own selections. Manage
+consumes the focused Account. Do not turn global Account selection into a
+payment recipient or invoice asset implicitly. Continue verifying stale reads
+and selection changes as those forms are mounted.
 
 ### 1. Establish the mounted workspace context and routing foundation — W1/O1
 
@@ -900,15 +1099,15 @@ setup may provision identities; the action under test may not inject keys.
 
 Hub Discovery, direct Open by ID, focused Account details/activity,
 capacity-bar skins/appearance controls and the disputed-entry action are
-mounted (checkpoints above), along with the Account dropdown, six rail
-destinations and shared wallet Entity selection. Reuse the dropdown and finish
-selected Account/token/jurisdiction wiring across action forms and ops consumers.
+mounted (checkpoints above), along with the Account dropdown, all ten rail
+destinations and shared wallet Entity selection. Manage/Move/Lending/History
+now own their action context. Reuse this wiring for remaining ops consumers.
 Prove live disputed-entry navigation and local faucet funding. Connect the
 remaining configuration and Entity Activity subviews below.
 
-Port the remaining configure/move/lending/history/settlement forms and register
-their real rail destinations, composing the current wallet payment, market and portfolio
-features instead of replacing them. Trace handlers from the retained parents
+Preserve the mounted configure/move/lending/history forms and finish the
+remaining settlement controls, composing the current wallet payment, market
+and portfolio features. Trace handlers from the retained parents
 to their existing frontend builders and submission functions. Share UI/models
 between wallet and docked Entity panels only where both actually consume them;
 do not import another app's bootstrap or start a second Runtime.

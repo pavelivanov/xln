@@ -1,8 +1,9 @@
 import type { RuntimeAdapter } from '../../../../core/api/runtime-adapter/types';
+import type { EntityTx, RuntimeInput } from '@xln/core/api/public/runtime-module';
+import { runtimeHttpOriginFromWsUrl } from '../../../src/lib/utils/runtime/wsUrl';
 import type {
   RuntimePaymentDeliveryMode,
   RuntimePaymentEntityTx,
-  RuntimePaymentInput,
 } from '../../../packages/runtime-client/src/payment-command-types';
 import type { RuntimeAdapterStorageSnapshot } from '../../../packages/browser/src/runtime-adapter-session';
 import {
@@ -144,7 +145,7 @@ export class WalletPaymentSource {
     if (!projection?.entities.some((entity) => entity.entityId === normalized)) {
       throw new Error(`WALLET_PAYMENT_ENTITY_UNKNOWN:${normalized}`);
     }
-    if (normalized === projection.activeEntityId) return;
+    if (normalized === (this.selectedEntityId || projection.activeEntityId)) return;
     if (this.pendingCommand || this.commandBusy) throw new Error('WALLET_PAYMENT_ENTITY_CHANGE_PENDING_COMMAND');
     this.selectedEntityId = normalized;
     this.selection.selectEntity(this.requireAdapter().runtimeId, normalized);
@@ -223,6 +224,17 @@ export class WalletPaymentSource {
     await this.submitInput(buildWalletEntityTxsInput(this.requireProjection(), entityTxs));
   };
 
+  readonly workspaceRuntime = () => ({ adapter: this.requireAdapter(), math: this.requireMath() });
+  readonly workspaceApiBase = (localBase: string): string => this.config.mode === 'remote'
+    ? runtimeHttpOriginFromWsUrl(this.config.wsUrl || '') : localBase;
+
+  readonly submitAccountTxs = async (entityId: string, entityTxs: EntityTx[]): Promise<void> => {
+    const projection = this.requireProjection();
+    if (projection.activeEntityId !== entityId) throw new Error('ACCOUNT_COMMAND_ENTITY_CHANGED');
+    if (!this.requireAdapter().commandReady) throw new Error(this.requireAdapter().commandReadyReason || 'ACCOUNT_COMMAND_UNAVAILABLE');
+    await this.submitInput({ runtimeTxs: [], jInputs: [], entityInputs: [{ entityId, signerId: projection.signerId, entityTxs }] });
+  };
+
   readonly submitOperation = async (draft: WalletOperationDraft): Promise<void> => {
     const projection = this.requireProjection();
     const entityTx = buildWalletOperationTx(draft, projection, this.requireMath());
@@ -253,7 +265,7 @@ export class WalletPaymentSource {
     await this.executePending(this.pendingCommand);
   };
 
-  private async submitInput(input: RuntimePaymentInput): Promise<void> {
+  private async submitInput(input: RuntimeInput): Promise<void> {
     if (this.pendingCommand || this.commandBusy) throw new Error('WALLET_PAYMENT_COMMAND_ALREADY_PENDING');
     this.commandBusy = true;
     this.patch({ command: { ...idleCommand(), status: 'submitting', message: 'Submitting one idempotent Runtime command…' } });
