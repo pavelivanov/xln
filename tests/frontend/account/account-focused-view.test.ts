@@ -1,5 +1,5 @@
 import { expect, test } from 'bun:test';
-import { buildAccountDisputeDeadline } from '../../../frontend/src/lib/components/Entity/account/account-focused-view';
+import { buildAccountDisputeDeadline, buildPendingSecretAckInfo } from '../../../frontend/src/lib/components/Entity/account/account-focused-view';
 import { createAccountActivityPresentation } from '../../../frontend/src/lib/components/Entity/account/account-activity-presentation';
 import { requestAccountFaucet, type AccountFaucetRequest } from '../../../frontend/src/lib/components/Entity/account/account-faucet-command';
 
@@ -37,4 +37,33 @@ test('shared Account faucet rejects invalid action context before making an HTTP
   const controller = new AbortController();
   controller.abort();
   await expect(requestAccountFaucet({ ...input, commandsReady: true, signal: controller.signal })).rejects.toThrow('aborted');
+});
+
+
+test('pending secret ACK countdown reads canonical paybook entries for only the inbound counterparty', () => {
+  const entries = new Map([
+    ['first', { hashlock: 'first', createdTimestamp: 0, inboundEntity: 'PEER', secretAckPending: true, secretAckDeadlineAt: 3001 }],
+    ['earlier', { hashlock: 'earlier', createdTimestamp: 0, inboundEntity: 'peer', secretAckPending: true, secretAckDeadlineAt: 2001 }],
+    ['other', { hashlock: 'other', createdTimestamp: 0, inboundEntity: 'other', secretAckPending: true, secretAckDeadlineAt: 1001 }],
+    ['settled', { hashlock: 'settled', createdTimestamp: 0, inboundEntity: 'peer', secretAckPending: false, secretAckDeadlineAt: 1001 }],
+    ['invalid', { hashlock: 'invalid', createdTimestamp: 0, inboundEntity: 'peer', secretAckPending: true, secretAckDeadlineAt: NaN }],
+  ]);
+  const paybook = { entries, feesEarned: 0n };
+  expect(buildPendingSecretAckInfo(paybook, 'peer', 1000)).toEqual({ count: 2, secondsLeft: 2 });
+  expect(buildPendingSecretAckInfo(paybook, 'PEER', 4000)).toEqual({ count: 2, secondsLeft: 0 });
+  expect(buildPendingSecretAckInfo(paybook, 'unrelated', 1000)).toBeNull();
+  expect(buildPendingSecretAckInfo(undefined, 'peer', 1000)).toBeNull();
+});
+
+test('Account activity reads invoice comments from the hashlock-owned paybook entry', () => {
+  const payments = new Map([
+    ['invoice', { hashlock: 'invoice', createdTimestamp: 0, description: '  invoice 42  ' }],
+    ['other', { hashlock: 'other', createdTimestamp: 0, description: 'private other invoice' }],
+  ]);
+  const presentation = createAccountActivityPresentation({ entityNames: new Map(), payments, activeXlnFunctions: null });
+  const lock = { type: 'htlc_lock', data: { lockId: 'invoice', hashlock: 'invoice', timelock: 100n, revealBeforeHeight: 10, amount: 42n, tokenId: 1 } } as const;
+  expect(presentation.buildActionParams(lock)).toContainEqual({ label: 'Comment', value: 'invoice 42' });
+  expect(presentation.buildActionParams({ ...lock, data: { ...lock.data, hashlock: 'missing' } }).some(row => row.label === 'Comment')).toBe(false);
+  payments.delete('invoice');
+  expect(presentation.buildActionParams(lock).some(row => row.label === 'Comment')).toBe(false);
 });
