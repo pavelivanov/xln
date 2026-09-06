@@ -27,7 +27,7 @@ function AccountTool({ tab, source, projection, selection }: Readonly<{
   return <>
     <p className="wallet-account-jurisdiction">Jurisdiction: {context.jurisdiction || 'Unassigned'}</p>
     {snapshot.error ? <p role="alert">{snapshot.error}</p> : null}
-    {tab === 'ownership' || tab === 'consensus' ? <WalletEntityEvidence context={context} tab={tab} /> : null}
+    {tab === 'ownership' || tab === 'consensus' ? <WalletEntityEvidence context={context} tab={tab} source={source} /> : null}
     {tab === 'configure' ? <WalletManage context={context} source={source} selection={selection} /> : null}
     {tab === 'move' ? <WalletMove context={context} source={source} projection={projection} selection={selection} /> : null}
     {tab === 'lending' ? <WalletLending context={context} source={source} selection={selection} /> : null}

@@ -242,6 +242,7 @@ const relayServer = relay.startStandaloneRelayServer({
 const handleRpc = rpc.createServerRpcMessageHandler({
   validateRuntimeInputAdmission: runtime.validateRuntimeInputAdmission,
 });
+let ownershipFixture: ReturnType<typeof import('./wallet-ownership-fixture').createWalletOwnershipFixture> | null = null;
 let server: ReturnType<typeof Bun.serve<FixtureSocketData>>;
 const activeRpcSockets = new Set<ServerWebSocket<FixtureSocketData>>();
 let dropdownFixture: ReturnType<typeof import('./wallet-account-dropdown-fixture').createAccountDropdownFixture> | null = null;
@@ -260,6 +261,11 @@ server = Bun.serve<FixtureSocketData>({
     if (assistantResponse) return assistantResponse;
     const apiHeaders = { 'access-control-allow-origin': '*', 'access-control-allow-methods': 'GET, POST, OPTIONS', 'access-control-allow-headers': 'content-type, cache-control, pragma', 'content-type': 'application/json' };
     if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: apiHeaders });
+    if (url.pathname === '/ownership-fixture' && request.method === 'POST') {
+      ownershipFixture ??= import('./wallet-ownership-fixture').then(module => module.createWalletOwnershipFixture(env, chainAdapter, config, commit));
+      return Response.json(await ownershipFixture, { headers: apiHeaders });
+    }
+    if (url.pathname === '/api/tokens') return new Response(runtime.safeStringify({ tokens: (await chainAdapter.getTokenRegistry()).map(token => ({ ...token, externalTokenId: token.externalTokenId.toString() })) }), { headers: apiHeaders });
     if (url.pathname === '/api/jurisdictions') return new Response(recoveryFixture.readJurisdictionsJson(), {
       headers: { 'content-type': 'application/json', 'access-control-allow-origin': '*', 'cache-control': 'no-store' },
     });
