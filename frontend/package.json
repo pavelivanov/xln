@@ -15,7 +15,7 @@
 		"preview": "node scripts/prepare-preview-assets.js && vite preview",
 		"prepare": "svelte-kit sync || echo ''",
 		"check": "bun run check:unsafe-types && bun copy-static-files.js && svelte-kit sync && bun ../tools/run-parallel-checks.ts check:svelte check:build",
-		"check:svelte": "svelte-check --tsconfig ./tsconfig.json --threshold error",
+		"check:svelte": "svelte-check --config ./svelte.config.js --tsconfig ./tsconfig.json --threshold error",
 		"check:build": "bun scripts/vite-build-check.ts",
 		"check:react": "bun scripts/check.ts --all --level=local",
 		"prepare:react": "bun scripts/prepare.ts --all",
