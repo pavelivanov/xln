@@ -3,7 +3,7 @@ import type { RuntimeReplica } from '@xln/core/api/public/runtime-module';
 type RuntimeConfig = NonNullable<RuntimeReplica['runtimeConfig']>;
 export type RuntimeStoragePolicy = NonNullable<RuntimeConfig['storage']>;
 export type RuntimePerformancePolicy = NonNullable<RuntimeConfig['performance']>;
-export type StoragePolicyFields = Readonly<{ commonGiB: string; walEpochGiB: string; historyViewGiB: string; historyRetainFrames: string }>;
+export type StoragePolicyFields = Readonly<{ walEpochGiB: string }>;
 export type PerformancePolicyFields = Readonly<{ cloneMiB: string; cloneMs: string; reducerMs: string; walMs: string }>;
 const GIB = 1024 ** 3, MIB = 1024 ** 2;
 
@@ -11,9 +11,7 @@ export const displayStorageGiB = (bytes: number | undefined): string =>
   bytes === undefined || bytes === Number.MAX_SAFE_INTEGER ? '' : String(bytes / GIB);
 
 export const readStoragePolicyFields = (storage: RuntimeStoragePolicy | undefined): StoragePolicyFields => ({
-  commonGiB: '', walEpochGiB: displayStorageGiB(storage?.epochMaxBytes), historyViewGiB: displayStorageGiB(storage?.historyViewMaxBytes),
-  historyRetainFrames: storage?.historyViewRetainFrames === undefined || storage.historyViewRetainFrames === Number.MAX_SAFE_INTEGER
-    ? '' : String(storage.historyViewRetainFrames),
+  walEpochGiB: displayStorageGiB(storage?.epochMaxBytes),
 });
 
 const parsePositive = (raw: string, label: string, multiplier = 1): number | undefined => {
@@ -30,16 +28,10 @@ const parseGiB = (raw: string, label: string): number | undefined => {
 };
 
 export const buildStoragePolicy = (current: RuntimeStoragePolicy | undefined, fields: StoragePolicyFields): RuntimeStoragePolicy => {
-  const common = parseGiB(fields.commonGiB, 'Common limit');
-  const epochMaxBytes = parseGiB(fields.walEpochGiB, 'WAL epoch limit') ?? common;
-  const historyViewMaxBytes = parseGiB(fields.historyViewGiB, 'History view limit') ?? common;
-  const historyViewRetainFrames = parsePositive(fields.historyRetainFrames, 'Retained frames');
-  if (historyViewRetainFrames !== undefined && !Number.isSafeInteger(historyViewRetainFrames)) throw new Error('Retained frames must be a positive integer');
+  const epochMaxBytes = parseGiB(fields.walEpochGiB, 'WAL epoch limit');
   const next = { ...current };
-  delete next.epochMaxBytes; delete next.historyViewMaxBytes; delete next.historyViewRetainFrames;
-  return { ...next, ...(epochMaxBytes === undefined ? {} : { epochMaxBytes }),
-    ...(historyViewMaxBytes === undefined ? {} : { historyViewMaxBytes }),
-    ...(historyViewRetainFrames === undefined ? {} : { historyViewRetainFrames }) };
+  delete next.epochMaxBytes;
+  return { ...next, ...(epochMaxBytes === undefined ? {} : { epochMaxBytes }) };
 };
 
 export const readPerformancePolicyFields = (policy: RuntimePerformancePolicy | undefined): PerformancePolicyFields => ({
