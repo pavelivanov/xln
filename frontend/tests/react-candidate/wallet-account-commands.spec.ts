@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test';
 import { expectNoBrowserErrors, expectPageContained, observeBrowserErrors, screenshotEvidence } from './browser-evidence';
 import { readWalletAccountToolState, readWalletFixtureChainBalances, selectWalletFixtureRuntime } from './wallet-runtime-test-helpers';
 
-test('Move broadcasts its reviewed collateral draft and observes exact Runtime and chain balances', async ({ page }, testInfo) => {
+test('Move broadcasts its reviewed collateral draft and observes exact Runtime and chain balances', { tag: '@functional' }, async ({ page }, testInfo) => {
   test.setTimeout(120000);
   const errors = observeBrowserErrors(page), fixture = await selectWalletFixtureRuntime(page);
   const before = await readWalletFixtureChainBalances(page);
@@ -30,7 +30,7 @@ test('Move broadcasts its reviewed collateral draft and observes exact Runtime a
   expectNoBrowserErrors(errors);
 });
 
-test('Manage commits the exact collateral request and prepaid peer fee on both Account sides', async ({ page }, testInfo) => {
+test('Manage commits the exact collateral request and prepaid peer fee on both Account sides', { tag: '@functional' }, async ({ page }, testInfo) => {
   test.setTimeout(120000);
   const errors = observeBrowserErrors(page), fixture = await selectWalletFixtureRuntime(page);
   // Distinct default assets keep requests independent when all viewports share

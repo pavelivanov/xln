@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test';
 import { installImportedRuntime, selectWalletFixtureRuntime } from './wallet-runtime-test-helpers';
 import { expectNoBrowserErrors, expectPageContained, observeBrowserErrors, screenshotEvidence } from './browser-evidence';
 
-test('Account dropdown lists every committed relationship and focuses an Account beyond the portfolio page', async ({ page }, testInfo) => {
+test('Account dropdown lists every committed relationship and focuses an Account beyond the portfolio page', { tag: '@functional' }, async ({ page }, testInfo) => {
   testInfo.setTimeout(120_000);
   const errors = observeBrowserErrors(page);
   const fixture = await selectWalletFixtureRuntime(page);

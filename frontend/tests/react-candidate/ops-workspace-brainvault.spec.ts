@@ -4,7 +4,7 @@ import { expectNoBrowserErrors, expectPageContained, observeBrowserErrors, scree
 import { installImportedRuntime, readWalletRuntimeFixture } from './wallet-runtime-test-helpers';
 import { finishOpenedWalletSetup } from './wallet-onboarding-test-helpers';
 
-test('docked BrainVault restores a canonical backup and hands the local Runtime to every panel', async ({ page }, testInfo) => {
+test('docked BrainVault restores a canonical backup and hands the local Runtime to every panel', { tag: '@functional' }, async ({ page }, testInfo) => {
   testInfo.setTimeout(150_000);
   const errors = observeBrowserErrors(page);
   const fixture = await readWalletRuntimeFixture(page);

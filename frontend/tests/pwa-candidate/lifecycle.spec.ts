@@ -99,7 +99,7 @@ const fetchWallet = async (page: Page): Promise<Readonly<{ releaseId: string | n
     return { releaseId: response.headers.get('x-xln-pwa-release'), html: await response.text() };
   });
 
-test('installs, updates, and rolls back exact release caches through one real service worker', async ({ page }) => {
+test('installs, updates, and rolls back exact release caches through one real service worker', { tag: '@resilience' }, async ({ page }) => {
   test.setTimeout(180_000);
   const consoleFailures: string[] = [];
   page.on('console', (message) => {
