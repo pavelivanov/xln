@@ -10,7 +10,7 @@ const SELECTED_FRAME = {
   activeEntityId: '0xAABB',
   activeEntity: {
     summary: { entityId: '0xaabb', label: 'Treasury', jurisdiction: { name: 'Localnet' } },
-    core: { entityId: '0xaabb', signerId: '0xCCDD', profile: { name: 'Core fallback' } },
+    core: { entityId: '0xaabb', signerId: '0xCCDD', profile: { name: 'Core profile' } },
     accounts: { items: [{ id: 'peer-a' }], totalItems: 3 },
   },
 };
@@ -28,7 +28,7 @@ describe('Entity workspace context projection', () => {
   test('projects only identity, jurisdiction, height, and account-count context', () => {
     expect(projectEntityWorkspaceContext({ runtimeId: ' Runtime-A ', frame: SELECTED_FRAME })).toEqual({
       status: 'selected', runtimeId: 'Runtime-A', height: 42, entityId: '0xaabb',
-      entityName: 'Core fallback', signerId: '0xccdd', jurisdictionName: 'Localnet', accountCount: 3,
+      entityName: 'Core profile', signerId: '0xccdd', jurisdictionName: 'Localnet', accountCount: 3,
     });
   });
 
@@ -42,7 +42,7 @@ describe('Entity workspace context projection', () => {
       },
     };
     expect(projectEntityWorkspaceContext({ frame })).toMatchObject({
-      entityName: 'Core fallback', jurisdictionName: 'Core J', accountCount: 3,
+      entityName: 'Core profile', jurisdictionName: 'Core J', accountCount: 3,
     });
   });
 
@@ -67,19 +67,19 @@ describe('Entity workspace context projection', () => {
     })).toThrow('ENTITY_WORKSPACE_ENTITY_NAME_INVALID');
   });
 
-  test('feeds both legacy projection and React shell contracts from the shared boundary', async () => {
-    const [legacyModel, reactShell, reactPage, reactSource, reactProjection] = await Promise.all([
+  test('feeds both retained projection and React shell contracts from the shared boundary', async () => {
+    const [retainedModel, reactShell, reactPage, reactSource, reactProjection] = await Promise.all([
       Bun.file('frontend/src/lib/components/Entity/core/entity-panel-model.ts').text(),
       Bun.file('frontend/packages/ui/src/entity-workspace-shell.tsx').text(),
       Bun.file('frontend/apps/ops/src/ops-entity-workspace.tsx').text(),
       Bun.file('frontend/apps/ops/src/ops-entity-workspace-source.ts').text(),
       Bun.file('frontend/apps/ops/src/ops-entity-workspace-projection.ts').text(),
     ]);
-    expect(legacyModel).toContain('projectEntityWorkspaceContext({ runtimeId: getRuntimeId(sourceEnv), frame })');
+    expect(retainedModel).toContain('projectEntityWorkspaceContext({ runtimeId: getRuntimeId(sourceEnv), frame })');
     expect(reactShell).toContain('context.status === \'selected\'');
     expect(reactPage).toContain('context={runtimeSnapshot.context}');
     expect(reactSource).toContain('return readEntityWorkspaceProjection(');
     expect(reactProjection).toContain('projectEntityWorkspaceContext({');
-    expect(legacyModel).not.toContain('as unknown as');
+    expect(retainedModel).not.toContain('as unknown as');
   });
 });

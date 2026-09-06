@@ -107,7 +107,7 @@ describe('runtime-client Runtime handle boundary', () => {
     )).toBe(true);
   });
 
-  test('uses stable fallback Runtime identities', () => {
+  test('uses stable default Runtime identities', () => {
     expect(runtimeAdapterConfigId({ mode: 'remote' })).toBe('radapter:remote');
     expect(runtimeAdapterConfigId({ mode: 'remote', wsUrl: 'WSS://Runtime.Example/RPC' }))
       .toBe('radapter:wss://runtime.example/rpc');

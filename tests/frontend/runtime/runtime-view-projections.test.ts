@@ -100,7 +100,7 @@ describe('runtime-client RuntimeView projection reader', () => {
     });
   });
 
-  test('accepts the projected Entity from the frame core fallback', async () => {
+  test('accepts the projected Entity from the frame core identity', async () => {
     const harness = createHarness();
     harness.setFrame(entityFrame(undefined, ' 0xENTITY-A '));
 
