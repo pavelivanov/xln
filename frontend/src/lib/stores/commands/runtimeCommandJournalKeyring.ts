@@ -1,1 +1,1 @@
-export * from '../../../../packages/browser/src/runtime-command-journal-keyring';
+export * from '../../../../packages/browser/src/commands/runtime-command-journal-keyring';

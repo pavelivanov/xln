@@ -34,7 +34,7 @@
     serializeViewSettings,
     type EntityOpenMode,
     type ViewSettings,
-  } from '../../../../packages/runtime-client/src/settings-panel-view';
+  } from '../../../../packages/runtime-client/src/panels/settings-panel-view';
 
   // Props (isolated stores - reserved for future time-travel settings UI)
   export let runtimeFrameEnv: Writable<RuntimeReplica | null>; void runtimeFrameEnv;

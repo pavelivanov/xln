@@ -5,11 +5,11 @@
   import { xlnFunctions } from '$lib/stores/xlnStore';
   import type { PaymentPanelView } from '../../../payments/payment-panel-view';
   import type { SwapPanelRuntimeView } from '../../../swap/swap-panel-helpers';
-  import { createLoadTestingController } from '../../load-testing-controller';
+  import { createLoadTestingController } from '../../load-testing/load-testing-controller';
   import {
     LoadTestScheduler,
     type LoadTestSchedulerSnapshot,
-  } from '../../load-testing-scheduler';
+  } from '../../load-testing/load-testing-scheduler';
   import LoadTestingPanel, {
     type LoadTestingCallbacks,
     type LoadTestingControllerState,

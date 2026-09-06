@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 test('DocsView sanitizes the final Markdown HTML at the shared security boundary', () => {
   const docsView = readFileSync('frontend/src/lib/components/Views/DocsView.svelte', 'utf8');
   const reactReader = readFileSync('frontend/apps/docs/src/docs-reader.tsx', 'utf8');
-  const docsModel = readFileSync('frontend/packages/ui/src/docs-page-model.ts', 'utf8');
+  const docsModel = readFileSync('frontend/packages/ui/src/content/docs-page-model.ts', 'utf8');
   const sanitizer = readFileSync('frontend/packages/ui/src/safe-markdown.ts', 'utf8');
 
   expect(docsView).toContain('renderDocsMarkdown');

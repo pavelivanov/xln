@@ -1,1 +1,1 @@
-export * from '../../../packages/runtime-client/src/xln-invoice';
+export * from '../../../packages/runtime-client/src/payments/xln-invoice';

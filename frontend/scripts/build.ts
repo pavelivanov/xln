@@ -1,6 +1,6 @@
 import type { SurfaceId } from '../config/surfaces';
-import { runCommands, type CommandSpec } from './command-runner';
-import { parseSurfaceSelection } from './surface-selection';
+import { runCommands, type CommandSpec } from './shared/command-runner';
+import { parseSurfaceSelection } from './shared/surface-selection';
 
 export const createBuildCommands = (surfaceIds: readonly SurfaceId[]): readonly CommandSpec[] =>
   surfaceIds.map((surfaceId) => ({

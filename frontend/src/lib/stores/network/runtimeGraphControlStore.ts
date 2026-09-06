@@ -1,7 +1,7 @@
 import {
   GRAPH3D_CANONICITY_OPTIONS,
   type Graph3dViewportCanonicity,
-} from '../../../../packages/runtime-client/src/graph3d-viewport-view';
+} from '../../../../packages/runtime-client/src/graph/graph3d-viewport-view';
 import { createObservableStore } from '$lib/utils/observableStore';
 
 const CANONICITY_KEY = 'xln-graph-canonicity';

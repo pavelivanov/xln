@@ -23,7 +23,7 @@ const diagnosticFiles = [
     logLine: "errorLog.log('Entity profile update failed', 'Entity Settings'",
   },
   {
-    path: 'frontend/src/lib/components/Entity/onboarding/FormationPanel.svelte',
+    path: 'frontend/src/lib/components/Entity/onboarding/formation/FormationPanel.svelte',
     importLine: "import { errorLog } from '../../../stores/errorLogStore';",
     logLine: "errorLog.log('Entity creation failed', 'Formation Panel'",
   },

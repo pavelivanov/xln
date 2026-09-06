@@ -4,7 +4,7 @@ import {
   createDemoPlaybackIntentStore,
   normalizeDemoPlaybackIntent,
   type DemoPlaybackIntent,
-} from '../../../../packages/runtime-client/src/demo-playback-intent';
+} from '../../../../packages/runtime-client/src/scenario/demo-playback-intent';
 
 /**
  * Playback intent for an embedded demo.

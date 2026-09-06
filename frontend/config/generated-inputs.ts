@@ -45,7 +45,7 @@ export const GENERATED_INPUTS: readonly GeneratedInputDefinition[] = [
     developmentConsumers: ['docs', 'site'],
     sourcePaths: [
       'frontend/copy-static-files.js',
-      'frontend/docs-catalog.js',
+      'frontend/scripts/docs/docs-catalog.js',
       'scripts/debug/gpt.cjs',
       'docs',
     ],

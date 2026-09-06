@@ -51,7 +51,7 @@ describe('workspace Dockview layout contract', () => {
 
   test('shares the Dockview layout contract with the public React workspace', async () => {
     const [reactSource, svelteSource] = await Promise.all([
-      Bun.file('frontend/packages/ui/src/workspace-dock.tsx').text(),
+      Bun.file('frontend/packages/ui/src/workspace/workspace-dock.tsx').text(),
       Bun.file('frontend/src/lib/view/DockRoot.svelte').text(),
     ]);
 

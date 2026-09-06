@@ -309,7 +309,7 @@ describe('production startup wiring', () => {
     const server = readFileSync(join(repoRoot, 'core/api/server/index.ts'), 'utf8');
     const packagedDaemon = readFileSync(join(repoRoot, 'packages/npm/xlnfinance/lib/process.js'), 'utf8');
     const formationPanel = readFileSync(
-      join(repoRoot, 'frontend/src/lib/components/Entity/onboarding/FormationPanel.svelte'),
+      join(repoRoot, 'frontend/src/lib/components/Entity/onboarding/formation/FormationPanel.svelte'),
       'utf8',
     );
     expect(server).toContain("process.env['XLN_LOCAL_SIMULATION'] === 'true'");

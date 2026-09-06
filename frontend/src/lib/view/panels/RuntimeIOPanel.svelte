@@ -28,7 +28,7 @@
     selectRuntimeIoFrame,
     sumRuntimeIoCollateral,
     sumRuntimeIoReserves,
-  } from '../../../../packages/runtime-client/src/runtime-io-panel-view';
+  } from '../../../../packages/runtime-client/src/runtime/runtime-io-panel-view';
 
   // Receive isolated env as prop (passed from View.svelte)
   export let runtimeFrameHistory: Writable<EnvSnapshot[]> | null = null;

@@ -13,8 +13,8 @@ import { join } from 'node:path';
 import { safeStringify } from '../../core/protocol/serialization';
 import type { PreparedGeneratedInputDefinition } from '../../frontend/config/generated-inputs';
 import { SURFACE_IDS, type SurfaceId } from '../../frontend/config/surfaces';
-import { assembleCandidateRelease } from '../../frontend/scripts/candidate-release';
-import { prepareGeneratedInputs } from '../../frontend/scripts/generated-inputs';
+import { assembleCandidateRelease } from '../../frontend/scripts/release/candidate-release';
+import { prepareGeneratedInputs } from '../../frontend/scripts/inputs/generated-inputs';
 import { materializeNativeWalletCandidate } from '../../scripts/native/stage-wallet-candidate';
 import {
   NATIVE_WALLET_CANDIDATE_MANIFEST,

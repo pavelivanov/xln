@@ -4,7 +4,7 @@ import { copyFile, lstat, mkdir, mkdtemp, rename, rm, writeFile } from 'node:fs/
 import { dirname, join, resolve } from 'node:path';
 
 import { safeStringify } from '../../core/protocol/serialization';
-import { verifyCandidateReleaseDirectory } from '../../frontend/scripts/candidate-release-verifier';
+import { verifyCandidateReleaseDirectory } from '../../frontend/scripts/release/candidate-release-verifier';
 import {
   NATIVE_WALLET_CANDIDATE_MANIFEST,
   planNativeWalletCandidate,

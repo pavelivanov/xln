@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 import {
   createGraph3dSceneInputView,
   graph3dSceneTransactionOf,
-} from '../../../frontend/packages/runtime-client/src/graph3d-scene-input';
+} from '../../../frontend/packages/runtime-client/src/graph/graph3d-scene-input';
 
 describe('Graph3D scene input model', () => {
   test('projects runtime options, desynchronization count, and jurisdictions', () => {

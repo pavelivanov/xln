@@ -25,7 +25,7 @@
     selectJurisdictionTokenIdText,
     selectJurisdictionTokenMeta,
     toJurisdictionDisplayBigInt,
-  } from '../../../../packages/runtime-client/src/jurisdiction-panel-view';
+  } from '../../../../packages/runtime-client/src/panels/jurisdiction-panel-view';
 
   // Props
   interface Props {

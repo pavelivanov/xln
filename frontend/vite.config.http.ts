@@ -4,7 +4,7 @@ import { execSync } from 'node:child_process';
 import http from 'node:http';
 import https from 'node:https';
 import { fileURLToPath } from 'node:url';
-import { configureWsProxyLifecycle } from './vite-ws-proxy-lifecycle';
+import { configureWsProxyLifecycle } from './config/server/vite-ws-proxy-lifecycle';
 
 const REPO_ROOT = fileURLToPath(new URL('..', import.meta.url));
 const BUILD_NUMBER = (() => {

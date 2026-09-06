@@ -1,7 +1,7 @@
-import { CandidateShell } from '../../../packages/ui/src/candidate-shell';
+import { CandidateShell } from '../../../packages/ui/src/shell/candidate-shell';
 import { WalletAppShell } from './app-shell';
-import { TestnetPage } from './testnet-page';
-import { WalletAddressPage } from './wallet-address';
+import { TestnetPage } from './testnet/testnet-page';
+import { WalletAddressPage } from './address/wallet-address';
 import type { WalletPage } from './wallet-model';
 
 export function WalletApp({ page }: Readonly<{ page: WalletPage }>) {

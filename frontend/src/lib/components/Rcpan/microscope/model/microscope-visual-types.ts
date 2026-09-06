@@ -1,1 +1,1 @@
-export * from '../../../../../../packages/ui/src/rcpan/microscope-visual-types';
+export * from '../../../../../../packages/ui/src/rcpan/microscope/microscope-visual-types';

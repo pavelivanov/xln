@@ -13,8 +13,8 @@ import type {
   XLNModule,
 } from '@xln/core/api/public/runtime-module';
 import { safeStringify } from '@xln/core/protocol/serialization';
-import { suspendWalletRuntimeActivity } from '../../../../packages/browser/src/wallet-runtime-suspension';
-import { WALLET_VAULT_STORAGE_KEY } from '../../../../packages/browser/src/wallet-vault-storage';
+import { suspendWalletRuntimeActivity } from '../../../../packages/browser/src/runtime/wallet-runtime-suspension';
+import { WALLET_VAULT_STORAGE_KEY } from '../../../../packages/browser/src/wallet/wallet-vault-storage';
 
 import {
   activeRuntimeId,

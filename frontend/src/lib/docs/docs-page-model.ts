@@ -1,1 +1,1 @@
-export * from '../../../packages/ui/src/docs-page-model';
+export * from '../../../packages/ui/src/content/docs-page-model';

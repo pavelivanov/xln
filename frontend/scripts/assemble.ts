@@ -1,8 +1,8 @@
 import { fileURLToPath } from 'node:url';
 
 import { SURFACE_IDS } from '../config/surfaces';
-import { assembleCandidateRelease } from './candidate-release';
-import { prepareGeneratedInputs } from './generated-inputs';
+import { assembleCandidateRelease } from './release/candidate-release';
+import { prepareGeneratedInputs } from './inputs/generated-inputs';
 
 const FRONTEND_ROOT = fileURLToPath(new URL('..', import.meta.url));
 const REPOSITORY_ROOT = fileURLToPath(new URL('../..', import.meta.url));

@@ -40,4 +40,4 @@ export type {
   QaRetentionPurgeResult,
   QaStoryScreenshot,
   QaUxReleasePackAudit,
-} from './report-types';
+} from './reporting/report-types';

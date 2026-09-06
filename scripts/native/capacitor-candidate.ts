@@ -3,7 +3,7 @@ import { lstat, mkdir, mkdtemp, readFile, readdir, rename, rm, writeFile } from 
 import { basename, dirname, join, relative, resolve, sep } from 'node:path';
 
 import canonicalCapacitorConfig from '../../frontend/capacitor.config';
-import { CONTENT_SECURITY_POLICY_HTML_ATTRIBUTE } from '../../frontend/config/content-security-policy.js';
+import { CONTENT_SECURITY_POLICY_HTML_ATTRIBUTE } from '../../frontend/config/security/content-security-policy.js';
 import { safeStringify } from '../../core/protocol/serialization';
 import { verifyNativeWalletCandidateDirectory } from './wallet-candidate-manifest';
 

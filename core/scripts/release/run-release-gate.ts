@@ -89,7 +89,7 @@ const RUNTIME_CORE_TESTS = [
   'core/__tests__/security/policy/terminal-resource-bounds.test.ts',
   'native/__tests__/desktop-security.test.ts',
   'native/__tests__/extension-security.test.ts',
-  'native/__tests__/capacitor-config.test.ts',
+  'native/__tests__/capacitor/capacitor-config.test.ts',
   'native/__tests__/native-build-options.test.ts',
   'native/__tests__/native-deeplink.test.ts',
   'native/__tests__/lazy-entity-id.test.ts',

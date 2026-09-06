@@ -40,7 +40,7 @@ import {
   type GraphReplicaLike,
 } from "./graph3d-helpers";
 import { buildBirdViewSettings, readBirdViewSettings, writeBirdViewSettings, type BirdViewSettings } from "./graph3d-settings";
-import { createGraphRenderer, detachGraphObject3D, disposeGraphObject3D, getGraphThemeColors, type GraphRenderer } from "../../../../../packages/ui/src/graph3d-renderer";
+import { createGraphRenderer, detachGraphObject3D, disposeGraphObject3D, getGraphThemeColors, type GraphRenderer } from "../../../../../packages/ui/src/graph/graph3d-renderer";
 import {
   buildGraphAccountVisuals,
   createBlockContainer,
@@ -57,28 +57,28 @@ import {
   bindGraphControlsLifecycle,
   bindGraphViewportLifecycle,
   type GraphLifecycleBinding,
-} from "../../../../../packages/ui/src/graph3d-lifecycle";
+} from "../../../../../packages/ui/src/graph/graph3d-lifecycle";
 import {
   createGraph3dSceneInputView,
   graph3dSceneTransactionOf,
-} from "../../../../../packages/runtime-client/src/graph3d-scene-input";
+} from "../../../../../packages/runtime-client/src/graph/graph3d-scene-input";
 import {
   buildSimpleRadialLayout,
   createGraphGrid,
   createGraphJMachine,
   startProportionalBroadcast,
-} from "../../../../../packages/ui/src/graph3d-scene-primitives";
+} from "../../../../../packages/ui/src/graph/graph3d-scene-primitives";
 import {
   createBroadcastRippleMesh,
   createDirectionalLightningMesh,
-} from "../../../../../packages/ui/src/graph3d-visual-effects";
+} from "../../../../../packages/ui/src/graph/graph3d-visual-effects";
 import {
   createEntityLabel,
   createGraphEntityNode,
   createMempoolIndicator,
   positionEntityLabel,
   positionMempoolIndicator,
-} from "../../../../../packages/ui/src/graph3d-entity-visuals";
+} from "../../../../../packages/ui/src/graph/graph3d-entity-visuals";
 import {
   beginGraphEntityDrag,
   beginGraphGesture,
@@ -96,16 +96,16 @@ import {
   updateGraphSelectionHighlight,
   type GraphGestureOutcome,
   type GraphXrGrab,
-} from "../../../../../packages/ui/src/graph3d-interaction";
+} from "../../../../../packages/ui/src/graph/graph3d-interaction";
 import {
   applyGraphCameraPose,
   applyGraphCameraTarget,
   fitGraphCameraToEntities,
-} from "../../../../../packages/ui/src/graph3d-camera";
+} from "../../../../../packages/ui/src/graph/graph3d-camera";
 import {
   highlightGraphHoverTarget,
   resolveGraphHoverHit,
-} from "../../../../../packages/ui/src/graph3d-hover";
+} from "../../../../../packages/ui/src/graph/graph3d-hover";
 let showMiniPanel = false;
 let miniPanelEntityId = "";
 let miniPanelEntityName = "";

@@ -1,1 +1,1 @@
-export * from '../../../packages/ui/src/reviews-model';
+export * from '../../../packages/ui/src/content/reviews-model';

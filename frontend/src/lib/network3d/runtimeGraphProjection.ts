@@ -8,7 +8,7 @@ import type {
   RuntimeAdapterGraphFrame,
   RuntimeAdapterViewFrame,
 } from '@xln/core/api/public/runtime-module';
-import type { Graph3dViewportCanonicity } from '../../../packages/runtime-client/src/graph3d-viewport-view';
+import type { Graph3dViewportCanonicity } from '../../../packages/runtime-client/src/graph/graph3d-viewport-view';
 import { validateAccountDeltas } from '@xln/core/account/validation/delta-validation';
 
 export type RuntimeGraphAdapterKind = 'browser' | 'remote';

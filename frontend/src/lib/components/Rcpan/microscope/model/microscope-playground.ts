@@ -1,1 +1,1 @@
-export * from '../../../../../../packages/ui/src/rcpan/microscope-playground';
+export * from '../../../../../../packages/ui/src/rcpan/microscope/microscope-playground';

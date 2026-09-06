@@ -1,1 +1,1 @@
-export * from '../../../../packages/browser/src/runtime-command-intent';
+export * from '../../../../packages/browser/src/commands/runtime-command-intent';

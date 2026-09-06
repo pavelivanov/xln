@@ -7,7 +7,7 @@
    * Copyright (C) 2025 XLN Finance
    */
 
-  import { createGraph3dVrHudView } from '../../../../packages/runtime-client/src/graph3d-viewport-view';
+  import { createGraph3dVrHudView } from '../../../../packages/runtime-client/src/graph/graph3d-viewport-view';
 
   export let isVRActive = false;
   export let onPaymentClick: (() => void) | null = null;

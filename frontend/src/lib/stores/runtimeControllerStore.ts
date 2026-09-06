@@ -13,7 +13,7 @@ import {
   normalizeRuntimeHandleId,
   runtimeAdapterConfigsMatch,
   type RuntimeHandle,
-} from '../../../packages/runtime-client/src/runtime-handle';
+} from '../../../packages/runtime-client/src/runtime/runtime-handle';
 
 export type { RuntimeHandle };
 

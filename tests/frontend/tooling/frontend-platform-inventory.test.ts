@@ -82,8 +82,8 @@ describe('frontend platform baseline inventory', () => {
 
     expect(entry?.workPackage).toBe('WP5');
     expect(entry?.status).toBe('implemented');
-    expect(entry?.sources).toContain('frontend/packages/browser/src/runtime-module-loader.ts');
-    expect(entry?.sources).toContain('frontend/bridges/browser-runtime-adapter.ts');
+    expect(entry?.sources).toContain('frontend/packages/browser/src/runtime/session/runtime-module-loader.ts');
+    expect(entry?.sources).toContain('frontend/bridges/runtime/browser-runtime-adapter.ts');
     expect(entry?.consumers).toContain('frontend/apps/wallet/src/app-shell.tsx');
     expect(entry?.consumers).toContain('frontend/src/lib/stores/bootstrap/xlnRuntimeLoader.ts');
     expect(entry?.consumers).toContain('frontend/src/lib/stores/vault/vaultStore.ts');

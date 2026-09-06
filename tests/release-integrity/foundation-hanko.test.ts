@@ -19,7 +19,7 @@ import {
   verifyReleaseManifestSnapshotBinding,
   verifyReleaseSnapshot,
   type ReleaseEnvelope,
-} from '../../frontend/packages/ui/src/release-signature.ts';
+} from '../../frontend/packages/ui/src/releases/release-signature.ts';
 import type { ReleaseManifest, ReleaseSnapshot } from '../../tools/release-snapshot/types.ts';
 import { releaseSnapshotExclusion, resolveReleaseSnapshotDependency } from '../../tools/release-snapshot/collect.ts';
 import { sourceDependencySpecifiers } from '../../tools/frozen-core/core.ts';

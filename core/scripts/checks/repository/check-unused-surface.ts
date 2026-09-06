@@ -49,7 +49,7 @@ const EXTERNAL_RUNTIME_CONSUMERS: Readonly<Record<string, readonly ExternalRunti
     consumer: 'frontend/src/routes/market-cap/+page.svelte',
     specifier: '@xln/core/network/relay/market/cap/market-cap-wire',
   }],
-  'core/qa/report-types.ts': [{
+  'core/qa/reporting/report-types.ts': [{
     consumer: 'core/qa/types.ts',
     specifier: './report-types',
     downstream: {

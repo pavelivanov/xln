@@ -16,7 +16,7 @@ import {
   runtimeHistoryFrameFromViewFrame,
   type RuntimeHistoryContext,
   type RuntimeHistoryFrame,
-} from '../../../packages/runtime-client/src/time-machine-transport';
+} from '../../../packages/runtime-client/src/scenario/time-machine-transport';
 import {
   getRuntimeControllerAdapter,
   getRuntimeControllerConfig,

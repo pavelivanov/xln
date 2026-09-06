@@ -1,10 +1,10 @@
 import { expect, test } from 'bun:test';
-import { WalletWorkspaceSelection } from '../../../frontend/apps/wallet/src/wallet-workspace-selection';
-import { resolveWalletAppRoute } from '../../../frontend/apps/wallet/src/wallet-navigation-model';
-import { buildWalletMoveDraftTxs, type WalletMoveDraft } from '../../../frontend/apps/wallet/src/wallet-move-model';
-import { buildWalletLoanRepayment, createWalletLendingIntentId, decodeWalletLending } from '../../../frontend/apps/wallet/src/wallet-lending-model';
-import { historyTimeRange } from '../../../frontend/apps/wallet/src/wallet-history-model';
-import { dedupeHistoryEvents } from '../../../frontend/src/lib/components/Entity/account/activity-history-events';
+import { WalletWorkspaceSelection } from '../../../frontend/apps/wallet/src/runtime/wallet-workspace-selection';
+import { resolveWalletAppRoute } from '../../../frontend/apps/wallet/src/navigation/wallet-navigation-model';
+import { buildWalletMoveDraftTxs, type WalletMoveDraft } from '../../../frontend/apps/wallet/src/move/wallet-move-model';
+import { buildWalletLoanRepayment, createWalletLendingIntentId, decodeWalletLending } from '../../../frontend/apps/wallet/src/manage/wallet-lending-model';
+import { historyTimeRange } from '../../../frontend/apps/wallet/src/history/wallet-history-model';
+import { dedupeHistoryEvents } from '../../../frontend/src/lib/components/Entity/account/activity/activity-history-events';
 import { buildLendingTokenOptions } from '../../../frontend/src/lib/components/Entity/payments/lending-token-options';
 
 const owner = `0x${'11'.repeat(32)}`, peer = `0x${'22'.repeat(32)}`, recipient = `0x${'33'.repeat(32)}`;

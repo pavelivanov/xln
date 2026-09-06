@@ -1,1 +1,1 @@
-export { currentQuorumInteractions } from '../../../../packages/runtime-client/src/qa-quorum-history';
+export { currentQuorumInteractions } from '../../../../packages/runtime-client/src/qa/quorum/qa-quorum-history';

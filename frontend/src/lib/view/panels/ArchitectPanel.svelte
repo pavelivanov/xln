@@ -32,7 +32,7 @@
     getNextArchitectJurisdictionName,
     listArchitectEntityIds,
     type ArchitectMode,
-  } from '../../../../packages/runtime-client/src/architect-panel-view';
+  } from '../../../../packages/runtime-client/src/panels/architect-panel-view';
 
   // Receive isolated env as props (passed from View.svelte) - REQUIRED
   export let runtimeFrameEnv: Writable<RuntimeReplica | null>;

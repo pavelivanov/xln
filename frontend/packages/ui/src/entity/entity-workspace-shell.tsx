@@ -1,0 +1,335 @@
+import {
+  ENTITY_WORKSPACE_SECTIONS,
+  type SettingsSubview,
+  type ViewTab,
+} from '../../../runtime-client/src/entity/entity-workspace-navigation';
+import type { EntityWorkspaceAccounts } from '../../../runtime-client/src/entity/entity-workspace-accounts';
+import type {
+  EntityWorkspaceActivity,
+  EntityWorkspaceActivityFilterType,
+  EntityWorkspaceActivityKind,
+  EntityWorkspaceActivityMode,
+  EntityWorkspaceActivityPageSize,
+} from '../../../runtime-client/src/entity/entity-workspace-activity';
+import type {
+  EntityWorkspaceContext,
+  EntityWorkspaceReadState,
+} from '../../../runtime-client/src/entity/entity-workspace-context';
+import type { EntityWorkspaceConsensusEvidence } from '../../../runtime-client/src/entity/entity-workspace-consensus-evidence';
+import type { EntityWorkspaceHubPolicy } from '../../../runtime-client/src/entity/profile/entity-workspace-hub-policy';
+import type { EntityWorkspaceOwnership } from '../../../runtime-client/src/entity/entity-workspace-ownership';
+import type { EntityWorkspaceProfile } from '../../../runtime-client/src/entity/profile/entity-workspace-profile';
+import type { EntityWorkspaceProfileDraft } from '../../../runtime-client/src/entity/profile/entity-workspace-profile-update';
+import type { EntityWorkspaceReserves } from '../../../runtime-client/src/entity/entity-workspace-reserves';
+import type { EntityWorkspaceTimeMachineState } from '../../../runtime-client/src/entity/entity-workspace-time-machine';
+import type { ThemeName } from '../theme-model';
+import { EntityWorkspaceOwnershipPanel } from './profile/entity-workspace-ownership-panel';
+import { EntityWorkspaceActivityPanel } from './activity/entity-workspace-activity-panel';
+import { EntityWorkspaceAccountsPanel } from './accounts/entity-workspace-accounts-panel';
+import { EntityWorkspaceConsensusPanel } from './accounts/entity-workspace-consensus-panel';
+import { EntityWorkspaceDisplayPanel, type EntityWorkspaceDisplayPreferences } from './settings/entity-workspace-display-panel';
+import { formatAddress } from './settings/entity-workspace-display';
+import { EntityWorkspaceProfilePanel } from './profile/entity-workspace-profile-panel';
+import { EntityWorkspaceReservesPanel } from './accounts/entity-workspace-reserves-panel';
+import { EntityWorkspaceSettingsStage } from './settings/entity-workspace-settings-stage';
+import './entity-workspace-shell.css';
+type SectionCopy = Readonly<{
+  eyebrow: string;
+  title: string;
+  summary: string;
+  nextBoundary: string;
+}>;
+const SECTION_COPY: Readonly<Record<ViewTab, SectionCopy>> = {
+  assets: {
+    eyebrow: 'Balance sheet',
+    title: 'Assets',
+    summary: 'Reserve positions and movement begin with an exact Entity identity.',
+    nextBoundary: 'Asset projection and movement controls remain on the canonical workspace.',
+  },
+  accounts: {
+    eyebrow: 'Bilateral state',
+    title: 'Accounts',
+    summary: 'Peer balances, credit, payments, and swaps stay scoped to one selected Entity.',
+    nextBoundary: 'Payments, swaps, credit, and Account lifecycle commands remain on the canonical workspace.',
+  },
+  ownership: {
+    eyebrow: 'Authority',
+    title: 'Ownership',
+    summary: 'Signer thresholds and Entity control must come from committed Runtime evidence.',
+    nextBoundary: 'Share issuance and board actions remain on the canonical workspace.',
+  },
+  settings: {
+    eyebrow: 'Configuration',
+    title: 'Settings',
+    summary: 'Wallet, consensus, recovery, display, network, and data controls stay explicit.',
+    nextBoundary: 'Profile updates use the selected Runtime owner lane; remaining Settings commands stay on the canonical workspace.',
+  },
+};
+const contextEntityLabel = (context: EntityWorkspaceContext): string =>
+  context.entityName || formatAddress(context.entityId || '') || 'Not selected';
+function EntityContextStrip({ context }: Readonly<{ context: EntityWorkspaceContext }>) {
+  return (
+    <dl className="entity-workspace-context" aria-label="Entity workspace context">
+      <div><dt>Runtime</dt><dd>{formatAddress(context.runtimeId || '') || 'Not attached'}</dd></div>
+      <div><dt>Jurisdiction</dt><dd>{context.jurisdictionName || 'Unassigned'}</dd></div>
+      <div><dt>Entity</dt><dd>{contextEntityLabel(context)}</dd></div>
+    </dl>
+  );
+}
+type ProjectionBoundaryProps = Readonly<{
+  context: EntityWorkspaceContext;
+  emptyMessage: string;
+  onRefresh: () => void;
+  readState: EntityWorkspaceReadState;
+}>;
+
+function ProjectionBoundary({ context, emptyMessage, onRefresh, readState }: ProjectionBoundaryProps) {
+  if (readState.status === 'error') {
+    return (
+      <div className="entity-workspace-boundary" data-tone="error" role="alert">
+        <span>Runtime read failed</span>
+        <strong>Entity context unavailable</strong>
+        <p>{readState.message}</p>
+        <button onClick={onRefresh} type="button">Retry read</button>
+      </div>
+    );
+  }
+  if (readState.status === 'connecting' || readState.status === 'loading') {
+    return (
+      <div className="entity-workspace-boundary" role="status">
+        <span>{readState.status === 'connecting' ? 'Runtime connection' : 'Committed read'}</span>
+        <strong>{readState.status === 'connecting' ? 'Connecting to Runtime' : 'Reading Entity context'}</strong>
+        <p>{readState.message}</p>
+      </div>
+    );
+  }
+  if (readState.status === 'ready' && context.status === 'selected') {
+    return (
+      <div className="entity-workspace-boundary" role="status">
+        <span>Committed projection</span>
+        <strong>Entity context attached</strong>
+        <p>Height {context.height} · {context.accountCount} accounts. Section panels remain on the canonical workspace.</p>
+      </div>
+    );
+  }
+  if (readState.status === 'ready') {
+    return (
+      <div className="entity-workspace-boundary" role="status">
+        <span>Runtime connected</span>
+        <strong>No active Entity selected</strong>
+        <p>Committed height {context.height}. Select an Entity in the canonical workspace before opening this preview.</p>
+      </div>
+    );
+  }
+  return (
+    <div className="entity-workspace-boundary" role="status">
+      <span>Integration boundary</span>
+      <strong>No Runtime projection attached</strong>
+      <p>{readState.message || emptyMessage}</p>
+    </div>
+  );
+}
+
+type EntityWorkspaceStageProps = Omit<ProjectionBoundaryProps, 'emptyMessage'> & Readonly<{ activeTab: ViewTab }>;
+
+
+type EntityWorkspaceStageWithOwnershipProps = EntityWorkspaceStageProps & Readonly<{
+  activity: EntityWorkspaceActivity;
+  accounts: EntityWorkspaceAccounts;
+  consensus: EntityWorkspaceConsensusEvidence;
+  displayIssue: string | null;
+  displayPreferences: EntityWorkspaceDisplayPreferences;
+  hubPolicy: EntityWorkspaceHubPolicy;
+  onApplyActivityTimeframe: (fromTimestamp: number | null, toTimestamp: number | null) => void;
+  onClearActivityFilters: () => void;
+  onLoadOlderActivity: () => void;
+  onRefreshActivity: () => void;
+  onSelectTheme: (theme: ThemeName) => void;
+  onSaveProfile: (draft: EntityWorkspaceProfileDraft) => Promise<void>;
+  onSelectActivityBeforeHeight: (beforeHeight: number | null) => void;
+  onSelectActivityKind: (kind: EntityWorkspaceActivityKind) => void;
+  onSelectActivityMode: (mode: EntityWorkspaceActivityMode) => void;
+  onSelectNewerActivityPage: () => void;
+  onSelectActivityPageSize: (pageSize: EntityWorkspaceActivityPageSize) => void;
+  onSelectActivitySearch: (search: string) => void;
+  onToggleActivityType: (type: EntityWorkspaceActivityFilterType) => void;
+  onToggleTimeMachine: (show: boolean) => void;
+  onToggleXlnGuide: (show: boolean) => void;
+  onSelectAccountsPage: (page: number) => void;
+  ownership: EntityWorkspaceOwnership;
+  profile: EntityWorkspaceProfile;
+  reserves: EntityWorkspaceReserves;
+  settingsSubview: SettingsSubview;
+  timeMachine: EntityWorkspaceTimeMachineState;
+}>;
+
+const readFooterLabel = (
+  copy: SectionCopy,
+  context: EntityWorkspaceContext,
+  readState: EntityWorkspaceReadState,
+): string => {
+  if (readState.status === 'error') return 'Runtime read failed';
+  if (readState.status === 'connecting' || readState.status === 'loading') return readState.message;
+  if (readState.status === 'ready' && context.status === 'selected') return copy.nextBoundary;
+  if (readState.status === 'ready') return 'Runtime attached — no Entity selected';
+  return 'Unavailable — no remote Runtime selected';
+};
+
+function EntityWorkspaceStage({ activity, accounts, activeTab, consensus, context, displayIssue, displayPreferences, hubPolicy, onApplyActivityTimeframe, onClearActivityFilters, onLoadOlderActivity, onRefresh, onRefreshActivity, onSaveProfile, onSelectAccountsPage, onSelectActivityBeforeHeight, onSelectActivityKind, onSelectActivityMode, onSelectActivityPageSize, onSelectActivitySearch, onSelectNewerActivityPage, onSelectTheme, onToggleActivityType, onToggleTimeMachine, onToggleXlnGuide, ownership, profile, readState, reserves, settingsSubview, timeMachine }: EntityWorkspaceStageWithOwnershipProps) {
+  const copy = SECTION_COPY[activeTab];
+  const showsActivity = readState.status === 'ready' && context.status === 'selected' && activeTab === 'accounts';
+  return (
+    <section className="entity-workspace-stage" data-testid="entity-workspace-stage">
+      {showsActivity
+        ? <EntityWorkspaceActivityPanel activity={activity} onApplyTimeframe={onApplyActivityTimeframe} onClearFilters={onClearActivityFilters} onLoadOlder={onLoadOlderActivity} onRefresh={onRefreshActivity} onSelectBeforeHeight={onSelectActivityBeforeHeight} onSelectKind={onSelectActivityKind} onSelectMode={onSelectActivityMode} onSelectNewerPage={onSelectNewerActivityPage} onSelectPageSize={onSelectActivityPageSize} onSelectSearch={onSelectActivitySearch} onToggleType={onToggleActivityType} />
+        : <header>
+            <span>{copy.eyebrow}</span>
+            <h2>{copy.title}</h2>
+            <p>{copy.summary}</p>
+          </header>}
+      {readState.status === 'ready' && context.status === 'selected' && activeTab === 'assets'
+        ? <EntityWorkspaceReservesPanel reserves={reserves} />
+        : readState.status === 'ready' && context.status === 'selected' && activeTab === 'accounts'
+          ? <EntityWorkspaceAccountsPanel accounts={accounts} onSelectPage={onSelectAccountsPage} />
+          : readState.status === 'ready' && context.status === 'selected' && activeTab === 'ownership'
+          ? <EntityWorkspaceOwnershipPanel ownership={ownership} />
+          : (readState.status === 'ready' || readState.status === 'loading')
+            && context.status === 'selected' && activeTab === 'settings'
+            ? <EntityWorkspaceSettingsStage settingsSubview={settingsSubview}>
+                {settingsSubview === 'consensus'
+                  ? <EntityWorkspaceConsensusPanel evidence={consensus} />
+                  : settingsSubview === 'display'
+                    ? <EntityWorkspaceDisplayPanel issue={displayIssue} onSelectTheme={onSelectTheme} onToggleTimeMachine={onToggleTimeMachine} onToggleXlnGuide={onToggleXlnGuide} preferences={displayPreferences} />
+                    : settingsSubview === 'wallet' || settingsSubview === 'entity'
+                      ? <EntityWorkspaceProfilePanel context={context} hubPolicy={hubPolicy} onSaveProfile={onSaveProfile} profile={profile} reserves={reserves} timeMachine={timeMachine} />
+                      : <ProjectionBoundary context={context} emptyMessage={copy.nextBoundary} onRefresh={onRefresh} readState={readState} />}
+              </EntityWorkspaceSettingsStage>
+          : <ProjectionBoundary
+            context={context}
+            emptyMessage={copy.nextBoundary}
+            onRefresh={onRefresh}
+            readState={readState}
+          />}
+      <footer><span>Read state</span><strong>{readFooterLabel(copy, context, readState)}</strong></footer>
+    </section>
+  );
+}
+
+type EntityWorkspaceShellProps = Readonly<{
+  activity: EntityWorkspaceActivity;
+  accounts: EntityWorkspaceAccounts;
+  activeTab: ViewTab;
+  consensus: EntityWorkspaceConsensusEvidence;
+  context: EntityWorkspaceContext;
+  displayIssue: string | null;
+  displayPreferences: EntityWorkspaceDisplayPreferences;
+  hubPolicy: EntityWorkspaceHubPolicy;
+  onApplyActivityTimeframe: (fromTimestamp: number | null, toTimestamp: number | null) => void;
+  onClearActivityFilters: () => void;
+  onLoadOlderActivity: () => void;
+  onRefresh: () => void;
+  onRefreshActivity: () => void;
+  onSelectActivityBeforeHeight: (beforeHeight: number | null) => void;
+  onSelectActivityKind: (kind: EntityWorkspaceActivityKind) => void;
+  onSelectActivityMode: (mode: EntityWorkspaceActivityMode) => void;
+  onSelectNewerActivityPage: () => void;
+  onSelectActivityPageSize: (pageSize: EntityWorkspaceActivityPageSize) => void;
+  onSelectActivitySearch: (search: string) => void;
+  onToggleActivityType: (type: EntityWorkspaceActivityFilterType) => void;
+  onSelectTheme: (theme: ThemeName) => void;
+  onSaveProfile: (draft: EntityWorkspaceProfileDraft) => Promise<void>;
+  onToggleTimeMachine: (show: boolean) => void;
+  onToggleXlnGuide: (show: boolean) => void;
+  onSelectAccountsPage: (page: number) => void;
+  ownership: EntityWorkspaceOwnership;
+  profile: EntityWorkspaceProfile;
+  readState: EntityWorkspaceReadState;
+  reserves: EntityWorkspaceReserves;
+  settingsSubview: SettingsSubview;
+  timeMachine: EntityWorkspaceTimeMachineState;
+}>;
+
+const readModeLabel = (
+  context: EntityWorkspaceContext,
+  readState: EntityWorkspaceReadState,
+): string => {
+  if (readState.status === 'error') return 'Read failed';
+  if (readState.status === 'connecting') return 'Connecting';
+  if (readState.status === 'loading') return 'Reading';
+  if (readState.status === 'ready') return context.status === 'selected' ? 'Context ready' : 'Runtime ready';
+  return 'Read boundary';
+};
+
+export function EntityWorkspaceShell({ activity, accounts, activeTab, consensus, context, displayIssue, displayPreferences, hubPolicy, onApplyActivityTimeframe, onClearActivityFilters, onLoadOlderActivity, onRefresh, onRefreshActivity, onSaveProfile, onSelectAccountsPage, onSelectActivityBeforeHeight, onSelectActivityKind, onSelectActivityMode, onSelectActivityPageSize, onSelectActivitySearch, onSelectNewerActivityPage, onSelectTheme, onToggleActivityType, onToggleTimeMachine, onToggleXlnGuide, ownership, profile, readState, reserves, settingsSubview, timeMachine }: EntityWorkspaceShellProps) {
+  return (
+    <section
+      className="entity-workspace"
+      data-active-tab={activeTab}
+      data-entity-id={context.entityId ?? undefined}
+      data-runtime-id={context.runtimeId ?? undefined}
+      data-read-status={readState.status}
+      data-testid="entity-workspace-shell"
+    >
+      <header className="entity-workspace-header">
+        <div>
+          <p>operator / entity</p>
+          <h1>Entity workspace</h1>
+          <span>Identity first. One canonical route for every workspace section.</span>
+        </div>
+        <div className="entity-workspace-mode">
+          <i aria-hidden="true" />
+          <span>React shell</span>
+          <strong>{readModeLabel(context, readState)}</strong>
+        </div>
+      </header>
+      <EntityContextStrip context={context} />
+      <nav className="entity-workspace-tabs" aria-label="Entity workspace sections">
+        {ENTITY_WORKSPACE_SECTIONS.map((section, index) => (
+          <a
+            aria-current={section.id === activeTab ? 'page' : undefined}
+            data-testid={`entity-workspace-tab-${section.id}`}
+            href={`#${section.id}`}
+            key={section.id}
+          >
+            <span>{String(index + 1).padStart(2, '0')}</span>
+            <strong>{section.label}</strong>
+          </a>
+        ))}
+      </nav>
+      <EntityWorkspaceStage
+        activity={activity}
+        accounts={accounts}
+        activeTab={activeTab}
+        consensus={consensus}
+        context={context}
+        displayIssue={displayIssue}
+        displayPreferences={displayPreferences}
+        hubPolicy={hubPolicy}
+        onApplyActivityTimeframe={onApplyActivityTimeframe}
+        onClearActivityFilters={onClearActivityFilters}
+        onLoadOlderActivity={onLoadOlderActivity}
+        onRefresh={onRefresh}
+        onRefreshActivity={onRefreshActivity}
+        onSaveProfile={onSaveProfile}
+        onSelectAccountsPage={onSelectAccountsPage}
+        onSelectActivityBeforeHeight={onSelectActivityBeforeHeight}
+        onSelectActivityKind={onSelectActivityKind}
+        onSelectActivityMode={onSelectActivityMode}
+        onSelectActivityPageSize={onSelectActivityPageSize}
+        onSelectActivitySearch={onSelectActivitySearch}
+        onSelectNewerActivityPage={onSelectNewerActivityPage}
+        onSelectTheme={onSelectTheme}
+        onToggleActivityType={onToggleActivityType}
+        onToggleTimeMachine={onToggleTimeMachine}
+        onToggleXlnGuide={onToggleXlnGuide}
+        ownership={ownership}
+        profile={profile}
+        readState={readState}
+        reserves={reserves}
+        settingsSubview={settingsSubview}
+        timeMachine={timeMachine}
+      />
+      <p className="entity-workspace-footnote">No inferred state · no hidden fallback · Svelte remains canonical</p>
+    </section>
+  );
+}

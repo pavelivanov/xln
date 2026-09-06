@@ -4,4 +4,4 @@ export {
   normalizeWsUrl,
   runtimeHttpOriginFromWsUrl,
   sameWsEndpoint,
-} from '../../../../packages/runtime-client/src/ws-url';
+} from '../../../../packages/runtime-client/src/runtime/ws-url';

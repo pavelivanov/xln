@@ -7,7 +7,7 @@ import {
   type StoredRemoteRuntimeImportEntry,
 } from './remoteRuntimeImport';
 import { validateRemoteRuntimeEntry, type RemoteRuntimeValidationProgress } from './remoteRuntimeValidation';
-import { writeRemoteRuntimeAdapterSession } from '../../../../packages/browser/src/runtime-adapter-session';
+import { writeRemoteRuntimeAdapterSession } from '../../../../packages/browser/src/runtime/session/runtime-adapter-session';
 
 export const REMOTE_RUNTIME_IMPORT_CONCURRENCY = 4;
 

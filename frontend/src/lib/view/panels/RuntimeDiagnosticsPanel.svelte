@@ -14,7 +14,7 @@
     getRuntimeDiagnosticsFrameLabel,
     sortRuntimeDiagnosticsIncidents,
     visibleRuntimeDiagnosticsIncidents,
-  } from '../../../../packages/runtime-client/src/runtime-diagnostics-panel-view';
+  } from '../../../../packages/runtime-client/src/runtime/runtime-diagnostics-panel-view';
 
   let head: StorageHead | null = null;
   let timeline: RuntimeAdapterTimelineIndexPage | null = null;

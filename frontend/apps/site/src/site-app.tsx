@@ -2,12 +2,12 @@ import { lazy, Suspense } from 'react';
 
 import { InstallPage } from './install-page';
 import { LandingPage } from './landing-page';
-import { RcpanPage } from './rcpan-page';
+import { RcpanPage } from './rcpan/rcpan-page';
 import { Arrow, SiteFooter, SiteShell } from './site-shell';
 import type { SitePage } from './site-model';
-import { UnicastPage } from './unicast-page';
+import { UnicastPage } from './unicast/unicast-page';
 
-const ReleasesPage = lazy(() => import('./releases-page').then((module) => ({ default: module.ReleasesPage })));
+const ReleasesPage = lazy(() => import('./releases/releases-page').then((module) => ({ default: module.ReleasesPage })));
 const ReviewsPage = lazy(() => import('./reviews-page').then((module) => ({ default: module.ReviewsPage })));
 const MarketCapPage = lazy(() => import('./market-cap-page').then((module) => ({ default: module.MarketCapPage })));
 

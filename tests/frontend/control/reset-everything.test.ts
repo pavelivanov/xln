@@ -5,7 +5,7 @@ import {
   clearBrowserRuntimeData,
   createBrowserRuntimeReset,
   type ResetEverythingRequest,
-} from '../../../frontend/packages/browser/src/browser-runtime-reset';
+} from '../../../frontend/packages/browser/src/runtime/session/browser-runtime-reset';
 import {
   ACTIVE_TAB_CHANNEL_NAME,
   ACTIVE_TAB_HARD_RESET_KEY,

@@ -7,7 +7,7 @@ import {
   deriveOpsHealthVerdict,
   formatOpsHealthUptime,
   shortOpsHealthHash,
-} from '../../../frontend/apps/ops/src/ops-health-model';
+} from '../../../frontend/apps/ops/src/health/ops-health-model';
 import { resolveOpsPage } from '../../../frontend/apps/ops/src/ops-model';
 
 const HEALTH_PAYLOAD = {
@@ -101,9 +101,9 @@ describe('React ops health evidence', () => {
 describe('React ops health lifecycle wiring', () => {
   test('uses live boundaries, an external store, and explicit page teardown', async () => {
     const [source, page, runtime] = await Promise.all([
-      Bun.file('frontend/apps/ops/src/ops-health-source.ts').text(),
-      Bun.file('frontend/apps/ops/src/ops-health.tsx').text(),
-      Bun.file('frontend/apps/ops/src/ops-health-runtime.ts').text(),
+      Bun.file('frontend/apps/ops/src/health/ops-health-source.ts').text(),
+      Bun.file('frontend/apps/ops/src/health/ops-health.tsx').text(),
+      Bun.file('frontend/apps/ops/src/health/ops-health-runtime.ts').text(),
     ]);
 
     expect(source).toContain("fetch('/api/health'");

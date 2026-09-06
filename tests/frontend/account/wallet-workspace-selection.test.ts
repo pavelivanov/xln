@@ -1,5 +1,5 @@
 import { expect, test } from 'bun:test';
-import { WalletWorkspaceSelection, requireWalletWorkspaceEntity } from '../../../frontend/apps/wallet/src/wallet-workspace-selection';
+import { WalletWorkspaceSelection, requireWalletWorkspaceEntity } from '../../../frontend/apps/wallet/src/runtime/wallet-workspace-selection';
 import { ACCOUNT_WORKSPACE_TABS, accountWorkspaceTabsForAccounts } from '../../../frontend/packages/runtime-client/src/account-workspace-tabs';
 
 test('wallet route consumers share Entity and Account selection only within the bound Runtime', () => {

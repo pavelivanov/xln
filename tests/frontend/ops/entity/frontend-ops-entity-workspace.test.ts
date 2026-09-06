@@ -1,0 +1,84 @@
+import { describe, expect, test } from 'bun:test';
+
+import { opsPageMetadata, resolveOpsPage } from '../../../../frontend/apps/ops/src/ops-model';
+import { resolveEntityPanelDeepLinkFromLocation } from '../../../../frontend/packages/runtime-client/src/entity/entity-workspace-navigation';
+
+describe('React Entity workspace shell', () => {
+  test('owns the isolated candidate route with explicit metadata', () => {
+    expect(resolveOpsPage('/embed')).toEqual({ kind: 'workspace', pathname: '/embed' });
+    const page = resolveOpsPage('/__app/ops/entity-workspace');
+    expect(page).toEqual({ kind: 'workspace', pathname: '/__app/ops/entity-workspace' });
+    expect(opsPageMetadata(page)).toEqual({
+      title: 'xln Entity Workspace',
+      description: 'Identity-first Entity workspace navigation for xln operators.',
+    });
+  });
+
+  test('derives top-level selection from canonical deep links', () => {
+    expect(resolveEntityPanelDeepLinkFromLocation({ hash: '#accounts/send', search: '' }).activeTab).toBe('accounts');
+    expect(resolveEntityPanelDeepLinkFromLocation({ hash: '#settings/network', search: '' }).activeTab).toBe('settings');
+    expect(resolveEntityPanelDeepLinkFromLocation({ hash: '#settings/consensus', search: '' }).settingsSubview).toBe('consensus');
+    expect(resolveEntityPanelDeepLinkFromLocation({ hash: '#settings/entity', search: '' }).settingsSubview).toBe('entity');
+    expect(resolveEntityPanelDeepLinkFromLocation({ hash: '#unknown', search: '' }).activeTab).toBeUndefined();
+  });
+
+  test('uses shared navigation and a cleaned-up browser subscription without legacy imports', async () => {
+    const [page, shell, activity, accounts, consensus, display, profile, reserves, settingsStage] = await Promise.all([
+      Bun.file('frontend/apps/ops/src/entity-workspace/ops-entity-workspace.tsx').text(),
+      Bun.file('frontend/packages/ui/src/entity/entity-workspace-shell.tsx').text(),
+      Bun.file('frontend/packages/ui/src/entity/activity/entity-workspace-activity-panel.tsx').text(),
+      Bun.file('frontend/packages/ui/src/entity/accounts/entity-workspace-accounts-panel.tsx').text(),
+      Bun.file('frontend/packages/ui/src/entity/accounts/entity-workspace-consensus-panel.tsx').text(),
+      Bun.file('frontend/packages/ui/src/entity/settings/entity-workspace-display-panel.tsx').text(),
+      Bun.file('frontend/packages/ui/src/entity/profile/entity-workspace-profile-panel.tsx').text(),
+      Bun.file('frontend/packages/ui/src/entity/accounts/entity-workspace-reserves-panel.tsx').text(),
+      Bun.file('frontend/packages/ui/src/entity/settings/entity-workspace-settings-stage.tsx').text(),
+    ]);
+    expect(page).toContain('useSyncExternalStore');
+    expect(page).toContain("removeEventListener('hashchange'");
+    expect(page).toContain('resolveEntityPanelDeepLinkFromLocation');
+    expect(shell).toContain('ENTITY_WORKSPACE_SECTIONS.map');
+    expect(shell).toContain('aria-current={section.id === activeTab');
+    expect(shell).toContain('No Runtime projection attached');
+    expect(shell).toContain('EntityWorkspaceAccountsPanel');
+    expect(shell).toContain('EntityWorkspaceActivityPanel');
+    expect(shell).toContain('EntityWorkspaceConsensusPanel');
+    expect(shell).toContain('EntityWorkspaceProfilePanel');
+    expect(shell).toContain('hubPolicy={hubPolicy}');
+    expect(shell).toContain('EntityWorkspaceReservesPanel');
+    expect(shell).toContain("settingsSubview === 'wallet' || settingsSubview === 'entity'");
+    expect(shell).toContain("readState.status === 'ready' || readState.status === 'loading'");
+    expect(shell).toContain('Profile updates use the selected Runtime owner lane');
+    expect(shell).not.toContain('Profile edits and all Settings commands remain');
+    expect(shell).toContain("settingsSubview === 'display'");
+    expect(page).toContain("route.settingsSubview ?? 'wallet'");
+    expect(accounts).toContain('Exact committed frame evidence');
+    expect(activity).toContain('Exact Runtime activity at or before the displayed committed frame');
+    expect(accounts).not.toContain('deriveDelta');
+    expect(accounts).not.toContain('CreditLimit');
+    expect(consensus).toContain('This view shows committed state. In-flight proposals, votes and locks are not included.');
+    expect(consensus).not.toContain('pendingLeaderCertificate');
+    expect(consensus).not.toContain('leaderVotes');
+    expect(display).toContain('settings-theme-select');
+    expect(display).toContain('settings-xln-mascot-toggle');
+    expect(display).toContain('onToggleXlnGuide(event.currentTarget.checked)');
+    expect(page).toContain('setXlnGuideVisibility');
+    expect(settingsStage).toContain('ENTITY_SETTINGS_SECTIONS.map');
+    expect(settingsStage).toContain("settingsSubview === 'entity' ? 'wallet' : settingsSubview");
+    expect(profile).toContain('settings-hub-policy');
+    expect(profile).toContain('settings-runtime-summary');
+    expect(profile).toContain('projectEntityWorkspaceSettingsSummary');
+    expect(profile).toContain('EntityWorkspaceProfileEditor');
+    expect(profile).toContain('Owner command');
+    expect(profile).toContain('onSave={onSaveProfile}');
+    expect(profile).not.toContain('runtimeController');
+    expect(reserves).toContain('Exact Entity-state amounts');
+    expect(reserves).toContain('raw units');
+    expect(reserves).not.toContain('formatUnits');
+    expect(reserves).not.toContain('getAssetValue');
+    for (const source of [page, shell, activity, accounts, consensus, display, profile, reserves, settingsStage]) {
+      expect(source).not.toContain('frontend/src');
+      expect(source).not.toContain('$lib');
+    }
+  });
+});

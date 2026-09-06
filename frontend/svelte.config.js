@@ -1,7 +1,7 @@
 import adapter from '@sveltejs/adapter-static';
 import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
 
-import { CONTENT_SECURITY_POLICY_DIRECTIVES } from './config/content-security-policy.js';
+import { CONTENT_SECURITY_POLICY_DIRECTIVES } from './config/security/content-security-policy.js';
 
 const outDir = process.env.XLN_SVELTE_KIT_OUT_DIR || '.svelte-kit';
 const buildDir = process.env.XLN_SVELTE_BUILD_DIR || 'build';

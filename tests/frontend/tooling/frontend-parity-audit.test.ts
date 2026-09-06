@@ -11,7 +11,7 @@ import {
   RETAINED_ROUTE_PARITY,
 } from '../../../frontend/config/parity-audit';
 import { resolveRouteOwner } from '../../../frontend/config/surfaces';
-import { buildParityAuditReport } from '../../../frontend/scripts/parity-audit';
+import { buildParityAuditReport } from '../../../frontend/scripts/checks/parity-audit';
 
 const listSveltePages = (directory: string): string[] => readdirSync(directory, { withFileTypes: true })
   .flatMap((entry) => entry.isDirectory()

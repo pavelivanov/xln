@@ -97,9 +97,9 @@ describe('React Entity workspace display preferences', () => {
 
   test('keeps React effects at the ops browser boundary', async () => {
     const [page, source, panel] = await Promise.all([
-      Bun.file('frontend/apps/ops/src/ops-entity-workspace.tsx').text(),
+      Bun.file('frontend/apps/ops/src/entity-workspace/ops-entity-workspace.tsx').text(),
       Bun.file('frontend/apps/ops/src/ops-display-preferences.ts').text(),
-      Bun.file('frontend/packages/ui/src/entity-workspace-display-panel.tsx').text(),
+      Bun.file('frontend/packages/ui/src/entity/settings/entity-workspace-display-panel.tsx').text(),
     ]);
     expect(page).toContain('useSyncExternalStore');
     expect(source).toContain('writeThemePreference(localStorage, theme)');

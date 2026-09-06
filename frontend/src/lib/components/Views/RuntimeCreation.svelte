@@ -55,46 +55,46 @@
     resolveWalletIdentityModeNavigation,
     selectWalletIdentityMode,
     type WalletIdentityMode,
-  } from '../../../../packages/browser/src/wallet-identity-entry';
+  } from '../../../../packages/browser/src/identity/wallet-identity-entry';
   import {
     evaluateWalletRecoveryRehearsal,
     resetWalletRecoveryRehearsal,
     type WalletRecoveryRehearsalMode,
     type WalletRecoveryRehearsalState,
-  } from '../../../../packages/browser/src/wallet-recovery-rehearsal';
+  } from '../../../../packages/browser/src/recovery/wallet-recovery-rehearsal';
   import {
     mergeWalletRecoveryCandidate,
     resolveWalletRecoveryContinuation,
     summarizeWalletRecoveryCandidates,
-  } from '../../../../packages/browser/src/wallet-recovery-choice';
+  } from '../../../../packages/browser/src/recovery/wallet-recovery-choice';
   import {
     WalletRecoveryDiscoveryCoordinator,
     type WalletRecoveryDiscoveryRequest,
-  } from '../../../../packages/browser/src/wallet-recovery-discovery';
+  } from '../../../../packages/browser/src/recovery/wallet-recovery-discovery';
   import {
     discoverCanonicalWalletRuntimeRecovery,
     executeCanonicalWalletRuntimeOpening,
   } from '../../stores/vault/walletRuntimeOpeningAdapter';
-  import { WalletNodeMnemonicRevealCoordinator } from '../../../../packages/browser/src/wallet-node-mnemonic-reveal';
+  import { WalletNodeMnemonicRevealCoordinator } from '../../../../packages/browser/src/identity/wallet-node-mnemonic-reveal';
   import {
     assertWalletNodeBrainVaultResult,
     nextWalletNodeShardTimeMs,
     resolveWalletNodeBrainVaultAccess,
     validateWalletNodeBrainVaultProgress,
-  } from '../../../../packages/browser/src/wallet-node-brainvault-validation';
+  } from '../../../../packages/browser/src/identity/wallet-node-brainvault-validation';
   import {
     decodeWalletBrainVaultWorkerMessage,
     normalizeWalletBrainVaultShardTimeSample,
     normalizeWalletBrainVaultWorkerError,
     type WalletBrainVaultShardCompleteMessage,
     validateWalletBrainVaultShardCompletion,
-  } from '../../../../packages/browser/src/wallet-brainvault-worker-validation';
+  } from '../../../../packages/browser/src/identity/wallet-brainvault-worker-validation';
   import {
     hasPendingWalletBrainVaultShardWork,
     resolveWalletBrainVaultShardDispatch,
     resolveWalletBrainVaultShardRetry,
     resolveWalletBrainVaultWorkerScale,
-  } from '../../../../packages/browser/src/wallet-brainvault-worker-scheduling';
+  } from '../../../../packages/browser/src/identity/wallet-brainvault-worker-scheduling';
   import {
     BRAINVAULT_WORKER_CAP_STORAGE_KEY,
     computeBrainVaultWorkerCap,
@@ -103,12 +103,12 @@
     resolveWalletBrainVaultShardWatchdog,
     resolveWalletBrainVaultWorkerInitRetry,
     walletBrainVaultWorkerInitFailureMessage,
-  } from '../../../../packages/browser/src/wallet-brainvault-worker-resilience';
+  } from '../../../../packages/browser/src/identity/wallet-brainvault-worker-resilience';
   import {
     resolveWalletBrainVaultFinalizationCommit,
     resolveWalletBrainVaultFinalizationShardOrder,
     resolveWalletBrainVaultFinalizationStart,
-  } from '../../../../packages/browser/src/wallet-brainvault-finalization';
+  } from '../../../../packages/browser/src/identity/wallet-brainvault-finalization';
   import {
     WALLET_AUTH_SCHEME_STORAGE_KEY,
     parseWalletBrainVaultWorkerCap,
@@ -117,7 +117,7 @@
     serializeWalletBrainVaultWorkerCap,
     type WalletAuthScheme,
     type WalletUnlockDurationChoice,
-  } from '../../../../packages/browser/src/wallet-runtime-preferences';
+  } from '../../../../packages/browser/src/runtime/wallet-runtime-preferences';
 
   // Props
   export let embedded: boolean = false;

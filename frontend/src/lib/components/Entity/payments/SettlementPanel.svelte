@@ -10,7 +10,7 @@
   import TokenSelect from '../../shared/TokenSelect.svelte';
   import ActivityHistoryPanel from './ActivityHistoryPanel.svelte';
   import { requireTokenDecimals } from '../token-metadata';
-  import { withdrawableCollateral } from '../../../../../packages/runtime-client/src/withdrawable-collateral';
+  import { withdrawableCollateral } from '../../../../../packages/runtime-client/src/payments/withdrawable-collateral';
 
   export let entityId: string;
   export let replica: EntityReplica | null = null;
