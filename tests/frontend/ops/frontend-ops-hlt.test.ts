@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'bun:test';
+import { readHltDashboardSnapshot } from '../../../core/qa/hlt/hlt-dashboard';
 
 import {
   buildOpsHltConfig,
@@ -24,6 +25,7 @@ const HLT_PAYLOAD = {
     paymentsTps: 149.3,
     swapsTps: 0,
     status: 'green',
+    engine: 'ts',
   }],
   payment: {
     deliveredTps: 149.276,
@@ -119,13 +121,65 @@ describe('React ops HLT control model', () => {
 });
 
 describe('React ops HLT evidence', () => {
+  test('decodes the canonical dashboard producer with the checked-in progress ledger', () => {
+    const evidence = readHltDashboardSnapshot();
+    const decoded = decodeHltDashboardPayload({ ...evidence, ok: true, snapshotError: null, run: HLT_PAYLOAD.run });
+    expect(evidence.ledger.length).toBeGreaterThan(0);
+    expect(decoded.ledger).toEqual(evidence.ledger);
+    expect(decoded.replay).toEqual(evidence.replay);
+    expect(decoded.swap).toEqual(evidence.swap);
+  });
   test('decodes authoritative payment, performance, ledger, and run evidence', () => {
     const snapshot = decodeHltDashboardPayload(HLT_PAYLOAD);
     expect(snapshot.payment?.deliveredTps).toBe(149.276);
     expect(snapshot.payment?.hubFrames).toBe(14);
     expect(snapshot.perf.rows[0]?.metric).toBe('runtime.process.total');
     expect(snapshot.ledger[0]?.status).toBe('green');
+    expect(snapshot.ledger[0]?.engine).toBe('ts');
     expect(opsHltVerdict(snapshot)).toEqual({ status: 'PASS', detail: 'Latest HLT evidence decoded and available' });
+  });
+
+
+  test('keeps both ledger engines and rejects absent or invalid engine evidence', () => {
+    const ledger = HLT_PAYLOAD.ledger.map((run) => ({ ...run, engine: 'rust' }));
+    expect(decodeHltDashboardPayload({ ...HLT_PAYLOAD, ledger }).ledger[0]?.engine).toBe('rust');
+    for (const engine of [undefined, null, 'other']) {
+      expect(() => decodeHltDashboardPayload({ ...HLT_PAYLOAD, ledger: ledger.map((run) => ({ ...run, engine })) }))
+        .toThrow('HLT_LEDGER_ENGINE_INVALID:0');
+    }
+  });
+
+  test('decodes current swap cards without requiring retired report counters', () => {
+    const swap = {
+      matchedTps: 20, fullySettledTps: 18, offeredSwapRate: 25, submitted: 50, matched: 40,
+      sourceDispatchP95Ms: 3, sourceDispatchMaxMs: 5, sourceAckMaxMs: 8,
+      matchedElapsedMs: 2000, fullySettledElapsedMs: 2200, users: 10, hubFrames: 4,
+    };
+    expect(decodeHltDashboardPayload({ ...HLT_PAYLOAD, swap }).swap).toEqual(swap);
+  });
+
+  test('preserves nullable replay engine and worker evidence and rejects malformed values', () => {
+    const trial = {
+      offeredTps: null, engine: 'rust', workers: 4, frames: 3, accountInputs: 12, accountTxs: 24,
+      outboxEnvelopes: 12, elapsedMs: 100, cpuMs: 80, accountInputTps: 120, accountTxTps: 240,
+      cpuAccountTxTps: 300, finalHeight: 3, finalPendingOutbox: 0, equivalent: true,
+    };
+    const payloadWithTrial = (row: Record<string, unknown>) => ({
+      ...HLT_PAYLOAD,
+      replay: { createdAt: 1000, recordingManifestHash: 'manifest', mode: 'max', trials: [row] },
+    });
+    for (const evidence of [{ engine: 'rust', workers: 4 }, { engine: 'ts', workers: 1 }, { engine: null, workers: null }]) {
+      const row = { ...trial, ...evidence };
+      expect(decodeHltDashboardPayload(payloadWithTrial(row)).replay?.trials[0]).toEqual(row);
+    }
+    for (const engine of [undefined, 'other', 1]) {
+      expect(() => decodeHltDashboardPayload(payloadWithTrial({ ...trial, engine })))
+        .toThrow('HLT_REPLAY_ENGINE_INVALID:0');
+    }
+    for (const workers of [undefined, 0, -1, 1.5, Infinity, '4']) {
+      expect(() => decodeHltDashboardPayload(payloadWithTrial({ ...trial, workers })))
+        .toThrow('HLT_REPLAY_WORKERS_INVALID:0');
+    }
   });
 
   test('keeps active and failed run authority visible', () => {

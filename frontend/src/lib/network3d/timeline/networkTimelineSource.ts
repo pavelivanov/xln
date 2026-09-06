@@ -329,7 +329,7 @@ export const graphFrameFromSnapshot = (
       epochMaxBytes: DEFAULT_EPOCH_MAX_BYTES,
       accountMerkleRadix: DEFAULT_ACCOUNT_MERKLE_RADIX,
       epochReplayBytes: 0,
-      retainedHistoryBytes: 0,
+      retainedWalBytes: 0,
     },
     runtimeId,
     height,

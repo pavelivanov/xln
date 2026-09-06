@@ -40,7 +40,6 @@ function SwapResult({ snapshot }: Readonly<{ snapshot: HltDashboardPayload }>) {
         <article><span>Settled TPS</span><strong>{formatTps(swap.fullySettledTps)}</strong></article>
         <article><span>Hub frames</span><strong>{swap.hubFrames}</strong></article>
         <article><span>Settled wall</span><strong>{formatMs(swap.fullySettledElapsedMs)}</strong></article>
-        <article><span>STP</span><strong data-testid="hlt-swap-stp">{swap.stp}</strong></article>
         <article><span>Source p95 / max</span><strong>{swap.sourceDispatchP95Ms} / {swap.sourceDispatchMaxMs}ms</strong></article>
       </div>
     </section>
