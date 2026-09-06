@@ -87,7 +87,7 @@ export function EntityWorkspaceConsensusPanel({
     <section className="entity-workspace-consensus" data-testid="settings-consensus-evidence">
       <header>
         <div>
-          <span>Remote consensus evidence</span>
+          <span>Consensus evidence</span>
           <strong>Committed board and Account heads</strong>
         </div>
         <b>Committed only</b>
@@ -98,7 +98,7 @@ export function EntityWorkspaceConsensusPanel({
         <AccountHeads evidence={evidence} />
       </div>
       <footer>
-        Validator-local proposals, votes, locks, and certificates are not exposed by this remote projection.
+        This view shows committed state. In-flight proposals, votes and locks are not included.
       </footer>
     </section>
   );

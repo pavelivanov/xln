@@ -13,6 +13,7 @@ export type RuntimeQueryResultSchema = {
   frameSummary: unknown;
   entities: unknown;
   viewFrame: unknown;
+  graphFrame: unknown;
   account: unknown;
   swapHistory: unknown;
   historyFrameBatch: unknown;
@@ -141,6 +142,10 @@ export class RuntimeQueryClient<
       'view-frame',
       query ?? this.dependencies.createEmptyQuery(),
     );
+  }
+
+  readGraphFrame(query?: Query): Promise<Results['graphFrame']> {
+    return this.cachedRead<Results['graphFrame']>('graph-frame', query ?? this.dependencies.createEmptyQuery());
   }
 
   readAccount(entityId: string, counterpartyId: string, query?: Query): Promise<Results['account']> {

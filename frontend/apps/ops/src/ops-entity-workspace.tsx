@@ -8,7 +8,8 @@ import {
 import { EntityWorkspaceShell } from '../../../packages/ui/src/entity-workspace-shell';
 import { EntityWorkspaceTimeMachine } from '../../../packages/ui/src/entity-workspace-time-machine';
 import { opsDisplayPreferencesSource } from './ops-display-preferences';
-import { opsEntityWorkspaceSource } from './ops-entity-workspace-runtime';
+import { opsEntityWorkspaceSource as defaultSource } from './ops-entity-workspace-runtime';
+import type { OpsEntityWorkspaceSource } from './ops-entity-workspace-source';
 
 const subscribeToHash = (onStoreChange: () => void): (() => void) => {
   window.addEventListener('hashchange', onStoreChange);
@@ -31,10 +32,15 @@ const replaceTimeMachineHash = (
 const errorMessage = (error: unknown): string =>
   error instanceof Error ? error.message : String(error || 'History read failed');
 
-export function OpsEntityWorkspaceView() {
+export function OpsEntityWorkspaceView({ source = defaultSource, panelHash }: Readonly<{
+  source?: OpsEntityWorkspaceSource;
+  panelHash?: string;
+}> = {}) {
+  const opsEntityWorkspaceSource = source;
   const appliedHistoryLink = useRef('');
   const [historyLinkIssue, setHistoryLinkIssue] = useState('');
-  const hash = useSyncExternalStore(subscribeToHash, readHash, () => '');
+  const locationHash = useSyncExternalStore(subscribeToHash, readHash, () => '');
+  const hash = panelHash ?? locationHash;
   const runtimeSnapshot = useSyncExternalStore(
     opsEntityWorkspaceSource.subscribe,
     opsEntityWorkspaceSource.getSnapshot,
@@ -76,13 +82,15 @@ export function OpsEntityWorkspaceView() {
     void opsEntityWorkspaceSource.selectHistoryHeight(link.height)
       .then((accepted) => {
         if (accepted && opsEntityWorkspaceSource.getSnapshot().timeMachine.mode === 'live') {
-          replaceTimeMachineHash(null);
+          if (panelHash === undefined) replaceTimeMachineHash(null);
         }
       })
       .catch((error: unknown) => setHistoryLinkIssue(errorMessage(error)));
   }, [
     displaySnapshot.preferences.showTimeMachine,
     hash,
+    opsEntityWorkspaceSource,
+    panelHash,
     runtimeSnapshot.context,
     runtimeSnapshot.readState.status,
   ]);
@@ -91,7 +99,7 @@ export function OpsEntityWorkspaceView() {
     setHistoryLinkIssue('');
     const accepted = await opsEntityWorkspaceSource.selectHistoryHeight(height);
     const snapshot = opsEntityWorkspaceSource.getSnapshot();
-    if (accepted && snapshot.context.status === 'selected') {
+    if (panelHash === undefined && accepted && snapshot.context.status === 'selected') {
       replaceTimeMachineHash(snapshot.timeMachine.mode === 'history' ? {
         entityId: snapshot.context.entityId,
         height: snapshot.timeMachine.selectedHeight,
@@ -104,7 +112,7 @@ export function OpsEntityWorkspaceView() {
   const returnLive = (): void => {
     setHistoryLinkIssue('');
     opsEntityWorkspaceSource.returnLive();
-    replaceTimeMachineHash(null);
+    if (panelHash === undefined) replaceTimeMachineHash(null);
   };
 
   const toggleTimeMachine = (show: boolean): void => {
@@ -114,7 +122,7 @@ export function OpsEntityWorkspaceView() {
     if (runtimeSnapshot.timeMachine.mode === 'history') {
       opsEntityWorkspaceSource.returnLive();
     }
-    replaceTimeMachineHash(null);
+    if (panelHash === undefined) replaceTimeMachineHash(null);
   };
   return (
     <>

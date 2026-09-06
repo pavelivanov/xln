@@ -18,6 +18,7 @@ export type WalletRecoveryFixture = Readonly<{
   runtimeHeight: number;
   towerUrl: string;
   rpcUrl: string;
+  readJurisdictionsJson: () => string;
   hubDiscovery: Readonly<{ backupFileContents: string; hubEntityId: string; towerUrl: string }>;
   external: Readonly<{
     recipient: string;
@@ -90,6 +91,7 @@ export const createWalletRecoveryFixture = async (
           name: jurisdictionName,
           chainId,
           ticker: 'SIM',
+          blockTimeMs: 1000,
           rpcs: [rpcUrl],
           contracts: { ...chainAdapter.addresses },
           entityProviderDeploymentBlock: chainAdapter.entityProviderDeploymentBlock,
@@ -251,6 +253,16 @@ export const createWalletRecoveryFixture = async (
     runtimeHeight: mnemonic.bundle.runtimeHeight,
     towerUrl,
     rpcUrl,
+    // Serve deployment evidence from the real restored fixture, including the
+    // same block timing that was committed by importJ. No synthetic addresses.
+    readJurisdictionsJson: () => serialization.safeStringify({ version: '1', jurisdictions: Object.fromEntries(
+      [...mnemonic.env.state.jReplicas].map(([name, machine]) => [name, {
+        name, primary: true, status: 'active', chainId: machine.chainId,
+        rpc: rpcUrl, blockTimeMs: machine.blockTimeMs,
+        entityProviderDeploymentBlock: machine.entityProviderDeploymentBlock,
+        contracts: machine.contracts,
+      }]),
+    ) }),
     hubDiscovery: { hubEntityId: hub.entityId, towerUrl: `http://127.0.0.1:${hubTower.server.port}`,
       backupFileContents: serialization.serializeTaggedJson({ version: 1, bundles: [hubEncrypted] }) },
     external: {

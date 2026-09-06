@@ -11,6 +11,12 @@
 .workspace-diagnostics-frames code { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--amber-soft); }
 .workspace-diagnostics-frames time, .workspace-diagnostics-frames span { color: #aaa9a1; }
 .workspace-diagnostics-content summary { cursor: pointer; font-size: .85rem; }
+.workspace-security-incidents { display: grid; gap: .5rem; }
+.workspace-security-incidents article { padding: .8rem; border: 1px solid var(--line); border-radius: 5px; overflow-wrap: anywhere; }
+.workspace-security-incidents article.is-active { border-color: #8a3846; background: #1b1015; }
+.workspace-security-incidents header { display: flex; justify-content: space-between; gap: .5rem; padding: 0; }
+.workspace-security-incidents p { margin: .6rem 0; }
+.workspace-security-incidents small { color: #aaa9a1; }
 .workspace-diagnostics-content pre { max-height: 360px; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; padding: 1rem; background: #090a0c; border: 1px solid var(--line); font: .75rem/1.6 ui-monospace, monospace; }
 @media (max-width: 760px) {
   .workspace-diagnostics-frames article { grid-template-columns: minmax(0, 1fr) auto; }

@@ -1,4 +1,4 @@
-import { useSyncExternalStore } from 'react';
+import { createContext, useContext, useSyncExternalStore } from 'react';
 
 import { resolveWalletAppRoute, type WalletAppRoute } from './wallet-navigation-model';
 
@@ -21,6 +21,9 @@ export const navigateWallet = (href: string): void => {
   window.dispatchEvent(new Event(navigationEvent));
   window.scrollTo({ top: 0, behavior: 'auto' });
 };
+
+export const WalletNavigationScope = createContext(navigateWallet);
+export const useWalletNavigation = (): typeof navigateWallet => useContext(WalletNavigationScope);
 
 export const useWalletRoute = (): WalletAppRoute => {
   // A primitive snapshot stays referentially stable between navigation events.

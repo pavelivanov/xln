@@ -15,7 +15,7 @@
     buildCommandPaletteViewFromRuntimeView,
     emptyCommandPaletteView,
     type CommandPaletteView,
-  } from '$lib/components/shared/command-palette-view';
+  } from '../../../packages/ui/src/command-palette-view';
   import PaymentSpotlight from '$lib/components/PaymentSpotlight.svelte';
   import { errorLog } from '$lib/stores/errorLogStore';
   import { panelBridge } from './utils/panelBridge';

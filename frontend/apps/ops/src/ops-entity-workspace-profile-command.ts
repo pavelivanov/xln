@@ -40,6 +40,7 @@ export class OpsEntityWorkspaceProfileCommand {
     if (this.dependencies.isHistoryActive()) throw new Error('OPS_ENTITY_PROFILE_LIVE_MODE_REQUIRED');
     const adapter = this.dependencies.readAdapter();
     if (!adapter) throw new Error('OPS_ENTITY_PROFILE_RUNTIME_REQUIRED');
+    const generation = this.dependencies.readGeneration();
     const expected = normalizeEntityWorkspaceProfileDraft(draft);
     const input = buildEntityWorkspaceProfileUpdateInput({
       entityId: context.entityId,
@@ -47,20 +48,27 @@ export class OpsEntityWorkspaceProfileCommand {
     }, expected);
     this.inFlight = true;
     try {
+      const { assertCanonicalOpsOwner } = await import('../../../bridges/ops-canonical-owner');
+      assertCanonicalOpsOwner(adapter.runtimeId);
       // The projection proves what may be edited; only the authenticated owner
       // lane authorizes mutation. Admin read authority is never sufficient.
       await adapter.ensureOwnerCommandLane();
       if (adapter.commandLaneKind !== 'owner') {
         throw new Error(`OPS_ENTITY_PROFILE_OWNER_LANE_REQUIRED:${adapter.runtimeId}`);
       }
+      // A cached authenticated lane is not an unexpired vault lease. Check
+      // again after the asynchronous handshake, immediately before sending.
+      assertCanonicalOpsOwner(adapter.runtimeId);
+      if (adapter !== this.dependencies.readAdapter() || generation !== this.dependencies.readGeneration()
+        || context.entityId !== this.dependencies.readSnapshot().context.entityId) throw new Error('OPS_ENTITY_PROFILE_SESSION_CHANGED');
+      if (this.dependencies.isHistoryActive()) throw new Error('OPS_ENTITY_PROFILE_LIVE_MODE_REQUIRED');
       const commandSequence = adapter.nextCommandSequence;
-      if (!Number.isSafeInteger(commandSequence) || Number(commandSequence) <= 0) {
-        throw new Error('OPS_ENTITY_PROFILE_COMMAND_SEQUENCE_REQUIRED');
-      }
-      const accepted = await adapter.send(input, {
-        commandId: createRuntimeCommandId(),
-        commandSequence: Number(commandSequence),
-      });
+      if (adapter.mode === 'remote' && (!Number.isSafeInteger(commandSequence) || Number(commandSequence) <= 0)) throw new Error('OPS_ENTITY_PROFILE_COMMAND_SEQUENCE_REQUIRED');
+      // The remote command lane owns its wire sequence. Embedded admission is
+      // direct to the already-owned Runtime and has no transport sequence.
+      const accepted = adapter.mode === 'remote'
+        ? await adapter.send(input, { commandId: createRuntimeCommandId(), commandSequence: Number(commandSequence) })
+        : await adapter.send(input);
       await this.waitForCommit(context.entityId, expected, accepted.height + 1);
     } finally {
       this.inFlight = false;

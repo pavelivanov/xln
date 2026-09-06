@@ -16,6 +16,12 @@ export type RuntimeDiagnosticsIncident = Readonly<{
 
 export type RuntimeDiagnosticsTimelineFrame = RuntimeAdapterTimelineIndexPage['entries'][number];
 
+export const snapshotRuntimeDiagnosticsIncidents = (incidents: Iterable<RuntimeDiagnosticsIncident>): readonly RuntimeDiagnosticsIncident[] =>
+  [...incidents].map(incident => ({
+    id: incident.id, code: incident.code, status: incident.status, summary: incident.summary,
+    entityId: incident.entityId, lastSeenAt: incident.lastSeenAt, occurrences: incident.occurrences,
+  }));
+
 export const sortRuntimeDiagnosticsIncidents = <T extends RuntimeDiagnosticsIncident>(
   incidents: Iterable<T>,
 ): T[] => [...incidents]

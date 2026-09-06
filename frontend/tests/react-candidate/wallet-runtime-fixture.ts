@@ -38,6 +38,8 @@ const auth = await import('../../../core/api/runtime-adapter/security/auth');
 const rpc = await import('../../../core/api/server/network/rpc-ws');
 const loopEnvironment = await import('../../../core/runtime/loop/loop-environment');
 const relay = await import('../../../core/network/relay/standalone-server');
+const { createAssistantProxyFromEnv } = await import('../../../core/api/server/assistant/proxy');
+const assistantProxy = createAssistantProxyFromEnv();
 const scenario = await import('../../../core/scenarios/harness/boot');
 const { createJAdapter } = await import('../../../core/jurisdiction/adapter/kernel/factory');
 
@@ -254,8 +256,13 @@ server = Bun.serve<FixtureSocketData>({
   port,
   async fetch(request, bunServer) {
     const url = new URL(request.url);
-    const apiHeaders = { 'access-control-allow-origin': '*', 'access-control-allow-methods': 'GET, POST, OPTIONS', 'access-control-allow-headers': 'content-type', 'content-type': 'application/json' };
+    const assistantResponse = await assistantProxy.handle(request, url.pathname, '127.0.0.1');
+    if (assistantResponse) return assistantResponse;
+    const apiHeaders = { 'access-control-allow-origin': '*', 'access-control-allow-methods': 'GET, POST, OPTIONS', 'access-control-allow-headers': 'content-type, cache-control, pragma', 'content-type': 'application/json' };
     if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: apiHeaders });
+    if (url.pathname === '/api/jurisdictions') return new Response(recoveryFixture.readJurisdictionsJson(), {
+      headers: { 'content-type': 'application/json', 'access-control-allow-origin': '*', 'cache-control': 'no-store' },
+    });
     if (url.pathname === '/api/lending/state') {
       const { handleLendingStateRequest } = await import('../../../core/api/server/entities/lending');
       const requestedHub = url.searchParams.get('hubEntityId');
@@ -338,7 +345,7 @@ server = Bun.serve<FixtureSocketData>({
       }, { headers: { 'access-control-allow-origin': '*' } });
     }
     if (url.pathname === '/connections') return Response.json({ active: activeRpcSockets.size });
-    return new Response('not found', { status: 404 });
+    return Response.json({ error: 'NOT_FOUND' }, { status: 404 });
   },
   websocket: {
     open(socket: ServerWebSocket<FixtureSocketData>) {

@@ -15,6 +15,11 @@ test('four retained Account routes resolve to real tool destinations', () => {
   for (const tab of ['configure', 'move', 'lending', 'history']) expect(resolveWalletAppRoute('', `#accounts/${tab}`)).toEqual({ view: 'account-tools', tab });
 });
 
+test('retained Ownership and Consensus deep links resolve to Entity evidence', () => {
+  expect(resolveWalletAppRoute('', '#ownership')).toEqual({ view: 'entity-tools', tab: 'ownership' });
+  expect(resolveWalletAppRoute('', '#settings/consensus')).toEqual({ view: 'entity-tools', tab: 'consensus' });
+});
+
 test('tool selections preserve independent ownership and reset at Entity and Runtime boundaries', () => {
   const selection = new WalletWorkspaceSelection();
   selection.bindRuntime('runtime'); selection.observeEntity('runtime', owner, true); selection.focusAccount('runtime', owner, peer);

@@ -26,6 +26,7 @@ type GatewayProxyOwners = Readonly<Partial<Record<SurfaceId, SurfaceId>>>;
 export type DevelopmentGatewayOptions = Readonly<{
   targets: GatewayTargets;
   proxyOwners?: GatewayProxyOwners;
+  edgeWebSocketTarget?: string;
 }>;
 
 export const resolveDevelopmentProxyOwner = (
@@ -103,7 +104,7 @@ const forwardWebSocketUpgrade = (
   socket.once('error', (error) => upstreamSocket.destroy(error));
 };
 
-export const createDevelopmentGateway = ({ targets, proxyOwners = {} }: DevelopmentGatewayOptions) => {
+export const createDevelopmentGateway = ({ targets, proxyOwners = {}, edgeWebSocketTarget = targets.edge }: DevelopmentGatewayOptions) => {
   const proxy = createProxyServer({ xfwd: true, changeOrigin: false });
   const server = createServer((request: IncomingMessage, response: ServerResponse) => {
     const rawUrl = request.url ?? '/';
@@ -148,7 +149,7 @@ export const createDevelopmentGateway = ({ targets, proxyOwners = {} }: Developm
     const proxyOwner = resolveDevelopmentProxyOwner(decision.owner, proxyOwners);
     const routedDecision = proxyOwner === decision.owner ? decision : { ...decision, owner: proxyOwner };
     request.url = rewriteDevelopmentGatewayUrl(rawUrl, routedDecision);
-    forwardWebSocketUpgrade(request, socket, head, targets[proxyOwner]);
+    forwardWebSocketUpgrade(request, socket, head, proxyOwner === 'edge' ? edgeWebSocketTarget : targets[proxyOwner]);
   });
 
   server.on('clientError', (error: Error, socket: Socket) => {
@@ -186,6 +187,7 @@ const run = (): void => {
   }
   const server = createDevelopmentGateway({
     targets,
+    ...(process.env['XLN_REACT_EDGE_WEBSOCKET_TARGET'] ? { edgeWebSocketTarget: process.env['XLN_REACT_EDGE_WEBSOCKET_TARGET'] } : {}),
     proxyOwners: {
       ...(docsProxyOwner === undefined ? {} : { docs: docsProxyOwner }),
       ...(walletProxyOwner === undefined ? {} : { wallet: walletProxyOwner }),

@@ -25,7 +25,7 @@ export type WalletEmbeddedRuntimeSessionDependencies<Adapter> = Readonly<{
 export type WalletEmbeddedRuntimeSession<Adapter> = Readonly<{
   getSnapshot: () => WalletEmbeddedRuntimeSessionSnapshot;
   subscribe: (listener: () => void) => () => void;
-  start: () => Promise<Adapter>;
+  start: (boot?: () => Promise<WalletEmbeddedRuntimeResource<Adapter>>) => Promise<Adapter>;
   replace: (boot: () => Promise<WalletEmbeddedRuntimeResource<Adapter>>) => Promise<Adapter>;
   stop: () => Promise<void>;
   requireAdapter: () => Adapter;
@@ -99,13 +99,13 @@ export const createWalletEmbeddedRuntimeSession = <Adapter>(
     return next.adapter;
   };
 
-  const startAttempt = async (): Promise<Adapter> => {
+  const startAttempt = async (boot: () => Promise<WalletEmbeddedRuntimeResource<Adapter>>): Promise<Adapter> => {
     const ownedGeneration = ++generation;
     publish({ status: 'booting', runtimeId: '', height: 0, message: 'Starting local Runtime…' });
     try {
       releaseLock = await dependencies.acquireLock(() => handleLockLoss(ownedGeneration));
       if (ownedGeneration !== generation) throw new Error('EMBEDDED_RUNTIME_BOOT_CANCELLED');
-      const next = await dependencies.boot();
+      const next = await boot();
       if (ownedGeneration === generation) return installResource(next, ownedGeneration);
       await next.stop();
       throw new Error('EMBEDDED_RUNTIME_BOOT_CANCELLED');
@@ -119,9 +119,12 @@ export const createWalletEmbeddedRuntimeSession = <Adapter>(
     }
   };
 
-  const start = async (): Promise<Adapter> => {
+  const start = async (boot?: () => Promise<WalletEmbeddedRuntimeResource<Adapter>>): Promise<Adapter> => {
+    // Explicit owner unlock may supply the canonical vault boot after a locked
+    // boot failed. It still acquires the same tab lease and cancellation fence.
+    if (boot && (resource || startInFlight)) throw new Error('EMBEDDED_RUNTIME_START_OVERRIDE_REQUIRES_IDLE');
     if (resource) return resource.adapter;
-    if (!startInFlight) startInFlight = startAttempt();
+    if (!startInFlight) startInFlight = startAttempt(boot ?? dependencies.boot);
     try {
       return await startInFlight;
     } finally {

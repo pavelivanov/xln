@@ -9,6 +9,7 @@ import {
   type OpsEntityWorkspaceSourceSnapshot,
 } from './ops-entity-workspace-projection';
 import { RuntimeQueryObserver } from '../../../packages/runtime-client/src/runtime-query-observer';
+import { projectRecordedEntity, type OpsWorkspaceRecording } from './workspace/ops-recorded-entity';
 import {
   buildEntityWorkspaceActivityQuery,
   type EntityWorkspaceActivityFilterType,
@@ -30,7 +31,7 @@ import {
   type OpsWorkspaceReader,
 } from './workspace/ops-workspace-query';
 
-type RuntimeReadSession = Readonly<{
+export type RuntimeReadSession = Readonly<{
   adapter: RuntimeAdapter;
   release: () => void;
 }>;
@@ -80,38 +81,33 @@ export const requireOpsEntityRemoteSession = (
 export const openOpsEntityRuntimeReadSession = async (
   snapshot: RuntimeAdapterStorageSnapshot,
 ): Promise<RuntimeReadSession> => {
+  if (snapshot.mode === 'embedded') {
+    const { startBrowserRuntime } = await import('../../../bridges/browser-runtime-session');
+    return { adapter: await startBrowserRuntime(), release: () => {} };
+  }
   const config = requireOpsEntityRemoteSession(snapshot);
   await import('../../../../core/support/process/runtime-process.ts');
-  const [{ RemoteRuntimeAdapter }, owner] = await Promise.all([
-    import('../../../../core/api/runtime-adapter/remote.ts'),
+  const [canonical, owner] = await Promise.all([
+    import('../../../bridges/ops-canonical-owner'),
     import('./ops-entity-workspace-owner'),
   ]);
-  const adapter = new RemoteRuntimeAdapter();
-  try {
-    await adapter.connect({
-      mode: 'remote',
-      ...config,
-      ownerBindingSigner: owner.signOpsEntityWorkspaceOwnerBinding,
-    });
-  } catch (error: unknown) {
-    adapter.disconnect();
-    throw error;
-  }
-  return { adapter, release: () => adapter.disconnect() };
+  return canonical.openCanonicalOpsRemoteSession({
+    mode: 'remote', ...config, ownerBindingSigner: owner.signOpsEntityWorkspaceOwnerBinding,
+  });
 };
 
 const unavailableSnapshot = (): OpsEntityWorkspaceSourceSnapshot => ({
   ...emptyOpsEntityWorkspaceProjection(),
   readState: {
     status: 'unavailable',
-    message: 'Select a remote Runtime in the wallet before opening this candidate workspace.',
+    message: 'Select a local or remote Runtime to open the workspace.',
   },
   timeMachine: createEntityWorkspaceLiveState(0),
 });
 
 export const initialOpsEntityWorkspaceSnapshot = (
   config: RuntimeAdapterStorageSnapshot,
-): OpsEntityWorkspaceSourceSnapshot => config.mode === 'remote'
+): OpsEntityWorkspaceSourceSnapshot => config.mode === 'remote' || config.mode === 'embedded'
   ? {
       ...emptyOpsEntityWorkspaceProjection(),
       readState: { status: 'connecting', message: 'Connecting to the selected Runtime…' },
@@ -133,12 +129,15 @@ export class OpsEntityWorkspaceSource {
   private generation = 0;
   private accountsPage = 0;
   private started = false;
+  private recording: OpsWorkspaceRecording | null = null;
+  private recordingRequest = 0;
 
   constructor(
-    private readonly config: RuntimeAdapterStorageSnapshot,
+    private config: RuntimeAdapterStorageSnapshot,
     private readonly dependencies: OpsEntityWorkspaceSourceDependencies = {
       openSession: openOpsEntityRuntimeReadSession,
     },
+    private readonly entityId?: string,
   ) {
     this.snapshot = initialOpsEntityWorkspaceSnapshot(config);
     this.historyController = new OpsEntityWorkspaceHistoryController({
@@ -154,12 +153,12 @@ export class OpsEntityWorkspaceSource {
       refreshLive: () => { void this.observer?.refresh(); },
     });
     this.activityController = new OpsEntityWorkspaceActivityController({
-      isHistoryActive: () => this.historyController.isActive(),
-      refreshHistory: () => this.historyController.reload(),
+      isHistoryActive: () => this.recording !== null || this.historyController.isActive(),
+      refreshHistory: () => { if (this.recording) this.refreshRecorded(); else this.historyController.reload(); },
       refreshLive: () => { void this.observer?.refresh(); },
     });
     this.profileCommand = new OpsEntityWorkspaceProfileCommand({
-      isHistoryActive: () => this.historyController.isActive(),
+      isHistoryActive: () => this.recording !== null || this.historyController.isActive(),
       readAdapter: () => this.session?.adapter ?? null,
       readGeneration: () => this.generation,
       readSnapshot: () => this.snapshot,
@@ -169,8 +168,56 @@ export class OpsEntityWorkspaceSource {
   }
 
   readonly getSnapshot = (): OpsEntityWorkspaceSourceSnapshot => this.snapshot;
+  readonly getRecording = (): OpsWorkspaceRecording | null => this.recording;
+
+  readonly setRecording = (recording: OpsWorkspaceRecording | null): void => {
+    this.recordingRequest += 1;
+    this.historyController.reset();
+    this.recording = recording;
+    this.accountsPage = 0;
+    this.activityController.resetPage();
+    if (recording) void this.refreshRecorded();
+    else { this.publish(initialOpsEntityWorkspaceSnapshot(this.config)); void this.refresh(); }
+  };
+
+  private async refreshRecorded(): Promise<void> {
+    const recording = this.recording;
+    if (!recording) return;
+    const request = ++this.recordingRequest;
+    const latestHeight = recording.history.reduce((height, frame) => Math.max(height, frame.state.height), Math.max(recording.height, this.session?.adapter.currentHeight ?? 0));
+    const timeMachine = { mode: 'history' as const, latestHeight, selectedHeight: recording.height, loading: false, error: null };
+    try {
+      const append = this.activityController.readAppendBeforeHeight();
+      const options = this.activityController.readQueryOptions();
+      let projection: OpsEntityWorkspaceProjection;
+      if (recording.kind === 'adapter') {
+        const client = this.queryClient;
+        if (!client || this.session?.adapter.runtimeId !== recording.runtimeId) throw new Error('OPS_RECORDED_RUNTIME_NOT_CONNECTED');
+        const selectedId = this.entityId ?? this.snapshot.context.entityId;
+        const previousActivity = this.snapshot.activity;
+        this.publish({ ...emptyOpsEntityWorkspaceProjection(recording.runtimeId), timeMachine: { ...timeMachine, loading: true }, readState: { status: 'loading', message: 'Reading the selected recorded Entity…' } });
+        const frame = await client.readViewFrame({ ...(selectedId ? { entityId: selectedId } : {}), atHeight: recording.height, accountsLimit: 8, accountsPage: this.accountsPage, booksLimit: 1 });
+        projection = await readEntityWorkspaceProjection(client, recording.runtimeId, frame, options, previousActivity, append !== null);
+      } else projection = projectRecordedEntity(recording, this.entityId, this.accountsPage, options, this.snapshot, append !== null);
+      if (request !== this.recordingRequest || recording !== this.recording) return;
+      if (append !== null) this.activityController.completeAppend(append);
+      this.publish({ ...projection, readState: { status: 'ready', message: '' }, timeMachine });
+    } catch (cause) {
+      if (request !== this.recordingRequest || recording !== this.recording) return;
+      this.publish({ ...emptyOpsEntityWorkspaceProjection(recording.runtimeId), timeMachine,
+        readState: { status: recording.kind === 'trail' ? 'unavailable' : 'error', message: cause instanceof Error ? cause.message : String(cause) } });
+    }
+  }
+
+  readonly configure = (config: RuntimeAdapterStorageSnapshot): void => {
+    this.stop();
+    this.config = config;
+    this.publish(initialOpsEntityWorkspaceSnapshot(config));
+  };
 
   readonly getPanelClient = (): OpsWorkspaceQueryClient | null => this.queryClient;
+
+  readonly getAdapter = (): RuntimeAdapter | null => this.session?.adapter ?? null;
 
   readonly observePanelQuery = <T>(reader: OpsWorkspaceReader<T>) => {
     if (!this.session || !this.queryClient) throw new Error('OPS_WORKSPACE_SESSION_UNAVAILABLE');
@@ -189,7 +236,8 @@ export class OpsEntityWorkspaceSource {
   };
 
   readonly start = async (): Promise<void> => {
-    if (this.started || this.config.mode !== 'remote') return;
+    if (this.recording && this.recording.kind !== 'adapter') { await this.refreshRecorded(); return; }
+    if (this.started || (this.config.mode !== 'remote' && this.config.mode !== 'embedded')) return;
     this.started = true;
     const generation = ++this.generation;
     this.publish({
@@ -205,6 +253,7 @@ export class OpsEntityWorkspaceSource {
       }
       this.session = session;
       this.installObserver(session.adapter);
+      if (this.recording) await this.refreshRecorded();
     } catch (error: unknown) {
       if (!this.isCurrent(generation)) return;
       this.started = false;
@@ -220,7 +269,10 @@ export class OpsEntityWorkspaceSource {
     }
   };
 
-  readonly refresh = (): Promise<void> => this.observer?.refresh() ?? this.start();
+  readonly refresh = (): Promise<void> => {
+    if (this.recording) return this.refreshRecorded();
+    return this.observer?.refresh() ?? this.start();
+  };
 
   readonly verifyChain = async (client: OpsWorkspaceQueryClient, signal: AbortSignal): Promise<unknown> => {
     signal.throwIfAborted();
@@ -243,7 +295,9 @@ export class OpsEntityWorkspaceSource {
     }
     if (page === this.accountsPage) return;
     this.accountsPage = page;
-    if (this.historyController.isActive()) {
+    if (this.recording) {
+      this.refreshRecorded();
+    } else if (this.historyController.isActive()) {
       this.historyController.reload();
     } else {
       void this.observer?.refresh();
@@ -302,15 +356,18 @@ export class OpsEntityWorkspaceSource {
 
   readonly selectHistoryHeight = (height: number): Promise<boolean> => {
     this.activityController.resetPage();
+    if (this.recording) return this.recording.selectHeight(height);
     return this.historyController.select(height);
   };
 
   readonly returnLive = (): void => {
+    if (this.recording) { this.recording.returnLive(); return; }
     this.activityController.resetPage();
     this.historyController.returnLive();
   };
 
   readonly stop = (): void => {
+    this.recordingRequest += 1;
     this.started = false;
     this.accountsPage = 0;
     this.activityController.reset();
@@ -331,6 +388,7 @@ export class OpsEntityWorkspaceSource {
     const observer = new RuntimeQueryObserver(
       async () => {
         const frame = await client.readViewFrame({
+          ...(this.entityId ? { entityId: this.entityId } : {}),
           accountsLimit: 8,
           accountsPage: this.accountsPage,
           booksLimit: 1,
@@ -358,6 +416,7 @@ export class OpsEntityWorkspaceSource {
   }
 
   private readonly syncObserver = (): void => {
+    if (this.recording) return;
     const observer = this.observer;
     const adapter = this.session?.adapter;
     if (!observer || !adapter) return;

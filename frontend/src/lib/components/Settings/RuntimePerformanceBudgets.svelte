@@ -1,67 +1,31 @@
 <script lang="ts">
   import type { Writable } from 'svelte/store';
   import type { RuntimeReplica } from '@xln/core/runtime/types';
-
-  const MIB = 1024 ** 2;
+  import { buildPerformancePolicy, readPerformancePolicyFields } from '../../../../packages/runtime-client/src/operator-policy-settings';
   export let runtimeFrameEnv: Writable<RuntimeReplica | null>;
-
-  let loadedRuntimeId = '';
-  let cloneMiB = '';
-  let cloneMs = '';
-  let reducerMs = '';
-  let walMs = '';
-  let status = '';
-  let error = '';
-
-  const display = (value: number | undefined, divisor = 1): string =>
-    value === undefined ? '' : String(Number((value / divisor).toFixed(3)));
-
+  let loadedRuntimeId = '', cloneMiB = '', cloneMs = '', reducerMs = '', walMs = '';
+  let status = '', error = '';
   const loadRuntime = (env: RuntimeReplica | null): void => {
     const runtimeId = String(env?.runtimeId || env?.dbNamespace || '');
     if (!env || runtimeId === loadedRuntimeId) return;
     loadedRuntimeId = runtimeId;
-    const budget = env.runtimeConfig?.performance;
-    cloneMiB = display(budget?.maxCloneBytes, MIB);
-    cloneMs = display(budget?.maxCloneMs);
-    reducerMs = display(budget?.maxReducerMs);
-    walMs = display(budget?.maxWalMs);
-    status = '';
-    error = '';
+    ({ cloneMiB, cloneMs, reducerMs, walMs } = readPerformancePolicyFields(env.runtimeConfig?.performance));
+    status = ''; error = '';
   };
-
-  const parse = (raw: string, label: string, multiplier = 1): number | undefined => {
-    const value = raw.trim();
-    if (!value) return undefined;
-    const parsed = Number(value) * multiplier;
-    if (!Number.isFinite(parsed) || parsed <= 0 || parsed > Number.MAX_SAFE_INTEGER) {
-      throw new Error(`${label} must be a positive finite number`);
-    }
-    return parsed;
-  };
-
   function saveBudgets(): void {
     try {
-      const next = {
-        maxCloneBytes: parse(cloneMiB, 'Clone budget', MIB),
-        maxCloneMs: parse(cloneMs, 'Clone latency budget'),
-        maxReducerMs: parse(reducerMs, 'Reducer latency budget'),
-        maxWalMs: parse(walMs, 'WAL latency budget'),
-      };
+      const performance = buildPerformancePolicy({ cloneMiB, cloneMs, reducerMs, walMs });
       runtimeFrameEnv.update(env => {
         if (!env) throw new Error('No Runtime is selected');
-        env.runtimeConfig.performance = Object.fromEntries(
-          Object.entries(next).filter((entry): entry is [string, number] => entry[1] !== undefined),
-        );
+        env.runtimeConfig = { ...env.runtimeConfig, performance };
         return env;
       });
       error = '';
       status = 'Performance budgets saved. Blank metrics remain observation-only.';
     } catch (cause) {
-      status = '';
-      error = cause instanceof Error ? cause.message : String(cause);
+      status = ''; error = cause instanceof Error ? cause.message : String(cause);
     }
   }
-
   $: loadRuntime($runtimeFrameEnv);
 </script>
 

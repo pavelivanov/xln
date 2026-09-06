@@ -1381,6 +1381,42 @@ export function shutdownRuntimeResumeListener(): void {
 }
 
 // Runtime operations
+// Shared vault authority lifecycle. Remote workspace hosts unlock the same
+// protected secrets without restoring a second local Runtime for that owner.
+export const unlockVaultRuntimeSecrets = async (
+  runtimeId: string,
+  seed: string,
+  durationMs: VaultUnlockDurationMs = DEFAULT_VAULT_UNLOCK_DURATION_MS,
+): Promise<string> => {
+  const normalizedRuntimeId = normalizeRuntimeId(runtimeId);
+  if (!normalizedRuntimeId) throw new Error('Invalid runtimeId');
+  const resolved = findRuntimeByIdCaseInsensitive(get(runtimesState).runtimes, normalizedRuntimeId);
+  if (!resolved) throw new Error(`Runtime not found: ${normalizedRuntimeId}`);
+  if (normalizeRuntimeId(deriveAddress(seed, 0)) !== normalizedRuntimeId) {
+    throw new Error('RUNTIME_UNLOCK_SEED_MISMATCH');
+  }
+  const previousSeed = resolved.runtime.seed;
+  resolved.runtime.seed = seed;
+  try {
+    await installVaultRuntimeCommandJournalKeys(normalizedRuntimeId, seed);
+    await protectRuntimeForDevice(resolved.runtime, durationMs, persistVaultStateOrThrow);
+  } catch (error) {
+    resolved.runtime.seed = previousSeed;
+    if (previousSeed) {
+      try {
+        await installVaultRuntimeCommandJournalKeys(normalizedRuntimeId, previousSeed);
+      } catch (restoreError) {
+        lockRuntimeCommandJournal(normalizedRuntimeId);
+        throw new AggregateError([error, restoreError], 'RUNTIME_COMMAND_JOURNAL_KEY_ROLLBACK_FAILED');
+      }
+    } else {
+      lockRuntimeCommandJournal(normalizedRuntimeId);
+    }
+    throw error;
+  }
+  return normalizedRuntimeId;
+};
+
 export const vaultOperations = {
   assertRuntimeAuthority(runtimeId?: string | null): void {
     const normalizedRuntimeId = normalizeRuntimeId(runtimeId || get(activeRuntimeId));
@@ -2265,32 +2301,7 @@ export const vaultOperations = {
     seed: string,
     durationMs: VaultUnlockDurationMs = DEFAULT_VAULT_UNLOCK_DURATION_MS,
   ): Promise<void> {
-    const normalizedRuntimeId = normalizeRuntimeId(runtimeId);
-    if (!normalizedRuntimeId) throw new Error('Invalid runtimeId');
-    const resolved = findRuntimeByIdCaseInsensitive(get(runtimesState).runtimes, normalizedRuntimeId);
-    if (!resolved) throw new Error(`Runtime not found: ${normalizedRuntimeId}`);
-    if (normalizeRuntimeId(deriveAddress(seed, 0)) !== normalizedRuntimeId) {
-      throw new Error('RUNTIME_UNLOCK_SEED_MISMATCH');
-    }
-    const previousSeed = resolved.runtime.seed;
-    resolved.runtime.seed = seed;
-    try {
-      await installVaultRuntimeCommandJournalKeys(normalizedRuntimeId, seed);
-      await protectRuntimeForDevice(resolved.runtime, durationMs, persistVaultStateOrThrow);
-    } catch (error) {
-      resolved.runtime.seed = previousSeed;
-      if (previousSeed) {
-        try {
-          await installVaultRuntimeCommandJournalKeys(normalizedRuntimeId, previousSeed);
-        } catch (restoreError) {
-          lockRuntimeCommandJournal(normalizedRuntimeId);
-          throw new AggregateError([error, restoreError], 'RUNTIME_COMMAND_JOURNAL_KEY_ROLLBACK_FAILED');
-        }
-      } else {
-        lockRuntimeCommandJournal(normalizedRuntimeId);
-      }
-      throw error;
-    }
+    const normalizedRuntimeId = await unlockVaultRuntimeSecrets(runtimeId, seed, durationMs);
     await this.selectRuntime(normalizedRuntimeId);
     if (get(runtimes).get(normalizedRuntimeId)?.type === 'remote') {
       await resumeRemoteRuntimeCommandIntents(normalizedRuntimeId);

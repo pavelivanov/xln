@@ -9,6 +9,7 @@ import type {
   RuntimeAdapterViewFrame,
 } from '@xln/core/api/public/runtime-module';
 import type { Graph3dViewportCanonicity } from '../../../packages/runtime-client/src/graph3d-viewport-view';
+import { validateAccountDeltas } from '@xln/core/account/validation/delta-validation';
 
 export type RuntimeGraphAdapterKind = 'browser' | 'remote';
 export type RuntimeGraphCanonicity = Graph3dViewportCanonicity;
@@ -183,7 +184,7 @@ const projectGraphAccountView = (account: unknown): RuntimeGraphAccountView => {
     ? undefined
     : record(envelope['pendingFrame'], 'RUNTIME_GRAPH_ACCOUNT_FRAME_INVALID');
   return {
-    state: { leftEntity, rightEntity, deltas: new Map(deltas) },
+    state: { leftEntity, rightEntity, deltas: validateAccountDeltas(new Map(deltas), 'Runtime graph') },
     ...('status' in envelope ? { status: envelope['status'] } : {}),
     mempool: Array.isArray(envelope['mempool']) ? envelope['mempool'] : [],
     ...(currentFrame ? { currentFrame: { ...currentFrame, height: integer(currentFrame['height']) } } : {}),
@@ -328,7 +329,14 @@ export const projectRuntimeEnv = (env: RuntimeGraphEnvFrame, options: Projection
   }
   const nodes = Array.from(selected.values()).sort((left, right) => left.entityId.localeCompare(right.entityId));
   const accounts = nodes.flatMap((node) => Array.from(node.replica?.state?.accounts?.entries?.() ?? [])
-    .map(([counterpartyId, account]) => accountState(source, node, counterpartyId, account)));
+    .map(([counterpartyId, account]) => accountState(source, node, counterpartyId, {
+      ...account,
+      // This branch consumes typed Runtime state. Materialize its ReadonlyMap
+      // before the wire-view boundary: the runtime bundle owns a separate
+      // class/symbol identity, so instanceof or imported brands cannot identify
+      // its immutable collection. Untrusted wire data still requires a Map.
+      state: { ...account.state, deltas: new Map(account.state.deltas) },
+    })));
   return { source, nodes, accounts, jMachines: projectEnvJMachines(env, source) };
 };
 

@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from 'react';
+import { useEffect, useId, useState, type FormEvent } from 'react';
 
 import type { EntityWorkspaceTimeMachineState } from '../../runtime-client/src/entity-workspace-time-machine';
 import './entity-workspace-time-machine.css';
@@ -17,6 +17,7 @@ export function EntityWorkspaceTimeMachine({
   onSelectHeight: (height: number) => Promise<boolean>;
   state: EntityWorkspaceTimeMachineState;
 }>) {
+  const heightInputId = useId();
   const [draft, setDraft] = useState(String(state.selectedHeight || 1));
   const [inputError, setInputError] = useState('');
 
@@ -64,10 +65,10 @@ export function EntityWorkspaceTimeMachine({
         <button disabled={!canStepForward} onClick={() => void selectHeight(state.selectedHeight + 1)} type="button">Next</button>
       </div>
       <form onSubmit={submit}>
-        <label htmlFor="entity-history-height">Committed height</label>
+        <label htmlFor={heightInputId}>Committed height</label>
         <input
           disabled={state.loading || state.latestHeight < 1}
-          id="entity-history-height"
+          id={heightInputId}
           inputMode="numeric"
           max={state.latestHeight}
           min="1"

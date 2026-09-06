@@ -1,4 +1,5 @@
 import { Capacitor } from '@capacitor/core';
+import type {} from './capacitor';
 
 import type { WalletExternalAuthorityPlatform } from '../../../packages/browser/src/wallet-external-provider';
 

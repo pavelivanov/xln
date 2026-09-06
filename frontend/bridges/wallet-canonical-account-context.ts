@@ -1,4 +1,4 @@
-import { get } from 'svelte/store';
+import { readStoreValue } from '../src/lib/utils/observableStore';
 import type { RuntimeAdapter, RuntimeAdapterViewFrame } from '@xln/core/api/public/runtime-module';
 import { getXLN, xlnEnvironment, resolveConfiguredApiBase } from '../src/lib/stores/xlnStore';
 import { buildEntityPanelView } from '../src/lib/components/Entity/core/entity-panel-model';
@@ -8,7 +8,7 @@ import { unwrapLiveRuntimeEnv } from '../src/lib/utils/runtime/liveRuntimeEnv';
 
 export async function readCanonicalAccountContext(adapter: RuntimeAdapter, entityId: string, frame: RuntimeAdapterViewFrame) {
   const xln = await getXLN();
-  const local = get(xlnEnvironment);
+  const local = readStoreValue(xlnEnvironment);
   const bound = adapter.mode === 'embedded' && local && local.runtimeId === adapter.runtimeId ? local : null;
   if (adapter.mode === 'embedded' && !bound) throw new Error('ACCOUNT_CONTEXT_RUNTIME_CHANGED');
   const env = bound ? unwrapLiveRuntimeEnv(bound) : null;
@@ -16,7 +16,7 @@ export async function readCanonicalAccountContext(adapter: RuntimeAdapter, entit
   const panel = buildEntityPanelView(bound, entityId, '', '', bound ? undefined : frame);
   if (!panel.replica || panel.replica.state.entityId.toLowerCase() !== entityId) throw new Error('ACCOUNT_CONTEXT_ENTITY_CHANGED');
   return {
-    entityId, runtimeId: adapter.runtimeId, replica: panel.replica, names: panel.entityNames,
+    entityId, runtimeId: adapter.runtimeId, frame, replica: panel.replica, names: panel.entityNames,
     xln, env, jurisdiction: panel.activeJurisdictionName || '', apiBase: resolveConfiguredApiBase(window.location.origin),
     commandsReady: adapter.commandReady, commandReason: adapter.commandReadyReason || '',
     paymentView: env ? buildPaymentPanelView({ entityId, replicas: panel.replicas, profiles: panel.profiles,

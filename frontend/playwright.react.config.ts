@@ -12,6 +12,14 @@ const gatewayPort = Number(process.env['PLAYWRIGHT_REACT_PORT'] ?? '19080');
 const portOffset = Number(process.env['PLAYWRIGHT_REACT_PORT_OFFSET'] ?? '12000');
 const baseURL = `http://${host}:${gatewayPort}`;
 const selectedSurface = parseCandidateBrowserSurface(process.env['PLAYWRIGHT_REACT_SURFACE']);
+const runtimeFixtureEnabled = selectedSurface === null || selectedSurface === 'wallet' || selectedSurface === 'ops';
+const fixturePort = Number(process.env['XLN_REACT_WALLET_FIXTURE_PORT'] ?? gatewayPort + 12);
+if (!Number.isSafeInteger(fixturePort) || fixturePort < 1024 || fixturePort > 65531) {
+  throw new Error('FRONTEND_BROWSER_FIXTURE_PORT_INVALID');
+}
+// Playwright workers and the web-server child must resolve the same fixture.
+// An env override only inside webServer leaves helpers on the default port.
+if (runtimeFixtureEnabled) process.env['XLN_REACT_WALLET_FIXTURE_PORT'] = String(fixturePort);
 const evidenceScope = selectedSurface ?? 'candidate';
 const readinessPath = selectedSurface === null ? '/' : CANDIDATE_BROWSER_READY_PATHS[selectedSurface];
 
@@ -54,9 +62,9 @@ export default defineConfig({
       XLN_REACT_GATEWAY_HOST: host,
       XLN_REACT_GATEWAY_PORT: String(gatewayPort),
       XLN_REACT_PORT_OFFSET: String(portOffset),
-      ...(selectedSurface === 'wallet' || selectedSurface === 'ops' ? {
+      ...(runtimeFixtureEnabled ? {
         XLN_REACT_WALLET_ADDRESS_FIXTURE: '1',
-        XLN_REACT_WALLET_FIXTURE_PORT: String(gatewayPort + 12),
+        XLN_REACT_WALLET_FIXTURE_PORT: String(fixturePort),
       } : {}),
     },
   },

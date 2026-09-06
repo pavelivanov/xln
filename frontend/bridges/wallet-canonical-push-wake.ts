@@ -1,4 +1,4 @@
-import { get } from 'svelte/store';
+import { readStoreValue } from '../src/lib/utils/observableStore';
 
 import type {
   WalletPushWakeOperation,
@@ -36,7 +36,7 @@ import { parseJsonUnknown, requireUnknownRecord } from '../src/lib/utils/boundar
 const normalizeRuntimeId = (value: string): string => value.trim().toLowerCase();
 
 const activeRuntime = (): Runtime | null => {
-  const state = get(runtimesState);
+  const state = readStoreValue(runtimesState);
   const activeId = normalizeRuntimeId(String(state.activeRuntimeId || ''));
   return Object.values(state.runtimes)
     .find((runtime) => normalizeRuntimeId(runtime.id) === activeId) ?? null;
@@ -89,7 +89,7 @@ const requireEntity = (runtime: Runtime, expectedEntityId?: string): string => {
 
 const liveRuntimeEnv = (runtime: Runtime): unknown | null => {
   const runtimeId = normalizeRuntimeId(runtime.id);
-  const entry = get(runtimeRegistry).get(runtimeId);
+  const entry = readStoreValue(runtimeRegistry).get(runtimeId);
   if (!entry || entry.type !== 'local' || !entry.env) return null;
   const env = unwrapLiveRuntimeEnv(entry.env) ?? entry.env;
   const envRuntimeId = normalizeRuntimeId(String(env.runtimeId || ''));

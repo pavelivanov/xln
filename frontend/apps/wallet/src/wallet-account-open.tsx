@@ -1,11 +1,18 @@
+import type { WalletOpenDraft } from './wallet-command-draft';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { parseEntityInput } from '../../../src/lib/components/shared/entity-input-model';
 import { WalletEntityInput } from './wallet-entity-input';
 import type { WalletHubDiscoverySnapshot, WalletHubDiscoverySource } from './wallet-hub-discovery-source';
 import './styles/wallet-account-open.css';
 
-export function WalletDirectAccountOpen({ source, snapshot }: Readonly<{ source: WalletHubDiscoverySource; snapshot: WalletHubDiscoverySnapshot }>) {
+export function WalletDirectAccountOpen({ source, snapshot, draft }: Readonly<{ draft?: WalletOpenDraft | undefined; source: WalletHubDiscoverySource; snapshot: WalletHubDiscoverySnapshot }>) {
   const [recipient, setRecipient] = useState('');
+  const draftField = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    if (!draft || !snapshot.canOpenAccounts) return;
+    setRecipient(draft.args.entityId);
+    if (draftField.current) { draftField.current.focus({ preventScroll: true }); draftField.current.scrollIntoView({ block: 'center' }); }
+  }, [draft, snapshot.canOpenAccounts]);
   const errorRef = useRef<HTMLParagraphElement>(null);
   const parsed = parseEntityInput(recipient, { entities: snapshot.entities, profiles: snapshot.profiles });
   const error = snapshot.messageKind === 'direct' ? snapshot.error : '';
@@ -25,7 +32,7 @@ export function WalletDirectAccountOpen({ source, snapshot }: Readonly<{ source:
   return <section className="wallet-account-direct">
     <header><p>Direct</p><h3>Open by ID</h3></header>
     <form aria-label="Open Account by ID" onSubmit={event => void submit(event)}>
-      <WalletEntityInput value={recipient} onChange={value => { setRecipient(value); source.clearDirectMessage(); }} entities={snapshot.entities} profiles={snapshot.profiles}
+      <WalletEntityInput inputRef={draftField} value={recipient} onChange={value => { setRecipient(value); source.clearDirectMessage(); }} entities={snapshot.entities} profiles={snapshot.profiles}
         disabled={Boolean(snapshot.connectingHubId || snapshot.retryHubId)} />
       {error ? <p className="wallet-hub-error" role="alert" tabIndex={-1} ref={errorRef}>{error}</p> : null}
       {notice ? <p role="status">{notice}</p> : null}

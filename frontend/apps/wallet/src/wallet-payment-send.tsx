@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import type { WalletPaymentPrefill } from './wallet-command-draft';
+import { useEffect, useRef, useState } from 'react';
 import type { RuntimePaymentDeliveryMode } from '../../../packages/runtime-client/src/payment-command-types';
 
 import { initialWalletPaymentInvoice, readWalletPaymentInvoice } from './wallet-payment-draft';
@@ -18,20 +19,28 @@ const deliveryModes: ReadonlyArray<Readonly<{
 
 export function WalletPaymentSend({
   invoiceLink,
+  prefill,
   projection,
   snapshot,
   source,
 }: Readonly<{
   invoiceLink: string;
+  prefill?: WalletPaymentPrefill | undefined;
   projection: WalletPaymentProjection;
   snapshot: WalletPaymentSourceSnapshot;
   source: WalletPaymentSource;
 }>) {
+  const draftField = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    if (!prefill || !draftField.current) return;
+    draftField.current.focus({ preventScroll: true });
+    draftField.current.scrollIntoView({ block: 'center' });
+  }, [prefill?.id]);
   const [initial] = useState(() => initialWalletPaymentInvoice(invoiceLink, projection));
   const [intent, setIntent] = useState(initial.intent);
-  const [recipient, setRecipient] = useState(initial.intent?.targetEntityId ?? '');
-  const [tokenId, setTokenId] = useState(initial.intent?.tokenId ?? 0);
-  const [amount, setAmount] = useState(initial.intent?.amount ?? '');
+  const [recipient, setRecipient] = useState(initial.intent?.targetEntityId ?? prefill?.recipientId ?? '');
+  const [tokenId, setTokenId] = useState(initial.intent?.tokenId ?? prefill?.tokenId ?? 0);
+  const [amount, setAmount] = useState(initial.intent?.amount ?? prefill?.amount ?? '');
   const [description, setDescription] = useState(initial.intent?.description ?? '');
   const [deliveryMode, setDeliveryMode] = useState<RuntimePaymentDeliveryMode>('instant');
   const [invoice, setInvoice] = useState(initial.intent?.canonicalUri ?? invoiceLink);
@@ -148,7 +157,7 @@ export function WalletPaymentSend({
         </label>
         <label>
           <span>Recipient amount</span>
-          <input disabled={busy || Boolean(intent?.amount)} inputMode="decimal" onChange={(event) => { source.clearQuote(); setAmount(event.target.value); }} placeholder="0.00" value={amount} />
+          <input ref={draftField} disabled={busy || Boolean(intent?.amount)} inputMode="decimal" onChange={(event) => { source.clearQuote(); setAmount(event.target.value); }} placeholder="0.00" value={amount} />
         </label>
         <label>
           <span>Description</span>

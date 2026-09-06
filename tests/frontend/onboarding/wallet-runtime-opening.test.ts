@@ -163,7 +163,7 @@ describe('browser wallet Runtime opening', () => {
       'utf8',
     );
     const reactBootstrap = readFileSync(
-      'frontend/apps/wallet/src/wallet-embedded-runtime-bootstrap.ts',
+      'frontend/bridges/browser-runtime-bootstrap.ts',
       'utf8',
     );
     const vault = readFileSync('frontend/src/lib/stores/vault/vaultStore.ts', 'utf8');
@@ -198,7 +198,7 @@ describe('browser wallet Runtime opening', () => {
     expect(reactRuntime.indexOf('if (discovery.candidates.length > 0)'))
       .toBeLessThan(reactRuntime.lastIndexOf("return openDiscoveredWalletRuntime(request, discovery, '');"));
     expect(reactBootstrap).toContain('hasPersistedWalletVault(localStorage)');
-    expect(reactBootstrap).toContain("await import('../../../bridges/wallet-canonical-vault-runtime')");
+    expect(reactBootstrap).toContain("await import('./wallet-canonical-vault-runtime')");
     expect(vault).toContain("import { WALLET_VAULT_STORAGE_KEY } from '../../../../packages/browser/src/wallet-vault-storage';");
     expect(vault).not.toContain("const VAULT_STORAGE_KEY = 'xln-vaults'");
   });

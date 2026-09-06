@@ -4,6 +4,7 @@ export type WalletFlowAuditEntry = Readonly<{
   id: string;
   pathname: '/app' | '/testnet' | '/address' | `/address/${string}`;
   search: string;
+  hash?: string;
   page: 'app' | 'testnet' | 'address-directory' | 'address-detail';
   view: WalletAppView | null;
   sources: readonly string[];
@@ -21,11 +22,22 @@ export type WalletFlowDeferral = Readonly<{
 export type WalletRequirementAudit = Readonly<{
   id: string;
   group: 1 | 2 | 3 | 4;
-  disposition: 'implemented' | 'deferred';
+  disposition: 'implemented' | 'partial' | 'deferred';
+  remaining?: string;
   evidenceId: string;
 }>;
 
 export const WALLET_FLOW_AUDIT = [
+  {
+    id: 'entity-ownership-evidence', pathname: '/app', search: '', hash: '#ownership', page: 'app', view: 'entity-tools',
+    sources: ['frontend/apps/wallet/src/wallet-entity-evidence.tsx', 'frontend/packages/ui/src/entity-workspace-ownership-panel.tsx'],
+    tests: ['frontend/tests/react-candidate/wallet-entity-evidence.spec.ts'],
+  },
+  {
+    id: 'entity-consensus-evidence', pathname: '/app', search: '', hash: '#settings/consensus', page: 'app', view: 'entity-tools',
+    sources: ['frontend/apps/wallet/src/wallet-entity-evidence.tsx', 'frontend/packages/ui/src/entity-workspace-consensus-panel.tsx'],
+    tests: ['frontend/tests/react-candidate/wallet-entity-evidence.spec.ts'],
+  },
   {
     id: 'account-dropdown',
     pathname: '/app', search: '?portfolio=1', page: 'app', view: 'portfolio',
@@ -139,8 +151,8 @@ export const WALLET_FLOW_AUDIT = [
       'frontend/packages/browser/src/runtime-module-loader.ts',
       'frontend/packages/browser/src/wallet-embedded-runtime-session.ts',
       'frontend/packages/browser/src/wallet-runtime-suspension.ts',
-      'frontend/apps/wallet/src/wallet-embedded-runtime-adapter.ts',
-      'frontend/apps/wallet/src/wallet-embedded-runtime-bootstrap.ts',
+      'frontend/bridges/browser-runtime-adapter.ts',
+      'frontend/bridges/browser-runtime-bootstrap.ts',
       'frontend/apps/wallet/src/wallet-embedded-runtime.ts',
     ],
     tests: [
@@ -447,11 +459,25 @@ export const WALLET_FLOW_DEFERRALS = [
   },
 ] as const satisfies readonly WalletFlowDeferral[];
 
-export const WALLET_REQUIREMENT_AUDIT = [
+const REMAINING_WALLET_REQUIREMENTS: Readonly<Record<string, string>> = {
+  onboarding: 'Automatic hub joining and the complete reload path remain unverified.',
+  settings: 'Committed Consensus is mounted; remaining retained settings and command controls are incomplete.',
+  credit: 'Manage commands are mounted; remote request-credit and full retained behavior require closure evidence.',
+  collateral: 'Request and Move forms are mounted; full positive collateral command matrix remains open.',
+  debt: 'Committed debt reads exist; full retained enforcement controls are incomplete.',
+  disputes: 'Prepare/finalize forms exist; the complete positive lifecycle is not browser-verified.',
+  history: 'Per-frame Activity pagination can omit events; backend query repair is outside the frontend boundary.',
+  lending: 'Forms exist; canonical admission rejects lending mutations with OUT_OF_PROFILE_TX_KINDS.',
+  settlement: 'Proposal exists; approval/execution controls and remote read projection remain open.',
+  'cross-j': 'Lifecycle reads exist; cross-j command controls are unported.',
+  activity: 'Same-frame history pagination loses the unreturned tail; complete history is not verified.',
+};
+
+export const WALLET_REQUIREMENT_AUDIT = ([
   { id: 'boot', group: 1, disposition: 'implemented', evidenceId: 'embedded-runtime-boot' },
   { id: 'shell', group: 1, disposition: 'implemented', evidenceId: 'runtime-overview-shell' },
   { id: 'identity', group: 1, disposition: 'implemented', evidenceId: 'identity-entry-and-rehearsal' },
-  { id: 'onboarding', group: 1, disposition: 'deferred', evidenceId: 'wallet-creation-and-onboarding' },
+  { id: 'onboarding', group: 1, disposition: 'partial', evidenceId: 'post-creation-profile-and-preferences' },
   { id: 'recovery', group: 1, disposition: 'implemented', evidenceId: 'push-wake-registration' },
   { id: 'settings', group: 1, disposition: 'implemented', evidenceId: 'preferences' },
   { id: 'diagnostics', group: 1, disposition: 'implemented', evidenceId: 'diagnostics' },
@@ -469,4 +495,7 @@ export const WALLET_REQUIREMENT_AUDIT = [
   ...['orders', 'orderbook', 'cancel-fill', 'cross-j', 'activity'].map((id) => ({
     id, group: 4 as const, disposition: 'implemented' as const, evidenceId: 'markets-and-activity',
   })),
-] as const satisfies readonly WalletRequirementAudit[];
+] as const satisfies readonly WalletRequirementAudit[]).map((requirement): WalletRequirementAudit => {
+  const remaining = REMAINING_WALLET_REQUIREMENTS[requirement.id];
+  return remaining ? { ...requirement, disposition: 'partial', remaining } : requirement;
+});

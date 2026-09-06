@@ -58,7 +58,7 @@ describe('browser Runtime module loader', () => {
 
   test('is the single loader used by both Svelte and React boot paths', () => {
     const svelte = readFileSync('frontend/src/lib/stores/bootstrap/xlnRuntimeLoader.ts', 'utf8');
-    const react = readFileSync('frontend/apps/wallet/src/wallet-embedded-runtime-bootstrap.ts', 'utf8');
+    const react = readFileSync('frontend/bridges/browser-runtime-bootstrap.ts', 'utf8');
     for (const source of [svelte, react]) {
       expect(source).toContain('createBrowserRuntimeModuleLoader');
       expect(source).not.toContain('import(/* @vite-ignore */ runtimeUrl)');

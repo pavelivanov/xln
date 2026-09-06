@@ -17,6 +17,24 @@ export type WalletRuntimeReadDependencies = Readonly<{
   };
 }>;
 
+export type WalletRuntimeReadLoader = (config: RuntimeAdapterStorageSnapshot) => Promise<WalletRuntimeReadDependencies>;
+
+const loadWalletRuntimeMath = async (): Promise<WalletRuntimeReadDependencies['math']> => {
+  await import('../../../../core/support/process/runtime-process.ts');
+  const [account, financial] = await Promise.all([
+    import('../../../../core/account/utils.ts'),
+    import('../../../../core/account/financial-utils.ts'),
+  ]);
+  return {
+    deriveDelta: (delta, isLeft) => account.deriveDelta(delta, isLeft),
+    formatTokenAmount: financial.formatTokenAmount, getTokenInfo: account.getTokenInfo,
+    isLeftEntity: account.isLeftEntity, parseTokenAmount: financial.parseTokenAmount,
+  };
+};
+
+export const borrowWalletRuntimeReadDependencies = async (adapter: RuntimeAdapter): Promise<WalletRuntimeReadDependencies> =>
+  ({ adapter, release: () => {}, math: await loadWalletRuntimeMath() });
+
 export type WalletMarketMath = Readonly<{
   canonicalPair: (
     tokenA: number,
@@ -80,29 +98,20 @@ export const loadWalletRuntimeReadDependencies = async (
   // Install the canonical browser process surface before loading any protocol
   // module that reads it during module initialization.
   await import('../../../../core/support/process/runtime-process.ts');
-  const mathPromise = Promise.all([
-    import('../../../../core/account/utils.ts'),
-    import('../../../../core/account/financial-utils.ts'),
-  ]);
+  const mathPromise = loadWalletRuntimeMath();
   if (config.mode !== 'remote') {
-    const [adapter, [account, financial]] = await Promise.all([
+    const [adapter, math] = await Promise.all([
       startWalletEmbeddedRuntime(),
       mathPromise,
     ]);
     return {
       adapter,
       release: () => {},
-      math: {
-        deriveDelta: (delta, isLeft) => account.deriveDelta(delta, isLeft),
-        formatTokenAmount: financial.formatTokenAmount,
-        getTokenInfo: account.getTokenInfo,
-        isLeftEntity: account.isLeftEntity,
-        parseTokenAmount: financial.parseTokenAmount,
-      },
+      math,
     };
   }
 
-  const [remote, [account, financial], journal] = await Promise.all([
+  const [remote, math, journal] = await Promise.all([
     import('../../../../core/api/runtime-adapter/remote.ts'),
     mathPromise,
     import('../../../packages/browser/src/runtime-command-journal-keyring.ts'),
@@ -120,13 +129,7 @@ export const loadWalletRuntimeReadDependencies = async (
   return {
     adapter,
     release: () => { adapter.disconnect(); },
-    math: {
-      deriveDelta: (delta, isLeft) => account.deriveDelta(delta, isLeft),
-      formatTokenAmount: financial.formatTokenAmount,
-      getTokenInfo: account.getTokenInfo,
-      isLeftEntity: account.isLeftEntity,
-      parseTokenAmount: financial.parseTokenAmount,
-    },
+    math,
   };
 };
 

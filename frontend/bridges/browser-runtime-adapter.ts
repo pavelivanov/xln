@@ -2,9 +2,11 @@ import type {
   RuntimeAdapter,
   RuntimeReplica,
   XLNModule,
-} from '../../../../core/api/public/runtime-module';
-import type { WalletEmbeddedRuntimeResource } from '../../../packages/browser/src/wallet-embedded-runtime-session';
-import { suspendWalletRuntimeActivity } from '../../../packages/browser/src/wallet-runtime-suspension';
+} from '../../core/api/public/runtime-module';
+import type { WalletEmbeddedRuntimeResource } from '../packages/browser/src/wallet-embedded-runtime-session';
+import { suspendWalletRuntimeActivity } from '../packages/browser/src/wallet-runtime-suspension';
+
+import { registerBrowserRuntimeEnvironment } from './browser-runtime-context';
 
 const RUNTIME_P2P_SHUTDOWN_TIMEOUT_MS = 10_000;
 
@@ -85,6 +87,7 @@ export const bootEmbeddedRuntimeAdapter = async (
     mode: 'embedded',
     ...(env.runtimeId ? { runtimeId: env.runtimeId } : {}),
   });
+  registerBrowserRuntimeEnvironment(adapter, () => env);
   const fence = () => fenceEmbeddedRuntimePageUnload(xln, env);
   onPageUnloadFence(fence);
   return {

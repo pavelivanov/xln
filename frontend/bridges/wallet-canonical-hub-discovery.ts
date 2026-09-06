@@ -1,4 +1,4 @@
-import { get } from 'svelte/store';
+import { readStoreValue } from '../src/lib/utils/observableStore';
 import type { RuntimeAdapter, RuntimeAdapterViewFrame } from '@xln/core/api/public/runtime-module';
 import { getXLN, xlnEnvironment, p2pState, resolveConfiguredApiBase } from '../src/lib/stores/xlnStore';
 import { runtimes } from '../src/lib/stores/runtimeStore';
@@ -21,14 +21,14 @@ export const readCanonicalAccountDropdown = async (adapter: RuntimeAdapter, enti
 
 export const readCanonicalAccountView = async (adapter: RuntimeAdapter, entityId: string, counterpartyId: string, frame: RuntimeAdapterViewFrame): Promise<WalletAccountView> => {
   const xln = await getXLN();
-  const local = get(xlnEnvironment);
+  const local = readStoreValue(xlnEnvironment);
   const bound = adapter.mode === 'embedded' && local?.runtimeId?.toLowerCase() === adapter.runtimeId.toLowerCase() ? local : null;
   if (adapter.mode === 'embedded' && !bound) throw new Error('ACCOUNT_VIEW_LOCAL_RUNTIME_CHANGED');
   const panel = buildEntityPanelView(bound, entityId, '', '', bound ? undefined : frame);
   if (!panel.replica) throw new Error('ACCOUNT_VIEW_ENTITY_UNAVAILABLE');
   const account = [...panel.replica.state.accounts].find(([id]) => id.toLowerCase() === counterpartyId.toLowerCase())?.[1] ?? null;
   if (counterpartyId && !account) throw new Error('ACCOUNT_VIEW_ACCOUNT_UNAVAILABLE');
-  const transport = get(p2pState);
+  const transport = readStoreValue(p2pState);
   return {
     account, replica: panel.replica, entityId, counterpartyId,
     counterpartyName: panel.entityNames.get(counterpartyId.toLowerCase()) || counterpartyId,
@@ -55,7 +55,7 @@ export const subscribeCanonicalAccountView = (listener: () => void): (() => void
 
 export const readCanonicalHubDiscovery = async (adapter: RuntimeAdapter, entityId: string, frame: RuntimeAdapterViewFrame, targetId = '', targetFrame?: RuntimeAdapterViewFrame): Promise<WalletAccountOpenRead> => {
   const xln = await getXLN();
-  const localFrame = get(xlnEnvironment);
+  const localFrame = readStoreValue(xlnEnvironment);
   const bound = adapter.mode === 'embedded' && localFrame?.runtimeId?.toLowerCase() === adapter.runtimeId.toLowerCase() ? localFrame : null;
   if (adapter.mode === 'embedded' && !bound) throw new Error('HUB_DISCOVERY_LOCAL_RUNTIME_CHANGED');
   const panel = buildEntityPanelView(bound, entityId, '', '', bound ? undefined : frame);
@@ -74,7 +74,7 @@ export const readCanonicalHubDiscovery = async (adapter: RuntimeAdapter, entityI
   const accountIds = [...(panel.replica?.state?.accounts.keys() || [])];
   const projection = buildHubDiscoveryProjection({
     runtimeId: adapter.runtimeId, entityId, replicas, profiles,
-    remoteHubs: buildHubDiscoveryRemoteHubsFromRuntimes(get(runtimes).values()),
+    remoteHubs: buildHubDiscoveryRemoteHubsFromRuntimes(readStoreValue(runtimes).values()),
     formatRawProfile: profile => xln.safeStringify(profile, 2), avatarForEntity: xln.generateEntityAvatar,
   });
   return {

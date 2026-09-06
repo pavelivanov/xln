@@ -108,7 +108,7 @@ export const consoleLevelColor = (level: ConsoleLogLevel): string => {
 export const CONSOLE_SCENARIO_NAMES = ['simnet-grid', 'diamond-dybvig', 'phantom-grid', 'corporate-treasury'] as const;
 
 export type ConsoleCommandsDeps = Readonly<{
-  readEnv: () => RuntimeReplica | null;
+  readEnv: () => Pick<RuntimeReplica, 'state'> | null;
   clear: () => void;
 }>;
 
@@ -118,7 +118,7 @@ export type ConsoleCommands = {
   state: () => { entities: number; height: number; timestamp: number };
   entities: () => string[];
   inspect: (entityId: string) => string | unknown;
-  scenario: { load: (name: string) => string; list: () => readonly string[] };
+  scenario: { load: (name: string) => string | Promise<string>; list: () => readonly string[] };
 };
 
 export const createConsoleCommands = (deps: ConsoleCommandsDeps): ConsoleCommands => ({

@@ -5,7 +5,7 @@ import { WalletAccountViewSource } from './wallet-account-view-source';
 import type { WalletAccountView } from './wallet-account-view-model';
 import { WalletAccountToken } from './wallet-account-token';
 import { useAccountAppearance } from './wallet-account-appearance-source';
-import { navigateWallet } from './wallet-navigation';
+import { useWalletNavigation } from './wallet-navigation';
 import { WalletAccountActivity } from './wallet-account-activity';
 import './styles/wallet-account-view.css';
 
@@ -34,6 +34,7 @@ function AccountDispute({ account, view, onWorkspace }: Readonly<{ account: Acco
 export function WalletFocusedAccount({ adapter, entityId, counterpartyId, onBack, onWorkspace }: Readonly<{
   adapter: RuntimeAdapter; entityId: string; counterpartyId: string; onBack: () => void; onWorkspace: () => void;
 }>) {
+  const navigateWallet = useWalletNavigation();
   const appearance = useAccountAppearance();
   const [source] = useState(() => new WalletAccountViewSource(adapter, entityId, counterpartyId));
   const snapshot = useSyncExternalStore(source.subscribe, source.getSnapshot, source.getSnapshot);

@@ -34,7 +34,8 @@ import './styles/identity-onboarding.css';
 export function IdentityOnboarding({
   runtimeState,
   runtimeId,
-}: Readonly<{ runtimeState: WalletRuntimeSummary['state']; runtimeId: string }>) {
+  onRuntimeOpened,
+}: Readonly<{ runtimeState: WalletRuntimeSummary['state']; runtimeId: string; onRuntimeOpened?: (runtimeId: string) => void | Promise<void> }>) {
   const [draft, setDraft] = useState<WalletIdentityDraft>(() => (
     createWalletIdentityDraft(window.location.search, DEMO_ACCOUNTS)
   ));
@@ -243,6 +244,7 @@ export function IdentityOnboarding({
       setRecoveryDiscovery(null);
       setSelectedRecoveryCandidateId('');
       setOpenedRuntimeId(outcome.runtimeId);
+      await onRuntimeOpened?.(outcome.runtimeId);
     } catch (error: unknown) {
       verifiedMnemonicRef.current = '';
       discardWalletRuntimeRecovery(recoveryTokenRef.current);

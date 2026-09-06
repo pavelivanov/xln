@@ -1,0 +1,158 @@
+import { openWorkspaceStorageOrigin } from './browser-evidence';
+import { expect, test } from '@playwright/test';
+import { expectNoBrowserErrors, expectPageContained, observeBrowserErrors, screenshotEvidence } from './browser-evidence';
+import { screenshotGraphEvidence } from './graph-evidence';
+
+test('operator Settings save exact local policies and retain them across panel reopen', async ({ page }, testInfo) => {
+  testInfo.setTimeout(90_000);
+  const errors = observeBrowserErrors(page);
+  await openWorkspaceStorageOrigin(page);
+  await page.evaluate(() => {
+    localStorage.setItem('xln-runtime-adapter-mode', 'embedded');
+    localStorage.setItem('xln-workspace-layout', 'canonical-full-layout-sentinel');
+  });
+  await page.goto('/__app/ops/entity-workspace');
+  await page.getByRole('button', { name: 'Open Settings panel', exact: true }).click();
+  const settings = page.getByTestId('workspace-settings');
+  await expect(settings.getByTestId('storage-wal-gib')).toBeVisible({ timeout: 45_000 });
+  await settings.getByTestId('storage-common-gib').fill('2');
+  await settings.getByTestId('storage-history-frames').fill('7.5');
+  await settings.getByTestId('storage-limits-save').click();
+  await expect(settings.getByRole('alert')).toHaveText('Retained frames must be a positive integer');
+  await settings.getByTestId('storage-history-frames').fill('750');
+  await settings.getByTestId('storage-limits-save').click();
+  await expect(settings.getByRole('status')).toContainText('Storage policy saved');
+  await expect(settings.getByTestId('storage-wal-gib')).toHaveValue('2');
+  await screenshotEvidence(page, testInfo, 'ops-settings-storage');
+  await settings.getByRole('button', { name: 'Performance', exact: true }).click();
+  await settings.getByTestId('perf-clone-mib').fill('1.25');
+  await settings.getByTestId('perf-clone-ms').fill('0.000125');
+  await settings.getByTestId('perf-reducer-ms').fill('5');
+  await settings.getByTestId('perf-wal-ms').fill('25');
+  await settings.getByTestId('perf-budgets-save').click();
+  await expect(settings.getByRole('status')).toContainText('Performance budgets saved');
+  await screenshotEvidence(page, testInfo, 'ops-settings-performance');
+  await settings.getByRole('button', { name: 'Storage', exact: true }).click();
+  await expect(settings.getByTestId('storage-wal-gib')).toHaveValue('2');
+  await expect(settings.getByTestId('storage-history-frames')).toHaveValue('750');
+  await settings.getByTestId('storage-wal-gib').fill('');
+  await settings.getByTestId('storage-limits-save').click();
+  await expect(settings.getByRole('status')).toContainText('Storage policy saved');
+  await page.locator('.dv-default-tab').filter({ hasText: /^Settings$/ }).locator('.dv-default-tab-action').click();
+  await page.getByRole('button', { name: 'Open Settings panel', exact: true }).click();
+  await expect(settings.getByTestId('storage-wal-gib')).toHaveValue('');
+  await expect(settings.getByTestId('storage-history-gib')).toHaveValue('2');
+  await settings.getByRole('button', { name: 'Performance', exact: true }).click();
+  await expect(settings.getByTestId('perf-clone-ms')).toHaveValue('0.000125');
+  await expect(settings.getByTestId('perf-clone-mib')).toHaveValue('1.25');
+  expect(await page.evaluate(() => localStorage.getItem('xln-workspace-layout'))).toBe('canonical-full-layout-sentinel');
+  await expectPageContained(page);
+  expectNoBrowserErrors(errors);
+});
+
+test('presentation config filters the real recording and applies caption and camera cues', async ({ page }, testInfo) => {
+  testInfo.setTimeout(120_000);
+  const errors = observeBrowserErrors(page);
+  await page.goto('/__app/ops/entity-workspace?scenario=ahb');
+  const timeline = page.getByTestId('workspace-network-timeline');
+  await expect(timeline.locator('output')).toContainText('1/', { timeout: 90_000 });
+  await timeline.getByLabel('Network frame', { exact: true }).press('End');
+  const event = await page.evaluate(async () => {
+    const moduleUrl = '/__app/ops/src/workspace/ops-workspace-playback.ts';
+    const module = await import(moduleUrl);
+    const selected = module.workspaceNetwork.get().selectedStep;
+    return { runtimeId: selected.event.runtimeId, height: selected.event.height, timestamp: selected.event.timestamp };
+  });
+  const fullCount = Number(await timeline.getByLabel('Network frame', { exact: true }).getAttribute('max'));
+  const changedCount = await page.evaluate(async () => {
+    const moduleUrl = '/__app/ops/src/workspace/ops-workspace-playback.ts';
+    const module = await import(moduleUrl);
+    return module.workspaceNetwork.get().indexes.flatMap((index: { frames: { graphChanged: boolean }[] }) => index.frames).filter((frame: { graphChanged: boolean }) => frame.graphChanged).length;
+  });
+  await page.getByRole('button', { name: 'Open Settings panel', exact: true }).click();
+  const settings = page.getByTestId('workspace-settings');
+  await settings.getByRole('button', { name: 'Presentation', exact: true }).click();
+  const draft = settings.getByRole('textbox', { name: 'Presentation config', exact: true });
+  await draft.fill('{ invalid');
+  await settings.getByRole('button', { name: 'Import presentation config', exact: true }).click();
+  await expect(settings.getByRole('alert')).toContainText('NETWORK_MACHINE');
+  const config = { version: 1, id: 'settings-browser', title: 'Operator presentation', timelineMode: 'all-frames', cues: [{
+    id: 'final-state', at: event, title: 'Final payment state', subtitle: 'Shared presentation cue',
+    camera: { position: { x: 10, y: 80, z: 300 }, target: { x: 10, y: 0, z: 0 }, fov: 65 },
+  }] };
+  await draft.fill(JSON.stringify(config));
+  await settings.getByRole('button', { name: 'Import presentation config', exact: true }).click();
+  await expect(settings.getByRole('status')).toContainText('Presentation config applied');
+  await expect(timeline).toContainText('Final payment state');
+  await settings.getByRole('button', { name: 'Camera', exact: true }).click();
+  await settings.getByText('Current camera pose', { exact: true }).click();
+  await expect.poll(async () => JSON.parse(await settings.getByTestId('settings-camera-pose').innerText()).position.z).toBe(300);
+  await settings.getByRole('button', { name: 'Presentation', exact: true }).click();
+  await settings.getByLabel('Timeline density', { exact: true }).selectOption('graph-changes');
+  await expect(settings.getByRole('status')).toContainText('Presentation config applied');
+  // AHB currently marks every recorded frame as graph-changing. Assert against
+  // the real source flags, rather than assuming that this scenario must shrink.
+  await expect(timeline.getByLabel('Network frame', { exact: true })).toHaveAttribute('max', String(changedCount - 1));
+  await expect(draft).toHaveValue(/"timelineMode": "graph-changes"/);
+  await expect(timeline.locator('output')).not.toHaveText('Live');
+  await screenshotEvidence(page, testInfo, 'ops-settings-presentation');
+  await settings.getByLabel('Timeline density', { exact: true }).selectOption('all-frames');
+  await expect(settings.getByRole('status')).toContainText('Presentation config applied');
+  await expect(timeline.getByLabel('Network frame', { exact: true })).toHaveAttribute('max', String(fullCount));
+  await page.reload();
+  await expect(timeline.locator('output')).toContainText('1/', { timeout: 90_000 });
+  await timeline.getByLabel('Network frame', { exact: true }).press('End');
+  await expect(timeline).toContainText('Final payment state');
+  await expectPageContained(page);
+  expectNoBrowserErrors(errors);
+});
+
+test('recorded Settings control the retained scene and camera without editing Runtime policy', async ({ page }, testInfo) => {
+  testInfo.setTimeout(120_000);
+  const errors = observeBrowserErrors(page);
+  await page.goto('/__app/ops/entity-workspace?scenario=ahb');
+  const timeline = page.getByTestId('workspace-network-timeline');
+  await expect(timeline.locator('output')).toContainText('1/', { timeout: 90_000 });
+  await timeline.getByLabel('Network frame', { exact: true }).press('End');
+  await page.getByRole('button', { name: 'Open Settings panel', exact: true }).click();
+  const settings = page.getByTestId('workspace-settings');
+  await expect(settings.getByRole('status')).toContainText('Recorded scenarios and remote connections are read-only here.');
+  await expect(settings.getByTestId('storage-limits-save')).toHaveCount(0);
+  await settings.getByRole('button', { name: 'Scene', exact: true }).click();
+  await settings.getByLabel('Grid opacity', { exact: true }).press('Home');
+  for (let i = 0; i < 4; i++) await settings.getByLabel('Grid opacity', { exact: true }).press('ArrowRight');
+  await settings.getByLabel('Grid divisions', { exact: true }).press('Home');
+  for (let i = 0; i < 9; i++) await settings.getByLabel('Grid divisions', { exact: true }).press('ArrowRight');
+  await settings.getByRole('checkbox', { name: 'Show xln guide' }).check();
+  await expect(page.getByTestId('xln-mascot-toggle')).toBeVisible();
+  await settings.getByRole('checkbox', { name: 'Show xln guide' }).uncheck();
+  await expect(page.getByTestId('xln-mascot-toggle')).toHaveCount(0);
+  await screenshotEvidence(page, testInfo, 'ops-settings-scene');
+  await settings.getByRole('button', { name: 'Camera', exact: true }).click();
+  await settings.getByLabel('Camera target x', { exact: true }).fill('10');
+  await settings.getByLabel('Camera distance', { exact: true }).press('Home');
+  for (let i = 0; i < 10; i++) await settings.getByLabel('Camera distance', { exact: true }).press('ArrowRight');
+  await settings.getByLabel('Field of view', { exact: true }).press('Home');
+  for (let i = 0; i < 6; i++) await settings.getByLabel('Field of view', { exact: true }).press('ArrowRight');
+  await settings.getByText('Current camera pose', { exact: true }).click();
+  await expect.poll(async () => JSON.parse(await settings.getByTestId('settings-camera-pose').innerText()).target.x).toBe(10);
+  await expect.poll(async () => Math.round(JSON.parse(await settings.getByTestId('settings-camera-pose').innerText()).distance)).toBe(600);
+  await settings.getByRole('button', { name: 'Focus origin', exact: true }).click();
+  await expect(settings.getByLabel('Camera target x', { exact: true })).toHaveValue('0');
+  await screenshotEvidence(page, testInfo, 'ops-settings-camera');
+  await settings.getByRole('button', { name: 'Performance', exact: true }).click();
+  await settings.getByRole('checkbox', { name: 'Show FPS and render stats', exact: true }).check();
+  await page.getByRole('button', { name: 'Open Graph3D panel', exact: true }).click();
+  await page.getByTestId('workspace-graph').getByRole('button', { name: 'Fit network' }).click();
+  await expect(page.getByTestId('graph-render-stats')).toContainText('draw calls');
+  await screenshotGraphEvidence(page, testInfo, 'ops-settings-graph-applied');
+  await page.reload();
+  await expect(timeline.locator('output')).toContainText('1/', { timeout: 90_000 });
+  await page.getByRole('button', { name: 'Open Settings panel', exact: true }).click();
+  await settings.getByRole('button', { name: 'Scene', exact: true }).click();
+  await expect(settings.getByLabel('Grid opacity', { exact: true })).toHaveValue('0.2');
+  await settings.getByRole('button', { name: 'Camera', exact: true }).click();
+  await expect(settings.getByLabel('Field of view', { exact: true })).toHaveValue('60');
+  await expectPageContained(page);
+  expectNoBrowserErrors(errors);
+});

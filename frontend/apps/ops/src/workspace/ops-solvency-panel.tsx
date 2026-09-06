@@ -1,3 +1,8 @@
+import { useEffect, useState, useSyncExternalStore } from 'react';
+import type { RuntimeAdapterSolvencySummary } from '@xln/core/api/public/runtime-module';
+import { networkMachineRuntimeOperations } from '../../../../src/lib/stores/network/networkMachineRuntimeStore';
+import { workspaceNetwork } from './ops-workspace-playback';
+
 import {
   formatSolvencyAmount,
   getSolvencyStatusView,
@@ -9,12 +14,24 @@ import { WorkspaceReadBoundary } from './workspace-read-boundary';
 
 export function OpsSolvencyPanel() {
   const { snapshot, connection, connected } = useWorkspaceQuery(readOpsSolvency);
-  const data = snapshot.data;
+  const network = useSyncExternalStore(workspaceNetwork.subscribe, workspaceNetwork.get);
+  const step = network.selectedStep;
+  const [recorded, setRecorded] = useState<{ step: typeof step; data: RuntimeAdapterSolvencySummary | null; error: string | null } | null>(null);
+  useEffect(() => {
+    if (!step) { setRecorded(null); return; }
+    let current = true;
+    void networkMachineRuntimeOperations.readSelectedSolvency().then(data => {
+      if (current) setRecorded({ step, data, error: null });
+    }).catch(cause => { if (current) setRecorded({ step, data: null, error: cause instanceof Error ? cause.message : String(cause) }); });
+    return () => { current = false; };
+  }, [step]);
+  const selected = recorded?.step === step ? recorded : null;
+  const data = step ? selected?.data ?? null : snapshot.data;
   const status = getSolvencyStatusView(data === null ? null : data.isValid);
   return (
     <section className="workspace-read-panel" data-testid="solvency-panel">
-      <header><div><h2>Solvency</h2><p>Asset conservation · live Runtime</p></div></header>
-      <WorkspaceReadBoundary connected={connected} connection={connection} error={snapshot.error} loading={snapshot.loading && data === null}>
+      <header><div><h2>Solvency</h2><p>Asset conservation · {step ? `recorded h${step.event.height}` : 'live Runtime'}</p></div></header>
+      <WorkspaceReadBoundary connected={step ? true : connected} connection={connection} error={step ? selected?.error ?? null : snapshot.error} loading={step ? selected === null : snapshot.loading && data === null}>
         <div className={`workspace-solvency-status is-${status.tone}`} data-testid="solvency-status"><span aria-hidden="true">{status.icon}</span>{status.label}</div>
         {data && data.assets.length ? (
           <div className="workspace-solvency-assets">

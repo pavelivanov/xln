@@ -55,7 +55,8 @@ const translations: Record<Locale, TranslationDict> = {
 function createLocaleStore() {
   // Try to get saved locale or detect from browser
   const saved = typeof localStorage !== 'undefined' ? localStorage.getItem('xln-locale') : null;
-  const browserLang = typeof navigator !== 'undefined' ? navigator.language.split('-')[0] ?? 'en' : 'en';
+  const browserLang = typeof navigator !== 'undefined' && typeof navigator.language === 'string'
+    ? navigator.language.split('-')[0] ?? 'en' : 'en';
   const initial = (saved as Locale) || (browserLang in LOCALES ? browserLang as Locale : 'en');
 
   const { subscribe, set } = writable<Locale>(initial);
@@ -93,7 +94,10 @@ function getNestedValue(obj: TranslationDict, path: string): string | undefined 
 
 // Translation function - use with $t('key') in components
 export function t(key: string, params?: Record<string, string | number>): string {
-  const currentLocale = get(locale);
+  return translateForLocale(get(locale), key, params);
+}
+
+export function translateForLocale(currentLocale: Locale, key: string, params?: Record<string, string | number>): string {
   let text = getNestedValue(translations[currentLocale], key);
 
   // English is the canonical default locale.

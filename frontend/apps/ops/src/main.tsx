@@ -1,6 +1,7 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 
+import { embedBootTitle, parseEmbedBootRequest } from '../../../packages/runtime-client/src/embed-boot-model';
 import { OpsApp } from './ops-app';
 import { startOpsHealthRuntime } from './ops-health-runtime';
 import { opsPageMetadata, resolveOpsPage } from './ops-model';
@@ -12,7 +13,7 @@ const page = resolveOpsPage(window.location.pathname);
 const metadata = opsPageMetadata(page);
 const description = document.querySelector<HTMLMetaElement>('meta[name="description"]');
 if (!description) throw new Error('OPS_DESCRIPTION_META_MISSING');
-document.title = metadata.title;
+document.title = page.pathname === '/embed' ? embedBootTitle(parseEmbedBootRequest(new URL(window.location.href))) : metadata.title;
 description.content = metadata.description;
 
 if (page.kind === 'health') startOpsHealthRuntime();

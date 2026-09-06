@@ -8,6 +8,7 @@ import {
   getRuntimeDiagnosticsErrorMessage,
   getRuntimeDiagnosticsFrameLabel,
   sortRuntimeDiagnosticsIncidents,
+  snapshotRuntimeDiagnosticsIncidents,
   visibleRuntimeDiagnosticsIncidents,
   type RuntimeDiagnosticsIncident,
   type RuntimeDiagnosticsTimelineFrame,
@@ -31,6 +32,14 @@ const frame = (
 });
 
 describe('runtime diagnostics panel view model', () => {
+  test('detaches incident observations from live updates and excludes private routing fields', () => {
+    const live = { ...incident('active', 10), routeHash: 'private-routing-evidence' };
+    const snapshot = snapshotRuntimeDiagnosticsIncidents([live]);
+    live.status = 'resolved'; live.occurrences = 2;
+    expect(snapshot).toEqual([incident('active', 10)]);
+    expect(snapshot[0]).not.toHaveProperty('routeHash');
+    expect(snapshot[0]).not.toBe(live);
+  });
   test('sorts incidents newest-first with stable id ties and preserves the input', () => {
     const input = [incident('z', 10), incident('b', 20, 'resolved'), incident('a', 20)];
     expect(sortRuntimeDiagnosticsIncidents(input).map(({ id }) => id)).toEqual(['a', 'b', 'z']);

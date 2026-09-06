@@ -49,7 +49,7 @@ describe('workspace Dockview layout contract', () => {
       .toThrow('WORKSPACE_LAYOUT_TIMESTAMP_INVALID');
   });
 
-  test('adds a production React adapter without claiming the incomplete /embed route', async () => {
+  test('shares the Dockview layout contract with the public React workspace', async () => {
     const [reactSource, svelteSource] = await Promise.all([
       Bun.file('frontend/packages/ui/src/workspace-dock.tsx').text(),
       Bun.file('frontend/src/lib/view/DockRoot.svelte').text(),
@@ -64,6 +64,6 @@ describe('workspace Dockview layout contract', () => {
     expect(svelteSource).toContain('parseWorkspaceLayoutEnvelope(savedLayout).dockview');
     expect(svelteSource).toContain('serializeWorkspaceDockLayout(dockview.toJSON()');
     expect(svelteSource).toContain('layoutChangeDisposable.dispose()');
-    expect(resolveOpsPage('/embed')).toEqual({ kind: 'pending', pathname: '/embed' });
+    expect(resolveOpsPage('/embed')).toEqual({ kind: 'workspace', pathname: '/embed' });
   });
 });

@@ -122,20 +122,20 @@ export const filterRuntimeIoLogs = (
 };
 
 export const runtimeIoReplicasArray = (
-  frame: EnvSnapshot | null,
+  frame: Pick<EnvSnapshot, 'state'> | null,
 ): Array<[string, RuntimeIoReplicaLike]> =>
   frame?.state.eReplicas ? mapToArray(frame.state.eReplicas) : [];
 
-export const runtimeIoXlnomiesArray = (frame: EnvSnapshot | null): RuntimeIoXlnomyLike[] =>
+export const runtimeIoXlnomiesArray = (frame: Pick<EnvSnapshot, 'state'> | null): RuntimeIoXlnomyLike[] =>
   (frame?.state.jReplicas ? Array.from(frame.state.jReplicas.values()) : []) as RuntimeIoXlnomyLike[];
 
 /** Conservation-law display projection: sum of every entity reserve. */
-export const sumRuntimeIoReserves = (frame: EnvSnapshot | null): bigint =>
+export const sumRuntimeIoReserves = (frame: Pick<EnvSnapshot, 'state'> | null): bigint =>
   valuesOf<RuntimeIoReplicaLike>(frame?.state.eReplicas).reduce((sum: bigint, replica: RuntimeIoReplicaLike) =>
     sum + valuesOf<unknown>(replica.state?.reserves).reduce((inner: bigint, amount: unknown) => inner + toBigIntValue(amount), 0n), 0n);
 
 /** Conservation-law display projection: sum of every account collateral. */
-export const sumRuntimeIoCollateral = (frame: EnvSnapshot | null): bigint =>
+export const sumRuntimeIoCollateral = (frame: Pick<EnvSnapshot, 'state'> | null): bigint =>
   valuesOf<RuntimeIoReplicaLike>(frame?.state.eReplicas).reduce((sum: bigint, replica: RuntimeIoReplicaLike) =>
     sum + valuesOf<RuntimeIoAccountLike>(replica.state?.accounts).reduce((accountSum: bigint, account: RuntimeIoAccountLike) =>
       accountSum + valuesOf<RuntimeIoDeltaLike>(account.state.deltas).reduce(

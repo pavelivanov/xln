@@ -1,4 +1,4 @@
-import { get } from 'svelte/store';
+import { readStoreValue } from '../src/lib/utils/observableStore';
 
 import type {
   WalletRecoveryServiceRole,
@@ -26,7 +26,7 @@ import {
 const normalizeRuntimeId = (runtimeId: string): string => runtimeId.trim().toLowerCase();
 
 const activeRuntime = (): Runtime | null => {
-  const state = get(runtimesState);
+  const state = readStoreValue(runtimesState);
   const runtimeId = normalizeRuntimeId(String(state.activeRuntimeId || ''));
   return Object.values(state.runtimes)
     .find((runtime) => normalizeRuntimeId(runtime.id) === runtimeId) ?? null;

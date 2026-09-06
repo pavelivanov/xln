@@ -2,6 +2,7 @@ import type {
   RuntimeAdapter,
   RuntimeAdapterActivityPage,
   RuntimeAdapterHistoryFrameBatch,
+  RuntimeAdapterGraphFrame,
   RuntimeAdapterReadQuery,
   RuntimeAdapterSolvencySummary,
   RuntimeAdapterTimelineIndexPage,
@@ -20,6 +21,7 @@ type WorkspaceQueryResults = RuntimeQueryResultSchema & Readonly<{
   activity: RuntimeAdapterActivityPage;
   historyFrameBatch: RuntimeAdapterHistoryFrameBatch;
   viewFrame: RuntimeAdapterViewFrame;
+  graphFrame: RuntimeAdapterGraphFrame;
   solvencySummary: RuntimeAdapterSolvencySummary;
   head: StorageHead;
   timelineIndex: RuntimeAdapterTimelineIndexPage;

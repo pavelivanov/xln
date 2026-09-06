@@ -1,4 +1,4 @@
-import { get } from 'svelte/store';
+import { readStoreValue } from '../src/lib/utils/observableStore';
 import type { RuntimeInput } from '@xln/core/api/public/runtime-module';
 import type { WalletOnboardingRequest, WalletOnboardingResult, WalletOnboardingView } from '../packages/browser/src/wallet-onboarding';
 import { activeRuntime, vaultOperations } from '../src/lib/stores/vault/vaultStore';
@@ -15,7 +15,7 @@ import { saveCanonicalWalletRecoveryServices } from './wallet-canonical-recovery
 const normalizeId = (value: string): string => value.trim().toLowerCase();
 
 const readBoundRuntime = (runtimeId: string) => {
-  const runtime = get(activeRuntime);
+  const runtime = readStoreValue(activeRuntime);
   if (!runtime || normalizeId(runtime.id) !== normalizeId(runtimeId)) {
     throw new Error('ONBOARDING_RUNTIME_CHANGED: Open setup for the active wallet.');
   }
@@ -24,7 +24,7 @@ const readBoundRuntime = (runtimeId: string) => {
 
 const readBoundProjection = (runtimeId: string) => {
   const runtime = readBoundRuntime(runtimeId);
-  const frame = get(xlnEnvironment);
+  const frame = readStoreValue(xlnEnvironment);
   if (!frame || normalizeId(String(frame.runtimeId || '')) !== normalizeId(runtime.id)) {
     return null;
   }
@@ -118,7 +118,7 @@ export const finishCanonicalWalletOnboarding = async (
   };
   const joins = createOnboardingHubJoinCommands({
     readProjection: () => requireCurrent().projection,
-    readTokenDecimals: () => get(xlnFunctions).getTokenInfo(1).decimals,
+    readTokenDecimals: () => readStoreValue(xlnFunctions).getTokenInfo(1).decimals,
     resolveApiBase: resolveConfiguredApiBase,
     submitRuntimeInput: submit,
   });

@@ -4,7 +4,6 @@ import { join } from 'node:path';
 import type { RuntimeInput } from '@xln/core/api/public/runtime-module';
 import {
   clearRuntimeCommandReceipts,
-  recordRuntimeIngressReceipt,
   replayRuntimeCommandIntentsInOrder,
   runtimeCommandLatestReceipt,
   runtimeCommandReceipts,
@@ -46,14 +45,13 @@ test('runtime command bus records pending accepted observed committed error rece
   expect(source).toContain('receiptId: `runtime-command-${++receiptSequence}`');
 	  expect(source).toContain('acceptedAtHeight');
   expect(source).toContain('committedAtHeight');
-	  expect(source).toContain('upstreamReceiptId');
-	  expect(source).toContain('statusUrl');
+	  expect(source).not.toContain('upstreamReceiptId');
+	  expect(source).not.toContain('statusUrl');
 	  expect(source).not.toContain('commitAcceptedRuntimeCommands');
-  expect(source).toContain('recordRuntimeIngressReceipt');
+  expect(source).not.toContain('recordRuntimeIngressReceipt');
   expect(source).toContain('classifyRuntimeFailure');
   expect(source).toContain('failureKind: RuntimeFailureKind | null');
   expect(source).toContain("status: receipt.mode === 'remote' ? 'observed' : 'committed'");
-  expect(source).toContain("upstreamStatus === 'observed' ? 'observed'");
   expect(source).toContain("registerDebugSurface('commands'");
   expect(source).not.toContain('__xlnRuntimeCommands');
   expect(source).not.toContain('Date.now');
@@ -110,8 +108,8 @@ test('runtime command bus transitions receipts from pending to accepted committe
   expect(committed.receipt.mode).toBe('embedded');
   expect(committed.receipt.acceptedAtHeight).toBe(5);
   expect(committed.receipt.committedAtHeight).toBe(6);
-  expect(committed.receipt.upstreamReceiptId).toBeNull();
-  expect(committed.receipt.statusUrl).toBeNull();
+  expect(committed.receipt).not.toHaveProperty('upstreamReceiptId');
+  expect(committed.receipt).not.toHaveProperty('statusUrl');
   expect(readStore(runtimeCommandReceipts)).toHaveLength(1);
 
   const remoteAccepted = await submitRuntimeCommand({
@@ -121,7 +119,7 @@ test('runtime command bus transitions receipts from pending to accepted committe
     serverFingerprint: SIGNED_SERVER_FINGERPRINT,
     initialHeight: 20,
   }, async (progress) => {
-    await progress.accepted(21, { receiptId: 'upstream-1', statusUrl: '/api/control/runtime-input/upstream-1/status' });
+    await progress.accepted(21);
     await progress.committed(22);
     return 'remote-ok';
   });
@@ -137,7 +135,7 @@ test('runtime command bus transitions receipts from pending to accepted committe
     serverFingerprint: SIGNED_SERVER_FINGERPRINT,
     initialHeight: 30,
   }, async (progress) => {
-    await progress.accepted(31, { receiptId: 'upstream-observed', statusUrl: '/api/control/runtime-input/upstream-observed/status' });
+    await progress.accepted(31);
     await progress.observed(32);
     return 'remote-observed';
   });
@@ -258,7 +256,7 @@ test('remote command IDs identify UI intents, not identical payloads', async () 
     initialHeight: 1,
   }, async (progress, receipt) => {
     seenCommandIds.push(receipt.commandId);
-    await progress.accepted(1, { receiptId: 'upstream-distinct-intent' });
+    await progress.accepted(1);
     await progress.observed(2);
     return 'distinct-observed';
   });
@@ -266,7 +264,7 @@ test('remote command IDs identify UI intents, not identical payloads', async () 
   await expect(submitRuntimeCommand({
     input: {
       ...structuredClone(input),
-      runtimeTxs: [{ type: 'importReplica', entityId: 'different-payload' } as never],
+      entityInputs: [{ entityId: '0x' + 'a'.repeat(64), signerId: '0x' + 'b'.repeat(40), entityTxs: [{ type: 'profile-update', data: { name: 'Different' } }] }],
     },
     runtimeId: 'runtime-idempotency',
     mode: 'remote',
@@ -285,7 +283,7 @@ test('remote command IDs identify UI intents, not identical payloads', async () 
     ...runtimeCommandRetryOptions(retryableReceipt),
   }, async (progress, receipt) => {
     seenCommandIds.push(receipt.commandId);
-    await progress.accepted(1, { receiptId: 'upstream-idempotency' });
+    await progress.accepted(1);
     await progress.observed(2);
     return 'observed';
   });
@@ -399,8 +397,8 @@ test('remote command journal persists protected replayable intents outside local
 test('remote command journal retains exact payload and status until observed', async () => {
   const runtimeId = 'runtime-journal-roundtrip';
   const input: RuntimeInput = {
-    runtimeTxs: [{ type: 'importReplica', entityId: 'journal-payload', amount: 7n } as never],
-    entityInputs: [],
+    runtimeTxs: [],
+    entityInputs: [{ entityId: '0x' + 'a'.repeat(64), signerId: '0x' + 'b'.repeat(40), entityTxs: [{ type: 'extendCredit', data: { counterpartyEntityId: '0x' + 'c'.repeat(64), tokenId: 1, amount: 7n } }] }],
     jInputs: [],
   };
   let retryableReceipt: CommandReceipt | null;
@@ -430,7 +428,7 @@ test('remote command journal retains exact payload and status until observed', a
     serverFingerprint: SIGNED_SERVER_FINGERPRINT,
     ...runtimeCommandRetryOptions(retryableReceipt),
   }, async (progress) => {
-    await progress.accepted(9, { receiptId: 'journal-receipt', statusUrl: '/receipt/journal-receipt' });
+    await progress.accepted(9);
     throw new Error('runtime projection timed out after acceptance');
   })).rejects.toThrow('timed out');
   retryableReceipt = readStore(runtimeCommandLatestReceipt);
@@ -440,8 +438,6 @@ test('remote command journal retains exact payload and status until observed', a
     commandId: retryableReceipt.commandId,
     input,
     status: 'accepted',
-    upstreamReceiptId: 'journal-receipt',
-    statusUrl: '/receipt/journal-receipt',
   }]);
 
   await submitRuntimeCommand({
@@ -451,75 +447,18 @@ test('remote command journal retains exact payload and status until observed', a
     serverFingerprint: SIGNED_SERVER_FINGERPRINT,
     ...runtimeCommandRetryOptions(retryableReceipt),
   }, async (progress) => {
-    await progress.accepted(9, { receiptId: 'journal-receipt', statusUrl: '/receipt/journal-receipt' });
+    await progress.accepted(9);
     await progress.observed(10);
     return null;
   });
   expect(await listUnresolvedRemoteRuntimeCommandIntents(runtimeId, SIGNED_SERVER_FINGERPRINT)).toEqual([]);
 });
 
-test('runtime command bus records server ingress receipts without fake RuntimeInput', () => {
-  clearRuntimeCommandReceipts();
-
-  const receipt = recordRuntimeIngressReceipt({
-    runtimeId: 'server-runtime',
-    mode: 'remote',
-    receipt: {
-      id: 'credit-1',
-      status: 'pending',
-      counts: { runtimeTxs: 0, entityInputs: 1, jInputs: 0 },
-      enqueuedHeight: 12,
-    },
-    statusUrl: '/api/control/runtime-input/credit-1/status',
-  });
-
-  expect(receipt.status).toBe('accepted');
-  expect(receipt.runtimeId).toBe('server-runtime');
-  expect(receipt.mode).toBe('remote');
-  expect(receipt.upstreamReceiptId).toBe('credit-1');
-  expect(receipt.acceptedAtHeight).toBe(12);
-  expect(receipt.statusUrl).toBe('/api/control/runtime-input/credit-1/status');
-  expect(receipt.inputSummary).toEqual({
-    runtimeTxs: 0,
-    entityInputs: 1,
-    jInputs: 0,
-    entityTxs: 0,
-  });
-  expect(readStore(runtimeCommandLatestReceipt)).toEqual(receipt);
-  expect(receipt.failureKind).toBeNull();
-  expect(receipt.failureRetryable).toBe(false);
-
-  const observed = recordRuntimeIngressReceipt({
-    runtimeId: 'server-runtime',
-    mode: 'remote',
-    receipt: {
-      id: 'credit-1',
-      status: 'observed',
-      counts: { runtimeTxs: 0, entityInputs: 1, jInputs: 0 },
-      enqueuedHeight: 12,
-      observedHeight: 13,
-    },
-    statusUrl: '/api/control/runtime-input/credit-1/status',
-  });
-  expect(observed.status).toBe('observed');
-  expect(observed.acceptedAtHeight).toBe(12);
-  expect(observed.committedAtHeight).toBe(13);
-
-  const expired = recordRuntimeIngressReceipt({
-    runtimeId: 'server-runtime',
-    mode: 'remote',
-    receipt: {
-      id: 'credit-expired',
-      status: 'expired',
-      note: 'Runtime ingress receipt expired',
-      enqueuedHeight: 14,
-    },
-    statusUrl: '/api/control/runtime-input/credit-expired/status',
-  });
-  expect(expired.status).toBe('error');
-  expect(expired.error).toBe('Runtime ingress receipt expired');
-  expect(expired.failureKind).toBe('defer');
-  expect(expired.failureRetryable).toBe(true);
+test('server results cannot synthesize command receipts or durable receipt URLs', () => {
+  const source = readFileSync('frontend/src/lib/stores/commands/runtimeCommandBus.ts', 'utf8');
+  expect(source).not.toContain('recordRuntimeIngressReceipt');
+  expect(source).not.toContain('statusUrl');
+  expect(source).not.toContain('upstreamReceiptId');
 });
 
 test('xlnStore routes RuntimeInput mutations through RuntimeCommandBus', () => {
@@ -533,8 +472,8 @@ test('xlnStore routes RuntimeInput mutations through RuntimeCommandBus', () => {
 	  expect(source).toContain('const observeRemoteRuntimeCommand');
 	  expect(routeSource).toContain('commandSequence: receipt.commandSequence');
 	  expect(routeSource).toContain('await observeRemoteRuntimeCommand(accepted, progress)');
-	  expect(source).toContain('statusUrl: accepted.statusUrl ?? null');
-	  expect(source).toContain('waitForRemoteRuntimeReceiptObserved');
+	  expect(source).not.toContain('statusUrl');
+	  expect(source).toContain('waitForRemoteRuntimeProjectionAtHeight(accepted.height + 1)');
 	  expect(source).toContain('progress.observed');
 	  expect(routeSource).toContain('progress.committed');
 	  expect(routeSource).toContain("runtimeAdapterSend(input, { commandId: receipt.commandId })");
@@ -719,14 +658,14 @@ test('public mutation exports no longer accept caller-owned RuntimeReplica', () 
   expect(submitEntitySource).not.toContain('routeRuntimeInput(');
 });
 
-test('server-side credit requests publish upstream runtime ingress receipts', () => {
+test('server-side credit requests validate the result without synthesizing ingress receipts', () => {
   const source = readFileSync('frontend/src/lib/components/Entity/account/ui/CreditForm.svelte', 'utf8');
 
-  expect(source).toContain('recordRuntimeIngressReceipt');
+  expect(source).not.toContain('recordRuntimeIngressReceipt');
   expect(source).toContain('runtimeControllerHandle');
   expect(source).toContain("fetch(`${apiBase}/api/credit/request`");
-  expect(source).toContain('receipt: result.receipt');
-  expect(source).toContain('statusUrl: result.statusUrl ?? null');
+  expect(source).toContain('!response.ok || result.success !== true');
+  expect(source).not.toContain('statusUrl');
 });
 
 test('credit and collateral configure forms submit RuntimeInput through shared command path', () => {
@@ -762,9 +701,9 @@ test('payment panel submits RuntimeInput through shared command path', () => {
   const accountWorkspaceSource = readFileSync('frontend/src/lib/components/Entity/workspace/AccountWorkspaceView.svelte', 'utf8');
 
   expect(paymentSource).toContain('export let submitRuntimeInput');
-  expect(paymentSource).toContain('await submitRuntimeInput({ runtimeTxs: [], entityInputs: [paymentInput], jInputs: [] })');
+  expect(paymentSource).toContain('await submitRuntimeInput(buildPaymentRuntimeInput({');
   expect(paymentSource).toContain('pendingPaymentCommandId');
-  expect(paymentSource).toContain('Payment submission pending');
+  expect(paymentSource).toContain('Submission pending...');
   expect(paymentSource).toContain("failure.kind === 'defer'");
   expect(paymentSource).toContain('latestReceipt.receiptId !== priorRuntimeReceiptId');
   expect(paymentSource).not.toContain('submitEntityInputs');
@@ -790,17 +729,18 @@ test('lending mutations use the signer runtime command path instead of unauthent
   expect(source).not.toContain('recordRuntimeIngressReceipt');
 });
 
-test('server-side faucet requests publish upstream runtime ingress receipts when provided', () => {
+test('server-side faucet results retain readiness guards without synthesizing ingress receipts', () => {
   const panelSource = readFileSync('frontend/src/lib/components/Entity/workspace/shell/EntityPanelTabs.svelte', 'utf8');
   const faucetSource = readFileSync('frontend/src/lib/components/Entity/account/account-faucet.ts', 'utf8');
   const assetFaucetSource = readFileSync('frontend/src/lib/components/Entity/assets/AssetFaucetCard.svelte', 'utf8');
   const assetsSource = readFileSync('frontend/src/lib/components/Entity/assets/EntityAssetsTab.svelte', 'utf8');
 
-  expect(faucetSource).toContain('receipt?: {');
-  expect(panelSource).toContain('recordRuntimeIngressReceipt');
-  expect(panelSource).toContain('function recordServerIngressReceipt');
-  expect(panelSource).toContain('recordServerIngressReceipt(result);');
-  expect(panelSource).toContain('statusUrl: result.statusUrl ?? null');
+  expect(faucetSource).not.toContain('receipt?: {');
+  expect(faucetSource).toContain('decodeFaucetApiResult');
+  expect(panelSource).not.toContain('recordRuntimeIngressReceipt');
+  expect(panelSource).not.toContain('function recordServerIngressReceipt');
+  expect(panelSource).not.toContain('recordServerIngressReceipt(result);');
+  expect(panelSource).not.toContain('statusUrl: result.statusUrl ?? null');
   expect(panelSource).toMatch(/notifyUserActionError\(["']asset-faucet["'], ["']Runtime is not ready for financial actions["']\)/);
   expect(panelSource).toMatch(/notifyUserActionError\(["']offchain-faucet["'], ["']Runtime is not ready for financial actions["']\)/);
   expect(assetFaucetSource).toContain('export let ready = false');
@@ -833,7 +773,7 @@ test('entity workspace renders latest runtime command receipt status', () => {
   expect(source).toContain('isActionableRuntimeReceipt');
   expect(source).not.toContain('$runtimeCommandLatestReceipt.committedAtHeight');
   expect(source).not.toContain('$runtimeCommandLatestReceipt.acceptedAtHeight');
-  expect(source).toContain('upstreamReceiptId');
+  expect(source).not.toContain('upstreamReceiptId');
 });
 
 test('entity panel never promotes UI reads or transaction responses into J-prefix inputs', () => {

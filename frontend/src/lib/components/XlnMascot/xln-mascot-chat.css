@@ -38,8 +38,8 @@
   height: 22px;
   flex: 0 0 auto;
   background: linear-gradient(145deg, #fff 12%, #9aabb9 54%, var(--theme-accent, #22d3aa));
-  -webkit-mask: url('/img/l.png') center / contain no-repeat;
-  mask: url('/img/l.png') center / contain no-repeat;
+  -webkit-mask: url('../../../../static/img/l.png') center / contain no-repeat;
+  mask: url('../../../../static/img/l.png') center / contain no-repeat;
 }
 
 .assistant-panel .header-actions { gap: 3px; }

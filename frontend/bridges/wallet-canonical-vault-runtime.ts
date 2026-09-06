@@ -1,4 +1,6 @@
-import { get } from 'svelte/store';
+import { registerBrowserRuntimeEnvironment } from './browser-runtime-context';
+import { runtimes } from '../src/lib/stores/runtimeStore';
+import { readStoreValue } from '../src/lib/utils/observableStore';
 
 import type { RuntimeAdapter } from '../../core/api/public/runtime-module';
 import {
@@ -33,6 +35,7 @@ import { runtimesState, vaultOperations } from '../src/lib/stores/vault/vaultSto
 import { writeRuntimeRecoveryDiscoveryStatus } from '../src/lib/utils/recovery/recoveryDiscoveryStatus';
 import type { RuntimeRecoveryCandidate } from '../src/lib/stores/vault/vault-recovery';
 import { WalletBrainVaultBrowserDerivation } from './wallet-brainvault-browser-derivation';
+import type { VaultUnlockDurationMs } from '../src/lib/security/vaultProtection';
 
 type PageUnloadFenceSetter = (fence: () => void) => void;
 
@@ -88,6 +91,7 @@ const createCanonicalResource = (
   adapter: RuntimeAdapter,
   setPageUnloadFence: PageUnloadFenceSetter,
 ): WalletEmbeddedRuntimeResource<RuntimeAdapter> => {
+  registerBrowserRuntimeEnvironment(adapter, () => readStoreValue(runtimes).get(runtimeId)?.env ?? null);
   setPageUnloadFence(() => vaultOperations.beginRuntimePageUnload());
   return {
     adapter,
@@ -119,7 +123,7 @@ export const restoreCanonicalWalletRuntime = async (
   setPageUnloadFence: PageUnloadFenceSetter,
 ): Promise<WalletEmbeddedRuntimeResource<RuntimeAdapter> | null> => {
   await vaultOperations.initialize();
-  const state = get(runtimesState);
+  const state = readStoreValue(runtimesState);
   const runtimeId = String(state.activeRuntimeId || '').trim().toLowerCase();
   if (!runtimeId) {
     if (Object.keys(state.runtimes).length > 0) {
@@ -127,6 +131,14 @@ export const restoreCanonicalWalletRuntime = async (
     }
     return null;
   }
+  return createCanonicalResource(runtimeId, requireCanonicalAdapter(runtimeId), setPageUnloadFence);
+};
+
+export const unlockCanonicalWalletRuntime = async (
+  runtimeId: string, seed: string, durationMs: VaultUnlockDurationMs, setPageUnloadFence: PageUnloadFenceSetter,
+): Promise<WalletEmbeddedRuntimeResource<RuntimeAdapter>> => {
+  await vaultOperations.initialize();
+  await vaultOperations.unlockRuntime(runtimeId, seed, durationMs);
   return createCanonicalResource(runtimeId, requireCanonicalAdapter(runtimeId), setPageUnloadFence);
 };
 

@@ -6,6 +6,7 @@ import type {
   RuntimeAdapterEntitySummary,
   RuntimeAdapterFrameSummary,
   RuntimeAdapterHistoryFrameBatch,
+  RuntimeAdapterGraphFrame,
   RuntimeAdapterReadQuery,
   RuntimeAdapterSolvencySummary,
   RuntimeAdapterTimelineIndexPage,
@@ -47,6 +48,7 @@ type XlnRuntimeQueryResults = {
   frameSummary: RuntimeAdapterFrameSummary;
   entities: RuntimeAdapterEntitySummary[];
   viewFrame: RuntimeAdapterViewFrame;
+  graphFrame: RuntimeAdapterGraphFrame;
   account: StorageAccountDoc;
   swapHistory: unknown;
   historyFrameBatch: RuntimeAdapterHistoryFrameBatch;

@@ -216,9 +216,11 @@ describe('wallet embedded Runtime session', () => {
 
   test('owns one document-scoped React session behind the canonical tab lock', () => {
     const source = readFileSync('frontend/apps/wallet/src/wallet-embedded-runtime.ts', 'utf8');
-    expect(source).toContain('createWalletEmbeddedRuntimeSession');
-    expect(source).toContain('activeTabLock.initializeActiveTabLock(handler)');
-    expect(source).toContain("await import('./wallet-embedded-runtime-bootstrap')");
+    const shared = readFileSync('frontend/bridges/browser-runtime-session.ts', 'utf8');
+    expect(shared).toContain('createWalletEmbeddedRuntimeSession');
+    expect(shared).toContain('activeTabLock.initializeActiveTabLock(handler)');
+    expect(shared).toContain("await import('./browser-runtime-bootstrap')");
+    expect(source).toContain('browserRuntimeSession as session');
     expect(source).toContain('await session.replace(async () => {');
     expect(source).not.toContain('await session.stop();');
     expect(source).not.toContain('new EmbeddedRuntimeAdapter');
