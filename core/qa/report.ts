@@ -77,7 +77,6 @@ import {
   QA_LOGS_ROOT,
   QA_STORY_SCREENSHOTS_ROOT,
 } from './report-paths';
-
 export * from './report-types';
 export * from './report-paths';
 
