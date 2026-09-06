@@ -42,10 +42,7 @@ function StoragePolicy({ adapter, policy }: { adapter: RuntimeAdapter; policy: R
   return <form data-testid="runtime-storage-limits" className="ops-runtime-policy" onSubmit={event => { event.preventDefault(); save(); }}>
     <h3>Runtime storage policy</h3><p>Blank means unlimited. Limits are local operator policy, never consensus state.</p>
     <PolicyFields values={draft} onChange={(key, value) => setDraft(current => ({ ...current, [key]: value }))} fields={[
-      { key: 'commonGiB', label: 'Common limit per archival store', unit: 'GiB · fills both blank limits below', testId: 'storage-common-gib' },
       { key: 'walEpochGiB', label: 'WAL epoch rollover', unit: 'GiB · closes the epoch at a durable checkpoint', testId: 'storage-wal-gib' },
-      { key: 'historyViewGiB', label: 'Materialized history view', unit: 'GiB · rebuildable from WAL', testId: 'storage-history-gib' },
-      { key: 'historyRetainFrames', label: 'Retained history frames', unit: 'frames', testId: 'storage-history-frames' },
     ]} /><button data-testid="storage-limits-save" type="submit">Save storage policy</button>
     {issue ? <p role="alert">{issue}</p> : status ? <p role="status">{status}</p> : null}
   </form>;

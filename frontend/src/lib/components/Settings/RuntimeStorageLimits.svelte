@@ -3,26 +3,25 @@
   import type { RuntimeReplica } from '@xln/core/runtime/types';
   import { buildStoragePolicy, readStoragePolicyFields, displayStorageGiB } from '../../../../packages/runtime-client/src/operator-policy-settings';
   export let runtimeFrameEnv: Writable<RuntimeReplica | null>;
-  let loadedRuntimeId = '', commonGiB = '', walEpochGiB = '', historyViewGiB = '', historyRetainFrames = '';
+  let loadedRuntimeId = '', walEpochGiB = '';
   let status = '', error = '';
   const loadRuntime = (env: RuntimeReplica | null): void => {
     const runtimeId = String(env?.runtimeId || env?.dbNamespace || '');
     if (!env || runtimeId === loadedRuntimeId) return;
     loadedRuntimeId = runtimeId;
-    ({ commonGiB, walEpochGiB, historyViewGiB, historyRetainFrames } = readStoragePolicyFields(env.runtimeConfig?.storage));
+    ({ walEpochGiB } = readStoragePolicyFields(env.runtimeConfig?.storage));
     status = ''; error = '';
   };
   function applyLimits(): void {
     try {
       runtimeFrameEnv.update(env => {
         if (!env) throw new Error('No Runtime is selected');
-        const storage = buildStoragePolicy(env.runtimeConfig?.storage, { commonGiB, walEpochGiB, historyViewGiB, historyRetainFrames });
+        const storage = buildStoragePolicy(env.runtimeConfig?.storage, { walEpochGiB });
         env.runtimeConfig = { ...env.runtimeConfig, storage };
         walEpochGiB = displayStorageGiB(storage.epochMaxBytes);
-        historyViewGiB = displayStorageGiB(storage.historyViewMaxBytes);
         return env;
       });
-      commonGiB = ''; error = '';
+      error = '';
       status = 'Storage policy saved. It applies from the next Runtime frame.';
     } catch (cause) {
       status = ''; error = cause instanceof Error ? cause.message : String(cause);
@@ -41,24 +40,9 @@
 
   <div class="limit-grid">
     <label>
-      <span>Common limit per archival store</span>
-      <input bind:value={commonGiB} inputmode="decimal" placeholder="Unlimited" data-testid="storage-common-gib" />
-      <small>GiB · fills both blank limits below</small>
-    </label>
-    <label>
       <span>WAL epoch rollover</span>
       <input bind:value={walEpochGiB} inputmode="decimal" placeholder="Unlimited" data-testid="storage-wal-gib" />
       <small>GiB · closes the epoch at a durable checkpoint</small>
-    </label>
-    <label>
-      <span>Materialized history view</span>
-      <input bind:value={historyViewGiB} inputmode="decimal" placeholder="Unlimited" data-testid="storage-history-gib" />
-      <small>GiB · rebuildable from WAL</small>
-    </label>
-    <label>
-      <span>Runtime history frames</span>
-      <input bind:value={historyRetainFrames} inputmode="numeric" placeholder="Unlimited" data-testid="storage-history-frames" />
-      <small>1 = latest only · 2 = latest plus one previous</small>
     </label>
   </div>
 
