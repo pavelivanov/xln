@@ -1,4 +1,10 @@
-import type { XlnMascotDockPlacement, XlnMascotDockSide } from '$lib/types/ui';
+export type XlnMascotDockSide = 'left' | 'right' | 'top' | 'bottom';
+
+export interface XlnMascotDockPlacement {
+  version: 1;
+  side: XlnMascotDockSide;
+  offsetRatio: number;
+}
 
 export type MascotPoint = Readonly<{ x: number; y: number }>;
 export type MascotViewport = Readonly<{
