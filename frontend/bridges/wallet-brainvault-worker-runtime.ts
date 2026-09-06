@@ -1,7 +1,7 @@
 import {
   BRAINVAULT_V1,
   BRAINVAULT_V1_SPEC_ID,
-} from '../../brainvault/core.ts';
+} from '../../brainvault/src/core/index.ts';
 import {
   decodeWalletBrainVaultWorkerMessage,
   normalizeWalletBrainVaultWorkerError,
