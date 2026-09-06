@@ -28,6 +28,7 @@ process.env['XLN_DISABLE_RUNTIME_RESTORE'] = '1';
 process.env['XLN_RADAPTER_AUTH_SEED'] = authSeed;
 
 const runtime = await import('../../../core/runtime');
+const { createStackManagerController } = await import('../../../core/api/server/control/stack-manager');
 const { dbRootPath } = await import('../../../core/runtime/replica/platform');
 if (dbRootPath !== databaseRoot) throw new Error(`WALLET_FIXTURE_STORAGE_SCOPE_MISMATCH:${dbRootPath}:${databaseRoot}`);
 const crypto = await import('../../../core/account/crypto');
@@ -239,6 +240,7 @@ const relayServer = relay.startStandaloneRelayServer({
   serverId: `0x${'99'.repeat(20)}`,
   audience: `ws://localhost:${gatewayPort}/relay`,
 });
+const stackManager = createStackManagerController({ parseBody: request => request.json(), headers: { 'content-type': 'application/json', 'access-control-allow-origin': '*' } });
 const handleRpc = rpc.createServerRpcMessageHandler({
   validateRuntimeInputAdmission: runtime.validateRuntimeInputAdmission,
 });
@@ -258,8 +260,12 @@ server = Bun.serve<FixtureSocketData>({
     const url = new URL(request.url);
     const assistantResponse = await assistantProxy.handle(request, url.pathname, '127.0.0.1');
     if (assistantResponse) return assistantResponse;
-    const apiHeaders = { 'access-control-allow-origin': '*', 'access-control-allow-methods': 'GET, POST, OPTIONS', 'access-control-allow-headers': 'content-type, cache-control, pragma', 'content-type': 'application/json' };
+    const apiHeaders = { 'access-control-allow-origin': '*', 'access-control-allow-methods': 'GET, POST, OPTIONS', 'access-control-allow-headers': 'content-type, cache-control, pragma, authorization', 'content-type': 'application/json' };
     if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: apiHeaders });
+    if (url.pathname === '/api/stack-manager/status' && request.method === 'GET') {
+      if (request.headers.get('authorization') !== `Bearer ${token}`) return new Response('Unauthorized', { status: 401, headers: apiHeaders });
+      return stackManager.status(request, env);
+    }
     if (url.pathname === '/api/jurisdictions') return new Response(recoveryFixture.readJurisdictionsJson(), {
       headers: { 'content-type': 'application/json', 'access-control-allow-origin': '*', 'cache-control': 'no-store' },
     });
