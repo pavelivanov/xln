@@ -42,14 +42,14 @@ const EXTERNAL_RUNTIME_CONSUMERS: Readonly<Record<string, readonly ExternalRunti
     specifier: '@xln/core/network/relay/market/wire',
   }],
   'core/network/relay/market/cap/market-cap-wire.ts': [{
-    consumer: 'frontend/packages/ui/src/market-cap-page-model.ts',
+    consumer: 'frontend/packages/ui/src/content/market-cap-page-model.ts',
     specifier: '@xln/core/network/relay/market/cap/market-cap-wire',
   }],
   'core/qa/reporting/report-types.ts': [{
     consumer: 'core/qa/types.ts',
-    specifier: './report-types',
+    specifier: './reporting/report-types',
     downstream: {
-      consumer: 'frontend/packages/runtime-client/src/qa-types.ts',
+      consumer: 'frontend/packages/runtime-client/src/qa/evidence/qa-types.ts',
       specifier: '@xln/core/qa/types',
     },
   }],
@@ -62,7 +62,7 @@ const EXTERNAL_RUNTIME_CONSUMERS: Readonly<Record<string, readonly ExternalRunti
     specifier: '@xln/core/qa/hlt/hlt-dashboard-preview',
   }],
   'core/qa/types.ts': [{
-    consumer: 'frontend/packages/runtime-client/src/qa-types.ts',
+    consumer: 'frontend/packages/runtime-client/src/qa/evidence/qa-types.ts',
     specifier: '@xln/core/qa/types',
   }],
 };
