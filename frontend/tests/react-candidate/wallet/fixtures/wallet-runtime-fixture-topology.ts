@@ -28,10 +28,10 @@ export const buildWalletFixtureProfileTx = (entityId: string): EntityTx => profi
   'Committed by the isolated candidate Runtime.',
 );
 
-export const buildWalletFixtureHubTxs = (entityId: string): EntityTx[] => [
+export const buildWalletFixtureHubTxs = (entityId: string, name = 'Browser Hub'): EntityTx[] => [
   profileTx(
     entityId,
-    'Browser Hub',
+    name,
     'Counterparty committed by the isolated candidate Runtime.',
   ),
   {
@@ -49,7 +49,7 @@ export const buildWalletFixtureHubTxs = (entityId: string): EntityTx[] => [
   {
     type: 'initOrderbookExt',
     data: {
-      name: 'Browser Hub',
+      name,
       spreadDistribution: DEFAULT_SPREAD_DISTRIBUTION,
       referenceTokenId: 1,
       usdQuoteAuthorityEntityId: entityId,

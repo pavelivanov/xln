@@ -8,6 +8,32 @@ import type { WalletAccountOpenRead } from '../account/controls/wallet-account-o
 import type { HubDiscoveryHub } from '../../../../src/lib/components/Entity/onboarding/hub-discovery-profile';
 import { createWalletRuntimeQueryClient, walletRuntimeReadErrorMessage } from '../runtime/wallet-runtime-read-boundary';
 import { abandonTerminalWalletPaymentCommand, executeWalletPaymentCommand, prepareWalletPaymentCommand, type WalletPreparedCommand } from '../payments/commands/wallet-payment-command';
+import {
+  RUNTIME_ADAPTER_ACCESS_KEY,
+  RUNTIME_ADAPTER_AUTH_KEY,
+  RUNTIME_ADAPTER_MODE_KEY,
+  RUNTIME_ADAPTER_WS_KEY,
+  readRuntimeAdapterStorageSnapshot,
+  type RuntimeAdapterStorageSnapshot,
+} from '../../../../packages/browser/src/runtime/session/runtime-adapter-session';
+
+const runtimeSelectionKeys = new Set<string>([
+  RUNTIME_ADAPTER_ACCESS_KEY,
+  RUNTIME_ADAPTER_AUTH_KEY,
+  RUNTIME_ADAPTER_MODE_KEY,
+  RUNTIME_ADAPTER_WS_KEY,
+]);
+
+const readRuntimeSelection = (): RuntimeAdapterStorageSnapshot => readRuntimeAdapterStorageSnapshot({
+  durable: localStorage,
+  session: sessionStorage,
+});
+
+const sameRuntimeSelection = (left: RuntimeAdapterStorageSnapshot, right: RuntimeAdapterStorageSnapshot): boolean =>
+  left.mode === right.mode
+  && left.wsUrl === right.wsUrl
+  && left.access === right.access
+  && left.sessionKey === right.sessionKey;
 
 export type WalletHubDetails = Readonly<{
   fee: number | null;
@@ -36,6 +62,7 @@ export type WalletHubDiscoverySnapshot = Readonly<{
 
 export class WalletHubDiscoverySource {
   private readonly runtimeId: string;
+  private readonly runtimeSelection = readRuntimeSelection();
   private readonly listeners = new Set<() => void>();
   private observer: RuntimeQueryObserver<WalletAccountOpenRead> | null = null;
   private release = () => {};
@@ -59,7 +86,11 @@ export class WalletHubDiscoverySource {
   private requireCurrent() {
     this.lifetime.signal.throwIfAborted();
     if (this.adapter.runtimeId !== this.runtimeId) throw new Error('HUB_DISCOVERY_RUNTIME_CHANGED');
+    if (!sameRuntimeSelection(this.runtimeSelection, readRuntimeSelection())) throw new Error('HUB_DISCOVERY_RUNTIME_CHANGED');
   }
+  private readonly stopOnRuntimeSelection = (event: StorageEvent) => {
+    if (event.key === null || runtimeSelectionKeys.has(event.key)) this.stop();
+  };
   private readonly readContext = async (targetId = ''): Promise<WalletAccountOpenRead> => {
     this.requireCurrent();
     const [bridge, frame] = await Promise.all([
@@ -79,6 +110,7 @@ export class WalletHubDiscoverySource {
   };
   readonly start = () => {
     this.lifetime = new AbortController();
+    window.addEventListener('storage', this.stopOnRuntimeSelection);
     this.observer = new RuntimeQueryObserver(this.readContext, {
       readHeight: () => this.adapter.currentHeight,
       subscribeHeight: listener => this.adapter.onChange(listener),
@@ -97,7 +129,10 @@ export class WalletHubDiscoverySource {
     };
     this.release = this.observer.subscribe(publish); publish();
   };
-  readonly stop = () => { this.lifetime.abort(); this.release(); this.observer?.destroy(); this.observer = null; };
+  readonly stop = () => {
+    window.removeEventListener('storage', this.stopOnRuntimeSelection);
+    this.lifetime.abort(); this.release(); this.observer?.destroy(); this.observer = null;
+  };
   readonly refresh = async () => { await this.observer?.refresh(); };
   readonly clearDirectMessage = () => {
     if (this.pending || this.snapshot.messageKind !== 'direct' || (!this.commandError && !this.snapshot.notice)) return;

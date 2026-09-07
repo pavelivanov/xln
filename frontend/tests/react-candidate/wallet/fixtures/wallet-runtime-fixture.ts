@@ -256,6 +256,7 @@ const activeRpcSockets = new Set<ServerWebSocket<FixtureSocketData>>();
 let dropdownFixture: ReturnType<typeof import('../account/wallet-account-dropdown-fixture').createAccountDropdownFixture> | null = null;
 let dropdownRuntime: typeof env | null = null;
 let onboardingHubDiscoveryEnabled = false;
+const hubDiscoveryFixtures = new Map<string, Promise<Awaited<ReturnType<typeof import('./wallet-hub-discovery-fixture').createWalletHubDiscoveryFixture>>>>();
 const socketRuntime = (socket: ServerWebSocket<FixtureSocketData>) => {
   if (socket.data.fixture === 'wallet') return env;
   if (!dropdownRuntime) throw new Error('ACCOUNT_DROPDOWN_FIXTURE_NOT_READY');
@@ -274,6 +275,29 @@ server = Bun.serve<FixtureSocketData>({
     if (url.pathname === '/onboarding-hub-discovery-mode' && request.method === 'POST') {
       onboardingHubDiscoveryEnabled = url.searchParams.get('enabled') === '1';
       return Response.json({ enabled: onboardingHubDiscoveryEnabled }, { headers: apiHeaders });
+    }
+    if (url.pathname === '/hub-discovery-fixture' && request.method === 'POST') {
+      const slot = String(url.searchParams.get('slot') || '');
+      let fixture = hubDiscoveryFixtures.get(slot);
+      if (!fixture) {
+        fixture = import('./wallet-hub-discovery-fixture').then(module => (
+          module.createWalletHubDiscoveryFixture(env, config, commit, runtimeSeed, slot)
+        ));
+        hubDiscoveryFixtures.set(slot, fixture);
+      }
+      const created = await fixture;
+      return Response.json(created, { headers: apiHeaders });
+    }
+    if (url.pathname === '/hub-discovery-account-state' && request.method === 'GET') {
+      const hubEntityId = String(url.searchParams.get('entityId') || '').toLowerCase();
+      if (!/^0x[0-9a-f]{64}$/.test(hubEntityId)) {
+        return new Response('Hub discovery Entity invalid', { status: 400, headers: apiHeaders });
+      }
+      return Response.json({
+        height: env.state.height,
+        sourceHasAccount: Boolean(readAccount(entityId, hubEntityId)),
+        hubHasAccount: Boolean(readAccount(hubEntityId, entityId)),
+      }, { headers: apiHeaders });
     }
     if (url.pathname === '/api/hubs') {
       return onboardingHubDiscoveryEnabled
