@@ -449,6 +449,7 @@ server = Bun.serve<FixtureSocketData>({
       return Response.json({
         runtimeId,
         entityId,
+        counterpartySignerId,
         counterpartyEntityId,
         height: env.state.height,
         walletSeed: runtimeSeed,

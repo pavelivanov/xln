@@ -128,7 +128,7 @@ export const WALLET_FLOW_AUDIT = [
       'frontend/src/lib/components/Entity/onboarding/formation/formation-commands.ts',
       'frontend/src/lib/components/Entity/onboarding/formation/formation-runtime-projection.ts',
     ],
-    tests: ['frontend/tests/react-candidate/wallet/onboarding/wallet-formation.spec.ts'],
+    tests: ['tests/frontend/onboarding/wallet-formation.test.ts', 'frontend/tests/react-candidate/wallet/onboarding/wallet-formation.spec.ts'],
   },
   {
     id: 'post-creation-profile-and-preferences',
@@ -448,7 +448,7 @@ export const WALLET_FLOW_DEFERRALS = [
     destination: 'WP9',
     evidenceSource: 'frontend/bridges/wallet/wallet-canonical-onboarding.ts',
     evidenceMarker: 'createOnboardingHubJoinCommands',
-    reason: 'React post-creation setup, Entity Formation and manual Hub Discovery are mounted. Local Hub Account opening and remote discovery reads are verified. Successful automatic hub joining, remote owner command integration and full reload parity remain open.',
+    reason: 'React post-creation setup, automatic Hub joining and local/remote-owner Entity Formation are verified. Remote Hub opening and full reload parity remain open.',
   },
   {
     id: 'canonical-cutover',
@@ -460,7 +460,7 @@ export const WALLET_FLOW_DEFERRALS = [
 ] as const satisfies readonly WalletFlowDeferral[];
 
 const REMAINING_WALLET_REQUIREMENTS: Readonly<Record<string, string>> = {
-  onboarding: 'Automatic hub joining and the complete reload path remain unverified.',
+  onboarding: 'Remote Hub opening and the complete reload path remain unverified.',
   settings: 'Committed Consensus is mounted; remaining retained settings and command controls are incomplete.',
   credit: 'Manage commands are mounted; remote request-credit and full retained behavior require closure evidence.',
   collateral: 'Request and Move forms are mounted; full positive collateral command matrix remains open.',

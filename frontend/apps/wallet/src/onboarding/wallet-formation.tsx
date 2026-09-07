@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { isTronChainId } from '@xln/core/api/public/runtime-module';
+import { isTronChainId, type RuntimeAdapter } from '@xln/core/api/public/runtime-module';
 import type { WalletFormationResult, WalletFormationView } from '../../../../packages/browser/src/wallet/wallet-formation';
 import { generateLazyEntityIdPreview } from '../../../../src/lib/utils/identity/lazyEntityId';
 import { createWalletFormation, loadWalletFormation } from './wallet-formation-source';
@@ -13,7 +13,7 @@ const previewBoard = (members: BoardMember[], threshold: number, lazy: boolean) 
   catch (cause) { return { hash: '', error: cause instanceof Error ? cause.message : String(cause) }; }
 };
 
-function FormationForm({ view, onCreated }: Readonly<{ view: ReadyFormation; onCreated: (result: WalletFormationResult) => void }>) {
+function FormationForm({ adapter, view, onCreated }: Readonly<{ adapter: RuntimeAdapter; view: ReadyFormation; onCreated: (result: WalletFormationResult) => void }>) {
   const [entityType, setEntityType] = useState<'numbered' | 'lazy'>('numbered');
   const [boardMode, setBoardMode] = useState<'personal' | 'shared'>('personal');
   const [entityName, setEntityName] = useState('');
@@ -52,7 +52,7 @@ function FormationForm({ view, onCreated }: Readonly<{ view: ReadyFormation; onC
     const controller = new AbortController(); operation.current = controller;
     setBusy(true); setError('');
     try {
-      const result = await createWalletFormation({ runtimeId: view.runtimeId, signerId: view.signerId,
+      const result = await createWalletFormation(adapter, { runtimeId: view.runtimeId, signerId: view.signerId,
         draft: { entityType, entityName, selectedJurisdiction, validators: members, threshold },
       }, controller.signal);
       controller.signal.throwIfAborted(); onCreated(result);
@@ -106,7 +106,7 @@ function FormationForm({ view, onCreated }: Readonly<{ view: ReadyFormation; onC
   );
 }
 
-export function WalletFormation({ runtimeId, onBack, onCreated }: Readonly<{ runtimeId: string; onBack: () => void; onCreated: (result: WalletFormationResult) => void }>) {
+export function WalletFormation({ adapter, onBack, onCreated }: Readonly<{ adapter: RuntimeAdapter; onBack: () => void; onCreated: (result: WalletFormationResult) => void }>) {
   const [view, setView] = useState<WalletFormationView | null>(null);
   const [issue, setIssue] = useState('');
   useEffect(() => {
@@ -114,15 +114,15 @@ export function WalletFormation({ runtimeId, onBack, onCreated }: Readonly<{ run
     setView(null); setIssue('');
     void loadWalletFormation().then(bridge => {
       if (disposed) return;
-      release = bridge.subscribeCanonicalWalletFormation(runtimeId, value => { if (!disposed) { setView(value); setIssue(''); } }, cause => {
+      release = bridge.subscribeCanonicalWalletFormation(adapter, value => { if (!disposed) { setView(value); setIssue(''); } }, cause => {
         if (!disposed) setIssue(cause instanceof Error ? cause.message : String(cause));
       });
     }).catch(cause => { if (!disposed) setIssue(cause instanceof Error ? cause.message : String(cause)); });
     return () => { disposed = true; release(); };
-  }, [runtimeId]);
+  }, [adapter]);
   return <section className="wallet-formation" data-testid="entity-formation-panel">
     <button className="wallet-formation-back" type="button" onClick={onBack}>← Back to assets</button>
     <header><p>New subject</p><h2>Create Entity</h2><p>Every person, company, and hub starts as the same Entity.</p></header>
-    {issue ? <p role="alert" className="wallet-formation-error">{issue}</p> : view === null ? <p role="status">Loading wallet configuration…</p> : view.state === 'unavailable' ? <p role="status">{view.message}</p> : <FormationForm key={`${view.runtimeId}:${view.signerId}`} view={view} onCreated={onCreated} />}
+    {issue ? <p role="alert" className="wallet-formation-error">{issue}</p> : view === null ? <p role="status">Loading wallet configuration…</p> : view.state === 'unavailable' ? <p role="status">{view.message}</p> : <FormationForm adapter={adapter} key={`${view.runtimeId}:${view.signerId}`} view={view} onCreated={onCreated} />}
   </section>;
 }
