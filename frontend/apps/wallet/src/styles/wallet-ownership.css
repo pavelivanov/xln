@@ -4,3 +4,15 @@
 .wallet-ownership-shares dt, .wallet-ownership-shares small { color: var(--theme-text-secondary, #aaa89f); font-size: .75rem; }
 .wallet-ownership-shares dd { margin: .5rem 0 0; font: 600 1.3rem monospace; }
 .wallet-ownership-shares > p { font-size: .8rem; line-height: 1.5; }
+.wallet-ownership-shares > button { margin-top: 1rem; }
+.wallet-ownership-review { margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--theme-border, #292a27); }
+.wallet-ownership-review > p { color: var(--theme-text-secondary, #aaa89f); font-size: .8rem; line-height: 1.5; }
+.wallet-ownership-review dl { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.wallet-ownership-review dl > div:last-child { grid-column: 1 / -1; }
+.wallet-ownership-review code { overflow-wrap: anywhere; }
+.wallet-ownership-actions { display: flex; justify-content: flex-end; gap: .6rem; }
+@media (max-width: 640px) {
+  .wallet-ownership-shares dl, .wallet-ownership-review dl { grid-template-columns: 1fr; }
+  .wallet-ownership-review dl > div:last-child { grid-column: auto; }
+  .wallet-ownership-actions > button { flex: 1; }
+}
