@@ -19,10 +19,12 @@ export function resolveOnboardingTargets(runtimeProjection: OnboardingRuntimePro
     if (!nextEntityId || !nextSignerId) return;
     const key = `${nextEntityId}:${nextSignerId}`;
     if (seen.has(key)) return;
-    const runtimeSigner = runtimeSigners.find((signer) =>
-      normalizeEntityId(signer.entityId || '') === nextEntityId
-      || String(signer.address || '').trim().toLowerCase() === nextSignerId
-    );
+    const runtimeSigner = runtimeSigners.find((signer) => {
+      const signerEntityId = normalizeEntityId(signer.entityId || '');
+      const signerAddress = String(signer.address || '').trim().toLowerCase();
+      return signerAddress === nextSignerId && (!signerEntityId || signerEntityId === nextEntityId);
+    });
+    if (!runtimeSigner) return;
     const jurisdiction = String(rawJurisdiction || runtimeSigner?.jurisdiction || 'Primary').trim() || 'Primary';
     const jurisdictionKey = String(rawJurisdictionKey || '').trim();
     const target = {
