@@ -1,5 +1,5 @@
 import type { RuntimeAdapter } from '../../../../../core/api/runtime-adapter/types';
-import type { EntityTx, RuntimeInput } from '@xln/core/api/public/runtime-module';
+import type { EntityTx, RoutedEntityInput, RuntimeInput } from '@xln/core/api/public/runtime-module';
 import { runtimeHttpOriginFromWsUrl } from '../../../../src/lib/utils/runtime/wsUrl';
 import type {
   RuntimePaymentDeliveryMode,
@@ -26,7 +26,6 @@ import {
   buildWalletPaymentInput,
   decodeWalletPaymentProjection,
   decodeWalletPaymentRoutes,
-  type WalletPaymentMath,
   type WalletPaymentProjection,
   type WalletPaymentQuoteRequest,
   type WalletPaymentRoute,
@@ -38,6 +37,7 @@ import {
 import {
   createWalletRuntimeQueryClient,
   loadWalletRuntimeReadDependencies,
+  type WalletRuntimeReadDependencies,
   type WalletRuntimeReadLoader,
   walletRuntimeReadErrorMessage,
 } from '../runtime/wallet-runtime-read-boundary';
@@ -74,7 +74,7 @@ export class WalletPaymentSource {
   private snapshot: WalletPaymentSourceSnapshot;
   private adapter: RuntimeAdapter | null = null;
   private releaseAdapter: (() => void) | null = null;
-  private math: WalletPaymentMath | null = null;
+  private math: WalletRuntimeReadDependencies['math'] | null = null;
   private observer: RuntimeQueryObserver<WalletPaymentProjection> | null = null;
   private teardowns: Array<() => void> = [];
   private generation = 0;
@@ -225,6 +225,17 @@ export class WalletPaymentSource {
     await this.submitInput(buildWalletEntityTxsInput(this.requireProjection(), entityTxs));
   };
 
+  readonly submitEntityInput = async (input: RoutedEntityInput): Promise<void> => {
+    const projection = this.requireProjection();
+    if (input.entityId !== projection.activeEntityId) throw new Error('WALLET_ENTITY_COMMAND_ENTITY_CHANGED');
+    if (input.signerId.trim().toLowerCase() !== projection.signerId) {
+      throw new Error('WALLET_ENTITY_COMMAND_SIGNER_CHANGED');
+    }
+    const adapter = this.requireAdapter();
+    if (!adapter.commandReady) throw new Error(adapter.commandReadyReason || 'WALLET_ENTITY_COMMAND_UNAVAILABLE');
+    await this.submitInput({ runtimeTxs: [], jInputs: [], entityInputs: [input] });
+  };
+
   readonly workspaceRuntime = () => ({ adapter: this.requireAdapter(), math: this.requireMath() });
   readonly workspaceApiBase = (localBase: string): string => this.config.mode === 'remote'
     ? runtimeHttpOriginFromWsUrl(this.config.wsUrl || '') : localBase;
@@ -335,14 +346,21 @@ export class WalletPaymentSource {
     }
   }
 
-  private installObserver(adapter: RuntimeAdapter, math: WalletPaymentMath): void {
+  private installObserver(adapter: RuntimeAdapter, math: WalletRuntimeReadDependencies['math']): void {
     const client = createWalletRuntimeQueryClient(adapter);
     const observer = new RuntimeQueryObserver(
       async () => {
         const entityId = this.selectedEntityId;
-        return requireWalletWorkspaceEntity(decodeWalletPaymentProjection(await client.readViewFrame({
+        const frame = await client.readViewFrame({
           accountsLimit: 100, booksLimit: 1, ...(entityId ? { entityId } : {}),
-        }), math), entityId);
+        });
+        try {
+          return requireWalletWorkspaceEntity(decodeWalletPaymentProjection(frame, math), entityId);
+        } catch (error: unknown) {
+          if (!/^TOKEN_METADATA_UNAVAILABLE:\d+$/u.test(walletRuntimeReadErrorMessage(error))) throw error;
+          await math.refreshTokenCatalog(this.workspaceApiBase(window.location.origin));
+          return requireWalletWorkspaceEntity(decodeWalletPaymentProjection(frame, math), entityId);
+        }
       },
       {
         readHeight: () => adapter.currentHeight,
@@ -394,7 +412,7 @@ export class WalletPaymentSource {
     return this.adapter;
   }
 
-  private requireMath(): WalletPaymentMath {
+  private requireMath(): WalletRuntimeReadDependencies['math'] {
     if (!this.math) throw new Error('WALLET_PAYMENT_MATH_UNAVAILABLE');
     return this.math;
   }

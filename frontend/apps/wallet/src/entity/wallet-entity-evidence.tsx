@@ -19,6 +19,7 @@ export function WalletEntityEvidence({ context: account, tab, source }: Readonly
   const ownership = projectEntityWorkspaceOwnership({ context, frame });
   const accounts = projectEntityWorkspaceAccounts({ context, frame });
   const evidence = projectEntityWorkspaceConsensusEvidence({ context, ownership, accounts, frame });
+  const depositoryAddress = account.replica.state.config.jurisdiction?.depositoryAddress ?? '';
   return <div className="wallet-entity-evidence" data-testid={`wallet-entity-${tab}`} data-entity-id={account.entityId}>
     <nav className="wallet-tool-tabs" aria-label="Entity controls">
       <a href="/app#ownership" aria-current={tab === 'ownership' ? 'page' : undefined}>Ownership</a>
@@ -26,7 +27,16 @@ export function WalletEntityEvidence({ context: account, tab, source }: Readonly
     </nav>
     {tab === 'ownership' ? <>
       <EntityWorkspaceOwnershipPanel ownership={ownership} />
-      <WalletOwnershipShares key={`${runtimeId}:${account.entityId}`} source={source} entityId={account.entityId} apiBase={account.apiBase} />
+      <WalletOwnershipShares
+        key={`${runtimeId}:${account.entityId}`}
+        source={source}
+        entityId={account.entityId}
+        signerId={context.signerId ?? ''}
+        depositoryAddress={depositoryAddress}
+        commandsReady={account.commandsReady}
+        commandReason={account.commandReason}
+        apiBase={account.apiBase}
+      />
     </> : <EntityWorkspaceConsensusPanel evidence={evidence} />}
   </div>;
 }

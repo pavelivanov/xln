@@ -97,3 +97,40 @@ test('Ownership exposes the exact confirmed release nonce from the real Runtime'
   await expect(page.getByTestId('ownership-control-reserve')).toHaveText('80');
   await expect(page.getByTestId('ownership-confirmed-nonce')).toHaveText('Confirmed action nonce 1');
 });
+
+test('Ownership review cancellation is inert and submit commits the canonical share release', { tag: '@functional' }, async ({ page }, testInfo) => {
+  const errors = observeBrowserErrors(page);
+  await selectWalletFixtureRuntime(page);
+  const port = Number(process.env['XLN_REACT_WALLET_FIXTURE_PORT'] || 19092);
+  const response = await page.request.post(`http://127.0.0.1:${port}/ownership-release-fixture?slot=${encodeURIComponent(testInfo.project.name)}`);
+  expect(response.ok()).toBe(true);
+  const company: unknown = await response.json();
+  if (!company || typeof company !== 'object' || !('entityId' in company) || typeof company.entityId !== 'string') throw new Error('OWNERSHIP_RELEASE_FIXTURE_INVALID');
+  const readAction = async () => {
+    const state = await page.request.get(`http://127.0.0.1:${port}/ownership-action-state?entityId=${company.entityId}`);
+    expect(state.ok()).toBe(true);
+    return state.json() as Promise<{ confirmedNonce: string; pendingKind: string | null }>;
+  };
+  await page.goto('/app#ownership');
+  await page.getByLabel('Entity', { exact: true }).selectOption(company.entityId);
+  const shares = page.getByTestId('ownership-shares');
+  await expect(shares).toContainText('No shares in this Entity’s reserve.');
+  await shares.getByTestId('ownership-release-shares').click();
+  const review = shares.getByTestId('ownership-release-review');
+  await expect(review).toContainText('100000000000');
+  await expect(review).toContainText('CONTROL');
+  await expect(review).toContainText('DIVIDEND');
+  await review.getByRole('button', { name: 'Cancel' }).click();
+  await expect(review).toHaveCount(0);
+  expect(await readAction()).toEqual({ confirmedNonce: '0', pendingKind: null });
+
+  await shares.getByTestId('ownership-release-shares').click();
+  await shares.getByTestId('ownership-release-submit').click();
+  await expect(shares.getByTestId('ownership-control-reserve')).toHaveText('100000000000', { timeout: 30_000 });
+  await expect(shares.getByTestId('ownership-dividend-reserve')).toHaveText('100000000000');
+  await expect(shares.getByTestId('ownership-confirmed-nonce')).toHaveText('Confirmed action nonce 1');
+  expect(await readAction()).toEqual({ confirmedNonce: '1', pendingKind: null });
+  await expectPageContained(page);
+  await screenshotEvidence(page, testInfo, 'wallet-ownership-release-committed');
+  expectNoBrowserErrors(errors);
+});

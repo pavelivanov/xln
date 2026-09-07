@@ -244,7 +244,7 @@ const stackManager = createStackManagerController({ parseBody: request => reques
 const handleRpc = rpc.createServerRpcMessageHandler({
   validateRuntimeInputAdmission: runtime.validateRuntimeInputAdmission,
 });
-let ownershipFixture: ReturnType<typeof import('./wallet-ownership-fixture').createWalletOwnershipFixture> | null = null;
+let ownershipFixtures: ReturnType<typeof import('./wallet-ownership-fixture').createWalletOwnershipFixtures> | null = null;
 let server: ReturnType<typeof Bun.serve<FixtureSocketData>>;
 const activeRpcSockets = new Set<ServerWebSocket<FixtureSocketData>>();
 let dropdownFixture: ReturnType<typeof import('../account/wallet-account-dropdown-fixture').createAccountDropdownFixture> | null = null;
@@ -264,8 +264,24 @@ server = Bun.serve<FixtureSocketData>({
     const apiHeaders = { 'access-control-allow-origin': '*', 'access-control-allow-methods': 'GET, POST, OPTIONS', 'access-control-allow-headers': 'content-type, cache-control, pragma, authorization', 'content-type': 'application/json' };
     if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: apiHeaders });
     if (url.pathname === '/ownership-fixture' && request.method === 'POST') {
-      ownershipFixture ??= import('./wallet-ownership-fixture').then(module => module.createWalletOwnershipFixture(env, chainAdapter, config, commit));
-      return Response.json(await ownershipFixture, { headers: apiHeaders });
+      ownershipFixtures ??= import('./wallet-ownership-fixture').then(module => module.createWalletOwnershipFixtures(env, chainAdapter, config, commit));
+      return Response.json((await ownershipFixtures).released, { headers: apiHeaders });
+    }
+    if (url.pathname === '/ownership-release-fixture' && request.method === 'POST') {
+      ownershipFixtures ??= import('./wallet-ownership-fixture').then(module => module.createWalletOwnershipFixtures(env, chainAdapter, config, commit));
+      const slot = String(url.searchParams.get('slot') || '');
+      const fixture = (await ownershipFixtures).unreleased[slot];
+      if (!fixture) return new Response('Ownership fixture slot not found', { status: 404, headers: apiHeaders });
+      return Response.json(fixture, { headers: apiHeaders });
+    }
+    if (url.pathname === '/ownership-action-state' && request.method === 'GET') {
+      const requestedEntityId = String(url.searchParams.get('entityId') || '').toLowerCase();
+      const replica = [...env.state.eReplicas.values()].find(candidate => candidate.state.entityId === requestedEntityId);
+      if (!replica) return new Response('Ownership Entity not found', { status: 404, headers: apiHeaders });
+      return Response.json({
+        confirmedNonce: (replica.state.entityProviderActionState?.confirmedNonce ?? 0n).toString(),
+        pendingKind: replica.state.entityProviderActionState?.pending?.payload.kind ?? null,
+      }, { headers: apiHeaders });
     }
     if (url.pathname === '/api/tokens') return new Response(runtime.safeStringify({ tokens: (await chainAdapter.getTokenRegistry()).map(token => ({ ...token, externalTokenId: token.externalTokenId.toString() })) }), { headers: apiHeaders });
     if (url.pathname === '/api/stack-manager/status' && request.method === 'GET') {

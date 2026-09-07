@@ -4,8 +4,8 @@ import type { RuntimePaymentEntityTx } from '../../../../packages/runtime-client
 import { requireRuntimeBigInt, requireRuntimeEnum, requireRuntimeInteger, requireRuntimeRecord, requireRuntimeString } from '../runtime/wallet-runtime-decode';
 
 const operationNames = {
-  flashloans: 'Flash loan', reserveToReserve: 'Reserve transfer',
-  reserveToCollateral: 'Fund collateral', collateralToReserve: 'Withdraw collateral',
+  reserveToReserve: 'Reserve transfer', reserveToCollateral: 'Fund collateral',
+  collateralToReserve: 'Withdraw collateral',
   settlements: 'Bilateral settlement', disputeStarts: 'Start dispute',
   counterDisputes: 'Counter dispute', disputeFinalizations: 'Finalize dispute',
   externalTokenToReserve: 'External deposit', reserveToExternalToken: 'External withdrawal',

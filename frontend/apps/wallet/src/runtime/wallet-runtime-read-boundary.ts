@@ -14,6 +14,7 @@ export type WalletRuntimeReadDependencies = Readonly<{
   release: () => void;
   math: WalletPortfolioMath & {
     parseTokenAmount: (tokenId: number, amount: string) => bigint;
+    refreshTokenCatalog: (apiBase: string) => Promise<void>;
   };
 }>;
 
@@ -21,14 +22,31 @@ export type WalletRuntimeReadLoader = (config: RuntimeAdapterStorageSnapshot) =>
 
 const loadWalletRuntimeMath = async (): Promise<WalletRuntimeReadDependencies['math']> => {
   await import('../../../../../core/support/process/runtime-process.ts');
-  const [account, financial] = await Promise.all([
+  const [account, financial, ethers] = await Promise.all([
     import('../../../../../core/account/utils.ts'),
     import('../../../../../core/account/financial-utils.ts'),
+    import('ethers'),
   ]);
+  const dynamicTokens = new Map<number, Readonly<{ symbol: string; name: string; decimals: number }>>();
+  const getTokenInfo = (tokenId: number) => dynamicTokens.get(tokenId) ?? account.getTokenInfo(tokenId);
   return {
     deriveDelta: (delta, isLeft) => account.deriveDelta(delta, isLeft),
-    formatTokenAmount: financial.formatTokenAmount, getTokenInfo: account.getTokenInfo,
-    isLeftEntity: account.isLeftEntity, parseTokenAmount: financial.parseTokenAmount,
+    formatTokenAmount: (tokenId, amount) => dynamicTokens.has(tokenId)
+      ? `${ethers.formatUnits(amount ?? 0n, getTokenInfo(tokenId).decimals)} ${getTokenInfo(tokenId).symbol}`
+      : financial.formatTokenAmount(tokenId, amount),
+    getTokenInfo,
+    isLeftEntity: account.isLeftEntity,
+    parseTokenAmount: (tokenId, amount) => dynamicTokens.has(tokenId)
+      ? ethers.parseUnits(amount, getTokenInfo(tokenId).decimals)
+      : financial.parseTokenAmount(tokenId, amount),
+    refreshTokenCatalog: async (apiBase) => {
+      const { fetchExternalTokenCatalog } = await import('../../../../src/lib/components/Entity/external-wallet-reader');
+      const tokens = await fetchExternalTokenCatalog(apiBase);
+      for (const token of tokens) {
+        if (token.tokenId === undefined) continue;
+        dynamicTokens.set(token.tokenId, { symbol: token.symbol, name: token.symbol, decimals: token.decimals });
+      }
+    },
   };
 };
 
