@@ -7,6 +7,7 @@ import { EntityWorkspaceOwnershipPanel } from '../../../../packages/ui/src/entit
 import { EntityWorkspaceConsensusPanel } from '../../../../packages/ui/src/entity/accounts/entity-workspace-consensus-panel';
 import '../../../../packages/ui/src/entity/entity-workspace-shell.css';
 import type { WalletPaymentSource } from '../payments/wallet-payment-source';
+import { WalletOwnershipGovernance } from '../ownership/wallet-ownership-governance';
 import { WalletOwnershipShares } from '../ownership/wallet-ownership-shares';
 
 export function WalletEntityEvidence({ context: account, tab, source }: Readonly<{
@@ -36,6 +37,13 @@ export function WalletEntityEvidence({ context: account, tab, source }: Readonly
         commandsReady={account.commandsReady}
         commandReason={account.commandReason}
         apiBase={account.apiBase}
+      />
+      <WalletOwnershipGovernance
+        source={source}
+        entityId={account.entityId}
+        signerId={context.signerId ?? ''}
+        commandsReady={account.commandsReady}
+        commandReason={account.commandReason}
       />
     </> : <EntityWorkspaceConsensusPanel evidence={evidence} />}
   </div>;

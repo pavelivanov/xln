@@ -32,6 +32,7 @@ export type {
 export { enqueueRuntimeInput } from '../../runtime/mempool/input-queue';
 export { resolveRuntimeAdapterRead, EmbeddedRuntimeAdapter, RemoteRuntimeAdapter } from '../runtime-adapter';
 export { readRuntimeFrameReceipts } from '../runtime-adapter/frame-receipts';
+export { resolveControlBoardGovernance } from '../server/control/control-board-governance';
 export type {
   RuntimeAdapter,
   RuntimeAdapterConfig,

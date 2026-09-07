@@ -114,8 +114,9 @@ export async function connectEmbedded(seed: string, recovery?: RuntimeRecoveryCa
 			return { delivered: true as const };
 		},
 		controlRuntime: async (target, action) => {
-			if (action !== 'verify-chain') throw new Error(`UNSUPPORTED_RUNTIME_CONTROL:${String(action)}`);
-			return xln.verifyLiveRuntimeStorage(target);
+			if (action === 'verify-chain') return xln.verifyLiveRuntimeStorage(target);
+			if (action.type === 'control-board-governance') return xln.resolveControlBoardGovernance(target, action);
+			throw new Error(`UNSUPPORTED_RUNTIME_CONTROL:${action.type}`);
 		},
 		registerRuntimePublishedCallback: (target, cb) => xln.registerRuntimePublishedCallback(target, cb),
 		buildReadContext: target => ({

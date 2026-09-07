@@ -134,3 +134,44 @@ test('Ownership review cancellation is inert and submit commits the canonical sh
   await screenshotEvidence(page, testInfo, 'wallet-ownership-release-committed');
   expectNoBrowserErrors(errors);
 });
+
+test('Ownership selects an eligible CONTROL target and observes the committed board proposal', { tag: '@functional' }, async ({ page }, testInfo) => {
+  const errors = observeBrowserErrors(page);
+  await selectWalletFixtureRuntime(page);
+  const port = Number(process.env['XLN_REACT_WALLET_FIXTURE_PORT'] || 19092);
+  const response = await page.request.post(`http://127.0.0.1:${port}/ownership-governance-fixture?slot=${encodeURIComponent(testInfo.project.name)}`);
+  expect(response.ok()).toBe(true);
+  const fixture = await response.json() as { shareholderEntityId: string; targetEntityId: string; targetName: string; expectedBoardHash: string };
+  const readBoard = async () => {
+    const board = await page.request.get(`http://127.0.0.1:${port}/ownership-board-state?entityId=${fixture.targetEntityId}`);
+    expect(board.ok()).toBe(true);
+    return board.json() as Promise<{ currentBoardHash: string; proposedBoardHash: string; actionNonce: string }>;
+  };
+  await page.goto('/app#ownership');
+  await page.getByLabel('Entity', { exact: true }).selectOption(fixture.shareholderEntityId);
+  const governance = page.getByTestId('ownership-control-takeover');
+  const target = governance.getByTestId('ownership-takeover-target');
+  await expect(target.locator(`option[value="${fixture.targetEntityId}"]`)).toHaveText(fixture.targetName);
+  await target.selectOption(fixture.targetEntityId);
+  await expect(governance.getByTestId('ownership-takeover-status')).toContainText('No pending board proposal');
+  await governance.getByTestId('ownership-takeover-propose').click();
+  const review = governance.getByTestId('ownership-takeover-review');
+  await expect(review).toContainText(fixture.targetName);
+  await expect(review).toContainText(fixture.expectedBoardHash);
+  await expect(review).toContainText('Action nonce');
+  await review.getByRole('button', { name: 'Cancel' }).click();
+  expect((await readBoard()).actionNonce).toBe('0');
+
+  await governance.getByTestId('ownership-takeover-propose').click();
+  await governance.getByTestId('ownership-takeover-submit').click();
+  await expect(governance.getByTestId('ownership-proposed-board')).toHaveText(fixture.expectedBoardHash, { timeout: 30_000 });
+  await expect(page.locator('.wallet-account-command')).toContainText('Committed at Runtime height');
+  await expect(page.getByRole('alert')).toHaveCount(0);
+  const committed = await readBoard();
+  expect(committed.proposedBoardHash).toBe(fixture.expectedBoardHash);
+  expect(committed.actionNonce).toBe('1');
+  await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+  await expectPageContained(page);
+  await screenshotEvidence(page, testInfo, 'wallet-ownership-control-proposed');
+  expectNoBrowserErrors(errors);
+});

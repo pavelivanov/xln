@@ -36,8 +36,9 @@ const createAdapter = (
     return { delivered: true };
   },
   controlRuntime: (target, action) => {
-    if (action !== 'verify-chain') throw new Error(`UNSUPPORTED_RUNTIME_CONTROL:${action}`);
-    return xln.verifyLiveRuntimeStorage(target);
+    if (action === 'verify-chain') return xln.verifyLiveRuntimeStorage(target);
+    if (action.type === 'control-board-governance') return xln.resolveControlBoardGovernance(target, action);
+    throw new Error(`UNSUPPORTED_RUNTIME_CONTROL:${action.type}`);
   },
   registerRuntimePublishedCallback: (target, callback) =>
     xln.registerRuntimePublishedCallback(target, callback),
