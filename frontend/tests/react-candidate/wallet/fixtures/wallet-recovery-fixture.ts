@@ -19,6 +19,7 @@ export type WalletRecoveryFixture = Readonly<{
   towerUrl: string;
   rpcUrl: string;
   readJurisdictionsJson: () => string;
+  readHubsJson: () => string;
   hubDiscovery: Readonly<{ backupFileContents: string; hubEntityId: string; towerUrl: string }>;
   external: Readonly<{
     recipient: string;
@@ -179,7 +180,7 @@ export const createWalletRecoveryFixture = async (
   const hubBundle = runtime.buildRuntimeRecoveryBundle(mnemonic.env, { signers: [{
     index: 0, derivationIndex: 0, address: mnemonic.runtimeId, name: 'Signer 1',
     entityId: mnemonic.entityId, jurisdiction: 'React Recovery mnemonic',
-  }, { index: 1, derivationIndex: 1, address: hubSignerId, name: 'Hub signer', entityId: hub.entityId, jurisdiction: 'React Recovery mnemonic' }] });
+  }] });
   const hubEncrypted = await runtime.encryptRuntimeRecoveryBundle(hubBundle, WALLET_RECOVERY_FIXTURE_MNEMONIC);
   const initialExternalBalance = 125_000_000n;
   if (!chainAdapter.fundSignerWallet) throw new Error('WALLET_RECOVERY_FIXTURE_FAUCET_REQUIRED');
@@ -263,6 +264,24 @@ export const createWalletRecoveryFixture = async (
         contracts: machine.contracts,
       }]),
     ) }),
+    readHubsJson: () => serialization.safeStringify({
+      ok: true,
+      count: 1,
+      serverTime: Date.now(),
+      hubs: [{
+        entityId: hub.entityId,
+        roleSource: 'operator-config',
+        metadata: {
+          isHub: true,
+          jurisdiction: {
+            name: owner.state.config.jurisdiction!.name,
+            chainId: owner.state.config.jurisdiction!.chainId,
+            depositoryAddress: owner.state.config.jurisdiction!.depositoryAddress,
+            entityProviderAddress: owner.state.config.jurisdiction!.entityProviderAddress,
+          },
+        },
+      }],
+    }),
     hubDiscovery: { hubEntityId: hub.entityId, towerUrl: `http://127.0.0.1:${hubTower.server.port}`,
       backupFileContents: serialization.serializeTaggedJson({ version: 1, bundles: [hubEncrypted] }) },
     external: {

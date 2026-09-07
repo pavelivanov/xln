@@ -255,6 +255,7 @@ let server: ReturnType<typeof Bun.serve<FixtureSocketData>>;
 const activeRpcSockets = new Set<ServerWebSocket<FixtureSocketData>>();
 let dropdownFixture: ReturnType<typeof import('../account/wallet-account-dropdown-fixture').createAccountDropdownFixture> | null = null;
 let dropdownRuntime: typeof env | null = null;
+let onboardingHubDiscoveryEnabled = false;
 const socketRuntime = (socket: ServerWebSocket<FixtureSocketData>) => {
   if (socket.data.fixture === 'wallet') return env;
   if (!dropdownRuntime) throw new Error('ACCOUNT_DROPDOWN_FIXTURE_NOT_READY');
@@ -270,6 +271,15 @@ server = Bun.serve<FixtureSocketData>({
     if (assistantResponse) return assistantResponse;
     const apiHeaders = { 'access-control-allow-origin': '*', 'access-control-allow-methods': 'GET, POST, OPTIONS', 'access-control-allow-headers': 'content-type, cache-control, pragma, authorization', 'content-type': 'application/json' };
     if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: apiHeaders });
+    if (url.pathname === '/onboarding-hub-discovery-mode' && request.method === 'POST') {
+      onboardingHubDiscoveryEnabled = url.searchParams.get('enabled') === '1';
+      return Response.json({ enabled: onboardingHubDiscoveryEnabled }, { headers: apiHeaders });
+    }
+    if (url.pathname === '/api/hubs') {
+      return onboardingHubDiscoveryEnabled
+        ? new Response(recoveryFixture.readHubsJson(), { headers: apiHeaders })
+        : Response.json({ ok: false, count: 0, serverTime: Date.now(), hubs: [] }, { headers: apiHeaders });
+    }
     if (url.pathname === '/ownership-fixture' && request.method === 'POST') {
       ownershipFixtures ??= import('./wallet-ownership-fixture').then(module => module.createWalletOwnershipFixtures(env, chainAdapter, config, commit));
       return Response.json((await ownershipFixtures).released, { headers: apiHeaders });

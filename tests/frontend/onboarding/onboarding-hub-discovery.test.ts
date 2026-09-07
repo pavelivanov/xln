@@ -65,12 +65,12 @@ test('projected discovery excludes self, wrong jurisdiction and existing account
   expect(getProjectedHubDiscovery({ ...projection, accountCounterpartiesByEntityId: {} }, target).eligibleHubEntityIds).toEqual([hubId]);
 });
 
-test('target resolution keeps committed role and signer lanes while filling only jurisdiction labels', () => {
+test('target resolution keeps only Runtime-owned signer lanes while filling jurisdiction labels', () => {
   const projection = { ...emptyOnboardingRuntimeProjection(), targets: [
     { ...target, jurisdiction: '', entityId: entityId.toUpperCase() }, target,
     { ...target, signerId: hubId, jurisdiction: 'Tron' },
   ] };
   const resolved = resolveOnboardingTargets(projection, [{ entityId, address: signerId, jurisdiction: 'Testnet' }]);
-  expect(resolved).toEqual([target, { ...target, signerId: hubId, jurisdiction: 'Tron' }]);
+  expect(resolved).toEqual([target]);
   expect(hasAnyOnboardingCounterpartyAccount({ ...projection, accountCounterpartiesByEntityId: { [entityId]: [hubId] } }, entityId.toUpperCase())).toBe(true);
 });

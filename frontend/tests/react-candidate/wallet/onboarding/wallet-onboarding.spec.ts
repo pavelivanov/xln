@@ -2,6 +2,14 @@ import { expect, test } from '@playwright/test';
 import { expectNoBrowserErrors, expectPageContained, observeBrowserErrors, screenshotEvidence } from '../../browser-evidence';
 import { restoreLocalWallet } from './wallet-onboarding-test-helpers';
 
+const readPersistedRuntimeIds = (page: import('@playwright/test').Page): Promise<string[]> =>
+  page.evaluate(() => {
+    const stored = JSON.parse(localStorage.getItem('xln-vaults') || '{}') as {
+      runtimes?: Record<string, unknown>;
+    };
+    return Object.keys(stored.runtimes || {}).sort();
+  });
+
 test('post-creation setup validates preferences, exposes discovery failure and commits manual setup', { tag: '@functional' }, async ({ page }, testInfo) => {
   testInfo.setTimeout(150_000);
   const errors = observeBrowserErrors(page);
@@ -29,8 +37,8 @@ test('post-creation setup validates preferences, exposes discovery failure and c
   await expectPageContained(page);
   await screenshotEvidence(page, testInfo, 'wallet-onboarding-advanced');
 
-  // This isolated edge is a real relay, without a public Hub HTTP service.
-  // A failed discovery must stay visible and cannot mark setup complete.
+  // The isolated edge returns explicit invalid discovery evidence in this mode.
+  // The failure must stay visible and cannot mark setup complete.
   await form.getByRole('button', { name: 'Start', exact: true }).click();
   await expect(form.getByRole('alert')).toContainText('ONBOARDING_HUB_DISCOVERY_FAILED', { timeout: 30_000 });
   const completionKey = `xln-onboarding-complete:${fixture.recovery.entityId}`;
@@ -72,5 +80,40 @@ test('post-creation setup validates preferences, exposes discovery failure and c
   await page.getByRole('link', { name: 'Identity', exact: true }).click();
   await expect(page.getByRole('tab', { name: /Mnemonic/ })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Configure account' })).toHaveCount(0);
+  expectNoBrowserErrors(errors);
+});
+
+test('post-creation setup automatically joins a real Hub and reload keeps one Runtime', { tag: '@functional' }, async ({ page }, testInfo) => {
+  testInfo.setTimeout(150_000);
+  const errors = observeBrowserErrors(page);
+  const fixture = await restoreLocalWallet(page, 'hub-discovery');
+  const form = page.getByRole('form', { name: 'Configure account' });
+  await expect(form).toBeVisible();
+  await page.getByLabel('Display name', { exact: true }).fill('React Auto Join');
+  await form.locator('.wallet-onboarding-advanced > summary').click();
+  await expect(page.getByLabel('Initial hub join')).toHaveValue('1');
+  await expect(form.getByRole('checkbox', { name: /React Recovery mnemonic/ })).toHaveCount(1);
+  await form.getByRole('button', { name: 'Start', exact: true }).click();
+  await expect(page.getByText('Account configured for React Auto Join. Joined 1 hub accounts.')).toBeVisible({
+    timeout: 30_000,
+  });
+  const runtimeIds = await readPersistedRuntimeIds(page);
+  expect(runtimeIds).toEqual([fixture.recovery.runtimeId]);
+  await expectPageContained(page);
+  await screenshotEvidence(page, testInfo, 'wallet-onboarding-auto-joined');
+
+  await page.getByRole('link', { name: 'Continue to assets' }).click();
+  await page.getByLabel('Entity', { exact: true }).selectOption(fixture.recovery.entityId);
+  await expect(page.getByLabel('Entity', { exact: true })).toHaveValue(fixture.recovery.entityId);
+  await expect(page.getByLabel('Accounts', { exact: true }).getByText('Browser Hub', { exact: true })).toBeVisible();
+  await page.reload({ waitUntil: 'domcontentloaded' });
+  await expect(page.locator('.wallet-shell-runtime-state')).toHaveText('Local Runtime', { timeout: 90_000 });
+  await expect(page.getByRole('heading', { name: 'Configure account' })).toHaveCount(0);
+  await page.getByLabel('Entity', { exact: true }).selectOption(fixture.recovery.entityId);
+  await expect(page.getByLabel('Entity', { exact: true })).toHaveValue(fixture.recovery.entityId);
+  await expect(page.getByLabel('Accounts', { exact: true }).getByText('Browser Hub', { exact: true })).toBeVisible();
+  expect(await readPersistedRuntimeIds(page)).toEqual(runtimeIds);
+  await expectPageContained(page);
+  await screenshotEvidence(page, testInfo, 'wallet-onboarding-auto-joined-reloaded');
   expectNoBrowserErrors(errors);
 });

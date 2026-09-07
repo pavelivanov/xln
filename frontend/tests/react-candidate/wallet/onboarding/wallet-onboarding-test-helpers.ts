@@ -14,6 +14,11 @@ const MNEMONIC = 'test test test test test test test test test test test junk';
 
 export async function restoreLocalWallet(page: Page, backup?: 'hub-discovery') {
   const fixture = await readWalletRuntimeFixture(page);
+  const port = Number(process.env['XLN_REACT_WALLET_FIXTURE_PORT'] || 19092);
+  const discoveryMode = await page.request.post(
+    `http://127.0.0.1:${port}/onboarding-hub-discovery-mode?enabled=${backup === 'hub-discovery' ? '1' : '0'}`,
+  );
+  expect(discoveryMode.ok()).toBe(true);
   await page.addInitScript((towerUrl: string) => {
     localStorage.setItem('xln-watchtower-urls', JSON.stringify([towerUrl]));
     (window as typeof window & { __XLN_WATCHTOWERS__?: string[] }).__XLN_WATCHTOWERS__ = [towerUrl];
