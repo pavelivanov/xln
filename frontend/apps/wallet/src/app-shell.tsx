@@ -2,6 +2,7 @@ import { lazy, Suspense, useEffect, useState, useSyncExternalStore, type MouseEv
 import { useWorkspaceTranslation } from '../../../bridges/workspace-localization-react';
 
 import { readRuntimeAdapterStorageSnapshot } from '../../../packages/browser/src/runtime/session/runtime-adapter-session';
+import { displayPreferencesSource } from '../../../packages/browser/src/display-preferences-source';
 import type { WalletAuthScheme } from '../../../packages/browser/src/runtime/wallet-runtime-preferences';
 import {
   resolveWalletRuntimeSummary,
@@ -126,6 +127,11 @@ export function WalletAppShell() {
     getWalletEmbeddedRuntimeSnapshot,
     getWalletEmbeddedRuntimeSnapshot,
   );
+  const display = useSyncExternalStore(
+    displayPreferencesSource.subscribe,
+    displayPreferencesSource.getSnapshot,
+    displayPreferencesSource.getSnapshot,
+  );
   const route = useWalletRoute();
   const view = route.view;
   const [authScheme, setAuthScheme] = useState<WalletAuthScheme>(() => (
@@ -156,7 +162,7 @@ export function WalletAppShell() {
   };
 
   return (
-    <main className={`wallet-shell${usesIdentityAppearance && authScheme === 'light' ? ' is-auth-light' : ''}`}>
+    <main className={`wallet-shell${usesIdentityAppearance && authScheme === 'light' ? ' is-auth-light' : ''}`} data-display-theme={display.preferences.theme}>
       <aside className="wallet-shell-rail">
         <a className="wallet-shell-brand" href="/app" aria-label="xln wallet">xln</a>
         <nav className="wallet-shell-nav" aria-label="Wallet navigation">

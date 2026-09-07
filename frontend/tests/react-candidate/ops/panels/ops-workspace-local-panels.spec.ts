@@ -21,6 +21,9 @@ test('recorded Gossip and Entity panels follow scenario selection without a live
   await expect(entity.getByTestId('entity-workspace-shell')).toHaveAttribute('data-runtime-id', 'scenario:ahb');
   await entity.getByTestId('entity-workspace-tab-settings').click();
   await entity.getByRole('link', { name: 'Display', exact: true }).click();
+  await entity.getByTestId('settings-theme-select').selectOption('light');
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
+  await expect(entity.getByTestId('settings-display-panel')).toContainText('Light palette');
   await entity.getByRole('checkbox', { name: /Time Machine/i }).check();
   await expect(entity.getByTestId('entity-workspace-time-machine')).toHaveAttribute('data-mode', 'history');
   await entity.getByTestId('entity-workspace-tab-accounts').click();

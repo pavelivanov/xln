@@ -77,6 +77,37 @@ test('Account appearance persists retained controls and renders every skin on a 
     await page.screenshot({ path, animations: 'disabled' });
     await testInfo.attach('account-appearance-effects-viewport', { path, contentType: 'image/png' });
   }
+  await page.goto('/app#settings/display', { waitUntil: 'domcontentloaded' });
+  const display = page.getByTestId('settings-display-panel');
+  const theme = page.getByTestId('settings-theme-select');
+  await expect(display).toBeVisible();
+  await theme.selectOption('light');
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
+  await expect(page.locator('.wallet-shell')).toHaveAttribute('data-display-theme', 'light');
+  await expect(display.getByText('Light palette')).toBeVisible();
+  expect(await page.evaluate(() => (
+    getComputedStyle(document.documentElement).getPropertyValue('--theme-background').trim()
+  ))).toBe('#edf2f7');
+  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('xln-settings') || '{}'))).toMatchObject({
+    accountBarStyle: 'thread',
+    accountBarUsdPerPx: 10,
+    accountSkin: 'apple',
+    barAnimGlow: true,
+    barAnimRipple: true,
+    barAnimSweep: true,
+    barLayout: 'sides',
+    theme: 'light',
+  });
+  await expectPageContained(page);
+  await screenshotEvidence(page, testInfo, 'wallet-display-light');
+  await page.reload({ waitUntil: 'domcontentloaded' });
+  await expect(page.getByTestId('settings-theme-select')).toHaveValue('light');
+  await expect(page.locator('.wallet-shell')).toHaveAttribute('data-display-theme', 'light');
+  await page.goto('/app#accounts/appearance', { waitUntil: 'domcontentloaded' });
+  await expect(page.getByRole('button', { name: 'Apple', exact: true })).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.getByRole('button', { name: 'Sides', exact: true })).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.getByLabel('Bar style', { exact: true })).toHaveValue('thread');
+  await expect(page.getByRole('slider', { name: /Scale/ })).toHaveValue('1000');
   await page.getByRole('button', { name: 'Classic', exact: true }).click();
   await page.getByRole('button', { name: 'Center', exact: true }).click();
   await page.getByRole('button', { name: '← Back to accounts' }).click();

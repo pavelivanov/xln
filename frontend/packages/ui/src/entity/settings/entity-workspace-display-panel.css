@@ -7,6 +7,7 @@
   color: var(--theme-text-secondary);
   background: color-mix(in srgb, var(--theme-surface) 94%, transparent);
 }
+.entity-workspace-display.is-theme-only { grid-template-rows: auto auto auto; }
 
 .entity-workspace-display > header,
 .entity-workspace-display-theme,

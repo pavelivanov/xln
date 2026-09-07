@@ -19,6 +19,7 @@ type EntityWorkspaceDisplayPanelProps = Readonly<{
   onToggleTimeMachine: (show: boolean) => void;
   onToggleXlnGuide: (show: boolean) => void;
   preferences: EntityWorkspaceDisplayPreferences;
+  showWorkspaceControls?: boolean;
 }>;
 
 export function EntityWorkspaceDisplayPanel({
@@ -27,10 +28,11 @@ export function EntityWorkspaceDisplayPanel({
   onToggleTimeMachine,
   onToggleXlnGuide,
   preferences,
+  showWorkspaceControls = true,
 }: EntityWorkspaceDisplayPanelProps) {
   const theme = getThemeCoreColors(preferences.theme);
   return (
-    <section className="entity-workspace-display" data-testid="settings-display-panel">
+    <section className={`entity-workspace-display${showWorkspaceControls ? '' : ' is-theme-only'}`} data-testid="settings-display-panel">
       <header>
         <div>
           <span>Display preferences</span>
@@ -58,7 +60,7 @@ export function EntityWorkspaceDisplayPanel({
           ))}
         </select>
       </label>
-      <label className="entity-workspace-display-toggle">
+      {showWorkspaceControls ? <label className="entity-workspace-display-toggle">
         <span>
           <strong>Time Machine</strong>
           <small>Show exact committed Runtime history below the workspace.</small>
@@ -69,8 +71,8 @@ export function EntityWorkspaceDisplayPanel({
           onChange={event => onToggleTimeMachine(event.currentTarget.checked)}
           type="checkbox"
         />
-      </label>
-      <label className="entity-workspace-display-toggle">
+      </label> : null}
+      {showWorkspaceControls ? <label className="entity-workspace-display-toggle">
         <span>
           <strong>xln guide</strong>
           <small>Show the draggable logo and local AI mini-chat on the canonical workspace.</small>
@@ -81,7 +83,7 @@ export function EntityWorkspaceDisplayPanel({
           onChange={event => onToggleXlnGuide(event.currentTarget.checked)}
           type="checkbox"
         />
-      </label>
+      </label> : null}
       {issue ? <p className="entity-workspace-display-issue" role="alert">{issue}</p> : null}
       <footer>
         <span>Shared storage</span>
