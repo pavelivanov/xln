@@ -110,8 +110,10 @@ describe('React wallet app shell', () => {
     expect(resolveWalletAppRoute('?portfolio=1')).toEqual({ view: 'portfolio', section: 'assets' });
     expect(resolveWalletAppRoute('', '#accounts/receive')).toEqual({ view: 'payments', tab: 'receive', invoice: '' });
     expect(resolveWalletAppRoute('', '#accounts/activity')).toEqual({ view: 'markets', tab: 'activity' });
-    expect(resolveWalletAppRoute('', '#settings/recovery')).toEqual({ view: 'settings', section: 'recovery' });
-    expect(resolveWalletAppRoute('', '#settings/display')).toEqual({ view: 'settings', section: 'preferences' });
+    expect(resolveWalletAppRoute('', '#settings')).toEqual({ view: 'settings', section: 'profile', entityId: '' });
+    expect(resolveWalletAppRoute('', '#settings/entity?entity=0xABCD')).toEqual({ view: 'settings', section: 'profile', entityId: '0xABCD' });
+    expect(resolveWalletAppRoute('', '#settings/recovery')).toEqual({ view: 'settings', section: 'recovery', entityId: '' });
+    expect(resolveWalletAppRoute('', '#settings/display')).toEqual({ view: 'settings', section: 'preferences', entityId: '' });
     expect(resolveWalletAppRoute('?markets=1', '#pay/ABC%3Fdesc%3DLunch')).toEqual({
       view: 'payments', tab: 'send', invoice: 'https://xln.finance/app#pay/ABC%3Fdesc%3DLunch',
     });

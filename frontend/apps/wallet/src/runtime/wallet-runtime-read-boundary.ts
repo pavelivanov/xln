@@ -18,6 +18,11 @@ export type WalletRuntimeReadDependencies = Readonly<{
   };
 }>;
 
+export type WalletRuntimeConnection = Pick<WalletRuntimeReadDependencies, 'adapter' | 'release'>;
+export type WalletRuntimeConnectionLoader = (
+  config: RuntimeAdapterStorageSnapshot,
+) => Promise<WalletRuntimeConnection>;
+
 export type WalletRuntimeReadLoader = (config: RuntimeAdapterStorageSnapshot) => Promise<WalletRuntimeReadDependencies>;
 
 const loadWalletRuntimeMath = async (): Promise<WalletRuntimeReadDependencies['math']> => {
@@ -110,28 +115,18 @@ const remoteRuntimeConfig = (
   };
 };
 
-export const loadWalletRuntimeReadDependencies = async (
+export const loadWalletRuntimeConnection = async (
   config: RuntimeAdapterStorageSnapshot,
-): Promise<WalletRuntimeReadDependencies> => {
+): Promise<WalletRuntimeConnection> => {
   // Install the canonical browser process surface before loading any protocol
   // module that reads it during module initialization.
   await import('../../../../../core/support/process/runtime-process.ts');
-  const mathPromise = loadWalletRuntimeMath();
   if (config.mode !== 'remote') {
-    const [adapter, math] = await Promise.all([
-      startWalletEmbeddedRuntime(),
-      mathPromise,
-    ]);
-    return {
-      adapter,
-      release: () => {},
-      math,
-    };
+    return { adapter: await startWalletEmbeddedRuntime(), release: () => {} };
   }
 
-  const [remote, math, journal] = await Promise.all([
+  const [remote, journal] = await Promise.all([
     import('../../../../../core/api/runtime-adapter/remote.ts'),
-    mathPromise,
     import('../../../../packages/browser/src/commands/runtime-command-journal-keyring.ts'),
   ]);
   const adapter = new remote.RemoteRuntimeAdapter();
@@ -147,8 +142,17 @@ export const loadWalletRuntimeReadDependencies = async (
   return {
     adapter,
     release: () => { adapter.disconnect(); },
-    math,
   };
+};
+
+export const loadWalletRuntimeReadDependencies = async (
+  config: RuntimeAdapterStorageSnapshot,
+): Promise<WalletRuntimeReadDependencies> => {
+  const [connection, math] = await Promise.all([
+    loadWalletRuntimeConnection(config),
+    loadWalletRuntimeMath(),
+  ]);
+  return { ...connection, math };
 };
 
 export const loadWalletMarketMath = async (): Promise<WalletMarketMath> => {

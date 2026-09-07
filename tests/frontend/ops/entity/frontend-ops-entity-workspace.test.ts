@@ -63,7 +63,8 @@ describe('React Entity workspace shell', () => {
     expect(display).toContain('settings-xln-mascot-toggle');
     expect(display).toContain('onToggleXlnGuide(event.currentTarget.checked)');
     expect(page).toContain('setXlnGuideVisibility');
-    expect(settingsStage).toContain('ENTITY_SETTINGS_SECTIONS.map');
+    expect(settingsStage).toContain('sections = ENTITY_SETTINGS_SECTIONS');
+    expect(settingsStage).toContain('sections.map');
     expect(settingsStage).toContain("settingsSubview === 'entity' ? 'wallet' : settingsSubview");
     expect(profile).toContain('settings-hub-policy');
     expect(profile).toContain('settings-runtime-summary');

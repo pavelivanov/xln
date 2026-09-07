@@ -1,7 +1,66 @@
 import { expect, test } from '@playwright/test';
 
 import { expectNoBrowserErrors, expectPageContained, observeBrowserErrors, screenshotEvidence } from '../browser-evidence';
-import { selectWalletFixtureRuntime } from './fixtures/wallet-runtime-test-helpers';
+import { installImportedRuntime, selectWalletFixtureRuntime } from './fixtures/wallet-runtime-test-helpers';
+import { finishOpenedWalletSetup, restoreLocalWallet } from './onboarding/wallet-onboarding-test-helpers';
+
+test('wallet profile settings cancel or commit against the selected identity and survive reload', { tag: '@functional' }, async ({ page }, testInfo) => {
+  testInfo.setTimeout(150_000);
+  const errors = observeBrowserErrors(page);
+  const fixture = await restoreLocalWallet(page);
+  await finishOpenedWalletSetup(page);
+  await installImportedRuntime(page, fixture);
+  await page.goto('/app#settings', { waitUntil: 'domcontentloaded' });
+
+  const profile = page.getByTestId('wallet-profile-settings');
+  const identity = page.getByLabel('Selected identity');
+  const name = page.getByTestId('settings-profile-name-input');
+  const bio = page.getByTestId('settings-profile-bio-input');
+  const cancel = page.getByTestId('settings-profile-cancel');
+  const save = page.getByTestId('settings-profile-save');
+  await expect(profile).toBeVisible({ timeout: 30_000 });
+  await expect(identity.locator(`option[value="${fixture.entityId}"]`)).toHaveCount(1);
+  await identity.selectOption(fixture.entityId);
+  await expect(identity).toHaveValue(fixture.entityId);
+  await expect(page).toHaveURL(new RegExp(`#settings\\?entity=${fixture.entityId}$`));
+  await expect(page.getByRole('link', { name: 'Wallet', exact: true })).toHaveAttribute('aria-current', 'page');
+  const committedName = await name.inputValue();
+  const committedBio = await bio.inputValue();
+
+  await name.fill(`Cancelled ${testInfo.project.name}`);
+  await bio.fill('This draft must remain local.');
+  await expect(cancel).toBeEnabled();
+  await cancel.click();
+  await expect(name).toHaveValue(committedName);
+  await expect(bio).toHaveValue(committedBio);
+  await expect(cancel).toBeDisabled();
+  await expect(save).toBeDisabled();
+  await screenshotEvidence(page, testInfo, 'wallet-profile-cancelled');
+
+  await page.getByRole('link', { name: 'Display', exact: true }).click();
+  await expect(page).toHaveURL(/#settings\/display$/);
+  await expect(page.getByLabel('BrainVault worker cap')).toBeVisible();
+  await page.goBack();
+  await expect(identity).toHaveValue(fixture.entityId);
+
+  const nextName = `Wallet profile ${testInfo.project.name}`;
+  await name.fill(nextName);
+  await save.click();
+  await expect(page.getByTestId('settings-profile-status')).toHaveText(
+    'Profile committed to the selected Entity.',
+    { timeout: 30_000 },
+  );
+  await expect(page.getByTestId('settings-profile-name')).toHaveText(nextName);
+  await expect(identity).toHaveValue(fixture.entityId);
+  await page.reload({ waitUntil: 'domcontentloaded' });
+  await expect(page.getByTestId('settings-profile-name-input')).toHaveValue(nextName, { timeout: 30_000 });
+  await expect(page.getByLabel('Selected identity')).toHaveValue(fixture.entityId);
+  await expect(page.getByTestId('settings-profile-save')).toBeDisabled();
+  await expectPageContained(page);
+  await page.evaluate(() => window.scrollTo({ left: 0, top: 0, behavior: 'auto' }));
+  await screenshotEvidence(page, testInfo, 'wallet-profile-committed');
+  expectNoBrowserErrors(errors);
+});
 
 test('wallet canonical links select subviews and retain Entity through hash and history navigation', { tag: '@functional' }, async ({ page }, testInfo) => {
   const errors = observeBrowserErrors(page);
@@ -39,7 +98,7 @@ test('wallet canonical links select subviews and retain Entity through hash and 
   await expect(page.getByLabel('BrainVault worker cap')).toHaveCount(0);
   await expectPageContained(page);
   await screenshotEvidence(page, testInfo, 'wallet-canonical-recovery');
-  await page.getByRole('button', { name: 'Preferences', exact: true }).click();
+  await page.getByRole('link', { name: 'Display', exact: true }).click();
   await expect(page).toHaveURL(/#settings\/display$/);
   await expect(page.getByLabel('BrainVault worker cap')).toBeVisible();
   await page.goBack();
