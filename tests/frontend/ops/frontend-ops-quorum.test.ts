@@ -2,17 +2,17 @@ import { describe, expect, test } from 'bun:test';
 
 import registry from '../../../audits/registry.json';
 import { opsPageMetadata, resolveOpsPage } from '../../../frontend/apps/ops/src/ops-model';
-import { OPS_QUORUM_INTERACTIONS } from '../../../frontend/apps/ops/src/ops-quorum-source';
-import { currentQuorumInteractions } from '../../../frontend/packages/runtime-client/src/qa-quorum-history';
+import { OPS_QUORUM_INTERACTIONS } from '../../../frontend/apps/ops/src/quorum/ops-quorum-source';
+import { currentQuorumInteractions } from '../../../frontend/packages/runtime-client/src/qa/quorum/qa-quorum-history';
 import {
   buildQuorumView,
   readQuorumCategoryFilter,
   readQuorumRange,
-} from '../../../frontend/packages/runtime-client/src/qa-quorum-model';
+} from '../../../frontend/packages/runtime-client/src/qa/quorum/qa-quorum-model';
 import {
   decodeQuorumRegistry,
   interactionsFromRegistry,
-} from '../../../frontend/packages/runtime-client/src/qa-quorum-registry';
+} from '../../../frontend/packages/runtime-client/src/qa/quorum/qa-quorum-registry';
 
 const oneRunRegistry = (overrides: Readonly<Record<string, unknown>> = {}): Readonly<Record<string, unknown>> => ({
   schemaVersion: 2,
@@ -90,7 +90,7 @@ describe('React ops quorum ownership', () => {
       Bun.file('frontend/src/routes/qa/quorum/+page.ts').text(),
       Bun.file('frontend/src/routes/qa/quorum/+page.svelte').text(),
     ]);
-    expect(app).toContain("import('./ops-quorum')");
+    expect(app).toContain("import('./quorum/ops-quorum')");
     expect(svelteLoad).toContain('decodeQuorumRegistry(registry)');
     expect(svelteLoad).not.toContain('as QuorumRegistry');
     expect(sveltePage).toContain('buildQuorumView');

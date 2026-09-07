@@ -101,7 +101,7 @@ import {
   RUNTIME_ADAPTER_WS_KEY,
   readRemoteRuntimeAdapterAuth,
   writeRemoteRuntimeAdapterAuth,
-} from '../../../packages/browser/src/runtime-adapter-session';
+} from '../../../packages/browser/src/runtime/session/runtime-adapter-session';
 
 let unregisterEnvChange: (() => void) | null = null;
 let unregisterRuntimeControllerChange: (() => void) | null = null;

@@ -4,11 +4,11 @@ import {
   embedBootErrorMessage,
   embedBootTitle,
   parseEmbedBootRequest,
-} from '../../../frontend/packages/runtime-client/src/embed-boot-model';
+} from '../../../frontend/packages/runtime-client/src/scenario/embed-boot-model';
 import {
   DEMO_PLAYBACK_INTENT_IDLE,
   createDemoPlaybackIntentStore,
-} from '../../../frontend/packages/runtime-client/src/demo-playback-intent';
+} from '../../../frontend/packages/runtime-client/src/scenario/demo-playback-intent';
 
 const url = (raw: string): URL => new URL(raw);
 

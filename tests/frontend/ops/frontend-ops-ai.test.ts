@@ -5,7 +5,7 @@ import {
   decodeAiMessage,
   decodeAiModelsPayload,
   type AiMessage,
-} from '../../../frontend/apps/ops/src/ops-ai-decode';
+} from '../../../frontend/apps/ops/src/ai/ops-ai-decode';
 import {
   aiModelOptionLabel,
   aiRamBarState,
@@ -16,8 +16,8 @@ import {
   resolveAiChatId,
   shouldOfferAiMlxLoad,
   sortAiChatGroups,
-} from '../../../frontend/apps/ops/src/ops-ai-model';
-import { createOpsAiSource, type OpsAiDependencies } from '../../../frontend/apps/ops/src/ops-ai-source';
+} from '../../../frontend/apps/ops/src/ai/ops-ai-model';
+import { createOpsAiSource, type OpsAiDependencies } from '../../../frontend/apps/ops/src/ai/ops-ai-source';
 
 const modelsPayload = {
   models: [{ id: 'qwen3-coder:latest', name: 'Qwen Coder', vision: false, available: true, backend: 'ollama' },
@@ -272,10 +272,10 @@ describe('React ops ai source', () => {
     const [app, main, runtime] = await Promise.all([
       Bun.file('frontend/apps/ops/src/ops-app.tsx').text(),
       Bun.file('frontend/apps/ops/src/main.tsx').text(),
-      Bun.file('frontend/apps/ops/src/ops-ai-runtime.ts').text(),
+      Bun.file('frontend/apps/ops/src/ai/ops-ai-runtime.ts').text(),
     ]);
-    expect(app).toContain("import('./ops-ai')");
-    expect(main).toContain("import('./ops-ai-runtime')");
+    expect(app).toContain("import('./ai/ops-ai')");
+    expect(main).toContain("import('./ai/ops-ai-runtime')");
     expect(runtime).toContain("addEventListener('pagehide'");
     expect(runtime).toContain('opsAiSource.stop()');
   });

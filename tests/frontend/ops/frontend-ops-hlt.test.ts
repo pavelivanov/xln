@@ -9,9 +9,9 @@ import {
   previewOpsHlt,
   readOpsHltMode,
   readOpsHltReplayMode,
-} from '../../../frontend/apps/ops/src/ops-hlt-model';
+} from '../../../frontend/apps/ops/src/hlt/ops-hlt-model';
 import { opsPageMetadata, resolveOpsPage } from '../../../frontend/apps/ops/src/ops-model';
-import { decodeHltDashboardPayload } from '../../../frontend/packages/runtime-client/src/qa-hlt';
+import { decodeHltDashboardPayload } from '../../../frontend/packages/runtime-client/src/qa/qa-hlt';
 
 const HLT_PAYLOAD = {
   ok: true,
@@ -198,8 +198,8 @@ describe('React ops HLT evidence', () => {
 
   test('wires real HLT endpoints, active-only polling, abort teardown, and a lazy route chunk', async () => {
     const [source, runtime, app] = await Promise.all([
-      Bun.file('frontend/apps/ops/src/ops-hlt-source.ts').text(),
-      Bun.file('frontend/apps/ops/src/ops-hlt-runtime.ts').text(),
+      Bun.file('frontend/apps/ops/src/hlt/ops-hlt-source.ts').text(),
+      Bun.file('frontend/apps/ops/src/hlt/ops-hlt-runtime.ts').text(),
       Bun.file('frontend/apps/ops/src/ops-app.tsx').text(),
     ]);
     expect(source).toContain("qaFetch('/api/qa/hlt'");
@@ -209,6 +209,6 @@ describe('React ops HLT evidence', () => {
     expect(source).toContain('1_000');
     expect(runtime).toContain("addEventListener('pagehide'");
     expect(runtime).toContain('opsHltSource.stop()');
-    expect(app).toContain("import('./ops-hlt')");
+    expect(app).toContain("import('./hlt/ops-hlt')");
   });
 });

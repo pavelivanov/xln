@@ -12,7 +12,7 @@
     projectConsoleFrameLogs,
     type ConsoleEntry,
     type ConsoleFilterLevel,
-  } from '../../../../packages/runtime-client/src/console-panel-view';
+  } from '../../../../packages/runtime-client/src/panels/console-panel-view';
 
   // Props for isolated mode (passed from View.svelte)
   export let runtimeFrameEnv: Writable<RuntimeReplica | null>;

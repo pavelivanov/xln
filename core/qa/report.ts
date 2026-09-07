@@ -71,14 +71,14 @@ import {
   type QaTestCategory,
   type QaTestLedgerEntry,
   type QaUxReleasePackAudit,
-} from './report-types';
+} from './reporting/report-types';
 import {
   QA_HISTORY_DB_PATH,
   QA_LOGS_ROOT,
   QA_STORY_SCREENSHOTS_ROOT,
-} from './report-paths';
-export * from './report-types';
-export * from './report-paths';
+} from './reporting/report-paths';
+export * from './reporting/report-types';
+export * from './reporting/report-paths';
 
 export const auditQaUxReleasePack = (stories: QaStoryScreenshot[]): QaUxReleasePackAudit => {
   const curated = stories.filter(story => story.curated);

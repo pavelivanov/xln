@@ -73,8 +73,8 @@ import {
   type ReserveTransferAsset,
 } from "../../assets/entity-asset-catalog";
 import { requireTokenDecimals } from "../../token-metadata";
-import { buildOpenOutgoingDebtTotals, buildPendingBatchPreview, buildPendingBatchState, canBroadcastPendingBatch, formatBatchReserveIssue, getPendingBatchReserveIssue, pendingBatchEntityLabel } from "../../payments/pending-batch-preview";
-import { createPendingBatchActionRunner, enqueuePendingBatchAction } from "../../payments/pending-batch-actions";
+import { buildOpenOutgoingDebtTotals, buildPendingBatchPreview, buildPendingBatchState, canBroadcastPendingBatch, formatBatchReserveIssue, getPendingBatchReserveIssue, pendingBatchEntityLabel } from "../../payments/batch/pending-batch-preview";
+import { createPendingBatchActionRunner, enqueuePendingBatchAction } from "../../payments/batch/pending-batch-actions";
 import {
   buildAddTokenToAccountTx,
   buildBroadcastTx,
@@ -93,7 +93,7 @@ import { buildDisputedAccountViews } from "../../account/account-dispute-view";
 import {
   buildEntityWorkspaceProfileUpdateInput,
   type EntityWorkspaceProfileDraft as EntitySettingsProfileDraft,
-} from "../../../../../../packages/runtime-client/src/entity-workspace-profile-update";
+} from "../../../../../../packages/runtime-client/src/entity/profile/entity-workspace-profile-update";
 export let tab: Tab;
 export let hideHeader: boolean = false;
 export let showJurisdiction: boolean = true;

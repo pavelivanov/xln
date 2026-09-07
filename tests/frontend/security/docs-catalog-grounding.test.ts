@@ -6,7 +6,7 @@ import {
   classifyDoc,
   getSectionDefinitions,
   getSectionKind,
-} from '../../../frontend/docs-catalog.js';
+} from '../../../frontend/scripts/docs/docs-catalog.js';
 import { rankXlnGuideDocs } from '../../../frontend/src/lib/ai/xln-guide-context';
 
 const entry = (id: string, title: string) => {

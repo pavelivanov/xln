@@ -1,36 +1,36 @@
 import { lazy, Suspense } from 'react';
 
-import { CandidateShell } from '../../../packages/ui/src/candidate-shell';
-import { OpsHealthPage } from './ops-health';
+import { CandidateShell } from '../../../packages/ui/src/shell/candidate-shell';
+import { OpsHealthPage } from './health/ops-health';
 import type { OpsPage } from './ops-model';
 
 const OpsHltPage = lazy(async () => {
-  const module = await import('./ops-hlt');
+  const module = await import('./hlt/ops-hlt');
   return { default: module.OpsHltPage };
 });
 
 const OpsQaPage = lazy(async () => {
-  const module = await import('./ops-qa');
+  const module = await import('./qa/ops-qa');
   return { default: module.OpsQaPage };
 });
 
 const OpsQuorumPage = lazy(async () => {
-  const module = await import('./ops-quorum');
+  const module = await import('./quorum/ops-quorum');
   return { default: module.OpsQuorumPage };
 });
 
 const OpsRunsPage = lazy(async () => {
-  const module = await import('./ops-runs');
+  const module = await import('./runs/ops-runs');
   return { default: module.OpsRunsPage };
 });
 
 const OpsScenariosPage = lazy(async () => {
-  const module = await import('./ops-scenarios');
+  const module = await import('./scenarios/ops-scenarios');
   return { default: module.OpsScenariosPage };
 });
 
 const OpsAiPage = lazy(async () => {
-  const module = await import('./ops-ai');
+  const module = await import('./ai/ops-ai');
   return { default: module.OpsAiPage };
 });
 

@@ -16,7 +16,7 @@ import { networkMachineConfig } from './networkMachineStore';
 import { runtimes } from '../runtimeStore';
 import { createObservableStore, readStoreValue } from '$lib/utils/observableStore';
 import type { RuntimeTimelineIndex } from '$lib/network3d/timeline/runtimeGraphTimeline';
-import { projectScenarioSolvency } from '../../../../packages/runtime-client/src/scenario-solvency';
+import { projectScenarioSolvency } from '../../../../packages/runtime-client/src/scenario/scenario-solvency';
 
 export type NetworkMachineRuntimeState = {
   loading: boolean;

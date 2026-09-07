@@ -24,7 +24,7 @@ export default defineConfig({
     trace: 'retain-on-failure',
   },
   webServer: {
-    command: 'bun scripts/pwa-candidate-smoke-server.ts',
+    command: 'bun scripts/pwa/pwa-candidate-smoke-server.ts',
     url: `${baseURL}/__xln-pwa/state`,
     reuseExistingServer: false,
     timeout: 120_000,

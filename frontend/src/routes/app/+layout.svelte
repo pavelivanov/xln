@@ -61,8 +61,8 @@
   import {
     isRemoteRuntimeAdapterPreferred,
     writeEmbeddedRuntimeAdapterSession,
-  } from '../../../packages/browser/src/runtime-adapter-session';
-  import { runWalletBootLifecycle } from '../../../packages/browser/src/wallet-boot-lifecycle';
+  } from '../../../packages/browser/src/runtime/session/runtime-adapter-session';
+  import { runWalletBootLifecycle } from '../../../packages/browser/src/runtime/wallet-boot-lifecycle';
   import {
     WalletDeployVersionCoordinator,
     walletDeployVersionRecoveryMessage,
@@ -70,8 +70,8 @@
   import {
     WalletRuntimeBootstrapCoordinator,
     hasWalletRuntimeBootstrapInput,
-  } from '../../../packages/browser/src/wallet-runtime-bootstrap';
-  import { WalletRuntimeConsentCoordinator } from '../../../packages/browser/src/wallet-runtime-consent';
+  } from '../../../packages/browser/src/runtime/wallet-runtime-bootstrap';
+  import { WalletRuntimeConsentCoordinator } from '../../../packages/browser/src/runtime/wallet-runtime-consent';
   import { resolveWalletShellPhase } from '../../../packages/browser/src/wallet-shell-state';
 
   let { children } = $props();

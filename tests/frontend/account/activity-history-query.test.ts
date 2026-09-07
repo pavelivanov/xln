@@ -7,7 +7,7 @@ import {
   formatActivityTokenAmount,
   isTransientActivityReadError,
   normalizeActivityHistoryPage,
-} from '../../../frontend/src/lib/components/Entity/account/activity-history-query';
+} from '../../../frontend/src/lib/components/Entity/account/activity/activity-history-query';
 
 const entityId = `0x${'ab'.repeat(32)}`;
 

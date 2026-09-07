@@ -22,7 +22,7 @@
   import { networkMachineRuntimeOperations } from '$lib/stores/network/networkMachineRuntimeStore';
   import { networkMachineDemo } from '$lib/stores/network/networkMachineDemoStore';
   import { decodeNetworkTrailFromHash } from '$lib/network3d/timeline/networkTimelineSource';
-  import { embedBootErrorMessage, embedBootTitle, parseEmbedBootRequest } from '../../../packages/runtime-client/src/embed-boot-model';
+  import { embedBootErrorMessage, embedBootTitle, parseEmbedBootRequest } from '../../../packages/runtime-client/src/scenario/embed-boot-model';
 
   let embedMode = true;
   let scenarioError = '';

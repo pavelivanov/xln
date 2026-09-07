@@ -9,7 +9,7 @@ import {
   readScenarioPreviewRequest,
   requireScenarioOption,
   scenarioPreviewHref,
-} from '../../../frontend/packages/runtime-client/src/scenario-player-model';
+} from '../../../frontend/packages/runtime-client/src/scenario/scenario-player-model';
 import { opsPageMetadata, resolveOpsPage } from '../../../frontend/apps/ops/src/ops-model';
 
 const frame = (height: number, title: string, disputed = false): EnvSnapshot => ({
@@ -59,9 +59,9 @@ describe('React ops scenarios model', () => {
 describe('React scenario Runtime ownership', () => {
   test('uses one real runtime.js source for ops and wallet with loud errors and teardown', async () => {
     const [source, runtime, walletRuntime, walletShell] = await Promise.all([
-      Bun.file('frontend/packages/browser/src/runtime-scenario-source.ts').text(),
-      Bun.file('frontend/apps/ops/src/ops-scenarios-runtime.ts').text(),
-      Bun.file('frontend/apps/wallet/src/wallet-scenario-preview-runtime.ts').text(),
+      Bun.file('frontend/packages/browser/src/runtime/session/runtime-scenario-source.ts').text(),
+      Bun.file('frontend/apps/ops/src/scenarios/ops-scenarios-runtime.ts').text(),
+      Bun.file('frontend/apps/wallet/src/scenario-preview/wallet-scenario-preview-runtime.ts').text(),
       Bun.file('frontend/apps/wallet/src/app-shell.tsx').text(),
     ]);
     expect(source).toContain('createBrowserRuntimeModuleLoader<XLNModule>');
@@ -71,7 +71,7 @@ describe('React scenario Runtime ownership', () => {
     expect(runtime).toContain("addEventListener('pagehide'");
     expect(runtime).toContain('opsScenariosSource.stop()');
     expect(walletRuntime).toContain('startFromPreviewSearch(window.location.search)');
-    expect(walletShell).toContain("import('./wallet-scenario-preview')");
+    expect(walletShell).toContain("import('./scenario-preview/wallet-scenario-preview')");
     expect(walletShell).toContain("view !== 'scenario-preview'");
   });
 
@@ -81,8 +81,8 @@ describe('React scenario Runtime ownership', () => {
       Bun.file('frontend/apps/ops/src/main.tsx').text(),
       Bun.file('frontend/apps/wallet/src/main.tsx').text(),
     ]);
-    expect(app).toContain("import('./ops-scenarios')");
-    expect(opsMain).toContain("import('./ops-scenarios-runtime')");
-    expect(walletMain).toContain("import('./wallet-scenario-preview-runtime')");
+    expect(app).toContain("import('./scenarios/ops-scenarios')");
+    expect(opsMain).toContain("import('./scenarios/ops-scenarios-runtime')");
+    expect(walletMain).toContain("import('./scenario-preview/wallet-scenario-preview-runtime')");
   });
 });

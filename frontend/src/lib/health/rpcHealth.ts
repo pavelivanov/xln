@@ -1,1 +1,1 @@
-export * from '../../../packages/runtime-client/src/rpc-health';
+export * from '../../../packages/runtime-client/src/runtime/rpc-health';

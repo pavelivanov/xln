@@ -40,9 +40,9 @@ describe('frontend capability inventory', () => {
     expect(site?.status).toBe('implemented');
     expect(site?.currentSources).toContain('frontend/apps/site/src/landing-page.tsx');
     expect(site?.currentSources).toContain('frontend/apps/site/src/install-page.tsx');
-    expect(site?.currentSources).toContain('frontend/apps/site/src/rcpan-page.tsx');
-    expect(site?.currentSources).toContain('frontend/apps/site/src/unicast-page.tsx');
-    expect(site?.currentSources).toContain('frontend/apps/site/src/releases-page.tsx');
+    expect(site?.currentSources).toContain('frontend/apps/site/src/rcpan/rcpan-page.tsx');
+    expect(site?.currentSources).toContain('frontend/apps/site/src/unicast/unicast-page.tsx');
+    expect(site?.currentSources).toContain('frontend/apps/site/src/releases/releases-page.tsx');
     expect(site?.currentSources).toContain('frontend/apps/site/src/reviews-page.tsx');
     expect(site?.currentSources).toContain('frontend/apps/site/src/market-cap-page.tsx');
     expect(CAPABILITIES.filter(({ id }) => ![
@@ -65,39 +65,39 @@ describe('frontend capability inventory', () => {
     expect(CAPABILITIES.find(({ id }) => id === 'wallet-shell-and-identity')?.status).toBe('implemented');
     expect(CAPABILITIES.find(({ id }) => id === 'wallet-recovery')?.status).toBe('implemented');
     expect(CAPABILITIES.find(({ id }) => id === 'wallet-recovery')?.currentSources)
-      .toContain('frontend/bridges/wallet-canonical-push-wake.ts');
+      .toContain('frontend/bridges/wallet/wallet-canonical-push-wake.ts');
     expect(CAPABILITIES.find(({ id }) => id === 'wallet-shell-and-identity')?.currentSources)
-      .toContain('frontend/packages/browser/src/wallet-boot-lifecycle.ts');
+      .toContain('frontend/packages/browser/src/runtime/wallet-boot-lifecycle.ts');
     expect(CAPABILITIES.find(({ id }) => id === 'wallet-shell-and-identity')?.currentSources)
-      .toContain('frontend/packages/browser/src/wallet-brainvault-finalization.ts');
+      .toContain('frontend/packages/browser/src/identity/wallet-brainvault-finalization.ts');
     expect(CAPABILITIES.find(({ id }) => id === 'wallet-shell-and-identity')?.currentSources)
-      .toContain('frontend/packages/browser/src/wallet-brainvault-worker-resilience.ts');
+      .toContain('frontend/packages/browser/src/identity/wallet-brainvault-worker-resilience.ts');
     expect(CAPABILITIES.find(({ id }) => id === 'wallet-shell-and-identity')?.currentSources)
-      .toContain('frontend/packages/browser/src/wallet-brainvault-worker-scheduling.ts');
+      .toContain('frontend/packages/browser/src/identity/wallet-brainvault-worker-scheduling.ts');
     expect(CAPABILITIES.find(({ id }) => id === 'wallet-shell-and-identity')?.currentSources)
-      .toContain('frontend/packages/browser/src/wallet-brainvault-worker-validation.ts');
+      .toContain('frontend/packages/browser/src/identity/wallet-brainvault-worker-validation.ts');
     expect(CAPABILITIES.find(({ id }) => id === 'wallet-shell-and-identity')?.currentSources)
       .toContain('frontend/packages/browser/src/wallet-deploy-version.ts');
     expect(CAPABILITIES.find(({ id }) => id === 'wallet-shell-and-identity')?.currentSources)
-      .toContain('frontend/packages/browser/src/wallet-identity-entry.ts');
+      .toContain('frontend/packages/browser/src/identity/wallet-identity-entry.ts');
     expect(CAPABILITIES.find(({ id }) => id === 'wallet-shell-and-identity')?.currentSources)
-      .toContain('frontend/packages/browser/src/wallet-node-brainvault-validation.ts');
+      .toContain('frontend/packages/browser/src/identity/wallet-node-brainvault-validation.ts');
     expect(CAPABILITIES.find(({ id }) => id === 'wallet-shell-and-identity')?.currentSources)
-      .toContain('frontend/packages/browser/src/wallet-node-mnemonic-reveal.ts');
+      .toContain('frontend/packages/browser/src/identity/wallet-node-mnemonic-reveal.ts');
     expect(CAPABILITIES.find(({ id }) => id === 'wallet-shell-and-identity')?.currentSources)
-      .toContain('frontend/packages/browser/src/wallet-recovery-choice.ts');
+      .toContain('frontend/packages/browser/src/recovery/wallet-recovery-choice.ts');
     expect(CAPABILITIES.find(({ id }) => id === 'wallet-shell-and-identity')?.currentSources)
-      .toContain('frontend/packages/browser/src/wallet-recovery-discovery.ts');
+      .toContain('frontend/packages/browser/src/recovery/wallet-recovery-discovery.ts');
     expect(CAPABILITIES.find(({ id }) => id === 'wallet-shell-and-identity')?.currentSources)
-      .toContain('frontend/packages/browser/src/wallet-recovery-rehearsal.ts');
+      .toContain('frontend/packages/browser/src/recovery/wallet-recovery-rehearsal.ts');
     expect(CAPABILITIES.find(({ id }) => id === 'wallet-shell-and-identity')?.currentSources)
-      .toContain('frontend/packages/browser/src/wallet-runtime-bootstrap.ts');
+      .toContain('frontend/packages/browser/src/runtime/wallet-runtime-bootstrap.ts');
     expect(CAPABILITIES.find(({ id }) => id === 'wallet-shell-and-identity')?.currentSources)
-      .toContain('frontend/packages/browser/src/wallet-runtime-consent.ts');
+      .toContain('frontend/packages/browser/src/runtime/wallet-runtime-consent.ts');
     expect(CAPABILITIES.find(({ id }) => id === 'wallet-shell-and-identity')?.currentSources)
-      .toContain('frontend/packages/browser/src/wallet-runtime-opening.ts');
+      .toContain('frontend/packages/browser/src/runtime/wallet-runtime-opening.ts');
     expect(CAPABILITIES.find(({ id }) => id === 'wallet-shell-and-identity')?.currentSources)
-      .toContain('frontend/packages/browser/src/wallet-runtime-preferences.ts');
+      .toContain('frontend/packages/browser/src/runtime/wallet-runtime-preferences.ts');
     expect(CAPABILITIES.find(({ id }) => id === 'wallet-shell-and-identity')?.currentSources)
       .toContain('frontend/packages/browser/src/wallet-shell-state.ts');
     expect(CAPABILITIES.find(({ id }) => id === 'wallet-shell-and-identity')?.currentSources)
@@ -145,35 +145,35 @@ describe('frontend capability inventory', () => {
       .toContain('exclusive cross-tab Runtime ownership and quiesced takeover');
     expect(CAPABILITIES.find(({ id }) => id === 'wallet-runtime-discovery')?.status).toBe('in_progress');
     expect(CAPABILITIES.find(({ id }) => id === 'wallet-runtime-discovery')?.currentSources)
-      .toContain('frontend/packages/browser/src/runtime-adapter-session.ts');
+      .toContain('frontend/packages/browser/src/runtime/session/runtime-adapter-session.ts');
     expect(CAPABILITIES.find(({ id }) => id === 'wallet-runtime-discovery')?.currentSources)
-      .toContain('frontend/packages/runtime-client/src/runtime-adapter-activation.ts');
+      .toContain('frontend/packages/runtime-client/src/runtime/runtime-adapter-activation.ts');
     expect(CAPABILITIES.find(({ id }) => id === 'wallet-runtime-discovery')?.currentSources)
-      .toContain('frontend/packages/runtime-client/src/runtime-handle.ts');
+      .toContain('frontend/packages/runtime-client/src/runtime/runtime-handle.ts');
     expect(CAPABILITIES.find(({ id }) => id === 'wallet-runtime-discovery')?.currentSources)
-      .toContain('frontend/packages/runtime-client/src/runtime-query-client.ts');
+      .toContain('frontend/packages/runtime-client/src/runtime/query/runtime-query-client.ts');
     expect(CAPABILITIES.find(({ id }) => id === 'wallet-runtime-discovery')?.currentSources)
-      .toContain('frontend/packages/runtime-client/src/runtime-query-observer.ts');
+      .toContain('frontend/packages/runtime-client/src/runtime/query/runtime-query-observer.ts');
     expect(CAPABILITIES.find(({ id }) => id === 'wallet-runtime-discovery')?.currentSources)
-      .toContain('frontend/packages/runtime-client/src/runtime-selection.ts');
+      .toContain('frontend/packages/runtime-client/src/runtime/runtime-selection.ts');
     expect(CAPABILITIES.find(({ id }) => id === 'wallet-runtime-discovery')?.currentSources)
-      .toContain('frontend/packages/runtime-client/src/runtime-view-catchup.ts');
+      .toContain('frontend/packages/runtime-client/src/runtime/view/runtime-view-catchup.ts');
     expect(CAPABILITIES.find(({ id }) => id === 'wallet-runtime-discovery')?.currentSources)
-      .toContain('frontend/packages/runtime-client/src/runtime-view-loader.ts');
+      .toContain('frontend/packages/runtime-client/src/runtime/view/runtime-view-loader.ts');
     expect(CAPABILITIES.find(({ id }) => id === 'wallet-runtime-discovery')?.currentSources)
-      .toContain('frontend/packages/runtime-client/src/runtime-view-model.ts');
+      .toContain('frontend/packages/runtime-client/src/runtime/view/runtime-view-model.ts');
     expect(CAPABILITIES.find(({ id }) => id === 'wallet-runtime-discovery')?.currentSources)
-      .toContain('frontend/packages/runtime-client/src/runtime-view-projections.ts');
+      .toContain('frontend/packages/runtime-client/src/runtime/view/runtime-view-projections.ts');
     expect(CAPABILITIES.find(({ id }) => id === 'wallet-runtime-discovery')?.currentSources)
-      .toContain('frontend/packages/runtime-client/src/runtime-view-publication.ts');
+      .toContain('frontend/packages/runtime-client/src/runtime/view/runtime-view-publication.ts');
     expect(CAPABILITIES.find(({ id }) => id === 'wallet-runtime-discovery')?.currentSources)
-      .toContain('frontend/packages/runtime-client/src/runtime-view-refresh.ts');
+      .toContain('frontend/packages/runtime-client/src/runtime/view/runtime-view-refresh.ts');
     expect(CAPABILITIES.find(({ id }) => id === 'wallet-runtime-discovery')?.currentSources)
-      .toContain('frontend/packages/runtime-client/src/runtime-view-selection.ts');
+      .toContain('frontend/packages/runtime-client/src/runtime/view/runtime-view-selection.ts');
     expect(CAPABILITIES.find(({ id }) => id === 'wallet-runtime-discovery')?.behavior)
       .toContain('framework-neutral RuntimeView snapshot and height transitions');
     expect(CAPABILITIES.find(({ id }) => id === 'wallet-runtime-discovery')?.currentSources)
-      .toContain('frontend/packages/runtime-client/src/runtime-view-state.ts');
+      .toContain('frontend/packages/runtime-client/src/runtime/view/runtime-view-state.ts');
     expect(CAPABILITIES.find(({ id }) => id === 'wallet-runtime-discovery')?.behavior)
       .toContain('tab-confined Runtime authority and rollback-safe adapter selection');
     expect(CAPABILITIES.find(({ id }) => id === 'wallet-runtime-discovery')?.behavior)
@@ -202,20 +202,20 @@ describe('frontend capability inventory', () => {
       .toContain('framework-neutral RuntimeView selection snapshots and revisions');
     expect(CAPABILITIES.find(({ id }) => id === 'wallet-finance')?.status).toBe('in_progress');
     expect(CAPABILITIES.find(({ id }) => id === 'wallet-finance')?.currentSources)
-      .toContain('frontend/apps/wallet/src/wallet-financial-health.tsx');
+      .toContain('frontend/apps/wallet/src/financial-health/wallet-financial-health.tsx');
     expect(CAPABILITIES.find(({ id }) => id === 'wallet-finance')?.behavior)
       .toContain('React-owned debt, Runtime solvency evidence, Account dispute gates, and committed history');
     expect(CAPABILITIES.find(({ id }) => id === 'wallet-payments-and-markets')?.status).toBe('implemented');
     expect(CAPABILITIES.find(({ id }) => id === 'wallet-payments-and-markets')?.currentSources)
-      .toContain('frontend/apps/wallet/src/wallet-payment-source.ts');
+      .toContain('frontend/apps/wallet/src/payments/wallet-payment-source.ts');
     expect(CAPABILITIES.find(({ id }) => id === 'wallet-payments-and-markets')?.behavior)
       .toContain('React-owned Runtime route quotes and idempotent payment command retry');
     expect(CAPABILITIES.find(({ id }) => id === 'wallet-payments-and-markets')?.currentSources)
-      .toContain('frontend/apps/wallet/src/wallet-market-source.ts');
+      .toContain('frontend/apps/wallet/src/markets/wallet-market-source.ts');
     expect(CAPABILITIES.find(({ id }) => id === 'wallet-payments-and-markets')?.behavior)
       .toContain('React-owned Runtime orderbooks, canonical same-j order and cancel commands, cross-j lifecycle, and persisted activity');
     expect(CAPABILITIES.find(({ id }) => id === 'wallet-payments-and-markets')?.currentSources)
-      .toContain('frontend/bridges/wallet-canonical-external-provider.ts');
+      .toContain('frontend/bridges/wallet/wallet-canonical-external-provider.ts');
     expect(CAPABILITIES.find(({ id }) => id === 'wallet-native-and-offline')?.status).toBe('implemented');
   });
 
@@ -231,12 +231,12 @@ describe('frontend capability inventory', () => {
   test('records the completed React health, QA cockpit, and HLT capability', () => {
     const opsHealth = CAPABILITIES.find(({ id }) => id === 'ops-health-and-qa');
     expect(opsHealth?.status).toBe('implemented');
-    expect(opsHealth?.currentSources).toContain('frontend/apps/ops/src/ops-health.tsx');
-    expect(opsHealth?.currentSources).toContain('frontend/apps/ops/src/ops-hlt.tsx');
-    expect(opsHealth?.currentSources).toContain('frontend/apps/ops/src/ops-qa.tsx');
-    expect(opsHealth?.currentSources).toContain('frontend/apps/ops/src/ops-qa-actions.ts');
-    expect(opsHealth?.currentSources).toContain('frontend/packages/runtime-client/src/rpc-health.ts');
-    expect(opsHealth?.currentSources).toContain('frontend/packages/runtime-client/src/qa-hlt.ts');
+    expect(opsHealth?.currentSources).toContain('frontend/apps/ops/src/health/ops-health.tsx');
+    expect(opsHealth?.currentSources).toContain('frontend/apps/ops/src/hlt/ops-hlt.tsx');
+    expect(opsHealth?.currentSources).toContain('frontend/apps/ops/src/qa/ops-qa.tsx');
+    expect(opsHealth?.currentSources).toContain('frontend/apps/ops/src/qa/ops-qa-actions.ts');
+    expect(opsHealth?.currentSources).toContain('frontend/packages/runtime-client/src/runtime/rpc-health.ts');
+    expect(opsHealth?.currentSources).toContain('frontend/packages/runtime-client/src/qa/qa-hlt.ts');
     expect(opsHealth?.behavior).toContain(
       'React-owned live health and RPC readiness with bounded retry, refresh, stale evidence, and teardown',
     );
@@ -252,10 +252,10 @@ describe('frontend capability inventory', () => {
     const capability = CAPABILITIES.find(({ id }) => id === 'ops-runs-scenarios-and-ai');
     expect(capability?.status).toBe('in_progress');
     expect(capability?.routes).not.toContain('/embed');
-    expect(capability?.currentSources).toContain('frontend/apps/ops/src/ops-runs.tsx');
-    expect(capability?.currentSources).toContain('frontend/apps/ops/src/ops-scenarios.tsx');
-    expect(capability?.currentSources).toContain('frontend/apps/ops/src/ops-ai.tsx');
-    expect(capability?.currentSources).toContain('frontend/packages/browser/src/runtime-scenario-source.ts');
+    expect(capability?.currentSources).toContain('frontend/apps/ops/src/runs/ops-runs.tsx');
+    expect(capability?.currentSources).toContain('frontend/apps/ops/src/scenarios/ops-scenarios.tsx');
+    expect(capability?.currentSources).toContain('frontend/apps/ops/src/ai/ops-ai.tsx');
+    expect(capability?.currentSources).toContain('frontend/packages/browser/src/runtime/session/runtime-scenario-source.ts');
     expect(capability?.behavior).toContain(
       'React-owned deterministic BrowserVM scenario execution, committed-frame playback, and teardown',
     );

@@ -29,7 +29,7 @@ test('runtime selector hot-swaps adapters instead of reloading the app', () => {
 
 test('runtime controller is the single adapter lifecycle owner', () => {
   const controllerSource = readFileSync('frontend/src/lib/stores/runtimeControllerStore.ts', 'utf8');
-  const handleSource = readFileSync('frontend/packages/runtime-client/src/runtime-handle.ts', 'utf8');
+  const handleSource = readFileSync('frontend/packages/runtime-client/src/runtime/runtime-handle.ts', 'utf8');
   const xlnStoreSource = readFileSync('frontend/src/lib/stores/xlnStore.ts', 'utf8');
   const contextSwitcherSource = readFileSync('frontend/src/lib/components/Entity/workspace/shell/ContextSwitcher.svelte', 'utf8');
   const runtimeStoreSource = readFileSync('frontend/src/lib/stores/runtimeStore.ts', 'utf8');
@@ -167,12 +167,12 @@ test('remote time-machine history requires radapter batch reads', () => {
   const xlnStoreSource = readFileSync('frontend/src/lib/stores/xlnStore.ts', 'utf8');
   const source = readFileSync('frontend/src/lib/stores/runtimeHistoryStore.ts', 'utf8');
   const transportSource = readFileSync(
-    'frontend/packages/runtime-client/src/time-machine-transport.ts',
+    'frontend/packages/runtime-client/src/scenario/time-machine-transport.ts',
     'utf8',
   );
   const querySource = readFileSync('frontend/src/lib/stores/runtimeQueryClient.ts', 'utf8');
   const queryBoundarySource = readFileSync(
-    'frontend/packages/runtime-client/src/runtime-query-client.ts',
+    'frontend/packages/runtime-client/src/runtime/query/runtime-query-client.ts',
     'utf8',
   );
   const scanStart = source.indexOf('export const scanRuntimeAdapterHistoryAtHeight');
@@ -207,7 +207,7 @@ test('remote adapter resolver restores active auth from the remote runtime regis
 
 test('direct remote runtime URL reuses saved capability before showing paste prompt', () => {
   const adapter = readFileSync('frontend/src/lib/utils/runtime/runtimeConnection.ts', 'utf8');
-  const boundary = readFileSync('frontend/packages/runtime-client/src/remote-runtime-request.ts', 'utf8');
+  const boundary = readFileSync('frontend/packages/runtime-client/src/runtime/remote-runtime-request.ts', 'utf8');
   const readStart = adapter.indexOf('export function readRemoteRuntimeRequestFromUrl');
   const readEnd = adapter.indexOf('export function readRemoteRuntimeImportPayloadFromHash', readStart);
   expect(readStart).toBeGreaterThan(0);
@@ -469,7 +469,7 @@ test('view runtime frame stores expose the canonical live snapshot debug surface
 test('local runtime selection persists embedded mode without deleting saved remote registry', () => {
   const source = readFileSync('frontend/src/lib/stores/runtimeStore.ts', 'utf8');
   const activationSource = readFileSync(
-    'frontend/packages/runtime-client/src/runtime-adapter-activation.ts',
+    'frontend/packages/runtime-client/src/runtime/runtime-adapter-activation.ts',
     'utf8',
   );
   const switchStart = source.indexOf('const performRuntimeSelection =');
@@ -488,7 +488,7 @@ test('local runtime selection persists embedded mode without deleting saved remo
 test('selecting the already connected runtime does not reconnect the adapter', () => {
   const source = readFileSync('frontend/src/lib/stores/runtimeStore.ts', 'utf8');
   const activationSource = readFileSync(
-    'frontend/packages/runtime-client/src/runtime-adapter-activation.ts',
+    'frontend/packages/runtime-client/src/runtime/runtime-adapter-activation.ts',
     'utf8',
   );
   const helperStart = source.indexOf('const runtimeControllerAlreadyTargets =');
@@ -509,7 +509,7 @@ test('selecting the already connected runtime does not reconnect the adapter', (
 test('runtime selection persists websocket before switch with rollback and reaffirms active endpoint after success', () => {
   const runtimeStoreSource = readFileSync('frontend/src/lib/stores/runtimeStore.ts', 'utf8');
   const activationSource = readFileSync(
-    'frontend/packages/runtime-client/src/runtime-adapter-activation.ts',
+    'frontend/packages/runtime-client/src/runtime/runtime-adapter-activation.ts',
     'utf8',
   );
   const xlnStoreSource = readFileSync('frontend/src/lib/stores/xlnStore.ts', 'utf8');
@@ -565,9 +565,9 @@ test('runtime selection persists websocket before switch with rollback and reaff
 
 test('runtime controller handle carries selected runtime identity', () => {
   const controllerSource = readFileSync('frontend/src/lib/stores/runtimeControllerStore.ts', 'utf8');
-  const handleSource = readFileSync('frontend/packages/runtime-client/src/runtime-handle.ts', 'utf8');
+  const handleSource = readFileSync('frontend/packages/runtime-client/src/runtime/runtime-handle.ts', 'utf8');
   const activationSource = readFileSync(
-    'frontend/packages/runtime-client/src/runtime-adapter-activation.ts',
+    'frontend/packages/runtime-client/src/runtime/runtime-adapter-activation.ts',
     'utf8',
   );
   const runtimeStoreSource = readFileSync('frontend/src/lib/stores/runtimeStore.ts', 'utf8');
@@ -666,7 +666,7 @@ test('embedded env initialization publishes active runtime snapshot before app s
 
 test('app embedded boot restores vault runtimes before default browser runtime initialization', () => {
   const source = readFileSync('frontend/src/routes/app/+layout.svelte', 'utf8');
-  const boundary = readFileSync('frontend/packages/browser/src/wallet-boot-lifecycle.ts', 'utf8');
+  const boundary = readFileSync('frontend/packages/browser/src/runtime/wallet-boot-lifecycle.ts', 'utf8');
   const helperStart = source.indexOf('function shouldBootRemoteRuntime()');
   const bootStart = source.indexOf('async function bootApp()');
   const mountStart = source.indexOf('onMount(() => {', bootStart);
@@ -728,7 +728,7 @@ test('app remote runtime prompt activates through hot boot instead of reload', (
 test('embedded remote capability never bypasses explicit runtime consent', () => {
   const appLayout = readFileSync('frontend/src/routes/app/+layout.svelte', 'utf8');
   const runtimeBootstrap = readFileSync(
-    'frontend/packages/browser/src/wallet-runtime-bootstrap.ts',
+    'frontend/packages/browser/src/runtime/wallet-runtime-bootstrap.ts',
     'utf8',
   );
   const runtimeConnection = readFileSync('frontend/src/lib/utils/runtime/runtimeConnection.ts', 'utf8');
@@ -790,7 +790,7 @@ test('remote app can page through full hub account and book projections', () => 
   const xlnStoreSource = readFileSync('frontend/src/lib/stores/xlnStore.ts', 'utf8');
   const runtimeViewSource = readFileSync('frontend/src/lib/stores/runtimeViewStore.ts', 'utf8');
   const runtimeViewModelSource = readFileSync(
-    'frontend/packages/runtime-client/src/runtime-view-model.ts',
+    'frontend/packages/runtime-client/src/runtime/view/runtime-view-model.ts',
     'utf8',
   );
 
@@ -826,7 +826,7 @@ test('remote app can page through full hub account and book projections', () => 
   expect(runtimeViewModelSource).toContain('accountsPageCount: number');
   expect(runtimeViewModelSource).toContain('accountsHasMore: boolean');
   expect(runtimeViewModelSource).toContain('export const runtimeViewPageNeedsNavigation');
-  expect(runtimeViewSource).toContain("from '../../../packages/runtime-client/src/runtime-view-model'");
+  expect(runtimeViewSource).toContain("from '../../../packages/runtime-client/src/runtime/view/runtime-view-model'");
   expect(runtimeViewSource).toContain('export const runtimeViewPageInfo');
 });
 

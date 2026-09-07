@@ -3,7 +3,7 @@ import {
   buildQaScenarioCues,
   qaScenarioFailureCueIndex,
   type QaScenarioShardLike,
-} from '../../../frontend/packages/runtime-client/src/qa-scenario-player';
+} from '../../../frontend/packages/runtime-client/src/qa/qa-scenario-player';
 
 const cancelledShard: QaScenarioShardLike = {
   shard: 7,

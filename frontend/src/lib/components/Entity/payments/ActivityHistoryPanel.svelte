@@ -9,7 +9,7 @@
   import { runtimeControllerHandle, runtimeAdapterHeight } from '$lib/stores/runtimeControllerStore';
   import { runtimeQueryClient } from '$lib/stores/runtimeQueryClient';
   import { settings } from '$lib/stores/settingsStore';
-  import { dedupeHistoryEvents as dedupe } from '../account/activity-history-events';
+  import { dedupeHistoryEvents as dedupe } from '../account/activity/activity-history-events';
   import { xlnFunctions } from '$lib/stores/xlnStore';
   import {
     Calendar,
@@ -26,7 +26,7 @@
     isTransientActivityReadError,
     normalizeActivityEntityId,
     normalizeActivityHistoryPage,
-  } from '../account/activity-history-query';
+  } from '../account/activity/activity-history-query';
 
   export let entityId: string;
   export let runtimeId: string | undefined = undefined;

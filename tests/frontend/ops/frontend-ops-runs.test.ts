@@ -6,10 +6,10 @@ import {
   opsRunsCategories,
   requestedOpsRunId,
   summarizeOpsRuns,
-} from '../../../frontend/apps/ops/src/ops-runs-model';
-import { createOpsRunsSource } from '../../../frontend/apps/ops/src/ops-runs-source';
+} from '../../../frontend/apps/ops/src/runs/ops-runs-model';
+import { createOpsRunsSource } from '../../../frontend/apps/ops/src/runs/ops-runs-source';
 import { opsPageMetadata, resolveOpsPage } from '../../../frontend/apps/ops/src/ops-model';
-import type { QaRunLedgerEntry } from '../../../frontend/packages/runtime-client/src/qa-types';
+import type { QaRunLedgerEntry } from '../../../frontend/packages/runtime-client/src/qa/evidence/qa-types';
 
 const signal = { severity: 'OK', reason: 'fixture', since: 1, owner: 'qa', evidence: [] } as const;
 const row = (runId: string, status: 'passed' | 'failed', createdAt: number, durationMs: number): QaRunLedgerEntry => ({
@@ -69,10 +69,10 @@ describe('React ops runs source', () => {
     const [app, main, runtime] = await Promise.all([
       Bun.file('frontend/apps/ops/src/ops-app.tsx').text(),
       Bun.file('frontend/apps/ops/src/main.tsx').text(),
-      Bun.file('frontend/apps/ops/src/ops-runs-runtime.ts').text(),
+      Bun.file('frontend/apps/ops/src/runs/ops-runs-runtime.ts').text(),
     ]);
-    expect(app).toContain("import('./ops-runs')");
-    expect(main).toContain("import('./ops-runs-runtime')");
+    expect(app).toContain("import('./runs/ops-runs')");
+    expect(main).toContain("import('./runs/ops-runs-runtime')");
     expect(runtime).toContain("addEventListener('pagehide'");
     expect(runtime).toContain('opsRunsSource.stop()');
   });

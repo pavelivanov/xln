@@ -1,1 +1,1 @@
-export * from '../../../../../../packages/ui/src/rcpan/microscope-court-model';
+export * from '../../../../../../packages/ui/src/rcpan/microscope/microscope-court-model';

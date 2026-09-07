@@ -1,1 +1,1 @@
-export * from '../../../packages/runtime-client/src/qa-hlt';
+export * from '../../../packages/runtime-client/src/qa/qa-hlt';

@@ -1,0 +1,45 @@
+import { expect, test } from '@playwright/test';
+import { expectNoBrowserErrors, expectPageContained, observeBrowserErrors, screenshotEvidence } from '../../browser-evidence';
+
+test('workspace locale updates controls, retained and new panels, and survives reload without internal layout writes', { tag: '@functional' }, async ({ page }, testInfo) => {
+  const errors = observeBrowserErrors(page);
+  await page.goto('/embed');
+  await expect(page.locator('.dv-tab')).toHaveCount(14);
+  const language = page.locator('.ops-locale-selector select');
+  await language.selectOption('ru');
+  await expect(page.locator('html')).toHaveAttribute('lang', 'ru');
+  await expect(page.locator('.ops-pinned-tab')).toHaveText('📌 \u041e\u0441\u043d\u043e\u0432\u043d\u043e\u0439 \u043a\u043e\u0448\u0435\u043b\u0451\u043a');
+  await expect(page.getByRole('button', { name: '\u0421\u043a\u043e\u043f\u0438\u0440\u043e\u0432\u0430\u0442\u044c \u0441\u0441\u044b\u043b\u043a\u0443 \u043d\u0430 \u0437\u0430\u043f\u0438\u0441\u044c', exact: true })).toBeVisible();
+  await expect(page.getByLabel('\u0421\u043a\u043e\u0440\u043e\u0441\u0442\u044c \u0432\u043e\u0441\u043f\u0440\u043e\u0438\u0437\u0432\u0435\u0434\u0435\u043d\u0438\u044f')).toHaveValue('1');
+  await page.getByRole('button', { name: '\u041e\u0442\u043a\u0440\u044b\u0442\u044c \u043f\u0430\u043b\u0438\u0442\u0440\u0443 \u043a\u043e\u043c\u0430\u043d\u0434', exact: true }).click();
+  const palette = page.getByRole('dialog', { name: '\u041a\u043e\u043c\u0430\u043d\u0434\u044b \u0440\u0430\u0431\u043e\u0447\u0435\u0439 \u043e\u0431\u043b\u0430\u0441\u0442\u0438' });
+  await expect(palette.getByRole('option').first()).toContainText('\u041e\u043f\u043b\u0430\u0442\u0438\u0442\u044c');
+  await screenshotEvidence(page, testInfo, 'ops-locale-russian-palette');
+  await palette.getByRole('combobox').press('Escape');
+  await page.getByLabel('\u041e\u0442\u043a\u0440\u044b\u0442\u044c \u043f\u0430\u043d\u0435\u043b\u044c \u0440\u0430\u0431\u043e\u0447\u0435\u0439 \u043e\u0431\u043b\u0430\u0441\u0442\u0438', { exact: true }).selectOption('entity-workspace');
+  await expect(page.locator('.dv-active-group .dv-tab.dv-active-tab')).toContainText('\u0421\u0443\u0449\u043d\u043e\u0441\u0442\u044c');
+  await page.getByRole('button', { name: '\u0421\u0431\u0440\u043e\u0441\u0438\u0442\u044c \u0440\u0430\u0441\u043f\u043e\u043b\u043e\u0436\u0435\u043d\u0438\u0435', exact: true }).click();
+  await expect(page.locator('.ops-pinned-tab')).toHaveText('📌 \u041e\u0441\u043d\u043e\u0432\u043d\u043e\u0439 \u043a\u043e\u0448\u0435\u043b\u0451\u043a');
+  await expect.poll(() => page.evaluate(() => localStorage.getItem('xln-locale'))).toBe('ru');
+  await page.reload();
+  await expect(page.locator('html')).toHaveAttribute('lang', 'ru');
+  await expect(page.locator('.ops-pinned-tab')).toHaveText('📌 \u041e\u0441\u043d\u043e\u0432\u043d\u043e\u0439 \u043a\u043e\u0448\u0435\u043b\u0451\u043a');
+  if (testInfo.project.name.startsWith('mobile')) {
+    await page.getByRole('button', { name: '\u0412\u0441\u0435 \u043f\u0430\u043d\u0435\u043b\u0438', exact: true }).click();
+    await expect.poll(() => page.locator('.dv-groupview').first().evaluate(element => element.getBoundingClientRect().width)).toBeGreaterThan(400);
+  }
+  await screenshotEvidence(page, testInfo, 'ops-locale-russian-restored');
+  const saved = await page.evaluate(() => localStorage.getItem('xln-workspace-layout'));
+  await page.goto('/__app/ops/entity-workspace');
+  await expect(page.getByRole('button', { name: '\u041e\u0442\u043a\u0440\u044b\u0442\u044c \u043f\u0430\u043d\u0435\u043b\u044c «\u041d\u0430\u0441\u0442\u0440\u043e\u0439\u043a\u0438»', exact: true })).toBeEnabled();
+  await language.selectOption('de');
+  await page.getByRole('button', { name: 'Panel Einstellungen öffnen', exact: true }).click();
+  await expect(page.locator('.dv-active-group .dv-tab.dv-active-tab')).toContainText('Einstellungen');
+  expect(await page.evaluate(() => localStorage.getItem('xln-workspace-layout'))).toBe(saved);
+  await screenshotEvidence(page, testInfo, 'ops-locale-german-internal');
+  await page.goto('/embed');
+  await expect(page.locator('.ops-pinned-tab')).toHaveText('📌 Hauptwallet');
+  await expect(page.locator('.dv-tab')).toHaveCount(14);
+  await expectPageContained(page);
+  expectNoBrowserErrors(errors);
+});

@@ -8,19 +8,19 @@ import type { RuntimeAdapter } from '../../../core/api/runtime-adapter/types';
 import {
   executeWalletPaymentCommand,
   prepareWalletPaymentCommand,
-} from '../../../frontend/apps/wallet/src/wallet-payment-command';
+} from '../../../frontend/apps/wallet/src/payments/commands/wallet-payment-command';
 import {
   buildWalletPaymentInput,
   decodeWalletPaymentProjection,
   decodeWalletPaymentRoutes,
   type WalletPaymentMath,
-} from '../../../frontend/apps/wallet/src/wallet-payment-model';
-import { buildWalletOperationTx } from '../../../frontend/apps/wallet/src/wallet-payment-operations-model';
+} from '../../../frontend/apps/wallet/src/payments/wallet-payment-model';
+import { buildWalletOperationTx } from '../../../frontend/apps/wallet/src/payments/commands/wallet-payment-operations-model';
 import {
   initialWalletPaymentInvoice,
   readWalletPaymentInvoice,
   requireWalletPaymentQuoteMatchesDraft,
-} from '../../../frontend/apps/wallet/src/wallet-payment-draft';
+} from '../../../frontend/apps/wallet/src/payments/commands/wallet-payment-draft';
 
 const alice = `0x${'11'.repeat(32)}`;
 const bob = `0x${'22'.repeat(32)}`;
@@ -330,10 +330,10 @@ describe('React wallet payments', () => {
   });
 
   test('keeps write identity, reconnect retry, and cleanup at the explicit adapter boundary', () => {
-    const source = readFileSync('frontend/apps/wallet/src/wallet-payment-source.ts', 'utf8');
-    const command = readFileSync('frontend/apps/wallet/src/wallet-payment-command.ts', 'utf8');
-    const boundary = readFileSync('frontend/apps/wallet/src/wallet-runtime-read-boundary.ts', 'utf8');
-    const view = readFileSync('frontend/apps/wallet/src/wallet-payments.tsx', 'utf8');
+    const source = readFileSync('frontend/apps/wallet/src/payments/wallet-payment-source.ts', 'utf8');
+    const command = readFileSync('frontend/apps/wallet/src/payments/commands/wallet-payment-command.ts', 'utf8');
+    const boundary = readFileSync('frontend/apps/wallet/src/runtime/wallet-runtime-read-boundary.ts', 'utf8');
+    const view = readFileSync('frontend/apps/wallet/src/payments/wallet-payments.tsx', 'utf8');
     expect(source).toContain("adapter.read('payment-routes'");
     expect(source).toContain('prepareWalletPaymentCommand');
     expect(source).toContain('executeWalletPaymentCommand');

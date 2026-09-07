@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import { readFileSync } from 'node:fs';
 
-import { WalletNodeMnemonicRevealCoordinator } from '../../../frontend/packages/browser/src/wallet-node-mnemonic-reveal';
+import { WalletNodeMnemonicRevealCoordinator } from '../../../frontend/packages/browser/src/identity/wallet-node-mnemonic-reveal';
 
 type Recovery = Readonly<{ mnemonic24: string }>;
 

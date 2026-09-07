@@ -10,15 +10,15 @@ import {
   purgeOpsQaHistory,
   runOpsQaRestart,
   type OpsQaActionPost,
-} from '../../../frontend/apps/ops/src/ops-qa-actions';
+} from '../../../frontend/apps/ops/src/qa/ops-qa-actions';
 import {
   decodeOpsQaMeta,
   decodeOpsQaRun,
   decodeOpsQaRuns,
   pickOpsQaShardIndex,
   requestedQaSelection,
-} from '../../../frontend/apps/ops/src/ops-qa-model';
-import { createOpsQaSource, type OpsQaBundle } from '../../../frontend/apps/ops/src/ops-qa-source';
+} from '../../../frontend/apps/ops/src/qa/ops-qa-model';
+import { createOpsQaSource, type OpsQaBundle } from '../../../frontend/apps/ops/src/qa/ops-qa-source';
 import { opsPageMetadata, resolveOpsPage } from '../../../frontend/apps/ops/src/ops-model';
 
 const signal = { severity: 'OK', reason: 'fixture', since: 1, owner: 'qa', evidence: [] } as const;
@@ -104,12 +104,12 @@ describe('React ops QA lifecycle wiring', () => {
     const [app, main, source, runtime] = await Promise.all([
       Bun.file('frontend/apps/ops/src/ops-app.tsx').text(),
       Bun.file('frontend/apps/ops/src/main.tsx').text(),
-      Bun.file('frontend/apps/ops/src/ops-qa-source.ts').text(),
-      Bun.file('frontend/apps/ops/src/ops-qa-runtime.ts').text(),
+      Bun.file('frontend/apps/ops/src/qa/ops-qa-source.ts').text(),
+      Bun.file('frontend/apps/ops/src/qa/ops-qa-runtime.ts').text(),
     ]);
 
-    expect(app).toContain("import('./ops-qa')");
-    expect(main).toContain("import('./ops-qa-runtime')");
+    expect(app).toContain("import('./qa/ops-qa')");
+    expect(main).toContain("import('./qa/ops-qa-runtime')");
     expect(source).toContain('Promise.all');
     expect(source).toContain('15_000');
     expect(source).toContain('refreshController?.abort()');

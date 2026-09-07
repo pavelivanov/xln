@@ -1,1 +1,1 @@
-export * from '../../../../../../packages/ui/src/rcpan/microscope-timeline';
+export * from '../../../../../../packages/ui/src/rcpan/microscope/microscope-timeline';

@@ -9,7 +9,7 @@
   import { buildAccountTokenDetails, isAccountLeftPerspective } from '../../shared/account-token-details';
   import { compareStableText } from '$lib/utils/stableSort';
   import { buildAccountActivityRows, buildAccountDisputeView } from '../account-focused-view';
-  import { createAccountActivityPresentation } from '../account-activity-presentation';
+  import { createAccountActivityPresentation } from '../activity/account-activity-presentation';
   import { faucetPendingKey } from '../account-faucet';
 
   export let account: AccountReplica;

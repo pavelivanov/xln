@@ -28,15 +28,15 @@ import {
   removeRemoteRuntimeImportParams,
   runtimeImportPayloadFromHash,
   runtimeImportSourceFromHash,
-} from '../../../../packages/runtime-client/src/remote-runtime-request';
-import type { RemoteRuntimeRequest } from '../../../../packages/runtime-client/src/remote-runtime-request';
-import type { RuntimeHandle } from '../../../../packages/runtime-client/src/runtime-handle';
+} from '../../../../packages/runtime-client/src/runtime/remote-runtime-request';
+import type { RemoteRuntimeRequest } from '../../../../packages/runtime-client/src/runtime/remote-runtime-request';
+import type { RuntimeHandle } from '../../../../packages/runtime-client/src/runtime/runtime-handle';
 import {
   hasAcceptedRemoteRuntimeRequest,
   isRemoteRuntimeAdapterPreferred,
   markRemoteRuntimeRequestAccepted,
   writeRemoteRuntimeAdapterSession,
-} from '../../../../packages/browser/src/runtime-adapter-session';
+} from '../../../../packages/browser/src/runtime/session/runtime-adapter-session';
 
 export {
   REMOTE_ACCEPT_PREFIX,
@@ -47,8 +47,8 @@ export {
   remoteAccessFromAuthKey,
   runtimeImportPayloadFromParams,
   runtimeImportSourceFromParams,
-} from '../../../../packages/runtime-client/src/remote-runtime-request';
-export type { RemoteRuntimeRequest } from '../../../../packages/runtime-client/src/remote-runtime-request';
+} from '../../../../packages/runtime-client/src/runtime/remote-runtime-request';
+export type { RemoteRuntimeRequest } from '../../../../packages/runtime-client/src/runtime/remote-runtime-request';
 
 const PROJECTION_RUNTIME_CONNECT_TIMEOUT_MS = 6_000;
 const PROJECTION_RUNTIME_REQUEST_TIMEOUT_MS = 5_000;

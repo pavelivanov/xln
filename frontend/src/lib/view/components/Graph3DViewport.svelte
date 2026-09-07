@@ -8,7 +8,7 @@
     GRAPH3D_CANONICITY_OPTIONS,
     createGraph3dViewportStatusView,
     type Graph3dViewportCanonicity,
-  } from '../../../../packages/runtime-client/src/graph3d-viewport-view';
+  } from '../../../../packages/runtime-client/src/graph/graph3d-viewport-view';
 
   export let container: HTMLDivElement;
   export let showMiniPanel = false;
