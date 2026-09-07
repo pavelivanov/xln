@@ -31,8 +31,10 @@ import {
   type WalletPaymentRoute,
 } from './wallet-payment-model';
 import {
+  buildWalletSettlementReview,
   buildWalletOperationTx,
   type WalletOperationDraft,
+  type WalletSettlementReview,
 } from './commands/wallet-payment-operations-model';
 import {
   createWalletRuntimeQueryClient,
@@ -266,6 +268,16 @@ export class WalletPaymentSource {
     const projection = this.requireProjection();
     const entityTx = buildWalletOperationTx(draft, projection, this.requireMath());
     await this.submitInput(buildWalletEntityTxInput(projection, entityTx));
+  };
+
+  readonly reviewSettlement = (draft: WalletOperationDraft): WalletSettlementReview =>
+    buildWalletSettlementReview(draft, this.requireProjection(), this.requireMath());
+
+  readonly submitReviewedSettlement = async (review: WalletSettlementReview): Promise<void> => {
+    const projection = this.requireProjection();
+    if (projection.activeEntityId !== review.entityId) throw new Error('WALLET_SETTLEMENT_REVIEW_ENTITY_CHANGED');
+    if (projection.signerId !== review.signerId) throw new Error('WALLET_SETTLEMENT_REVIEW_SIGNER_CHANGED');
+    await this.submitInput(buildWalletEntityTxInput(projection, review.entityTx));
   };
 
   readonly validateInvoiceAmount = (tokenId: number, amount: string): string | null => {

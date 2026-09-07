@@ -16,6 +16,26 @@ export type WalletOperationDraft = Readonly<{
   intentId: string;
 }>;
 
+type WalletSettlementTx = Extract<RuntimePaymentEntityTx, { type: 'settle_propose' }>;
+
+export type WalletSettlementReview = Readonly<{
+  entityId: string;
+  entityLabel: string;
+  signerId: string;
+  counterpartyEntityId: string;
+  counterpartyLabel: string;
+  tokenId: number;
+  tokenSymbol: string;
+  amount: bigint;
+  amountLabel: string;
+  executorEntityId: string;
+  executorLabel: string;
+  executorIsLeft: boolean;
+  memo: string;
+  operation: 'c2r';
+  entityTx: WalletSettlementTx;
+}>;
+
 const requireTarget = (
   projection: WalletPaymentProjection,
   rawTarget: string,
@@ -89,7 +109,7 @@ export const buildWalletOperationTx = (
       data: {
         counterpartyEntityId: targetEntityId,
         executorIsLeft: math.isLeftEntity(projection.activeEntityId, targetEntityId),
-        memo: 'react-wallet-c2r',
+        memo: 'settle-c2r',
         ops: [{ type: 'c2r', tokenId: draft.tokenId, amount }],
       },
     };
@@ -119,5 +139,39 @@ export const buildWalletOperationTx = (
       termId: draft.termId,
       maxInterestBps: rate,
     },
+  };
+};
+
+export const buildWalletSettlementReview = (
+  draft: WalletOperationDraft,
+  projection: WalletPaymentProjection,
+  math: WalletPaymentMath,
+): WalletSettlementReview => {
+  if (draft.kind !== 'c2r') throw new Error('WALLET_SETTLEMENT_REVIEW_KIND_INVALID');
+  const entityTx = buildWalletOperationTx(draft, projection, math) as WalletSettlementTx;
+  const counterparty = projection.recipients.find(({ entityId }) => entityId === entityTx.data.counterpartyEntityId);
+  const token = projection.tokens.find(({ tokenId }) => tokenId === entityTx.data.ops[0]?.tokenId);
+  const operation = entityTx.data.ops[0];
+  if (!counterparty || !token || !operation) throw new Error('WALLET_SETTLEMENT_REVIEW_CONTEXT_INVALID');
+  const executorEntityId = entityTx.data.executorIsLeft
+    ? [projection.activeEntityId, counterparty.entityId].sort()[0]!
+    : [projection.activeEntityId, counterparty.entityId].sort()[1]!;
+  const executor = projection.entities.find(({ entityId }) => entityId === executorEntityId);
+  return {
+    entityId: projection.activeEntityId,
+    entityLabel: projection.activeEntityLabel,
+    signerId: projection.signerId,
+    counterpartyEntityId: counterparty.entityId,
+    counterpartyLabel: counterparty.label,
+    tokenId: operation.tokenId,
+    tokenSymbol: token.symbol,
+    amount: operation.amount,
+    amountLabel: math.formatTokenAmount(operation.tokenId, operation.amount),
+    executorEntityId,
+    executorLabel: executor?.label || executorEntityId,
+    executorIsLeft: entityTx.data.executorIsLeft,
+    memo: entityTx.data.memo,
+    operation: operation.type,
+    entityTx,
   };
 };
