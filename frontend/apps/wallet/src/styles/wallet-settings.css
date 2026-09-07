@@ -8,7 +8,7 @@
 
 .wallet-settings > header h1 {
   margin: 0;
-  color: #f6f7f2;
+  color: var(--theme-text-primary, #f6f7f2);
   font-size: clamp(2.6rem, 6vw, 5.4rem);
   font-weight: 620;
   letter-spacing: -0.07em;
@@ -17,7 +17,7 @@
 
 .wallet-settings > header > p:last-child {
   margin: 1.1rem 0 0;
-  color: #8f9699;
+  color: var(--theme-text-secondary, #8f9699);
   line-height: 1.6;
 }
 
@@ -41,6 +41,9 @@
   padding: 0 1.5rem 1.5rem;
 }
 
+.wallet-settings-display > .entity-workspace-display { border-left: 0; }
+.wallet-settings-display .wallet-settings-list { margin-top: 0; }
+
 .wallet-preference-row {
   display: grid;
   grid-template-columns: minmax(14rem, 0.8fr) minmax(18rem, 1.2fr);
@@ -55,7 +58,7 @@
 
 .wallet-preference-row legend,
 .wallet-preference-row > span > strong {
-  color: #d9dcd6;
+  color: var(--theme-text-primary, #d9dcd6);
   font-size: 0.86rem;
   font-weight: 620;
 }
@@ -64,7 +67,7 @@
 .wallet-preference-row > span > small {
   display: block;
   margin: 0.35rem 0 0;
-  color: #71777b;
+  color: var(--theme-text-muted, #71777b);
   font-size: 0.75rem;
   font-weight: 450;
   line-height: 1.5;
@@ -82,7 +85,7 @@
   display: grid;
   gap: 0.35rem;
   padding: 0.9rem;
-  color: #8f9699;
+  color: var(--theme-text-secondary, #8f9699);
   text-align: left;
   cursor: pointer;
   background: transparent;
@@ -91,7 +94,7 @@
 }
 
 .wallet-scheme-options button[aria-pressed="true"] {
-  color: #101210;
+  color: var(--theme-background, #101210);
   background: var(--accent);
   border-color: var(--accent);
 }
@@ -107,10 +110,10 @@
 .wallet-preference-row select {
   min-width: 12rem;
   padding: 0.75rem 2.25rem 0.75rem 0.85rem;
-  color: #e8e9e4;
+  color: var(--theme-text-primary, #e8e9e4);
   font: inherit;
   font-size: 0.8rem;
-  background: #151718;
+  background: var(--theme-background, #151718);
   border: 1px solid var(--line);
   border-radius: 0.45rem;
 }
@@ -119,7 +122,7 @@
 .wallet-settings-status,
 .wallet-settings-error {
   margin: 1.5rem 0 0;
-  color: #73797c;
+  color: var(--theme-text-muted, #73797c);
   font-size: 0.76rem;
   line-height: 1.55;
 }
@@ -131,7 +134,7 @@
   min-height: 12rem;
   margin: 0;
   padding: 2rem 1.5rem;
-  color: #8f9699;
+  color: var(--theme-text-secondary, #8f9699);
 }
 
 .wallet-settings-profile-context {
@@ -150,7 +153,7 @@
 
 .wallet-settings-profile-context label > span,
 .wallet-settings-profile-context > span {
-  color: #73797c;
+  color: var(--theme-text-muted, #73797c);
   font: 0.62rem/1.2 "SFMono-Regular", Consolas, monospace;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -161,7 +164,7 @@
   min-height: 2.35rem;
   padding: 0.55rem 0.7rem;
   color: inherit;
-  background: #151718;
+  background: var(--theme-background, #151718);
   border: 1px solid var(--line);
 }
 

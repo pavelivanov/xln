@@ -95,13 +95,18 @@ describe('React Entity workspace display preferences', () => {
     }
   });
 
-  test('keeps React effects at the ops browser boundary', async () => {
-    const [page, source, panel] = await Promise.all([
+  test('keeps one observable browser source across Wallet and docked Entity consumers', async () => {
+    const [page, source, panel, wallet, opsFacade] = await Promise.all([
       Bun.file('frontend/apps/ops/src/entity-workspace/ops-entity-workspace.tsx').text(),
-      Bun.file('frontend/apps/ops/src/ops-display-preferences.ts').text(),
+      Bun.file('frontend/packages/browser/src/display-preferences-source.ts').text(),
       Bun.file('frontend/packages/ui/src/entity/settings/entity-workspace-display-panel.tsx').text(),
+      Bun.file('frontend/apps/wallet/src/settings/wallet-settings.tsx').text(),
+      Bun.file('frontend/apps/ops/src/ops-display-preferences.ts').text(),
     ]);
     expect(page).toContain('useSyncExternalStore');
+    expect(opsFacade).toContain('displayPreferencesSource as opsDisplayPreferencesSource');
+    expect(wallet).toContain('displayPreferencesSource.subscribe');
+    expect(wallet).toContain('<EntityWorkspaceDisplayPanel');
     expect(source).toContain('writeThemePreference(localStorage, theme)');
     expect(source).toContain("window.addEventListener('storage', handleStorage)");
     expect(source).toContain('writeTimeMachinePreference(localStorage, showTimeMachine)');
