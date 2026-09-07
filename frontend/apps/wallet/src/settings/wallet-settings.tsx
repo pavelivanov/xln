@@ -10,22 +10,33 @@ import {
 } from './wallet-settings-model';
 import type { WalletRuntimeSummary } from '../app-shell-model';
 import { WalletRecoveryServices } from '../recovery/wallet-recovery-services';
-import { useWalletNavigation } from '../navigation/wallet-navigation';
 import type { WalletSettingsSection } from '../navigation/wallet-navigation-model';
+import type { WalletWorkspaceSelection } from '../runtime/wallet-workspace-selection';
+import { EntityWorkspaceSettingsStage } from '../../../../packages/ui/src/entity/settings/entity-workspace-settings-stage';
+import { WalletProfileSettings } from './wallet-profile-settings';
 import '../styles/wallet-settings.css';
 
 const WORKER_CAPS = [1, 2, 3, 4, 5, 6, 7, 8] as const;
+const WALLET_SETTINGS_SECTIONS = [
+  { id: 'wallet', label: 'Wallet' },
+  { id: 'display', label: 'Display' },
+  { id: 'recovery', label: 'Recovery' },
+  { id: 'consensus', label: 'Consensus' },
+] as const;
 
 export function WalletSettings({
+  entityId,
   onAuthSchemeChange,
   runtimeState,
   section,
+  workspaceSelection,
 }: Readonly<{
+  entityId: string;
   onAuthSchemeChange: (scheme: WalletAuthScheme) => void;
   runtimeState: WalletRuntimeSummary['state'];
   section: WalletSettingsSection;
+  workspaceSelection: WalletWorkspaceSelection;
 }>) {
-  const navigateWallet = useWalletNavigation();
   const [preferences, setPreferences] = useState(() => readWalletPreferences(localStorage));
   const [status, setStatus] = useState('');
   const [error, setError] = useState('');
@@ -63,59 +74,60 @@ export function WalletSettings({
   return (
     <section className="wallet-settings" aria-labelledby="wallet-settings-title">
       <header>
-        <p className="wallet-shell-eyebrow">Browser preferences</p>
+        <p className="wallet-shell-eyebrow">Identity and browser preferences</p>
         <h1 id="wallet-settings-title">Wallet settings</h1>
-        <p>Device-local preferences and recovery services for the active Runtime.</p>
+        <p>Committed identity, device-local preferences and recovery services for the active Runtime.</p>
       </header>
 
-      <nav className="wallet-settings-tabs" aria-label="Settings sections">
-        <button aria-current={section === 'preferences' || section === 'all' ? 'page' : undefined} onClick={() => navigateWallet('/app#settings/display')} type="button">Preferences</button>
-        <button aria-current={section === 'recovery' ? 'page' : undefined} onClick={() => navigateWallet('/app#settings/recovery')} type="button">Recovery</button>
-        <button onClick={() => navigateWallet('/app#settings/consensus')} type="button">Consensus</button>
-      </nav>
-      {section !== 'recovery' ? <>
-      <div className="wallet-settings-list">
-        <fieldset className="wallet-preference-row">
-          <legend>Identity appearance</legend>
-          <p>Applied to identity and recovery screens. It does not change wallet data.</p>
-          <div className="wallet-scheme-options">
-            {(['dark', 'light'] as const).map((scheme) => (
-              <button
-                aria-pressed={preferences.authScheme === scheme}
-                key={scheme}
-                onClick={() => changeAuthScheme(scheme)}
-                type="button"
+      <EntityWorkspaceSettingsStage
+        sections={WALLET_SETTINGS_SECTIONS}
+        settingsSubview={section === 'profile' ? 'wallet' : section === 'preferences' ? 'display' : 'recovery'}
+      >
+        {section === 'profile' ? <WalletProfileSettings entityId={entityId} selection={workspaceSelection} /> : null}
+        {section === 'preferences' ? <div className="wallet-settings-pane">
+          <div className="wallet-settings-list">
+            <fieldset className="wallet-preference-row">
+              <legend>Identity appearance</legend>
+              <p>Applied to identity and recovery screens. It does not change wallet data.</p>
+              <div className="wallet-scheme-options">
+                {(['dark', 'light'] as const).map((scheme) => (
+                  <button
+                    aria-pressed={preferences.authScheme === scheme}
+                    key={scheme}
+                    onClick={() => changeAuthScheme(scheme)}
+                    type="button"
+                  >
+                    <strong>{scheme === 'dark' ? 'Vault dark' : 'Paper light'}</strong>
+                    <span>{scheme === 'dark' ? 'Low-light workspace' : 'High-contrast document'}</span>
+                  </button>
+                ))}
+              </div>
+            </fieldset>
+
+            <label className="wallet-preference-row" htmlFor="wallet-worker-cap">
+              <span>
+                <strong>BrainVault worker cap</strong>
+                <small>Limits browser concurrency; memory pressure may reduce it further.</small>
+              </span>
+              <select
+                id="wallet-worker-cap"
+                onChange={(event) => changeWorkerCap(event.target.value)}
+                value={preferences.brainVaultWorkerCap ?? 'automatic'}
               >
-                <strong>{scheme === 'dark' ? 'Vault dark' : 'Paper light'}</strong>
-                <span>{scheme === 'dark' ? 'Low-light workspace' : 'High-contrast document'}</span>
-              </button>
-            ))}
+                <option value="automatic">Automatic</option>
+                {WORKER_CAPS.map((cap) => <option key={cap} value={cap}>{cap} worker{cap === 1 ? '' : 's'}</option>)}
+              </select>
+            </label>
           </div>
-        </fieldset>
 
-        <label className="wallet-preference-row" htmlFor="wallet-worker-cap">
-          <span>
-            <strong>BrainVault worker cap</strong>
-            <small>Limits browser concurrency; memory pressure may reduce it further.</small>
-          </span>
-          <select
-            id="wallet-worker-cap"
-            onChange={(event) => changeWorkerCap(event.target.value)}
-            value={preferences.brainVaultWorkerCap ?? 'automatic'}
-          >
-            <option value="automatic">Automatic</option>
-            {WORKER_CAPS.map((cap) => <option key={cap} value={cap}>{cap} worker{cap === 1 ? '' : 's'}</option>)}
-          </select>
-        </label>
-      </div>
-
-      <p className="wallet-settings-boundary">
-        Preferences stay in this browser. Recovery secrets, Runtime state, and authority are not stored here.
-      </p>
-      {status ? <p className="wallet-settings-status" aria-live="polite">{status}</p> : null}
-      {error ? <p className="wallet-settings-error" role="alert">{error}</p> : null}
-      </> : null}
-      {section !== 'preferences' ? <WalletRecoveryServices runtimeState={runtimeState} /> : null}
+          <p className="wallet-settings-boundary">
+            Preferences stay in this browser. Recovery secrets, Runtime state, and authority are not stored here.
+          </p>
+          {status ? <p className="wallet-settings-status" aria-live="polite">{status}</p> : null}
+          {error ? <p className="wallet-settings-error" role="alert">{error}</p> : null}
+        </div> : null}
+        {section === 'recovery' ? <div className="wallet-settings-pane"><WalletRecoveryServices runtimeState={runtimeState} /></div> : null}
+      </EntityWorkspaceSettingsStage>
     </section>
   );
 }

@@ -47,6 +47,10 @@ export function EntityWorkspaceProfileEditor({
     setDraft(current => ({ ...current, [field]: value }));
     setSaveState({ status: 'idle', message: '' });
   };
+  const cancel = (): void => {
+    setDraft(initialDraft(profile));
+    setSaveState({ status: 'idle', message: '' });
+  };
   const submit = async (event: FormEvent<HTMLFormElement>): Promise<void> => {
     event.preventDefault();
     if (disabledReason || !dirty || !draft.name.trim() || saveState.status === 'saving') return;
@@ -89,9 +93,12 @@ export function EntityWorkspaceProfileEditor({
         <p data-status={saveState.status} data-testid="settings-profile-status" role={saveState.status === 'error' ? 'alert' : 'status'}>
           {disabledReason || saveState.message || 'Changes commit only after the Runtime publishes the next frame.'}
         </p>
-        <button data-testid="settings-profile-save" disabled={Boolean(disabledReason) || !dirty || !draft.name.trim() || saveState.status === 'saving'} type="submit">
-          {saveState.status === 'saving' ? 'Committing…' : 'Save profile'}
-        </button>
+        <div className="profile-editor-actions">
+          <button data-testid="settings-profile-cancel" disabled={!dirty || saveState.status === 'saving'} onClick={cancel} type="button">Cancel</button>
+          <button data-testid="settings-profile-save" disabled={Boolean(disabledReason) || !dirty || !draft.name.trim() || saveState.status === 'saving'} type="submit">
+            {saveState.status === 'saving' ? 'Committing…' : 'Save profile'}
+          </button>
+        </div>
       </footer>
     </form>
   );

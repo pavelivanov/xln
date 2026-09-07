@@ -196,7 +196,7 @@ export function WalletAppShell() {
               {view === 'health' ? <WalletFinancialHealth workspaceSelection={workspaceSelection} /> : null}
               {route.view === 'payments' ? <WalletPayments workspaceSelection={workspaceSelection} tab={route.tab} invoice={route.invoice} onTabChange={(tab) => navigateWallet(walletPaymentTabHref(tab))} /> : null}
               {route.view === 'markets' ? <WalletMarkets workspaceSelection={workspaceSelection} tab={route.tab} onTabChange={(tab) => navigateWallet(`/app#accounts/${tab === 'market' ? 'swap' : 'activity'}`)} /> : null}
-              {route.view === 'settings' ? <WalletSettings section={route.section} onAuthSchemeChange={setAuthScheme} runtimeState={runtime.state} /> : null}
+              {route.view === 'settings' ? <WalletSettings entityId={route.entityId} key={runtimeSelectionKey} section={route.section} onAuthSchemeChange={setAuthScheme} runtimeState={runtime.state} workspaceSelection={workspaceSelection} /> : null}
               {view === 'diagnostics' ? <WalletDiagnostics runtime={runtime} /> : null}
               {view === 'scenario-preview' ? <Suspense fallback={<p>Loading scenario preview…</p>}><WalletScenarioPreview /></Suspense> : null}
               {view === 'overview' ? <WalletOverview navigate={navigate} runtime={runtime} /> : null}

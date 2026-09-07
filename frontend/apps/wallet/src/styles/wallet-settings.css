@@ -1,4 +1,7 @@
 .wallet-settings {
+  --entity-accent: var(--accent);
+  --entity-accent-soft: var(--accent);
+  --entity-line: var(--line);
   max-width: 60rem;
   animation: wallet-shell-enter 360ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
 }
@@ -23,25 +26,19 @@
   border-top: 1px solid var(--line);
 }
 
-.wallet-settings-tabs {
-  display: flex;
-  gap: 1rem;
+.wallet-settings > .entity-workspace-settings-stage {
   margin-top: 2rem;
-  border-bottom: 1px solid var(--line);
-}
-
-.wallet-settings-tabs button {
-  padding: 0.8rem 0;
-  color: inherit;
-  cursor: pointer;
+  border: 1px solid var(--line);
   background: transparent;
-  border: 0;
-  border-bottom: 2px solid transparent;
 }
 
-.wallet-settings-tabs button[aria-current="page"] {
-  color: var(--accent);
-  border-bottom-color: var(--accent);
+.wallet-settings > .entity-workspace-settings-stage > div,
+.wallet-settings > .entity-workspace-settings-stage > div > * {
+  height: auto;
+}
+
+.wallet-settings-pane {
+  padding: 0 1.5rem 1.5rem;
 }
 
 .wallet-preference-row {
@@ -129,6 +126,53 @@
 
 .wallet-settings-status { color: var(--accent); }
 .wallet-settings-error { color: #e99c95; }
+
+.wallet-settings-profile-state {
+  min-height: 12rem;
+  margin: 0;
+  padding: 2rem 1.5rem;
+  color: #8f9699;
+}
+
+.wallet-settings-profile-context {
+  display: grid;
+  grid-template-columns: minmax(14rem, 1fr) auto auto;
+  gap: 1rem;
+  align-items: end;
+  padding: 1rem 1.35rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.wallet-settings-profile-context label {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.wallet-settings-profile-context label > span,
+.wallet-settings-profile-context > span {
+  color: #73797c;
+  font: 0.62rem/1.2 "SFMono-Regular", Consolas, monospace;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.wallet-settings-profile-context select,
+.wallet-settings-profile-context button {
+  min-height: 2.35rem;
+  padding: 0.55rem 0.7rem;
+  color: inherit;
+  background: #151718;
+  border: 1px solid var(--line);
+}
+
+.wallet-settings-profile-context button {
+  color: var(--accent);
+  cursor: pointer;
+}
+
+.wallet-settings-profile .entity-workspace-profile-panel {
+  border-left: 0;
+}
 
 .wallet-shell.is-auth-light {
   --accent: #3e7f2d;
@@ -222,5 +266,17 @@
 
   .wallet-preference-row select {
     width: 100%;
+  }
+
+  .wallet-settings-pane {
+    padding-inline: 1rem;
+  }
+
+  .wallet-settings-profile-context {
+    grid-template-columns: 1fr auto;
+  }
+
+  .wallet-settings-profile-context label {
+    grid-column: 1 / -1;
   }
 }
