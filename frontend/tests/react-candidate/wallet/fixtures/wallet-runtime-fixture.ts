@@ -245,6 +245,7 @@ const handleRpc = rpc.createServerRpcMessageHandler({
   validateRuntimeInputAdmission: runtime.validateRuntimeInputAdmission,
 });
 let ownershipFixtures: ReturnType<typeof import('./wallet-ownership-fixture').createWalletOwnershipFixtures> | null = null;
+const ownershipGovernanceFixtures = new Map<string, ReturnType<typeof import('./wallet-ownership-fixture').createWalletOwnershipGovernanceFixture>>();
 let server: ReturnType<typeof Bun.serve<FixtureSocketData>>;
 const activeRpcSockets = new Set<ServerWebSocket<FixtureSocketData>>();
 let dropdownFixture: ReturnType<typeof import('../account/wallet-account-dropdown-fixture').createAccountDropdownFixture> | null = null;
@@ -257,6 +258,7 @@ const socketRuntime = (socket: ServerWebSocket<FixtureSocketData>) => {
 server = Bun.serve<FixtureSocketData>({
   hostname: '127.0.0.1',
   port,
+  idleTimeout: 30,
   async fetch(request, bunServer) {
     const url = new URL(request.url);
     const assistantResponse = await assistantProxy.handle(request, url.pathname, '127.0.0.1');
@@ -281,6 +283,33 @@ server = Bun.serve<FixtureSocketData>({
       return Response.json({
         confirmedNonce: (replica.state.entityProviderActionState?.confirmedNonce ?? 0n).toString(),
         pendingKind: replica.state.entityProviderActionState?.pending?.payload.kind ?? null,
+      }, { headers: apiHeaders });
+    }
+    if (url.pathname === '/ownership-governance-fixture' && request.method === 'POST') {
+      const slot = String(url.searchParams.get('slot') || '');
+      if (!['mobile-390x844', 'laptop-1366x900', 'wide-1920x1080'].includes(slot)) {
+        return new Response('Ownership governance fixture slot not found', { status: 404, headers: apiHeaders });
+      }
+      let fixture = ownershipGovernanceFixtures.get(slot);
+      if (!fixture) {
+        fixture = import('./wallet-ownership-fixture').then(module => (
+          module.createWalletOwnershipGovernanceFixture(env, chainAdapter, config, commit, slot, counterpartySignerId)
+        ));
+        ownershipGovernanceFixtures.set(slot, fixture);
+      }
+      return Response.json(await fixture, { headers: apiHeaders });
+    }
+    if (url.pathname === '/ownership-board-state' && request.method === 'GET') {
+      const targetEntityId = String(url.searchParams.get('entityId') || '').toLowerCase();
+      if (!/^0x[0-9a-f]{64}$/.test(targetEntityId)) return new Response('Ownership target invalid', { status: 400, headers: apiHeaders });
+      const [entity, actionNonce] = await Promise.all([
+        chainAdapter.entityProvider.entities(targetEntityId),
+        chainAdapter.entityProvider.boardActionNonces(targetEntityId),
+      ]);
+      return Response.json({
+        currentBoardHash: String(entity.currentBoardHash).toLowerCase(),
+        proposedBoardHash: String(entity.proposedBoardHash).toLowerCase(),
+        actionNonce: actionNonce.toString(),
       }, { headers: apiHeaders });
     }
     if (url.pathname === '/api/tokens') return new Response(runtime.safeStringify({ tokens: (await chainAdapter.getTokenRegistry()).map(token => ({ ...token, externalTokenId: token.externalTokenId.toString() })) }), { headers: apiHeaders });

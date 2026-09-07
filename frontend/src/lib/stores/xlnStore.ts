@@ -893,8 +893,9 @@ const createEmbeddedRuntimeAdapter = async (
       return { delivered: true };
     },
     controlRuntime: (env, action) => {
-      if (action !== 'verify-chain') throw new Error(`UNSUPPORTED_RUNTIME_CONTROL:${action}`);
-      return xln.verifyLiveRuntimeStorage(env);
+      if (action === 'verify-chain') return xln.verifyLiveRuntimeStorage(env);
+      if (action.type === 'control-board-governance') return xln.resolveControlBoardGovernance(env, action);
+      throw new Error(`UNSUPPORTED_RUNTIME_CONTROL:${action.type}`);
     },
     registerRuntimePublishedCallback: (env, cb) => xln.registerRuntimePublishedCallback(env, cb),
     buildReadContext: (env) => ({

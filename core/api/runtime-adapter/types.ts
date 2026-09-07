@@ -4,6 +4,7 @@ import type { CrossJurisdictionSwapRoute } from '../../types/cross-jurisdiction'
 import type { RuntimeInput } from '../../runtime/types';
 import type { XlnProtocolVersion } from '../../protocol/version';
 import type { SettlementEvidenceRequest } from './control/settlement-evidence';
+import type { ControlBoardGovernanceRequest } from './control/control-board-governance';
 import type {
   NumberedRegistrationCommand,
   NumberedRegistrationCommandResult,
@@ -180,7 +181,7 @@ export type RuntimeAdapterCrossJurisdictionIntentResult = {
   delivered: true;
 };
 
-export type RuntimeAdapterControlAction = 'verify-chain' | SettlementEvidenceRequest;
+export type RuntimeAdapterControlAction = 'verify-chain' | SettlementEvidenceRequest | ControlBoardGovernanceRequest;
 
 /** Exact secret input sent only to the selected trusted node's admin channel. */
 export type RuntimeAdapterBrainVaultInput = Readonly<{

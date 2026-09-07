@@ -6,6 +6,7 @@ import { withRuntimeCommittedRead } from '../../../runtime/frame/lifecycle/write
 import { RuntimeAdapterError } from '../../runtime-adapter/errors';
 import { buildSettlementEvidence } from '../../runtime-adapter/control/settlement-evidence';
 import type { RuntimeAdapterControlAction } from '../../runtime-adapter/types';
+import { resolveControlBoardGovernance } from './control-board-governance';
 
 export const resolveRuntimeAdminControl = async (
   env: RuntimeReplica,
@@ -14,6 +15,7 @@ export const resolveRuntimeAdminControl = async (
   if (action === 'verify-chain') {
     return withRuntimeCommittedRead(env, () => verifyLiveRuntimeStorage(env));
   }
+  if (action.type === 'control-board-governance') return resolveControlBoardGovernance(env, action);
   if (action.type !== 'settlement-evidence') {
     throw new RuntimeAdapterError('E_BAD_QUERY', 'unsupported runtime control');
   }

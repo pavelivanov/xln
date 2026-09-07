@@ -88,6 +88,20 @@ export async function createBrowserVMAdapter(
     addresses,
     browserVM,
   });
+  const refreshSignerNonce = (): void => {
+    const resetNonce = Reflect.get(signer, 'resetNonce');
+    if (typeof resetNonce === 'function') resetNonce.call(signer);
+  };
+  const submitAndRefreshSignerNonce: JAdapter['submitTx'] = async (jTx, options) => {
+    try {
+      return await submitTx(jTx, options);
+    } finally {
+      // BrowserVM J submission mines directly against the in-process EVM,
+      // bypassing ethers' signer. Reset a nonce-tracking signer before the
+      // next direct contract call so it reads the newly committed nonce.
+      refreshSignerNonce();
+    }
+  };
   const stateMethods = createBrowserVmStateMethods(
     browserVM,
     () => {
@@ -96,6 +110,20 @@ export async function createBrowserVMAdapter(
     verifyStackBinding,
   );
   const ioMethods = createBrowserVmIoMethods(browserVM);
+  const debugFundReserves: JAdapter['debugFundReserves'] = async (...args) => {
+    try {
+      return await ioMethods.debugFundReserves(...args);
+    } finally {
+      refreshSignerNonce();
+    }
+  };
+  const debugFundReservesBatch: JAdapter['debugFundReservesBatch'] = async (...args) => {
+    try {
+      return await ioMethods.debugFundReservesBatch(...args);
+    } finally {
+      refreshSignerNonce();
+    }
+  };
   const nonceSequencer = createSignerNonceSequencer(provider, true);
 
   const adapter: JAdapter = {
@@ -124,7 +152,9 @@ export async function createBrowserVMAdapter(
     ...stateMethods,
     ...ioMethods,
 
-    submitTx,
+    submitTx: submitAndRefreshSignerNonce,
+    debugFundReserves,
+    debugFundReservesBatch,
 
     startWatching(env: RuntimeReplica): void {
       if (!stackBindingVerified) {
