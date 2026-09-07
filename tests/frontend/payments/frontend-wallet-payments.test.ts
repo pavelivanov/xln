@@ -15,7 +15,7 @@ import {
   decodeWalletPaymentRoutes,
   type WalletPaymentMath,
 } from '../../../frontend/apps/wallet/src/payments/wallet-payment-model';
-import { buildWalletOperationTx } from '../../../frontend/apps/wallet/src/payments/commands/wallet-payment-operations-model';
+import { buildWalletOperationTx, buildWalletSettlementReview } from '../../../frontend/apps/wallet/src/payments/commands/wallet-payment-operations-model';
 import {
   initialWalletPaymentInvoice,
   readWalletPaymentInvoice,
@@ -292,7 +292,7 @@ describe('React wallet payments', () => {
     });
     expect(buildWalletOperationTx({ ...base, kind: 'c2r', amount: '20' }, projection, math)).toMatchObject({
       type: 'settle_propose',
-      data: { counterpartyEntityId: bob, ops: [{ type: 'c2r', amount: 20_000_000n }] },
+      data: { counterpartyEntityId: bob, memo: 'settle-c2r', ops: [{ type: 'c2r', amount: 20_000_000n }] },
     });
     expect(buildWalletOperationTx({
       ...base, kind: 'lend', intentId: 'lend-12345678',
@@ -305,6 +305,36 @@ describe('React wallet payments', () => {
     expect(() => buildWalletOperationTx({
       ...base, kind: 'c2r', amount: '101',
     }, projection, math)).toThrow('WALLET_OPERATION_COLLATERAL_EXCEEDED');
+  });
+
+  test('binds every settlement review field to the exact canonical transaction', () => {
+    const projection = decodeWalletPaymentProjection(frame(), math);
+    const review = buildWalletSettlementReview({
+      kind: 'c2r', targetEntityId: bob, tokenId: 1, amount: '20',
+      termId: '1d', interestBps: 0, intentId: '',
+    }, projection, math);
+    expect(review).toMatchObject({
+      entityId: alice,
+      signerId: signer,
+      counterpartyEntityId: bob,
+      tokenId: 1,
+      tokenSymbol: 'USDC',
+      amount: 20_000_000n,
+      amountLabel: '20.0 USDC',
+      executorEntityId: alice,
+      executorIsLeft: true,
+      memo: 'settle-c2r',
+      operation: 'c2r',
+      entityTx: {
+        type: 'settle_propose',
+        data: {
+          counterpartyEntityId: bob,
+          executorIsLeft: true,
+          memo: 'settle-c2r',
+          ops: [{ type: 'c2r', tokenId: 1, amount: 20_000_000n }],
+        },
+      },
+    });
   });
 
   test('withdraws only the caller collateral remaining after canonical holds, on either Account side', () => {

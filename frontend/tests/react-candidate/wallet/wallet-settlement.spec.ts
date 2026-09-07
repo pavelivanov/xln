@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { expectNoBrowserErrors, expectPageContained, observeBrowserErrors, screenshotEvidence } from '../browser-evidence';
-import { readWalletFixtureChainBalances as balances, selectWalletFixtureRuntime } from './fixtures/wallet-runtime-test-helpers';
+import { readWalletAccountToolState, readWalletFixtureChainBalances as balances, selectWalletFixtureRuntime } from './fixtures/wallet-runtime-test-helpers';
 
 test('wallet funds collateral through reviewed batch broadcast and real chain finality', { tag: '@functional' }, async ({ page }, testInfo) => {
   test.setTimeout(120_000);
@@ -33,8 +33,36 @@ test('wallet funds collateral through reviewed batch broadcast and real chain fi
   await page.getByRole('radio', { name: /Withdraw collateral/ }).click();
   await expect(page.getByText(/Available to withdraw:/)).toBeVisible();
   await page.getByRole('textbox', { name: 'Amount', exact: true }).fill('9999');
-  await page.getByRole('button', { name: 'Propose settlement' }).click();
+  await page.getByRole('button', { name: 'Review settlement' }).click();
   await expect(page.getByRole('alert').filter({ hasText: 'WALLET_OPERATION_COLLATERAL_EXCEEDED' })).toBeVisible();
+
+  await page.getByRole('textbox', { name: 'Amount', exact: true }).fill('10');
+  await page.getByRole('button', { name: 'Review settlement' }).click();
+  const review = page.getByRole('region', { name: 'Collateral → Reserve' });
+  await expect(review).toContainText(fixture.entityId);
+  await expect(review).toContainText(fixture.counterpartyEntityId);
+  await expect(review).toContainText('10.0 USDC');
+  await expect(review).toContainText('10000000 raw');
+  await expect(review).toContainText('c2r');
+  await expect(review).toContainText('settle-c2r');
+  const settlementBeforeCancel = (await readWalletAccountToolState(page, fixture.entityId, fixture.counterpartyEntityId))['settlement'];
+  await review.getByRole('button', { name: 'Cancel review' }).click();
+  await expect(review).not.toBeVisible();
+  expect((await readWalletAccountToolState(page, fixture.entityId, fixture.counterpartyEntityId))['settlement']).toEqual(settlementBeforeCancel);
+
+  await page.getByRole('button', { name: 'Review settlement' }).click();
+  await page.getByRole('textbox', { name: 'Amount', exact: true }).fill('12');
+  await expect(review).not.toBeVisible();
+  await page.getByRole('button', { name: 'Review settlement' }).click();
+  await expect(review).toContainText('12.0 USDC');
+  await expectPageContained(page);
+  await screenshotEvidence(page, testInfo, 'wallet-settlement-proposal-review');
+  await review.getByRole('button', { name: 'Submit settlement proposal' }).click();
+  await expect.poll(async () => String((await readWalletAccountToolState(page, fixture.entityId, fixture.counterpartyEntityId))['settlement'] || ''), { timeout: 30_000 })
+    .toContain('settle-c2r');
+  const settlement = String((await readWalletAccountToolState(page, fixture.entityId, fixture.counterpartyEntityId))['settlement']);
+  expect(settlement).toContain('12000000');
+  expect(settlement).toContain('c2r');
   await expectPageContained(page);
   await screenshotEvidence(page, testInfo, 'wallet-collateral-boundary');
   expectNoBrowserErrors(errors);

@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import type { WalletPaymentProjection } from './wallet-payment-model';
 import type {
   WalletLendingTerm,
   WalletOperationKind,
+  WalletSettlementReview,
 } from './commands/wallet-payment-operations-model';
 import type { WalletPaymentSource, WalletPaymentSourceSnapshot } from './wallet-payment-source';
 import { WalletPaymentBatch } from './commands/wallet-payment-batch';
@@ -43,6 +44,7 @@ export function WalletPaymentOperations({
   const [termId, setTermId] = useState<WalletLendingTerm>('1d');
   const [interestBps, setInterestBps] = useState(100);
   const [error, setError] = useState('');
+  const [settlementReview, setSettlementReview] = useState<WalletSettlementReview | null>(null);
   const accountOnly = kind !== 'r2r';
   const options = accountOnly
     ? projection.recipients.filter((recipient) => projection.accounts.some((account) => account.counterpartyId === recipient.entityId))
@@ -56,19 +58,49 @@ export function WalletPaymentOperations({
   const selectedPosition = projection.accounts.find((account) => account.counterpartyId === selectedTarget)
     ?.positions.find((position) => position.tokenId === selectedTokenId);
 
+  useEffect(() => setSettlementReview(null), [projection.activeEntityId, projection.signerId]);
+
+  const draft = () => ({
+    kind,
+    targetEntityId: selectedTarget,
+    tokenId: selectedTokenId,
+    amount,
+    termId,
+    interestBps,
+    intentId: kind === 'lend' || kind === 'borrow' ? createWalletLendingIntentId(kind) : '',
+  });
+
+  const edit = (update: () => void): void => {
+    setSettlementReview(null);
+    setError('');
+    update();
+  };
+
   const submit = async (): Promise<void> => {
     setError('');
     try {
-      const intentId = kind === 'lend' || kind === 'borrow' ? createWalletLendingIntentId(kind) : '';
-      await source.submitOperation({
-        kind,
-        targetEntityId: selectedTarget,
-        tokenId: selectedTokenId,
-        amount,
-        termId,
-        interestBps,
-        intentId,
-      });
+      await source.submitOperation(draft());
+      setAmount('');
+    } catch (failure: unknown) {
+      setError(failure instanceof Error ? failure.message : String(failure));
+    }
+  };
+
+  const reviewSettlement = (): void => {
+    setError('');
+    try {
+      setSettlementReview(source.reviewSettlement(draft()));
+    } catch (failure: unknown) {
+      setError(failure instanceof Error ? failure.message : String(failure));
+    }
+  };
+
+  const submitSettlement = async (): Promise<void> => {
+    if (!settlementReview) return;
+    setError('');
+    try {
+      await source.submitReviewedSettlement(settlementReview);
+      setSettlementReview(null);
       setAmount('');
     } catch (failure: unknown) {
       setError(failure instanceof Error ? failure.message : String(failure));
@@ -88,7 +120,7 @@ export function WalletPaymentOperations({
             className={kind === operation ? 'is-selected' : ''}
             disabled={busy}
             key={operation}
-            onClick={() => { setKind(operation); setError(''); }}
+            onClick={() => edit(() => setKind(operation))}
             role="radio"
             type="button"
           >
@@ -101,7 +133,7 @@ export function WalletPaymentOperations({
       <div className="wallet-payment-form-grid wallet-operation-form">
         <label>
           <span>{isLending ? 'Hub Account' : kind === 'r2r' ? 'Recipient' : 'Counterparty Account'}</span>
-          <select disabled={busy} onChange={(event) => setTarget(event.target.value)} value={selectedTarget}>
+          <select disabled={busy} onChange={(event) => edit(() => setTarget(event.target.value))} value={selectedTarget}>
             {options.map((option) => (
               <option disabled={option.blocked} key={option.entityId} value={option.entityId}>{option.label}{option.blocked ? ' · dispute gate' : ''}</option>
             ))}
@@ -109,25 +141,25 @@ export function WalletPaymentOperations({
         </label>
         <label>
           <span>Asset</span>
-          <select disabled={busy} onChange={(event) => setTokenId(Number(event.target.value))} value={selectedTokenId}>
+          <select disabled={busy} onChange={(event) => edit(() => setTokenId(Number(event.target.value)))} value={selectedTokenId}>
             {projection.tokens.map((token) => <option key={token.tokenId} value={token.tokenId}>{token.symbol}</option>)}
           </select>
         </label>
         <label>
           <span>Amount</span>
-          <input disabled={busy} inputMode="decimal" onChange={(event) => setAmount(event.target.value)} placeholder="0.00" value={amount} />
+          <input disabled={busy} inputMode="decimal" onChange={(event) => edit(() => setAmount(event.target.value))} placeholder="0.00" value={amount} />
         </label>
         {isLending ? (
           <>
             <label>
               <span>Term</span>
-              <select disabled={busy} onChange={(event) => setTermId(event.target.value as WalletLendingTerm)} value={termId}>
+              <select disabled={busy} onChange={(event) => edit(() => setTermId(event.target.value as WalletLendingTerm))} value={termId}>
                 {lendingTerms.map((term) => <option key={term.id} value={term.id}>{term.label}</option>)}
               </select>
             </label>
             <label>
               <span>{kind === 'lend' ? 'Interest' : 'Maximum interest'} · basis points</span>
-              <input disabled={busy} max="10000" min="0" onChange={(event) => setInterestBps(Number(event.target.value))} type="number" value={interestBps} />
+              <input disabled={busy} max="10000" min="0" onChange={(event) => edit(() => setInterestBps(Number(event.target.value)))} type="number" value={interestBps} />
             </label>
           </>
         ) : null}
@@ -143,16 +175,40 @@ export function WalletPaymentOperations({
         <p className="wallet-operation-note">The Runtime validates Hub policy, matching, capacity, and final terms. This form does not estimate acceptance.</p>
       ) : null}
       {error ? <p className="wallet-payment-error" role="alert">{error}</p> : null}
-      <div className="wallet-payment-actions">
-        <button
-          className="is-primary"
-          disabled={busy || !selectedTarget || !selectedTokenId || !amount.trim()}
-          onClick={() => void submit()}
-          type="button"
-        >
-          {operationCopy[kind].action}
-        </button>
-      </div>
+      {settlementReview ? (
+        <section className="wallet-settlement-review" aria-labelledby="wallet-settlement-review-title">
+          <header>
+            <div><p>Proposal review</p><h3 id="wallet-settlement-review-title">Collateral → Reserve</h3></div>
+            <span>Not submitted</span>
+          </header>
+          <dl>
+            <div><dt>Source Entity</dt><dd>{settlementReview.entityLabel}<code>{settlementReview.entityId}</code></dd></div>
+            <div><dt>Counterparty</dt><dd>{settlementReview.counterpartyLabel}<code>{settlementReview.counterpartyEntityId}</code></dd></div>
+            <div><dt>Asset</dt><dd>{settlementReview.tokenSymbol}<code>token {settlementReview.tokenId}</code></dd></div>
+            <div><dt>Amount</dt><dd>{settlementReview.amountLabel}<code>{settlementReview.amount.toString()} raw</code></dd></div>
+            <div><dt>Operation</dt><dd>Collateral → Reserve<code>{settlementReview.operation}</code></dd></div>
+            <div><dt>Executor</dt><dd>{settlementReview.executorLabel}<code>{settlementReview.executorEntityId} · {settlementReview.executorIsLeft ? 'left' : 'right'}</code></dd></div>
+            <div><dt>Signer</dt><dd><code>{settlementReview.signerId}</code></dd></div>
+            <div><dt>Memo</dt><dd><code>{settlementReview.memo}</code></dd></div>
+          </dl>
+          <p>Submitting creates the bilateral proposal. It does not approve or execute settlement.</p>
+          <div className="wallet-payment-actions">
+            <button disabled={busy} onClick={() => setSettlementReview(null)} type="button">Cancel review</button>
+            <button className="is-primary" disabled={busy} onClick={() => void submitSettlement()} type="button">Submit settlement proposal</button>
+          </div>
+        </section>
+      ) : (
+        <div className="wallet-payment-actions">
+          <button
+            className="is-primary"
+            disabled={busy || !selectedTarget || !selectedTokenId || !amount.trim()}
+            onClick={kind === 'c2r' ? reviewSettlement : () => void submit()}
+            type="button"
+          >
+            {kind === 'c2r' ? 'Review settlement' : operationCopy[kind].action}
+          </button>
+        </div>
+      )}
     </section><WalletPaymentBatch projection={projection} snapshot={snapshot} source={source} /></>
   );
 }

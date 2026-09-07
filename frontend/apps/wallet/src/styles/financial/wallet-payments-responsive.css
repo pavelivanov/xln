@@ -35,6 +35,9 @@
   .wallet-operation-picker { grid-template-columns: 1fr; }
   .wallet-operation-picker button { border-top: 1px solid var(--line); border-right: 0; }
   .wallet-operation-picker button:first-child { border-top: 0; }
+  .wallet-settlement-review dl { grid-template-columns: 1fr; }
+  .wallet-settlement-review dl > div:nth-child(odd),
+  .wallet-settlement-review dl > div:nth-child(even) { padding-inline: 0; border-right: 0; }
   .wallet-receive-builder label:first-child,
   .wallet-receive-builder .wallet-payment-error,
   .wallet-receive-builder .wallet-payment-actions { grid-column: auto; }
