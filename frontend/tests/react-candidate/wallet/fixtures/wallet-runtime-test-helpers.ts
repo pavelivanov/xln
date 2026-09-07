@@ -35,6 +35,7 @@ export const readWalletAccountToolState = async (page: Page, entityId: string, a
 export type WalletRuntimeFixtureInfo = Readonly<{
   runtimeId: string;
   entityId: string;
+  counterpartySignerId: string;
   counterpartyEntityId: string;
   height: number;
   walletSeed: string;
@@ -81,6 +82,7 @@ export const readWalletRuntimeFixture = async (page: Page): Promise<WalletRuntim
   const info = value as Record<string, unknown>;
   const runtimeId = String(info['runtimeId'] || '').trim().toLowerCase();
   const entityId = String(info['entityId'] || '').trim().toLowerCase();
+  const counterpartySignerId = String(info['counterpartySignerId'] || '').trim().toLowerCase();
   const counterpartyEntityId = String(info['counterpartyEntityId'] || '').trim().toLowerCase();
   const height = Number(info['height']);
   const walletSeed = String(info['walletSeed'] || '').trim();
@@ -122,6 +124,7 @@ export const readWalletRuntimeFixture = async (page: Page): Promise<WalletRuntim
   const brainVaultRuntimeHeight = Number(brainVaultInfo['runtimeHeight']);
   const brainVaultBackupFileContents = String(brainVaultInfo['backupFileContents'] || '');
   if (!/^0x[0-9a-f]{40}$/.test(runtimeId)
+    || !/^0x[0-9a-f]{40}$/.test(counterpartySignerId)
     || !/^0x[0-9a-f]{64}$/.test(entityId)
     || !/^0x[0-9a-f]{64}$/.test(counterpartyEntityId)) {
     throw new Error('WALLET_RUNTIME_FIXTURE_ID_INVALID');
@@ -154,6 +157,7 @@ export const readWalletRuntimeFixture = async (page: Page): Promise<WalletRuntim
   return {
     runtimeId,
     entityId,
+    counterpartySignerId,
     counterpartyEntityId,
     height,
     walletSeed,

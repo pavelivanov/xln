@@ -231,7 +231,7 @@ export function WalletPortfolio({ section = 'assets', workspaceSelection, draft 
   </Suspense>;
 
   if (creatingEntity && snapshot.projection) return <Suspense fallback={<p>Loading Entity formation…</p>}>
-    <WalletFormation runtimeId={source.getRuntimeId()} onBack={() => setCreatingEntity(false)} onCreated={result => {
+    <WalletFormation adapter={source.requireAdapter()} onBack={() => setCreatingEntity(false)} onCreated={result => {
       setFormationNotice(result.message); setCreatingEntity(false); void source.refresh();
     }} />
   </Suspense>;
