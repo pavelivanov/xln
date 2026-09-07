@@ -13,13 +13,19 @@ test('Ownership and Consensus deep links follow the selected real Entity', { tag
   await expect(ownership.getByTestId('ownership-member-count')).toHaveText('1');
   await expectPageContained(page);
   await screenshotEvidence(page, testInfo, 'wallet-ownership-board');
-  await ownership.getByRole('link', { name: 'Consensus', exact: true }).click();
+
+  await page.goto(`/app#settings?entity=${fixture.entityId}`);
+  await expect(page.getByLabel('Selected identity')).toHaveValue(fixture.entityId);
+  await page.getByRole('link', { name: 'Consensus', exact: true }).click();
+  await expect(page).toHaveURL(new RegExp(`#settings/consensus\\?entity=${fixture.entityId}$`));
   const consensus = page.getByTestId('wallet-entity-consensus');
   await expect(consensus).toHaveAttribute('data-entity-id', fixture.entityId);
   await expect(consensus.getByTestId('consensus-threshold')).toHaveText('1 / 1');
   await expect(consensus.getByTestId('consensus-account-heads')).toContainText('A');
+  await expect(consensus).toContainText('This view shows committed state. In-flight proposals, votes and locks are not included.');
   await page.getByLabel('Entity', { exact: true }).selectOption(fixture.counterpartyEntityId);
   await expect(consensus).toHaveAttribute('data-entity-id', fixture.counterpartyEntityId);
+  await expect(page).toHaveURL(new RegExp(`#settings/consensus\\?entity=${fixture.counterpartyEntityId}$`));
   await expectPageContained(page);
   await screenshotEvidence(page, testInfo, 'wallet-consensus-selected-entity');
   await page.reload();

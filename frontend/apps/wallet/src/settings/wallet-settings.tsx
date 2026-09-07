@@ -45,6 +45,11 @@ export function WalletSettings({
     displayPreferencesSource.getSnapshot,
     displayPreferencesSource.getSnapshot,
   );
+  const selectedWorkspace = useSyncExternalStore(
+    workspaceSelection.subscribe,
+    workspaceSelection.getSnapshot,
+    workspaceSelection.getSnapshot,
+  );
   const [status, setStatus] = useState('');
   const [error, setError] = useState('');
 
@@ -87,6 +92,7 @@ export function WalletSettings({
       </header>
 
       <EntityWorkspaceSettingsStage
+        entityId={selectedWorkspace.entityId || entityId}
         sections={WALLET_SETTINGS_SECTIONS}
         settingsSubview={section === 'profile' ? 'wallet' : section === 'preferences' ? 'display' : 'recovery'}
       >

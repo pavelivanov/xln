@@ -11,6 +11,7 @@ import { WalletLending } from '../manage/wallet-lending';
 import { WalletHistory } from '../history/wallet-history';
 import { WalletPaymentBatch } from '../payments/commands/wallet-payment-batch';
 import { WalletEntityEvidence } from '../entity/wallet-entity-evidence';
+import { navigateWallet } from '../navigation/wallet-navigation';
 import '../styles/account/wallet-account-workspace.css';
 
 export type WalletAccountTool = 'configure' | 'move' | 'lending' | 'history' | 'ownership' | 'consensus';
@@ -36,7 +37,9 @@ function AccountTool({ tab, source, projection, selection }: Readonly<{
   </>;
 }
 
-export function WalletAccountWorkspace({ tab, selection }: Readonly<{ tab: WalletAccountTool; selection: WalletWorkspaceSelection }>) {
+export function WalletAccountWorkspace({ entityId, tab, selection }: Readonly<{
+  entityId: string; tab: WalletAccountTool; selection: WalletWorkspaceSelection;
+}>) {
   const selected = useSyncExternalStore(selection.subscribe, selection.getSnapshot, selection.getSnapshot);
   const loadRuntime = useWalletRuntimeLoader();
   const [source] = useState(() => new WalletPaymentSource(readRuntimeAdapterStorageSnapshot({ durable: localStorage, session: sessionStorage }), selection, loadRuntime));
@@ -45,11 +48,24 @@ export function WalletAccountWorkspace({ tab, selection }: Readonly<{ tab: Walle
   useEffect(() => { void source.start(); return source.stop; }, [source]);
   const projection = snapshot.projection;
   const busy = snapshot.command.status === 'submitting' || snapshot.command.status === 'pending';
+  useEffect(() => {
+    if (!entityId || busy || snapshot.status !== 'ready' || projection?.activeEntityId === entityId) return;
+    setError('');
+    try { source.selectEntity(entityId); }
+    catch (cause: unknown) { setError(cause instanceof Error ? cause.message : String(cause)); }
+  }, [busy, entityId, projection?.activeEntityId, snapshot.status, source]);
   return <section className="wallet-account-workspace" aria-label={titles[tab]}>
     <header><p>{tab === 'ownership' || tab === 'consensus' ? 'Entity workspace' : 'Account workspace'}</p><h1>{titles[tab]}</h1></header>
     {projection ? <>
       <div className="wallet-account-context">
-        <label>Entity<select aria-label="Entity" value={selected.entityId || projection.activeEntityId} disabled={busy} onChange={event => source.selectEntity(event.target.value)}>
+        <label>Entity<select aria-label="Entity" value={selected.entityId || projection.activeEntityId} disabled={busy} onChange={event => {
+          const nextEntityId = event.target.value;
+          source.selectEntity(nextEntityId);
+          if (tab === 'ownership' || tab === 'consensus') {
+            const route = tab === 'ownership' ? 'ownership' : 'settings/consensus';
+            navigateWallet(`/app#${route}?entity=${encodeURIComponent(nextEntityId)}`);
+          }
+        }}>
           {projection.entities.map(entity => <option key={entity.entityId} value={entity.entityId}>{entity.label}</option>)}
         </select></label>
         <span>Committed height {projection.height}</span>

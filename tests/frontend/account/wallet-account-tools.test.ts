@@ -16,8 +16,11 @@ test('four retained Account routes resolve to real tool destinations', () => {
 });
 
 test('retained Ownership and Consensus deep links resolve to Entity evidence', () => {
-  expect(resolveWalletAppRoute('', '#ownership')).toEqual({ view: 'entity-tools', tab: 'ownership' });
-  expect(resolveWalletAppRoute('', '#settings/consensus')).toEqual({ view: 'entity-tools', tab: 'consensus' });
+  expect(resolveWalletAppRoute('', '#ownership')).toEqual({ view: 'entity-tools', tab: 'ownership', entityId: '' });
+  expect(resolveWalletAppRoute('', '#settings/consensus')).toEqual({ view: 'entity-tools', tab: 'consensus', entityId: '' });
+  expect(resolveWalletAppRoute('', '#settings/consensus?entity=0x1234')).toEqual({
+    view: 'entity-tools', tab: 'consensus', entityId: '0x1234',
+  });
 });
 
 test('tool selections preserve independent ownership and reset at Entity and Runtime boundaries', () => {

@@ -95,7 +95,7 @@ function LiveWallet({ adapter, navigation }: Readonly<{ adapter: RuntimeAdapter;
         {route.view === 'portfolio' || route.view === 'overview' ? <WalletPortfolio draft={draft?.type === 'open' ? draft : undefined} workspaceSelection={selection} section={route.view === 'portfolio' ? route.section : 'assets'} /> : null}
         {route.view === 'payments' ? <WalletPayments draft={draft?.type === 'pay' ? draft : undefined} workspaceSelection={selection} tab={route.tab} invoice={route.invoice} onTabChange={tab => setHref(walletPaymentTabHref(tab))} /> : null}
         {route.view === 'markets' ? <WalletMarkets draft={draft?.type === 'swap' ? draft : undefined} workspaceSelection={selection} tab={route.tab} onTabChange={tab => setHref(`/app#accounts/${tab === 'market' ? 'swap' : 'activity'}`)} /> : null}
-        {route.view === 'account-tools' || route.view === 'entity-tools' ? <WalletAccountWorkspace selection={selection} tab={route.tab} /> : null}
+        {route.view === 'account-tools' || route.view === 'entity-tools' ? <WalletAccountWorkspace entityId={route.view === 'entity-tools' ? route.entityId : ''} selection={selection} tab={route.tab} /> : null}
         {route.view === 'health' ? <WalletFinancialHealth workspaceSelection={selection} /> : null}
         {route.view === 'diagnostics' ? <OpsRuntimeDiagnosticsPanel /> : null}
         {route.view === 'settings' ? selected.entityId

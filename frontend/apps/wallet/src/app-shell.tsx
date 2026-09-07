@@ -196,7 +196,7 @@ export function WalletAppShell() {
           ) : (
             <WalletExistingSetupGate runtimeId={view === 'identity' || view === 'scenario-preview' ? '' : embedded.runtimeId} runtimeState={runtime.state}>
               <WalletAccountRail route={route} selection={workspaceSelection} />
-              {route.view === 'account-tools' || route.view === 'entity-tools' ? <WalletAccountWorkspace tab={route.tab} selection={workspaceSelection} /> : null}
+              {route.view === 'account-tools' || route.view === 'entity-tools' ? <WalletAccountWorkspace entityId={route.view === 'entity-tools' ? route.entityId : ''} tab={route.tab} selection={workspaceSelection} /> : null}
               {view === 'identity' ? <IdentityOnboarding runtimeId={embedded.runtimeId} runtimeState={runtime.state} /> : null}
               {route.view === 'portfolio' ? <WalletPortfolio key={runtimeSelectionKey} section={route.section} workspaceSelection={workspaceSelection} /> : null}
               {view === 'health' ? <WalletFinancialHealth workspaceSelection={workspaceSelection} /> : null}
