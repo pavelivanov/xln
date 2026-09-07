@@ -9,6 +9,12 @@ import type { ControlBoardGovernanceRequest } from '../../runtime-adapter/contro
 const ZERO_HASH = `0x${'0'.repeat(64)}`;
 const normalize = (value: unknown): string => String(value || '').trim().toLowerCase();
 type TakeoverTarget = Readonly<{ entityId: string; name: string }>;
+type TakeoverBoard = {
+  mode: EntityReplica['state']['config']['mode'];
+  threshold: bigint;
+  validators: string[];
+  shares: Record<string, bigint>;
+};
 type TakeoverTargetCandidate = Readonly<{
   entityId: string;
   name: string;
@@ -73,15 +79,21 @@ const captureTarget = async (env: RuntimeReplica, request: Exclude<ControlBoardG
     if (!target) throw new Error(`CONTROL_TAKEOVER_TARGET_INELIGIBLE:${normalize(request.targetEntityId)}`);
     const config = structuredClone(findReplica(env, target.entityId, request.signerId).state.config);
     const signerId = normalize(request.signerId);
-    const board = {
+    const board: TakeoverBoard = {
       mode: config.mode,
       threshold: 1n,
       validators: [signerId],
       shares: { [signerId]: 1n },
-      ...(config.jurisdiction ? { jurisdiction: config.jurisdiction } : {}),
     };
-    const encodedBoard = encodeBoard(board, env);
-    return { target, encodedBoard, newBoardHash: normalize(hashBoard(encodedBoard)) };
+    const encodedBoard = encodeBoard(
+      {
+        ...board,
+        ...(config.jurisdiction ? { jurisdiction: config.jurisdiction } : {}),
+      },
+      env,
+    );
+    const runtimeBoardHash = normalize(hashBoard(encodeBoard(config, env)));
+    return { target, board, encodedBoard, runtimeBoardHash, newBoardHash: normalize(hashBoard(encodedBoard)) };
   });
 
 const readStatus = async (env: RuntimeReplica, request: Exclude<ControlBoardGovernanceRequest, { operation: 'targets' }>) => {
@@ -94,17 +106,48 @@ const readStatus = async (env: RuntimeReplica, request: Exclude<ControlBoardGove
     adapter.entityProvider.boardActionNonces(target.target.entityId),
   ]);
   if (!latestBlock) throw new Error('CONTROL_TAKEOVER_LATEST_BLOCK_MISSING');
+  const activationAvailableAt =
+    BigInt(entity.activateAt) > BigInt(entity.previousBoardValidUntil2)
+      ? BigInt(entity.activateAt)
+      : BigInt(entity.previousBoardValidUntil2);
   return {
     ...target,
     status: {
       targetEntityId: target.target.entityId,
       currentBoardHash: normalize(entity.currentBoardHash),
       proposedBoardHash: normalize(entity.proposedBoardHash) || ZERO_HASH,
+      successorBoardHash: target.newBoardHash,
+      runtimeBoardHash: target.runtimeBoardHash,
       actionNonce: BigInt(actionNonce),
       currentUnix: BigInt(latestBlock.timestamp),
       activateAt: BigInt(entity.activateAt),
+      activationAvailableAt,
     },
     adapter,
+  };
+};
+
+const requireActivationReview = (captured: Awaited<ReturnType<typeof readStatus>>) => {
+  const { status } = captured;
+  if (status.runtimeBoardHash !== status.currentBoardHash) {
+    throw new Error('CONTROL_TAKEOVER_TARGET_STATE_STALE');
+  }
+  if (status.proposedBoardHash === ZERO_HASH) throw new Error('CONTROL_TAKEOVER_ACTIVATION_PROPOSAL_REQUIRED');
+  if (status.proposedBoardHash !== status.successorBoardHash) {
+    throw new Error('CONTROL_TAKEOVER_ACTIVATION_BOARD_MISMATCH');
+  }
+  if (status.activationAvailableAt <= 0n || status.currentUnix < status.activationAvailableAt) {
+    throw new Error(`CONTROL_TAKEOVER_ACTIVATION_NOT_READY:${status.currentUnix}:${status.activationAvailableAt}`);
+  }
+  return {
+    targetEntityId: captured.target.entityId,
+    targetName: captured.target.name,
+    currentBoardHash: status.currentBoardHash,
+    newBoardHash: status.successorBoardHash,
+    actionNonce: status.actionNonce,
+    activateAt: status.activateAt,
+    activationAvailableAt: status.activationAvailableAt,
+    board: captured.board,
   };
 };
 
@@ -117,6 +160,7 @@ export const resolveControlBoardGovernance = async (
   }
   const captured = await readStatus(env, request);
   if (request.operation === 'status') return captured.status;
+  if (request.operation === 'activation-review') return requireActivationReview(captured);
   const review = { targetEntityId: captured.target.entityId, targetName: captured.target.name, newBoardHash: captured.newBoardHash, actionNonce: captured.status.actionNonce + 1n };
   if (request.operation === 'review') {
     if (captured.status.proposedBoardHash !== ZERO_HASH) throw new Error('CONTROL_TAKEOVER_PROPOSAL_ALREADY_PENDING');
@@ -126,6 +170,13 @@ export const resolveControlBoardGovernance = async (
   let expectedActionNonce: bigint;
   try { expectedActionNonce = BigInt(request.expectedActionNonce); }
   catch { throw new Error(`CONTROL_TAKEOVER_ACTION_NONCE_INVALID:${request.expectedActionNonce}`); }
+  if (request.operation === 'activation-prepare') {
+    const activation = requireActivationReview(captured);
+    if (normalize(request.expectedBoardHash) !== activation.newBoardHash || expectedActionNonce !== activation.actionNonce) {
+      throw new Error('CONTROL_TAKEOVER_ACTIVATION_REVIEW_STALE');
+    }
+    return activation;
+  }
   if (normalize(request.expectedBoardHash) !== review.newBoardHash || expectedActionNonce !== review.actionNonce) {
     throw new Error('CONTROL_TAKEOVER_REVIEW_STALE');
   }
