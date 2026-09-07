@@ -83,6 +83,8 @@ test('BrowserVM reset preserves its configured chain and recreates the same fres
     const initial = await browserVM.serializeState();
 
     browserVM.setBlockTimestamp(123_456);
+    browserVM.setBlockTimestamp(120_000);
+    expect(browserVM.getBlockTimestamp()).toBe(123_456);
     await browserVM.reset();
     const reset = await browserVM.serializeState();
 

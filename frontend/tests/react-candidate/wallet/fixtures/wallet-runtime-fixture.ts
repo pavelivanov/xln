@@ -26,6 +26,8 @@ const authSeed = `xln-react-wallet-address-auth:${port}:minimum-32-bytes`;
 process.env['XLN_DB_PATH'] = databaseRoot;
 process.env['XLN_DISABLE_RUNTIME_RESTORE'] = '1';
 process.env['XLN_RADAPTER_AUTH_SEED'] = authSeed;
+process.env['XLN_RADAPTER_SEND_BURST'] = '100';
+process.env['XLN_RADAPTER_SEND_PER_SEC'] = '50';
 
 const runtime = await import('../../../../../core/runtime');
 const { createStackManagerController } = await import('../../../../../core/api/server/control/stack-manager');
@@ -35,6 +37,7 @@ const crypto = await import('../../../../../core/account/crypto');
 const accountConfig = await import('../../../../../core/account/config/dispute-config');
 const codec = await import('../../../../../core/api/runtime-adapter/codec');
 const adapterServer = await import('../../../../../core/api/runtime-adapter/server');
+const { drainJWatcherBacklog } = await import('../../../../../core/jurisdiction/adapter/operations/backlog-drain');
 const auth = await import('../../../../../core/api/runtime-adapter/security/auth');
 const rpc = await import('../../../../../core/api/server/network/rpc-ws');
 const loopEnvironment = await import('../../../../../core/runtime/loop/loop-environment');
@@ -246,6 +249,8 @@ const handleRpc = rpc.createServerRpcMessageHandler({
 });
 let ownershipFixtures: ReturnType<typeof import('./wallet-ownership-fixture').createWalletOwnershipFixtures> | null = null;
 const ownershipGovernanceFixtures = new Map<string, ReturnType<typeof import('./wallet-ownership-fixture').createWalletOwnershipGovernanceFixture>>();
+const ownershipActivationFixtures = new Map<string, ReturnType<typeof import('./wallet-ownership-fixture').createWalletOwnershipGovernanceFixture>>();
+const ownershipActivatedFixtures = new Map<string, ReturnType<typeof import('./wallet-ownership-fixture').createWalletOwnershipActivatedFixture>>();
 let server: ReturnType<typeof Bun.serve<FixtureSocketData>>;
 const activeRpcSockets = new Set<ServerWebSocket<FixtureSocketData>>();
 let dropdownFixture: ReturnType<typeof import('../account/wallet-account-dropdown-fixture').createAccountDropdownFixture> | null = null;
@@ -299,17 +304,68 @@ server = Bun.serve<FixtureSocketData>({
       }
       return Response.json(await fixture, { headers: apiHeaders });
     }
+    if (url.pathname === '/ownership-activation-fixture' && request.method === 'POST') {
+      const slot = String(url.searchParams.get('slot') || '');
+      if (!['mobile-390x844', 'laptop-1366x900', 'wide-1920x1080'].includes(slot)) {
+        return new Response('Ownership activation fixture slot not found', { status: 404, headers: apiHeaders });
+      }
+      let fixture = ownershipActivationFixtures.get(slot);
+      if (!fixture) {
+        fixture = import('./wallet-ownership-fixture').then(module => module.createWalletOwnershipGovernanceFixture(
+          env, chainAdapter, config, commit, `activation-${slot}`, counterpartySignerId,
+        ));
+        ownershipActivationFixtures.set(slot, fixture);
+      }
+      return Response.json(await fixture, { headers: apiHeaders });
+    }
+    if (url.pathname === '/ownership-activation-ready' && request.method === 'POST') {
+      const slot = String(url.searchParams.get('slot') || '');
+      const fixture = ownershipActivationFixtures.get(slot);
+      if (!fixture) return new Response('Ownership activation fixture not found', { status: 404, headers: apiHeaders });
+      const target = await fixture;
+      const entity = await chainAdapter.entityProvider.entities(target.targetEntityId);
+      const activateAt = Number(entity.activateAt);
+      if (!Number.isSafeInteger(activateAt) || activateAt <= 0
+        || String(entity.proposedBoardHash).toLowerCase() !== target.expectedBoardHash) {
+        return new Response('Ownership activation proposal not ready', { status: 409, headers: apiHeaders });
+      }
+      const browserVM = chainAdapter.getBrowserVM();
+      if (!browserVM) throw new Error('OWNERSHIP_ACTIVATION_BROWSERVM_REQUIRED');
+      await browserVM.mineEmptyBlock(activateAt * 1000);
+      await drainJWatcherBacklog(env, currentEnv => runtime.processRuntime(currentEnv));
+      return Response.json({ activateAt }, { headers: apiHeaders });
+    }
+    if (url.pathname === '/ownership-activated-fixture' && request.method === 'POST') {
+      const slot = String(url.searchParams.get('slot') || '');
+      if (!['mobile-390x844', 'laptop-1366x900', 'wide-1920x1080'].includes(slot)) {
+        return new Response('Ownership activated fixture slot not found', { status: 404, headers: apiHeaders });
+      }
+      let fixture = ownershipActivatedFixtures.get(slot);
+      if (!fixture) {
+        fixture = import('./wallet-ownership-fixture').then(module =>
+          module.createWalletOwnershipActivatedFixture(env, chainAdapter, config, commit, slot));
+        ownershipActivatedFixtures.set(slot, fixture);
+      }
+      return Response.json(await fixture, { headers: apiHeaders });
+    }
     if (url.pathname === '/ownership-board-state' && request.method === 'GET') {
       const targetEntityId = String(url.searchParams.get('entityId') || '').toLowerCase();
       if (!/^0x[0-9a-f]{64}$/.test(targetEntityId)) return new Response('Ownership target invalid', { status: 400, headers: apiHeaders });
-      const [entity, actionNonce] = await Promise.all([
+      const signerId = String(url.searchParams.get('signerId') || '').toLowerCase();
+      const [entity, actionNonce, boardEpoch] = await Promise.all([
         chainAdapter.entityProvider.entities(targetEntityId),
         chainAdapter.entityProvider.boardActionNonces(targetEntityId),
+        chainAdapter.entityProvider.boardEpochs(targetEntityId),
       ]);
+      const replica = signerId ? [...env.state.eReplicas.values()].find(candidate =>
+        candidate.state.entityId === targetEntityId && candidate.signerId.toLowerCase() === signerId) : null;
       return Response.json({
         currentBoardHash: String(entity.currentBoardHash).toLowerCase(),
         proposedBoardHash: String(entity.proposedBoardHash).toLowerCase(),
         actionNonce: actionNonce.toString(),
+        boardEpoch: boardEpoch.toString(),
+        runtimeBoardHash: replica ? runtime.hashBoard(runtime.encodeBoard(replica.state.config, env)).toLowerCase() : null,
+        runtimeThreshold: replica ? replica.state.config.threshold.toString() : null,
       }, { headers: apiHeaders });
     }
     if (url.pathname === '/api/tokens') return new Response(runtime.safeStringify({ tokens: (await chainAdapter.getTokenRegistry()).map(token => ({ ...token, externalTokenId: token.externalTokenId.toString() })) }), { headers: apiHeaders });

@@ -171,6 +171,41 @@ export async function createWalletOwnershipGovernanceFixture(
     shareholderEntityId: shareholder.entityId,
     targetEntityId: target.entityId,
     targetName: `Browser Takeover Target ${slot}`,
+    successorSignerId: signerId,
     expectedBoardHash: runtime.hashBoard(runtime.encodeBoard(successorConfig, env)).toLowerCase(),
+  };
+}
+
+export async function createWalletOwnershipActivatedFixture(
+  env: RuntimeReplica,
+  adapter: JAdapter,
+  config: ConsensusConfig,
+  commit: (input: Parameters<typeof runtime.enqueueRuntimeInput>[1]) => Promise<void>,
+  slot: string,
+) {
+  const signerId = config.validators[0];
+  if (!signerId) throw new Error('OWNERSHIP_ACTIVATED_FIXTURE_SIGNER_REQUIRED');
+  const shareholder = await registerOwnershipEntity(
+    env,
+    adapter,
+    config,
+    commit,
+    `Browser CONTROL Holder active-${slot}`,
+    `isolated-browser-ownership-active-shareholder:${slot}`,
+  );
+  const target = await registerOwnershipEntity(
+    env,
+    adapter,
+    config,
+    commit,
+    `Browser Activated Target ${slot}`,
+    `isolated-browser-ownership-active-target:${slot}`,
+  );
+  return {
+    shareholderEntityId: shareholder.entityId,
+    targetEntityId: target.entityId,
+    targetName: `Browser Activated Target ${slot}`,
+    successorSignerId: signerId,
+    expectedBoardHash: runtime.hashBoard(runtime.encodeBoard(config, env)).toLowerCase(),
   };
 }

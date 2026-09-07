@@ -1,9 +1,10 @@
 import { useEffect, useState, useSyncExternalStore } from 'react';
 import type { WalletPaymentSource } from '../payments/wallet-payment-source';
-import type { WalletControlTakeoverReview, WalletControlTakeoverStatus, WalletControlTakeoverTarget } from '../../../../bridges/wallet/wallet-canonical-ownership-governance';
+import type { WalletControlActivationReview, WalletControlTakeoverReview, WalletControlTakeoverStatus, WalletControlTakeoverTarget } from '../../../../bridges/wallet/wallet-canonical-ownership-governance';
 
 const ZERO_HASH = `0x${'0'.repeat(64)}`;
 const compact = (value: string): string => value.length <= 18 ? value : `${value.slice(0, 10)}…${value.slice(-6)}`;
+const formatUnix = (value: bigint): string => value <= 0n ? '—' : `${new Date(Number(value) * 1000).toISOString().replace('T', ' ').slice(0, 19)} UTC`;
 
 export function WalletOwnershipGovernance({ source, entityId, signerId, commandsReady, commandReason }: Readonly<{
   source: WalletPaymentSource;
@@ -17,6 +18,7 @@ export function WalletOwnershipGovernance({ source, entityId, signerId, commands
   const [targetId, setTargetId] = useState('');
   const [status, setStatus] = useState<WalletControlTakeoverStatus | null>(null);
   const [review, setReview] = useState<WalletControlTakeoverReview | null>(null);
+  const [activationReview, setActivationReview] = useState<WalletControlActivationReview | null>(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -47,6 +49,18 @@ export function WalletOwnershipGovernance({ source, entityId, signerId, commands
   }, [source, entityId, signerId, observedHeight]);
   const commandBusy = payment.command.status === 'submitting' || payment.command.status === 'pending';
   const proposalPending = Boolean(status && status.proposedBoardHash !== ZERO_HASH);
+  const successorActive = Boolean(
+    status &&
+    status.currentBoardHash === status.successorBoardHash &&
+    status.runtimeBoardHash === status.successorBoardHash,
+  );
+  const activationReady = Boolean(
+    status &&
+    status.runtimeBoardHash === status.currentBoardHash &&
+    status.proposedBoardHash === status.successorBoardHash &&
+    status.activationAvailableAt > 0n &&
+    status.currentUnix >= status.activationAvailableAt,
+  );
   const refreshStatus = async (selected = targetId) => {
     if (!selected) return;
     setBusy(true);
@@ -95,10 +109,48 @@ export function WalletOwnershipGovernance({ source, entityId, signerId, commands
       setBusy(false);
     }
   };
+  const openActivationReview = async () => {
+    setBusy(true);
+    setError('');
+    try {
+      const governance = await import('../../../../bridges/wallet/wallet-canonical-ownership-governance');
+      setActivationReview(
+        await governance.reviewWalletControlBoardActivation(
+          source.workspaceRuntime().adapter,
+          entityId,
+          signerId,
+          targetId,
+        ),
+      );
+    } catch (cause: unknown) {
+      setError(cause instanceof Error ? cause.message : String(cause));
+    } finally {
+      setBusy(false);
+    }
+  };
+  const submitActivation = async () => {
+    if (!activationReview) return;
+    setBusy(true);
+    setError('');
+    try {
+      const governance = await import('../../../../bridges/wallet/wallet-canonical-ownership-governance');
+      const adapter = source.workspaceRuntime().adapter;
+      await source.submitEntityInputs(
+        await governance.prepareWalletControlBoardActivation(adapter, entityId, signerId, activationReview),
+      );
+      setActivationReview(null);
+      setStatus(await governance.observeWalletControlBoardActivation(adapter, entityId, signerId, activationReview));
+    } catch (cause: unknown) {
+      setError(cause instanceof Error ? cause.message : String(cause));
+    } finally {
+      setBusy(false);
+    }
+  };
   const selectTarget = (value: string) => {
     setTargetId(value);
     setStatus(null);
     setReview(null);
+    setActivationReview(null);
     setError('');
     if (value) void refreshStatus(value);
   };
@@ -110,9 +162,13 @@ export function WalletOwnershipGovernance({ source, entityId, signerId, commands
         <option value="">Select target</option>{targets.map(target => <option value={target.entityId} key={target.entityId}>{target.name}</option>)}
       </select></label>
       {status?.targetEntityId === targetId ? <div className="wallet-ownership-takeover-state" data-testid="ownership-takeover-status">
-        <span>Current board <code>{compact(status.currentBoardHash)}</code></span>
+        <span>Current board <code data-testid="ownership-current-board">{successorActive ? status.currentBoardHash : compact(status.currentBoardHash)}</code></span>
         <span>{proposalPending ? <>Proposed board <code data-testid="ownership-proposed-board">{status.proposedBoardHash}</code></> : 'No pending board proposal'}</span>
-        <span>Next action nonce {status.actionNonce + 1n}</span>
+        {successorActive
+          ? <span data-testid="ownership-activation-state">Successor board active and synchronized</span>
+          : proposalPending
+            ? <span data-testid="ownership-activation-state">Activation opens {formatUnix(status.activationAvailableAt)} · chain now {formatUnix(status.currentUnix)}</span>
+            : <span>Next action nonce {status.actionNonce + 1n}</span>}
       </div> : null}
       {review?.targetEntityId === targetId ? <div className="wallet-ownership-review" data-testid="ownership-takeover-review">
         <strong>Review board proposal</strong>
@@ -120,8 +176,15 @@ export function WalletOwnershipGovernance({ source, entityId, signerId, commands
         <dl><div><dt>Target</dt><dd>{review.targetName}</dd></div><div><dt>Action nonce</dt><dd>{review.actionNonce}</dd></div><div><dt>New board</dt><dd><code>{review.newBoardHash}</code></dd></div></dl>
         <div className="wallet-ownership-actions"><button type="button" onClick={() => { setReview(null); setError(''); }} disabled={busy || commandBusy}>Cancel</button>
           <button type="button" data-testid="ownership-takeover-submit" onClick={() => void submitProposal()} disabled={!commandsReady || busy || commandBusy}>Submit proposal</button></div>
+      </div> : activationReview?.targetEntityId === targetId ? <div className="wallet-ownership-review" data-testid="ownership-activation-review">
+        <strong>Review board activation</strong>
+        <p>Activate the reviewed successor on EntityProvider and commit its synchronized Entity handover in the same Runtime command.</p>
+        <dl><div><dt>Target</dt><dd>{activationReview.targetName}</dd></div><div><dt>Action nonce</dt><dd>{activationReview.actionNonce}</dd></div><div><dt>New board</dt><dd><code>{activationReview.newBoardHash}</code></dd></div></dl>
+        <div className="wallet-ownership-actions"><button type="button" onClick={() => { setActivationReview(null); setError(''); }} disabled={busy || commandBusy}>Cancel</button>
+          <button type="button" data-testid="ownership-activation-submit" onClick={() => void submitActivation()} disabled={!commandsReady || busy || commandBusy}>Activate board</button></div>
       </div> : <div className="wallet-ownership-actions"><button type="button" onClick={() => void refreshStatus()} disabled={!targetId || busy || commandBusy}>Refresh status</button>
-        <button type="button" data-testid="ownership-takeover-propose" onClick={() => void openReview()} disabled={!targetId || proposalPending || !commandsReady || busy || commandBusy}>Review proposal</button></div>}
+        <button type="button" data-testid="ownership-takeover-propose" onClick={() => void openReview()} disabled={!targetId || proposalPending || successorActive || !commandsReady || busy || commandBusy}>Review proposal</button>
+        <button type="button" data-testid="ownership-takeover-activate" onClick={() => void openActivationReview()} disabled={!targetId || !activationReady || !commandsReady || busy || commandBusy}>Review activation</button></div>}
       </>}
     {!commandsReady ? <p role="status">{commandReason || 'Runtime commands are unavailable.'}</p> : null}
     {error ? <p role="alert">{error}</p> : null}

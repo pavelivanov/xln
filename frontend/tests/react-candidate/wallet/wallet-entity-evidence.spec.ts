@@ -175,3 +175,119 @@ test('Ownership selects an eligible CONTROL target and observes the committed bo
   await screenshotEvidence(page, testInfo, 'wallet-ownership-control-proposed');
   expectNoBrowserErrors(errors);
 });
+
+test(
+  'Ownership keeps activation gated until the exact successor is ready for review',
+  { tag: '@functional' },
+  async ({ page }, testInfo) => {
+    const errors = observeBrowserErrors(page);
+    await selectWalletFixtureRuntime(page);
+    const port = Number(process.env['XLN_REACT_WALLET_FIXTURE_PORT'] || 19092);
+    const response = await page.request.post(
+      `http://127.0.0.1:${port}/ownership-activation-fixture?slot=${encodeURIComponent(testInfo.project.name)}`,
+    );
+    expect(response.ok()).toBe(true);
+    const fixture = (await response.json()) as {
+      shareholderEntityId: string;
+      targetEntityId: string;
+      targetName: string;
+      successorSignerId: string;
+      expectedBoardHash: string;
+    };
+    const readBoard = async () => {
+      const board = await page.request.get(
+        `http://127.0.0.1:${port}/ownership-board-state?entityId=${fixture.targetEntityId}&signerId=${fixture.successorSignerId}`,
+      );
+      expect(board.ok()).toBe(true);
+      return board.json() as Promise<{
+        currentBoardHash: string;
+        proposedBoardHash: string;
+        actionNonce: string;
+        boardEpoch: string;
+        runtimeBoardHash: string | null;
+        runtimeThreshold: string | null;
+      }>;
+    };
+    await page.goto('/app#ownership');
+    await page.getByLabel('Entity', { exact: true }).selectOption(fixture.shareholderEntityId);
+    const governance = page.getByTestId('ownership-control-takeover');
+    await governance.getByTestId('ownership-takeover-target').selectOption(fixture.targetEntityId);
+    const activate = governance.getByTestId('ownership-takeover-activate');
+    await expect(activate).toBeDisabled();
+
+    await governance.getByTestId('ownership-takeover-propose').click();
+    await governance.getByTestId('ownership-takeover-submit').click();
+    await expect(governance.getByTestId('ownership-proposed-board')).toHaveText(fixture.expectedBoardHash, {
+      timeout: 30_000,
+    });
+    await expect(activate).toBeDisabled();
+    const pending = await readBoard();
+    expect(pending.currentBoardHash).not.toBe(fixture.expectedBoardHash);
+    expect(pending.proposedBoardHash).toBe(fixture.expectedBoardHash);
+    expect(pending.actionNonce).toBe('1');
+    expect(pending.boardEpoch).toBe('0');
+
+    const advanced = await page.request.post(
+      `http://127.0.0.1:${port}/ownership-activation-ready?slot=${encodeURIComponent(testInfo.project.name)}`,
+    );
+    expect(advanced.ok()).toBe(true);
+    await governance.getByRole('button', { name: 'Refresh status' }).click();
+    await expect(activate).toBeEnabled();
+    await activate.click();
+    const review = governance.getByTestId('ownership-activation-review');
+    await expect(review).toContainText(fixture.targetName);
+    await expect(review).toContainText(fixture.expectedBoardHash);
+    await expect(review).toContainText('Action nonce');
+    await review.getByRole('button', { name: 'Cancel' }).click();
+    expect((await readBoard()).proposedBoardHash).toBe(fixture.expectedBoardHash);
+    await activate.click();
+    await expect(page.getByRole('alert')).toHaveCount(0);
+    await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+    await expectPageContained(page);
+    await screenshotEvidence(page, testInfo, 'wallet-ownership-control-activation-ready');
+    expectNoBrowserErrors(errors);
+  },
+);
+
+test(
+  'Ownership shows a committed successor board as active and synchronized',
+  { tag: '@functional' },
+  async ({ page }, testInfo) => {
+    const errors = observeBrowserErrors(page);
+    await selectWalletFixtureRuntime(page);
+    const port = Number(process.env['XLN_REACT_WALLET_FIXTURE_PORT'] || 19092);
+    const response = await page.request.post(
+      `http://127.0.0.1:${port}/ownership-activated-fixture?slot=${encodeURIComponent(testInfo.project.name)}`,
+    );
+    expect(response.ok()).toBe(true);
+    const fixture = (await response.json()) as {
+      shareholderEntityId: string;
+      targetEntityId: string;
+      successorSignerId: string;
+      expectedBoardHash: string;
+    };
+    await page.goto('/app#ownership');
+    await page.getByLabel('Entity', { exact: true }).selectOption(fixture.shareholderEntityId);
+    const governance = page.getByTestId('ownership-control-takeover');
+    await governance.getByTestId('ownership-takeover-target').selectOption(fixture.targetEntityId);
+    await expect(governance.getByTestId('ownership-current-board')).toHaveText(fixture.expectedBoardHash);
+    await expect(governance.getByTestId('ownership-activation-state')).toContainText('active and synchronized');
+    await expect(governance.getByTestId('ownership-proposed-board')).toHaveCount(0);
+    await expect(governance.getByTestId('ownership-takeover-propose')).toBeDisabled();
+    await expect(governance.getByTestId('ownership-takeover-activate')).toBeDisabled();
+    const boardResponse = await page.request.get(
+      `http://127.0.0.1:${port}/ownership-board-state?entityId=${fixture.targetEntityId}&signerId=${fixture.successorSignerId}`,
+    );
+    expect(boardResponse.ok()).toBe(true);
+    await expect(boardResponse.json()).resolves.toMatchObject({
+      currentBoardHash: fixture.expectedBoardHash,
+      proposedBoardHash: `0x${'00'.repeat(32)}`,
+      runtimeBoardHash: fixture.expectedBoardHash,
+      runtimeThreshold: '1',
+    });
+    await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+    await expectPageContained(page);
+    await screenshotEvidence(page, testInfo, 'wallet-ownership-control-activated');
+    expectNoBrowserErrors(errors);
+  },
+);

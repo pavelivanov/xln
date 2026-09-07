@@ -2593,7 +2593,10 @@ export class BrowserVMProvider {
   /** Set deterministic block timestamp for next tx/block */
   setBlockTimestamp(timestamp: number): void {
     if (!this.activeBlock) {
-      this.blockTimestamp = timestamp;
+      // A Runtime maintenance input may carry a wall-clock timestamp after a
+      // test/scenario has advanced the jurisdiction clock. Never let that next
+      // transaction move BrowserVM's chain time backwards.
+      this.blockTimestamp = Math.max(this.blockTimestamp, timestamp);
     }
   }
 

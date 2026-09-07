@@ -236,6 +236,21 @@ export class WalletPaymentSource {
     await this.submitInput({ runtimeTxs: [], jInputs: [], entityInputs: [input] });
   };
 
+  readonly submitEntityInputs = async (inputs: readonly RoutedEntityInput[]): Promise<void> => {
+    const projection = this.requireProjection();
+    if (inputs.length === 0) throw new Error('WALLET_ENTITY_COMMAND_INPUTS_REQUIRED');
+    const entityIds = new Set(projection.entities.map(entity => entity.entityId));
+    for (const input of inputs) {
+      if (!entityIds.has(input.entityId)) throw new Error(`WALLET_ENTITY_COMMAND_ENTITY_UNKNOWN:${input.entityId}`);
+      if (input.signerId.trim().toLowerCase() !== projection.signerId) {
+        throw new Error('WALLET_ENTITY_COMMAND_SIGNER_CHANGED');
+      }
+    }
+    const adapter = this.requireAdapter();
+    if (!adapter.commandReady) throw new Error(adapter.commandReadyReason || 'WALLET_ENTITY_COMMAND_UNAVAILABLE');
+    await this.submitInput({ runtimeTxs: [], jInputs: [], entityInputs: [...inputs] });
+  };
+
   readonly workspaceRuntime = () => ({ adapter: this.requireAdapter(), math: this.requireMath() });
   readonly workspaceApiBase = (localBase: string): string => this.config.mode === 'remote'
     ? runtimeHttpOriginFromWsUrl(this.config.wsUrl || '') : localBase;
