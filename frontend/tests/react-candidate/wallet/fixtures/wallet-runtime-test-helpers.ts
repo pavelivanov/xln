@@ -32,6 +32,39 @@ export const readWalletAccountToolState = async (page: Page, entityId: string, a
   return result as Record<string, unknown>;
 };
 
+const walletFixtureUrl = (path: string): string => {
+  const port = Number(process.env['XLN_REACT_WALLET_FIXTURE_PORT'] || 19092);
+  return `http://127.0.0.1:${port}${path}`;
+};
+
+export const createWalletHubDiscoveryFixture = async (page: Page, slot: string) => {
+  const response = await page.request.post(walletFixtureUrl(`/hub-discovery-fixture?slot=${encodeURIComponent(slot)}`));
+  expect(response.ok()).toBe(true);
+  const result: unknown = await response.json();
+  if (!result || typeof result !== 'object' || Array.isArray(result)) throw new Error('HUB_DISCOVERY_FIXTURE_INFO_INVALID');
+  const record = result as Record<string, unknown>;
+  const entityId = String(record['entityId'] || '').toLowerCase();
+  const name = String(record['name'] || '');
+  const height = Number(record['height']);
+  if (!/^0x[0-9a-f]{64}$/.test(entityId) || !name || !Number.isSafeInteger(height)) {
+    throw new Error('HUB_DISCOVERY_FIXTURE_INFO_INVALID');
+  }
+  return { entityId, name, height };
+};
+
+export const readWalletHubDiscoveryAccountState = async (page: Page, entityId: string) => {
+  const response = await page.request.get(walletFixtureUrl(`/hub-discovery-account-state?entityId=${encodeURIComponent(entityId)}`));
+  expect(response.ok()).toBe(true);
+  const result: unknown = await response.json();
+  if (!result || typeof result !== 'object' || Array.isArray(result)) throw new Error('HUB_DISCOVERY_ACCOUNT_STATE_INVALID');
+  const record = result as Record<string, unknown>;
+  return {
+    height: Number(record['height']),
+    sourceHasAccount: record['sourceHasAccount'] === true,
+    hubHasAccount: record['hubHasAccount'] === true,
+  };
+};
+
 export type WalletRuntimeFixtureInfo = Readonly<{
   runtimeId: string;
   entityId: string;

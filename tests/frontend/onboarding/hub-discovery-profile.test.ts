@@ -13,6 +13,7 @@ import {
   hubHasPublishedRuntimeRoute,
   isSameEntityId,
 } from '../../../frontend/src/lib/components/Entity/onboarding/hub-discovery-profile';
+import { connectDiscoveredHub } from '../../../frontend/src/lib/components/Entity/onboarding/hub-discovery-commands';
 import { readFileSync } from 'node:fs';
 
 const SOURCE = `0x${'11'.repeat(32)}`;
@@ -119,6 +120,45 @@ test('hub open-account actions require admin auth for remote runtimes', () => {
     HUB_OPEN_ACCOUNT_REQUIRES_ADMIN,
   );
   expect(HUB_OPEN_ACCOUNT_REQUIRES_ADMIN).toBe('Account opening requires admin runtime access.');
+});
+
+test('hub opening rejects a switched Runtime before submitting its prepared input', async () => {
+  const projectedHub = {
+    entityId: HUB,
+    name: 'H1',
+    metadata: { isHub: true, jurisdiction: JURISDICTION, fee: 0, peerCount: 0 },
+    runtimeId: RUNTIME,
+    wsUrl: null,
+    lastSeen: 1,
+    raw: '',
+    avatar: '',
+    isConnected: false,
+    isOpening: false,
+    roleSource: 'committed-profile' as const,
+  };
+  const projection = {
+    discoveryKey: `runtime-a:${SOURCE}`,
+    entityJurisdictionKey: hubDiscoveryJurisdictionKey(JURISDICTION),
+    sourceSignerId: SIGNER,
+    localHubs: [projectedHub],
+    connectionByHubId: new Map([[HUB, { isConnected: false, isOpening: false }]]),
+    committedRoles: new Map([[SOURCE, false], [HUB, true]]),
+  };
+  let reads = 0;
+  let submitted = false;
+  await expect(connectDiscoveredHub(HUB, {
+    readContext: () => ({
+      entityId: SOURCE,
+      env: null,
+      projection: reads++ === 0 ? projection : { ...projection, discoveryKey: `runtime-b:${SOURCE}` },
+      canOpenAccounts: true,
+      permissionError: '',
+    }),
+    readTokenDecimals: () => 6,
+    submitRuntimeInput: () => { submitted = true; },
+  })).rejects.toThrow('HUB_DISCOVERY_CONTEXT_CHANGED');
+  expect(reads).toBe(2);
+  expect(submitted).toBe(false);
 });
 
 test('hub open-account command builds an explicit RuntimeInput batch', () => {
