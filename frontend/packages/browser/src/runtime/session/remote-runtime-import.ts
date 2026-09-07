@@ -1,4 +1,4 @@
-import { REMOTE_RUNTIME } from '@xln/core/config/remote-runtime';
+import { REMOTE_RUNTIME } from '../../../../../../core/config/remote-runtime';
 import { isUnknownRecord as isRecord, parseJsonUnknown } from '../../../../runtime-client/src/boundary';
 import {
   REMOTE_RUNTIME_IMPORT_HASH_PARAM,
