@@ -1,4 +1,4 @@
-import { REMOTE_RUNTIME } from '@xln/core/config/remote-runtime';
+import { REMOTE_RUNTIME } from '../../../../../core/config/remote-runtime';
 import { normalizeWsConnectUrl } from './ws-url';
 
 export const REMOTE_ACCEPT_PREFIX = 'xln-remote-runtime-accepted:';

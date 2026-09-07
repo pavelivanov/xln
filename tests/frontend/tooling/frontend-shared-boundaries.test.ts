@@ -14,7 +14,8 @@ const PACKAGE_ROOTS = [
 const ALL_PACKAGE_ROOTS = [...PACKAGE_ROOTS, 'frontend/packages/ui/src'] as const;
 
 const ALLOWED_BROWSER_SAFE_CORE_IMPORTS = [
-  '@xln/core/config/remote-runtime',
+  '../../../../../../core/config/remote-runtime',
+  '../../../../../core/config/remote-runtime',
   '@xln/core/api/public/runtime-module',
   '@xln/core/api/public/runtime-module-guard',
   '@xln/core/api/runtime-adapter/security/owner-binding',
