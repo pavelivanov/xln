@@ -1,6 +1,7 @@
 import { expect, test } from '@playwright/test';
+import { WALLET_VAULT_STORAGE_KEY } from '../../../../packages/browser/src/wallet/wallet-vault-storage';
 import { expectNoBrowserErrors, expectPageContained, observeBrowserErrors, screenshotEvidence } from '../../browser-evidence';
-import { restoreLocalWallet } from './wallet-onboarding-test-helpers';
+import { finishOpenedWalletSetup, restoreLocalWallet } from './wallet-onboarding-test-helpers';
 
 const readPersistedRuntimeIds = (page: import('@playwright/test').Page): Promise<string[]> =>
   page.evaluate(() => {
@@ -115,5 +116,53 @@ test('post-creation setup automatically joins a real Hub and reload keeps one Ru
   expect(await readPersistedRuntimeIds(page)).toEqual(runtimeIds);
   await expectPageContained(page);
   await screenshotEvidence(page, testInfo, 'wallet-onboarding-auto-joined-reloaded');
+  expectNoBrowserErrors(errors);
+});
+
+test('recovery settings validate, save and restore services for the already-open Runtime', { tag: '@functional' }, async ({ page }, testInfo) => {
+  testInfo.setTimeout(150_000);
+  const errors = observeBrowserErrors(page);
+  const fixture = await restoreLocalWallet(page);
+  await finishOpenedWalletSetup(page);
+  await page.getByRole('link', { name: 'Continue to assets' }).click();
+  await page.getByRole('link', { name: 'Settings', exact: true }).click();
+  await page.getByRole('link', { name: 'Recovery', exact: true }).click();
+
+  await expect(page).toHaveURL(/#settings\/recovery$/);
+  await expect(page.getByRole('heading', { name: 'Recovery services' })).toBeVisible();
+  await expect(page.getByText(fixture.recovery.runtimeId, { exact: true })).toBeVisible();
+  await expect(page.getByRole('textbox', { name: /^Seed phrase/ })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Review identity inputs' })).toHaveCount(0);
+  const officialTower = page.getByText('Official xln tower', { exact: true }).locator('..');
+  await expect(officialTower).toContainText(fixture.recovery.towerUrl);
+
+  await page.getByRole('radio', { name: /^Backup only/ }).click();
+  await expect(page.getByRole('radio', { name: /^Backup only/ })).toHaveAttribute('aria-checked', 'true');
+  const serviceUrl = page.getByLabel('Service URL');
+  await serviceUrl.fill('ftp://invalid.example.com');
+  await page.getByRole('button', { name: 'Add service' }).click();
+  await expect(page.getByRole('alert')).toHaveText('Service URL must start with http:// or https://');
+
+  const manualUrl = `${fixture.recovery.towerUrl}/settings`;
+  await serviceUrl.fill(`${manualUrl}/`);
+  await page.getByLabel('Manual recovery service role').selectOption('delayed_last_resort');
+  await page.getByRole('button', { name: 'Add service' }).click();
+  const manualService = page.getByText('Manual service', { exact: true }).locator('..');
+  await expect(manualService).toContainText(manualUrl);
+  await expect(page.getByLabel(`Role for ${manualUrl}`)).toHaveValue('delayed_last_resort');
+  await page.getByRole('button', { name: 'Save recovery services' }).click();
+  await expect(page.getByText('Recovery services saved to the active Runtime.')).toBeVisible();
+  expect(await page.evaluate((storageKey) => localStorage.getItem(storageKey), WALLET_VAULT_STORAGE_KEY))
+    .toContain(manualUrl);
+
+  await page.reload({ waitUntil: 'domcontentloaded' });
+  await expect(page.locator('.wallet-shell-runtime-state')).toHaveText('Local Runtime', { timeout: 90_000 });
+  await expect(page.getByRole('heading', { name: 'Recovery services' })).toBeVisible();
+  await expect(page.getByRole('radio', { name: /^Backup only/ })).toHaveAttribute('aria-checked', 'true');
+  await expect(page.getByText('Manual service', { exact: true }).locator('..')).toContainText(manualUrl);
+  await expect(page.getByLabel(`Role for ${manualUrl}`)).toHaveValue('delayed_last_resort');
+  await expect(page.getByRole('textbox', { name: /^Seed phrase/ })).toHaveCount(0);
+  await expectPageContained(page);
+  await screenshotEvidence(page, testInfo, 'wallet-recovery-settings-restored');
   expectNoBrowserErrors(errors);
 });
