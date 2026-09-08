@@ -26,6 +26,8 @@ const authSeed = `xln-react-wallet-address-auth:${port}:minimum-32-bytes`;
 process.env['XLN_DB_PATH'] = databaseRoot;
 process.env['XLN_DISABLE_RUNTIME_RESTORE'] = '1';
 process.env['XLN_RADAPTER_AUTH_SEED'] = authSeed;
+process.env['XLN_RADAPTER_CONTROL_BURST'] = '1000';
+process.env['XLN_RADAPTER_READ_BURST'] = '1000';
 process.env['XLN_RADAPTER_SEND_BURST'] = '100';
 process.env['XLN_RADAPTER_SEND_PER_SEC'] = '50';
 
@@ -158,11 +160,13 @@ await commit({
       type: 'openAccount',
       data: {
         targetEntityId: counterpartyEntityId,
+            tokenId: 1,
+            creditAmount: 0n,
         disputeConfig: accountConfig.defaultAccountDisputeConfigForParties(
           entityId,
           false,
           counterpartyEntityId,
-          false,
+              true,
         ),
       },
     }],
@@ -234,14 +238,14 @@ const token = auth.deriveRuntimeAdapterCapabilityToken(
   { audience: runtimeId, keyId: 'wallet-address-e2e', tokenId: 'wallet-address-e2e' },
 );
 const recoveryFixture = await createWalletRecoveryFixture(port);
-const gatewayPort = Math.floor(Number(process.env['XLN_REACT_GATEWAY_PORT'] || 19080));
 const relayPort = port + 3;
 if (relayPort > 65_535) throw new Error('WALLET_RUNTIME_FIXTURE_RELAY_PORT_INVALID');
+const relayUrl = `ws://127.0.0.1:${relayPort}/`;
 const relayServer = relay.startStandaloneRelayServer({
   host: '127.0.0.1',
   port: relayPort,
   serverId: `0x${'99'.repeat(20)}`,
-  audience: `ws://localhost:${gatewayPort}/relay`,
+  audience: relayUrl,
 });
 const stackManager = createStackManagerController({ parseBody: request => request.json(), headers: { 'content-type': 'application/json', 'access-control-allow-origin': '*' } });
 const handleRpc = rpc.createServerRpcMessageHandler({
@@ -257,6 +261,13 @@ let dropdownFixture: ReturnType<typeof import('../account/wallet-account-dropdow
 let dropdownRuntime: typeof env | null = null;
 let onboardingHubDiscoveryEnabled = false;
 const hubDiscoveryFixtures = new Map<string, Promise<Awaited<ReturnType<typeof import('./wallet-hub-discovery-fixture').createWalletHubDiscoveryFixture>>>>();
+const disputeFixtures = new Map<
+  string,
+  Promise<Awaited<ReturnType<typeof import('./wallet-hub-discovery-fixture').createWalletDisputeFixture>>>
+>();
+let crossJFixture: Promise<
+  Awaited<ReturnType<typeof import('./wallet-cross-j-fixture').createWalletCrossJFixture>>
+> | null = null;
 const socketRuntime = (socket: ServerWebSocket<FixtureSocketData>) => {
   if (socket.data.fixture === 'wallet') return env;
   if (!dropdownRuntime) throw new Error('ACCOUNT_DROPDOWN_FIXTURE_NOT_READY');
@@ -296,6 +307,115 @@ server = Bun.serve<FixtureSocketData>({
       }
       const created = await fixture;
       return Response.json(created, { headers: apiHeaders });
+    }
+    if (url.pathname === '/dispute-fixture' && request.method === 'POST') {
+      const slot = String(url.searchParams.get('slot') || '');
+      let fixture = disputeFixtures.get(slot);
+      if (!fixture) {
+        fixture = import('./wallet-hub-discovery-fixture').then(module =>
+          module.createWalletDisputeFixture(env, config, commit, runtimeSeed, slot, entityId, runtimeId),
+        );
+        disputeFixtures.set(slot, fixture);
+      }
+      const created = await fixture;
+      return Response.json(created, { headers: apiHeaders });
+    }
+    if (url.pathname === '/debt-payment-fixture' && request.method === 'POST') {
+      const sourceEntityId = String(url.searchParams.get('entityId') || '').toLowerCase();
+      const targetEntityId = String(url.searchParams.get('counterpartyId') || '').toLowerCase();
+      const amount = BigInt(String(url.searchParams.get('amount') || '0'));
+      const replica = [...env.state.eReplicas.values()].find(candidate => candidate.state.entityId === sourceEntityId);
+      if (!replica || !replica.state.accounts.has(targetEntityId) || amount <= 0n) {
+        return new Response('Debt payment fixture invalid', { status: 400, headers: apiHeaders });
+      }
+      await commit({
+        runtimeTxs: [],
+        entityInputs: [
+          {
+            entityId: sourceEntityId,
+            signerId: replica.signerId,
+            entityTxs: [
+              {
+                type: 'directPayment',
+                data: {
+                  targetEntityId,
+                  tokenId: 1,
+                  amount,
+                  route: [sourceEntityId, targetEntityId],
+                  deliveryMode: 'direct',
+                  description: 'wallet-debt-fixture',
+                },
+              },
+            ],
+          },
+        ],
+      });
+      return Response.json({ height: env.state.height }, { headers: apiHeaders });
+    }
+    if (url.pathname === '/cross-j-fixture' && request.method === 'POST') {
+      crossJFixture ??= import('./wallet-cross-j-fixture').then(module =>
+        module.createWalletCrossJFixture(env, config, commit, runtimeSeed, entityId, p2p, relayUrl),
+      );
+      const created = await crossJFixture;
+      return Response.json(
+        {
+          sourceHubEntityId: created.sourceHubEntityId,
+          targetEntityId: created.targetEntityId,
+          targetHubEntityId: created.targetHubEntityId,
+          targetJurisdiction: created.targetJurisdiction,
+          height: env.state.height,
+        },
+        { headers: apiHeaders },
+      );
+    }
+    if (url.pathname === '/cross-j-state' && request.method === 'GET') {
+      const orderId = String(url.searchParams.get('orderId') || '');
+      const rows = [...env.state.eReplicas.values()].flatMap(replica => {
+        const route = replica.state.crossJurisdictionSwaps?.get(orderId);
+        return route ? [{ entityId: replica.state.entityId, status: route.status, orderId: route.orderId }] : [];
+      });
+      return Response.json({ rows, height: env.state.height }, { headers: apiHeaders });
+    }
+    if (url.pathname === '/debt-reserve-fixture' && request.method === 'POST') {
+      const targetEntityId = String(url.searchParams.get('entityId') || '').toLowerCase();
+      const amount = BigInt(String(url.searchParams.get('amount') || '0'));
+      const replica = [...env.state.eReplicas.values()].find(candidate => candidate.state.entityId === targetEntityId);
+      if (!replica || amount <= 0n)
+        return new Response('Debt reserve fixture invalid', { status: 400, headers: apiHeaders });
+      const before = replica.state.reserves.get(1) ?? 0n;
+      await commit({
+        runtimeTxs: [],
+        entityInputs: [
+          {
+            entityId: targetEntityId,
+            signerId: replica.signerId,
+            entityTxs: [{ type: 'mintReserves', data: { tokenId: 1, amount } }],
+          },
+        ],
+      });
+      const currentReserve = () =>
+        [...env.state.eReplicas.values()]
+          .find(candidate => candidate.state.entityId === targetEntityId)
+          ?.state.reserves.get(1) ?? 0n;
+      await waitForWalletFixtureState(`Debt reserve ${targetEntityId}`, () => currentReserve() === before + amount);
+      return Response.json({ reserve: String(currentReserve()) }, { headers: apiHeaders });
+    }
+    if (url.pathname === '/debt-ledger-state' && request.method === 'GET') {
+      const targetEntityId = String(url.searchParams.get('entityId') || '').toLowerCase();
+      const replica = [...env.state.eReplicas.values()].find(candidate => candidate.state.entityId === targetEntityId);
+      if (!replica) return new Response('Debt Entity not found', { status: 404, headers: apiHeaders });
+      const debts = [...(replica.state.outDebtsByToken?.get(1)?.values() ?? [])];
+      return new Response(
+        runtime.safeStringify({
+          reserve: String(replica.state.reserves.get(1) ?? 0n),
+          debts: debts.map(debt => ({
+            creditor: debt.creditor,
+            remainingAmount: debt.remainingAmount.toString(),
+            status: debt.status,
+          })),
+        }),
+        { headers: apiHeaders },
+      );
     }
     if (url.pathname === '/hub-discovery-account-state' && request.method === 'GET') {
       const hubEntityId = String(url.searchParams.get('entityId') || '').toLowerCase();
@@ -436,6 +556,7 @@ server = Bun.serve<FixtureSocketData>({
       if (url.searchParams.get('dump') === '1') return new Response(runtime.safeStringify(env.state), { headers: apiHeaders });
       const owner = url.searchParams.get('entityId') || entityId;
       const peer = url.searchParams.get('accountId') || counterpartyEntityId;
+      const ownerReplica = [...env.state.eReplicas.values()].find(candidate => candidate.state.entityId === owner);
       const account = readAccount(owner, peer);
       if (!account) throw new Error('ACCOUNT_TOOL_FIXTURE_ACCOUNT_MISSING');
       const tokenId = Number(url.searchParams.get('tokenId') || 1);
@@ -443,11 +564,30 @@ server = Bun.serve<FixtureSocketData>({
       const derived = delta ? runtime.deriveDelta(delta, owner.toLowerCase() < peer.toLowerCase()) : null;
       const policy = account.state.rebalanceFeePolicies?.get(tokenId)?.[runtime.isLeftEntity(owner, peer) ? 'right' : 'left'];
       const request = account.state.requestedRebalanceFeeState.get(tokenId);
+      const chainAccount = await chainAdapter.getAccountInfo(owner, peer);
       return Response.json({ height: env.state.height, tokenIds: [...account.state.deltas.keys()], tokenDecimals: runtime.getTokenInfo(tokenId).decimals, status: account.status,
         ownCreditLimit: derived ? derived.ownCreditLimit.toString() : null, peerCreditLimit: derived ? derived.peerCreditLimit.toString() : null,
+        outPeerCredit: derived ? derived.outPeerCredit.toString() : null,
         peerFeePolicy: policy ? { policyVersion: policy.policyVersion, baseFee: String(policy.baseFee), gasFee: String(policy.gasFee), liquidityFeeBps: String(policy.liquidityFeeBps) } : null,
         collateralRequest: request ? { amount: String(request.requestedAmount), feePaid: String(request.feePaidUpfront), feeTokenId: request.feeTokenId, policyVersion: request.policyVersion } : null,
-        collateral: delta ? delta.collateral.toString() : null, settlement: account.state.settlementWorkspace ? runtime.safeStringify(account.state.settlementWorkspace) : null });
+        collateral: delta ? delta.collateral.toString() : null,
+        reserve: String(ownerReplica?.state.reserves.get(tokenId) ?? 0n),
+        chainReserve: String(await chainAdapter.getReserves(owner, tokenId)),
+        chainCollateral: String(await chainAdapter.getCollateral(owner, peer, tokenId)),
+        lastFinalizedJHeight: account.state.lastFinalizedJHeight,
+        activeDispute: account.activeDispute
+          ? {
+              startedByLeft: account.activeDispute.startedByLeft,
+              disputeTimeout: account.activeDispute.disputeTimeout,
+              observedOnChain: account.activeDispute.observedOnChain === true,
+              finalizeQueued: account.activeDispute.finalizeQueued === true,
+            }
+          : null,
+        chainAccount: {
+          nonce: String(chainAccount.nonce),
+          disputeHash: chainAccount.disputeHash,
+          disputeTimeout: String(chainAccount.disputeTimeout),
+        }, settlement: account.state.settlementWorkspace ? runtime.safeStringify(account.state.settlementWorkspace) : null });
     }
     if (url.pathname === '/account-dropdown-fixture' && request.method === 'POST') {
       dropdownFixture ??= import('../account/wallet-account-dropdown-fixture').then(module => module.createAccountDropdownFixture(port));
@@ -534,13 +674,14 @@ const stop = async (): Promise<void> => {
   stopping = true;
   await server.stop(true);
   if (dropdownFixture) await (await dropdownFixture).close();
-  relayServer.close();
+  if (crossJFixture) await (await crossJFixture).close();
+  await chainAdapter.close();
+  await recoveryFixture.close();
   await runtime.stopP2PAndWait(env, 1_000);
+  relayServer.close();
   await runtime.stopRuntimeLoopAndWait(env).catch(() => false);
   await runtime.closeRuntimeDb(env);
   await runtime.closeInfraDb(env);
-  await recoveryFixture.close();
-  await chainAdapter.close();
   await rm(databaseRoot, { recursive: true, force: true });
 };
 

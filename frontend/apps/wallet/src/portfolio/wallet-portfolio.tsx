@@ -189,8 +189,10 @@ function PortfolioContent({
   );
 }
 
-export function WalletPortfolio({ section = 'assets', workspaceSelection, draft }: Readonly<{
-  draft?: WalletOpenDraft | undefined; section?: 'assets' | 'open' | 'appearance'; workspaceSelection: WalletWorkspaceSelection;
+export function WalletPortfolio({ section = 'assets', workspaceSelection, draft,
+  focus }: Readonly<{
+  draft?: WalletOpenDraft | undefined;
+  focus?: Readonly<{ entityId: string; accountId: string; tokenId: number }> | undefined; section?: 'assets' | 'open' | 'appearance'; workspaceSelection: WalletWorkspaceSelection;
 }>) {
   const navigateWallet = useWalletNavigation();
   const [creatingEntity, setCreatingEntity] = useState(false);
@@ -208,6 +210,20 @@ export function WalletPortfolio({ section = 'assets', workspaceSelection, draft 
     void source.start();
     return () => { source.stop(); workspaceSelection.closeAccount(); };
   }, [source, workspaceSelection]);
+
+  useEffect(() => {
+
+  const projection = snapshot.projection;
+    if (!focus || snapshot.status !== 'ready' || !projection) return;
+    if (projection.activeEntityId !== focus.entityId) {
+      source.selectEntity(focus.entityId);
+      return;
+    }
+    if (!projection.accounts.some(account => account.counterpartyId === focus.accountId)) {
+      throw new Error(`WALLET_ACCOUNT_DEEP_LINK_NOT_FOUND:${focus.accountId}`);
+    }
+    workspaceSelection.focusAccount(source.getRuntimeId(), focus.entityId, focus.accountId);
+  }, [focus, snapshot.projection, snapshot.status, source, workspaceSelection]);
 
   const accountIds = snapshot.projection?.accounts.map(account => account.counterpartyId) || [];
   const selectAccount = (id: string) => {
@@ -227,6 +243,7 @@ export function WalletPortfolio({ section = 'assets', workspaceSelection, draft 
   if (focusedAccountId && snapshot.projection) return <Suspense fallback={<p>Loading Account…</p>}>
     <WalletFocusedAccount key={`${source.getRuntimeId()}:${snapshot.projection.activeEntityId}:${focusedAccountId}`}
       adapter={source.requireAdapter()} entityId={snapshot.projection.activeEntityId} counterpartyId={focusedAccountId}
+          initialTokenId={focus?.tokenId}
       onBack={() => returnToWorkspace('activity')} onWorkspace={() => returnToWorkspace('open')} />
   </Suspense>;
 

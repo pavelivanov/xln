@@ -162,6 +162,111 @@
 .wallet-order-ticket > p { color: #676f6a; font-size: 0.68rem; line-height: 1.5; }
 .wallet-market-submit { width: 100%; padding: 0.82rem; color: #10130f; font-weight: 650; background: var(--accent); border: 1px solid var(--accent); border-radius: 0.45rem; }
 
+.wallet-cross-ticket {
+  padding: 2rem 0;
+  border-bottom: 1px solid var(--line);
+}
+.wallet-cross-ticket > header {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: flex-end;
+  margin-bottom: 1rem;
+}
+.wallet-cross-ticket h2 {
+  margin: 0;
+  color: #e7e9e3;
+  font-size: 1rem;
+  font-weight: 620;
+}
+.wallet-cross-ticket > header > span,
+.wallet-cross-ticket > p {
+  color: #676e71;
+  font-size: 0.7rem;
+}
+.wallet-cross-fields {
+  display: grid;
+  grid-template-columns: minmax(15rem, 1.25fr) repeat(2, minmax(12rem, 1fr));
+  gap: 1rem;
+}
+.wallet-cross-fields label {
+  display: grid;
+  gap: 0.45rem;
+}
+.wallet-cross-fields label > span,
+.wallet-cross-review div > span {
+  color: #6c7376;
+  font:
+    0.62rem/1.3 'SFMono-Regular',
+    Consolas,
+    monospace;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+.wallet-cross-fields label > div {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 6rem;
+}
+.wallet-cross-fields label > div input {
+  border-radius: 0.45rem 0 0 0.45rem;
+}
+.wallet-cross-fields label > div select {
+  border-left: 0;
+  border-radius: 0 0.45rem 0.45rem 0;
+}
+.wallet-cross-review-button {
+  margin-top: 1rem;
+  padding: 0.68rem 0.9rem;
+  color: #ccd2ca;
+  background: transparent;
+  border: 1px solid #3d4940;
+  border-radius: 0.45rem;
+}
+.wallet-cross-review {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  gap: 1.4rem;
+  align-items: center;
+  margin-top: 1rem;
+  padding: 1.15rem 0;
+  border-top: 1px solid #40513f;
+  border-bottom: 1px solid #29342a;
+}
+.wallet-cross-review > div {
+  display: grid;
+  gap: 0.3rem;
+}
+.wallet-cross-review > span {
+  color: var(--accent);
+}
+.wallet-cross-review strong {
+  color: #d3d9d0;
+  font-size: 0.78rem;
+}
+.wallet-cross-review small {
+  color: #7f8781;
+  font-size: 0.66rem;
+}
+.wallet-cross-review footer {
+  display: flex;
+  grid-column: 1 / -1;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: center;
+}
+.wallet-cross-review code {
+  color: #717975;
+  font-size: 0.62rem;
+}
+.wallet-cross-review button {
+  padding: 0.72rem 0.9rem;
+  color: #10130f;
+  font-weight: 650;
+  background: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: 0.45rem;
+}
+
 .wallet-open-orders,
 .wallet-cross-routes,
 .wallet-market-activity { padding: 2rem 0; border-bottom: 1px solid var(--line); }
@@ -187,6 +292,14 @@
 .wallet-cross-routes strong { color: #9fc9a4; font-size: 0.65rem; text-transform: uppercase; }
 .wallet-cross-routes article p { color: #acb2aa; font-size: 0.7rem; }
 .wallet-cross-routes time { color: #61686a; font-size: 0.6rem; }
+.wallet-cross-routes article > button {
+  margin-top: 0.75rem;
+  padding: 0.5rem 0.65rem;
+  color: #d79088;
+  background: transparent;
+  border: 1px solid #4a302e;
+  border-radius: 0.4rem;
+}
 
 .wallet-market-activity > header { align-items: center; }
 .wallet-market-activity nav { display: flex; border-bottom: 1px solid var(--line); }

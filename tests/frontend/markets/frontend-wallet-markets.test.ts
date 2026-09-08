@@ -5,6 +5,7 @@ import { formatTokenAmount, parseTokenAmount } from '../../../core/account/finan
 import { deriveDelta, getTokenInfo, isLeftEntity } from '../../../core/account/utils';
 import { deriveSwapNetAuthorization } from '../../../core/account/swap/swap-net-authorization';
 import { buildDeterministicSwapOfferId } from '../../../core/account/swap/swap-command-route';
+import { planSwapCommand } from '../../../core/runtime/swap-cmd/swap-command-plan';
 import { applyCommand, createBook } from '../../../core/orderbook/core';
 import { projectBookPricePageTree } from '../../../core/orderbook/pages/page';
 import {
@@ -13,6 +14,11 @@ import {
   prepareSwapOrderForDimensions,
 } from '../../../core/orderbook/types';
 import { buildWalletMarketCancelInput, buildWalletMarketOrderInput } from '../../../frontend/apps/wallet/src/markets/wallet-market-command';
+import {
+  buildWalletCrossMarketCancelInput,
+  buildWalletCrossMarketReview,
+  walletCrossMarketDraftKey,
+} from '../../../frontend/apps/wallet/src/markets/wallet-cross-market-command';
 import { decodeWalletMarketProjection } from '../../../frontend/apps/wallet/src/markets/wallet-market-model';
 import type { WalletPaymentMath } from '../../../frontend/apps/wallet/src/payments/wallet-payment-model';
 import type { WalletMarketMath } from '../../../frontend/apps/wallet/src/runtime/wallet-runtime-read-boundary';
@@ -20,7 +26,12 @@ import type { WalletMarketMath } from '../../../frontend/apps/wallet/src/runtime
 const alice = `0x${'11'.repeat(32)}`;
 const hub = `0x${'22'.repeat(32)}`;
 const maker = `0x${'33'.repeat(32)}`;
+const targetUser = `0x${'44'.repeat(32)}`;
+const targetHub = `0x${'55'.repeat(32)}`;
 const signer = `0x${'aa'.repeat(20)}`;
+const hubSigner = `0x${'bb'.repeat(20)}`;
+const targetSigner = `0x${'cc'.repeat(20)}`;
+const targetHubSigner = `0x${'dd'.repeat(20)}`;
 
 const paymentMath: WalletPaymentMath = {
   deriveDelta,
@@ -36,6 +47,7 @@ const marketMath: WalletMarketMath = {
   prepareSwapOrderForDimensions,
   deriveSwapNetAuthorization,
   buildDeterministicSwapOfferId,
+  planSwapCommand,
 };
 
 const delta = (tokenId: number, spendCapacity: bigint) => ({
@@ -83,8 +95,31 @@ const account = () => ({
 const activeFrame = () => ({
   height: 22,
   entities: [
-    { entityId: alice, label: 'Alice', height: 22 },
-    { entityId: hub, label: 'North Hub', height: 22, isHub: true },
+    { entityId: alice,
+      signerId: signer, label: 'Alice', height: 22,
+      isHub: false,
+      jurisdiction: { name: 'Source Chain', chainId: 1, depositoryAddress: `0x${'01'.repeat(20)}` },
+    },
+    { entityId: hub,
+      signerId: hubSigner, label: 'North Hub', height: 22, isHub: true,
+      jurisdiction: { name: 'Source Chain', chainId: 1, depositoryAddress: `0x${'01'.repeat(20)}` },
+    },
+    {
+      entityId: targetUser,
+      signerId: targetSigner,
+      label: 'Bob',
+      height: 22,
+      isHub: false,
+      jurisdiction: { name: 'Target Chain', chainId: 2, depositoryAddress: `0x${'02'.repeat(20)}` },
+    },
+    {
+      entityId: targetHub,
+      signerId: targetHubSigner,
+      label: 'South Hub',
+      height: 22,
+      isHub: true,
+      jurisdiction: { name: 'Target Chain', chainId: 2, depositoryAddress: `0x${'02'.repeat(20)}` },
+    },
   ],
   activeEntityId: alice,
   activeEntity: {
@@ -234,6 +269,75 @@ describe('React wallet markets', () => {
     expect(() => buildWalletMarketCancelInput(projection(), 'unknown')).toThrow('WALLET_MARKET_OPEN_ORDER_UNKNOWN');
   });
 
+  test('reviews one exact cross-j route through the canonical planner and cancels only that route', () => {
+    const result = projection();
+    const source = activeFrame();
+    const sourceAccount = source.activeEntity.accounts.items[0]!.state;
+    sourceAccount.disputeConfig = { leftResponseSeconds: 3_600, rightResponseSeconds: 3_600 };
+    const targetToken = delta(2, 0n);
+    targetToken.rightCreditLimit = 2_000_000_000_000_000_000n;
+    const target = {
+      ...source,
+      activeEntityId: targetUser,
+      activeEntity: {
+        core: { entityId: targetUser, signerId: targetSigner, timestamp: 1_780_000_000_000 },
+        accounts: {
+          items: [
+            {
+              status: 'active',
+              state: {
+                leftEntity: targetUser,
+                rightEntity: targetHub,
+                deltas: new Map([[2, targetToken]]),
+                disputeConfig: { leftResponseSeconds: 3_600, rightResponseSeconds: 3_600 },
+              },
+            },
+          ],
+        },
+      },
+    };
+    const draft = {
+      routeValue: result.crossTargets[0]!.routeValue,
+      giveTokenId: 1,
+      wantTokenId: 2,
+      giveAmount: '25',
+      wantAmount: '0.01',
+    };
+    const review = buildWalletCrossMarketReview(draft, result, source, target, paymentMath, marketMath);
+    expect(review).toMatchObject({
+      draftKey: walletCrossMarketDraftKey(draft),
+      sourceJurisdictionLabel: 'Source Chain',
+      targetJurisdictionLabel: 'Target Chain',
+      giveAssetLabel: 'USDC',
+      wantAssetLabel: 'WETH',
+    });
+    expect(review.plan.targetSetupInput).toBeNull();
+    expect(review.plan.crossJurisdictionIntent).toMatchObject({
+      orderId: review.orderId,
+      status: 'intent',
+      source: { entityId: alice, counterpartyEntityId: hub, tokenId: 1 },
+      target: { entityId: targetHub, counterpartyEntityId: targetUser, tokenId: 2 },
+    });
+    const committed = {
+      ...result,
+      crossRoutes: [
+        {
+          orderId: review.orderId,
+          status: 'resting',
+          sourceLabel: review.giveAmountLabel,
+          targetLabel: review.wantAmountLabel,
+          updatedAt: 1,
+          expiresAt: 2,
+        },
+      ],
+    };
+    expect(buildWalletCrossMarketCancelInput(committed, review.orderId).entityInputs[0]?.entityTxs[0]).toEqual({
+      type: 'requestCrossJurisdictionClear',
+      data: { orderId: review.orderId, cancelRemainder: true },
+    });
+    expect(walletCrossMarketDraftKey({ ...draft, wantTokenId: 1 })).not.toBe(review.draftKey);
+  });
+
   test('keeps Runtime reads, idempotent command identity, cleanup, and React subscriptions explicit', () => {
     const source = readFileSync('frontend/apps/wallet/src/markets/wallet-market-source.ts', 'utf8');
     const view = readFileSync('frontend/apps/wallet/src/markets/wallet-markets.tsx', 'utf8');
@@ -243,6 +347,7 @@ describe('React wallet markets', () => {
     expect(source).toContain('executeWalletPaymentCommand');
     expect(source).toContain('this.releaseAdapter?.()');
     expect(source).toContain('Do not submit a second command');
+    expect(source).toContain('await math.refreshTokenCatalog(this.workspaceApiBase())');
     expect(source).toContain("this.requireNoPendingCommand('WALLET_MARKET_PAIR_CHANGE_PENDING_COMMAND')");
     expect(view).toContain('useSyncExternalStore');
     expect(source).not.toContain('setInterval');

@@ -148,6 +148,10 @@ type RuntimeAdapterActiveDispute = Pick<NonNullable<StorageAccountDoc['activeDis
   | 'observedOnChain' | 'observedBlockNumber' | 'batchNonce' | 'selectedCounterNonce'
   | 'selectedCounterProofbodyHash' | 'selectedCounterProposerIsLeft' | 'finalizeQueued'
 >;
+type RuntimeAdapterAccountDisputeLifecycle = Pick<
+  NonNullable<StorageAccountDoc['activeDispute']>,
+  'startedByLeft' | 'disputeTimeout' | 'initialNonce' | 'observedOnChain' | 'finalizeQueued'
+>;
 type RuntimeAdapterAccountDoc = Omit<StorageAccountDoc, 'state' | 'pendingWithdrawals' | 'shadow' | 'activeDispute' | 'disputePrepare'> & {
   state: RuntimeAdapterAccountStateDoc;
   /** Bodies stay redacted; zero here means the live Account queue is actually empty. */
@@ -155,6 +159,7 @@ type RuntimeAdapterAccountDoc = Omit<StorageAccountDoc, 'state' | 'pendingWithdr
   activeDispute?: RuntimeAdapterActiveDispute;
   disputePrepare?: Pick<NonNullable<StorageAccountDoc['disputePrepare']>, 'startedAt' | 'readyAfter' | 'reason'>;
   pendingWithdrawals: NativeMapView<StorageAccountDoc['pendingWithdrawals']>;
+  disputeLifecycle?: RuntimeAdapterAccountDisputeLifecycle;
   shadow: {
     rebalance: Omit<AccountRebalanceShadow, 'policy' | 'submittedAtByToken'> & {
       policy: NativeMapView<AccountRebalanceShadow['policy']>;
@@ -590,6 +595,7 @@ const jurisdictionSummary = (jurisdiction: unknown): RuntimeAdapterEntitySummary
 const summaryFromProfile = (
   profile: Profile,
   defaultHeight: number,
+  verifiedSignerId?: string,
 ): RuntimeAdapterEntitySummary | null => {
   const entityId = normalizeEntityId(profile.entityId);
   if (!entityId) return null;
@@ -599,6 +605,7 @@ const summaryFromProfile = (
   return {
     entityId,
     ...(runtimeId ? { runtimeId } : {}),
+    ...withDefinedProp('signerId', verifiedSignerId),
     label: profileName || entityId,
     height: Math.max(0, Math.floor(Number(profile.lastUpdated || defaultHeight || 0))),
     isHub: profile.metadata?.isHub === true,
@@ -648,7 +655,16 @@ const listLiveGossipProfileSummaries = (ctx: RuntimeAdapterResolveContext): Runt
   const height = envHeight(ctx.env);
   const summaries: RuntimeAdapterEntitySummary[] = [];
   for (const profile of profiles) {
-    const summary = summaryFromProfile(profile, height);
+    const entityId = normalizeEntityId(profile.entityId);
+    const route = ctx.env.infrastructure?.verifiedProfileRoutes?.get(entityId);
+    // A profile never self-asserts its signer. Only the signer recovered while
+    // verifying its Entity Hanko and Runtime-route signature may cross this
+    // compact read boundary.
+    const verifiedSignerId =
+      route && normalizeEntityId(route.runtimeId) === normalizeEntityId(profile.runtimeId)
+        ? normalizeEntityId(route.runtimeSignerId)
+        : undefined;
+    const summary = summaryFromProfile(profile, height, verifiedSignerId);
     if (summary) summaries.push(summary);
   }
   return summaries;
@@ -1064,6 +1080,15 @@ const compactAccountDocForView = (
   if (doc.counterpartyDisputeProofBodyHash) compact.counterpartyDisputeProofBodyHash = doc.counterpartyDisputeProofBodyHash;
   if (doc.counterpartyDisputeHash) compact.counterpartyDisputeHash = doc.counterpartyDisputeHash;
   if (doc.counterpartySettlementHanko) compact.counterpartySettlementHanko = doc.counterpartySettlementHanko;
+  if (doc.activeDispute) {
+    compact.disputeLifecycle = {
+      startedByLeft: doc.activeDispute.startedByLeft,
+      disputeTimeout: doc.activeDispute.disputeTimeout,
+      initialNonce: doc.activeDispute.initialNonce,
+      observedOnChain: doc.activeDispute.observedOnChain === true,
+      finalizeQueued: doc.activeDispute.finalizeQueued === true,
+    };
+  }
   return compact;
 };
 

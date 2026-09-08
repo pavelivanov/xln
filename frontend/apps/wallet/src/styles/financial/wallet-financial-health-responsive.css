@@ -21,6 +21,10 @@
 }
 
 @media (max-width: 600px) {
+  .wallet-health-debt-action {
+    align-items: stretch;
+    flex-direction: column;
+  }
   .wallet-health-section-heading {
     display: grid;
     gap: 0.55rem;

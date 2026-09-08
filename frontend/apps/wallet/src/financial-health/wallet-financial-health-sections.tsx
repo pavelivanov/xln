@@ -8,6 +8,16 @@ import type {
 const shortId = (value: string): string =>
   value.length > 18 ? `${value.slice(0, 10)}…${value.slice(-6)}` : value;
 
+const accountHref = (entityId: string, counterpartyId: string, tokenId: number): string => {
+  const query = new URLSearchParams({
+    portfolio: '1',
+    entity: entityId,
+    account: counterpartyId,
+    token: String(tokenId),
+  });
+  return `/app?${query.toString()}`;
+};
+
 const sectionHeading = (number: string, title: string, detail: string, id: string) => (
   <div className="wallet-health-section-heading">
     <div><p>{number}</p><h2 id={id}>{title}</h2></div>
@@ -15,7 +25,13 @@ const sectionHeading = (number: string, title: string, detail: string, id: strin
   </div>
 );
 
-function DebtGroup({ group }: Readonly<{ group: WalletDebtGroup }>) {
+function DebtGroup({
+  activeEntityId,
+  busy, group,
+  enforce }: Readonly<{
+  activeEntityId: string;
+  busy: boolean; group: WalletDebtGroup;
+  enforce: (group: WalletDebtGroup) => void; }>) {
   return (
     <article className="wallet-health-debt-group">
       <header>
@@ -27,6 +43,16 @@ function DebtGroup({ group }: Readonly<{ group: WalletDebtGroup }>) {
         </div>
         <div><small>Outstanding</small><strong>{group.outstandingLabel}</strong></div>
       </header>
+      {group.direction === 'out' ? (<div className="wallet-health-debt-action">
+          <p>
+            <strong>{group.payableLabel}</strong> payable from {group.reserveLabel} reserve · starts at FIFO index{' '}
+            {group.nextDebtIndex}
+          </p>
+          <button disabled={busy || group.payableAmount <= 0n} onClick={() => enforce(group)} type="button">
+            {busy ? 'Submitting…' : `Enforce ${group.symbol} debt`}
+          </button>
+        </div>
+      ) : null}
       <div className="wallet-health-debt-table" role="table" aria-label={`${group.symbol} open debts`}>
         <div className="wallet-health-debt-row is-heading" role="row">
           <span role="columnheader">Counterparty</span>
@@ -37,7 +63,12 @@ function DebtGroup({ group }: Readonly<{ group: WalletDebtGroup }>) {
         </div>
         {group.entries.map((entry) => (
           <div className="wallet-health-debt-row" role="row" key={entry.debtId}>
-            <span role="cell"><strong>{entry.counterpartyLabel}</strong><code title={entry.counterpartyId}>{shortId(entry.counterpartyId)}</code></span>
+            <span role="cell"><a
+                data-testid="wallet-debt-account-link"
+                href={accountHref(activeEntityId, entry.counterpartyId, group.tokenId)}
+              >
+                <strong>{entry.counterpartyLabel}</strong><code title={entry.counterpartyId}>{shortId(entry.counterpartyId)}</code></a>
+            </span>
             <span role="cell">{entry.remainingLabel}</span>
             <span role="cell">{entry.originalLabel}</span>
             <span role="cell">{entry.paidLabel}</span>
@@ -49,13 +80,19 @@ function DebtGroup({ group }: Readonly<{ group: WalletDebtGroup }>) {
   );
 }
 
-export function WalletDebtSection({ groups }: Readonly<{ groups: readonly WalletDebtGroup[] }>) {
+export function WalletDebtSection({
+  activeEntityId,
+  busy, groups,
+  enforce }: Readonly<{
+  activeEntityId: string;
+  busy: boolean; groups: readonly WalletDebtGroup[];
+  enforce: (group: WalletDebtGroup) => void; }>) {
   return (
     <section className="wallet-health-section" aria-labelledby="wallet-debt-title">
       {sectionHeading('01', 'Open debt', 'Canonical J-event ledger · bounded read', 'wallet-debt-title')}
       {groups.length === 0
         ? <p className="wallet-health-empty">No open debt entries for this Entity.</p>
-        : <div className="wallet-health-debt-list">{groups.map((group) => <DebtGroup group={group} key={group.key} />)}</div>}
+        : <div className="wallet-health-debt-list">{groups.map((group) => <DebtGroup activeEntityId={activeEntityId} busy={busy} enforce={enforce} group={group} key={group.key} />)}</div>}
       <p className="wallet-health-note">The remote projection exposes up to 20 open entries per token direction. Terminal debt events remain in committed history.</p>
     </section>
   );
@@ -117,7 +154,12 @@ export function WalletDisputesSection({
         <div className="wallet-health-disputes">
           {projection.disputes.map((dispute) => (
             <article key={dispute.counterpartyId}>
-              <header><div><strong>{dispute.counterpartyLabel}</strong><code title={dispute.counterpartyId}>{shortId(dispute.counterpartyId)}</code></div><span className={`is-${dispute.phase}`}>{dispute.phase}</span></header>
+              <header><div><a
+                    data-testid="wallet-dispute-account-link"
+                    href={accountHref(projection.activeEntityId, dispute.counterpartyId, 1)}
+                  >
+                    <strong>{dispute.counterpartyLabel}</strong><code title={dispute.counterpartyId}>{shortId(dispute.counterpartyId)}</code></a>
+                </div><span className={`is-${dispute.phase}`}>{dispute.phase}</span></header>
               <dl>
                 <div><dt>Account height</dt><dd>{dispute.accountHeight}</dd></div>
                 <div><dt>Committed frame</dt><dd>{dispute.frameHeight}</dd></div>

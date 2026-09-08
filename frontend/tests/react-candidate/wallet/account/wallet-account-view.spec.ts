@@ -85,3 +85,28 @@ test('focused Account reads a real locally opened Account without starting anoth
   await screenshotEvidence(page, testInfo, 'wallet-account-focused-local');
   expectNoBrowserErrors(errors);
 });
+
+test(
+  'focused Account deep link preserves exact Entity, Account and token through refresh',
+  { tag: '@functional' },
+  async ({ page }) => {
+    test.setTimeout(120_000);
+    const errors = observeBrowserErrors(page);
+    const fixture = await selectWalletFixtureRuntime(page);
+    const query = new URLSearchParams({
+      portfolio: '1',
+      entity: fixture.counterpartyEntityId,
+      account: fixture.entityId,
+      token: '1',
+    });
+    await page.goto(`/app?${query}`, { waitUntil: 'domcontentloaded' });
+    const panel = page.getByTestId('account-panel');
+    await expect(panel).toHaveAttribute('data-counterparty-id', fixture.entityId, { timeout: 90_000 });
+    await expect(panel).toHaveAttribute('data-focused-token-id', '1');
+    await expect(panel.locator('[data-token-id="1"] table')).toBeVisible();
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await expect(panel).toHaveAttribute('data-counterparty-id', fixture.entityId, { timeout: 90_000 });
+    await expect(panel.locator('[data-token-id="1"] table')).toBeVisible();
+    expectNoBrowserErrors(errors);
+  },
+);

@@ -4,6 +4,12 @@
   .wallet-open-orders article { grid-template-columns: minmax(9rem, 0.7fr) minmax(0, 1.8fr); }
   .wallet-open-orders article > button { grid-column: 1 / -1; justify-self: start; }
   .wallet-cross-routes { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .wallet-cross-fields {
+    grid-template-columns: 1fr 1fr;
+}
+  .wallet-cross-fields label:first-child {
+    grid-column: 1 / -1;
+  }
 }
 
 @media (max-width: 680px) {
@@ -20,6 +26,21 @@
   .wallet-open-orders dl { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .wallet-open-orders article > button { grid-column: auto; width: 100%; }
   .wallet-cross-routes { grid-template-columns: 1fr; }
+  .wallet-cross-fields {
+    grid-template-columns: 1fr;
+  }
+  .wallet-cross-fields label:first-child {
+    grid-column: auto;
+  }
+  .wallet-cross-review {
+    grid-template-columns: 1fr;
+    gap: 0.65rem;
+  }
+  .wallet-cross-review > span {
+    transform: rotate(90deg);
+    transform-origin: center;
+    justify-self: start;
+  }
   .wallet-market-activity > header { display: grid; align-items: start; }
   .wallet-market-activity nav { overflow-x: auto; }
   .wallet-market-activity li { grid-template-columns: auto minmax(0, 1fr); }

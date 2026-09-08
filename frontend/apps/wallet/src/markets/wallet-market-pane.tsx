@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 
 import type { WalletMarketProjection } from './wallet-market-model';
 import type { WalletMarketSource, WalletMarketSourceSnapshot } from './wallet-market-source';
+import { WalletCrossMarketTicket } from './wallet-cross-market-ticket';
 
 const commandBusy = (snapshot: WalletMarketSourceSnapshot): boolean =>
   snapshot.status !== 'ready' || snapshot.command.status === 'submitting' || snapshot.command.status === 'pending';
@@ -102,6 +103,17 @@ export function WalletMarketPane({
     }
   };
 
+  const cancelCross = async (orderId: string): Promise<void> => {
+
+  if (!window.confirm(`Cancel the exact cross-jurisdiction order ${orderId}?`)) return;
+    setError('');
+    try {
+      await source.cancelCrossOrder(orderId);
+    } catch (cause: unknown) {
+      setError(cause instanceof Error ? cause.message : String(cause));
+    }
+  };
+
   if (projection.hubs.length === 0) {
     return (
       <section className="wallet-market-empty">
@@ -190,6 +202,8 @@ export function WalletMarketPane({
         </div>
       ) : <p className="wallet-market-empty-line">This hub has no committed orderbook pair.</p>}
 
+      <WalletCrossMarketTicket projection={projection} snapshot={snapshot} source={source} />
+
       <section className="wallet-open-orders" aria-labelledby="wallet-open-orders-title">
         <header><div><p className="wallet-shell-eyebrow">Account-owned</p><h2 id="wallet-open-orders-title">Open orders</h2></div><span>{projection.openOrders.length} live</span></header>
         {projection.openOrders.length ? projection.openOrders.map((order) => (
@@ -204,7 +218,11 @@ export function WalletMarketPane({
       <section className="wallet-cross-routes" aria-labelledby="wallet-cross-routes-title">
         <header><div><p className="wallet-shell-eyebrow">Cross-j lifecycle</p><h2 id="wallet-cross-routes-title">Committed routes</h2></div><span>{projection.crossRoutes.length} tracked</span></header>
         {projection.crossRoutes.length ? projection.crossRoutes.map((route) => (
-          <article key={route.orderId}><div><strong>{route.status.replaceAll('_', ' ')}</strong><code>{shortId(route.orderId)}</code></div><p>{route.sourceLabel} <span aria-hidden="true">→</span> {route.targetLabel}</p><time>Updated {runtimeTimeLabel(route.updatedAt)}</time></article>
+          <article data-order-id={route.orderId} data-route-status={route.status} key={route.orderId}><div><strong>{route.status.replaceAll('_', ' ')}</strong><code>{shortId(route.orderId)}</code></div><p>{route.sourceLabel} <span aria-hidden="true">→</span> {route.targetLabel}</p><time>Updated {runtimeTimeLabel(route.updatedAt)}</time>{!['settled', 'cancelled', 'expired'].includes(route.status) ? (<button disabled={commandBusy(snapshot)} onClick={() => void cancelCross(route.orderId)} type="button">
+                  Cancel cross-j order
+                </button>
+              ) : null}
+            </article>
         )) : <p>No cross-jurisdiction route is committed for this Entity.</p>}
       </section>
     </div>

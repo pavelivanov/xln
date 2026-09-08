@@ -33,21 +33,47 @@ test('Move broadcasts its reviewed collateral draft and observes exact Runtime a
 test('Manage commits the exact collateral request and prepaid peer fee on both Account sides', { tag: '@functional' }, async ({ page }, testInfo) => {
   test.setTimeout(120000);
   const errors = observeBrowserErrors(page), fixture = await selectWalletFixtureRuntime(page);
-  // Distinct default assets keep requests independent when all viewports share
-  // the isolated Runtime. Every request must be new, never a pending retry.
-  const tokenId = testInfo.project.name === 'mobile-390x844' ? 2 : testInfo.project.name === 'wide-1920x1080' ? 3 : 1;
+    // Each request is driven to chain finality, so all viewports can prove the
+    // canonical funded USDC path without leaving a pending request behind.
+    const tokenId = 1;
   await page.goto('/app#accounts/configure');
-  await page.getByLabel('Entity', { exact: true }).selectOption(fixture.counterpartyEntityId);
-  await page.getByLabel('Account', { exact: true }).selectOption(fixture.entityId);
+  await page.getByLabel('Entity', { exact: true }).selectOption(fixture.entityId);
+  await page.getByLabel('Account', { exact: true }).selectOption(fixture.counterpartyEntityId);
   await page.getByLabel('Asset', { exact: true }).selectOption(String(tokenId));
   await page.getByLabel('Credit amount', { exact: true }).fill('100');
   await page.getByRole('button', { name: 'Extend Credit', exact: true }).last().click();
   await expect(page.getByLabel('Entity', { exact: true })).toBeEnabled();
-  await page.getByLabel('Entity', { exact: true }).selectOption(fixture.entityId);
-  await page.getByLabel('Account', { exact: true }).selectOption(fixture.counterpartyEntityId);
+  await page.goto('/app?payments=1');
+    await expect(page.getByRole('heading', { name: 'Payments' })).toBeVisible({ timeout: 90_000 });
+    await page.getByLabel('Entity', { exact: true }).selectOption(fixture.counterpartyEntityId);
+    const recipient = page.getByLabel('Recipient', { exact: true });
+    await expect(recipient.locator('option')).toContainText('Browser Alice');
+    await recipient.selectOption({ label: 'Browser Alice' });
+    await expect(recipient.locator('option:checked')).toHaveText('Browser Alice');
+    await page.getByLabel('Asset').first().selectOption(String(tokenId));
+    await page.getByLabel('Recipient amount').fill('25');
+    await page.locator('.wallet-payment-modes label').filter({ hasText: 'Direct' }).click();
+    await page.getByRole('button', { name: 'Find route' }).click();
+    await expect(page.getByRole('button', { name: 'Submit quoted payment' })).toBeEnabled();
+    await page.getByRole('button', { name: 'Submit quoted payment' }).click();
+    await expect
+      .poll(async () =>
+        BigInt(
+          String(
+            (await readWalletAccountToolState(page, fixture.entityId, fixture.counterpartyEntityId, tokenId))[
+              'outPeerCredit'
+            ],
+          ),
+        ),
+      )
+      .toBeGreaterThan(10_000_000n);
+  await page.goto('/app#accounts/configure');
+    await page.getByLabel('Entity', { exact: true }).selectOption(fixture.entityId);
+    await page.getByLabel('Account', { exact: true }).selectOption(fixture.counterpartyEntityId);
   await page.getByTestId('configure-tab-collateral').click();
   await page.getByLabel('Asset', { exact: true }).selectOption(String(tokenId));
   const before = await readWalletAccountToolState(page, fixture.entityId, fixture.counterpartyEntityId, tokenId);
+    const hubBefore = await readWalletAccountToolState(page, fixture.counterpartyEntityId, fixture.entityId, tokenId);
   expect(before['collateralRequest']).toBeNull();
   const decimals = before['tokenDecimals'];
   if (typeof decimals !== 'number' || !Number.isSafeInteger(decimals)) throw new Error('Expected token decimals');
@@ -66,5 +92,37 @@ test('Manage commits the exact collateral request and prepaid peer fee on both A
     await expect.poll(async () => (await readWalletAccountToolState(page, owner, peer, tokenId))['collateralRequest'], { timeout: 20000 }).toEqual(expected);
   }
   await expectPageContained(page); await screenshotEvidence(page, testInfo, 'manage-collateral-request-committed');
+    const expectedCollateral = BigInt(String(before['collateral'])) + BigInt(expected.amount);
+    const expectedHubReserve = BigInt(String(hubBefore['reserve'])) - BigInt(expected.amount);
+    await expect
+      .poll(
+        async () => {
+          const user = await readWalletAccountToolState(page, fixture.entityId, fixture.counterpartyEntityId, tokenId);
+          const hub = await readWalletAccountToolState(page, fixture.counterpartyEntityId, fixture.entityId, tokenId);
+          if (user['collateralRequest'] === null && hub['collateralRequest'] === null) return 'complete';
+          return JSON.stringify({ user, hub });
+        },
+        { timeout: 15000 },
+      )
+      .toBe('complete');
+    const completed = await readWalletAccountToolState(page, fixture.entityId, fixture.counterpartyEntityId, tokenId);
+    const hubCompleted = await readWalletAccountToolState(
+      page,
+      fixture.counterpartyEntityId,
+      fixture.entityId,
+      tokenId,
+    );
+    expect(completed).toMatchObject({
+      collateral: expectedCollateral.toString(),
+      chainCollateral: expectedCollateral.toString(),
+    });
+    expect(hubCompleted).toMatchObject({
+      reserve: expectedHubReserve.toString(),
+      chainReserve: expectedHubReserve.toString(),
+    });
+    expect(Number(completed['lastFinalizedJHeight'])).toBeGreaterThan(Number(before['lastFinalizedJHeight']));
+    expect(Number(hubCompleted['lastFinalizedJHeight'])).toBe(Number(completed['lastFinalizedJHeight']));
+    await expectPageContained(page);
+    await screenshotEvidence(page, testInfo, 'manage-collateral-finalized');
   expectNoBrowserErrors(errors);
 });

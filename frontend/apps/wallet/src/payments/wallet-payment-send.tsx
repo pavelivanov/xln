@@ -139,7 +139,8 @@ export function WalletPaymentSend({
       <div className="wallet-payment-form-grid">
         <label>
           <span>Recipient</span>
-          <select disabled={busy || intent !== null} onChange={(event) => { source.clearQuote(); setRecipient(event.target.value); }} value={selectedRecipient}>
+          <select
+            aria-label="Recipient" disabled={busy || intent !== null} onChange={(event) => { source.clearQuote(); setRecipient(event.target.value); }} value={selectedRecipient}>
             {projection.recipients.map((option) => (
               <option disabled={option.blocked} key={option.entityId} value={option.entityId}>
                 {option.label}{option.blocked ? ' · dispute gate' : ''}

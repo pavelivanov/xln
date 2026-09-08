@@ -3,6 +3,7 @@ import { useEffect, useState, useSyncExternalStore } from 'react';
 
 import { readRuntimeAdapterStorageSnapshot } from '../../../../packages/browser/src/runtime/session/runtime-adapter-session';
 import { WalletFinancialHealthSource } from './wallet-financial-health-source';
+import type { WalletDebtGroup } from './wallet-financial-health-model';
 import type { WalletWorkspaceSelection } from '../runtime/wallet-workspace-selection';
 import {
   WalletDebtSection,
@@ -48,6 +49,13 @@ export function WalletFinancialHealth({ workspaceSelection }: Readonly<{ workspa
   }, [source]);
 
   const projection = snapshot.projection;
+  const command = source.getCommandSnapshot();
+  const enforceDebt = (group: WalletDebtGroup): void => {
+    const confirmed = window.confirm(
+      `Enforce ${group.payableLabel} of ${group.outstandingLabel} ${group.symbol} debt for the selected Entity?`,
+    );
+    if (confirmed) void source.enforceDebt(group);
+  };
   return (
     <section className="wallet-health" aria-labelledby="wallet-health-title">
       <header className="wallet-health-heading">
@@ -68,15 +76,26 @@ export function WalletFinancialHealth({ workspaceSelection }: Readonly<{ workspa
             </button>
           </div>
           {entityId && entityId !== projection.activeEntityId ? <p role="status">Loading selected Entity…</p> : <>
-          <WalletDebtSection groups={projection.debtGroups} />
-          <WalletSolvencySection projection={projection} />
+          <WalletDebtSection
+                activeEntityId={projection.activeEntityId}
+                busy={command.status === 'submitting'}
+                enforce={enforceDebt} groups={projection.debtGroups} />
+          {command.status !== 'idle' ? (<p
+                  className={`wallet-health-command is-${command.status}`}
+                  role={command.status === 'error' ? 'alert' : 'status'}
+                >
+                  {command.message}
+                </p>
+              ) : null}
+              <WalletSolvencySection projection={projection} />
           <WalletDisputesSection busy={snapshot.status === 'loading'} projection={projection} selectPage={source.selectAccountsPage} />
           <WalletHistorySection busy={snapshot.status === 'loading'} projection={projection} newer={source.selectNewerHistory} older={source.selectOlderHistory} />
           </>}
         </>
       ) : <HealthUnavailable error={snapshot.status === 'error'} message={snapshot.message} retry={() => void source.refresh()} />}
       <p className="wallet-health-boundary">
-        This surface reads committed projections only. Unchecked solvency is never presented as balanced, and no Runtime inputs are sent.
+        This surface reads committed projections. Unchecked solvency is never presented as balanced; the only write is
+        an explicit, reviewed FIFO debt-enforcement Runtime command.
       </p>
     </section>
   );

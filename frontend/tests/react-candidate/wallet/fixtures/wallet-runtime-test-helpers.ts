@@ -52,6 +52,70 @@ export const createWalletHubDiscoveryFixture = async (page: Page, slot: string) 
   return { entityId, name, height };
 };
 
+export const createWalletDisputeFixture = async (page: Page, slot: string) => {
+  const response = await page.request.post(walletFixtureUrl(`/dispute-fixture?slot=${encodeURIComponent(slot)}`));
+  expect(response.ok()).toBe(true);
+  const result: unknown = await response.json();
+  if (!result || typeof result !== 'object' || Array.isArray(result)) throw new Error('DISPUTE_FIXTURE_INFO_INVALID');
+  const record = result as Record<string, unknown>;
+  const entityId = String(record['entityId'] || '').toLowerCase();
+  const name = String(record['name'] || '');
+  const height = Number(record['height']);
+  if (!/^0x[0-9a-f]{64}$/.test(entityId) || !name || !Number.isSafeInteger(height)) {
+    throw new Error('DISPUTE_FIXTURE_INFO_INVALID');
+  }
+  return { entityId, name, height };
+};
+
+export const fundWalletDebtReserve = async (page: Page, entityId: string, amount: bigint) => {
+  const response = await page.request.post(
+    walletFixtureUrl(`/debt-reserve-fixture?entityId=${encodeURIComponent(entityId)}&amount=${amount}`),
+  );
+  expect(response.ok()).toBe(true);
+  return response.json() as Promise<{ reserve: string }>;
+};
+
+export const seedWalletDebtPayment = async (page: Page, entityId: string, counterpartyId: string, amount: bigint) => {
+  const response = await page.request.post(
+    walletFixtureUrl(
+      `/debt-payment-fixture?entityId=${encodeURIComponent(entityId)}&counterpartyId=${encodeURIComponent(counterpartyId)}&amount=${amount}`,
+    ),
+  );
+  expect(response.ok()).toBe(true);
+};
+
+export const readWalletDebtLedgerState = async (page: Page, entityId: string) => {
+  const response = await page.request.get(
+    walletFixtureUrl(`/debt-ledger-state?entityId=${encodeURIComponent(entityId)}`),
+  );
+  expect(response.ok()).toBe(true);
+  return response.json() as Promise<{
+    reserve: string;
+    debts: Array<{ creditor: string; remainingAmount: string; status: string }>;
+  }>;
+};
+
+export const createWalletCrossJFixture = async (page: Page) => {
+  const response = await page.request.post(walletFixtureUrl('/cross-j-fixture'));
+  expect(response.ok()).toBe(true);
+  return response.json() as Promise<{
+    sourceHubEntityId: string;
+    targetEntityId: string;
+    targetHubEntityId: string;
+    targetJurisdiction: string;
+    height: number;
+  }>;
+};
+
+export const readWalletCrossJState = async (page: Page, orderId: string) => {
+  const response = await page.request.get(walletFixtureUrl(`/cross-j-state?orderId=${encodeURIComponent(orderId)}`));
+  expect(response.ok()).toBe(true);
+  return response.json() as Promise<{
+    rows: Array<{ entityId: string; status: string; orderId: string }>;
+    height: number;
+  }>;
+};
+
 export const readWalletHubDiscoveryAccountState = async (page: Page, entityId: string) => {
   const response = await page.request.get(walletFixtureUrl(`/hub-discovery-account-state?entityId=${encodeURIComponent(entityId)}`));
   expect(response.ok()).toBe(true);
