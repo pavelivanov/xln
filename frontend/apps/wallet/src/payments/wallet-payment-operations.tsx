@@ -8,6 +8,7 @@ import type {
 } from './commands/wallet-payment-operations-model';
 import type { WalletPaymentSource, WalletPaymentSourceSnapshot } from './wallet-payment-source';
 import { WalletPaymentBatch } from './commands/wallet-payment-batch';
+import { WalletSettlementApprovals } from './wallet-settlement-approvals';
 import { createWalletLendingIntentId } from '../manage/wallet-lending-model';
 
 const operationCopy: Record<WalletOperationKind, Readonly<{
@@ -209,6 +210,7 @@ export function WalletPaymentOperations({
           </button>
         </div>
       )}
-    </section><WalletPaymentBatch projection={projection} snapshot={snapshot} source={source} /></>
+    </section><WalletSettlementApprovals projection={projection} snapshot={snapshot} source={source} />
+      <WalletPaymentBatch projection={projection} snapshot={snapshot} source={source} /></>
   );
 }

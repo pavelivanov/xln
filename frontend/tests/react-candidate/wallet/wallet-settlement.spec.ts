@@ -1,6 +1,7 @@
 import { expect, test } from '@playwright/test';
 import { expectNoBrowserErrors, expectPageContained, observeBrowserErrors, screenshotEvidence } from '../browser-evidence';
 import { readWalletAccountToolState, readWalletFixtureChainBalances as balances, selectWalletFixtureRuntime } from './fixtures/wallet-runtime-test-helpers';
+import { finishOpenedWalletSetup, restoreLocalWallet } from './onboarding/wallet-onboarding-test-helpers';
 
 test('wallet funds collateral through reviewed batch broadcast and real chain finality', { tag: '@functional' }, async ({ page }, testInfo) => {
   test.setTimeout(120_000);
@@ -91,5 +92,80 @@ test('wallet clears only after confirmation and leaves chain balances unchanged'
   expect(await balances(page)).toEqual(before);
   await expectPageContained(page);
   await screenshotEvidence(page, testInfo, 'wallet-batch-cleared');
+  expectNoBrowserErrors(errors);
+});
+
+test('wallet peer approves and designated executor finalizes the exact local settlement workspace', { tag: '@functional' }, async ({ page }, testInfo) => {
+  test.setTimeout(150_000);
+  const errors = observeBrowserErrors(page);
+  const fixture = await restoreLocalWallet(page, 'settlement');
+  await finishOpenedWalletSetup(page);
+  await page.getByRole('link', { name: 'Continue to assets' }).click();
+  await page.getByRole('link', { name: 'Payments', exact: true }).click();
+  await page.getByRole('button', { name: 'Operations' }).click();
+  await page.getByLabel('Entity', { exact: true }).selectOption(fixture.recovery.entityId);
+
+  const proposals = page.getByRole('region', { name: 'Settlement proposals' });
+  const proposal = proposals.locator('.wallet-settlement-proposal').filter({
+    hasText: fixture.recovery.settlement.counterpartyEntityId,
+  });
+  await expect(proposal).toContainText('awaiting counterparty');
+  await expect(proposal).toContainText(fixture.recovery.settlement.workspaceHash);
+  await expect(proposal).toContainText('Forgive · token 1');
+  await proposal.getByRole('button', { name: 'Review peer approval' }).click();
+
+  const review = proposals.getByRole('region', { name: 'Approve revision 1' });
+  await expect(review).toContainText(fixture.recovery.entityId);
+  await expect(review).toContainText(fixture.recovery.settlement.counterpartyEntityId);
+  await expect(review).toContainText(fixture.recovery.settlement.workspaceHash);
+  await expect(review).toContainText('manual-peer-review');
+  await expect(review).toContainText('Forgive · token 1');
+  await expectPageContained(page);
+  await screenshotEvidence(page, testInfo, 'wallet-settlement-peer-approval-review');
+
+  await review.getByRole('button', { name: 'Cancel approval review' }).click();
+  await expect(review).not.toBeVisible();
+  await expect(proposal).toContainText('awaiting counterparty');
+  await proposal.getByRole('button', { name: 'Review peer approval' }).click();
+  await page.getByLabel('Entity', { exact: true }).selectOption(fixture.recovery.settlement.counterpartyEntityId);
+  await expect(review).not.toBeVisible();
+  const ownProposal = proposals.locator('.wallet-settlement-proposal').filter({ hasText: fixture.recovery.entityId });
+  await expect(ownProposal.getByRole('button', { name: 'Awaiting peer approval' })).toBeDisabled();
+
+  await page.getByLabel('Entity', { exact: true }).selectOption(fixture.recovery.entityId);
+  await proposal.getByRole('button', { name: 'Review peer approval' }).click();
+  await review.getByRole('button', { name: 'Approve exact proposal' }).click();
+  await expect(proposal).toContainText('ready to submit', { timeout: 30_000 });
+  await expect(proposal.getByRole('button', { name: 'Awaiting designated executor' })).toBeDisabled();
+  await expectPageContained(page);
+  await screenshotEvidence(page, testInfo, 'wallet-settlement-peer-approved');
+
+  await page.getByLabel('Entity', { exact: true }).selectOption(fixture.recovery.settlement.counterpartyEntityId);
+  const executorProposal = proposals.locator('.wallet-settlement-proposal').filter({ hasText: fixture.recovery.entityId });
+  const batch = page.getByRole('region', { name: 'Jurisdiction batch' });
+  await expect(batch.getByRole('heading', { name: 'Draft · 1 operations' })).toBeVisible({ timeout: 30_000 });
+  await expect(batch.locator('summary')).toContainText('Bilateral settlement');
+  await batch.locator('summary').click();
+  await expect(batch.locator('pre')).toContainText(fixture.recovery.entityId);
+  await expect(batch.locator('pre')).toContainText(fixture.recovery.settlement.counterpartyEntityId);
+  await expect(executorProposal).toContainText('submitted');
+  await expect(executorProposal.getByRole('button', { name: 'Submitted to jurisdiction batch' })).toBeDisabled();
+  await expectPageContained(page);
+  await screenshotEvidence(page, testInfo, 'wallet-settlement-executor-draft');
+
+  await batch.getByRole('button', { name: 'Broadcast draft' }).click();
+  await expect(batch.getByRole('heading', { name: /Awaiting chain finality/ })).not.toBeVisible({ timeout: 45_000 });
+  await expect(batch.getByText('No queued operations.')).toBeVisible();
+  await expect(proposals).not.toBeVisible();
+  await expectPageContained(page);
+  await screenshotEvidence(page, testInfo, 'wallet-settlement-chain-finality');
+
+  await page.getByRole('link', { name: 'Assets', exact: true }).click();
+  await page.getByRole('link', { name: 'Payments', exact: true }).click();
+  await page.getByRole('button', { name: 'Operations' }).click();
+  await expect(page.getByRole('region', { name: 'Settlement proposals' })).not.toBeVisible();
+  await expect(page.getByRole('region', { name: 'Jurisdiction batch' }).getByText('No queued operations.')).toBeVisible();
+  await expectPageContained(page);
+  await screenshotEvidence(page, testInfo, 'wallet-settlement-finality-reopen');
   expectNoBrowserErrors(errors);
 });

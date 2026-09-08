@@ -77,6 +77,7 @@ export type WalletRuntimeFixtureInfo = Readonly<{
   recovery: Readonly<{
     backupFileContents: string;
     hubDiscovery: Readonly<{ backupFileContents: string; hubEntityId: string; towerUrl: string }>;
+    settlement: Readonly<{ backupFileContents: string; counterpartyEntityId: string; workspaceHash: string }>;
     entityId: string;
     runtimeId: string;
     runtimeHeight: number;
@@ -149,6 +150,19 @@ export const readWalletRuntimeFixture = async (page: Page): Promise<WalletRuntim
   const hubBackup = String(hubDiscoveryInfo['backupFileContents'] || '');
   const hubTowerUrl = String(hubDiscoveryInfo['towerUrl'] || '');
   if (!/^0x[0-9a-f]{64}$/.test(hubEntityId) || !hubBackup.startsWith('{') || !/^http:\/\/127\.0\.0\.1:\d+$/.test(hubTowerUrl)) throw new Error('HUB_DISCOVERY_FIXTURE_INFO_INVALID');
+  const settlement = recoveryInfo['settlement'];
+  if (!settlement || typeof settlement !== 'object' || Array.isArray(settlement)) {
+    throw new Error('WALLET_SETTLEMENT_FIXTURE_INFO_INVALID');
+  }
+  const settlementInfo = settlement as Record<string, unknown>;
+  const settlementBackup = String(settlementInfo['backupFileContents'] || '');
+  const settlementCounterpartyEntityId = String(settlementInfo['counterpartyEntityId'] || '').toLowerCase();
+  const settlementWorkspaceHash = String(settlementInfo['workspaceHash'] || '').toLowerCase();
+  if (!settlementBackup.startsWith('{')
+    || !/^0x[0-9a-f]{64}$/.test(settlementCounterpartyEntityId)
+    || !/^0x[0-9a-f]{64}$/.test(settlementWorkspaceHash)) {
+    throw new Error('WALLET_SETTLEMENT_FIXTURE_INFO_INVALID');
+  }
   if (!brainVault || typeof brainVault !== 'object' || Array.isArray(brainVault)) {
     throw new Error('WALLET_RECOVERY_FIXTURE_INFO_INVALID');
   }
@@ -199,6 +213,11 @@ export const readWalletRuntimeFixture = async (page: Page): Promise<WalletRuntim
     recovery: {
       backupFileContents: recoveryBackupFileContents,
       hubDiscovery: { hubEntityId, backupFileContents: hubBackup, towerUrl: hubTowerUrl },
+      settlement: {
+        backupFileContents: settlementBackup,
+        counterpartyEntityId: settlementCounterpartyEntityId,
+        workspaceHash: settlementWorkspaceHash,
+      },
       entityId: recoveryEntityId,
       runtimeId: recoveryRuntimeId,
       runtimeHeight: recoveryRuntimeHeight,

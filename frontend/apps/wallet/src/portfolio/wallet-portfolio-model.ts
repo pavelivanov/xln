@@ -63,10 +63,35 @@ export type WalletPortfolioPosition = Readonly<{
   peerCreditLimitLabel: string;
 }>;
 
+export type WalletSettlementOperation =
+  | Readonly<{ type: 'r2c' | 'c2r' | 'r2r'; tokenId: number; amount: bigint }>
+  | Readonly<{ type: 'forgive'; tokenId: number }>
+  | Readonly<{
+      type: 'rawDiff';
+      tokenId: number;
+      leftDiff: bigint;
+      rightDiff: bigint;
+      collateralDiff: bigint;
+      ondeltaDiff: bigint;
+    }>;
+
+export type WalletSettlementWorkspace = Readonly<{
+  workspaceHash: string;
+  ops: readonly WalletSettlementOperation[];
+  lastModifiedByLeft: boolean;
+  status: 'draft' | 'awaiting_counterparty' | 'ready_to_submit' | 'submitted';
+  memo: string;
+  revision: number;
+  executorIsLeft: boolean;
+  leftHankoPresent: boolean;
+  rightHankoPresent: boolean;
+}>;
+
 export type WalletPortfolioAccount = Readonly<{
   counterpartyId: string;
   counterpartyLabel: string;
   positions: readonly WalletPortfolioPosition[];
+  settlement: WalletSettlementWorkspace | null;
 }>;
 
 export type WalletPortfolioAsset = Readonly<{
@@ -149,6 +174,56 @@ const decodePosition = (
   };
 };
 
+const decodeSettlementOperation = (value: unknown): WalletSettlementOperation => {
+  const operation = requireRuntimeRecord(value, 'WALLET_SETTLEMENT_OPERATION');
+  const type = requireRuntimeString(operation['type'], 'WALLET_SETTLEMENT_OPERATION_TYPE');
+  const tokenId = requireRuntimeInteger(operation['tokenId'], 'WALLET_SETTLEMENT_OPERATION_TOKEN');
+  if (type === 'forgive') return { type, tokenId };
+  if (type === 'rawDiff') return {
+    type,
+    tokenId,
+    leftDiff: requireRuntimeBigInt(operation['leftDiff'], 'WALLET_SETTLEMENT_LEFT_DIFF'),
+    rightDiff: requireRuntimeBigInt(operation['rightDiff'], 'WALLET_SETTLEMENT_RIGHT_DIFF'),
+    collateralDiff: requireRuntimeBigInt(operation['collateralDiff'], 'WALLET_SETTLEMENT_COLLATERAL_DIFF'),
+    ondeltaDiff: requireRuntimeBigInt(operation['ondeltaDiff'], 'WALLET_SETTLEMENT_ONDELTA_DIFF'),
+  };
+  if (type !== 'r2c' && type !== 'c2r' && type !== 'r2r') {
+    throw new Error('WALLET_SETTLEMENT_OPERATION_TYPE_INVALID');
+  }
+  return { type, tokenId, amount: requireRuntimeBigInt(operation['amount'], 'WALLET_SETTLEMENT_OPERATION_AMOUNT') };
+};
+
+export const decodeWalletSettlementWorkspace = (value: unknown): WalletSettlementWorkspace | null => {
+  if (value === undefined) return null;
+  const workspace = requireRuntimeRecord(value, 'WALLET_SETTLEMENT_WORKSPACE');
+  const workspaceHash = requireRuntimeString(workspace['workspaceHash'], 'WALLET_SETTLEMENT_WORKSPACE_HASH').toLowerCase();
+  if (!/^0x[0-9a-f]{64}$/u.test(workspaceHash)) throw new Error('WALLET_SETTLEMENT_WORKSPACE_HASH_INVALID');
+  if (!Array.isArray(workspace['ops']) || workspace['ops'].length === 0) {
+    throw new Error('WALLET_SETTLEMENT_OPERATIONS_INVALID');
+  }
+  const status = requireRuntimeString(workspace['status'], 'WALLET_SETTLEMENT_STATUS');
+  if (status !== 'draft' && status !== 'awaiting_counterparty' && status !== 'ready_to_submit' && status !== 'submitted') {
+    throw new Error('WALLET_SETTLEMENT_STATUS_INVALID');
+  }
+  if (typeof workspace['lastModifiedByLeft'] !== 'boolean' || typeof workspace['executorIsLeft'] !== 'boolean') {
+    throw new Error('WALLET_SETTLEMENT_PARTICIPANT_ROLE_INVALID');
+  }
+  if (workspace['memo'] !== undefined && typeof workspace['memo'] !== 'string') {
+    throw new Error('WALLET_SETTLEMENT_MEMO_INVALID');
+  }
+  return {
+    workspaceHash,
+    ops: workspace['ops'].map(decodeSettlementOperation),
+    lastModifiedByLeft: workspace['lastModifiedByLeft'],
+    status,
+    memo: workspace['memo'] || '',
+    revision: requireRuntimeInteger(workspace['revision'], 'WALLET_SETTLEMENT_REVISION', 1),
+    executorIsLeft: workspace['executorIsLeft'],
+    leftHankoPresent: typeof workspace['leftHanko'] === 'string' && workspace['leftHanko'].length > 0,
+    rightHankoPresent: typeof workspace['rightHanko'] === 'string' && workspace['rightHanko'].length > 0,
+  };
+};
+
 const decodeAccount = (
   value: unknown,
   activeEntityId: string,
@@ -175,6 +250,7 @@ const decodeAccount = (
     counterpartyId,
     counterpartyLabel: entityLabels.get(counterpartyId) ?? counterpartyId,
     positions,
+    settlement: decodeWalletSettlementWorkspace(state['settlementWorkspace']),
   };
 };
 

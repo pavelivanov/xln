@@ -17,6 +17,15 @@ import {
 } from '../../../frontend/apps/wallet/src/payments/wallet-payment-model';
 import { buildWalletOperationTx, buildWalletSettlementReview } from '../../../frontend/apps/wallet/src/payments/commands/wallet-payment-operations-model';
 import {
+  buildWalletSettlementApproval,
+  requireCurrentWalletSettlementApproval,
+} from '../../../frontend/apps/wallet/src/payments/commands/wallet-settlement-approval-model';
+import {
+  buildWalletSettlementExecution,
+  requireCurrentWalletSettlementExecution,
+  selectWalletSettlementExecution,
+} from '../../../frontend/apps/wallet/src/payments/commands/wallet-settlement-execution-model';
+import {
   initialWalletPaymentInvoice,
   readWalletPaymentInvoice,
   requireWalletPaymentQuoteMatchesDraft,
@@ -335,6 +344,105 @@ describe('React wallet payments', () => {
         },
       },
     });
+  });
+
+  test('binds peer approval to the selected workspace and rejects stale or wrong-Entity review', () => {
+    const payload = frame();
+    Object.assign(payload.activeEntity.accounts.items[0]!.state, {
+      settlementWorkspace: {
+        workspaceHash: `0x${'44'.repeat(32)}`,
+        ops: [{ type: 'forgive', tokenId: 1 }],
+        lastModifiedByLeft: false,
+        status: 'awaiting_counterparty',
+        memo: 'manual-peer-review',
+        revision: 3,
+        executorIsLeft: false,
+      },
+    });
+    const projection = decodeWalletPaymentProjection(payload, math);
+    const review = buildWalletSettlementApproval(projection, bob);
+    expect(review).toMatchObject({
+      entityId: alice,
+      signerId: signer,
+      counterpartyEntityId: bob,
+      workspaceHash: `0x${'44'.repeat(32)}`,
+      revision: 3,
+      proposerEntityId: bob,
+      executorEntityId: bob,
+      approverSide: 'left',
+      operations: [{ type: 'forgive', tokenId: 1 }],
+      entityTx: {
+        type: 'settle_approve',
+        data: { counterpartyEntityId: bob, workspaceHash: `0x${'44'.repeat(32)}` },
+      },
+    });
+    expect(requireCurrentWalletSettlementApproval(review, projection)).toEqual(review.entityTx);
+    expect(() => requireCurrentWalletSettlementApproval(review, { ...projection, activeEntityId: bob }))
+      .toThrow('WALLET_SETTLEMENT_APPROVAL_ENTITY_CHANGED');
+    const stale = { ...projection, accounts: projection.accounts.map((account) => ({
+      ...account,
+      settlement: account.settlement ? { ...account.settlement, workspaceHash: `0x${'55'.repeat(32)}` } : null,
+    })) };
+    expect(() => requireCurrentWalletSettlementApproval(review, stale))
+      .toThrow('WALLET_SETTLEMENT_APPROVAL_STALE');
+    const ownProposal = { ...projection, accounts: projection.accounts.map((account) => ({
+      ...account,
+      settlement: account.settlement ? { ...account.settlement, lastModifiedByLeft: true } : null,
+    })) };
+    expect(() => buildWalletSettlementApproval(ownProposal, bob))
+      .toThrow('WALLET_SETTLEMENT_APPROVAL_OWN_PROPOSAL');
+  });
+
+  test('selects only the designated executor for one exact ready settlement workspace', () => {
+    const payload = frame();
+    Object.assign(payload.activeEntity.accounts.items[0]!.state, {
+      settlementWorkspace: {
+        workspaceHash: `0x${'66'.repeat(32)}`,
+        ops: [{ type: 'forgive', tokenId: 1 }],
+        lastModifiedByLeft: false,
+        status: 'ready_to_submit',
+        memo: 'manual-peer-review',
+        revision: 3,
+        executorIsLeft: true,
+        leftHanko: 'left-signature',
+        rightHanko: 'right-signature',
+      },
+    });
+    const projection = decodeWalletPaymentProjection(payload, math);
+    const execution = buildWalletSettlementExecution(projection, bob);
+    expect(execution).toMatchObject({
+      entityId: alice,
+      signerId: signer,
+      counterpartyEntityId: bob,
+      workspaceHash: `0x${'66'.repeat(32)}`,
+      revision: 3,
+      executorSide: 'left',
+      operations: [{ type: 'forgive', tokenId: 1 }],
+      entityTx: { type: 'settle_execute', data: { counterpartyEntityId: bob } },
+    });
+    expect(selectWalletSettlementExecution(projection)).toEqual(execution);
+    expect(requireCurrentWalletSettlementExecution(
+      execution.executionKey,
+      bob,
+      projection,
+    )).toEqual(execution.entityTx);
+    const wrongExecutor = { ...projection, accounts: projection.accounts.map((account) => ({
+      ...account,
+      settlement: account.settlement ? { ...account.settlement, executorIsLeft: false } : null,
+    })) };
+    expect(selectWalletSettlementExecution(wrongExecutor)).toBeNull();
+    expect(() => buildWalletSettlementExecution(wrongExecutor, bob))
+      .toThrow('WALLET_SETTLEMENT_EXECUTION_WRONG_ENTITY');
+    const stale = { ...projection, accounts: projection.accounts.map((account) => ({
+      ...account,
+      settlement: account.settlement ? { ...account.settlement, revision: 4 } : null,
+    })) };
+    expect(() => requireCurrentWalletSettlementExecution(execution.executionKey, bob, stale))
+      .toThrow('WALLET_SETTLEMENT_EXECUTION_STALE');
+    expect(selectWalletSettlementExecution({
+      ...projection,
+      batch: { ...projection.batch, sentHash: `0x${'77'.repeat(32)}` },
+    })).toBeNull();
   });
 
   test('withdraws only the caller collateral remaining after canonical holds, on either Account side', () => {

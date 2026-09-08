@@ -12,7 +12,7 @@ export const finishOpenedWalletSetup = async (page: Page): Promise<void> => {
 
 const MNEMONIC = 'test test test test test test test test test test test junk';
 
-export async function restoreLocalWallet(page: Page, backup?: 'hub-discovery') {
+export async function restoreLocalWallet(page: Page, backup?: 'hub-discovery' | 'settlement') {
   const fixture = await readWalletRuntimeFixture(page);
   const port = Number(process.env['XLN_REACT_WALLET_FIXTURE_PORT'] || 19092);
   const discoveryMode = await page.request.post(
@@ -20,9 +20,12 @@ export async function restoreLocalWallet(page: Page, backup?: 'hub-discovery') {
   );
   expect(discoveryMode.ok()).toBe(true);
   await page.addInitScript((towerUrl: string) => {
-    localStorage.setItem('xln-watchtower-urls', JSON.stringify([towerUrl]));
-    (window as typeof window & { __XLN_WATCHTOWERS__?: string[] }).__XLN_WATCHTOWERS__ = [towerUrl];
-  }, backup === 'hub-discovery' ? fixture.recovery.hubDiscovery.towerUrl : fixture.recovery.towerUrl);
+    const towers = towerUrl ? [towerUrl] : [];
+    localStorage.setItem('xln-watchtower-urls', JSON.stringify(towers));
+    (window as typeof window & { __XLN_WATCHTOWERS__?: string[] }).__XLN_WATCHTOWERS__ = towers;
+  }, backup === 'settlement' ? '' : backup === 'hub-discovery'
+    ? fixture.recovery.hubDiscovery.towerUrl
+    : fixture.recovery.towerUrl);
   await page.goto('/app?setup=1', { waitUntil: 'domcontentloaded' });
   await expect(page.locator('.wallet-shell-runtime-state')).toHaveText('Local Runtime', { timeout: 90_000 });
   await page.getByRole('tab', { name: /Mnemonic/ }).click();
@@ -31,10 +34,16 @@ export async function restoreLocalWallet(page: Page, backup?: 'hub-discovery') {
   await page.getByRole('button', { name: 'Verify recovery' }).click();
   await page.getByRole('textbox', { name: /^Seed phrase/ }).fill(MNEMONIC);
   await page.getByRole('button', { name: 'Verify recovered wallet' }).click();
-  if (backup === 'hub-discovery') {
+  if (backup) {
     const choosing = page.waitForEvent('filechooser');
     await page.getByRole('button', { name: 'Import runtime backup' }).click();
-    await (await choosing).setFiles({ name: 'hub-discovery-backup.json', mimeType: 'application/json', buffer: Buffer.from(fixture.recovery.hubDiscovery.backupFileContents) });
+    const contents = backup === 'hub-discovery'
+      ? fixture.recovery.hubDiscovery.backupFileContents
+      : fixture.recovery.settlement.backupFileContents;
+    const fileName = `${backup}-backup.json`;
+    await (await choosing).setFiles({ name: fileName, mimeType: 'application/json', buffer: Buffer.from(contents) });
+    await expect(page.getByRole('radio').filter({ hasText: fileName }))
+      .toHaveAttribute('aria-checked', 'true', { timeout: 30_000 });
   } else await page.getByRole('button', { name: 'Check recovery and open wallet' }).click();
   await expect(page.getByRole('heading', { name: 'Choose a backup' })).toBeVisible({ timeout: 90_000 });
   await page.getByRole('button', { name: 'Restore selected backup' }).click();

@@ -12,6 +12,7 @@ import { buildAccountTokenDetails } from '../../src/lib/components/Entity/shared
 import { buildAccountActivityRows } from '../../src/lib/components/Entity/account/account-focused-view';
 import { buildDisputedAccountViews } from '../../src/lib/components/Entity/account/account-dispute-view';
 import { buildAccountDropdownItems } from '../../src/lib/components/Entity/account/account-dropdown-model';
+import { decodeWalletSettlementWorkspace } from '../../apps/wallet/src/portfolio/wallet-portfolio-model';
 
 export const readCanonicalAccountDropdown = async (adapter: RuntimeAdapter, entityId: string, frame: RuntimeAdapterViewFrame) => {
   const view = await readCanonicalAccountView(adapter, entityId, '', frame);
@@ -51,6 +52,18 @@ export const readCanonicalAccountView = async (adapter: RuntimeAdapter, entityId
 export const subscribeCanonicalAccountView = (listener: () => void): (() => void) => {
   const releases = [p2pState.subscribe(listener)];
   return () => { for (const release of releases) release(); };
+};
+
+export const readCanonicalWalletSettlementWorkspaces = async (
+  adapter: RuntimeAdapter,
+  entityId: string,
+  frame: RuntimeAdapterViewFrame,
+) => {
+  const view = await readCanonicalAccountView(adapter, entityId, '', frame);
+  return new Map([...view.replica.state.accounts].map(([counterpartyId, account]) => [
+    counterpartyId.toLowerCase(),
+    decodeWalletSettlementWorkspace(account.state.settlementWorkspace),
+  ]));
 };
 
 export const readCanonicalHubDiscovery = async (adapter: RuntimeAdapter, entityId: string, frame: RuntimeAdapterViewFrame, targetId = '', targetFrame?: RuntimeAdapterViewFrame): Promise<WalletAccountOpenRead> => {

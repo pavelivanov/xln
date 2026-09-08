@@ -487,6 +487,7 @@ server = Bun.serve<FixtureSocketData>({
           towerUrl: recoveryFixture.towerUrl,
           rpcUrl: recoveryFixture.rpcUrl,
           hubDiscovery: recoveryFixture.hubDiscovery,
+          settlement: recoveryFixture.settlement,
           external: recoveryFixture.external,
           brainVault: recoveryFixture.brainVault,
         },
