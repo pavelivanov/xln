@@ -20,6 +20,8 @@ export type WalletRecoveryFixture = Readonly<{
   rpcUrl: string;
   readJurisdictionsJson: () => string;
   readHubsJson: () => string;
+  resetSettlementChain: () => Promise<void>;
+  setRpcOnline: (online: boolean) => void;
   hubDiscovery: Readonly<{ backupFileContents: string; hubEntityId: string; towerUrl: string }>;
   settlement: Readonly<{ backupFileContents: string; counterpartyEntityId: string; workspaceHash: string }>;
   external: Readonly<{
@@ -256,6 +258,10 @@ export const createWalletRecoveryFixture = async (
   if (!token) throw new Error('WALLET_RECOVERY_FIXTURE_USDC_REQUIRED');
   const fundedExternalBalance = await chainAdapter.getErc20Balance(token.address, mnemonic.runtimeId);
   const externalRecipient = new Wallet(`0x${'77'.repeat(32)}`).address.toLowerCase();
+  const settlementChainBaseline = await chainAdapter.dumpState();
+  if (typeof settlementChainBaseline === 'string') {
+    throw new Error('WALLET_RECOVERY_FIXTURE_BROWSERVM_STATE_INVALID');
+  }
   const closeAppointments = async (): Promise<void> => {
     for (const appointment of [mnemonic, brainVault]) {
       for (const { adapter } of liveJAdapters.getLiveJAdapterEntries(appointment.env)) {
@@ -349,6 +355,11 @@ export const createWalletRecoveryFixture = async (
         },
       }],
     }),
+    resetSettlementChain: async () => {
+      await chainAdapter.loadState(settlementChainBaseline);
+      rpcFixture.setOnline(true);
+    },
+    setRpcOnline: rpcFixture.setOnline,
     hubDiscovery: { hubEntityId: hub.entityId, towerUrl: `http://127.0.0.1:${hubTower.server.port}`,
       backupFileContents: serialization.serializeTaggedJson({ version: 1, bundles: [hubEncrypted] }) },
     settlement: {

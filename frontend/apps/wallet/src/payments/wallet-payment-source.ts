@@ -13,7 +13,12 @@ import {
 import { normalizeEntityIdForRuntimeView } from '../../../../packages/runtime-client/src/runtime/view/runtime-view-model';
 import { requireWalletWorkspaceEntity, WalletWorkspaceSelection } from '../runtime/wallet-workspace-selection';
 import { requireWalletPaymentQuoteMatchesDraft, type WalletPaymentDraft } from './commands/wallet-payment-draft';
-import { buildWalletBatchTx, type WalletBatchAction, type WalletBatchProjection } from '../commands/wallet-batch-model';
+import {
+  buildWalletBatchTx,
+  mergeWalletBatchRuntimeSubmission,
+  type WalletBatchAction,
+  type WalletBatchProjection,
+} from '../commands/wallet-batch-model';
 import {
   abandonTerminalWalletPaymentCommand,
   executeWalletPaymentCommand,
@@ -427,13 +432,13 @@ export class WalletPaymentSource {
         }
         if (adapter.mode !== 'embedded') return projection;
         const bridge = await import('../../../../bridges/wallet/wallet-canonical-hub-discovery');
-        const workspaces = await bridge.readCanonicalWalletSettlementWorkspaces(
-          adapter,
-          projection.activeEntityId,
-          frame,
-        );
+        const [workspaces, batchSubmission] = await Promise.all([
+          bridge.readCanonicalWalletSettlementWorkspaces(adapter, projection.activeEntityId, frame),
+          bridge.readCanonicalWalletBatchSubmission(adapter, projection.activeEntityId, frame),
+        ]);
         return {
           ...projection,
+          batch: mergeWalletBatchRuntimeSubmission(projection.batch, batchSubmission),
           accounts: projection.accounts.map((account) => ({
             ...account,
             settlement: workspaces.get(account.counterpartyId) ?? null,

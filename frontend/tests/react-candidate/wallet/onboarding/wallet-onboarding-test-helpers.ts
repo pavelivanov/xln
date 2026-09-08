@@ -19,6 +19,10 @@ export async function restoreLocalWallet(page: Page, backup?: 'hub-discovery' | 
     `http://127.0.0.1:${port}/onboarding-hub-discovery-mode?enabled=${backup === 'hub-discovery' ? '1' : '0'}`,
   );
   expect(discoveryMode.ok()).toBe(true);
+  if (backup === 'settlement') {
+    const reset = await page.request.post(`http://127.0.0.1:${port}/recovery-settlement-reset`);
+    expect(reset.ok()).toBe(true);
+  }
   await page.addInitScript((towerUrl: string) => {
     const towers = towerUrl ? [towerUrl] : [];
     localStorage.setItem('xln-watchtower-urls', JSON.stringify(towers));
