@@ -65,6 +65,9 @@ const payload = () => ({
     activeEntity: {
       core: {
         entityId: alice,
+        signerId: `0x${'55'.repeat(20)}`,
+        config: { jurisdiction: { name: 'BrowserVM' } },
+        reserves: new Map([[1, 50_000_000n]]),
         outDebtsByToken: new Map([[1, new Map([['debt-out', debt('out')]])]]),
         inDebtsByToken: new Map([[1, new Map([['debt-in', debt('in')]])]]),
       },
@@ -142,6 +145,11 @@ describe('React wallet financial health projection', () => {
       counterpartyId: hub,
       counterpartyLabel: 'Hub',
       remainingLabel: '125.0 USDC',
+    });
+    expect(projection.debtGroups[0]).toMatchObject({
+      reserveLabel: '50.0 USDC',
+      payableLabel: '50.0 USDC',
+      nextDebtIndex: 1,
     });
     expect(projection.disputes).toEqual([expect.objectContaining({
       counterpartyId: hub,
@@ -244,7 +252,7 @@ describe('React wallet financial health projection', () => {
     expect(boundary).toContain('adapter.disconnect()');
     expect(view).toContain('useSyncExternalStore');
     expect(view).toContain('Unchecked solvency is never presented as balanced');
-    expect(source).not.toContain('.send(');
+    expect(source).toContain('executeWalletPaymentCommand');
     expect(source).not.toContain('setInterval');
     expect(source).not.toContain('Math.random');
   });

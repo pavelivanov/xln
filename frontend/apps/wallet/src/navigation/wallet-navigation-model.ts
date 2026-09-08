@@ -14,7 +14,9 @@ export type WalletAppRoute =
   | Readonly<{ view: 'payments'; tab: WalletPaymentTab; invoice: string }>
   | Readonly<{ view: 'markets'; tab: WalletMarketTab }>
   | Readonly<{ view: 'settings'; section: WalletSettingsSection; entityId: string }>
-  | Readonly<{ view: 'portfolio'; section: 'assets' | 'open' | 'appearance' }>
+  | Readonly<{ view: 'portfolio'; section: 'assets' | 'open' | 'appearance';
+      focus?: Readonly<{ entityId: string; accountId: string; tokenId: number }>;
+    }>
   | Readonly<{ view: Exclude<WalletAppView, 'payments' | 'markets' | 'settings' | 'portfolio' | 'account-tools' | 'entity-tools'> }>;
 
 export const resolveWalletAppRoute = (search: string, hash = ''): WalletAppRoute => {
@@ -42,7 +44,22 @@ export const resolveWalletAppRoute = (search: string, hash = ''): WalletAppRoute
   if (route === 'settings/display') return { view: 'settings', section: 'preferences', entityId: settingsEntityId };
   if (route === 'settings' || route === 'settings/entity') return { view: 'settings', section: 'profile', entityId: settingsEntityId };
   if (params.get('setup') === '1' || params.has('demo')) return { view: 'identity' };
-  if (params.get('portfolio') === '1') return { view: 'portfolio', section: 'assets' };
+  if (params.get('portfolio') === '1') {
+    const entityId = String(params.get('entity') || '')
+      .trim()
+      .toLowerCase();
+    const accountId = String(params.get('account') || '')
+      .trim()
+      .toLowerCase();
+    const tokenId = Number(params.get('token'));
+    const focus =
+      /^0x[0-9a-f]{64}$/u.test(entityId) &&
+      /^0x[0-9a-f]{64}$/u.test(accountId) &&
+      Number.isSafeInteger(tokenId) &&
+      tokenId >= 1
+        ? { entityId, accountId, tokenId }
+        : undefined; return { view: 'portfolio', section: 'assets', ...(focus ? { focus } : {}) };
+  }
   if (params.get('health') === '1') return { view: 'health' };
   if (params.get('payments') === '1') {
     const tool = params.get('paymentTool');

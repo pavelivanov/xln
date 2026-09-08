@@ -4,12 +4,14 @@ import { stripTrailingSymbol } from '../../../../../packages/ui/src/rcpan/delta-
 import type { useAccountAppearance } from '../controls/wallet-account-appearance-source';
 import { WalletAccountSummary } from './wallet-account-summary';
 
-export function WalletAccountToken({ detail, format, commandsReady, funding, busy, onFaucet, appearance }: Readonly<{
+export function WalletAccountToken({ detail, format, commandsReady, funding, busy, onFaucet, appearance,
+  initiallyExpanded = false }: Readonly<{
   detail: AccountTokenDetailRow; format: (id: number, value: bigint) => string;
   commandsReady: boolean; funding: boolean; busy: boolean; onFaucet: () => void;
   appearance: ReturnType<typeof useAccountAppearance>;
+  initiallyExpanded?: boolean;
 }>) {
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(initiallyExpanded);
   const id = useId();
   const { derived, delta, tokenInfo, tokenId } = detail;
   const amount = (value: bigint) => stripTrailingSymbol(format(tokenId, value), tokenInfo.symbol);

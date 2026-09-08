@@ -198,7 +198,8 @@ export function WalletAppShell() {
               <WalletAccountRail route={route} selection={workspaceSelection} />
               {route.view === 'account-tools' || route.view === 'entity-tools' ? <WalletAccountWorkspace entityId={route.view === 'entity-tools' ? route.entityId : ''} tab={route.tab} selection={workspaceSelection} /> : null}
               {view === 'identity' ? <IdentityOnboarding runtimeId={embedded.runtimeId} runtimeState={runtime.state} /> : null}
-              {route.view === 'portfolio' ? <WalletPortfolio key={runtimeSelectionKey} section={route.section} workspaceSelection={workspaceSelection} /> : null}
+              {route.view === 'portfolio' ? <WalletPortfolio key={runtimeSelectionKey}
+                  focus={route.focus} section={route.section} workspaceSelection={workspaceSelection} /> : null}
               {view === 'health' ? <WalletFinancialHealth workspaceSelection={workspaceSelection} /> : null}
               {route.view === 'payments' ? <WalletPayments workspaceSelection={workspaceSelection} tab={route.tab} invoice={route.invoice} onTabChange={(tab) => navigateWallet(walletPaymentTabHref(tab))} /> : null}
               {route.view === 'markets' ? <WalletMarkets workspaceSelection={workspaceSelection} tab={route.tab} onTabChange={(tab) => navigateWallet(`/app#accounts/${tab === 'market' ? 'swap' : 'activity'}`)} /> : null}

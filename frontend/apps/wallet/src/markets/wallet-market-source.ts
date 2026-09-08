@@ -1,4 +1,5 @@
 import type { RuntimeAdapter } from '../../../../../core/api/runtime-adapter/types';
+import { runtimeHttpOriginFromWsUrl } from '../../../../src/lib/utils/runtime/wsUrl';
 import type { RuntimeAdapterStorageSnapshot } from '../../../../packages/browser/src/runtime/session/runtime-adapter-session';
 import {
   RuntimeQueryObserver,
@@ -18,6 +19,11 @@ import {
   buildWalletMarketOrderInput,
   type WalletMarketOrderDraft,
 } from './wallet-market-command';
+import {
+  buildWalletCrossMarketCancelInput,
+  buildWalletCrossMarketReview, type WalletCrossMarketDraft,
+  type WalletCrossMarketReview,
+} from './wallet-cross-market-command';
 import type { WalletMarketActivityKind } from './wallet-market-activity';
 import {
   decodeWalletMarketActivity,
@@ -61,6 +67,9 @@ const contextOnlyProjection = (
     ...context.payment,
     logicalTimestamp: context.logicalTimestamp,
     hubs: context.hubs,
+    sourceJurisdiction: context.sourceJurisdiction,
+    sourceJurisdictionLabel: context.sourceJurisdictionLabel,
+    crossTargets: context.crossTargets,
     selectedHubId: '',
     pairs: [],
     selectedPairId: '',
@@ -150,6 +159,9 @@ export class WalletMarketSource {
 
   readonly refresh = (): Promise<void> => this.observer?.refresh() ?? this.start();
 
+  private readonly workspaceApiBase = (): string =>
+    this.config.mode === 'remote' ? runtimeHttpOriginFromWsUrl(this.config.wsUrl || '') : window.location.origin;
+
   readonly selectEntity = (entityId: string): void => {
     const normalized = normalizeEntityIdForRuntimeView(entityId);
     const projection = this.snapshot.projection;
@@ -229,6 +241,79 @@ export class WalletMarketSource {
     await this.submitInput(buildWalletMarketCancelInput(this.requireProjection(), offerId));
   };
 
+  readonly reviewCrossOrder = async (draft: WalletCrossMarketDraft): Promise<WalletCrossMarketReview> => {
+    const projection = this.requireProjection();
+    const target = projection.crossTargets.find(candidate => candidate.routeValue === draft.routeValue);
+    if (!target) throw new Error('WALLET_CROSS_TARGET_UNKNOWN');
+    const client = createWalletRuntimeQueryClient(this.requireAdapter());
+    const sourceFrame = await client.readViewFrame({
+      entityId: projection.activeEntityId,
+      atHeight: projection.height,
+      accountsLimit: 200,
+      booksLimit: 1,
+    });
+    const targetFrame = await client.readViewFrame({
+      entityId: target.entityId,
+      atHeight: projection.height,
+      accountsLimit: 200,
+      booksLimit: 1,
+    });
+    return buildWalletCrossMarketReview(
+      draft,
+      projection,
+      sourceFrame,
+      targetFrame,
+      this.requireDependencies().math,
+      this.requireMarketMath(),
+    );
+  };
+
+  readonly submitCrossOrder = async (review: WalletCrossMarketReview): Promise<void> => {
+    const projection = this.requireProjection();
+    if (!projection.crossTargets.some(({ routeValue }) => review.routeValue === routeValue)) {
+      throw new Error('WALLET_CROSS_REVIEW_STALE');
+    }
+    if (review.plan.targetSetupInput) await this.submitInput(review.plan.targetSetupInput);
+    this.requireNoPendingCommand('WALLET_CROSS_SETUP_PENDING');
+    this.commandBusy = true;
+    this.patch({
+      command: {
+        ...idleCommand(),
+        status: 'submitting',
+        message: 'Delivering the canonical cross-jurisdiction intent…',
+      },
+    });
+    try {
+      await this.requireAdapter().submitCrossJurisdictionIntent(review.plan.crossJurisdictionIntent);
+      this.patch({
+        command: {
+          status: 'accepted',
+          message: `Canonical intent ${review.orderId} was delivered for Runtime admission.`,
+          commandId: review.orderId.slice(-12),
+          durable: false,
+          retryable: false,
+        },
+      });
+      await this.observer?.refresh();
+    } catch (error: unknown) {
+      this.patch({
+        command: {
+          ...idleCommand(),
+          status: 'error',
+          message: walletRuntimeReadErrorMessage(error),
+          commandId: review.orderId.slice(-12),
+        },
+      });
+      throw error;
+    } finally {
+      this.commandBusy = false;
+    }
+  };
+
+  readonly cancelCrossOrder = async (orderId: string): Promise<void> => {
+    await this.submitInput(buildWalletCrossMarketCancelInput(this.requireProjection(), orderId));
+  };
+
   readonly retryPendingCommand = async (): Promise<void> => {
     if (!this.pendingCommand) throw new Error('WALLET_MARKET_PENDING_COMMAND_MISSING');
     await this.executePending(this.pendingCommand);
@@ -244,8 +329,19 @@ export class WalletMarketSource {
         booksLimit: 1,
         ...(entityId ? { entityId } : {}),
       });
-      const context = decodeWalletMarketContext(activeFrame, math);
+      const decodeContext = () => {
+          const context = decodeWalletMarketContext(activeFrame, math);
       requireWalletWorkspaceEntity(context.payment, entityId);
+          return context;
+        };
+        let context;
+        try {
+          context = decodeContext();
+        } catch (error: unknown) {
+          if (!/^TOKEN_METADATA_UNAVAILABLE:\d+$/u.test(walletRuntimeReadErrorMessage(error))) throw error;
+          await math.refreshTokenCatalog(this.workspaceApiBase());
+          context = decodeContext();
+        }
       const activeEntityId = context.payment.activeEntityId;
       if (!activeEntityId) throw new Error('WALLET_MARKET_ENTITY_UNAVAILABLE');
       const selectedHubId = context.hubs.some((hub) => hub.entityId === this.selectedHubId)
@@ -261,8 +357,13 @@ export class WalletMarketSource {
       if (!selectedHubId) {
         return contextOnlyProjection(activeFrame, await activityPromise, this.activityKind, this.activityPage, math);
       }
-      const [hubFrame, activity] = await Promise.all([
-        client.readViewFrame({ entityId: selectedHubId, accountsLimit: 1, booksLimit: 50 }),
+      const selectedHub = context.hubs.find(hub => hub.entityId === selectedHubId);
+        if (!selectedHub) throw new Error('WALLET_MARKET_HUB_UNKNOWN');
+        const [hubFrame, activity] = await Promise.all([
+          selectedHub.isLocal
+            ?
+        client.readViewFrame({ entityId: selectedHubId, accountsLimit: 1, booksLimit: 50 })
+            : Promise.resolve(null),
         activityPromise,
       ]);
       return decodeWalletMarketProjection({

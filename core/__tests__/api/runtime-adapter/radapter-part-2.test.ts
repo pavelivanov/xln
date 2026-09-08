@@ -554,6 +554,50 @@ test('runtime adapter view-frame excludes unbounded account internals from remot
   expect(compact?.boardHankoRefreshMigration).toEqual(account.boardHankoRefreshMigration);
 });
 
+test('runtime adapter compact Account view preserves bounded dispute lifecycle evidence', async () => {
+  const env = makeEnv();
+  const replica = Array.from(env.state.eReplicas.values())[0]!;
+  const account = replica.state.accounts.get(counterpartyId)! as any;
+  account.activeDispute = {
+    startedByLeft: true,
+    initialProofbodyHash: `0x${'22'.repeat(32)}`,
+    initialNonce: 7,
+    initialProposerIsLeft: true,
+    disputeTimeout: 1_800_000_000,
+    jNonce: 7,
+    starterInitialArguments: '0x1234',
+    starterCounterArguments: '0x',
+    starterCounterProofCommitment: `0x${'33'.repeat(32)}`,
+    observedOnChain: true,
+    finalizeQueued: false,
+  };
+  const frame = await resolveRuntimeAdapterRead<{
+    activeEntity: {
+      accounts: {
+        items: Array<{
+          activeDispute?: unknown;
+          disputeLifecycle?: {
+            startedByLeft: boolean;
+            disputeTimeout: number;
+            initialNonce: number;
+            observedOnChain: boolean;
+            finalizeQueued: boolean;
+          };
+        }>;
+      };
+    } | null;
+  }>({ env }, 'view-frame', { entityId, accountsLimit: 1, booksLimit: 1 });
+  const compact = frame.activeEntity?.accounts.items[0];
+  expect(compact?.activeDispute).toBeUndefined();
+  expect(compact?.disputeLifecycle).toEqual({
+    startedByLeft: true,
+    disputeTimeout: 1_800_000_000,
+    initialNonce: 7,
+    observedOnChain: true,
+    finalizeQueued: false,
+  });
+});
+
 test('runtime adapter returns an owned projection after releasing the committed-read lease', async () => {
   const env = makeEnv();
   const persistedHead: StorageHead = {

@@ -47,7 +47,10 @@ export function WalletMarkets({ tab, onTabChange, workspaceSelection, draft }: R
       <header className="wallet-markets-heading">
         <p className="wallet-shell-eyebrow">Committed liquidity and history</p>
         <h1 id="wallet-markets-title">Markets</h1>
-        <p>Read Runtime-owned books, place canonical same-j orders, and follow cross-j and persisted activity without rebuilding protocol state in React.</p>
+        <p>
+          Read Runtime-owned books, place canonical same-j and cross-j orders, and follow persisted lifecycle activity
+          without rebuilding protocol state in React.
+        </p>
       </header>
 
       {projection ? (
@@ -93,7 +96,10 @@ export function WalletMarkets({ tab, onTabChange, workspaceSelection, draft }: R
         </section>
       )}
 
-      <p className="wallet-market-boundary">Cross-j routes are lifecycle evidence here; this increment does not synthesize a cross-j authorization from partial browser context.</p>
+      <p className="wallet-market-boundary">
+        Every cross-j review is derived from exact committed source and target Account frames by the Runtime-owned
+        planner; selection changes discard the prior authorization.
+      </p>
     </section>
   );
 }

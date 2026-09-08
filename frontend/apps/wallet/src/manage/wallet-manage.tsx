@@ -9,9 +9,19 @@ import { requestWalletCredit } from './wallet-manage-credit';
 import { buildConfigureTokenOptions } from '../../../../src/lib/components/Entity/workspace/entity-panel-options';
 import { compareStableText } from '../../../../src/lib/utils/stableSort';
 import { formatWalletExternalAmount } from '../../../../packages/browser/src/wallet/wallet-external-provider';
+import type { AccountReplica } from '@xln/core/api/public/runtime-module';
 
 const tabs = [['extend-credit', 'Extend Credit'], ['request-credit', 'Request Credit'], ['collateral', 'Request Collateral'], ['token', 'Add Token'], ['load-testing', 'Load Testing'], ['dispute', 'Dispute']] as const;
 type ManageTab = typeof tabs[number][0];
+type DisputeLifecycle = Pick<
+  NonNullable<AccountReplica['activeDispute']>,
+  'startedByLeft' | 'disputeTimeout' | 'initialNonce' | 'observedOnChain' | 'finalizeQueued'
+>;
+
+const readDisputeLifecycle = (account: AccountReplica): DisputeLifecycle | null =>
+  account.activeDispute ??
+  (account as AccountReplica & { disputeLifecycle?: DisputeLifecycle }).disputeLifecycle ??
+  null;
 
 export function WalletManage({ context, source, selection }: Readonly<{ context: WalletAccountContext; source: WalletPaymentSource; selection: WalletWorkspaceSelection }>) {
   const selected = useSyncExternalStore(selection.subscribe, selection.getSnapshot, selection.getSnapshot);
@@ -39,6 +49,7 @@ function ManageForm({ context, source, accountId, tab, disabled, tokenId, setTok
 }>) {
   const account = context.replica.state.accounts.get(accountId);
   if (!account) throw new Error('MANAGE_ACCOUNT_UNAVAILABLE');
+  const activeDispute = readDisputeLifecycle(account);
   const delta = account.state.deltas.get(tokenId);
   const derived = delta ? context.xln.deriveDelta(delta, context.xln.isLeftEntity(context.entityId, accountId)) : null;
   const max = derived && derived.outPeerCredit > 0n ? derived.outPeerCredit : 0n;
@@ -67,9 +78,9 @@ function ManageForm({ context, source, accountId, tab, disabled, tokenId, setTok
     } catch (cause) { setError(String(cause)); } finally { setBusy(false); }
   };
   const dispute = async () => {
-    const active = Boolean(account.activeDispute);
+    const active = Boolean(activeDispute);
     const name = context.names.get(accountId) || accountId;
-    if (!window.confirm(active ? `Finalize on-chain dispute with ${name}?\n\nThis adds Dispute Finalize to the pending batch. Only do this after the dispute timeout has passed.`
+    if (!window.confirm(active ? `Finalize on-chain dispute with ${name}?\n\nThis adds Dispute Finalize when the committed role, selected proof, and on-chain clock permit it.`
       : `Prepare dispute with ${name}?\n\nThis freezes normal account traffic, removes orderbook exposure, and automatically drafts Dispute Start as soon as evidence is stable.`)) return;
     setBusy(true); setError('');
     try { await source.submitAccountTxs(context.entityId, [active ? buildDisputeFinalizeTx(accountId, 'dispute-finalize-from-configure') : buildPrepareDisputeTx(accountId, 'dispute-prepare-from-configure')]); }
@@ -79,8 +90,12 @@ function ManageForm({ context, source, accountId, tab, disabled, tokenId, setTok
   return <section><h2>{tab === 'dispute' ? 'Dispute Account' : label}</h2>
     {tab === 'dispute' ? <>
       <p>One action freezes local Account traffic, removes orderbook exposure, and automatically drafts the on-chain dispute when evidence is stable.</p>
-      {account.activeDispute ? <p>Active dispute. Finalize only after the timeout passes on-chain.</p> : account.status === 'dispute_preparing' ? <p>Preparing automatically. Normal Account traffic is frozen; Dispute Start will appear in the batch after orderbook removals are confirmed.</p> : <p>This stops normal Account traffic before committing the on-chain dispute hash.</p>}
-      {account.activeDispute || account.status !== 'dispute_preparing' ? <button className="wallet-tool-danger" disabled={disabled || busy} data-testid={account.activeDispute ? 'configure-dispute-finalize' : 'configure-dispute-prepare'} onClick={() => void dispute()}>{account.activeDispute ? 'Add Dispute Finalize To Batch' : 'Prepare & Queue Dispute'}</button> : null}
+      {activeDispute ? <p data-testid="configure-dispute-evidence">
+              {activeDispute.observedOnChain
+                ? `On-chain start observed · ${context.xln.isLeftEntity(context.entityId, accountId) === activeDispute.startedByLeft ? 'starter' : 'non-starter'} role · timeout unix ${activeDispute.disputeTimeout}. Runtime validates the selected proof and chain clock.`
+                : 'Dispute queued: awaiting the authoritative on-chain start and timeout.'}
+            </p> : account.status === 'dispute_preparing' ? <p>Preparing automatically. Normal Account traffic is frozen; Dispute Start will appear in the batch after orderbook removals are confirmed.</p> : <p>This stops normal Account traffic before committing the on-chain dispute hash.</p>}
+      {activeDispute || account.status !== 'dispute_preparing' ? <button className="wallet-tool-danger" disabled={disabled || busy || (activeDispute !== null && !activeDispute.observedOnChain)} data-testid={activeDispute ? 'configure-dispute-finalize' : 'configure-dispute-prepare'} onClick={() => void dispute()}>{activeDispute ? 'Add Dispute Finalize To Batch' : 'Prepare & Queue Dispute'}</button> : null}
     </> : <form onSubmit={event => { event.preventDefault(); void run(); }}><fieldset disabled={disabled || busy}>
       <label>Asset<select aria-label="Asset" value={tokenId} onChange={event => { setToken(Number(event.target.value)); setDraft(null); setNotice(''); }}>{tokens.map(({ id, symbol }) => <option value={id} key={id}>{symbol}</option>)}</select></label>
       {tab === 'token' ? <p>Adds a token delta with zero credit. Use Extend Credit to set its limit.</p> : <label>{tab === 'collateral' ? 'Collateral amount' : 'Credit amount'}<input inputMode="decimal" value={amount} onChange={event => setDraft(event.target.value)} required /></label>}

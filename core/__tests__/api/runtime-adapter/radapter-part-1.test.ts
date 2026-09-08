@@ -108,13 +108,15 @@ const decodeTestRuntimeAdapterMessage = <T>(raw: unknown): T =>
     ? decodeRuntimeAdapterBrowserMessage(raw)
     : decodeRuntimeAdapterMessage(raw)) as unknown as T;
 
-const makeHubProfile = (id: string, name: string, lastUpdated = 7): Profile =>
+const makeHubProfile = (id: string, name: string, lastUpdated = 7,
+  runtimeId = `runtime:${name.toLowerCase()}`,
+): Profile =>
   buildCryptographicProfileFixture({
     entityId: id,
     signingSeed: `radapter-live-profile:${id}:${name}`,
     name,
     lastUpdated,
-    runtimeId: `runtime:${name.toLowerCase()}`,
+    runtimeId,
     runtimeEncPubKey: `0x${'11'.repeat(32)}`,
     isHub: true,
     jurisdiction: {
@@ -930,12 +932,23 @@ test('current stored view frame overlays local identity without mixing a later l
 test('runtime adapter view-frame includes live gossip summaries for visible account peers', async () => {
   const env = makeEnv();
   env.gossip = createGossipLayer();
-  env.gossip.announce(makeHubProfile(entityId, 'H1'));
-  env.gossip.announce(makeHubProfile(counterpartyId, 'H2'));
+  const peerRuntimeId = `0x${'22'.repeat(20)}`;
+  env.gossip.announce(makeHubProfile(counterpartyId, 'H2', 7, peerRuntimeId));
+  env.infrastructure!.verifiedProfileRoutes = new Map([
+    [counterpartyId,
+      {
+        runtimeId: peerRuntimeId,
+        runtimeSignerId: 'verified-h2-signer',
+        runtimeEncPubKey: `0x${'11'.repeat(32)}`,
+        lastUpdated: 7,
+      },
+    ],
+  ]);
 
   const frame = await resolveRuntimeAdapterRead<{
     entities: Array<{
       entityId: string;
+      signerId?: string;
       label: string;
       isHub?: boolean;
       jurisdiction?: { name?: string; chainId?: number };
@@ -947,6 +960,7 @@ test('runtime adapter view-frame includes live gossip summaries for visible acco
   expect(frame.entities.find(entry => entry.entityId === entityId)?.label).toBe('Adapter Test');
   const peer = frame.entities.find(entry => entry.entityId === counterpartyId);
   expect(peer?.label).toBe('H2');
+  expect(peer?.signerId).toBe('verified-h2-signer');
   expect(peer?.isHub).toBe(true);
   expect(peer?.jurisdiction?.name).toBe('Testnet');
   expect(peer?.jurisdiction?.chainId).toBe(31337);

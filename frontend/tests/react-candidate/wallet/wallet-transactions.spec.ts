@@ -6,7 +6,9 @@ import {
   observeBrowserErrors,
   screenshotEvidence,
 } from '../browser-evidence';
-import { selectWalletFixtureRuntime } from './fixtures/wallet-runtime-test-helpers';
+import {
+  createWalletCrossJFixture,
+  readWalletCrossJState, selectWalletFixtureRuntime } from './fixtures/wallet-runtime-test-helpers';
 
 test('wallet payments quote committed capacity and build recipient-owned tools', { tag: '@functional' }, async ({ page }, testInfo) => {
   const errors = observeBrowserErrors(page);
@@ -99,3 +101,144 @@ test('wallet markets read the committed hub book and persisted activity', { tag:
   await screenshotEvidence(page, testInfo, 'wallet-market-activity');
   expectNoBrowserErrors(errors);
 });
+
+test(
+  'wallet invalidates one exact cross-jurisdiction quote review when route context changes',
+  { tag: '@functional' },
+  async ({ page }, testInfo) => {
+    test.setTimeout(120_000);
+    const errors = observeBrowserErrors(page);
+    const fixture = await selectWalletFixtureRuntime(page);
+    const crossFixture = await createWalletCrossJFixture(page);
+    const response = await page.goto('/app?markets=1', { waitUntil: 'domcontentloaded' });
+    expect(response?.ok(), 'document response for cross-j quote review').toBe(true);
+
+    await expect(page.getByRole('heading', { name: 'Markets' })).toBeVisible({ timeout: 90_000 });
+    const entity = page.getByLabel('Entity');
+    await entity.selectOption(fixture.entityId);
+    const marketSelection = page.getByRole('region', { name: 'Market selection' });
+    await marketSelection.getByRole('combobox').nth(0).selectOption(crossFixture.sourceHubEntityId);
+    const ticket = page.getByRole('region', { name: 'Cross-jurisdiction order' });
+    await expect(ticket.getByLabel('Target route').locator('option:checked')).toContainText(
+      crossFixture.targetJurisdiction,
+    );
+    await ticket.getByLabel('Cross-j source asset').selectOption('1');
+    await ticket.getByLabel('Cross-j target asset').selectOption('2');
+    await ticket.getByLabel('Cross-j source amount').fill('1');
+    await ticket.getByLabel('Cross-j target amount').fill('0.0004');
+    await ticket.getByRole('button', { name: 'Review cross-j route' }).click();
+
+    let review = ticket.getByRole('article', { name: 'Cross-jurisdiction quote review' });
+    const orderId = await review.getAttribute('data-order-id');
+    expect(orderId).toMatch(/^swap-/);
+    await ticket.getByLabel('Cross-j target asset').selectOption('1');
+    await expect(review).toHaveCount(0);
+    await expect(ticket.getByRole('button', { name: 'Review cross-j route' })).toBeDisabled();
+    await entity.selectOption(crossFixture.targetEntityId);
+    await expect(entity).toHaveValue(crossFixture.targetEntityId);
+    await entity.selectOption(fixture.entityId);
+    await marketSelection.getByRole('combobox').nth(0).selectOption(crossFixture.sourceHubEntityId);
+    await ticket.getByLabel('Cross-j source asset').selectOption('1');
+    await ticket.getByLabel('Cross-j target asset').selectOption('2');
+    await ticket.getByLabel('Cross-j source amount').fill('1');
+    await ticket.getByLabel('Cross-j target amount').fill('0.0004');
+    await ticket.getByRole('button', { name: 'Review cross-j route' }).click();
+    review = ticket.getByRole('article', { name: 'Cross-jurisdiction quote review' });
+    await expect(review).toHaveAttribute('data-order-id', orderId!);
+    await expectPageContained(page);
+    await screenshotEvidence(page, testInfo, 'wallet-market-cross-j-review');
+    expectNoBrowserErrors(errors);
+  },
+);
+
+test(
+  'wallet reviews, submits, and cancels one exact cross-jurisdiction order',
+  { tag: '@functional' },
+  async ({ page }, testInfo) => {
+    test.setTimeout(180_000);
+    const errors = observeBrowserErrors(page);
+    const fixture = await selectWalletFixtureRuntime(page);
+    const crossFixture = await createWalletCrossJFixture(page);
+    const response = await page.goto('/app?markets=1', { waitUntil: 'domcontentloaded' });
+    expect(response?.ok(), 'document response for cross-j markets').toBe(true);
+
+    await expect(page.getByRole('heading', { name: 'Markets' })).toBeVisible({ timeout: 90_000 });
+    await page.getByLabel('Entity').selectOption(fixture.entityId);
+    const marketSelection = page.getByRole('region', { name: 'Market selection' });
+    await marketSelection.getByRole('combobox').nth(0).selectOption(crossFixture.sourceHubEntityId);
+    await expect(marketSelection.getByRole('combobox').nth(0).locator('option:checked')).toHaveText(
+      'Browser Cross Source Hub',
+    );
+    const ticket = page.getByRole('region', { name: 'Cross-jurisdiction order' });
+    await expect(ticket.getByLabel('Target route').locator('option:checked')).toContainText(
+      crossFixture.targetJurisdiction,
+    );
+    await expect(ticket.getByLabel('Target route').locator('option:checked')).toContainText(
+      'Browser Target User via Browser Target Hub',
+    );
+    await ticket.getByLabel('Cross-j source asset').selectOption('1');
+    await ticket.getByLabel('Cross-j target asset').selectOption('2');
+    await ticket.getByLabel('Cross-j source amount').fill('1');
+    await ticket.getByLabel('Cross-j target amount').fill('0.0004');
+    await ticket.getByRole('button', { name: 'Review cross-j route' }).click();
+
+    let review = ticket.getByRole('article', { name: 'Cross-jurisdiction quote review' });
+    await expect(review).toBeVisible();
+    await expect(review).toContainText('1.0 USDC via Browser Cross Source Hub');
+    await expect(review).toContainText('0.0004 WETH via Browser Target Hub');
+    const orderId = await review.getAttribute('data-order-id');
+    expect(orderId).toMatch(/^swap-/);
+
+    await ticket.getByLabel('Cross-j target asset').selectOption('1');
+    await expect(review).toHaveCount(0);
+    await expect(ticket.getByRole('button', { name: 'Review cross-j route' })).toBeDisabled();
+    await ticket.getByLabel('Cross-j target asset').selectOption('2');
+    await ticket.getByRole('button', { name: 'Review cross-j route' }).click();
+    review = ticket.getByRole('article', { name: 'Cross-jurisdiction quote review' });
+    await expect(review).toHaveAttribute('data-order-id', orderId!);
+    await review.getByRole('button', { name: 'Submit cross-j order' }).click();
+
+    await expect
+      .poll(
+        async () => {
+          const state = await readWalletCrossJState(page, orderId!);
+          return state.rows.find(({ entityId }) => entityId === fixture.entityId)?.status ?? '';
+        },
+        { timeout: 60_000 },
+      )
+      .toBe('resting');
+    const committed = page.locator(`.wallet-cross-routes article[data-order-id="${orderId}"]`);
+    await expect(committed).toHaveAttribute('data-route-status', 'resting', { timeout: 30_000 });
+    await screenshotEvidence(page, testInfo, 'wallet-market-cross-j-resting');
+
+    const beforeCancel = await readWalletCrossJState(page, orderId!);
+    page.once('dialog', dialog => dialog.dismiss());
+    await committed.getByRole('button', { name: 'Cancel cross-j order' }).click();
+    expect(await readWalletCrossJState(page, orderId!)).toEqual(beforeCancel);
+    page.once('dialog', dialog => dialog.accept());
+    await committed.getByRole('button', { name: 'Cancel cross-j order' }).click();
+    await expect
+      .poll(
+        async () => {
+          const state = await readWalletCrossJState(page, orderId!);
+          return state.rows.find(({ entityId }) => entityId === fixture.entityId)?.status ?? '';
+        },
+        { timeout: 10_000 },
+      )
+      .toBe('clear_requested');
+    await expect
+      .poll(
+        async () => {
+          const state = await readWalletCrossJState(page, orderId!);
+          return state.rows.find(({ entityId }) => entityId === fixture.entityId)?.status ?? '';
+        },
+        { timeout: 20_000 },
+      )
+      .toBe('cancelled');
+    await expect(committed).toHaveAttribute('data-route-status', 'cancelled', { timeout: 30_000 });
+    await expect(committed.getByRole('button', { name: 'Cancel cross-j order' })).toHaveCount(0);
+    await expectPageContained(page);
+    await screenshotEvidence(page, testInfo, 'wallet-market-cross-j-cancelled');
+    expectNoBrowserErrors(errors);
+  },
+);

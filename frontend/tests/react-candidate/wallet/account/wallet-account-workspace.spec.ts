@@ -1,6 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 import { expectNoBrowserErrors, expectPageContained, observeBrowserErrors, screenshotEvidence } from '../../browser-evidence';
-import { readWalletAccountToolState as toolState, selectWalletFixtureRuntime } from '../fixtures/wallet-runtime-test-helpers';
+import {
+  createWalletDisputeFixture, readWalletAccountToolState as toolState, selectWalletFixtureRuntime } from '../fixtures/wallet-runtime-test-helpers';
 import { finishOpenedWalletSetup, restoreLocalWallet } from '../onboarding/wallet-onboarding-test-helpers';
 
 test.use({ actionTimeout: 20000 });
@@ -149,6 +150,86 @@ test('Manage runs and stops the retained local load controls and prepares a real
   await expectPageContained(page); await screenshotEvidence(page, testInfo, 'manage-dispute-start-draft-finalize-cancelled');
   expectNoBrowserErrors(errors);
 });
+
+test(
+  'Manage preserves dispute clocks and roles through supported chain finalization',
+  { tag: '@functional' },
+  async ({ page }, testInfo) => {
+    test.setTimeout(150000);
+    const errors = observeBrowserErrors(page),
+      fixture = await selectWalletFixtureRuntime(page);
+    const disputeHub = await createWalletDisputeFixture(page, `${testInfo.project.name}-dispute`);
+    await page.goto('/app#accounts/configure');
+    await page.getByLabel('Entity', { exact: true }).selectOption(fixture.entityId);
+    await page.getByLabel('Account', { exact: true }).selectOption(disputeHub.entityId);
+    await page.getByTestId('configure-tab-dispute').click();
+    page.once('dialog', dialog => dialog.accept());
+    await page.getByTestId('configure-dispute-prepare').click();
+    const starterBatch = page.getByRole('region', { name: 'Jurisdiction batch' });
+    await expect(starterBatch.getByText('Start dispute', { exact: false })).toBeVisible({ timeout: 20000 });
+    await starterBatch.getByRole('button', { name: 'Broadcast draft' }).click();
+    await expect
+      .poll(
+        async () => {
+          const state = await toolState(page, fixture.entityId, disputeHub.entityId);
+          const active = state['activeDispute'] as Record<string, unknown> | null;
+          const chain = state['chainAccount'] as Record<string, unknown>;
+          return (
+            active?.['observedOnChain'] === true &&
+            active['startedByLeft'] === fixture.entityId < disputeHub.entityId &&
+            BigInt(String(chain['disputeHash'])) !== 0n &&
+            BigInt(String(chain['disputeTimeout'])) > 0n
+          );
+        },
+        { timeout: 45000 },
+      )
+      .toBe(true);
+    await expect(starterBatch).toHaveCount(0);
+    await page.getByRole('button', { name: 'Refresh', exact: true }).click();
+    await expect(page.getByTestId('configure-dispute-finalize')).toBeVisible();
+    await expect(page.getByTestId('configure-dispute-evidence')).toContainText('starter role');
+
+    page.once('dialog', dialog => dialog.accept());
+    await page.getByTestId('configure-dispute-finalize').click();
+    await expect(starterBatch).toHaveCount(0);
+
+    await page.getByLabel('Entity', { exact: true }).selectOption(disputeHub.entityId);
+    await expect(page.getByLabel('Account', { exact: true })).toHaveValue(fixture.entityId);
+    await page.getByTestId('configure-tab-dispute').click();
+    await expect(page.getByTestId('configure-dispute-evidence')).toContainText('non-starter role');
+    const finalizerBatch = page.getByRole('region', { name: 'Jurisdiction batch' });
+    page.once('dialog', dialog => dialog.dismiss());
+    await page.getByTestId('configure-dispute-finalize').click();
+    await expect(finalizerBatch).toHaveCount(0);
+    page.once('dialog', dialog => dialog.accept());
+    await page.getByTestId('configure-dispute-finalize').click();
+    await expect(finalizerBatch.getByText('Finalize dispute', { exact: false })).toBeVisible({ timeout: 20000 });
+    await expectPageContained(page);
+    await screenshotEvidence(page, testInfo, 'manage-dispute-finalize-supported');
+    await finalizerBatch.getByRole('button', { name: 'Broadcast draft' }).click();
+    await expect
+      .poll(
+        async () => {
+          const [starter, finalizer] = await Promise.all([
+            toolState(page, fixture.entityId, disputeHub.entityId),
+            toolState(page, disputeHub.entityId, fixture.entityId),
+          ]);
+          const chain = finalizer['chainAccount'] as Record<string, unknown>;
+          return (
+            starter['activeDispute'] === null &&
+            finalizer['activeDispute'] === null &&
+            BigInt(String(chain['disputeHash'])) === 0n
+          );
+        },
+        { timeout: 45000 },
+      )
+      .toBe(true);
+    await expect(finalizerBatch).toHaveCount(0);
+    await expectPageContained(page);
+    await screenshotEvidence(page, testInfo, 'manage-dispute-finalized-on-chain');
+    expectNoBrowserErrors(errors);
+  },
+);
 
 test('Move selects routes with pointer and keyboard, queues a real draft and cancels batch clearing', { tag: '@functional' }, async ({ page }, testInfo) => {
   test.setTimeout(120000);

@@ -1,4 +1,5 @@
 import type { RuntimeAdapter } from '../../../../../core/api/runtime-adapter/types';
+import { buildDebtEnforcementRuntimeInputFromProjection } from '../../../../../core/runtime/tx/debt-enforcement-input';
 import type { RuntimeAdapterStorageSnapshot } from '../../../../packages/browser/src/runtime/session/runtime-adapter-session';
 import {
   RuntimeQueryObserver,
@@ -18,6 +19,15 @@ import {
   type WalletRuntimeReadLoader,
   walletRuntimeReadErrorMessage,
 } from '../runtime/wallet-runtime-read-boundary';
+import { executeWalletPaymentCommand, prepareWalletPaymentCommand } from '../payments/commands/wallet-payment-command';
+import
+
+type { WalletDebtGroup } from './wallet-financial-health-model';
+
+export type WalletFinancialHealthCommandState = Readonly<{
+  status: 'idle' | 'submitting' | 'accepted' | 'observed' | 'error';
+  message: string;
+}>;
 
 type WalletFinancialHealthWaitingStatus = 'unavailable' | 'connecting' | 'error';
 
@@ -66,6 +76,8 @@ export class WalletFinancialHealthSource {
   private accountsPage = 0;
   private historyCursors: Array<number | null> = [null];
   private historyPage = 0;
+  private commandState: WalletFinancialHealthCommandState = { status: 'idle', message: '' };
+  private commandBusy = false;
 
   constructor(private readonly config: RuntimeAdapterStorageSnapshot, private readonly selection: WalletWorkspaceSelection, private readonly loadRuntime: WalletRuntimeReadLoader = loadWalletRuntimeReadDependencies) {
     this.snapshot = {
@@ -76,6 +88,7 @@ export class WalletFinancialHealthSource {
   }
 
   readonly getSnapshot = (): WalletFinancialHealthSourceSnapshot => this.snapshot;
+  readonly getCommandSnapshot = (): WalletFinancialHealthCommandState => this.commandState;
 
   readonly subscribe = (listener: () => void): (() => void) => {
     this.listeners.add(listener);
@@ -110,6 +123,46 @@ export class WalletFinancialHealthSource {
   };
 
   readonly refresh = (): Promise<void> => this.observer?.refresh() ?? this.start();
+
+  readonly enforceDebt = async (requested: WalletDebtGroup): Promise<void> => {
+    if (this.commandBusy) throw new Error('WALLET_HEALTH_COMMAND_ALREADY_PENDING');
+    const projection = this.snapshot.projection;
+    const group = projection?.debtGroups.find(candidate => candidate.key === requested.key);
+    if (this.snapshot.status !== 'ready' || !projection || !group) throw new Error('WALLET_HEALTH_DEBT_VIEW_NOT_READY');
+    if (group.direction !== 'out') throw new Error('WALLET_HEALTH_DEBT_NOT_OURS');
+    if (group.payableAmount <= 0n) throw new Error('WALLET_HEALTH_DEBT_RESERVE_REQUIRED');
+    const adapter = this.requireAdapter();
+    if (!adapter.commandReady) throw new Error(adapter.commandReadyReason || 'WALLET_HEALTH_COMMAND_UNAVAILABLE');
+    this.commandBusy = true;
+    this.publishCommand({ status: 'submitting', message: `Submitting FIFO drain for ${group.symbol}…` });
+    try {
+      const prepared = await prepareWalletPaymentCommand(
+        adapter,
+        buildDebtEnforcementRuntimeInputFromProjection({
+          entityId: projection.activeEntityId,
+          jurisdictionName: projection.jurisdictionName,
+          tokenId: group.tokenId,
+          maxIterations: 100,
+          signerId: projection.signerId,
+          timestamp: Date.now(),
+        }),
+      );
+      const result = await executeWalletPaymentCommand(adapter, prepared);
+      this.publishCommand({
+        status: result.status === 'observed' ? 'observed' : 'accepted',
+        message:
+          result.status === 'observed'
+            ? `Debt enforcement committed at Runtime height ${result.height}.`
+            : `Debt enforcement accepted after Runtime height ${result.height}.`,
+      });
+      await this.observer?.refresh();
+    } catch (error: unknown) {
+      this.publishCommand({ status: 'error', message: walletRuntimeReadErrorMessage(error) });
+      throw error;
+    } finally {
+      this.commandBusy = false;
+    }
+  };
 
   readonly selectEntity = (entityId: string): void => {
     const normalized = normalizeEntityIdForRuntimeView(entityId);
@@ -216,6 +269,16 @@ export class WalletFinancialHealthSource {
   private resetHistory(): void {
     this.historyCursors = [null];
     this.historyPage = 0;
+  }
+
+  private requireAdapter(): RuntimeAdapter {
+    if (!this.adapter || this.adapter.status !== 'connected') throw new Error('WALLET_HEALTH_RUNTIME_NOT_CONNECTED');
+    return this.adapter;
+  }
+
+  private publishCommand(commandState: WalletFinancialHealthCommandState): void {
+    this.commandState = commandState;
+    this.publish({ ...this.snapshot });
   }
 
   private releaseRuntimeConnection(): void {

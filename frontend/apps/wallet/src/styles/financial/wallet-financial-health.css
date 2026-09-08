@@ -159,6 +159,56 @@
   font-size: 1.15rem;
 }
 
+.wallet-health-debt-action {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.8rem 0;
+  border-top: 1px solid #1d2021;
+}
+
+.wallet-health-debt-action p,
+.wallet-health-command {
+  margin: 0;
+  color: #8c9390;
+  font-size: 0.74rem;
+}
+
+.wallet-health-debt-action button {
+  flex: 0 0 auto;
+  padding: 0.65rem 0.85rem;
+  color: #151711;
+  font: 650 0.72rem/1 inherit;
+  background: var(--accent);
+  border: 0;
+  border-radius: 0.35rem;
+  cursor: pointer;
+}
+
+.wallet-health-debt-action button:disabled {
+  cursor: not-allowed;
+  opacity: 0.42;
+}
+.wallet-health-command {
+  padding: 0.9rem 0;
+  border-bottom: 1px solid var(--line);
+}
+.wallet-health-command.is-error {
+  color: #ef847c;
+}
+.wallet-health-debt-row a,
+.wallet-health-disputes a {
+  display: grid;
+  gap: 0.2rem;
+  color: inherit;
+  text-decoration: none;
+}
+.wallet-health-debt-row a:hover strong,
+.wallet-health-disputes a:hover strong {
+  color: var(--accent);
+}
+
 .wallet-health-debt-group small,
 .wallet-health-direction {
   color: #747b7e;

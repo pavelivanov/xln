@@ -22,9 +22,8 @@ const profileTx = (
   },
 });
 
-export const buildWalletFixtureProfileTx = (entityId: string): EntityTx => profileTx(
-  entityId,
-  'Browser Alice',
+export const buildWalletFixtureProfileTx = (entityId: string, name = 'Browser Alice'): EntityTx => profileTx(
+  entityId, name,
   'Committed by the isolated candidate Runtime.',
 );
 

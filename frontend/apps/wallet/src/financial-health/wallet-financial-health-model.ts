@@ -25,6 +25,7 @@ export type WalletDebtEntry = Readonly<{
   debtId: string;
   counterpartyId: string;
   counterpartyLabel: string;
+  remainingAmount: bigint;
   remainingLabel: string;
   originalLabel: string;
   paidLabel: string;
@@ -37,6 +38,12 @@ export type WalletDebtGroup = Readonly<{
   tokenId: number;
   symbol: string;
   outstandingLabel: string;
+  outstandingAmount: bigint;
+  reserveAmount: bigint;
+  reserveLabel: string;
+  payableAmount: bigint;
+  payableLabel: string;
+  nextDebtIndex: number;
   entries: readonly WalletDebtEntry[];
 }>;
 
@@ -69,6 +76,8 @@ export type WalletFinancialHealthProjection = Readonly<{
   entities: readonly WalletPortfolioEntity[];
   activeEntityId: string;
   activeEntityLabel: string;
+  signerId: string;
+  jurisdictionName: string;
   debtGroups: readonly WalletDebtGroup[];
   disputes: readonly WalletDispute[];
   accountsPage: number;
@@ -112,6 +121,7 @@ const decodeDebtGroups = (
   activeEntityId: string,
   labels: ReadonlyMap<string, string>,
   math: WalletPortfolioMath,
+  reserves: ReadonlyMap<unknown, unknown>,
 ): readonly WalletDebtGroup[] => {
   const groups: WalletDebtGroup[] = [];
   for (const direction of ['out', 'in'] as const) {
@@ -120,6 +130,7 @@ const decodeDebtGroups = (
       const tokenId = requireRuntimeInteger(tokenKey, 'WALLET_HEALTH_DEBT_TOKEN', 1);
       const bucket = requireRuntimeMap(bucketValue, 'WALLET_HEALTH_DEBT_BUCKET');
       let outstanding = 0n;
+      let nextDebtIndex = Number.MAX_SAFE_INTEGER;
       const entries = [...bucket.values()].map((value): WalletDebtEntry => {
         const debt = requireRuntimeRecord(value, 'WALLET_HEALTH_DEBT');
         if (requireRuntimeEnum(debt['direction'], ['out', 'in'], 'WALLET_HEALTH_DEBT_DIRECTION') !== direction) {
@@ -139,22 +150,36 @@ const decodeDebtGroups = (
         const remaining = requireRuntimeBigInt(debt['remainingAmount'], 'WALLET_HEALTH_DEBT_REMAINING');
         if (created - paid !== remaining || remaining < 0n) throw new Error('WALLET_HEALTH_DEBT_AMOUNT_MISMATCH');
         outstanding += remaining;
+          nextDebtIndex = Math.min(
+            nextDebtIndex,
+            requireRuntimeInteger(debt['currentDebtIndex'], 'WALLET_HEALTH_DEBT_INDEX'),
+          );
         return {
           debtId: requireRuntimeString(debt['debtId'], 'WALLET_HEALTH_DEBT_ID'),
           counterpartyId,
           counterpartyLabel: labels.get(counterpartyId) ?? counterpartyId,
+            remainingAmount: remaining,
           remainingLabel: math.formatTokenAmount(tokenId, remaining),
           originalLabel: math.formatTokenAmount(tokenId, created),
           paidLabel: math.formatTokenAmount(tokenId, paid),
           lastUpdatedBlock: requireRuntimeInteger(debt['lastUpdatedBlock'], 'WALLET_HEALTH_DEBT_BLOCK'),
         };
       }).sort((left, right) => left.lastUpdatedBlock - right.lastUpdatedBlock || left.debtId.localeCompare(right.debtId));
+      const reserve =
+        direction === 'out' ? requireRuntimeBigInt(reserves.get(tokenId) ?? 0n, 'WALLET_HEALTH_DEBT_RESERVE') : 0n;
+      const payable = reserve < outstanding ? reserve : outstanding;
       groups.push({
         key: `${direction}:${tokenId}`,
         direction,
         tokenId,
         symbol: math.getTokenInfo(tokenId).symbol,
         outstandingLabel: math.formatTokenAmount(tokenId, outstanding),
+        outstandingAmount: outstanding,
+        reserveAmount: reserve,
+        reserveLabel: math.formatTokenAmount(tokenId, reserve),
+        payableAmount: payable,
+        payableLabel: math.formatTokenAmount(tokenId, payable),
+        nextDebtIndex: nextDebtIndex === Number.MAX_SAFE_INTEGER ? 0 : nextDebtIndex,
         entries,
       });
     }
@@ -245,7 +270,9 @@ export const decodeWalletFinancialHealthProjection = (
   const activeEntityId = readWalletFrameActiveEntityId(frame);
   const history = decodeWalletActivityHistory(payload.activity, math);
   if (!activeEntityId && frame['activeEntity'] === null) return {
-    height, entities, activeEntityId: '', activeEntityLabel: '', debtGroups: [], disputes: [],
+    height, entities, activeEntityId: '', activeEntityLabel: '',
+      signerId: '',
+      jurisdictionName: '', debtGroups: [], disputes: [],
     accountsPage: 0, accountsPageCount: 0, accountsTotal: 0,
     solvencyStatus: solvency.status, solvencyEntityCount: solvency.entityCount,
     solvencyAccountViews: solvency.accountViews, solvencyAssets: solvency.assets,
@@ -258,13 +285,20 @@ export const decodeWalletFinancialHealthProjection = (
     throw new Error('WALLET_HEALTH_ACTIVE_ID_MISMATCH');
   }
   const accounts = requireRuntimeRecord(active['accounts'], 'WALLET_HEALTH_ACCOUNTS');
+  const config = requireRuntimeRecord(core['config'], 'WALLET_HEALTH_CONFIG');
+  const jurisdiction = requireRuntimeRecord(config['jurisdiction'], 'WALLET_HEALTH_JURISDICTION');
+  const reserves = requireRuntimeMap(core['reserves'], 'WALLET_HEALTH_RESERVES');
+  const signerId = requireRuntimeString(core['signerId'], 'WALLET_HEALTH_SIGNER_ID').toLowerCase();
+  if (!/^0x[0-9a-f]{40}$/u.test(signerId)) throw new Error('WALLET_HEALTH_SIGNER_ID_INVALID');
   if (!Array.isArray(accounts['items'])) throw new Error('WALLET_HEALTH_ACCOUNT_ITEMS_INVALID');
   return {
     height,
     entities,
     activeEntityId,
     activeEntityLabel: labels.get(activeEntityId) ?? activeEntityId,
-    debtGroups: decodeDebtGroups(core, activeEntityId, labels, math),
+    signerId,
+    jurisdictionName: requireRuntimeString(jurisdiction['name'], 'WALLET_HEALTH_JURISDICTION_NAME'),
+    debtGroups: decodeDebtGroups(core, activeEntityId, labels, math, reserves),
     disputes: decodeDisputes(accounts['items'], activeEntityId, labels),
     accountsPage: optionalRuntimeInteger(accounts['pageIndex'], 0, 'WALLET_HEALTH_ACCOUNT_PAGE'),
     accountsPageCount: optionalRuntimeInteger(accounts['pageCount'], accounts['items'].length > 0 ? 1 : 0, 'WALLET_HEALTH_ACCOUNT_PAGE_COUNT'),

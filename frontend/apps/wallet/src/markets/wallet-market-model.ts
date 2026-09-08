@@ -1,5 +1,6 @@
 import type { WalletMarketActivityEvent, WalletMarketActivityKind } from './wallet-market-activity';
 import { decodeWalletMarketActivity } from './wallet-market-activity';
+import { getJurisdictionStackId } from '../../../../../core/jurisdiction/machine/jurisdiction-stack';
 import {
   decodeWalletPaymentProjection,
   type WalletPaymentMath,
@@ -20,6 +21,19 @@ export type WalletMarketHub = Readonly<{
   entityId: string;
   label: string;
   feeBps: number | null;
+  isLocal: boolean;
+}>;
+
+export type WalletCrossMarketTarget = Readonly<{
+  routeValue: string;
+  jurisdiction: string;
+  jurisdictionLabel: string;
+  entityId: string;
+  entityLabel: string;
+  signerId: string;
+  hubEntityId: string;
+  hubLabel: string;
+  hubSignerId: string;
 }>;
 
 export type WalletMarketLevel = Readonly<{
@@ -63,6 +77,9 @@ export type WalletCrossMarketRoute = Readonly<{
 export type WalletMarketProjection = WalletPaymentProjection & Readonly<{
   logicalTimestamp: number;
   hubs: readonly WalletMarketHub[];
+    sourceJurisdiction: string;
+    sourceJurisdictionLabel: string;
+    crossTargets: readonly WalletCrossMarketTarget[];
   selectedHubId: string;
   pairs: readonly WalletMarketPair[];
   selectedPairId: string;
@@ -78,11 +95,14 @@ export type WalletMarketContext = Readonly<{
   payment: WalletPaymentProjection;
   logicalTimestamp: number;
   hubs: readonly WalletMarketHub[];
+  sourceJurisdiction: string;
+  sourceJurisdictionLabel: string;
+  crossTargets: readonly WalletCrossMarketTarget[];
 }>;
 
 export type WalletMarketPayload = Readonly<{
   activeFrame: unknown;
-  hubFrame: unknown;
+  hubFrame: unknown | null;
   activity: unknown;
   selectedHubId: string;
   selectedPairId: string;
@@ -101,31 +121,103 @@ export const decodeWalletMarketContext = (
   math: WalletPaymentMath,
 ): WalletMarketContext => {
   const payment = decodeWalletPaymentProjection(frame, math);
-  if (!payment.activeEntityId) return { payment, logicalTimestamp: 0, hubs: [] };
+  if (!payment.activeEntityId) return { payment, logicalTimestamp: 0, hubs: [],
+      sourceJurisdiction: '',
+      sourceJurisdictionLabel: '',
+      crossTargets: [] };
   const root = requireRuntimeRecord(frame, 'WALLET_MARKET_FRAME');
   if (!Array.isArray(root['entities'])) throw new Error('WALLET_MARKET_ENTITIES_INVALID');
-  const hubIds = new Set(root['entities'].flatMap((value): string[] => {
+  const entitySummaries =root['entities'].map(value => {
     const entity = requireRuntimeRecord(value, 'WALLET_MARKET_ENTITY');
-    return entity['isHub'] === true
-      ? [normalizeRequiredRuntimeEntityId(entity['entityId'], 'WALLET_MARKET_HUB_ID')]
-      : [];
-  }));
+    const jurisdiction =
+      entity['jurisdiction'] === undefined
+        ? null: requireRuntimeRecord(entity['jurisdiction'], 'WALLET_MARKET_ENTITY_JURISDICTION');
+    const name = jurisdiction
+      ? requireRuntimeString(jurisdiction['name'], 'WALLET_MARKET_ENTITY_JURISDICTION_NAME')
+      : '';
+    const stackId = jurisdiction
+      ? getJurisdictionStackId( {
+          chainId: jurisdiction['chainId'],
+          depositoryAddress: jurisdiction['depositoryAddress'],
+        })
+      : '';
+    const signerId =
+      entity['signerId'] === undefined
+        ? ''
+        : requireRuntimeString(entity['signerId'], 'WALLET_MARKET_ENTITY_SIGNER').toLowerCase();
+    const runtimeId = entity['runtimeId'] === undefined
+      ? ''
+        : requireRuntimeString(entity ['runtimeId'], 'WALLET_MARKET_ENTITY_RUNTIME').toLowerCase();
+    return {
+      entityId:normalizeRequiredRuntimeEntityId(entity['entityId'], 'WALLET_MARKET_ENTITY_ID'),
+      label: requireRuntimeString(entity['label'], 'WALLET_MARKET_ENTITY_LABEL'),
+      signerId,
+      runtimeId,
+      isHub
+      : entity ['isHub'] === true,
+      jurisdiction: stackId.toLowerCase(),
+      jurisdictionLabel: name.trim(),
+    };
+  });
+  const hubIds = new Set(entitySummaries.filter(({ isHub }) => isHub).map(({ entityId }) => entityId));
   const labels = new Map(payment.entities.map(({ entityId, label }) => [entityId, label]));
   const usableRecipients = new Set(payment.recipients
     .filter(({ blocked }) => !blocked)
     .map(({ entityId }) => entityId));
+  const activeSummary = entitySummaries.find(({ entityId }) => entityId === payment.activeEntityId);
   const hubs = payment.accounts
     .filter(({ counterpartyId }) => hubIds.has(counterpartyId) && usableRecipients.has(counterpartyId))
     .map(({ counterpartyId }): WalletMarketHub => ({
       entityId: counterpartyId,
       label: labels.get(counterpartyId) ?? counterpartyId,
       feeBps: null,
+      isLocal:
+        entitySummaries.find(({ entityId,
+    }) => entityId === counterpartyId)?.runtimeId === activeSummary?.runtimeId,
     }));
   const core = readCore(frame, 'WALLET_MARKET');
+  const sourceJurisdiction = activeSummary?.jurisdiction ?? '';
+  const sourceJurisdictionLabel = activeSummary?.jurisdictionLabel ?? '';
+  const targetUsers = entitySummaries.filter(
+    entity =>
+      !entity.isHub &&
+      entity.entityId !== payment.activeEntityId &&
+      entity.signerId &&
+      entity.jurisdiction &&
+      entity.jurisdiction !== sourceJurisdiction,
+  );
+  const targetHubs = entitySummaries.filter(
+    entity => entity.isHub && entity.signerId && entity.jurisdiction && entity.jurisdiction !== sourceJurisdiction,
+  );
+  const crossTargets = targetUsers
+    .flatMap((entity): WalletCrossMarketTarget[] =>
+      targetHubs
+        .filter(hub => hub.jurisdiction === entity.jurisdiction)
+        .map(hub => ({
+          routeValue: `cross:${sourceJurisdiction}:${entity.jurisdiction}:${payment.activeEntityId}:${entity.entityId}:${hub.entityId}`,
+          jurisdiction: entity.jurisdiction,
+          jurisdictionLabel: entity.jurisdictionLabel,
+          entityId: entity.entityId,
+          entityLabel: entity.label,
+          signerId: entity.signerId,
+          hubEntityId: hub.entityId,
+          hubLabel: hub.label,
+          hubSignerId: hub.signerId,
+        })),
+    )
+    .sort(
+      (left, right) =>
+        left.jurisdictionLabel.localeCompare(right.jurisdictionLabel) ||
+        left.entityLabel.localeCompare(right.entityLabel) ||
+        left.hubLabel.localeCompare(right.hubLabel),
+    );
   return {
     payment,
     logicalTimestamp: requireRuntimeInteger(core['timestamp'], 'WALLET_MARKET_TIMESTAMP'),
     hubs,
+    sourceJurisdiction,
+    sourceJurisdictionLabel,
+    crossTargets,
   };
 };
 
@@ -314,9 +406,9 @@ export const decodeWalletMarketProjection = (
   const context = decodeWalletMarketContext(payload.activeFrame, math);
   const selectedHub = context.hubs.find(({ entityId }) => entityId === payload.selectedHubId);
   if (!selectedHub) throw new Error('WALLET_MARKET_HUB_UNKNOWN');
-  const feeBps = selectedHubFee(payload.hubFrame, selectedHub.entityId);
+  const feeBps = payload.hubFrame ? selectedHubFee(payload.hubFrame, selectedHub.entityId) : null;
   const hubs = context.hubs.map((hub) => hub.entityId === selectedHub.entityId ? { ...hub, feeBps } : hub);
-  const pairs = decodePairs(payload.hubFrame, math);
+  const pairs = payload.hubFrame ? decodePairs(payload.hubFrame, math) : [];
   const selectedPairId = pairs.some(({ pairId }) => pairId === payload.selectedPairId)
     ? payload.selectedPairId
     : pairs[0]?.pairId ?? '';
@@ -325,6 +417,9 @@ export const decodeWalletMarketProjection = (
     ...context.payment,
     logicalTimestamp: context.logicalTimestamp,
     hubs,
+    sourceJurisdiction: context.sourceJurisdiction,
+    sourceJurisdictionLabel: context.sourceJurisdictionLabel,
+    crossTargets: context.crossTargets,
     selectedHubId: selectedHub.entityId,
     pairs,
     selectedPairId,

@@ -4,6 +4,7 @@ import type {
   RuntimeAdapterReadQuery,
 } from '../../../../../core/api/runtime-adapter/types';
 import type { RuntimeAdapterViewFrame } from '@xln/core/api/public/runtime-module';
+import type { SwapCommandPlan, SwapCommandPlanInput } from '../../../../../core/runtime/swap-cmd/swap-command-plan';
 import type { RuntimeAdapterStorageSnapshot } from '../../../../packages/browser/src/runtime/session/runtime-adapter-session';
 import { RuntimeQueryClient, type RuntimeQueryResultSchema } from '../../../../packages/runtime-client/src/runtime/query/runtime-query-client';
 import type { WalletPortfolioMath } from '../portfolio/wallet-portfolio-model';
@@ -95,6 +96,7 @@ export type WalletMarketMath = Readonly<{
     priceTicks: bigint;
     routeValue: string;
   }>) => string;
+  planSwapCommand: (input: SwapCommandPlanInput) => SwapCommandPlan;
 }>;
 
 export const walletRuntimeReadErrorMessage = (error: unknown): string =>
@@ -157,10 +159,11 @@ export const loadWalletRuntimeReadDependencies = async (
 
 export const loadWalletMarketMath = async (): Promise<WalletMarketMath> => {
   await import('../../../../../core/support/process/runtime-process.ts');
-  const [orderbook, authorization, route] = await Promise.all([
+  const [orderbook, authorization, route, planner] = await Promise.all([
     import('../../../../../core/orderbook/types.ts'),
     import('../../../../../core/account/swap/swap-net-authorization.ts'),
     import('../../../../../core/account/swap/swap-command-route.ts'),
+    import('../../../../../core/runtime/swap-cmd/swap-command-plan.ts'),
   ]);
   return {
     canonicalPair: orderbook.canonicalPair,
@@ -168,6 +171,7 @@ export const loadWalletMarketMath = async (): Promise<WalletMarketMath> => {
     prepareSwapOrderForDimensions: orderbook.prepareSwapOrderForDimensions,
     deriveSwapNetAuthorization: authorization.deriveSwapNetAuthorization,
     buildDeterministicSwapOfferId: route.buildDeterministicSwapOfferId,
+    planSwapCommand: planner.planSwapCommand,
   };
 };
 

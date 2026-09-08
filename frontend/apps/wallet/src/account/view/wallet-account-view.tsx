@@ -31,8 +31,10 @@ function AccountDispute({ account, view, onWorkspace }: Readonly<{ account: Acco
   </section>;
 }
 
-export function WalletFocusedAccount({ adapter, entityId, counterpartyId, onBack, onWorkspace }: Readonly<{
-  adapter: RuntimeAdapter; entityId: string; counterpartyId: string; onBack: () => void; onWorkspace: () => void;
+export function WalletFocusedAccount({ adapter, entityId, counterpartyId,
+  initialTokenId, onBack, onWorkspace }: Readonly<{
+  adapter: RuntimeAdapter; entityId: string; counterpartyId: string;
+  initialTokenId?: number | undefined; onBack: () => void; onWorkspace: () => void;
 }>) {
   const navigateWallet = useWalletNavigation();
   const appearance = useAccountAppearance();
@@ -42,7 +44,8 @@ export function WalletFocusedAccount({ adapter, entityId, counterpartyId, onBack
   const view = snapshot.data;
   const account = view?.account;
   const committed = account ? Number(account.currentFrame?.height ?? account.currentHeight ?? 0) > 0 : false;
-  return <section className="wallet-account-view" data-testid="account-panel" data-counterparty-id={counterpartyId}>
+  return <section className="wallet-account-view" data-testid="account-panel" data-counterparty-id={counterpartyId}
+      data-focused-token-id={initialTokenId}>
     <div className="wallet-account-view-actions"><button type="button" data-testid="account-panel-back" onClick={onBack}>← Back to Entity</button>
       <button type="button" onClick={() => navigateWallet('/app#accounts/configure')}>Manage</button>
       <button type="button" onClick={() => navigateWallet('/app#accounts/appearance')}>Appearance</button></div>
@@ -54,7 +57,8 @@ export function WalletFocusedAccount({ adapter, entityId, counterpartyId, onBack
     {snapshot.notice ? <p role="status">{snapshot.notice}</p> : null}
     {view && account ? <>
       {committed && view.tokens.length ? view.tokens.map(detail => <WalletAccountToken key={detail.tokenId} detail={detail} format={view.formatTokenAmount} appearance={appearance}
-        commandsReady={view.commandsReady} busy={snapshot.fundingTokenId !== null} funding={snapshot.fundingTokenId === detail.tokenId} onFaucet={() => void source.faucet(detail.tokenId)} />)
+        commandsReady={view.commandsReady}
+                initiallyExpanded={detail.tokenId === initialTokenId} busy={snapshot.fundingTokenId !== null} funding={snapshot.fundingTokenId === detail.tokenId} onFaucet={() => void source.faucet(detail.tokenId)} />)
         : <p>{committed ? 'No active token deltas in this account.' : 'Account is opening. Deltas will appear after first committed frame.'}</p>}
       <AccountDispute account={account} view={view} onWorkspace={onWorkspace} />
       <WalletAccountActivity view={view} />
