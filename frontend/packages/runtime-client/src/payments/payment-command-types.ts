@@ -58,6 +58,19 @@ export type RuntimePaymentEntityTx =
       }>;
     }>
   | Readonly<{
+      type: 'settle_approve';
+      data: Readonly<{
+        counterpartyEntityId: string;
+        workspaceHash: string;
+      }>;
+    }>
+  | Readonly<{
+      type: 'settle_execute';
+      data: Readonly<{
+        counterpartyEntityId: string;
+      }>;
+    }>
+  | Readonly<{
       type: 'lendingOffer';
       data: Readonly<{
         positionId: string;

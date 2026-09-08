@@ -21,6 +21,7 @@ export type WalletRecoveryFixture = Readonly<{
   readJurisdictionsJson: () => string;
   readHubsJson: () => string;
   hubDiscovery: Readonly<{ backupFileContents: string; hubEntityId: string; towerUrl: string }>;
+  settlement: Readonly<{ backupFileContents: string; counterpartyEntityId: string; workspaceHash: string }>;
   external: Readonly<{
     recipient: string;
     tokenAddress: string;
@@ -182,6 +183,72 @@ export const createWalletRecoveryFixture = async (
     entityId: mnemonic.entityId, jurisdiction: 'React Recovery mnemonic',
   }] });
   const hubEncrypted = await runtime.encryptRuntimeRecoveryBundle(hubBundle, WALLET_RECOVERY_FIXTURE_MNEMONIC);
+  const { defaultAccountDisputeConfigForParties } = await import(
+    '../../../../../core/account/config/dispute-config'
+  );
+  runtime.resumeRuntimeLoop(mnemonic.env);
+  runtime.enqueueRuntimeInput(mnemonic.env, { runtimeTxs: [], entityInputs: [{
+    entityId: hub.entityId,
+    signerId: hubSignerId,
+    entityTxs: [{
+      type: 'openAccount',
+      data: {
+        targetEntityId: mnemonic.entityId,
+        disputeConfig: defaultAccountDisputeConfigForParties(
+          hub.entityId, false, mnemonic.entityId, false,
+        ),
+      },
+    }],
+  }] });
+  await waitForWalletFixtureState('settlement-account-open', () => {
+    const ownerReplica = [...mnemonic.env.state.eReplicas.values()]
+      .find(replica => replica.entityId === mnemonic.entityId);
+    const hubReplica = [...mnemonic.env.state.eReplicas.values()]
+      .find(replica => replica.entityId === hub.entityId);
+    return Boolean(
+      ownerReplica?.state.accounts.get(hub.entityId)
+      && hubReplica?.state.accounts.get(mnemonic.entityId),
+    );
+  });
+  runtime.enqueueRuntimeInput(mnemonic.env, { runtimeTxs: [], entityInputs: [{
+    entityId: hub.entityId,
+    signerId: hubSignerId,
+    entityTxs: [{
+      type: 'settle_propose',
+      data: {
+        counterpartyEntityId: mnemonic.entityId,
+        executorIsLeft: runtime.isLeftEntity(hub.entityId, mnemonic.entityId),
+        memo: 'manual-peer-review',
+        ops: [{ type: 'forgive', tokenId: 1 }],
+      },
+    }],
+  }] });
+  await waitForWalletFixtureState('settlement-awaiting-peer', () => {
+    const ownerReplica = [...mnemonic.env.state.eReplicas.values()]
+      .find(replica => replica.entityId === mnemonic.entityId);
+    const workspace = ownerReplica?.state.accounts.get(hub.entityId)?.state.settlementWorkspace;
+    return workspace?.status === 'awaiting_counterparty'
+      && workspace.lastModifiedByLeft === runtime.isLeftEntity(hub.entityId, mnemonic.entityId);
+  });
+  await runtime.stopRuntimeLoopAndWait(mnemonic.env);
+  const settlementWorkspace = [...mnemonic.env.state.eReplicas.values()]
+    .find(replica => replica.entityId === mnemonic.entityId)
+    ?.state.accounts.get(hub.entityId)?.state.settlementWorkspace;
+  if (!settlementWorkspace) throw new Error('WALLET_SETTLEMENT_FIXTURE_WORKSPACE_MISSING');
+  const settlementBundle = runtime.buildRuntimeRecoveryBundle(mnemonic.env, { signers: [
+    {
+      index: 0, derivationIndex: 0, address: mnemonic.runtimeId, name: 'Signer 1',
+      entityId: mnemonic.entityId, jurisdiction: 'React Recovery mnemonic',
+    },
+    {
+      index: 1, derivationIndex: 1, address: hubSignerId, name: 'Signer 2',
+      entityId: hub.entityId, jurisdiction: 'React Recovery mnemonic',
+    },
+  ] });
+  const settlementEncrypted = await runtime.encryptRuntimeRecoveryBundle(
+    settlementBundle,
+    WALLET_RECOVERY_FIXTURE_MNEMONIC,
+  );
   const initialExternalBalance = 125_000_000n;
   if (!chainAdapter.fundSignerWallet) throw new Error('WALLET_RECOVERY_FIXTURE_FAUCET_REQUIRED');
   await chainAdapter.fundSignerWallet(mnemonic.runtimeId, initialExternalBalance, 'USDC');
@@ -284,6 +351,11 @@ export const createWalletRecoveryFixture = async (
     }),
     hubDiscovery: { hubEntityId: hub.entityId, towerUrl: `http://127.0.0.1:${hubTower.server.port}`,
       backupFileContents: serialization.serializeTaggedJson({ version: 1, bundles: [hubEncrypted] }) },
+    settlement: {
+      counterpartyEntityId: hub.entityId,
+      workspaceHash: settlementWorkspace.workspaceHash,
+      backupFileContents: serialization.serializeTaggedJson({ version: 1, bundles: [settlementEncrypted] }),
+    },
     external: {
       recipient: externalRecipient,
       tokenAddress: token.address.toLowerCase(),

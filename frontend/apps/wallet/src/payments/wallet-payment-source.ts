@@ -37,6 +37,12 @@ import {
   type WalletSettlementReview,
 } from './commands/wallet-payment-operations-model';
 import {
+  buildWalletSettlementApproval,
+  requireCurrentWalletSettlementApproval,
+  type WalletSettlementApproval,
+} from './commands/wallet-settlement-approval-model';
+import { requireCurrentWalletSettlementExecution } from './commands/wallet-settlement-execution-model';
+import {
   createWalletRuntimeQueryClient,
   loadWalletRuntimeReadDependencies,
   type WalletRuntimeReadDependencies,
@@ -85,6 +91,7 @@ export class WalletPaymentSource {
   private selectedEntityId = '';
   private quoteRequest: WalletPaymentQuoteRequest | null = null;
   private pendingCommand: WalletPreparedCommand | null = null;
+  private readonly settlementExecutionKeys = new Set<string>();
   private commandBusy = false;
 
   constructor(private readonly config: RuntimeAdapterStorageSnapshot, private readonly selection: WalletWorkspaceSelection, private readonly loadRuntime: WalletRuntimeReadLoader = loadWalletRuntimeReadDependencies) {
@@ -280,6 +287,35 @@ export class WalletPaymentSource {
     await this.submitInput(buildWalletEntityTxInput(projection, review.entityTx));
   };
 
+  readonly reviewSettlementApproval = (counterpartyEntityId: string): WalletSettlementApproval =>
+    buildWalletSettlementApproval(this.requireProjection(), counterpartyEntityId);
+
+  readonly submitReviewedSettlementApproval = async (review: WalletSettlementApproval): Promise<void> => {
+    const projection = this.requireProjection();
+    const entityTx = requireCurrentWalletSettlementApproval(review, projection);
+    await this.submitInput(buildWalletEntityTxInput(projection, entityTx));
+  };
+
+  readonly executeReadySettlement = async (
+    counterpartyEntityId: string,
+    executionKey: string,
+  ): Promise<void> => {
+    if (this.settlementExecutionKeys.has(executionKey)) return;
+    const projection = this.requireProjection();
+    const entityTx = requireCurrentWalletSettlementExecution(
+      executionKey,
+      counterpartyEntityId,
+      projection,
+    );
+    this.settlementExecutionKeys.add(executionKey);
+    try {
+      await this.submitInput(buildWalletEntityTxInput(projection, entityTx));
+    } catch (error: unknown) {
+      this.settlementExecutionKeys.delete(executionKey);
+      throw error;
+    }
+  };
+
   readonly validateInvoiceAmount = (tokenId: number, amount: string): string | null => {
     const normalized = amount.trim();
     if (!normalized) return null;
@@ -381,13 +417,28 @@ export class WalletPaymentSource {
         const frame = await client.readViewFrame({
           accountsLimit: 100, booksLimit: 1, ...(entityId ? { entityId } : {}),
         });
+        let projection: WalletPaymentProjection;
         try {
-          return requireWalletWorkspaceEntity(decodeWalletPaymentProjection(frame, math), entityId);
+          projection = requireWalletWorkspaceEntity(decodeWalletPaymentProjection(frame, math), entityId);
         } catch (error: unknown) {
           if (!/^TOKEN_METADATA_UNAVAILABLE:\d+$/u.test(walletRuntimeReadErrorMessage(error))) throw error;
           await math.refreshTokenCatalog(this.workspaceApiBase(window.location.origin));
-          return requireWalletWorkspaceEntity(decodeWalletPaymentProjection(frame, math), entityId);
+          projection = requireWalletWorkspaceEntity(decodeWalletPaymentProjection(frame, math), entityId);
         }
+        if (adapter.mode !== 'embedded') return projection;
+        const bridge = await import('../../../../bridges/wallet/wallet-canonical-hub-discovery');
+        const workspaces = await bridge.readCanonicalWalletSettlementWorkspaces(
+          adapter,
+          projection.activeEntityId,
+          frame,
+        );
+        return {
+          ...projection,
+          accounts: projection.accounts.map((account) => ({
+            ...account,
+            settlement: workspaces.get(account.counterpartyId) ?? null,
+          })),
+        };
       },
       {
         readHeight: () => adapter.currentHeight,

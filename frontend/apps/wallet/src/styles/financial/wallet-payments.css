@@ -204,20 +204,59 @@
 .wallet-operation-picker span { color: #62696c; font-size: 0.62rem; line-height: 1.4; }
 .wallet-operation-form { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .wallet-operation-note { margin: 0; padding: 0.9rem 0; color: #737b76; font-size: 0.7rem; line-height: 1.5; border-bottom: 1px solid var(--line); }
-.wallet-settlement-review { margin-top: 1.15rem; padding: 1.15rem; background: #121713; border: 1px solid #354238; }
-.wallet-settlement-review header { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; padding-bottom: 0.9rem; border-bottom: 1px solid #2b342e; }
-.wallet-settlement-review header p { margin: 0 0 0.25rem; color: var(--accent); font-size: 0.62rem; letter-spacing: 0.12em; text-transform: uppercase; }
-.wallet-settlement-review h3 { margin: 0; color: #e1e5de; font-size: 1rem; font-weight: 560; }
-.wallet-settlement-review header > span { color: #a88a58; font-size: 0.66rem; }
-.wallet-settlement-review dl { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); margin: 0; }
-.wallet-settlement-review dl > div { display: grid; gap: 0.3rem; min-width: 0; padding: 0.85rem 0; border-bottom: 1px solid #252d28; }
-.wallet-settlement-review dl > div:nth-child(odd) { padding-right: 1rem; border-right: 1px solid #252d28; }
-.wallet-settlement-review dl > div:nth-child(even) { padding-left: 1rem; }
-.wallet-settlement-review dt { color: #69716c; font-size: 0.61rem; letter-spacing: 0.08em; text-transform: uppercase; }
-.wallet-settlement-review dd { display: grid; gap: 0.25rem; min-width: 0; margin: 0; color: #cbd1ca; font-size: 0.76rem; }
-.wallet-settlement-review code { overflow-wrap: anywhere; color: #777f79; font-size: 0.6rem; }
-.wallet-settlement-review > p { margin: 0; padding: 0.85rem 0; color: #858d87; font-size: 0.68rem; line-height: 1.5; }
-.wallet-settlement-review .wallet-payment-actions { padding-bottom: 0; }
+.wallet-settlement-review,
+.wallet-settlement-approval-review { margin-top: 1.15rem; padding: 1.15rem; background: #121713; border: 1px solid #354238; }
+.wallet-settlement-review header,
+.wallet-settlement-approval-review header { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; padding-bottom: 0.9rem; border-bottom: 1px solid #2b342e; }
+.wallet-settlement-review header p,
+.wallet-settlement-approval-review header p { margin: 0 0 0.25rem; color: var(--accent); font-size: 0.62rem; letter-spacing: 0.12em; text-transform: uppercase; }
+.wallet-settlement-review h3,
+.wallet-settlement-approval-review h3 { margin: 0; color: #e1e5de; font-size: 1rem; font-weight: 560; }
+.wallet-settlement-review header > span,
+.wallet-settlement-approval-review header > span { color: #a88a58; font-size: 0.66rem; }
+.wallet-settlement-review dl,
+.wallet-settlement-approval-review dl { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); margin: 0; }
+.wallet-settlement-review dl > div,
+.wallet-settlement-approval-review dl > div { display: grid; gap: 0.3rem; min-width: 0; padding: 0.85rem 0; border-bottom: 1px solid #252d28; }
+.wallet-settlement-review dl > div:nth-child(odd),
+.wallet-settlement-approval-review dl > div:nth-child(odd) { padding-right: 1rem; border-right: 1px solid #252d28; }
+.wallet-settlement-review dl > div:nth-child(even),
+.wallet-settlement-approval-review dl > div:nth-child(even) { padding-left: 1rem; }
+.wallet-settlement-review dt,
+.wallet-settlement-approval-review dt { color: #69716c; font-size: 0.61rem; letter-spacing: 0.08em; text-transform: uppercase; }
+.wallet-settlement-review dd,
+.wallet-settlement-approval-review dd { display: grid; gap: 0.25rem; min-width: 0; margin: 0; color: #cbd1ca; font-size: 0.76rem; }
+.wallet-settlement-review code,
+.wallet-settlement-approval-review code { overflow-wrap: anywhere; color: #777f79; font-size: 0.6rem; }
+.wallet-settlement-review > p,
+.wallet-settlement-approval-review > p { margin: 0; padding: 0.85rem 0; color: #858d87; font-size: 0.68rem; line-height: 1.5; }
+.wallet-settlement-review .wallet-payment-actions,
+.wallet-settlement-approval-review .wallet-payment-actions { padding-bottom: 0; }
+.wallet-settlement-approvals { padding-block: 1.5rem; border-top: 1px solid var(--line); }
+.wallet-settlement-proposal { display: grid; gap: 0.7rem; padding: 0.95rem 0; border-bottom: 1px solid var(--line); }
+.wallet-settlement-proposal > header { display: flex; justify-content: space-between; gap: 1rem; }
+.wallet-settlement-proposal > header div,
+.wallet-settlement-proposal > div { display: grid; gap: 0.25rem; min-width: 0; }
+.wallet-settlement-proposal strong { color: #d8ddd6; font-size: 0.8rem; }
+.wallet-settlement-proposal header span { color: var(--accent); font-size: 0.62rem; text-transform: uppercase; }
+.wallet-settlement-proposal code { overflow-wrap: anywhere; color: #707873; font-size: 0.6rem; }
+.wallet-settlement-proposal ul,
+.wallet-settlement-approval-review ul { margin: 0; padding: 0; color: #aab0aa; font-size: 0.7rem; list-style: none; }
+.wallet-settlement-proposal > p,
+.wallet-settlement-approval-review > p { margin: 0; color: #858d87; font-size: 0.68rem; }
+.wallet-settlement-proposal > button {
+  justify-self: end;
+  padding: 0.72rem 0.9rem;
+  color: #cdd2ca;
+  background: transparent;
+  border: 1px solid #34383a;
+  border-radius: 0.45rem;
+}
+.wallet-settlement-proposal > button:hover:not(:disabled) {
+  color: #10130f;
+  background: var(--accent);
+  border-color: var(--accent);
+}
 
 .wallet-payments-unavailable { max-width: 46rem; margin-top: clamp(3rem, 8vw, 7rem); padding: 1.5rem 0; border-top: 1px solid #71532f; border-bottom: 1px solid #42351f; }
 .wallet-payments-unavailable h2 { margin: 0; color: #e7e9e3; font-size: clamp(1.5rem, 3vw, 2.5rem); font-weight: 560; letter-spacing: -0.04em; }
