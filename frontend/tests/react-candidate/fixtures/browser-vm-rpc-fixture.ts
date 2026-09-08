@@ -5,6 +5,7 @@ import type { BrowserVMState } from '../../../../core/runtime/types';
 export type BrowserVmRpcFixture = Readonly<{
   chainAdapter: JAdapter;
   rpcUrl: string;
+  setOnline: (online: boolean) => void;
   close: () => Promise<void>;
 }>;
 
@@ -36,6 +37,7 @@ export const createBrowserVmRpcFixture = async (rpcPort: number): Promise<Browse
   let receipts = new Map(browserVmState.chain.txReceipts);
   let receiptRoots = new Map(browserVmState.chain.blockReceiptRoots);
   let blockHashes = new Map(browserVmState.chain.blockHashes);
+  let online = true;
   const refreshBrowserVmState = async (): Promise<void> => {
     const next = await chainAdapter.dumpState();
     if (typeof next === 'string') throw new Error('WALLET_RECOVERY_FIXTURE_BROWSERVM_STATE_INVALID');
@@ -214,6 +216,7 @@ export const createBrowserVmRpcFixture = async (rpcPort: number): Promise<Browse
     port: rpcPort,
     async fetch(request) {
       if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: rpcHeaders });
+      if (!online) return new Response('RECOVERY_RPC_OFFLINE', { status: 503, headers: rpcHeaders });
       try {
         const body = await request.json() as unknown;
         const response = Array.isArray(body)
@@ -231,6 +234,7 @@ export const createBrowserVmRpcFixture = async (rpcPort: number): Promise<Browse
   return {
     chainAdapter,
     rpcUrl: `http://127.0.0.1:${rpcServer.port}`,
+    setOnline: (next) => { online = next; },
     close: async () => {
       rpcServer.stop(true);
       await chainAdapter.close();

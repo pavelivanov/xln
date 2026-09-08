@@ -83,11 +83,15 @@ test('wallet clears only after confirmation and leaves chain balances unchanged'
   const batch = page.getByRole('region', { name: 'Jurisdiction batch' });
   await expect(batch.getByRole('heading', { name: 'Draft · 1 operations' })).toBeVisible({ timeout: 30_000 });
   await expect(batch.locator('summary')).toContainText('1.0 USDC');
-  page.once('dialog', (dialog) => dialog.dismiss());
-  await batch.getByRole('button', { name: 'Clear batch' }).click();
+  await batch.getByRole('button', { name: 'Review clear' }).click();
+  const clearReview = batch.getByRole('region', { name: 'Confirm clear batch' });
+  await expect(clearReview).toContainText('This removes every operation currently shown in the draft.');
+  await expectPageContained(page);
+  await screenshotEvidence(page, testInfo, 'wallet-batch-clear-review');
+  await clearReview.getByRole('button', { name: 'Keep batch' }).click();
   await expect(batch.getByRole('heading', { name: 'Draft · 1 operations' })).toBeVisible();
-  page.once('dialog', (dialog) => dialog.accept());
-  await batch.getByRole('button', { name: 'Clear batch' }).click();
+  await batch.getByRole('button', { name: 'Review clear' }).click();
+  await clearReview.getByRole('button', { name: 'Clear exact batch' }).click();
   await expect(batch.getByText('No queued operations.')).toBeVisible({ timeout: 30_000 });
   expect(await balances(page)).toEqual(before);
   await expectPageContained(page);
@@ -95,7 +99,7 @@ test('wallet clears only after confirmation and leaves chain balances unchanged'
   expectNoBrowserErrors(errors);
 });
 
-test('wallet peer approves and designated executor finalizes the exact local settlement workspace', { tag: '@functional' }, async ({ page }, testInfo) => {
+test('wallet peer approves, retries, and finalizes the exact local settlement workspace', { tag: '@functional' }, async ({ page }, testInfo) => {
   test.setTimeout(150_000);
   const errors = observeBrowserErrors(page);
   const fixture = await restoreLocalWallet(page, 'settlement');
@@ -104,6 +108,7 @@ test('wallet peer approves and designated executor finalizes the exact local set
   await page.getByRole('link', { name: 'Payments', exact: true }).click();
   await page.getByRole('button', { name: 'Operations' }).click();
   await page.getByLabel('Entity', { exact: true }).selectOption(fixture.recovery.entityId);
+  await expect(page.getByLabel('Entity', { exact: true })).toHaveValue(fixture.recovery.entityId);
 
   const proposals = page.getByRole('region', { name: 'Settlement proposals' });
   const proposal = proposals.locator('.wallet-settlement-proposal').filter({
@@ -128,11 +133,13 @@ test('wallet peer approves and designated executor finalizes the exact local set
   await expect(proposal).toContainText('awaiting counterparty');
   await proposal.getByRole('button', { name: 'Review peer approval' }).click();
   await page.getByLabel('Entity', { exact: true }).selectOption(fixture.recovery.settlement.counterpartyEntityId);
+  await expect(page.getByLabel('Entity', { exact: true })).toHaveValue(fixture.recovery.settlement.counterpartyEntityId);
   await expect(review).not.toBeVisible();
-  const ownProposal = proposals.locator('.wallet-settlement-proposal').filter({ hasText: fixture.recovery.entityId });
-  await expect(ownProposal.getByRole('button', { name: 'Awaiting peer approval' })).toBeDisabled();
+  await expect(proposals.getByRole('button', { name: 'Review peer approval' })).toHaveCount(0);
 
   await page.getByLabel('Entity', { exact: true }).selectOption(fixture.recovery.entityId);
+  await expect(page.getByLabel('Entity', { exact: true })).toHaveValue(fixture.recovery.entityId);
+  await expect(proposal).toBeVisible({ timeout: 30_000 });
   await proposal.getByRole('button', { name: 'Review peer approval' }).click();
   await review.getByRole('button', { name: 'Approve exact proposal' }).click();
   await expect(proposal).toContainText('ready to submit', { timeout: 30_000 });
@@ -141,6 +148,7 @@ test('wallet peer approves and designated executor finalizes the exact local set
   await screenshotEvidence(page, testInfo, 'wallet-settlement-peer-approved');
 
   await page.getByLabel('Entity', { exact: true }).selectOption(fixture.recovery.settlement.counterpartyEntityId);
+  await expect(page.getByLabel('Entity', { exact: true })).toHaveValue(fixture.recovery.settlement.counterpartyEntityId);
   const executorProposal = proposals.locator('.wallet-settlement-proposal').filter({ hasText: fixture.recovery.entityId });
   const batch = page.getByRole('region', { name: 'Jurisdiction batch' });
   await expect(batch.getByRole('heading', { name: 'Draft · 1 operations' })).toBeVisible({ timeout: 30_000 });
@@ -153,12 +161,40 @@ test('wallet peer approves and designated executor finalizes the exact local set
   await expectPageContained(page);
   await screenshotEvidence(page, testInfo, 'wallet-settlement-executor-draft');
 
+  const fixtureControlBase = fixture.wsUrl.replace(/^ws:/u, 'http:').replace(/\/rpc$/u, '');
+  const offline = await page.request.post(`${fixtureControlBase}/recovery-rpc-mode?online=0`);
+  expect(offline.ok()).toBe(true);
   await batch.getByRole('button', { name: 'Broadcast draft' }).click();
-  await expect(batch.getByRole('heading', { name: /Awaiting chain finality/ })).not.toBeVisible({ timeout: 45_000 });
+  await expect(batch.getByRole('heading', { name: 'Submission needs retry' })).toBeVisible({ timeout: 30_000 });
+  await expect(batch.getByText('The exact signed batch is preserved for rebroadcast.', { exact: false })).toBeVisible();
+  await expect(batch.getByText('Failure detail')).toBeVisible();
+  await expect(batch.locator('.wallet-batch-failure')).toContainText('503');
+  await expect(batch.getByRole('button', { name: 'Rebroadcast sent batch' })).toBeVisible();
+  await batch.getByRole('button', { name: 'Review clear' }).click();
+  const sentClearReview = batch.getByRole('region', { name: 'Confirm clear batch' });
+  await expect(sentClearReview).toContainText('A transaction already on-chain may still finalize.');
+  await page.getByLabel('Entity', { exact: true }).selectOption(fixture.recovery.entityId);
+  await expect(sentClearReview).not.toBeVisible();
+  await page.getByLabel('Entity', { exact: true }).selectOption(fixture.recovery.settlement.counterpartyEntityId);
+  await expect(batch.getByRole('heading', { name: 'Submission needs retry' })).toBeVisible({ timeout: 30_000 });
+  await expect(sentClearReview).not.toBeVisible();
+  await batch.getByRole('button', { name: 'Review clear' }).click();
+  await sentClearReview.getByRole('button', { name: 'Keep batch' }).click();
+  await expectPageContained(page);
+  await screenshotEvidence(page, testInfo, 'wallet-settlement-batch-retry');
+  const online = await page.request.post(`${fixtureControlBase}/recovery-rpc-mode?online=1`);
+  expect(online.ok()).toBe(true);
+  await batch.getByRole('button', { name: 'Rebroadcast sent batch' }).click();
+  await expect(batch.getByRole('heading', { name: 'Batch confirmed' })).toBeVisible({ timeout: 45_000 });
+  await expect(batch.getByText('Chain finality removed the batch from the pending queue.')).toBeVisible();
   await expect(batch.getByText('No queued operations.')).toBeVisible();
   await expect(proposals).not.toBeVisible();
   await expectPageContained(page);
-  await screenshotEvidence(page, testInfo, 'wallet-settlement-chain-finality');
+  await screenshotEvidence(page, testInfo, 'wallet-settlement-batch-confirmed');
+
+  await page.getByLabel('Entity', { exact: true }).selectOption(fixture.recovery.entityId);
+  await page.getByLabel('Entity', { exact: true }).selectOption(fixture.recovery.settlement.counterpartyEntityId);
+  await expect(batch.getByRole('heading', { name: 'Batch confirmed' })).not.toBeVisible();
 
   await page.getByRole('link', { name: 'Assets', exact: true }).click();
   await page.getByRole('link', { name: 'Payments', exact: true }).click();
@@ -167,5 +203,7 @@ test('wallet peer approves and designated executor finalizes the exact local set
   await expect(page.getByRole('region', { name: 'Jurisdiction batch' }).getByText('No queued operations.')).toBeVisible();
   await expectPageContained(page);
   await screenshotEvidence(page, testInfo, 'wallet-settlement-finality-reopen');
-  expectNoBrowserErrors(errors);
+  expect(errors.pageErrors).toEqual([]);
+  expect(errors.consoleErrors.length).toBeGreaterThan(0);
+  for (const message of errors.consoleErrors) expect(message).toContain('503');
 });

@@ -14,12 +14,33 @@ const operationNames = {
 
 export type WalletBatchOperation = Readonly<{ label: string; summary: string; details: string }>;
 type BatchMath = Readonly<{ formatTokenAmount: (tokenId: number, amount: bigint) => string }>;
+export type WalletBatchSubmission = Readonly<{
+  batchHash: string;
+  txHash: string;
+  entityNonce: number;
+  submitAttempts: number;
+  firstSubmittedAt: number;
+  lastSubmittedAt: number;
+}>;
+export type WalletBatchRuntimeSubmission = Readonly<{
+  batchHash: string;
+  entityNonce: number;
+  submitAttempts: number;
+  lastSubmittedAt: number;
+  txHash: string;
+  failure: string;
+  failureKind: 'none' | 'retryable' | 'terminal';
+  failureAt: number | null;
+}>;
 export type WalletBatchProjection = Readonly<{
   draft: readonly WalletBatchOperation[];
   sent: readonly WalletBatchOperation[];
   sentHash: string;
+  submission: WalletBatchSubmission | null;
   status: 'empty' | 'accumulating' | 'sent' | 'failed';
   failure: string;
+  failureKind: 'none' | 'retryable' | 'terminal';
+  failureAt: number | null;
   reviewKey: string;
 }>;
 export type WalletBatchAction = 'broadcast' | 'rebroadcast' | 'clear';
@@ -53,17 +74,56 @@ const decodeOperations = (value: unknown, math: BatchMath): readonly WalletBatch
 };
 
 export const decodeWalletBatch = (value: unknown, math: BatchMath): WalletBatchProjection => {
-  if (value === undefined) return { draft: [], sent: [], sentHash: '', status: 'empty', failure: '', reviewKey: '' };
+  if (value === undefined) return {
+    draft: [], sent: [], sentHash: '', submission: null, status: 'empty', failure: '',
+    failureKind: 'none', failureAt: null, reviewKey: '',
+  };
   const state = requireRuntimeRecord(value, 'WALLET_BATCH_STATE');
   const sent = state['sentBatch'] === undefined ? null : requireRuntimeRecord(state['sentBatch'], 'WALLET_SENT_BATCH');
-  const failure = sent ? sent['terminalFailure'] ?? sent['lastFailure'] : undefined;
+  const terminalFailure = sent?.['terminalFailure'];
+  const retryableFailure = sent?.['lastFailure'];
+  const failure = terminalFailure ?? retryableFailure;
+  const decodedFailure = failure === undefined ? null : requireRuntimeRecord(failure, 'WALLET_BATCH_FAILURE');
+  const submission = sent ? {
+    batchHash: requireRuntimeString(sent['batchHash'], 'WALLET_SENT_BATCH_HASH'),
+    txHash: sent['txHash'] === undefined ? '' : requireRuntimeString(sent['txHash'], 'WALLET_SENT_BATCH_TX_HASH'),
+    entityNonce: requireRuntimeInteger(sent['entityNonce'], 'WALLET_SENT_BATCH_NONCE', 1),
+    submitAttempts: requireRuntimeInteger(sent['submitAttempts'], 'WALLET_SENT_BATCH_ATTEMPTS'),
+    firstSubmittedAt: requireRuntimeInteger(sent['firstSubmittedAt'], 'WALLET_SENT_BATCH_FIRST_SUBMITTED'),
+    lastSubmittedAt: requireRuntimeInteger(sent['lastSubmittedAt'], 'WALLET_SENT_BATCH_LAST_SUBMITTED'),
+  } : null;
   return {
     draft: decodeOperations(state['batch'], math),
     sent: sent ? decodeOperations(sent['batch'], math) : [],
-    sentHash: sent ? requireRuntimeString(sent['batchHash'], 'WALLET_SENT_BATCH_HASH') : '',
+    sentHash: submission?.batchHash ?? '',
+    submission,
     status: requireRuntimeEnum(state['status'], ['empty', 'accumulating', 'sent', 'failed'], 'WALLET_BATCH_STATUS'),
-    failure: failure === undefined ? '' : requireRuntimeString(requireRuntimeRecord(failure, 'WALLET_BATCH_FAILURE')['message'], 'WALLET_BATCH_FAILURE_MESSAGE'),
+    failure: decodedFailure ? requireRuntimeString(decodedFailure['message'], 'WALLET_BATCH_FAILURE_MESSAGE') : '',
+    failureKind: terminalFailure !== undefined ? 'terminal' : retryableFailure !== undefined ? 'retryable' : 'none',
+    failureAt: decodedFailure ? requireRuntimeInteger(decodedFailure['failedAt'], 'WALLET_BATCH_FAILURE_AT') : null,
     reviewKey: safeStringify(value),
+  };
+};
+
+export const mergeWalletBatchRuntimeSubmission = (
+  batch: WalletBatchProjection,
+  runtime: WalletBatchRuntimeSubmission | null,
+): WalletBatchProjection => {
+  if (!batch.submission || !runtime) return batch;
+  if (runtime.batchHash !== batch.submission.batchHash
+    || runtime.entityNonce !== batch.submission.entityNonce) return batch;
+  return {
+    ...batch,
+    submission: {
+      ...batch.submission,
+      submitAttempts: runtime.submitAttempts,
+      lastSubmittedAt: runtime.lastSubmittedAt,
+      txHash: runtime.txHash,
+    },
+    status: runtime.failureKind === 'none' ? batch.status : 'failed',
+    failure: runtime.failure,
+    failureKind: runtime.failureKind,
+    failureAt: runtime.failureAt,
   };
 };
 
@@ -79,6 +139,7 @@ export const buildWalletBatchTx = (
   }
   if (action === 'rebroadcast') {
     if (!current.sentHash) throw new Error('No in-flight batch to rebroadcast.');
+    if (current.failureKind === 'terminal') throw new Error('A terminally failed batch must be cleared before rebuilding.');
     return { type: 'j_rebroadcast', data: { gasBumpBps: 1_000 } };
   }
   if (!current.sentHash && current.draft.length === 0) throw new Error('No batch to clear.');

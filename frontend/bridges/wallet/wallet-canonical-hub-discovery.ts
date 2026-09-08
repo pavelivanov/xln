@@ -13,6 +13,7 @@ import { buildAccountActivityRows } from '../../src/lib/components/Entity/accoun
 import { buildDisputedAccountViews } from '../../src/lib/components/Entity/account/account-dispute-view';
 import { buildAccountDropdownItems } from '../../src/lib/components/Entity/account/account-dropdown-model';
 import { decodeWalletSettlementWorkspace } from '../../apps/wallet/src/portfolio/wallet-portfolio-model';
+import type { WalletBatchRuntimeSubmission } from '../../apps/wallet/src/commands/wallet-batch-model';
 
 export const readCanonicalAccountDropdown = async (adapter: RuntimeAdapter, entityId: string, frame: RuntimeAdapterViewFrame) => {
   const view = await readCanonicalAccountView(adapter, entityId, '', frame);
@@ -64,6 +65,31 @@ export const readCanonicalWalletSettlementWorkspaces = async (
     counterpartyId.toLowerCase(),
     decodeWalletSettlementWorkspace(account.state.settlementWorkspace),
   ]));
+};
+
+export const readCanonicalWalletBatchSubmission = async (
+  adapter: RuntimeAdapter,
+  entityId: string,
+  frame: RuntimeAdapterViewFrame,
+): Promise<WalletBatchRuntimeSubmission | null> => {
+  const view = await readCanonicalAccountView(adapter, entityId, '', frame);
+  const submission = view.replica.jSubmitState;
+  const sent = view.replica.state.jBatchState?.sentBatch;
+  if (!submission || !sent
+    || submission.batchHash.toLowerCase() !== sent.batchHash.toLowerCase()
+    || submission.entityNonce !== sent.entityNonce) return null;
+  const terminal = submission.terminalFailure;
+  const failure = terminal ?? submission.lastFailure;
+  return {
+    batchHash: submission.batchHash.toLowerCase(),
+    entityNonce: submission.entityNonce,
+    submitAttempts: submission.submitAttempts,
+    lastSubmittedAt: submission.lastSubmittedAt,
+    txHash: submission.txHash?.toLowerCase() ?? '',
+    failure: failure?.message ?? '',
+    failureKind: terminal ? 'terminal' : submission.lastFailure ? 'retryable' : 'none',
+    failureAt: failure?.failedAt ?? null,
+  };
 };
 
 export const readCanonicalHubDiscovery = async (adapter: RuntimeAdapter, entityId: string, frame: RuntimeAdapterViewFrame, targetId = '', targetFrame?: RuntimeAdapterViewFrame): Promise<WalletAccountOpenRead> => {

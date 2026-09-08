@@ -276,6 +276,15 @@ server = Bun.serve<FixtureSocketData>({
       onboardingHubDiscoveryEnabled = url.searchParams.get('enabled') === '1';
       return Response.json({ enabled: onboardingHubDiscoveryEnabled }, { headers: apiHeaders });
     }
+    if (url.pathname === '/recovery-rpc-mode' && request.method === 'POST') {
+      const online = url.searchParams.get('online') === '1';
+      recoveryFixture.setRpcOnline(online);
+      return Response.json({ online }, { headers: apiHeaders });
+    }
+    if (url.pathname === '/recovery-settlement-reset' && request.method === 'POST') {
+      await recoveryFixture.resetSettlementChain();
+      return Response.json({ reset: true }, { headers: apiHeaders });
+    }
     if (url.pathname === '/hub-discovery-fixture' && request.method === 'POST') {
       const slot = String(url.searchParams.get('slot') || '');
       let fixture = hubDiscoveryFixtures.get(slot);
