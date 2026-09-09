@@ -2,7 +2,6 @@
  * Deploy full XLN contract stack
  * Usage: npx hardhat run scripts/deploy-stack.cjs --network localhost
  */
-
 const { mkdirSync, writeFileSync } = require("node:fs");
 const { dirname } = require("node:path");
 const { buildFoundationTokenListing, foundationEntityId } = require("./foundation-hanko.cjs");

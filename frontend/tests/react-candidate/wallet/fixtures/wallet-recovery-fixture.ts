@@ -20,6 +20,7 @@ export type WalletRecoveryFixture = Readonly<{
   rpcUrl: string;
   readJurisdictionsJson: () => string;
   readHubsJson: () => string;
+  createIsolatedMnemonicTower: (label: string) => Promise<string>;
   resetSettlementChain: () => Promise<void>;
   setRpcOnline: (online: boolean) => void;
   hubDiscovery: Readonly<{ backupFileContents: string; hubEntityId: string; towerUrl: string }>;
@@ -262,7 +263,10 @@ export const createWalletRecoveryFixture = async (
   if (typeof settlementChainBaseline === 'string') {
     throw new Error('WALLET_RECOVERY_FIXTURE_BROWSERVM_STATE_INVALID');
   }
+  let appointmentsClosed = false;
   const closeAppointments = async (): Promise<void> => {
+    if (appointmentsClosed) return;
+    appointmentsClosed = true;
     for (const appointment of [mnemonic, brainVault]) {
       for (const { adapter } of liveJAdapters.getLiveJAdapterEntries(appointment.env)) {
         await adapter.close();
@@ -271,6 +275,7 @@ export const createWalletRecoveryFixture = async (
       await runtime.closeInfraDb(appointment.env);
     }
   };
+  await closeAppointments();
   const towerRoot = `/tmp/xln-react-wallet-recovery-tower-${fixturePort}`;
   const towerPort = fixturePort + 1;
   if (towerPort > 65_535) throw new Error('WALLET_RECOVERY_FIXTURE_PORT_INVALID');
@@ -317,6 +322,34 @@ export const createWalletRecoveryFixture = async (
     dbPath: join(towerRoot, 'hub-discovery.level'),
     maxStoredBytesPerLookupKey: 4 * 1024 * 1024,
   });
+  const isolatedTowers: Array<Awaited<ReturnType<typeof watchtower.startStandaloneWatchtowerServer>>> = [];
+  let isolatedTowerSequence = 0;
+  const createIsolatedMnemonicTower = async (label: string): Promise<string> => {
+    const safeLabel = label.toLowerCase().replace(/[^a-z0-9-]+/g, '-').replace(/^-+|-+$/g, '');
+    if (!safeLabel) throw new Error('WALLET_RECOVERY_FIXTURE_TOWER_LABEL_INVALID');
+    const isolated = watchtower.startStandaloneWatchtowerServer({
+      host: '127.0.0.1', port: 0, towerId: `react-isolated-${safeLabel}`,
+      dbPath: join(towerRoot, `isolated-${isolatedTowerSequence += 1}-${safeLabel}.level`),
+      maxStoredBytesPerLookupKey: 4 * 1024 * 1024,
+    });
+    const isolatedUrl = `http://127.0.0.1:${isolated.server.port}`;
+    const response = await fetch(`${isolatedUrl}/api/tower/appointment`, {
+      method: 'PUT',
+      headers: { 'content-type': 'application/json' },
+      body: serialization.serializeTaggedJson({
+        type: 'tower_appointment', version: 1, towerMode: 'blind_backup',
+        lookupKey: mnemonic.encrypted.lookupKey, slot: 0, bundle: mnemonic.encrypted,
+        ownerProof: mnemonic.ownerProof,
+      }),
+    });
+    if (!response.ok) {
+      const detail = await response.text();
+      await isolated.close();
+      throw new Error(`WALLET_RECOVERY_FIXTURE_ISOLATED_TOWER_UPLOAD_FAILED:${response.status}:${detail}`);
+    }
+    isolatedTowers.push(isolated);
+    return isolatedUrl;
+  };
   return {
     backupFileContents: serialization.serializeTaggedJson({
       version: 1,
@@ -355,6 +388,7 @@ export const createWalletRecoveryFixture = async (
         },
       }],
     }),
+    createIsolatedMnemonicTower,
     resetSettlementChain: async () => {
       await chainAdapter.loadState(settlementChainBaseline);
       rpcFixture.setOnline(true);
@@ -382,6 +416,7 @@ export const createWalletRecoveryFixture = async (
       runtimeHeight: brainVault.bundle.runtimeHeight,
     },
     close: async () => {
+      for (const isolated of isolatedTowers.splice(0)) await isolated.close();
       await hubTower.close();
       await tower.close();
       await closeAppointments();

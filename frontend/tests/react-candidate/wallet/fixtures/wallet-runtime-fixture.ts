@@ -1,5 +1,5 @@
 import type { ServerWebSocket } from 'bun';
-import { rm } from 'node:fs/promises';
+import { mkdir, rm, writeFile } from 'node:fs/promises';
 
 import {
   buildWalletFixtureHubTxs,
@@ -21,9 +21,11 @@ if (!Number.isSafeInteger(port) || port < 1 || port > 65_535) {
 }
 
 const databaseRoot = `/tmp/xln-react-wallet-address-${port}`;
+const jurisdictionsPath = `${databaseRoot}/jurisdictions.json`;
 const runtimeSeed = 'test test test test test test test test test test test junk';
 const authSeed = `xln-react-wallet-address-auth:${port}:minimum-32-bytes`;
 process.env['XLN_DB_PATH'] = databaseRoot;
+process.env['XLN_JURISDICTIONS_PATH'] = jurisdictionsPath;
 process.env['XLN_DISABLE_RUNTIME_RESTORE'] = '1';
 process.env['XLN_RADAPTER_AUTH_SEED'] = authSeed;
 process.env['XLN_RADAPTER_CONTROL_BURST'] = '1000';
@@ -33,6 +35,7 @@ process.env['XLN_RADAPTER_SEND_PER_SEC'] = '50';
 
 const runtime = await import('../../../../../core/runtime');
 const { createStackManagerController } = await import('../../../../../core/api/server/control/stack-manager');
+const { createBrainVaultOwnerController } = await import('../../../../../core/api/server/ownership/brainvault');
 const { dbRootPath } = await import('../../../../../core/runtime/replica/platform');
 if (dbRootPath !== databaseRoot) throw new Error(`WALLET_FIXTURE_STORAGE_SCOPE_MISMATCH:${dbRootPath}:${databaseRoot}`);
 const crypto = await import('../../../../../core/account/crypto');
@@ -50,6 +53,13 @@ const scenario = await import('../../../../../core/scenarios/harness/boot');
 const { createJAdapter } = await import('../../../../../core/jurisdiction/adapter/kernel/factory');
 
 await rm(databaseRoot, { recursive: true, force: true });
+await mkdir(databaseRoot, { recursive: true });
+await writeFile(jurisdictionsPath, JSON.stringify({
+  version: '1',
+  lastUpdated: new Date(0).toISOString(),
+  jurisdictions: {},
+  defaults: { timeout: 30_000, retryAttempts: 3, gasLimit: 1_000_000 },
+}));
 const env = await runtime.main(runtimeSeed);
 env.quietRuntimeLogs = true;
 runtime.startRuntimeLoop(env);
@@ -240,16 +250,55 @@ const token = auth.deriveRuntimeAdapterCapabilityToken(
 const recoveryFixture = await createWalletRecoveryFixture(port);
 const relayPort = port + 3;
 if (relayPort > 65_535) throw new Error('WALLET_RUNTIME_FIXTURE_RELAY_PORT_INVALID');
-const relayUrl = `ws://127.0.0.1:${relayPort}/`;
+const gatewayPort = Number(process.env['XLN_REACT_GATEWAY_PORT'] ?? port - 12);
+if (!Number.isSafeInteger(gatewayPort) || gatewayPort < 1 || gatewayPort > 65_535) {
+  throw new Error('WALLET_RUNTIME_FIXTURE_GATEWAY_PORT_INVALID');
+}
+const relayUrl = `ws://localhost:${gatewayPort}/relay`;
 const relayServer = relay.startStandaloneRelayServer({
   host: '127.0.0.1',
   port: relayPort,
   serverId: `0x${'99'.repeat(20)}`,
   audience: relayUrl,
 });
+const deploymentRpcPort = port + 4;
+if (deploymentRpcPort > 65_535) throw new Error('WALLET_RUNTIME_FIXTURE_DEPLOYMENT_RPC_PORT_INVALID');
+const deploymentRpcUrl = `http://127.0.0.1:${deploymentRpcPort}`;
+let deploymentRpc: ReturnType<typeof Bun.spawn> | null = null;
+const startDeploymentRpc = async (): Promise<string> => {
+  if (!deploymentRpc) {
+    deploymentRpc = Bun.spawn([
+      'anvil', '--silent', '--host', '127.0.0.1', '--port', String(deploymentRpcPort),
+      '--chain-id', '31339', '--block-gas-limit', '300000000', '--code-size-limit', '65536',
+    ], { stdout: 'ignore', stderr: 'ignore' });
+  }
+  for (let attempt = 0; attempt < 100; attempt += 1) {
+    if (deploymentRpc.exitCode !== null) throw new Error(`WALLET_RUNTIME_FIXTURE_ANVIL_EXITED:${deploymentRpc.exitCode}`);
+    try {
+      const response = await fetch(deploymentRpcUrl, {
+        method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'eth_chainId', params: [] }),
+      });
+      if (response.ok && (await response.json() as { result?: string }).result === '0x7a6b') return deploymentRpcUrl;
+    } catch {
+      // The child has not bound its socket yet.
+    }
+    await Bun.sleep(25);
+  }
+  throw new Error('WALLET_RUNTIME_FIXTURE_ANVIL_READY_TIMEOUT');
+};
 const stackManager = createStackManagerController({ parseBody: request => request.json(), headers: { 'content-type': 'application/json', 'access-control-allow-origin': '*' } });
+const brainVaultOwner = createBrainVaultOwnerController({
+  path: `${databaseRoot}/brainvault-owner.json`,
+  profileName: 'Ops remote owner',
+  enqueue: runtime.enqueueRuntimeInput,
+  onFrameCommit: (targetEnv, callback) =>
+    runtime.registerRuntimeFrameCommitCallback(targetEnv, ({ height }) => callback(height)),
+  timeoutMs: 120_000,
+});
 const handleRpc = rpc.createServerRpcMessageHandler({
   validateRuntimeInputAdmission: runtime.validateRuntimeInputAdmission,
+  deriveBrainVault: (targetEnv, input, options) => brainVaultOwner.deriveAndInstall(targetEnv, input, options),
 });
 let ownershipFixtures: ReturnType<typeof import('./wallet-ownership-fixture').createWalletOwnershipFixtures> | null = null;
 const ownershipGovernanceFixtures = new Map<string, ReturnType<typeof import('./wallet-ownership-fixture').createWalletOwnershipGovernanceFixture>>();
@@ -536,6 +585,17 @@ server = Bun.serve<FixtureSocketData>({
       if (request.headers.get('authorization') !== `Bearer ${token}`) return new Response('Unauthorized', { status: 401, headers: apiHeaders });
       return stackManager.status(request, env);
     }
+    if (url.pathname === '/api/control/stack-manager/deploy' && request.method === 'POST') {
+      if (request.headers.get('authorization') !== `Bearer ${token}`) return new Response('Unauthorized', { status: 401, headers: apiHeaders });
+      return stackManager.deploy(request, env);
+    }
+    if (url.pathname === '/stack-manager-fixture') {
+      return Response.json({ rpcUrl: await startDeploymentRpc(), chainId: 31_339 }, { headers: apiHeaders });
+    }
+    if (url.pathname === '/isolated-recovery-tower-fixture') {
+      const label = String(url.searchParams.get('label') || '');
+      return Response.json({ towerUrl: await recoveryFixture.createIsolatedMnemonicTower(label) }, { headers: apiHeaders });
+    }
     if (url.pathname === '/api/jurisdictions') return new Response(recoveryFixture.readJurisdictionsJson(), {
       headers: { 'content-type': 'application/json', 'access-control-allow-origin': '*', 'cache-control': 'no-store' },
     });
@@ -679,6 +739,10 @@ const stop = async (): Promise<void> => {
   await recoveryFixture.close();
   await runtime.stopP2PAndWait(env, 1_000);
   relayServer.close();
+  if (deploymentRpc) {
+    deploymentRpc.kill('SIGTERM');
+    await deploymentRpc.exited;
+  }
   await runtime.stopRuntimeLoopAndWait(env).catch(() => false);
   await runtime.closeRuntimeDb(env);
   await runtime.closeInfraDb(env);
