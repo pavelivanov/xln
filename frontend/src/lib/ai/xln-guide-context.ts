@@ -102,6 +102,7 @@ export async function buildXlnGuideMessages(input: Readonly<{
   query: string;
   pathname: string;
   history: readonly XlnAssistantMessage[];
+  screenContext?: string;
   signal?: AbortSignal;
 }>): Promise<XlnAssistantMessage[]> {
   const grounding = await loadXlnGuideGrounding(input.query, input.pathname, input.signal);
@@ -112,6 +113,7 @@ export async function buildXlnGuideMessages(input: Readonly<{
     'Use only the supplied xln documentation for protocol-specific claims. If it is insufficient, say so and point to Docs.',
     'Never request or expose seeds, private keys, signatures, auth tokens or full runtime state.',
     routeDescription(input.pathname),
+    input.screenContext?.trim() ? `CURRENT SCREEN CONTEXT\n${input.screenContext.trim()}` : '',
     grounding ? `\nTRUSTED XLN DOCUMENTATION\n${grounding}` : '',
   ].filter(Boolean).join('\n');
   return [{ role: 'system', content: system }, ...input.history.slice(-10), { role: 'user', content: input.query }];

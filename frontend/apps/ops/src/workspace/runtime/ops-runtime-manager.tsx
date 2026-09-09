@@ -3,10 +3,12 @@ import { describeRemoteRuntimeImportError, normalizeRemoteRuntimeWsUrl, parseRem
 import { importRemoteRuntimeEntries } from '../../../../../src/lib/utils/onboarding/remoteRuntimeImportFlow';
 import { opsEntityWorkspaceSource } from '../../entity-workspace/ops-entity-workspace-runtime';
 import { selectWorkspaceRuntime } from './ops-runtime-selection';
+import { useWorkspaceTranslation } from '../../../../../bridges/workspace-localization-react';
 
 type Row = { label: string; status: string; detail: string };
 
 export function OpsRuntimeManager() {
+  const { t } = useWorkspaceTranslation();
   const adapter = useSyncExternalStore(opsEntityWorkspaceSource.subscribe, opsEntityWorkspaceSource.getAdapter);
   const [mode, setMode] = useState<'single' | 'bulk'>('single');
   const [label, setLabel] = useState('');
@@ -55,7 +57,7 @@ export function OpsRuntimeManager() {
     } catch (cause) { setError(describeRemoteRuntimeImportError(cause)); }
   };
   return <section className="ops-evidence-panel ops-runtime-manager" data-testid="remote-runtime-manager">
-    <header><h2>Runtime Manager</h2><div><button aria-pressed={mode === 'single'} disabled={working} onClick={() => setMode('single')} type="button">Attach</button><button aria-pressed={mode === 'bulk'} disabled={working} onClick={() => setMode('bulk')} type="button">Bulk</button></div></header>
+    <header><h2>{t('workspace.runtimes')}</h2><div><button aria-pressed={mode === 'single'} disabled={working} onClick={() => setMode('single')} type="button">Attach</button><button aria-pressed={mode === 'bulk'} disabled={working} onClick={() => setMode('bulk')} type="button">Bulk</button></div></header>
     <p className="ops-selected-runtime">Selected: {adapter ? `${adapter.mode} · ${adapter.runtimeId}` : 'none'}</p>
     <button disabled={working} onClick={() => { void select('embedded'); }} type="button">Use browser Runtime</button>
     <form aria-label="Attach remote Runtime" onSubmit={event => { event.preventDefault(); submit(); }}>
@@ -70,7 +72,7 @@ export function OpsRuntimeManager() {
     <div className="ops-runtime-import-rows">{rows.map((row, index) => <article key={index} data-status={row.status}><strong>{row.label}</strong><span>{row.status}</span><small>{row.detail}</small></article>)}</div>
     <h3>Attached Runtimes</h3>
     {imports.length === 0 ? <p>No remote Runtimes attached.</p> : imports.map(entry => <article className="ops-runtime-saved" key={entry.runtimeId}>
-      <strong>{entry.label}</strong><code>{entry.runtimeId}</code><span>{entry.entityCount} entities · h{entry.height}</span>
+      <strong>{entry.label}</strong><code>{entry.runtimeId}</code><span>{entry.entityCount} {t('network.entities')} · h{entry.height}</span>
       <button disabled={working} onClick={() => { void select(entry); }} type="button">Select {entry.label}</button>
     </article>)}
   </section>;

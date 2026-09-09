@@ -2,6 +2,13 @@ import * as THREE from 'three';
 import type WebGPURenderer from 'three/src/renderers/webgpu/WebGPURenderer.js';
 
 export type GraphRenderer = THREE.WebGLRenderer | WebGPURenderer;
+export type GraphRendererMode = 'webgl' | 'webgpu';
+
+export type GraphRendererSelection = Readonly<{
+  renderer: GraphRenderer | null;
+  mode: GraphRendererMode;
+  issue: string;
+}>;
 
 export function getGraphThemeColors(_theme: string) {
   return {
@@ -14,27 +21,44 @@ export function getGraphThemeColors(_theme: string) {
   };
 }
 
-export async function createGraphRenderer(
-  mode: string,
+export async function createExactGraphRenderer(
+  mode: GraphRendererMode,
   options: THREE.WebGLRendererParameters,
-): Promise<GraphRenderer | null> {
-  if (mode === 'webgpu' && typeof navigator !== 'undefined' && navigator.gpu) {
+): Promise<GraphRendererSelection> {
+  if (mode === 'webgpu') {
+    if (typeof navigator === 'undefined' || !navigator.gpu) {
+      return { renderer: null, mode, issue: 'GRAPH_WEBGPU_UNSUPPORTED' };
+    }
+    let renderer: WebGPURenderer | null = null;
     try {
       const { default: WebGPURenderer } = await import('three/src/renderers/webgpu/WebGPURenderer.js');
-      const renderer = new WebGPURenderer({ antialias: options.antialias });
+      renderer = new WebGPURenderer({ antialias: options.antialias });
       await renderer.init();
-      return renderer;
+      return { renderer, mode, issue: '' };
     } catch (error) {
-      console.warn('[Graph3D] WebGPU renderer unavailable, falling back to WebGL:', error);
+      renderer?.dispose();
+      const message = error instanceof Error ? error.message : String(error);
+      return { renderer: null, mode, issue: `GRAPH_WEBGPU_INITIALIZATION_FAILED:${message}` };
     }
   }
 
   try {
-    return new THREE.WebGLRenderer(options);
+    return { renderer: new THREE.WebGLRenderer(options), mode, issue: '' };
   } catch (error) {
-    console.error('[Graph3D] Renderer init failed:', error);
-    return null;
+    const message = error instanceof Error ? error.message : String(error);
+    return { renderer: null, mode, issue: `GRAPH_WEBGL_INITIALIZATION_FAILED:${message}` };
   }
+}
+
+export async function createGraphRenderer(
+  mode: string,
+  options: THREE.WebGLRendererParameters,
+): Promise<GraphRenderer | null> {
+  const selectedMode: GraphRendererMode = mode === 'webgpu' ? 'webgpu' : 'webgl';
+  const exact = await createExactGraphRenderer(selectedMode, options);
+  if (exact.renderer || selectedMode === 'webgl') return exact.renderer;
+  console.warn('[Graph3D] WebGPU renderer unavailable, falling back to WebGL:', exact.issue);
+  return (await createExactGraphRenderer('webgl', options)).renderer;
 }
 
 type DisposableMaterial = { dispose?: () => void; map?: { dispose?: () => void } | null };

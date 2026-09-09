@@ -5,6 +5,15 @@ type GraphEffectTransaction = Readonly<{
   data?: Readonly<{ amount?: string | number | bigint }>;
 }>;
 
+const broadcastColor = (txType: string): number => ({
+  r2c: 0x00ff88,
+  reserve_to_collateral: 0x00ff88,
+  deposit_reserve: 0x00ff00,
+  withdraw_reserve: 0xff0000,
+  credit_from_reserve: 0xffaa00,
+  debit_to_reserve: 0xff44ff,
+})[txType] ?? 0x00ffff;
+
 export function createDirectionalLightningMesh(
   connection: GraphEffectConnection,
   accountTx: GraphEffectTransaction | null | undefined,
@@ -45,18 +54,10 @@ export function createDirectionalLightningMesh(
 }
 
 export function createBroadcastRippleMesh(position: THREE.Vector3, txType: string): THREE.Mesh {
-  const colors: Record<string, number> = {
-    r2c: 0x00ff88,
-    reserve_to_collateral: 0x00ff88,
-    deposit_reserve: 0x00ff00,
-    withdraw_reserve: 0xff0000,
-    credit_from_reserve: 0xffaa00,
-    debit_to_reserve: 0xff44ff,
-  };
   const ripple = new THREE.Mesh(
     new THREE.TorusGeometry(0.5, 0.05, 16, 32),
     new THREE.MeshBasicMaterial({
-      color: colors[txType] ?? 0x00ffff,
+      color: broadcastColor(txType),
       transparent: true,
       opacity: 0.8,
       side: THREE.DoubleSide,
@@ -65,4 +66,35 @@ export function createBroadcastRippleMesh(position: THREE.Vector3, txType: strin
   ripple.position.copy(position);
   ripple.rotation.x = Math.PI / 2;
   return ripple;
+}
+
+export function createBroadcastRayMesh(
+  from: THREE.Vector3,
+  to: THREE.Vector3,
+  txType: string,
+): THREE.Mesh {
+  const distance = from.distanceTo(to);
+  const ray = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.08, 0.08, distance, 8),
+    new THREE.MeshBasicMaterial({
+      color: broadcastColor(txType), transparent: true, opacity: 0.8,
+    }),
+  );
+  ray.position.copy(from).lerp(to, 0.5);
+  ray.quaternion.setFromUnitVectors(
+    new THREE.Vector3(0, 1, 0),
+    new THREE.Vector3().subVectors(to, from).normalize(),
+  );
+  return ray;
+}
+
+export function createBroadcastParticleMesh(position: THREE.Vector3, txType: string): THREE.Mesh {
+  const particle = new THREE.Mesh(
+    new THREE.SphereGeometry(0.35, 8, 8),
+    new THREE.MeshBasicMaterial({
+      color: broadcastColor(txType), transparent: true, opacity: 0.9,
+    }),
+  );
+  particle.position.copy(position);
+  return particle;
 }

@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 import * as THREE from '../../../../frontend/node_modules/three';
 
 import {
+  createExactGraphRenderer,
   detachGraphObject3D,
   disposeGraphObject3D,
   getGraphThemeColors,
@@ -17,6 +18,15 @@ describe('Graph3D shared renderer boundary', () => {
       entityColor: '#007acc',
       entityEmissive: '#003366',
       connectionColor: '#444444',
+    });
+  });
+
+  test('reports an exact unsupported WebGPU choice without silently selecting WebGL', async () => {
+    if (typeof navigator !== 'undefined' && navigator.gpu) return;
+    expect(await createExactGraphRenderer('webgpu', { antialias: true })).toEqual({
+      renderer: null,
+      mode: 'webgpu',
+      issue: 'GRAPH_WEBGPU_UNSUPPORTED',
     });
   });
 

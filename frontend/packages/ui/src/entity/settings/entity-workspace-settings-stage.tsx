@@ -6,7 +6,10 @@ import {
 } from '../../../../runtime-client/src/entity/entity-workspace-navigation';
 import './entity-workspace-settings-stage.css';
 
-type EntitySettingsSection = (typeof ENTITY_SETTINGS_SECTIONS)[number];
+type EntitySettingsSection = Readonly<{
+  id: (typeof ENTITY_SETTINGS_SECTIONS)[number]['id'];
+  label: string;
+}>;
 
 export function EntityWorkspaceSettingsStage({
   children,

@@ -7,7 +7,7 @@ import {
   beginGraphEntityDrag, moveGraphEntityDrag, endGraphEntityDrag,
 } from '../../../../../packages/ui/src/graph/graph3d-interaction';
 import type { GraphEntityVisualData } from '../../../../../packages/ui/src/graph/graph3d-entity-visuals';
-import { disposeGraphObject3D } from '../../../../../packages/ui/src/graph/graph3d-renderer';
+import { createExactGraphRenderer, disposeGraphObject3D } from '../../../../../packages/ui/src/graph/graph3d-renderer';
 import { fitGraphCameraToEntities, applyGraphCameraPose, applyGraphCameraTarget } from '../../../../../packages/ui/src/graph/graph3d-camera';
 import { bindGraphControlsLifecycle } from '../../../../../packages/ui/src/graph/graph3d-lifecycle';
 import type { MergedRuntimeGraph } from '../../../../../src/lib/network3d/runtimeGraphProjection';
@@ -20,21 +20,27 @@ import { buildOpsGraphWorld, type OpsGraphConnection, type OpsGraphOptions } fro
 import { applyOpsGraphCue } from './ops-graph-cues';
 import { createOpsGraphStats } from './ops-graph-stats';
 import { logDebug } from '../../../../../src/lib/view/utils/frontendLogger';
+import { createOpsGraphEffects, type OpsGraphEffectSignal } from './ops-graph-effects';
+import { createOpsGraphXr, readOpsGraphXrSupport } from './ops-graph-xr';
 
 export type OpsGraphSelection = Readonly<{ kind: 'entity' | 'account' | 'jurisdiction'; id: string }>;
 
-export const createOpsGraphScene = (
+export const createOpsGraphScene = async (
   container: HTMLDivElement, runtime: GraphXLNRuntime,
   onSelect: (selection: OpsGraphSelection) => void,
   onHover: (selection: OpsGraphSelection | null) => void,
   onOpen: (entityId: string) => void,
   onError: (cause: unknown) => void,
   onOpenJurisdiction: (name: string) => void,
+  onXrState: (state: Readonly<{ supported: boolean; active: boolean }>) => void,
 ) => {
   const settings = opsGraphViewSettings.get();
   let previousView = settings;
   let previousCue = '';
-  const renderer = new THREE.WebGLRenderer({ antialias: settings.antiAlias, alpha: false });
+  const rendererSelection = await createExactGraphRenderer(settings.rendererMode, { antialias: settings.antiAlias, alpha: false });
+  if (!rendererSelection.renderer) throw new Error(rendererSelection.issue);
+  const renderer = rendererSelection.renderer;
+  container.dataset['rendererMode'] = rendererSelection.mode;
   const scene = new THREE.Scene();
   scene.background = new THREE.Color('#15191d');
   const camera = new THREE.PerspectiveCamera(settings.fov, 1, 0.1, 10000);
@@ -71,6 +77,7 @@ export const createOpsGraphScene = (
   renderer.domElement.setAttribute('aria-busy', 'true');
   container.append(renderer.domElement);
   const stats = createOpsGraphStats(container);
+  const effects = createOpsGraphEffects(container);
   scene.add(new THREE.AmbientLight(0xffffff, 2));
   const light = new THREE.DirectionalLight(0xffffff, 3);
   light.position.set(40, 80, 60);
@@ -191,8 +198,18 @@ export const createOpsGraphScene = (
   renderer.domElement.addEventListener('dblclick', doubleClick);
   renderer.domElement.addEventListener('pointermove', move);
   renderer.domElement.addEventListener('pointerleave', leave);
+  const xr = createOpsGraphXr({
+    renderer, scene, supported: await readOpsGraphXrSupport(), getWorld: () => world,
+    getEntities: () => entities, getScale: () => previousView.vrScaleMultiplier,
+    onSelect: id => onSelect({ kind: 'entity', id }), onOpen,
+    onMove: entity => {
+      writeGraphPositionOverride(localStorage, entity.id, { ...entity.position });
+      refreshConnections();
+    },
+    onState: onXrState, onError,
+  });
   renderer.setAnimationLoop(timestamp => {
-    try { controls.update(); renderer.render(scene, camera); stats.frame(timestamp, renderer); renderer.domElement.setAttribute('aria-busy', 'false'); }
+    try { controls.update(); xr.frame(); effects.frame(timestamp); renderer.render(scene, camera); stats.frame(timestamp, renderer); renderer.domElement.setAttribute('aria-busy', 'false'); }
     catch (cause) { fail(cause); }
   });
   return {
@@ -201,12 +218,14 @@ export const createOpsGraphScene = (
       updateGraphSelectionHighlight(entities, selection?.kind === 'entity' ? selection.id : '');
     },
     fit: (): void => { fitGraphCameraToEntities(camera, controls, focusPoints); saveCamera(); },
-    update: (graph: MergedRuntimeGraph, options: OpsGraphOptions): void => {
+    update: (graph: MergedRuntimeGraph, options: OpsGraphOptions, effectSignals: readonly OpsGraphEffectSignal[], selectedStepIndex: number): void => {
       // Finish a drag before replacing its meshes; a playback tick must not
       // retain a pointer to a disposed entity or leave orbit controls disabled.
       if (dragged) { endGraphEntityDrag(dragged); dragged = null; controls.enabled = true; }
+      xr.resetGrabs();
       renderer.domElement.setAttribute('aria-busy', 'true');
       leave();
+      effects.clear();
       scene.remove(world);
       disposeGraphObject3D(world);
       world = new THREE.Group();
@@ -221,6 +240,8 @@ export const createOpsGraphScene = (
       layout = result.layout;
       rebuildConnections = result.rebuildConnections;
       refreshConnections();
+      effects.replace(world, effectSignals, options.view, entities, jurisdictionMeshes, connections);
+      container.dataset['renderedStepIndex'] = String(selectedStepIndex);
       camera.fov = options.cue?.camera?.fov ?? options.view.fov;
       camera.updateProjectionMatrix();
       controls.autoRotate = options.view.autoRotate;
@@ -237,11 +258,14 @@ export const createOpsGraphScene = (
         controls.update();
       }
       previousView = options.view;
+      xr.applyWorld();
       const cue = options.cue ? safeStringify(options.cue) : '';
       if (cue !== previousCue && options.cue && applyOpsGraphCue(camera, controls, options.cue, graph, focusPoints)) saveCamera();
       previousCue = cue;
       updateGraphSelectionHighlight(entities, selected?.kind === 'entity' ? selected.id : '');
     },
+    enterXr: xr.enter,
+    exitXr: xr.exit,
     dispose: (): void => {
       if (cameraSaveTimer !== null) clearTimeout(cameraSaveTimer);
       // Storage failures remain visible, but must not leak animation loops,
@@ -260,6 +284,8 @@ export const createOpsGraphScene = (
       renderer.domElement.removeEventListener('pointerleave', leave);
       controlBinding.dispose();
       controls.dispose();
+      xr.dispose();
+      effects.clear();
       disposeGraphObject3D(scene);
       renderer.dispose();
       stats.dispose();

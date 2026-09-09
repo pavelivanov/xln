@@ -3,6 +3,8 @@ import { readFileSync } from 'node:fs';
 import * as THREE from '../../../../frontend/node_modules/three';
 
 import {
+  createBroadcastParticleMesh,
+  createBroadcastRayMesh,
   createBroadcastRippleMesh,
   createDirectionalLightningMesh,
 } from '../../../../frontend/packages/ui/src/graph/graph3d-visual-effects';
@@ -48,6 +50,19 @@ describe('Graph3D shared visual effects', () => {
     expect(reserveRipple.rotation.x).toBe(Math.PI / 2);
     expect((reserveRipple.material as THREE.MeshBasicMaterial).color.getHex()).toBe(0xff0000);
     expect((unknownRipple.material as THREE.MeshBasicMaterial).color.getHex()).toBe(0x00ffff);
+  });
+
+  test('builds deterministic ray and particle variants from the same broadcast palette', () => {
+    const from = new THREE.Vector3(1, 2, 3);
+    const to = new THREE.Vector3(1, 12, 3);
+    const ray = createBroadcastRayMesh(from, to, 'credit_from_reserve');
+    const particle = createBroadcastParticleMesh(from, 'debit_to_reserve');
+
+    expect((ray.geometry as THREE.CylinderGeometry).parameters.height).toBe(10);
+    expect(ray.position.toArray()).toEqual([1, 7, 3]);
+    expect((ray.material as THREE.MeshBasicMaterial).color.getHex()).toBe(0xffaa00);
+    expect(particle.position.toArray()).toEqual([1, 2, 3]);
+    expect((particle.material as THREE.MeshBasicMaterial).color.getHex()).toBe(0xff44ff);
   });
 
   test('moves live effects to shared UI and removes the unused random ripple', () => {

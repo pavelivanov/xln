@@ -17,15 +17,9 @@ import { EntityWorkspaceDisplayPanel } from '../../../../packages/ui/src/entity/
 import { displayPreferencesSource } from '../../../../packages/browser/src/display-preferences-source';
 import { WalletProfileSettings } from './wallet-profile-settings';
 import '../styles/wallet-settings.css';
+import { useWorkspaceTranslation } from '../../../../bridges/workspace-localization-react';
 
 const WORKER_CAPS = [1, 2, 3, 4, 5, 6, 7, 8] as const;
-const WALLET_SETTINGS_SECTIONS = [
-  { id: 'wallet', label: 'Wallet' },
-  { id: 'display', label: 'Display' },
-  { id: 'recovery', label: 'Recovery' },
-  { id: 'consensus', label: 'Consensus' },
-] as const;
-
 export function WalletSettings({
   entityId,
   onAuthSchemeChange,
@@ -39,6 +33,13 @@ export function WalletSettings({
   section: WalletSettingsSection;
   workspaceSelection: WalletWorkspaceSelection;
 }>) {
+  const { t } = useWorkspaceTranslation();
+  const settingsSections = [
+    { id: 'wallet', label: t('workspace.wallet') },
+    { id: 'display', label: t('settings.theme') },
+    { id: 'recovery', label: 'Recovery' },
+    { id: 'consensus', label: 'Consensus' },
+  ] as const;
   const [preferences, setPreferences] = useState(() => readWalletPreferences(localStorage));
   const display = useSyncExternalStore(
     displayPreferencesSource.subscribe,
@@ -87,13 +88,13 @@ export function WalletSettings({
     <section className="wallet-settings" aria-labelledby="wallet-settings-title">
       <header>
         <p className="wallet-shell-eyebrow">Identity and browser preferences</p>
-        <h1 id="wallet-settings-title">Wallet settings</h1>
+        <h1 id="wallet-settings-title">{t('settings.title')}</h1>
         <p>Committed identity, device-local preferences and recovery services for the active Runtime.</p>
       </header>
 
       <EntityWorkspaceSettingsStage
         entityId={selectedWorkspace.entityId || entityId}
-        sections={WALLET_SETTINGS_SECTIONS}
+        sections={settingsSections}
         settingsSubview={section === 'profile' ? 'wallet' : section === 'preferences' ? 'display' : 'recovery'}
       >
         {section === 'profile' ? <WalletProfileSettings entityId={entityId} selection={workspaceSelection} /> : null}
@@ -105,6 +106,7 @@ export function WalletSettings({
             onToggleXlnGuide={displayPreferencesSource.setXlnGuideVisibility}
             preferences={display.preferences}
             showWorkspaceControls={false}
+            translate={t}
           />
           <div className="wallet-settings-pane">
             <div className="wallet-settings-list">

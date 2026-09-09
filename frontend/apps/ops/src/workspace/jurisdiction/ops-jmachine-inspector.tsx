@@ -3,6 +3,7 @@ import { safeStringify } from '@xln/core/protocol/serialization';
 import type { RuntimeAdapter } from '@xln/core/api/public/runtime-module';
 import { readBrowserRuntimeEnvironment } from '../../../../../bridges/runtime/browser-runtime-context';
 import { useWorkspaceEnvironment } from '../session/use-workspace-environment';
+import { useWorkspaceTranslation } from '../../../../../bridges/workspace-localization-react';
 
 type ContractRow = Readonly<{ name: string; address: string; bytes: number | null; error: string }>;
 const byteLength = (code: unknown): number => {
@@ -11,6 +12,7 @@ const byteLength = (code: unknown): number => {
   throw new Error('Contract provider returned unsupported bytecode');
 };
 export function OpsJMachineInspector() {
+  const { t } = useWorkspaceTranslation();
   const context = useWorkspaceEnvironment();
   const machines = context.frame ? [...context.frame.state.jReplicas.values()] : [];
   const [selectedName, setSelectedName] = useState('');
@@ -46,7 +48,7 @@ export function OpsJMachineInspector() {
   };
   const rows = result?.adapter === context.adapter && result?.machine === name ? result.rows : [];
   return <section className="ops-evidence-panel ops-jmachine-panel" data-testid="jmachine-storage-inspector">
-    <header><h2>J-Machine Inspector</h2><select aria-label="Inspect J-Machine" value={name} onChange={event => setSelectedName(event.currentTarget.value)}>{machines.map(machine => <option key={machine.name}>{machine.name}</option>)}</select></header>
+    <header><h2>{t('workspace.jInspector')}</h2><select aria-label="Inspect J-Machine" value={name} onChange={event => setSelectedName(event.currentTarget.value)}>{machines.map(machine => <option key={machine.name}>{machine.name}</option>)}</select></header>
     {context.error || context.restriction ? <p role={context.error ? 'alert' : 'status'}>{context.error || context.restriction}</p> : !selected ? <p>No J-Machine in the selected frame.</p> : <>
       <dl className="ops-audit-metrics"><div><dt>J height</dt><dd>{String(selected.blockNumber)}</dd></div><div><dt>Mempool</dt><dd>{selected.mempool.length}</dd></div><div><dt>Chain ID</dt><dd>{selected.chainId}</dd></div><div><dt>Frame</dt><dd>{context.historical ? 'Recorded' : 'Live'}</dd></div></dl>
       <header><h3>Contract bytecode</h3><button disabled={busy || context.historical} onClick={() => { void inspect(); }} type="button">{busy ? 'Reading…' : 'Read code'}</button></header>

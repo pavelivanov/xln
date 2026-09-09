@@ -6,6 +6,11 @@ import {
 import './entity-workspace-display-panel.css';
 
 const THEME_OPTIONS = getThemeOptions();
+const DEFAULT_DISPLAY_COPY: Readonly<Record<string, string>> = {
+  'settings.theme': 'Theme',
+  'settings.themes.dark': 'Dark',
+  'settings.themes.light': 'Light',
+};
 
 export type EntityWorkspaceDisplayPreferences = Readonly<{
   showTimeMachine: boolean;
@@ -20,6 +25,7 @@ type EntityWorkspaceDisplayPanelProps = Readonly<{
   onToggleXlnGuide: (show: boolean) => void;
   preferences: EntityWorkspaceDisplayPreferences;
   showWorkspaceControls?: boolean;
+  translate?: (key: string) => string;
 }>;
 
 export function EntityWorkspaceDisplayPanel({
@@ -29,16 +35,20 @@ export function EntityWorkspaceDisplayPanel({
   onToggleXlnGuide,
   preferences,
   showWorkspaceControls = true,
+  translate = key => DEFAULT_DISPLAY_COPY[key] ?? key,
 }: EntityWorkspaceDisplayPanelProps) {
   const theme = getThemeCoreColors(preferences.theme);
+  const themeName = preferences.theme === 'dark'
+    ? translate('settings.themes.dark')
+    : preferences.theme === 'light' ? translate('settings.themes.light') : theme.name;
   return (
     <section className={`entity-workspace-display${showWorkspaceControls ? '' : ' is-theme-only'}`} data-testid="settings-display-panel">
       <header>
         <div>
           <span>Display preferences</span>
-          <strong>{theme.name} palette</strong>
+          <strong>{themeName} palette</strong>
         </div>
-        <div className="entity-workspace-display-swatches" aria-label={`${theme.name} palette preview`}>
+        <div className="entity-workspace-display-swatches" aria-label={`${themeName} palette preview`}>
           <i style={{ background: theme.background }} />
           <i style={{ background: theme.surface }} />
           <i style={{ background: theme.accentColor }} />
@@ -46,17 +56,19 @@ export function EntityWorkspaceDisplayPanel({
       </header>
       <label className="entity-workspace-display-theme">
         <span>
-          <strong>Theme</strong>
+          <strong>{translate('settings.theme')}</strong>
           <small>Applied immediately and saved to the shared browser preference record.</small>
         </span>
         <select
-          aria-label="Theme"
+          aria-label={translate('settings.theme')}
           data-testid="settings-theme-select"
           onChange={event => onSelectTheme(event.currentTarget.value as ThemeName)}
           value={preferences.theme}
         >
           {THEME_OPTIONS.map(option => (
-            <option key={option.value} value={option.value}>{option.label}</option>
+            <option key={option.value} value={option.value}>{option.value === 'dark'
+              ? translate('settings.themes.dark') : option.value === 'light'
+                ? translate('settings.themes.light') : option.label}</option>
           ))}
         </select>
       </label>

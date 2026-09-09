@@ -1,10 +1,12 @@
-import { useEffect, useRef, useState, type PointerEvent } from 'react';
+import { useEffect, useRef, useState, useSyncExternalStore, type PointerEvent } from 'react';
 import { safeStringify } from '@xln/core/protocol/serialization';
 import { DEFAULT_XLN_MASCOT_DOCK, clampMascotPoint, moveMascotDock, normalizeXlnMascotDock, resolveMascotPanelRect, resolveMascotPoint, resolveMascotViewport, snapMascotToEdge, type MascotPoint } from '../../../../../packages/ui/src/mascot-geometry';
 import { parseJsonUnknown, isUnknownRecord } from '../../../../../packages/runtime-client/src/boundary';
 import type { XlnAssistantMessage } from '../../../../../src/lib/ai/xln-assistant-client';
 import { OpsGuideChat } from './ops-guide-chat';
 import mascotMark from '../../../../../static/img/l.png';
+import { workspaceNetwork } from '../session/ops-workspace-playback';
+import { createOpsGuideFrameContext } from './ops-guide-context';
 
 const viewport = () => {
   const visual = window.visualViewport;
@@ -24,6 +26,8 @@ export function OpsWorkspaceGuide() {
   const [dragPoint, setDragPoint] = useState<MascotPoint | null>(null);
   const [messages, setMessages] = useState<XlnAssistantMessage[]>([]);
   const [issue, setIssue] = useState('');
+  const network = useSyncExternalStore(workspaceNetwork.subscribe, workspaceNetwork.get);
+  const context = createOpsGuideFrameContext(network.selectedStep);
   const button = useRef<HTMLButtonElement>(null);
   const drag = useRef<{ id: number; start: MascotPoint; origin: MascotPoint; moved: boolean } | null>(null);
   const suppressClick = useRef(false);
@@ -55,7 +59,7 @@ export function OpsWorkspaceGuide() {
       onPointerMove={event => { const current = drag.current; if (!current || current.id !== event.pointerId) return; const dx = event.clientX - current.start.x, dy = event.clientY - current.start.y; if (Math.hypot(dx, dy) < 5 && !current.moved) return; current.moved = true; setDragPoint(clampMascotPoint({ x: current.origin.x + dx, y: current.origin.y + dy }, bounds)); }}
       onPointerUp={event => finish(event, false)} onPointerCancel={event => finish(event, true)}
       onKeyDown={event => { if (event.key === 'Escape') close(); if (event.key.startsWith('Arrow')) { event.preventDefault(); persist(moveMascotDock(dock, event.key, event.shiftKey)); } }}><img src={mascotMark} alt="" width={40} height={40} /></button>
-    {expanded ? <div className="ops-guide-chat" style={{ left: panel.x, top: panel.y, width: panel.width, height: panel.height }}><OpsGuideChat messages={messages} setMessages={setMessages} onClose={close} /></div> : null}
+    {expanded ? <div className="ops-guide-chat" style={{ left: panel.x, top: panel.y, width: panel.width, height: panel.height }}><OpsGuideChat context={context} messages={messages} setMessages={setMessages} onClose={close} /></div> : null}
     {issue ? <p className="ops-guide-error" role="alert">{issue}</p> : null}
   </>;
 }
