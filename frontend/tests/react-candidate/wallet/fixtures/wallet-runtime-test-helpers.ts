@@ -37,6 +37,31 @@ const walletFixtureUrl = (path: string): string => {
   return `http://127.0.0.1:${port}${path}`;
 };
 
+export const readStackManagerRpcFixture = async (page: Page) => {
+  const response = await page.request.get(walletFixtureUrl('/stack-manager-fixture'));
+  expect(response.ok()).toBe(true);
+  const value = await response.json() as { rpcUrl?: unknown; chainId?: unknown };
+  const rpcUrl = String(value.rpcUrl || '');
+  const chainId = Number(value.chainId);
+  if (!/^http:\/\/127\.0\.0\.1:\d+$/.test(rpcUrl) || chainId !== 31_339) {
+    throw new Error('STACK_MANAGER_RPC_FIXTURE_INVALID');
+  }
+  return { rpcUrl, chainId };
+};
+
+export const createIsolatedRecoveryTowerFixture = async (page: Page, label: string): Promise<string> => {
+  const response = await page.request.get(walletFixtureUrl(
+    `/isolated-recovery-tower-fixture?label=${encodeURIComponent(label)}`,
+  ));
+  expect(response.ok()).toBe(true);
+  const value = await response.json() as { towerUrl?: unknown };
+  const towerUrl = String(value.towerUrl || '');
+  if (!/^http:\/\/127\.0\.0\.1:\d+$/.test(towerUrl)) {
+    throw new Error('WALLET_RECOVERY_TOWER_FIXTURE_INVALID');
+  }
+  return towerUrl;
+};
+
 export const createWalletHubDiscoveryFixture = async (page: Page, slot: string) => {
   const response = await page.request.post(walletFixtureUrl(`/hub-discovery-fixture?slot=${encodeURIComponent(slot)}`));
   expect(response.ok()).toBe(true);

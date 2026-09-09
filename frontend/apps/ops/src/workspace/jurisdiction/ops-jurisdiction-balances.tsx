@@ -1,7 +1,17 @@
 import type { EntityReplica } from '@xln/core/api/public/runtime-module';
 import { useOpenWorkspaceEntity } from '../session/ops-workspace-navigation';
+import type { OpsChainDebt, OpsExternalBalance } from './ops-jurisdiction-live';
 
-export function OpsJurisdictionBalances({ replica, tokenId }: { replica: EntityReplica; tokenId: number | null }) {
+export function OpsJurisdictionBalances({ replica, tokenId, liveBalances, liveDebts, liveIssue, liveLoading, historical, onRefresh }: {
+  replica: EntityReplica;
+  tokenId: number | null;
+  liveBalances: readonly OpsExternalBalance[];
+  liveDebts: readonly OpsChainDebt[];
+  liveIssue: string;
+  liveLoading: boolean;
+  historical: boolean;
+  onRefresh: () => void;
+}) {
   const openEntity = useOpenWorkspaceEntity();
   const state = replica.state;
   const accepts = (id: number): boolean => tokenId === null || id === tokenId;
@@ -27,6 +37,15 @@ export function OpsJurisdictionBalances({ replica, tokenId }: { replica: EntityR
     <h3>External wallet observations</h3>
     <div className="ops-panel-table"><table aria-label="Jurisdiction external balances"><thead><tr><th>Owner</th><th>Token</th><th>Balance</th><th>J block</th></tr></thead><tbody>{balances.map(balance => <tr key={`${balance.owner}:${balance.tokenAddress}`}><td data-label="Owner"><code>{balance.owner}</code></td><td data-label="Token"><code>{balance.tokenId === undefined ? balance.tokenAddress : `#${balance.tokenId}`}</code></td><td data-label="Balance">{balance.balance.toString()}</td><td data-label="J block">{balance.jHeight}</td></tr>)}</tbody></table></div>
     {!balances.length ? <p>No finalized external wallet observations for this selection.</p> : null}
+    <header><h3>Fresh external chain balances</h3><button disabled={historical || liveLoading} onClick={onRefresh} type="button">{liveLoading ? 'Reading…' : 'Refresh chain reads'}</button></header>
+    {historical ? <p data-testid="jurisdiction-chain-history">Recorded frames never query or time-travel the live provider.</p> : null}
+    {liveIssue ? <p role="alert">{liveIssue}</p> : null}
+    {!historical ? <div className="ops-panel-table"><table aria-label="Fresh external balances"><thead><tr><th>Entity</th><th>Signer</th><th>Token</th><th>Native</th></tr></thead><tbody>{liveBalances.map(row => <tr key={row.signerId}><td data-label="Entity">{row.label}</td><td data-label="Signer"><code>{row.signerId}</code></td><td data-label="Token">{row.token?.toString() ?? 'Unavailable'}</td><td data-label="Native">{row.native?.toString() ?? 'Unavailable'}</td></tr>)}</tbody></table></div> : null}
+    {!historical && !liveLoading && !liveBalances.length ? <p>No signer balances returned by the selected stack.</p> : null}
+    <h3>Fresh on-chain debts</h3>
+    {!historical && tokenId === null ? <p>Select one token to read its exact on-chain debts.</p> : null}
+    {!historical && tokenId !== null ? <div className="ops-panel-table"><table aria-label="Fresh on-chain debts"><thead><tr><th>Debtor</th><th>Creditor</th><th>Amount</th></tr></thead><tbody>{liveDebts.map((debt, index) => <tr key={`${debt.debtor}:${debt.creditor}:${index}`}><td data-label="Debtor">{debt.debtorLabel}</td><td data-label="Creditor">{peerLink(debt.creditor)}</td><td data-label="Amount">{debt.amount.toString()}</td></tr>)}</tbody></table></div> : null}
+    {!historical && tokenId !== null && !liveLoading && !liveDebts.length ? <p>No outstanding debts returned by the selected stack.</p> : null}
     <h3>Active disputes</h3>
     {disputes.length ? disputes.map(([peer, account]) => {
       const dispute = account.activeDispute;

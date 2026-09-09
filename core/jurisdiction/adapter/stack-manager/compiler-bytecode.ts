@@ -100,16 +100,33 @@ const decodeEvidence = (
   return { immutableReferences };
 };
 
+const resolveHardhatSourceName = (value: unknown, sourceName: string): string => {
+  const root = requireRecord(value, 'STACK_MANAGER_BUILD_INFO_INVALID');
+  const sourceNames = readFieldRecord(
+    root,
+    'userSourceNameMap',
+    'STACK_MANAGER_BUILD_SOURCE_MAP_INVALID',
+  );
+  const resolved = sourceNames[sourceName];
+  if (typeof resolved !== 'string' || resolved.length === 0) return sourceName;
+  return resolved;
+};
+
 export const readCompilerBytecodeEvidence = async (
   buildInfoDirectory: URL,
   sourceName: string,
   contractName: string,
 ): Promise<CompilerBytecodeEvidence> => {
-  const files = (await readdir(buildInfoDirectory)).filter(file => file.endsWith('.json')).sort();
+  const files = (await readdir(buildInfoDirectory)).filter(file => file.endsWith('.output.json')).sort();
   let match: CompilerBytecodeEvidence | null = null;
   for (const file of files) {
     const raw: unknown = JSON.parse(await readFile(new URL(file, buildInfoDirectory), 'utf8'));
-    const candidate = decodeEvidence(raw, sourceName, contractName);
+    const metadataFile = file.replace(/\.output\.json$/, '.json');
+    const metadata: unknown = JSON.parse(
+      await readFile(new URL(metadataFile, buildInfoDirectory), 'utf8'),
+    );
+    const compilerSourceName = resolveHardhatSourceName(metadata, sourceName);
+    const candidate = decodeEvidence(raw, compilerSourceName, contractName);
     if (!candidate) continue;
     if (match) throw new Error(`STACK_MANAGER_BUILD_INFO_AMBIGUOUS:${sourceName}:${contractName}`);
     match = candidate;

@@ -198,6 +198,47 @@ test('Stack Manager inspects the real daemon signer and exact RPC, rejects failu
   await expectPageContained(page);
 });
 
+test('Stack Manager deploys, verifies, registers, and shares one real isolated V1 stack', { tag: '@functional' }, async ({ page }, testInfo) => {
+  testInfo.setTimeout(180_000);
+  const { installImportedRuntime, readStackManagerRpcFixture, readWalletRuntimeFixture } = await import('../../wallet/fixtures/wallet-runtime-test-helpers');
+  const errors = observeBrowserErrors(page);
+  const fixture = await readWalletRuntimeFixture(page);
+  const deploymentRpc = await readStackManagerRpcFixture(page);
+  const suffix = testInfo.project.name.replace(/[^a-z0-9]+/gi, '-').toLowerCase();
+  const name = `Ops deployed ${suffix}`;
+  await openWorkspaceStorageOrigin(page);
+  await installImportedRuntime(page, fixture);
+  await page.goto('/__app/ops/entity-workspace');
+  await page.getByRole('button', { name: 'Open Settings panel', exact: true }).click();
+  const settings = page.getByTestId('workspace-settings');
+  await settings.getByRole('button', { name: 'Stack Manager', exact: true }).click();
+  const stack = settings.getByTestId('workspace-stack-manager');
+  await expect(stack.getByTestId('stack-manager-phase')).toBeVisible();
+  await stack.getByTestId('stack-manager-rpc').fill(deploymentRpc.rpcUrl);
+  await stack.getByRole('button', { name: 'Probe RPC', exact: true }).click();
+  await expect(stack.getByTestId('stack-manager-probe')).toContainText('Native balance (wei)');
+  await stack.getByTestId('stack-manager-name').fill(name);
+  await stack.getByTestId('stack-manager-stablecoin').selectOption('test');
+  await stack.getByTestId('stack-manager-confirmations').fill('1');
+  await stack.getByTestId('stack-manager-confirm').check();
+  await expect(stack.getByTestId('stack-manager-deploy')).toBeEnabled();
+  await stack.getByTestId('stack-manager-deploy').click();
+  const result = stack.getByTestId('stack-manager-result');
+  await expect(result).toContainText(`${name} deployed and registered`, { timeout: 150_000 });
+  await expect(result).toContainText('publication local/not_requested');
+  await expect(stack.getByLabel('Configured jurisdiction stack', { exact: true })).toHaveValue(name);
+  const persisted = await page.evaluate(() => JSON.parse(localStorage.getItem('xln-jmachines') || 'null'));
+  expect(persisted.activeJMachine).toBe(name);
+  expect(persisted.configs.find((entry: { name: string }) => entry.name === name)?.contracts.entityProvider).toMatch(/^0x[0-9a-fA-F]{40}$/);
+  await screenshotEvidence(page, testInfo, 'ops-settings-stack-manager-deployed');
+  await stack.getByTestId('stack-manager-confirm').check();
+  await stack.getByTestId('stack-manager-deploy').click();
+  await expect(stack.getByRole('alert')).toHaveText('STACK_MANAGER_DEPLOY_HTTP_400', { timeout: 15_000 });
+  await expectPageContained(page);
+  expect(errors.pageErrors).toEqual([]);
+  expect(errors.consoleErrors).toEqual(['Failed to load resource: the server responded with a status of 400 (Bad Request)']);
+});
+
 test('Stack Manager does not inspect a daemon from an in-browser Runtime', { tag: '@functional' }, async ({ page }, testInfo) => {
   const errors = observeBrowserErrors(page);
   await openWorkspaceStorageOrigin(page);

@@ -1,5 +1,7 @@
 import { expect, test } from '@playwright/test';
 import { expectNoBrowserErrors, expectPageContained, observeBrowserErrors, screenshotEvidence } from '../../browser-evidence';
+import { readWalletRuntimeFixture } from '../../wallet/fixtures/wallet-runtime-test-helpers';
+import { installOpsOwnerMetadata } from '../owner/ops-owner-test-helpers';
 
 test('Jurisdiction preserves exact recorded observations across frame and Entity selection', { tag: '@functional' }, async ({ page }, testInfo) => {
   testInfo.setTimeout(120_000);
@@ -18,6 +20,7 @@ test('Jurisdiction preserves exact recorded observations across frame and Entity
   await expect(panel.getByRole('table', { name: 'Jurisdiction reserves', exact: true }).locator('tbody tr')).not.toHaveCount(0);
   const token = panel.getByLabel('Jurisdiction token', { exact: true });
   await token.selectOption('1');
+  await expect(token.locator('option:checked')).toContainText('USDC · #1');
   const reserves = panel.getByRole('table', { name: 'Jurisdiction reserves', exact: true });
   await expect(reserves.locator('tbody tr')).toHaveCount(1);
   await expect(reserves.locator('tbody tr td').first()).toHaveText('#1');
@@ -36,7 +39,48 @@ test('Jurisdiction preserves exact recorded observations across frame and Entity
   await frame.press('End');
   await panel.getByRole('button', { name: 'Balances', exact: true }).click();
   await expect(reserves.locator('tbody tr td').nth(1)).toHaveText(amount);
+  await expect(panel.getByTestId('jurisdiction-chain-history')).toHaveText('Recorded frames never query or time-travel the live provider.');
+  await expect(panel.getByRole('table', { name: 'Fresh external balances' })).toHaveCount(0);
+  await expect(panel.getByRole('table', { name: 'Fresh on-chain debts' })).toHaveCount(0);
   expect(await page.evaluate(() => localStorage.getItem('xln-workspace-layout'))).toBeNull();
+  await expectPageContained(page);
+  expectNoBrowserErrors(errors);
+});
+
+test('Jurisdiction reads registry labels and fresh external balances/debts from the exact live stack', { tag: '@functional' }, async ({ page }, testInfo) => {
+  testInfo.setTimeout(120_000);
+  const errors = observeBrowserErrors(page);
+  const fixture = await readWalletRuntimeFixture(page);
+  await page.addInitScript(({ towerUrl, apiUrl }: { towerUrl: string; apiUrl: string }) => {
+    localStorage.setItem('xln-watchtower-urls', JSON.stringify([towerUrl]));
+    (window as typeof window & { __XLN_WATCHTOWERS__?: string[] }).__XLN_WATCHTOWERS__ = [towerUrl];
+    (window as typeof window & { __XLN_API_BASE_URL__?: string }).__XLN_API_BASE_URL__ = apiUrl;
+  }, { towerUrl: fixture.recovery.towerUrl, apiUrl: new URL(fixture.wsUrl.replace('ws:', 'http:')).origin });
+  await page.goto('/scenarios/catalog.json');
+  await installOpsOwnerMetadata(page, { ...fixture, entityId: fixture.recovery.entityId });
+  await page.evaluate(() => localStorage.setItem('xln-runtime-adapter-mode', 'embedded'));
+  await page.goto('/__app/ops/entity-workspace');
+  await page.getByRole('button', { name: 'Owner locked', exact: true }).click();
+  const unlock = page.getByRole('form', { name: 'Unlock Runtime owner' });
+  await unlock.getByLabel('Owner wallet seed phrase').fill(fixture.walletSeed);
+  await unlock.getByRole('button', { name: 'Unlock owner', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Owner unlocked', exact: true })).toBeVisible({ timeout: 60_000 });
+  await page.getByRole('button', { name: 'Open Jurisdiction panel', exact: true }).click();
+  const panel = page.getByTestId('workspace-jurisdiction');
+  await expect(panel.getByLabel('Jurisdiction', { exact: true })).toHaveValue('React Recovery mnemonic');
+  const token = panel.getByLabel('Jurisdiction token', { exact: true });
+  await expect(token.locator('option:checked')).toHaveText('USDC · #1', { timeout: 30_000 });
+  const balances = panel.getByRole('table', { name: 'Fresh external balances' });
+  await expect(balances.locator('tbody tr')).toHaveCount(1, { timeout: 30_000 });
+  await expect(balances).toContainText(fixture.recovery.external.initialBalance);
+  await expect(balances).toContainText(fixture.recovery.runtimeId);
+  const debts = panel.getByRole('table', { name: 'Fresh on-chain debts' });
+  await expect(debts.locator('tbody tr')).toHaveCount(0);
+  await expect(panel).toContainText('No outstanding debts returned by the selected stack.');
+  await panel.getByRole('button', { name: 'Refresh chain reads', exact: true }).click();
+  await expect(panel.getByRole('button', { name: 'Refresh chain reads', exact: true })).toBeEnabled();
+  await expect(balances).toContainText(fixture.recovery.external.initialBalance);
+  await screenshotEvidence(page, testInfo, 'ops-jurisdiction-live-chain');
   await expectPageContained(page);
   expectNoBrowserErrors(errors);
 });

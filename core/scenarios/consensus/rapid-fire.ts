@@ -23,7 +23,6 @@ import { getPerfMs } from '../../support/time';
 import {
   bindScenarioJReplica,
   ensureJAdapter,
-  getJAdapterMode,
   createJReplica,
   createJurisdictionConfig,
   registerEntities,
@@ -73,8 +72,7 @@ export async function rapidFire(env: RuntimeReplica): Promise<void> {
   // ============================================================================
   console.log('🏛️  Setting up test environment...');
 
-  const jMode = getJAdapterMode();
-  const jadapter = await ensureJAdapter(env, jMode);
+  const jadapter = await ensureJAdapter(env);
   const jurisdiction = createJurisdictionConfig(
     'RapidFire',
     jadapter.addresses.depository,

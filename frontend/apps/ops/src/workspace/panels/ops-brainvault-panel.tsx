@@ -6,11 +6,14 @@ import { WalletNavigationScope } from '../../../../wallet/src/navigation/wallet-
 import { selectWorkspaceRuntime } from '../runtime/ops-runtime-selection';
 import { useOpenWorkspaceWallet } from '../session/ops-workspace-navigation';
 import { opsEntityWorkspaceSource } from '../../entity-workspace/ops-entity-workspace-runtime';
+import { useWorkspaceEnvironment } from '../session/use-workspace-environment';
+import { OpsRemoteBrainVault } from './ops-remote-brainvault';
 
 export function OpsBrainVaultPanel() {
   const embedded = useSyncExternalStore(subscribeWalletEmbeddedRuntime, getWalletEmbeddedRuntimeSnapshot);
   const openWallet = useOpenWorkspaceWallet();
   const adapter = useSyncExternalStore(opsEntityWorkspaceSource.subscribe, opsEntityWorkspaceSource.getAdapter);
+  const context = useWorkspaceEnvironment();
   const mounted = useRef(true);
   useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
   const summary = resolveWalletRuntimeSummary({ mode: 'embedded', wsUrl: null, access: null, sessionKey: null }, navigator.onLine, embedded);
@@ -28,7 +31,9 @@ export function OpsBrainVaultPanel() {
     await selectWorkspaceRuntime('embedded');
   };
   return <section className="ops-brainvault-panel" data-testid="workspace-brainvault">
-    <header><h2>BrainVault</h2><p>Create or recover a local browser Runtime. Opening it selects that Runtime for the shared workspace.</p></header>
-    <WalletNavigationScope.Provider value={navigate}><IdentityOnboarding runtimeId={embedded.runtimeId} runtimeState={summary.state} onRuntimeOpened={opened} /></WalletNavigationScope.Provider>
+    <header><h2>BrainVault</h2><p>{adapter?.mode === 'remote' ? 'Derive and install an owner on the exact selected Runtime node.' : 'Create or recover a local browser Runtime. Opening it selects that Runtime for the shared workspace.'}</p></header>
+    {adapter?.mode === 'remote'
+      ? <OpsRemoteBrainVault adapter={adapter} historical={context.historical} />
+      : <WalletNavigationScope.Provider value={navigate}><IdentityOnboarding runtimeId={embedded.runtimeId} runtimeState={summary.state} onRuntimeOpened={opened} /></WalletNavigationScope.Provider>}
   </section>;
 }

@@ -2,7 +2,7 @@
  * Deploy full XLN contract stack
  * Usage: npx hardhat run scripts/deploy-stack.cjs --network localhost
  */
-const hre = require("hardhat");
+let hre;
 
 const { mkdirSync, writeFileSync } = require("node:fs");
 const { dirname } = require("node:path");
@@ -43,6 +43,11 @@ const deploymentEvidence = async (contract, address, label) => {
 };
 
 async function main() {
+  // Hardhat 3 is ESM-first. Loading it dynamically keeps this CommonJS script
+  // runnable on Node versions that reject require() of Hardhat's async graph.
+  const { network: networkManager } = await import("hardhat");
+  const connection = await networkManager.create();
+  hre = { ethers: connection.ethers, network: { name: connection.networkName } };
   console.log("🚀 Deploying XLN Contract Stack...\n");
   const network = await hre.ethers.provider.getNetwork();
   const [deployer] = await hre.ethers.getSigners();

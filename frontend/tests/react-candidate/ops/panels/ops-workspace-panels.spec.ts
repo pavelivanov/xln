@@ -2,7 +2,10 @@ import { openWorkspaceStorageOrigin } from '../../browser-evidence';
 import { expect, test, type WebSocket } from '@playwright/test';
 
 import { expectNoBrowserErrors, expectPageContained, observeBrowserErrors, screenshotEvidence } from '../../browser-evidence';
-import { installImportedRuntime, readWalletRuntimeFixture } from '../../wallet/fixtures/wallet-runtime-test-helpers';
+import { createIsolatedRecoveryTowerFixture, installImportedRuntime, readWalletRuntimeFixture } from '../../wallet/fixtures/wallet-runtime-test-helpers';
+import { installOpsOwnerMetadata } from '../owner/ops-owner-test-helpers';
+
+const securityIncidentFixtureUrl = '/__app/ops/src/testing/ops-runtime-security-incident-fixture.ts';
 
 test('workspace panels preserve unavailable Runtime state without opening a connection', { tag: '@resilience' }, async ({ page }, testInfo) => {
   const errors = observeBrowserErrors(page);
@@ -20,6 +23,71 @@ test('workspace panels preserve unavailable Runtime state without opening a conn
   await expectPageContained(page);
   await screenshotEvidence(page, testInfo, 'ops-workspace-unavailable');
   expectNoBrowserErrors(errors);
+});
+
+test('Runtime Diagnostics refreshes real active/resolved incidents without copying infrastructure into history', { tag: '@functional' }, async ({ page }, testInfo) => {
+  testInfo.setTimeout(120_000);
+  const errors = observeBrowserErrors(page);
+  const fixture = await readWalletRuntimeFixture(page);
+  const towerUrl = await createIsolatedRecoveryTowerFixture(page, `incidents-${testInfo.project.name}`);
+  await page.addInitScript(({ towerUrl, apiUrl }: { towerUrl: string; apiUrl: string }) => {
+    localStorage.setItem('xln-watchtower-urls', JSON.stringify([towerUrl]));
+    (window as typeof window & { __XLN_WATCHTOWERS__?: string[] }).__XLN_WATCHTOWERS__ = [towerUrl];
+    (window as typeof window & { __XLN_API_BASE_URL__?: string }).__XLN_API_BASE_URL__ = apiUrl;
+  }, { towerUrl, apiUrl: new URL(fixture.wsUrl.replace('ws:', 'http:')).origin });
+  await openWorkspaceStorageOrigin(page);
+  await installOpsOwnerMetadata(page, { ...fixture, entityId: fixture.recovery.entityId });
+  await page.evaluate(() => localStorage.setItem('xln-runtime-adapter-mode', 'embedded'));
+  await page.goto('/__app/ops/entity-workspace');
+  await page.getByRole('button', { name: 'Owner locked', exact: true }).click();
+  const unlock = page.getByRole('form', { name: 'Unlock Runtime owner' });
+  await unlock.getByLabel('Owner wallet seed phrase').fill(fixture.walletSeed);
+  await unlock.getByRole('button', { name: 'Unlock owner', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Owner unlocked', exact: true })).toBeVisible({ timeout: 60_000 });
+  await page.getByRole('button', { name: 'Open Runtime Diagnostics panel', exact: true }).click();
+  const diagnostics = page.getByTestId('runtime-diagnostics-panel');
+  await expect(diagnostics.getByTestId('runtime-security-summary')).toHaveText('No active security incidents.', { timeout: 45_000 });
+  const identity = {
+    domain: 'cross-j', code: 'CROSS_J_ACCOUNT_PAIR_STRUCTURAL_MISMATCH', source: 'remote-ingress',
+    severity: 'critical', summary: 'Isolated malformed cross-j cohort was rejected',
+    entityId: fixture.recovery.entityId,
+  } as const;
+  await page.evaluate(async ({ moduleUrl, value }) => {
+    const fixture = await import(/* @vite-ignore */ moduleUrl);
+    fixture.mutateOpsRuntimeSecurityIncidentFixture('record', value);
+  }, { moduleUrl: securityIncidentFixtureUrl, value: identity });
+  await diagnostics.getByRole('button', { name: 'Refresh', exact: true }).click();
+  await expect(diagnostics.getByTestId('runtime-security-summary')).toHaveText('1 active');
+  const incident = diagnostics.getByTestId('runtime-security-incident');
+  await expect(incident).toContainText('CROSS_J_ACCOUNT_PAIR_STRUCTURAL_MISMATCH');
+  await expect(incident).toContainText('active');
+  await expect(incident).toContainText(identity.summary);
+  await expect(incident).toContainText('seen 1×');
+  await screenshotEvidence(page, testInfo, 'ops-runtime-incident-active');
+  await page.evaluate(async ({ moduleUrl, value }) => {
+    const fixture = await import(/* @vite-ignore */ moduleUrl);
+    fixture.mutateOpsRuntimeSecurityIncidentFixture('resolve', value);
+  }, { moduleUrl: securityIncidentFixtureUrl, value: identity });
+  await diagnostics.getByRole('button', { name: 'Refresh', exact: true }).click();
+  await expect(diagnostics.getByTestId('runtime-security-summary')).toHaveText('No active security incidents.');
+  await expect(incident).toContainText('resolved');
+  expect(await page.evaluate(() => {
+    const debug = (window as Window & { __xln?: { env?: Record<string, unknown> } }).__xln;
+    return Object.hasOwn(debug?.env ?? {}, 'infrastructure');
+  })).toBe(false);
+  await page.getByRole('button', { name: 'Open Architect panel', exact: true }).click();
+  const architect = page.getByTestId('workspace-architect');
+  await architect.getByLabel('Architect scenario').selectOption('settle');
+  await architect.getByRole('button', { name: 'Run scenario', exact: true }).click();
+  await expect(architect.getByText(/^settle: \d+ recorded network steps$/)).toBeVisible({ timeout: 90_000 });
+  await page.getByRole('button', { name: 'Open Runtime Diagnostics panel', exact: true }).click();
+  await expect(diagnostics.getByTestId('runtime-diagnostics-history')).toBeVisible();
+  await expect(diagnostics.getByTestId('runtime-security-incident')).toHaveCount(0);
+  await screenshotEvidence(page, testInfo, 'ops-runtime-incident-history-boundary');
+  await expectPageContained(page);
+  expect(errors.pageErrors).toEqual([]);
+  expect(errors.consoleErrors).toHaveLength(1);
+  expect(errors.consoleErrors[0]).toContain('[system] SECURITY_INCIDENT_ACTIVE');
 });
 
 test('Runtime Diagnostics verifies real persisted storage and releases its panel state on close', { tag: '@functional' }, async ({ page }, testInfo) => {

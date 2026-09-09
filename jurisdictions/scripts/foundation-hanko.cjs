@@ -16,7 +16,8 @@ const HANKO_ABI = [
     'bytes32[] placeholders,' +
     'bytes packedSignatures,' +
     'tuple(bytes32 entityId, uint256[] entityIndexes, uint256[] weights, uint256 threshold,' +
-      ' uint32 boardChangeDelay, uint32 controlChangeDelay, uint32 dividendChangeDelay)[] claims' +
+      ' uint32 boardChangeDelay, uint32 controlChangeDelay, uint32 dividendChangeDelay)[] claims,' +
+    'bytes[] memberSignatures' +
   ')',
 ];
 
@@ -45,7 +46,9 @@ const tokenListingArgumentsHash = (ethers, { depository, tokenType, contractAddr
 /**
  * 1-of-1 Foundation Hanko over a raw 32-byte digest (no EIP-191 prefix):
  * packedSignatures = r || s || recoveryBits (bit 0 set when v == 28),
- * placeholders = [], claims = [[bytes32(1), [0], [1], 1, 0, 0, 0]].
+ * placeholders = [], claims = [[bytes32(1), [0], [1], 1, 0, 0, 0]],
+ * memberSignatures = []. Omitting the final field changes the ABI envelope and
+ * makes current HankoVerifier reject an otherwise valid Foundation signature.
  */
 const buildSingleSignerFoundationHanko = (ethers, actionHash, privateKey) => {
   const key = privateKey.startsWith('0x') ? privateKey : `0x${privateKey}`;
@@ -57,6 +60,7 @@ const buildSingleSignerFoundationHanko = (ethers, actionHash, privateKey) => {
     [],
     packedSignatures,
     [[foundationEntityId(ethers), [0], [1], 1, 0, 0, 0]],
+    [],
   ]]);
 };
 
