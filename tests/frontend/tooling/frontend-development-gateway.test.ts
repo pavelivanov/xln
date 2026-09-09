@@ -302,7 +302,7 @@ describe('React development gateway', () => {
       label: 'same-origin-gateway',
       argv: ['bun', 'scripts/run-dev-gateway.ts'],
       gatewayAware: false,
-      environment: { XLN_REACT_WALLET_PROXY_OWNER: 'ops' },
+      environment: { XLN_REACT_DOCS_PROXY_OWNER: 'ops', XLN_REACT_WALLET_PROXY_OWNER: 'ops' },
     });
     process.env['XLN_REACT_WALLET_ADDRESS_FIXTURE'] = '1';
     try {
@@ -321,7 +321,7 @@ describe('React development gateway', () => {
         label: 'same-origin-gateway',
         argv: ['bun', 'scripts/run-dev-gateway.ts'],
         gatewayAware: false,
-        environment: { XLN_REACT_EDGE_TARGET: 'http://127.0.0.1:19092', XLN_REACT_EDGE_WEBSOCKET_TARGET: 'http://127.0.0.1:19095', XLN_REACT_WALLET_PROXY_OWNER: 'ops' },
+        environment: { XLN_REACT_EDGE_TARGET: 'http://127.0.0.1:19092', XLN_REACT_EDGE_WEBSOCKET_TARGET: 'http://127.0.0.1:19095', XLN_REACT_DOCS_PROXY_OWNER: 'ops', XLN_REACT_WALLET_PROXY_OWNER: 'ops' },
       });
       expect(createDevelopmentProcessSpecs(['ops']).at(-1)).toEqual({
         label: 'wallet-address-runtime-fixture',

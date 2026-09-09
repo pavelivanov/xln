@@ -32,7 +32,7 @@ describe('frontend generated input ownership', () => {
     const runtimeBundle = GENERATED_INPUTS.find(({ id }) => id === 'wallet-runtime-bundle');
     if (docsCatalog === undefined) throw new Error('TEST_DOCS_CATALOG_MISSING');
     if (runtimeBundle === undefined) throw new Error('TEST_RUNTIME_BUNDLE_MISSING');
-    expect(getGeneratedInputDevelopmentConsumers(docsCatalog)).toEqual(['docs', 'site']);
+    expect(getGeneratedInputDevelopmentConsumers(docsCatalog)).toEqual(['docs', 'site', 'ops']);
     expect(getGeneratedInputDevelopmentConsumers(runtimeBundle)).toEqual(['wallet', 'ops']);
     for (const input of GENERATED_INPUTS.filter(({ id }) =>
       id !== 'docs-catalog' && id !== 'wallet-runtime-bundle')) {

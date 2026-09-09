@@ -42,7 +42,7 @@ export const GENERATED_INPUTS: readonly GeneratedInputDefinition[] = [
   {
     id: 'docs-catalog',
     owner: 'docs',
-    developmentConsumers: ['docs', 'site'],
+    developmentConsumers: ['docs', 'site', 'ops'],
     sourcePaths: [
       'frontend/copy-static-files.js',
       'frontend/scripts/docs/docs-catalog.js',

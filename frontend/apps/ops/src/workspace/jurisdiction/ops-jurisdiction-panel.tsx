@@ -8,8 +8,10 @@ import { useWorkspaceEnvironment } from '../session/use-workspace-environment';
 import { belongsToJurisdiction, jurisdictionTokenIds } from './ops-jurisdiction-view';
 import { OpsJurisdictionBalances } from './ops-jurisdiction-balances';
 import { useOpsJurisdictionLive } from './ops-jurisdiction-live';
+import { useWorkspaceTranslation } from '../../../../../bridges/workspace-localization-react';
 
 export function OpsJurisdictionPanel({ params }: IDockviewPanelProps<{ jurisdictionName?: string }>) {
+  const { t } = useWorkspaceTranslation();
   const context = useWorkspaceEnvironment();
   const [machineName, setMachineName] = useState(params.jurisdictionName ?? '');
   const [replicaKey, setReplicaKey] = useState('');
@@ -29,9 +31,9 @@ export function OpsJurisdictionPanel({ params }: IDockviewPanelProps<{ jurisdict
   const selectedToken = selectJurisdictionTokenIdText(tokenOptions, token);
   useEffect(() => { if (selectedToken !== token) setToken(selectedToken); }, [selectedToken, token]);
   return <section className="ops-evidence-panel ops-jurisdiction-panel" data-testid="workspace-jurisdiction">
-    <header><h2>Jurisdiction</h2><select aria-label="Jurisdiction" value={selected?.name ?? ''} onChange={event => { const name = event.currentTarget.value; setMachineName(name); setReplicaKey(''); setToken(''); if (!context.historical && configured.configs.some(config => config.name === name)) jmachineOperations.setActive(name); }}>{machines.map(machine => <option key={machine.name}>{machine.name}</option>)}</select><span>{context.historical ? 'Recorded' : 'Live'}{context.frame ? ` · Runtime h${context.frame.state.height}` : ''}</span></header>
-    {context.error || context.restriction ? <p role={context.error ? 'alert' : 'status'}>{context.error || context.restriction}</p> : !selected ? <p>No Jurisdiction in the selected frame.</p> : <>
-      <nav aria-label="Jurisdiction views">{(['balances', 'overview'] as const).map(value => <button aria-pressed={tab === value} key={value} onClick={() => setTab(value)} type="button">{value === 'balances' ? 'Balances' : 'Overview'}</button>)}</nav>
+    <header><h2>{t('workspace.jurisdiction')}</h2><select aria-label={t('workspace.jurisdiction')} value={selected?.name ?? ''} onChange={event => { const name = event.currentTarget.value; setMachineName(name); setReplicaKey(''); setToken(''); if (!context.historical && configured.configs.some(config => config.name === name)) jmachineOperations.setActive(name); }}>{machines.map(machine => <option key={machine.name}>{machine.name}</option>)}</select><span>{context.historical ? t('time.historical') : t('time.live')}{context.frame ? ` · Runtime h${context.frame.state.height}` : ''}</span></header>
+    {context.error || context.restriction ? <p role={context.error ? 'alert' : 'status'}>{context.error || context.restriction}</p> : !selected ? <p>No {t('workspace.jurisdiction')} in the selected frame.</p> : <>
+      <nav aria-label="Jurisdiction views">{(['balances', 'overview'] as const).map(value => <button aria-pressed={tab === value} key={value} onClick={() => setTab(value)} type="button">{value === 'balances' ? t('workspace.balances') : t('walletNavigation.Overview')}</button>)}</nav>
       <dl className="ops-audit-metrics"><div><dt>Chain ID</dt><dd>{selected.chainId ?? 'Unavailable'}</dd></div><div><dt>J block</dt><dd>{selected.blockNumber.toString()}</dd></div><div><dt>Observers</dt><dd>{replicas.length}</dd></div></dl>
       {tab === 'overview' ? <>
         <h3>{selected.name}</h3><dl><dt>State root</dt><dd><code>{formatJurisdictionStateRoot(selected.stateRoot)}</code></dd><dt>Block delay</dt><dd>{selected.blockDelayMs} ms</dd><dt>Last block timestamp</dt><dd>{selected.lastBlockTimestamp}</dd><dt>Position</dt><dd>{selected.position.x}, {selected.position.y}, {selected.position.z}</dd></dl>

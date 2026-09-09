@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { listInspectableDatabases, listInspectableStores, readInspectableEntries } from '../../../../../packages/browser/src/indexed-db-inspector';
 import { formatBytes, type DbEntryView, type DbKindFilter, type IndexedDbMeta } from '../../../../../packages/runtime-client/src/storage/indexed-db-inspector-key';
 import { compactValuePreview, renderBlobPretty } from '../../../../../packages/runtime-client/src/storage/indexed-db-inspector-value';
+import { useWorkspaceTranslation } from '../../../../../bridges/workspace-localization-react';
 
 const kindOf = (name: string) => name.endsWith('-infra') ? 'infra' : 'core';
 function DatabaseEntry({ entry }: Readonly<{ entry: DbEntryView }>) {
@@ -9,6 +10,7 @@ function DatabaseEntry({ entry }: Readonly<{ entry: DbEntryView }>) {
   return <article className="ops-db-entry"><header><code>#{entry.index} · {entry.key.label}</code><small>{formatBytes(entry.value.byteLength)}</small></header><pre>{compactValuePreview(entry.value)}</pre>{entry.key.pretty ? <details><summary>Raw key</summary><pre>{entry.key.pretty}</pre></details> : null}<details onToggle={event => setExpanded(event.currentTarget.open)}><summary>Expand value fully</summary>{expanded ? <pre>{renderBlobPretty(entry.value)}</pre> : null}</details></article>;
 }
 export function OpsDatabaseInspector() {
+  const { t } = useWorkspaceTranslation();
   const [databases, setDatabases] = useState<IndexedDbMeta[]>([]);
   const [kind, setKind] = useState<DbKindFilter>('all');
   const [database, setDatabase] = useState('');
@@ -69,11 +71,11 @@ export function OpsDatabaseInspector() {
   }, [database, activeStore]);
   const visible = currentEntries.filter(entry => `${entry.key.label} ${compactValuePreview(entry.value)}`.toLowerCase().includes(search.toLowerCase()));
   return <section className="ops-evidence-panel" data-testid="leveldb-inspector">
-    <header><h2>Browser database inspector</h2><button disabled={discovering} onClick={() => { void refresh(); }} type="button">{discovering ? 'Refreshing…' : 'Refresh DBs'}</button></header>
+    <header><h2>{t('workspace.database')}</h2><button disabled={discovering} onClick={() => { void refresh(); }} type="button">{discovering ? `${t('common.refresh')}…` : t('common.refresh')}</button></header>
     <div className="ops-panel-controls">{(['all', 'core', 'infra'] as const).map(value => <button key={value} aria-pressed={kind === value} onClick={() => { setKind(value); if (database && value !== 'all' && kindOf(database) !== value) setDatabase(''); }} type="button">{value}</button>)}</div>
     {issue ? <p role="alert">{issue}</p> : null}
     <div className="ops-db-layout"><nav aria-label="Browser databases">{filteredDatabases.length ? filteredDatabases.map(db => <button aria-pressed={database === db.name} key={db.name} onClick={() => setDatabase(db.name)} type="button">{db.name}<small>{kindOf(db.name)}</small></button>) : <p>No matching IndexedDB databases found.</p>}</nav><div>
-      {!database ? <p>Select a database to inspect.</p> : <><header><code>{database}</code><label>Store <select aria-label="Database object store" disabled={!stores.length} value={activeStore} onChange={event => setStore(event.currentTarget.value)}>{stores.map(name => <option key={name}>{name}</option>)}</select></label></header><div className="ops-panel-controls"><input type="search" aria-label="Search loaded database entries" placeholder="Search loaded entries" value={search} onChange={event => setSearch(event.currentTarget.value)} /><button disabled={loading || !activeStore} onClick={() => { void load(true); }} type="button">Refresh entries</button><span>{visible.length} shown · {currentEntries.length} loaded</span></div>
+      {!database ? <p>Select a database to inspect.</p> : <><header><code>{database}</code><label>Store <select aria-label="Database object store" disabled={!stores.length} value={activeStore} onChange={event => setStore(event.currentTarget.value)}>{stores.map(name => <option key={name}>{name}</option>)}</select></label></header><div className="ops-panel-controls"><input type="search" aria-label={`${t('common.search')} loaded database entries`} placeholder={t('common.search')} value={search} onChange={event => setSearch(event.currentTarget.value)} /><button disabled={loading || !activeStore} onClick={() => { void load(true); }} type="button">{t('common.refresh')}</button><span>{visible.length} shown · {currentEntries.length} loaded</span></div>
         {loading && !currentEntries.length ? <p>Loading entries…</p> : visible.length ? visible.map(entry => <DatabaseEntry key={`${database}:${store}:${entry.index}`} entry={entry} />) : <p>{currentEntries.length ? 'No loaded entries match the search.' : 'No entries in this object store.'}</p>}
         {entriesFor === selectedKey && hasMore ? <button disabled={loading} onClick={() => { void load(false); }} type="button">{loading ? 'Loading…' : 'Load 50 more'}</button> : null}</>}
     </div></div>

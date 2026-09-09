@@ -237,8 +237,9 @@ async function ensureMLXModel(modelId: string): Promise<{ success: boolean; erro
   }
 }
 
-const CHATS_DIR = "/Users/zigota/ai/chats";
-const AGENTS_DIR = "/Users/zigota/xln/.agents";
+const PROJECT_ROOT = join(import.meta.dir, "..");
+const CHATS_DIR = process.env.XLN_AI_CHATS_DIR || join(process.env.HOME || PROJECT_ROOT, "ai", "chats");
+const AGENTS_DIR = process.env.XLN_AI_AGENTS_DIR || join(PROJECT_ROOT, ".agents");
 
 // Ensure directories exist
 [CHATS_DIR, `${CHATS_DIR}/audio`, `${AGENTS_DIR}/papertrail`].forEach(dir => {

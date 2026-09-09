@@ -12,8 +12,9 @@ import { useWorkspaceQuery } from '../session/use-workspace-query';
 import { WorkspaceReadBoundary } from '../session/workspace-read-boundary';
 import { useOpenWorkspaceEntity } from '../session/ops-workspace-navigation';
 import { workspaceNetwork } from '../session/ops-workspace-playback';
+import { useWorkspaceTranslation } from '../../../../../bridges/workspace-localization-react';
 
-function GossipProfile({ profile }: Readonly<{ profile: GossipDirectoryProfile }>) {
+function GossipProfile({ profile, translate }: Readonly<{ profile: GossipDirectoryProfile; translate: (key: string) => string }>) {
   const openEntity = useOpenWorkspaceEntity();
   const [copied, setCopied] = useState(false);
   const [issue, setIssue] = useState('');
@@ -34,7 +35,7 @@ function GossipProfile({ profile }: Readonly<{ profile: GossipDirectoryProfile }
         <strong>{getGossipDirectoryDisplayName(profile)}</strong>
         <code title={profile.entityId}>{profile.entityId}</code>
         <div className="workspace-gossip-links">
-          <button aria-label={`Copy address for ${profile.name || profile.entityId}`} onClick={() => { void copy(); }} type="button">{copied ? 'Copied' : 'Copy'}</button>
+          <button aria-label={`${translate('common.copy')} address for ${profile.name || profile.entityId}`} onClick={() => { void copy(); }} type="button">{translate(copied ? 'common.copied' : 'common.copy')}</button>
           <a href={`/address/${encodeURIComponent(profile.entityId)}`}>Address →</a>
           {openEntity ? <button aria-label={`Open Entity ${profile.name || profile.entityId}`} onClick={() => openEntity(profile.entityId, getGossipDirectoryDisplayName(profile))} type="button">Open Entity</button> : null}
         </div>
@@ -51,6 +52,7 @@ function GossipProfile({ profile }: Readonly<{ profile: GossipDirectoryProfile }
 }
 
 export function OpsGossipPanel() {
+  const { t } = useWorkspaceTranslation();
   const [search, setSearch] = useState('');
   const { snapshot, connection, connected } = useWorkspaceQuery(readOpsGossipDirectory);
   const network = useSyncExternalStore(workspaceNetwork.subscribe, workspaceNetwork.get);
@@ -66,17 +68,17 @@ export function OpsGossipPanel() {
   return (
     <section className="workspace-read-panel" data-testid="runtime-gossip-panel">
       <header>
-        <div><h2>Gossip Directory</h2><p>{data ? `${data.directory.profileCount} profiles · ${data.directory.hubCount} ${data.directory.hubCount === 1 ? 'hub' : 'hubs'}` : 'Runtime profiles'}</p></div>
-        {data ? <span className="workspace-live-label" title={data.runtimeId}>{network.selectedStep ? 'Recorded' : 'Live'} Runtime · h{data.height}</span> : null}
+        <div><h2>{t('workspace.gossip')}</h2><p>{data ? `${data.directory.profileCount} profiles · ${data.directory.hubCount} ${data.directory.hubCount === 1 ? 'hub' : 'hubs'}` : 'Runtime profiles'}</p></div>
+        {data ? <span className="workspace-live-label" title={data.runtimeId}>{network.selectedStep ? t('time.historical') : t('time.live')} Runtime · h{data.height}</span> : null}
       </header>
       <label className="workspace-search">
-        <span>Search gossip directory</span>
-        <input aria-label="Search gossip directory" onChange={event => setSearch(event.currentTarget.value)} placeholder="Name, entity, runtime, jurisdiction" type="search" value={search} />
+        <span>{t('common.search')} {t('workspace.gossip')}</span>
+        <input aria-label={`${t('common.search')} gossip directory`} onChange={event => setSearch(event.currentTarget.value)} placeholder={`Name, ${t('view.labels.entity')}, Runtime, ${t('workspace.jurisdiction')}`} type="search" value={search} />
       </label>
       <WorkspaceReadBoundary connected={network.selectedStep ? true : connected} connection={connection} error={network.selectedStep ? network.error : snapshot.error} loading={network.selectedStep ? network.loading && data === null : snapshot.loading && data === null}>
         {profiles.length ? (
           <div className="workspace-gossip-profiles" data-testid="runtime-gossip-profiles">
-            {profiles.map(profile => <GossipProfile key={profile.entityId} profile={profile} />)}
+            {profiles.map(profile => <GossipProfile key={profile.entityId} profile={profile} translate={t} />)}
           </div>
         ) : <p className="workspace-read-state" data-testid="runtime-gossip-empty">No profiles in this runtime projection.</p>}
       </WorkspaceReadBoundary>

@@ -12,10 +12,12 @@ import {
   sendArchitectR2R,
 } from './ops-architect-actions';
 import { requireArchitectAmount } from './ops-architect-model';
+import { useWorkspaceTranslation } from '../../../../../bridges/workspace-localization-react';
 
 const addressFields = ['depository', 'entityProvider', 'account', 'deltaTransformer'] as const;
 
 export function OpsArchitectLiveControls() {
+  const { t } = useWorkspaceTranslation();
   const context = useWorkspaceEnvironment();
   const configured = useSyncExternalStore(jmachineState.subscribe, jmachineState.get);
   const machines = context.frame ? [...context.frame.state.jReplicas.values()] : [];
@@ -74,7 +76,7 @@ export function OpsArchitectLiveControls() {
     {context.historical ? <p role="status">Switch to Live Runtime before creating, funding, or transferring.</p> : null}
     {issue ? <p role="alert">{issue}</p> : null}{status ? <p role="status">{status}</p> : null}
     <fieldset disabled={context.historical || Boolean(busy) || context.adapter?.mode !== 'embedded'}>
-      <legend>Jurisdiction stack</legend>
+      <legend>{t('workspace.jurisdiction')} stack</legend>
       <label>Selected stack<select aria-label="Architect selected stack" value={selectedName} onChange={event => { const next = event.currentTarget.value; setMachineName(next); try { selectArchitectJurisdiction(actionContext, next); setIssue(''); } catch (cause) { setIssue(cause instanceof Error ? cause.message : String(cause)); } }}>{machines.map(machine => <option key={machine.name}>{machine.name}</option>)}</select></label>
       <label>Import mode<select aria-label="Jurisdiction import mode" value={mode} onChange={event => setMode(event.currentTarget.value as 'browservm' | 'rpc')}><option value="browservm">BrowserVM</option><option value="rpc">Existing RPC</option></select></label>
       <label>Name<input aria-label="Jurisdiction name" value={name} onChange={event => setName(event.currentTarget.value)} /></label>
@@ -83,7 +85,7 @@ export function OpsArchitectLiveControls() {
       <button type="button" onClick={() => { void run('create', create); }}>{busy === 'create' ? 'Creating…' : 'Create jurisdiction'}</button>
     </fieldset>
     <fieldset disabled={context.historical || Boolean(busy) || !selectedName || context.adapter?.mode !== 'embedded'}>
-      <legend>3×3 demo topology</legend><p>{entityIds.length} Entities in the selected stack. Setup never clears the existing Runtime.</p>
+      <legend>3×3 demo topology</legend><p>{entityIds.length} {t('network.entities')} in the selected stack. Setup never clears the existing Runtime.</p>
       <button type="button" onClick={() => { void run('grid', async () => { const xln = await getXLN(); const ids = await createArchitectDemoGrid(actionContext, xln, selectedName); return `Created ${ids.length} demo Entities.`; }); }}>{busy === 'grid' ? 'Creating…' : 'Create 3×3 hub'}</button>
       <button disabled={!entityIds.length} type="button" onClick={() => { void run('fund', async () => { const balances = await fundArchitectEntities(actionContext, selectedName, entityIds, 1, 1_000_000n); return `Observed ${balances.length} reserves at or above 1000000 raw units.`; }); }}>{busy === 'fund' ? 'Funding…' : 'Fund all reserves'}</button>
     </fieldset>

@@ -5,9 +5,11 @@ import { networkMachineRuntimeOperations } from '../../../../../src/lib/stores/n
 import { getXLN } from '../../../../../src/lib/stores/bootstrap/xlnRuntimeLoader';
 import { loadWorkspaceScenario } from '../session/ops-workspace-playback';
 import { useWorkspaceEnvironment } from '../session/use-workspace-environment';
+import { useWorkspaceTranslation } from '../../../../../bridges/workspace-localization-react';
 
 const levels: readonly ConsoleFilterLevel[] = ['all', 'debug', 'log', 'info', 'warn', 'error'];
 export function OpsConsolePanel() {
+  const { t } = useWorkspaceTranslation();
   const context = useWorkspaceEnvironment();
   const [command, setCommand] = useState('');
   const [history, setHistory] = useState<string[]>([]);
@@ -58,9 +60,9 @@ export function OpsConsolePanel() {
     const anchor = document.createElement('a'); anchor.href = url; anchor.download = 'xln-console.txt'; anchor.click(); URL.revokeObjectURL(url);
   };
   return <section className="ops-evidence-panel ops-console" data-testid="workspace-console">
-    <header><h2>Console</h2><span>{filtered.length} / {CONSOLE_MAX_LOGS} logs</span></header>
+    <header><h2>{t('workspace.console')}</h2><span>{filtered.length} / {CONSOLE_MAX_LOGS} logs</span></header>
     {context.error || context.restriction ? <p role={context.error ? 'alert' : 'status'}>{context.error || context.restriction}</p> : <>
-      <div className="ops-panel-controls"><label>Level <select aria-label="Console log level" value={level} onChange={event => { const next = levels.find(value => value === event.currentTarget.value); if (next) setLevel(next); }}>{levels.map(value => <option key={value}>{value}</option>)}</select></label><input aria-label="Search console logs" type="search" value={search} onChange={event => setSearch(event.currentTarget.value)} /><label><input type="checkbox" checked={autoScroll} onChange={event => setAutoScroll(event.currentTarget.checked)} /> Auto-scroll</label><button onClick={clear} type="button">Clear</button><button onClick={() => exportLogs(false)} type="button">Copy</button><button onClick={() => exportLogs(true)} type="button">Download</button></div>
+      <div className="ops-panel-controls"><label>Level <select aria-label="Console log level" value={level} onChange={event => { const next = levels.find(value => value === event.currentTarget.value); if (next) setLevel(next); }}>{levels.map(value => <option key={value}>{value}</option>)}</select></label><input aria-label={`${t('common.search')} console logs`} type="search" value={search} onChange={event => setSearch(event.currentTarget.value)} /><label><input type="checkbox" checked={autoScroll} onChange={event => setAutoScroll(event.currentTarget.checked)} /> Auto-scroll</label><button onClick={clear} type="button">Clear</button><button onClick={() => exportLogs(false)} type="button">{t('common.copy')}</button><button onClick={() => exportLogs(true)} type="button">Download</button></div>
       <div className="ops-console-logs" ref={logView} role="log">{filtered.map(log => <pre key={log.id} style={{ color: consoleLevelColor(log.level) }}>[{log.timestamp}] [{log.level.toUpperCase()}] {log.message}</pre>)}</div>
       <form className="ops-console-command" onSubmit={event => { event.preventDefault(); void execute(); }}><label htmlFor="ops-console-command">&gt;</label><input id="ops-console-command" aria-label="Console command" placeholder="help()" disabled={busy} value={command} onChange={event => setCommand(event.currentTarget.value)} onKeyDown={event => {
         if (event.key === 'ArrowUp' || event.key === 'ArrowDown') { event.preventDefault(); const next = event.key === 'ArrowUp' ? Math.min(history.length - 1, historyIndex + 1) : Math.max(-1, historyIndex - 1); setHistoryIndex(next); setCommand(next < 0 ? '' : history[history.length - 1 - next] ?? ''); }

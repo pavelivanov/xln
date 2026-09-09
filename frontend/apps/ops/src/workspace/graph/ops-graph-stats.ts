@@ -1,4 +1,4 @@
-import type { WebGLRenderer } from 'three';
+import type { GraphRenderer } from '../../../../../packages/ui/src/graph/graph3d-renderer';
 import { createGraph3dFpsOverlayView } from '../../../../../packages/runtime-client/src/graph/graph3d-viewport-view';
 
 export const createOpsGraphStats = (container: HTMLElement) => {
@@ -12,7 +12,7 @@ export const createOpsGraphStats = (container: HTMLElement) => {
   return {
     reset: (): void => { started = null; frames = 0; output.textContent = 'Measuring rendered frames…'; },
     setVisible: (visible: boolean): void => { output.hidden = !visible; },
-    frame: (timestamp: number, renderer: WebGLRenderer): void => {
+    frame: (timestamp: number, renderer: GraphRenderer): void => {
       if (output.hidden) { started = null; frames = 0; return; }
       if (started === null) { started = timestamp; return; }
       frames += 1;

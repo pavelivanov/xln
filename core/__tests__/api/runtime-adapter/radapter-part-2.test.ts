@@ -2429,19 +2429,27 @@ test('remote adapter can inspect and control a hub over the rpc wire', async () 
     }>('verify-chain');
     expect(verification).toEqual({ ok: true, runtimeId, verifiedHeight: 7 });
 
+    const graphAccount = replica.state.accounts.get(counterpartyId)!;
+    graphAccount.state.deltas = PersistentAccountStateMap.fromEntries(
+      'deltas',
+      [[1, makeTestDelta(1, 25n)]],
+    );
+
     const graph = await adapter.read<{
       height: number;
       stateHash: string;
       entities: Array<{
         summary: { entityId: string };
         core: { entityId: string } | null;
-        accounts: { items: unknown[] };
+        accounts: { items: Array<{ deltas: Map<number, { ondelta: bigint }> }> };
       }>;
     }>('graph-frame', { limit: 10, accountsLimit: 10 });
     expect(graph.height).toBe(7);
     expect(graph.stateHash).toBe('');
     expect(graph.entities.map(entry => entry.summary.entityId)).toEqual([entityId, counterpartyId]);
-    expect(graph.entities.find(entry => entry.summary.entityId === entityId)?.accounts.items).toHaveLength(1);
+    const remoteAccount = graph.entities.find(entry => entry.summary.entityId === entityId)?.accounts.items[0];
+    expect(remoteAccount?.deltas).toBeInstanceOf(Map);
+    expect(remoteAccount?.deltas.get(1)?.ondelta).toBe(25n);
     expect(graph.entities.find(entry => entry.summary.entityId === counterpartyId)?.core).toBeNull();
 
     const input: RuntimeInput = {

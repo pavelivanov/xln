@@ -9,8 +9,10 @@ import { loadWorkspaceScenario, pauseWorkspacePlayback, returnWorkspaceLive, wor
 import { OpsSolvencyPanel } from './ops-solvency-panel';
 import { OpsArchitectLiveControls } from '../architect/ops-architect-live-controls';
 import { networkMachineRuntimeOperations } from '../../../../../src/lib/stores/network/networkMachineRuntimeStore';
+import { useWorkspaceTranslation } from '../../../../../bridges/workspace-localization-react';
 
 export function OpsArchitectPanel() {
+  const { t } = useWorkspaceTranslation();
   const context = useWorkspaceEnvironment();
   const network = useSyncExternalStore(workspaceNetwork.subscribe, workspaceNetwork.get);
   const [keys, setKeys] = useState<readonly string[]>([]);
@@ -59,15 +61,15 @@ export function OpsArchitectPanel() {
   const selectedOption = SCENARIO_OPTIONS.find(option => option.runner === key);
   const state = context.frame?.state;
   return <section className="ops-evidence-panel ops-architect-panel" data-testid="workspace-architect">
-    <header><h2>Architect</h2><span>{network.selectedStep ? `${network.selectedStep.activeRuntimeId} · h${network.selectedStep.event.height}` : 'Live workspace'}</span></header>
-    <nav aria-label="Architect views"><button aria-pressed={tab === 'scenarios'} onClick={() => setTab('scenarios')} type="button">Scenarios</button><button aria-pressed={tab === 'solvency'} onClick={() => setTab('solvency')} type="button">Solvency</button></nav>
+    <header><h2>{t('workspace.architect')}</h2><span>{network.selectedStep ? `${network.selectedStep.activeRuntimeId} · h${network.selectedStep.event.height}` : `${t('time.live')} ${t('workspace.title')}`}</span></header>
+    <nav aria-label="Architect views"><button aria-pressed={tab === 'scenarios'} onClick={() => setTab('scenarios')} type="button">Scenarios</button><button aria-pressed={tab === 'solvency'} onClick={() => setTab('solvency')} type="button">{t('workspace.solvency')}</button></nav>
     {issue || network.error ? <p role="alert">{issue || network.error}</p> : null}
     {tab === 'solvency' ? <OpsSolvencyPanel /> : <>
       <h3>Deterministic scenario lab</h3><p>Run the canonical browser scenarios in a fresh Runtime. Every retained panel follows the same recorded frame. The connected Runtime stays available through Live.</p>
       <form className="ops-panel-controls" onSubmit={event => { event.preventDefault(); void run(); }}>
         <label>Scenario<select aria-label="Architect scenario" disabled={busy || network.loading || context.historical} value={key} onChange={event => setKey(event.currentTarget.value)}>{keys.map(value => <option key={value} value={value}>{SCENARIO_OPTIONS.find(option => option.runner === value)?.title ?? value}</option>)}</select></label>
         <button disabled={!keys.length || busy || network.loading || context.historical} type="submit">{busy ? 'Running scenario…' : 'Run scenario'}</button>
-        <button disabled={!network.selectedStep} onClick={returnWorkspaceLive} type="button">Live Runtime</button>
+        <button disabled={!network.selectedStep} onClick={returnWorkspaceLive} type="button">{t('time.live')} Runtime</button>
         <button disabled={!ownsDemo || !network.machine} onClick={resetDemo} type="button">Reset isolated demo</button>
       </form>
       {selectedOption ? <p>{selectedOption.description}</p> : null}

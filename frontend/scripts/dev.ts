@@ -35,7 +35,10 @@ export const createDevelopmentProcessSpecs = (
             XLN_REACT_EDGE_WEBSOCKET_TARGET: `http://127.0.0.1:${Number(process.env['XLN_REACT_WALLET_FIXTURE_PORT'] || 19092) + 3}`,
         } : {}),
         ...(surfaceIds.length === 1 && surfaceIds[0] === 'site' ? { XLN_REACT_DOCS_PROXY_OWNER: 'site' } : {}),
-        ...(surfaceIds.length === 1 && surfaceIds[0] === 'ops' ? { XLN_REACT_WALLET_PROXY_OWNER: 'ops' } : {}),
+        ...(surfaceIds.length === 1 && surfaceIds[0] === 'ops' ? {
+          XLN_REACT_DOCS_PROXY_OWNER: 'ops',
+          XLN_REACT_WALLET_PROXY_OWNER: 'ops',
+        } : {}),
       } } : {}),
     },
     ...(runtimeFixtureEnabled ? [{

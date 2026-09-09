@@ -13,6 +13,7 @@ test('Graph3D shares the real Runtime and retains a replay timeline across close
   await page.getByRole('button', { name: 'Open Graph3D panel' }).click();
   const graph = page.getByTestId('workspace-graph');
   await expect(graph).toHaveAttribute('data-node-count', '2');
+  await expect(graph).not.toHaveAttribute('data-account-count', '0', { timeout: 20_000 });
   await expect(graph.locator('canvas')).toBeVisible();
   await graph.getByLabel('Graph Entity').selectOption(fixture.entityId);
   await expect(graph.locator('.ops-graph-selection')).toContainText(fixture.entityId);
@@ -24,12 +25,19 @@ test('Graph3D shares the real Runtime and retains a replay timeline across close
   await timeline.getByRole('button', { name: 'Next network frame' }).click();
   await expect(timeline.locator('output')).toContainText('1/');
   await expect(graph.getByText('Recorded frame', { exact: true })).toBeVisible();
+  const range = timeline.getByLabel('Network frame', { exact: true });
+  await range.focus();
+  await range.press('End');
+  await expect(graph).not.toHaveAttribute('data-account-count', '0', { timeout: 20_000 });
+  await graph.getByLabel('Graph Account', { exact: true }).selectOption({ index: 1 });
+  await expect(graph.getByTestId('graph-account-selection')).toContainText('1 Runtime sources');
+  const selectedFrameLabel = await timeline.locator('output').textContent();
   await screenshotGraphEvidence(page, testInfo, 'ops-graph-history');
   await page.locator('.dv-default-tab').filter({ hasText: 'Graph3D' }).locator('.dv-default-tab-action').click();
   await expect(graph).toHaveCount(0);
   await page.getByRole('button', { name: 'Open Graph3D panel' }).click();
   await expect(graph.locator('canvas')).toBeVisible();
-  await expect(timeline.locator('output')).toContainText('1/');
+  await expect(timeline.locator('output')).toHaveText(selectedFrameLabel ?? '');
   await timeline.getByRole('button', { name: 'Live', exact: true }).click();
   await expect(timeline.locator('output')).toHaveText('Live');
   await expectPageContained(page);
@@ -137,6 +145,118 @@ test('Graph3D retains camera and view controls without overwriting the full work
   expect(await page.evaluate(() => JSON.parse(localStorage.getItem('xln-bird-view-settings') || 'null').camera)).toEqual(closedCamera);
   await expectPageContained(page);
   await screenshotGraphEvidence(page, testInfo, 'ops-graph-restored-controls');
+  expectNoBrowserErrors(errors);
+});
+
+test('selected Runtime frames drive controlled effects and exact renderer/XR capability state', { tag: '@functional' }, async ({ page }, testInfo) => {
+  testInfo.setTimeout(120_000);
+  const errors = observeBrowserErrors(page);
+  await openWorkspaceStorageOrigin(page);
+  await page.evaluate(() => localStorage.setItem('xln-view-settings', JSON.stringify({
+    lightningEnabled: true,
+    lightningSpeed: 500,
+    broadcastEnabled: true,
+    broadcastStyle: 'wave',
+    rendererMode: 'webgl',
+    vrScaleMultiplier: 1,
+  })));
+  await page.goto('/__app/ops/entity-workspace?scenario=ahb');
+  const graph = page.getByTestId('workspace-graph');
+  const canvasOwner = graph.locator('.ops-graph-canvas');
+  const timeline = page.getByTestId('workspace-network-timeline');
+  const range = timeline.getByLabel('Network frame', { exact: true });
+  await expect(timeline.locator('output')).toContainText('1/', { timeout: 90_000 });
+  await expect(canvasOwner).toHaveAttribute('data-renderer-mode', 'webgl');
+  await expect(graph.locator('canvas')).toHaveAttribute('aria-busy', 'false');
+  const xrEntry = graph.getByRole('button', { name: 'Enter VR', exact: true });
+  await expect(xrEntry).toBeDisabled();
+  await expect(xrEntry).toHaveAttribute('title', 'VR not supported on this device');
+
+  const frameCount = Number(await range.getAttribute('max')) + 1;
+  const observed = new Set<string>();
+  let lightningFrame = -1;
+  let broadcastFrame = -1;
+  for (let index = 0; index < frameCount && (!observed.has('lightning') || !observed.has('wave')); index += 1) {
+    await range.fill(String(index));
+    await expect(graph).toHaveAttribute('data-selected-step-index', String(index));
+    await expect(canvasOwner).toHaveAttribute('data-rendered-step-index', String(index));
+    await expect(graph.locator('canvas')).toHaveAttribute('aria-busy', 'false');
+    for (const kind of (await canvasOwner.getAttribute('data-effect-emitted-kinds') ?? '').split(',').filter(Boolean)) {
+      observed.add(kind);
+      if (kind === 'lightning') lightningFrame = index;
+      if (kind === 'wave') broadcastFrame = index;
+    }
+  }
+  expect([...observed].sort()).toEqual(['lightning', 'wave']);
+  expect(lightningFrame).toBeGreaterThanOrEqual(0);
+  expect(broadcastFrame).toBeGreaterThanOrEqual(0);
+  await range.fill(String(broadcastFrame));
+
+  await page.getByRole('button', { name: 'Open Settings panel', exact: true }).click();
+  const settings = page.getByTestId('workspace-settings');
+  const graphTab = page.locator('.dv-default-tab').filter({ hasText: 'Graph3D' });
+  const settingsTab = page.locator('.dv-default-tab').filter({ hasText: /^Settings$/ });
+  await settings.getByRole('button', { name: 'Effects', exact: true }).click();
+  await settings.getByRole('checkbox', { name: 'Enable jurisdiction broadcast', exact: true }).uncheck();
+  await graphTab.click();
+  await expect(canvasOwner).not.toHaveAttribute('data-effect-emitted-kinds', /wave/);
+  await settingsTab.click();
+  await settings.getByRole('checkbox', { name: 'Enable jurisdiction broadcast', exact: true }).check();
+  await settings.getByRole('radio', { name: 'particles', exact: true }).check();
+  await graphTab.click();
+  await expect(canvasOwner).toHaveAttribute('data-effect-emitted-kinds', /particles/);
+  await screenshotGraphEvidence(page, testInfo, 'ops-graph-particle-effect');
+  await range.fill(String(lightningFrame));
+  await settingsTab.click();
+  await settings.getByRole('checkbox', { name: 'Enable lightning animation', exact: true }).uncheck();
+  await graphTab.click();
+  await expect(canvasOwner).not.toHaveAttribute('data-effect-emitted-kinds', /lightning/);
+  await settingsTab.click();
+  await settings.getByLabel('Lightning duration (ms)', { exact: true }).fill('420');
+  await settings.getByRole('button', { name: 'Performance', exact: true }).click();
+  await settings.getByLabel('XR graph scale', { exact: true }).fill('2');
+  const renderer = settings.getByLabel('Renderer', { exact: true });
+  await renderer.selectOption('webgpu');
+  await expect(renderer).toHaveValue('webgpu');
+  await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem('xln-view-settings') || 'null')?.rendererMode)).toBe('webgpu');
+  await graphTab.click();
+  await expect(graph).toHaveAttribute('data-renderer-request', 'webgpu');
+  let rendererOutcome = '';
+  await expect.poll(async () => {
+    rendererOutcome = await canvasOwner.getAttribute('data-renderer-mode') === 'webgpu'
+      ? 'webgpu'
+      : (await graph.getByRole('alert').textContent().catch(() => '')) ?? '';
+    return rendererOutcome;
+  }, { timeout: 20_000 }).toMatch(/^(webgpu|GRAPH_WEBGPU_(UNSUPPORTED|INITIALIZATION_FAILED:.*))$/);
+  await expect(canvasOwner).not.toHaveAttribute('data-renderer-mode', 'webgl');
+  const capabilities = await page.evaluate(() => ({
+    navigatorGpu: Boolean(navigator.gpu), navigatorXr: Boolean(navigator.xr), webdriver: navigator.webdriver,
+  }));
+  await testInfo.attach('graph-renderer-xr-capability', {
+    body: JSON.stringify({ ...capabilities, rendererOutcome, xrEntryDisabled: await xrEntry.isDisabled() }, null, 2),
+    contentType: 'application/json',
+  });
+  await settingsTab.click();
+  await renderer.selectOption('webgl');
+  await expect(renderer).toHaveValue('webgl');
+  await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem('xln-view-settings') || 'null')?.rendererMode)).toBe('webgl');
+  await graphTab.click();
+  await expect(graph).toHaveAttribute('data-renderer-request', 'webgl');
+  await expect(canvasOwner).toHaveAttribute('data-renderer-mode', 'webgl');
+  await expect(graph.locator('canvas')).toHaveAttribute('aria-busy', 'false');
+  await screenshotGraphEvidence(page, testInfo, 'ops-graph-effects-capability');
+
+  const stored = await page.evaluate(() => JSON.parse(localStorage.getItem('xln-view-settings') || 'null'));
+  expect(stored).toMatchObject({
+    lightningEnabled: false, lightningSpeed: 420, broadcastEnabled: true,
+    broadcastStyle: 'particles', rendererMode: 'webgl', vrScaleMultiplier: 2,
+  });
+  await page.locator('.dv-default-tab').filter({ hasText: 'Graph3D' }).locator('.dv-default-tab-action').click();
+  await expect(graph).toHaveCount(0);
+  await page.getByRole('button', { name: 'Open Graph3D panel', exact: true }).click();
+  await expect(canvasOwner).toHaveAttribute('data-renderer-mode', 'webgl');
+  await expect(graph.locator('canvas')).toHaveAttribute('aria-busy', 'false');
+  await expectPageContained(page);
   expectNoBrowserErrors(errors);
 });
 

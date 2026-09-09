@@ -157,6 +157,38 @@ test('recorded Settings control the retained scene and camera without editing Ru
   expectNoBrowserErrors(errors);
 });
 
+test('effect, renderer and XR controls retain one exact view-settings record', { tag: '@functional' }, async ({ page }) => {
+  const errors = observeBrowserErrors(page);
+  await openWorkspaceStorageOrigin(page);
+  await page.evaluate(() => localStorage.setItem('xln-runtime-adapter-mode', 'embedded'));
+  await page.goto('/__app/ops/entity-workspace');
+  await page.getByRole('button', { name: 'Open Settings panel', exact: true }).click();
+  const settings = page.getByTestId('workspace-settings');
+  await settings.getByRole('button', { name: 'Effects', exact: true }).click();
+  await settings.getByRole('checkbox', { name: 'Enable lightning animation', exact: true }).check();
+  await settings.getByLabel('Lightning duration (ms)', { exact: true }).fill('330');
+  await settings.getByRole('checkbox', { name: 'Enable jurisdiction broadcast', exact: true }).uncheck();
+  await settings.getByRole('radio', { name: 'wave', exact: true }).check();
+  await settings.getByRole('button', { name: 'Performance', exact: true }).click();
+  await settings.getByLabel('XR graph scale', { exact: true }).fill('1.75');
+  await settings.getByLabel('Renderer', { exact: true }).selectOption('webgpu');
+  await page.locator('.dv-default-tab').filter({ hasText: /^Settings$/ }).locator('.dv-default-tab-action').click();
+  await page.getByRole('button', { name: 'Open Settings panel', exact: true }).click();
+  await settings.getByRole('button', { name: 'Effects', exact: true }).click();
+  await expect(settings.getByRole('checkbox', { name: 'Enable lightning animation', exact: true })).toBeChecked();
+  await expect(settings.getByLabel('Lightning duration (ms)', { exact: true })).toHaveValue('330');
+  await expect(settings.getByRole('checkbox', { name: 'Enable jurisdiction broadcast', exact: true })).not.toBeChecked();
+  await expect(settings.getByRole('radio', { name: 'wave', exact: true })).toBeChecked();
+  await settings.getByRole('button', { name: 'Performance', exact: true }).click();
+  await expect(settings.getByLabel('XR graph scale', { exact: true })).toHaveValue('1.75');
+  await expect(settings.getByLabel('Renderer', { exact: true })).toHaveValue('webgpu');
+  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('xln-view-settings') || 'null'))).toMatchObject({
+    lightningEnabled: true, lightningSpeed: 330, broadcastEnabled: false,
+    broadcastStyle: 'wave', rendererMode: 'webgpu', vrScaleMultiplier: 1.75,
+  });
+  expectNoBrowserErrors(errors);
+});
+
 
 test('Stack Manager inspects the real daemon signer and exact RPC, rejects failures and clears stale probes', { tag: '@resilience' }, async ({ page }, testInfo) => {
   const { installImportedRuntime, readWalletRuntimeFixture } = await import('../../wallet/fixtures/wallet-runtime-test-helpers');

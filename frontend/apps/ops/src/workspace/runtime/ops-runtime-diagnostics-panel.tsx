@@ -16,8 +16,10 @@ import { useWorkspaceQuery } from '../session/use-workspace-query';
 import { WorkspaceReadBoundary } from '../session/workspace-read-boundary';
 import { useWorkspaceEnvironment } from '../session/use-workspace-environment';
 import './ops-runtime-diagnostics.css';
+import { useWorkspaceTranslation } from '../../../../../bridges/workspace-localization-react';
 
 export function OpsRuntimeDiagnosticsPanel() {
+  const { t } = useWorkspaceTranslation();
   const context = useWorkspaceEnvironment();
   const { snapshot, connection, connected, client, refresh } = useWorkspaceQuery(readOpsRuntimeDiagnostics, !context.historical);
   const incidents = sortRuntimeDiagnosticsIncidents(context.securityIncidents ?? []);
@@ -49,9 +51,9 @@ export function OpsRuntimeDiagnosticsPanel() {
   return (
     <section className="workspace-read-panel workspace-diagnostics" data-testid="runtime-diagnostics-panel">
       <header>
-        <div><h2>Runtime Diagnostics</h2><p>Storage integrity · {context.historical ? 'recorded frame' : 'live Runtime'}</p></div>
+        <div><h2>{t('workspace.diagnostics')}</h2><p>Storage integrity · {context.historical ? `${t('time.historical')} ${t('time.frame')}` : `${t('time.live')} Runtime`}</p></div>
         <div className="workspace-diagnostics-actions">
-          <button disabled={!refresh || snapshot.loading} onClick={() => { context.refreshLocal?.(); void refresh?.(); }} type="button">Refresh</button>
+          <button disabled={!refresh || snapshot.loading} onClick={() => { context.refreshLocal?.(); void refresh?.(); }} type="button">{t('common.refresh')}</button>
           <button disabled={!connected || verifying || context.historical} onClick={() => { void verify(); }} type="button">{verifying ? 'Verifying…' : 'Verify chain'}</button>
         </div>
       </header>

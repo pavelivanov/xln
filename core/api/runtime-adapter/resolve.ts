@@ -1,6 +1,6 @@
 import { projectBookDepth, type BookState } from '../../orderbook';
 import { projectBookPricePageTree, type BookPricePage } from '../../orderbook/pages/page';
-import type { AccountTx } from '../../types/account';
+import type { AccountTx, Delta } from '../../types/account';
 import type { EntityReplica, EntityState, ExternalWalletState } from '../../entity/types';
 import type { RuntimeEntityMetricStats, RuntimeReplica } from '../../runtime/types';
 import { readRuntimeEntityMetricStats } from '../../runtime/observability/entity-metrics';
@@ -243,7 +243,7 @@ type RuntimeAdapterGraphAccount = {
   mempool: RuntimeAdapterGraphAccountActivity[];
   mempoolCount: number;
   currentFrame: RuntimeAdapterGraphAccountFrame;
-  deltas: StorageAccountDoc['state']['deltas'];
+  deltas: Map<number, Delta>;
   currentHeight: number;
   pendingFrame?: RuntimeAdapterGraphAccountFrame;
   rollbackCount: number;
@@ -1532,7 +1532,9 @@ const projectGraphAccount = (doc: StorageAccountDoc): RuntimeAdapterGraphAccount
   mempool: projectGraphAccountActivities(doc.mempool),
   mempoolCount: doc.mempool.length,
   currentFrame: projectGraphAccountFrame(doc.currentFrame),
-  deltas: doc.state.deltas,
+  // The graph wire DTO owns value-only data. Patricia collection machinery
+  // remains inside Account/storage and is never passed to the binary codec.
+  deltas: new Map(doc.state.deltas),
   currentHeight: doc.currentHeight,
   ...(doc.pendingFrame ? { pendingFrame: projectGraphAccountFrame(doc.pendingFrame) } : {}),
   rollbackCount: doc.rollbackCount,

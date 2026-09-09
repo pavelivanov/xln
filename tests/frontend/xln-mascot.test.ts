@@ -13,7 +13,8 @@ import {
   parseAssistantSseLine,
   streamXlnAssistantReply,
 } from '../../frontend/src/lib/ai/xln-assistant-client';
-import { rankXlnGuideDocs } from '../../frontend/src/lib/ai/xln-guide-context';
+import { buildXlnGuideMessages, rankXlnGuideDocs } from '../../frontend/src/lib/ai/xln-guide-context';
+import { createOpsGuideFrameContext } from '../../frontend/apps/ops/src/workspace/guide/ops-guide-context';
 import {
   parseAssistantChatRequest,
   sanitizeAssistantCatalog,
@@ -164,5 +165,34 @@ describe('xln assistant boundaries', () => {
     ];
     expect(rankXlnGuideDocs('Why does collateral protect credit?', '/app', entries)[0]?.id).toBe('core/12_invariant');
     expect(rankXlnGuideDocs('network overview', '/app', entries).some(entry => entry.kind === 'archive')).toBe(false);
+  });
+
+  test('binds guide context to the selected committed Runtime frame', () => {
+    expect(createOpsGuideFrameContext(null)).toMatchObject({ key: 'live', label: 'Live Runtime view' });
+    expect(createOpsGuideFrameContext({
+      index: 2,
+      event: { runtimeId: 'scenario:ahb', height: 7, timestamp: 123, stateHash: '', materialized: true },
+      selection: { timestamp: 123, byRuntime: new Map() }, activeRuntimeId: 'scenario:ahb', activeRuntimeColor: '#fff', cues: [],
+    })).toEqual({
+      key: 'scenario:ahb:h7:123', label: 'scenario:ahb · h7',
+      description: 'The workspace is bound to recorded Runtime scenario:ahb at committed height 7 and timestamp 123.',
+    });
+  });
+
+  test('adds bounded screen context to the system prompt without changing user history', async () => {
+    const originalFetch = globalThis.fetch;
+    globalThis.fetch = (async (value: string | URL | Request) => {
+      const url = String(value);
+      if (url.endsWith('manifest.json')) return Response.json({ items: [{ id: 'intro', path: 'intro.md', title: 'Intro', summary: 'network', kind: 'live' }] });
+      return new Response('Trusted xln documentation.');
+    }) as typeof fetch;
+    try {
+      const messages = await buildXlnGuideMessages({
+        query: 'Explain this frame', pathname: '/embed', history: [{ role: 'assistant', content: 'Earlier' }],
+        screenContext: 'Recorded Runtime demo at height 7.',
+      });
+      expect(messages[0]?.content).toContain('CURRENT SCREEN CONTEXT\nRecorded Runtime demo at height 7.');
+      expect(messages.slice(1)).toEqual([{ role: 'assistant', content: 'Earlier' }, { role: 'user', content: 'Explain this frame' }]);
+    } finally { globalThis.fetch = originalFetch; }
   });
 });
