@@ -22,7 +22,7 @@ import {
   resolveDefaultRecoveryTowerUrls,
   tryRestoreRuntimeEnvFromTower,
   type Runtime,
-} from '../../frontend/src/lib/stores/vault/vaultStore';
+} from '../../frontend/bridges/vault/vault-store';
 import { createDefaultDelta } from '../../core/account/state/delta';
 import { PersistentAccountStateMap } from '../../core/account/state/persistent-state-map';
 import { createEmptyAccountJClaimAccumulator } from '../../core/account/j-claims/j-claim-accumulator';

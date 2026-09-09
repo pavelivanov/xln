@@ -6,7 +6,7 @@
   import InvariantTicker from '../Home/InvariantTicker.svelte';
   import Collapsible from './Collapsible.svelte';
   import { content, type Content, type ContentLang } from './content';
-  import { locale } from '$lib/i18n';
+  import { locale } from '../../../../packages/browser/src/localization';
 
   export let onUnlock: () => void;
 

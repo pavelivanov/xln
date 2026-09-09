@@ -1,5 +1,5 @@
-import type { AccountTokenDetailRow } from '../../../../../src/lib/components/Entity/shared/account-token-details';
-import { buildTokenVisualScale } from '../../../../../src/lib/components/Entity/shared/delta-visual';
+import type { AccountTokenDetailRow } from '../../../../../packages/ui/src/account/account-token-details';
+import { buildTokenVisualScale } from '../../../../../packages/ui/src/account/delta-visual';
 import { DeltaCapacityBar } from '../../../../../packages/ui/src/rcpan/delta-capacity-bar';
 import { DeltaApple } from '../../../../../packages/ui/src/rcpan/delta-apple';
 import { useDeltaBarAnimation } from '../../../../../packages/ui/src/rcpan/delta-bar-animation';

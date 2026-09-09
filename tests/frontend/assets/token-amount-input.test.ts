@@ -3,7 +3,7 @@ import { describe, expect, test } from 'bun:test';
 import {
   parseTokenAmountInput,
   tokenAmountInputErrorMessage,
-} from '../../../frontend/src/lib/components/Entity/assets/token-amount-input';
+} from '../../../frontend/packages/ui/src/entity/assets/token-amount-input';
 
 describe('token amount input', () => {
   test('encodes exact six-decimal amounts without changing precision', () => {

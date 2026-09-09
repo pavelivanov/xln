@@ -6,9 +6,12 @@
  * Copyright (C) 2025 XLN Finance
  */
 
-import { writable, get } from 'svelte/store';
+import {
+  createObservableStore as writable,
+  readStoreValue as get,
+} from '../../../packages/runtime-client/src/observable-store';
 import { browser } from '$app/environment';
-import { errorLog } from './errorLogStore';
+import { errorLog } from '../../../packages/browser/src/logging/error-log-store';
 
 export type AppMode = 'user' | 'dev';
 export type ViewMode = 'home' | 'settings' | 'docs' | 'brainvault' | 'panels' | 'graph3d' | 'terminal';

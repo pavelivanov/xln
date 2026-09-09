@@ -5,12 +5,12 @@
     RuntimeAdapterReadQuery,
     RuntimeActivityEvent,
   } from '@xln/core/api/public/runtime-module';
-  import { errorLog } from '$lib/stores/errorLogStore';
-  import { runtimeControllerHandle, runtimeAdapterHeight } from '$lib/stores/runtimeControllerStore';
+  import { errorLog } from '../../../../../packages/browser/src/logging/error-log-store';
+  import { runtimeControllerHandle, runtimeAdapterHeight } from '../../../../../bridges/runtime/runtime-controller-store';
   import { runtimeQueryClient } from '$lib/stores/runtimeQueryClient';
-  import { settings } from '$lib/stores/settingsStore';
-  import { dedupeHistoryEvents as dedupe } from '../account/activity/activity-history-events';
-  import { xlnFunctions } from '$lib/stores/xlnStore';
+  import { settings } from '../../../../../packages/browser/src/settings-store';
+  import { dedupeHistoryEvents as dedupe } from '../../../../../packages/ui/src/account/activity/activity-history-events';
+  import { xlnFunctions } from '../../../../../bridges/runtime/xln-store';
   import {
     Calendar,
     ChevronLeft,
@@ -26,7 +26,7 @@
     isTransientActivityReadError,
     normalizeActivityEntityId,
     normalizeActivityHistoryPage,
-  } from '../account/activity/activity-history-query';
+  } from '../../../../../packages/ui/src/account/activity/activity-history-query';
 
   export let entityId: string;
   export let runtimeId: string | undefined = undefined;

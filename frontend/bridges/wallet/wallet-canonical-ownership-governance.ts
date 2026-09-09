@@ -3,7 +3,7 @@ import {
   buildControlBoardActivationInputs,
   buildControlBoardProposalInput,
   type ControlTakeoverBoard,
-} from '../../src/lib/components/Entity/ownership/ownership-flow';
+} from '../../packages/runtime-client/src/entity/ownership-flow';
 
 export type WalletControlTakeoverTarget = Readonly<{ entityId: string; name: string }>;
 export type WalletControlTakeoverStatus = Readonly<{

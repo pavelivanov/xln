@@ -1,6 +1,6 @@
 import { useEffect, useState, useSyncExternalStore } from 'react';
 import type { AccountReplica, RuntimeAdapter } from '@xln/core/api/public/runtime-module';
-import { buildAccountDisputeView } from '../../../../../src/lib/components/Entity/account/account-focused-view';
+import { buildAccountDisputeView } from '../../../../../packages/ui/src/account/account-focused-view';
 import { WalletAccountViewSource } from './wallet-account-view-source';
 import type { WalletAccountView } from './wallet-account-view-model';
 import { WalletAccountToken } from './wallet-account-token';

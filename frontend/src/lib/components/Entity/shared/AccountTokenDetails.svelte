@@ -1,6 +1,6 @@
 <script lang="ts">
   import { stripTrailingSymbol } from '../../../../../packages/ui/src/rcpan/delta-token-format';
-  import type { AccountTokenDetailRow } from './account-token-details';
+  import type { AccountTokenDetailRow } from '../../../../../packages/ui/src/account/account-token-details';
 
   export let detail: AccountTokenDetailRow;
   export let formatTokenAmount: ((tokenId: number, value: bigint) => string) | null = null;

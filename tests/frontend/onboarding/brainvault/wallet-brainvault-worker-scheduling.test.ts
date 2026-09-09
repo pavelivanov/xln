@@ -114,13 +114,21 @@ describe('browser wallet BrainVault worker scheduling', () => {
       .toEqual({ status: 'unchanged' });
   });
 
-  test('keeps Worker lifecycle, secrets, timers, and mutable state in Svelte', () => {
+  test('routes both frontends through one browser worker orchestrator', () => {
     const boundary = readFileSync(
       'frontend/packages/browser/src/identity/wallet-brainvault-worker-scheduling.ts',
       'utf8',
     );
+    const orchestration = readFileSync(
+      'frontend/bridges/wallet/brainvault/wallet-brainvault-browser-derivation.ts',
+      'utf8',
+    );
     const view = readFileSync(
       'frontend/src/lib/components/Views/RuntimeCreation.svelte',
+      'utf8',
+    );
+    const reactRuntime = readFileSync(
+      'frontend/bridges/wallet/wallet-canonical-vault-runtime.ts',
       'utf8',
     );
 
@@ -129,11 +137,14 @@ describe('browser wallet BrainVault worker scheduling', () => {
     expect(boundary).not.toContain('passphrase');
     expect(boundary).not.toContain('new Worker');
     expect(boundary).not.toContain('worker: Worker');
-    expect(view).toContain('resolveWalletBrainVaultShardRetry(shardIndex, message, {');
-    expect(view).toContain('resolveWalletBrainVaultShardDispatch({');
-    expect(view).toContain('resolveWalletBrainVaultWorkerScale(');
-    expect(view).toContain('worker.postMessage({');
-    expect(view).toContain('armWorkerShardWatchdog(worker, dispatch.shardIndex)');
-    expect(view).toContain('passphrase: run.passphrase');
+    expect(orchestration).toContain('resolveWalletBrainVaultShardRetry(shardIndex, message, {');
+    expect(orchestration).toContain('resolveWalletBrainVaultShardDispatch({');
+    expect(orchestration).toContain('worker.postMessage({');
+    expect(orchestration).toContain('passphrase: run.input.passphrase');
+    expect(view).toContain('new WalletBrainVaultBrowserDerivation()');
+    expect(view).toContain('browserBrainVaultDerivation.derive(');
+    expect(view).not.toContain('worker.postMessage({');
+    expect(reactRuntime).toContain('new WalletBrainVaultBrowserDerivation()');
+    expect(reactRuntime).toContain('brainVaultDerivation.derive(input, onProgress)');
   });
 });

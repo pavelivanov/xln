@@ -7,8 +7,8 @@
   import {
     getRuntimeControllerConfig,
     runtimeControllerHandle,
-  } from '$lib/stores/runtimeControllerStore';
-  import { runtimeHttpOriginFromWsUrl } from '$lib/utils/runtime/wsUrl';
+  } from '../../../../bridges/runtime/runtime-controller-store';
+  import { runtimeHttpOriginFromWsUrl } from '../../../../packages/runtime-client/src/runtime/ws-url';
   import {
     STACK_VERSION,
     defaultStackStablecoinKind,
@@ -20,7 +20,7 @@
     type StackManagerStatus,
     type StackPublicationRequest,
     type StackStablecoinKind,
-  } from './stack-manager-client';
+  } from '../../../../bridges/runtime/stack-manager-client';
   type SignerOption = Readonly<{ id: string; label: string }>;
   let rpcUrl = '';
   let networkName = '';

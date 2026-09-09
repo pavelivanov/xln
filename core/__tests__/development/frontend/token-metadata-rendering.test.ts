@@ -2,11 +2,11 @@ import { describe, expect, test } from 'bun:test';
 
 import {
   resolveReserveTokenMetaFromCatalog,
-} from '../../../../frontend/src/lib/components/Entity/assets/entity-asset-catalog';
+} from '../../../../frontend/packages/ui/src/entity/assets/entity-asset-catalog';
 import {
   getAssetValueUsd,
   getExternalTokenValueUsd,
-} from '../../../../frontend/src/lib/components/Entity/assets/entity-asset-values';
+} from '../../../../frontend/packages/ui/src/entity/assets/entity-asset-values';
 import { remainingOfferUsd } from '../../../../frontend/src/lib/components/Entity/swap/swap-order-history';
 import {
   RCPAN_MICROSCOPE_TOKENS,
@@ -16,7 +16,7 @@ import type { SwapBookEntry } from '../../../entity/types';
 import {
   formatGraphEntityReserveBalances,
   formatGraphReserveBadge,
-} from '../../../../frontend/src/lib/view/panels/graph3d/graph3d-helpers';
+} from '../../../../frontend/packages/ui/src/graph/graph3d-helpers';
 
 describe('rendered token metadata is exact', () => {
   test('jurisdiction catalog decimals win for a custom token', () => {

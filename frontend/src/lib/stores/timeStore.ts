@@ -1,7 +1,11 @@
-import { writable, derived, get } from 'svelte/store';
+import {
+  createDerivedStore as derived,
+  createObservableStore as writable,
+  readStoreValue as get,
+} from '../../../packages/runtime-client/src/observable-store';
 import type { TimeState } from '$lib/types/ui';
-import { history } from './xlnStore';
-import { errorLog } from './errorLogStore';
+import { history } from '../../../bridges/runtime/xln-store';
+import { errorLog } from '../../../packages/browser/src/logging/error-log-store';
 
 const defaultTimeState: TimeState = {
   currentTimeIndex: -1,

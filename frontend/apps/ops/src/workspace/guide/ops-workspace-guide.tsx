@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, useSyncExternalStore, type PointerEvent } 
 import { safeStringify } from '@xln/core/protocol/serialization';
 import { DEFAULT_XLN_MASCOT_DOCK, clampMascotPoint, moveMascotDock, normalizeXlnMascotDock, resolveMascotPanelRect, resolveMascotPoint, resolveMascotViewport, snapMascotToEdge, type MascotPoint } from '../../../../../packages/ui/src/mascot-geometry';
 import { parseJsonUnknown, isUnknownRecord } from '../../../../../packages/runtime-client/src/boundary';
-import type { XlnAssistantMessage } from '../../../../../src/lib/ai/xln-assistant-client';
+import type { XlnAssistantMessage } from '../../../../../packages/browser/src/ai/xln-assistant-client';
 import { OpsGuideChat } from './ops-guide-chat';
 import mascotMark from '../../../../../static/img/l.png';
 import { workspaceNetwork } from '../session/ops-workspace-playback';

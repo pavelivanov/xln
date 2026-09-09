@@ -7,8 +7,8 @@ import {
   buildPersistedJMachineConfig,
   normalizeJMachineCreateDetail,
   type JMachineCreateDetail,
-} from '../../../../../src/lib/components/Jurisdiction/import-jmachine-runtime';
-import { jmachineOperations } from '../../../../../src/lib/stores/network/jmachineStore';
+} from '../../../../../bridges/runtime/import-jmachine-runtime';
+import { jmachineOperations } from '../../../../../packages/browser/src/jurisdiction/jmachine-store';
 import {
   OPS_DEMO_ENTITY_COUNT,
   architectDemoPosition,

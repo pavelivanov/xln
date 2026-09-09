@@ -8,11 +8,11 @@ import {
   buildEntityShareReleaseInput,
   getEntityShareExternalTokenIds,
   projectEntityShareTokens,
-} from '../../src/lib/components/Entity/ownership/ownership-flow';
+} from '../../packages/runtime-client/src/entity/ownership-flow';
 import {
   buildEntityPanelHashRouteFromState,
   resolveEntityPanelDeepLink,
-} from '../../src/lib/components/Entity/workspace/entity-panel-routing';
+} from '../../packages/runtime-client/src/entity/entity-workspace-navigation';
 
 const entityId = toEntityId(`0x${'0'.repeat(63)}1`);
 const ids = getEntityShareExternalTokenIds(entityId);

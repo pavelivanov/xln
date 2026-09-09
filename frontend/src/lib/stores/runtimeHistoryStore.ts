@@ -1,4 +1,7 @@
-import { get, writable } from 'svelte/store';
+import {
+  createObservableStore as writable,
+  readStoreValue as get,
+} from '../../../packages/runtime-client/src/observable-store';
 import type { RuntimeAdapterViewFrame } from '@xln/core/api/public/runtime-module';
 import { REMOTE_RUNTIME } from '@xln/core/config/constants';
 import {
@@ -20,7 +23,7 @@ import {
 import {
   getRuntimeControllerAdapter,
   getRuntimeControllerConfig,
-} from './runtimeControllerStore';
+} from '../../../bridges/runtime/runtime-controller-store';
 import { runtimeQueryClient } from './runtimeQueryClient';
 import {
   readRuntimeViewSelection,

@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 
 import type { AccountState } from '../../../core/types/account';
-import { buildDisputedAccountViews } from '../../../frontend/src/lib/components/Entity/account/account-dispute-view';
+import { buildDisputedAccountViews } from '../../../frontend/packages/ui/src/account/account-dispute-view';
 
 describe('account dispute view helpers', () => {
   test('builds active disputes before finalized disputed accounts', () => {

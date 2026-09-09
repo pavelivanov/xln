@@ -1,7 +1,7 @@
 import type { EntityReadView } from '$lib/components/Entity/core/entity-panel-types';
 
-import type { FrontendXlnFunctions } from '$lib/stores/xlnStore';
-import { amountToUsd } from '$lib/utils/assetPricing';
+import type { FrontendXlnFunctions } from '../../../../bridges/runtime/xln-store';
+import { amountToUsd } from '../../../../packages/runtime-client/src/asset-pricing';
 import type { AccountCapacityView, ReceiveCapacityPlan } from '@xln/core/api/public/runtime-module';
 import {
   defaultAccountDisputeConfigForRoleEvidence,

@@ -108,7 +108,7 @@ describe('external wallet snapshot helpers', () => {
   });
 
   test('local wallet reads never certify an incomplete jurisdiction block', () => {
-    const source = readFileSync('frontend/src/lib/components/Entity/external-wallet-reader.ts', 'utf8');
+    const source = readFileSync('frontend/bridges/wallet/external-wallet-reader.ts', 'utf8');
     const start = source.indexOf('export async function requestExternalWalletSnapshot');
     const end = source.indexOf('function buildExternalWalletStateSyncSignature', start);
     expect(start).toBeGreaterThan(0);
@@ -120,7 +120,7 @@ describe('external wallet snapshot helpers', () => {
 
   test('live wallet balances refresh through read-only snapshots without producing consensus input', () => {
     const source = readFileSync('frontend/src/lib/components/Entity/workspace/shell/EntityPanelTabs.svelte', 'utf8');
-    const reader = readFileSync('frontend/src/lib/components/Entity/external-wallet-reader.ts', 'utf8');
+    const reader = readFileSync('frontend/bridges/wallet/external-wallet-reader.ts', 'utf8');
     expect(reader).toContain('signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS)');
     expect(source).toContain('const externalWalletRefresh = window.setInterval(() => {');
     expect(source).toMatch(/document\.visibilityState !== ["']visible["'] \|\| !activeIsLive/);
@@ -131,7 +131,7 @@ describe('external wallet snapshot helpers', () => {
 
   test('external wallet snapshot transport failures are non-fatal persistent diagnostics', () => {
     const source = readFileSync('frontend/src/lib/components/Entity/workspace/shell/EntityPanelTabs.svelte', 'utf8');
-    const reader = readFileSync('frontend/src/lib/components/Entity/external-wallet-reader.ts', 'utf8');
+    const reader = readFileSync('frontend/bridges/wallet/external-wallet-reader.ts', 'utf8');
     expect(reader).toContain('function isExternalWalletSnapshotTransportFailure(message: string): boolean');
     expect(source).toMatch(
       /logEntityPanelDiagnostic\(["']External token snapshot unavailable["'], \{ error: message \}\)/,

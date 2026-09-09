@@ -6,11 +6,11 @@
 -->
 <script lang="ts">
   import { isTronChainId } from '@xln/core/api/public/runtime-module';
-  import { getXLN, registerActiveNumberedEntities, submitRuntimeInput } from '../../../../stores/xlnStore';
-  import { errorLog } from '../../../../stores/errorLogStore';
-  import { activeRuntime } from '../../../../stores/vault/vaultStore';
+  import { getXLN, registerActiveNumberedEntities, submitRuntimeInput } from '../../../../../../bridges/runtime/xln-store';
+  import { errorLog } from '../../../../../../packages/browser/src/logging/error-log-store';
+  import { activeRuntime } from '../../../../../../bridges/vault/vault-metadata-store';
   import { tabOperations } from '../../../../stores/ui/tabStore';
-  import { generateLazyEntityIdPreview } from '../../../../utils/identity/lazyEntityId';
+  import { generateLazyEntityIdPreview } from '../../../../../../packages/browser/src/identity/lazy-entity-id';
   import { Plus, X, Shield, Hash, UserRound, UsersRound, Zap } from 'lucide-svelte';
   import {
     emptyFormationRuntimeProjection,

@@ -9,18 +9,18 @@
 
   import { onMount } from 'svelte';
   import type { Writable } from 'svelte/store';
-  import { panelBridge } from '../utils/panelBridge';
-  import { setFrontendVerboseLogging } from '../utils/frontendLogger';
+  import { panelBridge } from '../../../../packages/browser/src/workspace/panel-bridge';
+  import { setFrontendVerboseLogging } from '../../../../packages/browser/src/logging/frontend-logger';
   import ConsolePanel from './ConsolePanel.svelte';
   import IndexedDbInspector from '$lib/components/Settings/IndexedDbInspector.svelte';
   import RuntimeStorageLimits from '$lib/components/Settings/RuntimeStorageLimits.svelte';
   import RuntimePerformanceBudgets from '$lib/components/Settings/RuntimePerformanceBudgets.svelte';
   import StackManager from '$lib/components/Settings/StackManager.svelte';
   import TabStylePicker from '$lib/components/Settings/TabStylePicker.svelte';
-  import { TAB_STYLE_OPTIONS } from '$lib/utils/ui-style-options';
-  import { settings as appSettings, settingsOperations } from '$lib/stores/settingsStore';
-  import { networkMachineConfig, networkMachineOperations } from '$lib/stores/network/networkMachineStore';
-  import type { NetworkMachineTimelineMode } from '$lib/network3d/networkMachine';
+  import { TAB_STYLE_OPTIONS } from '../../../../packages/ui/src/ui-style-options';
+  import { settings as appSettings, settingsOperations } from '../../../../packages/browser/src/settings-store';
+  import { networkMachineConfig, networkMachineOperations } from '../../../../packages/browser/src/graph/network-machine-store';
+  import type { NetworkMachineTimelineMode } from '../../../../packages/runtime-client/src/scenario/network-machine';
   import type { EnvSnapshot, RuntimeReplica } from '@xln/core/api/public/runtime-module';
   import {
     ENTITY_OPEN_MODE_STORAGE_KEY,

@@ -1,4 +1,4 @@
-import { readStoreValue } from '../../src/lib/utils/observableStore';
+import { readStoreValue } from '../../packages/runtime-client/src/observable-store';
 
 import type {
   WalletPushWakeOperation,
@@ -6,13 +6,10 @@ import type {
   WalletPushWakeServiceView,
   WalletPushWakeView,
 } from '../../packages/browser/src/wallet/wallet-push-wake';
-import {
-  runtimesState,
-  vaultOperations,
-  type RecoveryTowerConfig,
-  type Runtime,
-} from '../../src/lib/stores/vault/vaultStore';
-import { runtimes as runtimeRegistry } from '../../src/lib/stores/runtimeStore';
+import { vaultOperations } from '../vault/vault-store';
+import { runtimesState } from '../vault/vault-metadata-store';
+import type { RecoveryTowerConfig, Runtime } from '../vault/vault-recovery';
+import { runtimes as runtimeRegistry } from '../runtime/runtime-store';
 import { unwrapLiveRuntimeEnv } from '../../src/lib/utils/runtime/liveRuntimeEnv';
 import {
   buildPushWakeRegistrationPayload,

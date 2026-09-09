@@ -5,8 +5,8 @@
     parseRemoteRuntimeImportText,
     type RemoteRuntimeImportAccess,
     type RemoteRuntimeImportEntry,
-  } from '$lib/utils/onboarding/remoteRuntimeImport';
-  import { importRemoteRuntimeEntries } from '$lib/utils/onboarding/remoteRuntimeImportFlow';
+  } from '../../../../packages/browser/src/runtime/session/remote-runtime-import';
+  import { importRemoteRuntimeEntries } from '../../../../bridges/runtime/remote-runtime-import-flow';
 
   type Row = RemoteRuntimeImportEntry & { index: number; status: string; detail: string };
   let mode: 'single' | 'bulk' = 'single';

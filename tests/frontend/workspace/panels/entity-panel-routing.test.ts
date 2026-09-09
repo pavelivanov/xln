@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 
 import {
   ENTITY_WORKSPACE_SECTIONS,
@@ -110,11 +110,11 @@ describe('entity panel routing helpers', () => {
     ]);
 
     const shared = readFileSync('frontend/packages/runtime-client/src/entity/entity-workspace-navigation.ts', 'utf8');
-    const facade = readFileSync('frontend/src/lib/components/Entity/workspace/entity-panel-routing.ts', 'utf8');
     const tabs = readFileSync('frontend/src/lib/components/Entity/workspace/shell/EntityPanelTabs.svelte', 'utf8');
     expect(shared).not.toContain('frontend/src');
     expect(shared).not.toContain('$lib');
-    expect(facade.trim()).toBe("export * from '../../../../../packages/runtime-client/src/entity/entity-workspace-navigation';");
+    expect(existsSync('frontend/src/lib/components/Entity/workspace/entity-panel-routing.ts')).toBe(false);
+    expect(tabs).toContain('packages/runtime-client/src/entity/entity-workspace-navigation');
     expect(tabs).toContain('ENTITY_WORKSPACE_SECTIONS.map((section) => ({');
   });
 });

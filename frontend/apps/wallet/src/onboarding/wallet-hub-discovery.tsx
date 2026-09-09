@@ -1,7 +1,7 @@
 import type { WalletOpenDraft } from '../commands/wallet-command-draft';
 import { useEffect, useState, useSyncExternalStore } from 'react';
 import type { RuntimeAdapter } from '@xln/core/api/public/runtime-module';
-import type { HubDiscoveryHub } from '../../../../src/lib/components/Entity/onboarding/hub-discovery-profile';
+import type { HubDiscoveryHub } from '../../../../packages/ui/src/onboarding/hub-discovery-profile';
 import { WalletHubDiscoverySource, type WalletHubDetails } from './wallet-hub-discovery-source';
 import { WalletDirectAccountOpen } from '../account/controls/wallet-account-open';
 import '../styles/onboarding/wallet-hub-discovery.css';

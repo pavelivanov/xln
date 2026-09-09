@@ -1,9 +1,8 @@
-import type { AccountReplica } from '@xln/core/api/public/runtime-module';
-import type { EntityReplica } from '../../../../../src/lib/types/ui';
-import type { AccountActivityRow } from '../../../../../src/lib/components/Entity/account/account-focused-view';
-import type { AccountActivityPresentationInput } from '../../../../../src/lib/components/Entity/account/activity/account-activity-presentation';
-import type { AccountTokenDetailRow } from '../../../../../src/lib/components/Entity/shared/account-token-details';
-import type { DisputedAccountView } from '../../../../../src/lib/components/Entity/account/account-dispute-view';
+import type { AccountReplica, EntityReplica } from '@xln/core/api/public/runtime-module';
+import type { AccountActivityRow } from '../../../../../packages/ui/src/account/account-focused-view';
+import type { AccountActivityPresentationInput } from '../../../../../packages/ui/src/account/activity/account-activity-presentation';
+import type { AccountTokenDetailRow } from '../../../../../packages/ui/src/account/account-token-details';
+import type { DisputedAccountView } from '../../../../../packages/ui/src/account/account-dispute-view';
 
 export type WalletAccountView = Readonly<{
   account: AccountReplica | null;

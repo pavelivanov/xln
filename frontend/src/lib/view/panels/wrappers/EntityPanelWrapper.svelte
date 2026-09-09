@@ -17,8 +17,8 @@
   import type { EntityWorkspaceEmbeddedRuntimeContext } from '$lib/components/Entity/core/embedded-runtime-context';
   import type { Tab } from '$lib/types/ui';
   import type { RuntimeReplica, EnvSnapshot } from '@xln/core/api/public/runtime-module';
-  import { runtimeControllerHandle } from '$lib/stores/runtimeControllerStore';
-  import type { EntityOpenAction } from '$lib/view/utils/panelBridge';
+  import { runtimeControllerHandle } from '../../../../../bridges/runtime/runtime-controller-store';
+  import type { EntityOpenAction } from '../../../../../packages/browser/src/workspace/panel-bridge';
 
   // Props from Dockview panel params (Svelte 5 runes syntax)
   let {

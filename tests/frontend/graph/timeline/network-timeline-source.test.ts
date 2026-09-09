@@ -9,12 +9,12 @@ import {
   recordNetworkTrail,
   scenarioNetworkTimelineSource,
   trailNetworkTimelineSource,
-} from '../../../../frontend/src/lib/network3d/timeline/networkTimelineSource';
+} from '../../../../frontend/packages/ui/src/graph/network-timeline-source';
 import {
   activityForStep,
   captionForStep,
   describeEvent,
-} from '../../../../frontend/src/lib/network3d/timeline/networkCaption';
+} from '../../../../frontend/packages/runtime-client/src/scenario/network-caption';
 import {
   networkTrailFromSnapshots,
   serializeNetworkTrailV1,

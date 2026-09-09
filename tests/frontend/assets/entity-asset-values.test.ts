@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import type { FrontendXlnFunctions } from '../../../frontend/src/lib/stores/xlnStore';
+import type { FrontendXlnFunctions } from '../../../frontend/bridges/runtime/xln-store';
 import {
   buildAccountPortfolioData,
   buildAssetLedger,
@@ -17,7 +17,7 @@ import {
   normalizeTokenPrecision,
   parsePositiveAssetAmount,
   parseTokenAmountInput,
-} from '../../../frontend/src/lib/components/Entity/assets/entity-asset-values';
+} from '../../../frontend/packages/ui/src/entity/assets/entity-asset-values';
 
 describe('entity asset value helpers', () => {
   test('normalizes token precision and formats token amounts', () => {

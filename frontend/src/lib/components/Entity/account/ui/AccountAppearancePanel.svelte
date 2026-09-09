@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { settings, settingsOperations } from '../../../../stores/settingsStore';
+  import { settings, settingsOperations } from '../../../../../../packages/browser/src/settings-store';
 
   const ACCOUNT_BAR_USD_PER_100PX_MIN = 10;
   const ACCOUNT_BAR_USD_PER_100PX_MAX = 10_000;

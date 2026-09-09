@@ -4,24 +4,24 @@ import { get, type Writable } from "svelte/store";
 import * as THREE from "three";
 import type { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import type { EnvSnapshot, RuntimeReplica } from "@xln/core/api/public/runtime-module";
-import { panelBridge } from "../../utils/panelBridge";
+import { panelBridge } from "../../../../../packages/browser/src/workspace/panel-bridge";
 import { PerformanceMonitor, type PerfMetrics } from "../../utils/perfMonitor";
-import { getXLN, entityPositions } from "$lib/stores/xlnStore";
-import { requireTokenDecimals } from "$lib/components/Entity/token-metadata";
+import { getXLN, entityPositions } from "../../../../../bridges/runtime/xln-store";
+import { requireTokenDecimals } from "../../../../../packages/runtime-client/src/token-metadata";
 import Graph3DViewport from "../../components/Graph3DViewport.svelte";
-import { compareStableText } from "$lib/utils/stableSort";
-  import { activeRuntimeId, runtimeOperations, runtimes, type Runtime } from "$lib/stores/runtimeStore";
-import { runtimeControllerHandle } from "$lib/stores/runtimeControllerStore";
+import { compareStableText } from "../../../../../packages/ui/src/stable-compare";
+  import { activeRuntimeId, runtimeOperations, runtimes, type Runtime } from "../../../../../bridges/runtime/runtime-store";
+import { runtimeControllerHandle } from "../../../../../bridges/runtime/runtime-controller-store";
 import { runtimeView } from "$lib/stores/runtimeViewStore";
-import { runtimeGraphLiveFrameCache, watchRuntimeGraphFrameCache } from "$lib/network3d/runtimeGraphFrameCache";
-import { runtimeGraphCanonicity, runtimeGraphControlOperations, runtimeGraphScope } from "$lib/stores/network/runtimeGraphControlStore";
+import { runtimeGraphLiveFrameCache, watchRuntimeGraphFrameCache } from "../../../../../bridges/runtime/runtime-graph-frame-cache";
+import { runtimeGraphCanonicity, runtimeGraphControlOperations, runtimeGraphScope } from "../../../../../packages/browser/src/graph/runtime-graph-control-store";
 import { ImmersiveWalletSurface } from "$lib/network3d/ImmersiveWalletSurface";
 import { registerDebugSurface } from "$lib/utils/runtime/debugSurface";
-import { networkMachineRuntime } from "$lib/stores/network/networkMachineRuntimeStore";
-import { mergeRuntimeGraphProjections, requireActionableGraphNodeRuntimeId, type MergedRuntimeGraph, type RuntimeGraphCanonicity, type RuntimeGraphProjection } from "$lib/network3d/runtimeGraphProjection";
-import { materializeRuntimeGraphReplicas } from "$lib/network3d/runtimeGraphRender";
-import { connectedRuntimeGraphEntityIds, resolveRuntimeGraphLayout, type RuntimeGraphLayoutCache } from "$lib/network3d/runtimeGraphLayout";
-import { readGraphPositionOverrides, writeGraphPositionOverride } from "$lib/network3d/graphPositionOverrides";
+import { networkMachineRuntime } from "../../../../../bridges/runtime/network-machine-runtime-store";
+import { mergeRuntimeGraphProjections, requireActionableGraphNodeRuntimeId, type MergedRuntimeGraph, type RuntimeGraphCanonicity, type RuntimeGraphProjection } from "../../../../../packages/ui/src/graph/runtime-graph-projection";
+import { materializeRuntimeGraphReplicas } from "../../../../../packages/ui/src/graph/runtime-graph-render";
+import { connectedRuntimeGraphEntityIds, resolveRuntimeGraphLayout, type RuntimeGraphLayoutCache } from "../../../../../packages/ui/src/graph/runtime-graph-layout";
+import { readGraphPositionOverrides, writeGraphPositionOverride } from "../../../../../packages/browser/src/graph/graph-position-overrides";
 import {
   buildGraphAvailableRoutes,
   formatGraphDualConnectionAccountInfoFromReplicas,
@@ -38,8 +38,8 @@ import {
   graphReserveValue,
   type GraphPaymentRoute,
   type GraphReplicaLike,
-} from "./graph3d-helpers";
-import { buildBirdViewSettings, readBirdViewSettings, writeBirdViewSettings, type BirdViewSettings } from "./graph3d-settings";
+} from "../../../../../packages/ui/src/graph/graph3d-helpers";
+import { buildBirdViewSettings, readBirdViewSettings, writeBirdViewSettings, type BirdViewSettings } from "../../../../../packages/browser/src/graph/graph3d-settings";
 import { createGraphRenderer, detachGraphObject3D, disposeGraphObject3D, getGraphThemeColors, type GraphRenderer } from "../../../../../packages/ui/src/graph/graph3d-renderer";
 import {
   buildGraphAccountVisuals,
@@ -49,10 +49,10 @@ import {
   deriveGraphEntry,
   getAccountTokenDelta,
   graphAccountMempoolCount,
-} from "./graph3d-visuals";
-import type { GraphConnectionData, GraphEntityData, GraphEntityProfile, GraphFrameActivity, GraphJBlockHistoryEntry, GraphRendererMode, GraphRipple, GraphTransactionLike, GraphXLNRuntime } from "./graph3d-types";
+} from "../../../../../packages/ui/src/graph/graph3d-visuals";
+import type { GraphConnectionData, GraphEntityData, GraphEntityProfile, GraphFrameActivity, GraphJBlockHistoryEntry, GraphRendererMode, GraphRipple, GraphTransactionLike, GraphXLNRuntime } from "../../../../../packages/ui/src/graph/graph3d-types";
 import { buildRuntimeGraphProjections } from "./graph3d-runtime-projections";
-import { collectGraphTokenIds, getGraphEntitySizeForToken } from "./graph3d-actions";
+import { collectGraphTokenIds, getGraphEntitySizeForToken } from "../../../../../packages/ui/src/graph/graph3d-actions";
 import {
   bindGraphControlsLifecycle,
   bindGraphViewportLifecycle,

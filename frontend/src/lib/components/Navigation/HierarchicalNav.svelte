@@ -1,9 +1,9 @@
 <script lang="ts">
   import Breadcrumb from './Breadcrumb.svelte';
   import { appState, appStateOperations } from '$lib/stores/appStateStore';
-  import { runtimes, runtimeOperations } from '$lib/stores/runtimeStore';
-  import { activeRuntime, activeSigner } from '$lib/stores/vault/vaultStore';
-  import { errorLog } from '$lib/stores/errorLogStore';
+  import { runtimes, runtimeOperations } from '../../../../bridges/runtime/runtime-store';
+  import { activeRuntime, activeSigner } from '../../../../bridges/vault/vault-metadata-store';
+  import { errorLog } from '../../../../packages/browser/src/logging/error-log-store';
   import { runtimeView } from '$lib/stores/runtimeViewStore';
   import { buildHierarchicalNavigationView } from './runtime-navigation-view';
 

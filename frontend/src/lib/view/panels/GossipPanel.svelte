@@ -7,7 +7,7 @@
     filterGossipDirectoryProfiles,
     getGossipDirectoryDisplayName,
   } from '../../../../packages/runtime-client/src/panels/gossip-panel-view';
-  import { runtimeControllerHandle } from '$lib/stores/runtimeControllerStore';
+  import { runtimeControllerHandle } from '../../../../bridges/runtime/runtime-controller-store';
   import { createRuntimeQueryStore } from '$lib/stores/runtimeQueryClient';
 
   const frameStore = createRuntimeQueryStore((client) => client.readViewFrame({

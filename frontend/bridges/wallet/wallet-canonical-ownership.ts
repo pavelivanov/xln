@@ -1,7 +1,7 @@
 import { isNumberedEntity, toEntityId, type RuntimeAdapterViewFrame } from '@xln/core/api/public/runtime-module';
-import { fetchExternalTokenCatalog, buildOnchainReserves } from '../../src/lib/components/Entity/external-wallet-reader';
-import { projectEntityShareTokens } from '../../src/lib/components/Entity/ownership/ownership-flow';
-import type { ExternalToken } from '../../src/lib/components/Entity/assets/entity-asset-catalog';
+import { fetchExternalTokenCatalog, buildOnchainReserves } from './external-wallet-reader';
+import { projectEntityShareTokens } from '../../packages/runtime-client/src/entity/ownership-flow';
+import type { ExternalToken } from '../../packages/ui/src/entity/assets/entity-asset-catalog';
 
 type OwnershipFrame = Pick<RuntimeAdapterViewFrame, 'height' | 'activeEntityId'> & {
   activeEntity: { core: Pick<NonNullable<RuntimeAdapterViewFrame['activeEntity']>['core'], 'entityId' | 'reserves' | 'entityProviderActionState'> & { config: { jurisdiction?: { entityProviderAddress: string } } } } | null;

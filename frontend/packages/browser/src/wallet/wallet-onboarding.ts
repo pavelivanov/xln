@@ -1,5 +1,5 @@
-import type { HubJoinPreference, SavedCollateralPolicy } from '../../../../src/lib/utils/onboarding/onboardingPreferences';
-import type { OnboardingSetupDraft } from '../../../../src/lib/components/Entity/onboarding/onboarding-setup';
+import type { HubJoinPreference, SavedCollateralPolicy } from '../onboarding/onboarding-preferences';
+import type { OnboardingSetupDraft } from '../onboarding/onboarding-setup';
 import type { WalletRecoveryServicesMutation } from '../recovery/wallet-recovery-services';
 
 export type WalletOnboardingJurisdiction = Readonly<{

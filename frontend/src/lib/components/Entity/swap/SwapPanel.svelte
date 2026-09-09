@@ -13,14 +13,14 @@ import {
   getBestBid,
 } from '@xln/core/api/public/runtime-module';
 import type { AccountRoleEvidence } from '@xln/core/account/config/dispute-config';
-import { submitActiveCrossJurisdictionIntent, submitEntityInputs, submitRuntimeInput, xlnFunctions } from '../../../stores/xlnStore';
+import { submitActiveCrossJurisdictionIntent, submitEntityInputs, submitRuntimeInput, xlnFunctions } from '../../../../../bridges/runtime/xln-store';
 import { readRuntimeEntityProjectionFrame, readRuntimeSwapHistory } from '../../../stores/runtimeViewStore';
 import { toasts } from '../../../stores/ui/toastStore';
-import { errorLog } from '../../../stores/errorLogStore';
-import { requireSignerIdForEntity } from '$lib/utils/identity/entityReplica';
+import { errorLog } from '../../../../../packages/browser/src/logging/error-log-store';
+import { requireSignerIdForEntity } from '../../../../../packages/runtime-client/src/entity/entity-replica';
 import { isMapLike, unwrapLiveRuntimeEnv } from '$lib/utils/runtime/liveRuntimeEnv';
-import { prewarmCounterpartyProfiles } from '$lib/utils/runtime/p2pPrefetch';
-import { requireTokenDecimals } from '../token-metadata';
+import { prewarmCounterpartyProfiles } from '../../../../../packages/runtime-client/src/runtime/p2p-prefetch';
+import { requireTokenDecimals } from '../../../../../packages/runtime-client/src/token-metadata';
 import { buildEntityPanelView } from '../core/entity-panel-model';
 import { formatEntityId } from '$lib/utils/format';
 import {

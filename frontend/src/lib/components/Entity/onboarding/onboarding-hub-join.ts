@@ -1,11 +1,11 @@
 import type { RuntimeInput } from '@xln/core/api/public/runtime-module';
 import type { AccountRoleEvidence } from '@xln/core/account/config/dispute-config';
 import { readJsonUnknown } from '../../../utils/boundary';
-import { normalizeEntityId } from '../../../utils/identity/entityReplica';
-import { getOpenAccountRebalancePolicyData } from '../../../utils/onboarding/onboardingPreferences';
-import { hubDiscoveryJurisdictionKey } from './hub-discovery-profile';
-import { buildOnboardingHubOpenRuntimeInput, selectAdvertisedAutoJoinCandidates, type OnboardingHubCandidate, type OnboardingRuntimeProjection } from './onboarding-runtime-input';
-import { authenticatedHubEvidence, decodePublicHubResponse, emptyHubDiscovery, getProjectedHubDiscovery, hasProjectedCounterpartyAccount, targetJurisdictionMatches, type HubDiscovery, type OnboardingTarget } from './onboarding-hub-discovery';
+import { normalizeEntityId } from '../../../../../packages/runtime-client/src/entity/entity-replica';
+import { getOpenAccountRebalancePolicyData } from '../../../../../packages/browser/src/onboarding/onboarding-preferences';
+import { hubDiscoveryJurisdictionKey } from '../../../../../packages/ui/src/onboarding/hub-discovery-profile';
+import { buildOnboardingHubOpenRuntimeInput, selectAdvertisedAutoJoinCandidates, type OnboardingHubCandidate, type OnboardingRuntimeProjection } from '../../../../../packages/ui/src/onboarding/onboarding-runtime-input';
+import { authenticatedHubEvidence, decodePublicHubResponse, emptyHubDiscovery, getProjectedHubDiscovery, hasProjectedCounterpartyAccount, targetJurisdictionMatches, type HubDiscovery, type OnboardingTarget } from '../../../../../packages/ui/src/onboarding/onboarding-hub-discovery';
 
 export type OnboardingHubJoinContext = Readonly<{
   readProjection: () => OnboardingRuntimeProjection;

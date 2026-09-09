@@ -7,12 +7,12 @@
 
   import type { Writable } from 'svelte/store';
   import { get } from 'svelte/store';
-  import { panelBridge } from '../utils/panelBridge';
+  import { panelBridge } from '../../../../packages/browser/src/workspace/panel-bridge';
   import type { BrowserVMTokenInfo, EntityReplica, RuntimeReplica, EnvSnapshot, JReplica } from '@xln/core/api/public/runtime-module';
-  import { activeRuntime, allRuntimes } from '$lib/stores/vault/vaultStore';
-  import { settings } from '$lib/stores/settingsStore';
-  import { xlnFunctions, xlnInstance } from '$lib/stores/xlnStore';
-  import { loadJurisdictionTokenRegistry } from './jurisdiction-token-registry';
+  import { activeRuntime, allRuntimes } from '../../../../bridges/vault/vault-metadata-store';
+  import { settings } from '../../../../packages/browser/src/settings-store';
+  import { xlnFunctions, xlnInstance } from '../../../../bridges/runtime/xln-store';
+  import { loadJurisdictionTokenRegistry } from '../../../../packages/ui/src/jurisdiction-token-registry';
   import {
     buildJurisdictionTokenOptions,
     filterJurisdictionRowsByToken,

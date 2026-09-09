@@ -6,10 +6,10 @@ import type { EntityReadView } from '$lib/components/Entity/core/entity-panel-ty
    * Uses unified Dropdown base component
    */
   import { createEventDispatcher } from 'svelte';
-  import { xlnFunctions, xlnInstance } from '../../../../stores/xlnStore';
+  import { xlnFunctions, xlnInstance } from '../../../../../../bridges/runtime/xln-store';
   import Dropdown from '$lib/components/UI/Dropdown.svelte';
   import { entityAvatar } from '$lib/utils/identity/avatar';
-  import { buildAccountDropdownItems } from '../account-dropdown-model';
+  import { buildAccountDropdownItems } from '../../../../../../packages/ui/src/account/account-dropdown-model';
 
   export let replica: EntityReadView | null = null;
   export let selectedAccountId: string | null = null;

@@ -2,10 +2,10 @@
   import type { RuntimeAdapterTimelineIndexPage, StorageHead } from '@xln/core/api/public/runtime-module';
   import type { RuntimeSecurityIncident } from '@xln/core/protocol/errors/security-incident';
   import { safeStringify } from '@xln/core/protocol/serialization';
-  import { runtimeControllerHandle } from '$lib/stores/runtimeControllerStore';
-  import { getRuntimeControllerAdapter } from '$lib/stores/runtimeControllerStore';
+  import { runtimeControllerHandle } from '../../../../bridges/runtime/runtime-controller-store';
+  import { getRuntimeControllerAdapter } from '../../../../bridges/runtime/runtime-controller-store';
   import { runtimeQueryClient } from '$lib/stores/runtimeQueryClient';
-  import { activeRuntime } from '$lib/stores/vault/vaultStore';
+  import { activeRuntime } from '../../../../bridges/vault/vault-metadata-store';
   import {
     filterActiveRuntimeDiagnosticsIncidents,
     formatRuntimeDiagnosticsTimestamp,

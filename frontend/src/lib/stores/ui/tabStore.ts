@@ -1,7 +1,10 @@
-import { writable, get } from 'svelte/store';
-import type { Tab } from '$lib/types/ui';
-import { errorLog } from '../errorLogStore';
-import { parseJsonUnknown, rejectExtraKeys, requireUnknownRecord } from '$lib/utils/boundary';
+import {
+  createObservableStore as writable,
+  readStoreValue as get,
+} from '../../../../packages/runtime-client/src/observable-store';
+import type { Tab } from '../../types/ui';
+import { errorLog } from '../../../../packages/browser/src/logging/error-log-store';
+import { parseJsonUnknown, rejectExtraKeys, requireUnknownRecord } from '../../../../packages/runtime-client/src/boundary';
 
 export const tabs = writable<Tab[]>([]);
 export const activeTabId = writable<string | null>(null);

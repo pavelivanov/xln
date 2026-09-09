@@ -9,10 +9,10 @@ import type {
   WalletPortfolioProjection,
 } from './wallet-portfolio-model';
 import { WalletPortfolioSource } from './wallet-portfolio-source';
-import { showsAccountDropdown } from '../../../../src/lib/components/Entity/account/account-dropdown-model';
+import { showsAccountDropdown } from '../../../../packages/ui/src/account/account-dropdown-model';
 import type { WalletWorkspaceSelection } from '../runtime/wallet-workspace-selection';
 import { useWalletNavigation } from '../navigation/wallet-navigation';
-import { openDisputedAccountNavigation, returnToAccountsWorkspace, selectAccountNavigation } from '../../../../src/lib/components/Entity/account/account-workspace-navigation';
+import { openDisputedAccountNavigation, returnToAccountsWorkspace, selectAccountNavigation } from '../../../../packages/runtime-client/src/entity/account-workspace-navigation';
 import '../styles/financial/wallet-portfolio.css';
 import '../styles/financial/wallet-portfolio-responsive.css';
 

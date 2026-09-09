@@ -1,15 +1,16 @@
-import { readStoreValue } from '../../src/lib/utils/observableStore';
+import { readStoreValue } from '../../packages/runtime-client/src/observable-store';
 import type { RuntimeInput } from '@xln/core/api/public/runtime-module';
 import type { WalletOnboardingRequest, WalletOnboardingResult, WalletOnboardingView } from '../../packages/browser/src/wallet/wallet-onboarding';
-import { activeRuntime, vaultOperations } from '../../src/lib/stores/vault/vaultStore';
-import { resolveConfiguredApiBase, submitRuntimeInput, xlnEnvironment, xlnFunctions } from '../../src/lib/stores/xlnStore';
+import { vaultOperations } from '../vault/vault-store';
+import { activeRuntime } from '../vault/vault-metadata-store';
+import { resolveConfiguredApiBase, submitRuntimeInput, xlnEnvironment, xlnFunctions } from '../runtime/xln-store';
 import { resolveActiveLocalReplica } from '../../src/lib/view/local-runtime-selection';
 import { buildOnboardingRuntimeProjection } from '../../src/lib/components/Entity/onboarding/onboarding-runtime-projection';
 import { createOnboardingHubJoinCommands } from '../../src/lib/components/Entity/onboarding/onboarding-hub-join';
-import { finishOnboardingSetup } from '../../src/lib/components/Entity/onboarding/onboarding-setup';
+import { finishOnboardingSetup } from '../../packages/browser/src/onboarding/onboarding-setup';
 import { hasAnyOnboardingCounterpartyAccount, resolveOnboardingTargets } from '../../src/lib/components/Entity/onboarding/onboarding-targets';
-import { readAnyOnboardingComplete, writeOnboardingCompleteForEntities } from '../../src/lib/utils/onboarding/onboardingState';
-import { readHubJoinPreference, readSavedCollateralPolicy } from '../../src/lib/utils/onboarding/onboardingPreferences';
+import { readAnyOnboardingComplete, writeOnboardingCompleteForEntities } from '../../packages/browser/src/onboarding/onboarding-state';
+import { readHubJoinPreference, readSavedCollateralPolicy } from '../../packages/browser/src/onboarding/onboarding-preferences';
 import { saveCanonicalWalletRecoveryServices } from './wallet-canonical-recovery-services';
 
 const normalizeId = (value: string): string => value.trim().toLowerCase();

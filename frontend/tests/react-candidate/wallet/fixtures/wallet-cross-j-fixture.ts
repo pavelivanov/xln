@@ -2,7 +2,7 @@ import * as runtime from '../../../../../core/runtime';
 import type { ConsensusConfig, RuntimeReplica } from '../../../../../core/api/public/runtime-module';
 import { deriveSignerAddressSync, deriveSignerKeySync, registerSignerKey } from '../../../../../core/account/crypto';
 import { defaultAccountDisputeConfigForParties } from '../../../../../core/account/config/dispute-config';
-import { readSwapAccountCapacity } from '../../../../../core/account/swap/swap-inbound-plan';
+import { readAccountCapacity } from '../../../../../core/account/capacity-plan';
 import * as scenario from '../../../../../core/scenarios/harness/boot';
 import { createHubDirectRuntimeRoute } from '../../../../../core/orchestrator/hub/hub-runtime-transport';
 
@@ -323,13 +323,13 @@ export async function createWalletCrossJFixture(
     return Boolean(
       sourceAccount &&
       targetAccount &&
-      readSwapAccountCapacity({
+      readAccountCapacity({
         account: sourceAccount.state,
         ownerEntityId: sourceEntityId,
         counterpartyEntityId: sourceHubEntityId,
         tokenId: 1,
       }).outCapacity >= 500_000_000n &&
-      readSwapAccountCapacity({
+      readAccountCapacity({
         account: targetAccount.state,
         ownerEntityId: targetEntityId,
         counterpartyEntityId: targetHubEntityId,

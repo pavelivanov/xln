@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { createObservableStore, readStoreValue } from '../../../frontend/src/lib/utils/observableStore';
+import { createObservableStore, readStoreValue } from '../../../frontend/packages/runtime-client/src/observable-store';
 
 describe('observable store', () => {
   test('emits the current value synchronously on subscribe and on every set/update', () => {

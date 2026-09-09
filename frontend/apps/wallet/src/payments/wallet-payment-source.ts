@@ -1,6 +1,6 @@
 import type { RuntimeAdapter } from '../../../../../core/api/runtime-adapter/types';
 import type { EntityTx, RoutedEntityInput, RuntimeInput } from '@xln/core/api/public/runtime-module';
-import { runtimeHttpOriginFromWsUrl } from '../../../../src/lib/utils/runtime/wsUrl';
+import { runtimeHttpOriginFromWsUrl } from '../../../../packages/runtime-client/src/runtime/ws-url';
 import type {
   RuntimePaymentDeliveryMode,
   RuntimePaymentEntityTx,

@@ -11,16 +11,16 @@
 <script lang="ts">
   import { Network, PlusCircle, Save, ShieldCheck, SlidersHorizontal } from 'lucide-svelte';
   import type { RuntimeReplica, HubRebalanceConfig } from '@xln/core/api/public/runtime-module';
-  import { errorLog } from '$lib/stores/errorLogStore';
-  import { runtimeControllerHandle } from '$lib/stores/runtimeControllerStore';
-  import { settings, settingsOperations } from '$lib/stores/settingsStore';
+  import { errorLog } from '../../../../../../packages/browser/src/logging/error-log-store';
+  import { runtimeControllerHandle } from '../../../../../../bridges/runtime/runtime-controller-store';
+  import { settings, settingsOperations } from '../../../../../../packages/browser/src/settings-store';
   import {
-    activeRuntime,
     buildRuntimeRecoveryConfigForMode,
-    vaultOperations,
     type RecoveryTowerConfig,
     type RecoveryTowerSetupMode,
-  } from '$lib/stores/vault/vaultStore';
+  } from '../../../../../../bridges/vault/vault-recovery';
+  import { activeRuntime } from '../../../../../../bridges/vault/vault-metadata-store';
+  import { vaultOperations } from '../../../../../../bridges/vault/vault-store';
   import {
     getManualRecoveryTowers,
     inferRecoveryTowerSetupMode,
@@ -41,14 +41,14 @@
   } from '$lib/utils/recovery/recoveryDiscoveryStatus';
   import { buildRemoteRuntimeRecoveryPeerSources } from '$lib/utils/onboarding/remoteRuntimeValidation';
   import AddJMachine from '$lib/components/Jurisdiction/AddJMachine.svelte';
-  import type { JMachineCreateDetail } from '$lib/components/Jurisdiction/import-jmachine-runtime';
+  import type { JMachineCreateDetail } from '../../../../../../bridges/runtime/import-jmachine-runtime';
   import PushWakePanel from '$lib/components/Settings/PushWakePanel.svelte';
   import StackManager from '$lib/components/Settings/StackManager.svelte';
   import EntityConsensusSettingsPanel from './EntityConsensusSettingsPanel.svelte';
   import type { EntityConsensusSettingsView } from '../entity-consensus-settings';
-  import type { SettingsSubview } from '../entity-panel-routing';
+  import type { SettingsSubview } from '../../../../../../packages/runtime-client/src/entity/entity-workspace-navigation';
   import type { ThemeName } from '$lib/types/ui';
-  import { getAvailableThemes } from '$lib/utils/themes';
+  import { getAvailableThemes } from '../../../../../../packages/browser/src/themes';
 
   type ProfileView = {
     name?: string;

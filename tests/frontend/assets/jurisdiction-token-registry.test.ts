@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { loadJurisdictionTokenRegistry } from '../../../frontend/src/lib/view/panels/jurisdiction-token-registry';
+import { loadJurisdictionTokenRegistry } from '../../../frontend/packages/ui/src/jurisdiction-token-registry';
 
 describe('Jurisdiction token registry loader', () => {
   test('awaits the asynchronous registry result', async () => {

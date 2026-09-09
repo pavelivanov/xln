@@ -1,7 +1,7 @@
 import { decodeWalletMarketActivity } from '../markets/wallet-market-activity';
 import type { WalletPortfolioMath } from '../portfolio/wallet-portfolio-model';
 import { optionalRuntimeString, requireRuntimeInteger, requireRuntimeRecord, requireRuntimeString } from '../runtime/wallet-runtime-decode';
-import { dedupeHistoryEvents } from '../../../../src/lib/components/Entity/account/activity/activity-history-events';
+import { dedupeHistoryEvents } from '../../../../packages/ui/src/account/activity/activity-history-events';
 
 export const HISTORY_TYPES = [
   ['payment', 'Payments'], ['swap', 'Swaps'], ['cross_swap', 'Cross-j'], ['htlc', 'HTLC'],

@@ -9,10 +9,10 @@
       "frontend/src/lib/components/Entity/**/*",
       "frontend/src/lib/components/PaymentSpotlight.svelte",
       "frontend/src/lib/components/Views/RuntimeCreation.svelte",
-      "frontend/src/lib/stores/network/paymentTerminalMonitor.ts",
-      "frontend/src/lib/stores/network/paymentSpotlightStore.ts",
+      "frontend/packages/browser/src/graph/payment-terminal-monitor.ts",
+      "frontend/packages/browser/src/graph/payment-spotlight-store.ts",
       "frontend/src/lib/view/View.svelte",
-      "frontend/src/lib/stores/xlnStore.ts",
+      "frontend/bridges/runtime/xln-store.ts",
       "frontend/packages/runtime-client/src/payments/xln-invoice.ts"
     ],
     "testGlobs": [
@@ -323,8 +323,8 @@
         "core/protocol/htlc/**/*.ts",
         "frontend/src/lib/components/Entity/payments/PaymentPanel.svelte",
         "frontend/src/lib/components/PaymentSpotlight.svelte",
-        "frontend/src/lib/stores/network/paymentSpotlightStore.ts",
-        "frontend/src/lib/stores/network/paymentTerminalMonitor.ts",
+        "frontend/packages/browser/src/graph/payment-spotlight-store.ts",
+        "frontend/packages/browser/src/graph/payment-terminal-monitor.ts",
         "frontend/src/lib/view/View.svelte",
         "frontend/packages/runtime-client/src/payments/xln-invoice.ts"
       ],
@@ -376,10 +376,10 @@
         "frontend/src/lib/components/Views/RuntimeCreation.svelte",
         "frontend/src/lib/components/Entity/**/*",
         "frontend/src/lib/components/PaymentSpotlight.svelte",
-        "frontend/src/lib/stores/network/paymentSpotlightStore.ts",
-        "frontend/src/lib/stores/network/paymentTerminalMonitor.ts",
+        "frontend/packages/browser/src/graph/payment-spotlight-store.ts",
+        "frontend/packages/browser/src/graph/payment-terminal-monitor.ts",
         "frontend/src/lib/view/View.svelte",
-        "frontend/src/lib/stores/xlnStore.ts",
+        "frontend/bridges/runtime/xln-store.ts",
         "frontend/packages/runtime-client/src/payments/xln-invoice.ts"
       ],
       "testGlobs": [
@@ -967,8 +967,8 @@
         "core/protocol/htlc/**/*.ts",
         "frontend/src/lib/components/Entity/payments/PaymentPanel.svelte",
         "frontend/src/lib/components/PaymentSpotlight.svelte",
-        "frontend/src/lib/stores/network/paymentSpotlightStore.ts",
-        "frontend/src/lib/stores/network/paymentTerminalMonitor.ts",
+        "frontend/packages/browser/src/graph/payment-spotlight-store.ts",
+        "frontend/packages/browser/src/graph/payment-terminal-monitor.ts",
         "frontend/src/lib/view/View.svelte",
         "frontend/packages/runtime-client/src/payments/xln-invoice.ts"
       ],
@@ -1022,7 +1022,7 @@
       "sourceGlobs": [
         "frontend/src/lib/components/Views/RuntimeCreation.svelte",
         "frontend/src/lib/components/Entity/**/*",
-        "frontend/src/lib/stores/xlnStore.ts"
+        "frontend/bridges/runtime/xln-store.ts"
       ],
       "testGlobs": [
         "frontend/tests/brainvault-*.spec.ts"
@@ -1045,10 +1045,10 @@
         "frontend/src/lib/components/Views/RuntimeCreation.svelte",
         "frontend/src/lib/components/Entity/**/*",
         "frontend/src/lib/components/PaymentSpotlight.svelte",
-        "frontend/src/lib/stores/network/paymentSpotlightStore.ts",
-        "frontend/src/lib/stores/network/paymentTerminalMonitor.ts",
+        "frontend/packages/browser/src/graph/payment-spotlight-store.ts",
+        "frontend/packages/browser/src/graph/payment-terminal-monitor.ts",
         "frontend/src/lib/view/View.svelte",
-        "frontend/src/lib/stores/xlnStore.ts",
+        "frontend/bridges/runtime/xln-store.ts",
         "frontend/packages/runtime-client/src/payments/xln-invoice.ts"
       ],
       "testGlobs": [

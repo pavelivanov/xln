@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { BrowserVMTokenInfo, EntityReplica, JReplica, RuntimeAdapter } from '@xln/core/api/public/runtime-module';
 
 import { readBrowserRuntimeEnvironment } from '../../../../../bridges/runtime/browser-runtime-context';
-import { loadJurisdictionTokenRegistry } from '../../../../../src/lib/view/panels/jurisdiction-token-registry';
+import { loadJurisdictionTokenRegistry } from '../../../../../packages/ui/src/jurisdiction-token-registry';
 
 export type OpsExternalBalance = Readonly<{
   entityId: string;

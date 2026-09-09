@@ -4,7 +4,7 @@ import {
   getAccountUiStatus,
   getAccountUiStatusDescription,
   getAccountUiStatusLabel,
-} from '../../../../frontend/src/lib/utils/accountStatus';
+} from '../../../../frontend/packages/ui/src/account/account-status';
 
 test('account pendingFrame is labeled as off-chain account work, not on-chain confirmation', () => {
   const status = getAccountUiStatus({

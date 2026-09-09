@@ -1,5 +1,5 @@
 import type { RuntimeAdapter, RuntimeAdapterViewFrame } from '@xln/core/api/public/runtime-module';
-import type { AccountDropdownItem } from '../../../../../src/lib/components/Entity/account/account-dropdown-model';
+import type { AccountDropdownItem } from '../../../../../packages/ui/src/account/account-dropdown-model';
 import { RuntimeQueryObserver, type RuntimeQuerySnapshot } from '../../../../../packages/runtime-client/src/runtime/query/runtime-query-observer';
 import { createWalletRuntimeQueryClient } from '../../runtime/wallet-runtime-read-boundary';
 

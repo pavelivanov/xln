@@ -1,11 +1,11 @@
 import type { RuntimeAdapter, RuntimeInput } from '@xln/core/api/public/runtime-module';
 import { RuntimeQueryObserver } from '../../../../packages/runtime-client/src/runtime/query/runtime-query-observer';
-import { compareStableText } from '../../../../src/lib/utils/stableSort';
-import { connectDiscoveredHub } from '../../../../src/lib/components/Entity/onboarding/hub-discovery-commands';
-import { openAccountById } from '../../../../src/lib/components/Entity/account/account-open-commands';
-import { isFullEntityId } from '../../../../src/lib/components/Entity/workspace/entity-panel-options';
+import { compareStableText } from '../../../../packages/ui/src/stable-compare';
+import { connectDiscoveredHub } from '../../../../packages/browser/src/wallet/hub-discovery-commands';
+import { openAccountById } from '../../../../packages/browser/src/wallet/account-open-commands';
+import { isFullEntityId } from '../../../../packages/ui/src/entity/entity-panel-options';
 import type { WalletAccountOpenRead } from '../account/controls/wallet-account-open-model';
-import type { HubDiscoveryHub } from '../../../../src/lib/components/Entity/onboarding/hub-discovery-profile';
+import type { HubDiscoveryHub } from '../../../../packages/ui/src/onboarding/hub-discovery-profile';
 import { createWalletRuntimeQueryClient, walletRuntimeReadErrorMessage } from '../runtime/wallet-runtime-read-boundary';
 import { abandonTerminalWalletPaymentCommand, executeWalletPaymentCommand, prepareWalletPaymentCommand, type WalletPreparedCommand } from '../payments/commands/wallet-payment-command';
 import {

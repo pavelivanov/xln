@@ -12,14 +12,14 @@ import {
 import {
   parseAssistantSseLine,
   streamXlnAssistantReply,
-} from '../../frontend/src/lib/ai/xln-assistant-client';
-import { buildXlnGuideMessages, rankXlnGuideDocs } from '../../frontend/src/lib/ai/xln-guide-context';
+} from '../../frontend/packages/browser/src/ai/xln-assistant-client';
+import { buildXlnGuideMessages, rankXlnGuideDocs } from '../../frontend/packages/browser/src/ai/xln-guide-context';
 import { createOpsGuideFrameContext } from '../../frontend/apps/ops/src/workspace/guide/ops-guide-context';
 import {
   parseAssistantChatRequest,
   sanitizeAssistantCatalog,
 } from '../../core/api/server/assistant/input';
-import { normalizeImportedUiSettings } from '../../frontend/src/lib/utils/ui-style';
+import { normalizeImportedUiSettings } from '../../frontend/packages/browser/src/ui-style';
 
 const desktop = { width: 1440, height: 900 };
 const phone = { width: 393, height: 852, insetTop: 47, insetBottom: 34 };

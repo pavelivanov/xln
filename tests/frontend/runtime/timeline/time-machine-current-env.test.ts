@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, test } from 'bun:test';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { runtimeControllerHandle } from '../../../../frontend/src/lib/stores/runtimeControllerStore';
+import { runtimeControllerHandle } from '../../../../frontend/bridges/runtime/runtime-controller-store';
 import { runtimeQueryClient } from '../../../../frontend/src/lib/stores/runtimeQueryClient';
 import {
   assertRuntimeViewIsLive,
@@ -275,7 +275,7 @@ describe('frontend time-machine current env contract', () => {
     const timeMachine = read('frontend/src/lib/view/core/TimeMachine.svelte');
     const workspace = read('frontend/src/lib/components/Entity/workspace/EntityWorkspace.svelte');
     const chrome = read('frontend/src/lib/components/Entity/workspace/EntityPanelChrome.svelte');
-    const xlnStore = read('frontend/src/lib/stores/xlnStore.ts');
+    const xlnStore = read('frontend/bridges/runtime/xln-store.ts');
 
     expect(timeMachine).toContain('setRuntimeViewAtHeight');
     expect(timeMachine).toContain('selectedRuntimeViewHeight');
@@ -318,7 +318,7 @@ describe('frontend time-machine current env contract', () => {
   test('remote TimeMachine deeplinks use RuntimeController identity instead of environment inference', () => {
     const source = read('frontend/src/lib/view/core/TimeMachine.svelte');
 
-    expect(source).toContain("import { runtimeControllerHandle } from '$lib/stores/runtimeControllerStore';");
+    expect(source).toContain("import { runtimeControllerHandle } from '../../../../bridges/runtime/runtime-controller-store';");
     expect(source).toContain("from '$lib/stores/runtimeHistoryStore';");
     expect(source).toContain('RuntimeAdapterViewFrame');
     expect(source).toContain('selectedRuntimeHistoryFrame = findRuntimeHistoryFrame($runtimeHistoryFrames');
@@ -362,7 +362,7 @@ describe('frontend time-machine current env contract', () => {
     const source = read('frontend/src/lib/view/View.svelte');
 
     expect(source).toContain('setLocalHistoryPreservingCursor');
-    expect(source).toContain("import { getEnv, getXLN, history as runtimeHistory, xlnEnvironment, xlnInstance } from '$lib/stores/xlnStore';");
+    expect(source).toContain("import { getEnv, getXLN, history as runtimeHistory, xlnEnvironment, xlnInstance } from '../../../bridges/runtime/xln-store';");
     expect(source).not.toContain("import { runtimeViewFrameToEnv } from '$lib/utils/runtimeViewEnv';");
     expect(source).toContain('unsubRuntimeEnv = xlnEnvironment.subscribe');
     expect(source).not.toContain('unsubActiveRuntimeView = runtimeView.subscribe');
@@ -373,7 +373,7 @@ describe('frontend time-machine current env contract', () => {
     expect(source).toContain('publishedRuntimeKey !== runtimeKey');
     expect(source).toContain('if (get(localIsLive))');
     expect(source).toContain('localTimeIndex.set(-1)');
-    expect(source).not.toContain("import { activeEnv } from '$lib/stores/runtimeStore';");
+    expect(source).not.toContain("import { activeEnv } from '../../../bridges/runtime/runtime-store';");
     expect(source).not.toContain('$xlnEnvironment');
     expect(source).not.toContain('unsubActiveRuntimeEnv');
     expect(source).not.toContain('localIsLive.set(true);\n        localTimeIndex.set(-1);\n        registerEnvChanges(nextEnv);');

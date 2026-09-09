@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import type { WalletOnboardingReadyView, WalletOnboardingResult, WalletOnboardingView } from '../../../../packages/browser/src/wallet/wallet-onboarding';
 import type { WalletRecoveryServicesMutation } from '../../../../packages/browser/src/recovery/wallet-recovery-services';
-import { hydrateJurisdictionPolicyDefaults, type HubJoinPreference } from '../../../../src/lib/utils/onboarding/onboardingPreferences';
-import { toUsdInt, type OnboardingSetupDraft } from '../../../../src/lib/components/Entity/onboarding/onboarding-setup';
+import { hydrateJurisdictionPolicyDefaults, type HubJoinPreference } from '../../../../packages/browser/src/onboarding/onboarding-preferences';
+import { toUsdInt, type OnboardingSetupDraft } from '../../../../packages/browser/src/onboarding/onboarding-setup';
 import type { WalletRuntimeSummary } from '../app-shell-model';
 import { finishWalletOnboarding, loadWalletOnboarding } from './wallet-onboarding-source';
 import { WalletRecoveryServices } from '../recovery/wallet-recovery-services';

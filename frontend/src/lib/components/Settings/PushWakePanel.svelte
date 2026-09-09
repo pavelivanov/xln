@@ -3,8 +3,8 @@
   import { readPushWakeRegistrationRecords, removePushWakeRegistrationRecord, upsertPushWakeRegistrationRecord } from '$lib/utils/recovery/pushWakeRecords';
   import type { PushWakeRegistrationRecord } from '$lib/utils/recovery/pushWakeTypes';
   import type { RuntimeReplica } from '@xln/core/api/public/runtime-module';
-  import type { RecoveryTowerConfig, Runtime } from '$lib/stores/vault/vaultStore';
-  import { vaultOperations } from '$lib/stores/vault/vaultStore';
+  import type { RecoveryTowerConfig, Runtime } from '../../../../bridges/vault/vault-store';
+  import { vaultOperations } from '../../../../bridges/vault/vault-store';
   import {
     buildPushWakeRegistrationPayload,
     buildPushWakeRegistrationRequest,

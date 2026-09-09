@@ -1,8 +1,8 @@
 import { useEffect, useState, useSyncExternalStore } from 'react';
 import type { IDockviewPanelProps } from 'dockview';
 import { safeStringify } from '@xln/core/protocol/serialization';
-import { getXLN } from '../../../../../src/lib/stores/bootstrap/xlnRuntimeLoader';
-import { jmachineOperations, jmachineState } from '../../../../../src/lib/stores/network/jmachineStore';
+import { getXLN } from '../../../../../bridges/runtime/xln-runtime-loader';
+import { jmachineOperations, jmachineState } from '../../../../../packages/browser/src/jurisdiction/jmachine-store';
 import { buildJurisdictionTokenOptions, formatJurisdictionStateRoot, selectJurisdictionTokenIdText } from '../../../../../packages/runtime-client/src/panels/jurisdiction-panel-view';
 import { useWorkspaceEnvironment } from '../session/use-workspace-environment';
 import { belongsToJurisdiction, jurisdictionTokenIds } from './ops-jurisdiction-view';

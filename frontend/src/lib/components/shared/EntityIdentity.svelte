@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { xlnFunctions } from '$lib/stores/xlnStore';
+  import { xlnFunctions } from '../../../../bridges/runtime/xln-store';
   import { entityAvatar } from '$lib/utils/identity/avatar';
 
   export let entityId: string;

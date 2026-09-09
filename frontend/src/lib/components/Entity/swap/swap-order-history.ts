@@ -1,5 +1,5 @@
-import { amountToUsd } from '$lib/utils/assetPricing';
-import { requireTokenDecimals } from './../token-metadata';
+import { amountToUsd } from '../../../../../packages/runtime-client/src/asset-pricing';
+import { requireTokenDecimals } from '../../../../../packages/runtime-client/src/token-metadata';
 import type { SwapBookEntry } from '@xln/core/api/public/runtime-module';
 import { toBigIntSafe } from './../swap-formatting';
 import { requireExactKeys as requireExactKeysWithOptional, requireUnknownRecord as requireRecord } from '$lib/utils/boundary';

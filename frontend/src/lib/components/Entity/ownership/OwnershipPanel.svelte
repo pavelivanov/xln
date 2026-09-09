@@ -1,7 +1,7 @@
 <!-- Optional Entity share issuance and reserve ownership; hub listing remains an Account action. -->
 <script lang="ts">
   import { Check, CircleDollarSign, LoaderCircle, PieChart, RefreshCw, Vote } from 'lucide-svelte';
-  import type { EntityShareTokenProjection } from './ownership-flow';
+  import type { EntityShareTokenProjection } from '../../../../../packages/runtime-client/src/entity/ownership-flow';
 
   export let entityName = '';
   export let entityId = '';

@@ -1,8 +1,8 @@
 import type { EntityTx } from '@xln/core/api/public/runtime-module';
 import { isAddress, ZeroAddress } from 'ethers';
 import { buildExternalToReserveTx, buildMoveSettlementContinuation, buildReserveToCollateralTx,
-  buildReserveToExternalEoaTx, buildReserveToReserveTx, type MovePostSettleOp } from '../../../../src/lib/components/Entity/account/entity-action-txs';
-import { getMoveRouteKey, type MoveEndpoint } from '../../../../src/lib/components/Entity/move-routes';
+  buildReserveToExternalEoaTx, buildReserveToReserveTx, type MovePostSettleOp } from '../../../../packages/runtime-client/src/entity/account-action-txs';
+import { getMoveRouteKey, type MoveEndpoint } from '../../../../packages/ui/src/entity/move/move-routes';
 
 export type WalletMoveDraft = Readonly<{
   from: MoveEndpoint; to: MoveEndpoint; entityId: string; sourceAccountId: string; targetEntityId: string;

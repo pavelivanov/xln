@@ -3,7 +3,7 @@
   import { browser } from '$app/environment';
   import { page } from '$app/stores';
   import RuntimeStateCard from '$lib/components/shared/RuntimeStateCard.svelte';
-  import { hasPasswordVault } from '$lib/security/passwordVault';
+  import { hasPasswordVault } from '../../../packages/browser/src/vault/passwordVault';
   import WalletUnlock from '$lib/components/Views/WalletUnlock.svelte';
   import { appState } from '$lib/stores/appStateStore';
   import {
@@ -13,8 +13,8 @@
     error,
     suspendClientActivity,
     xlnFunctions
-  } from '$lib/stores/xlnStore';
-  import { runtimeControllerHandle } from '$lib/stores/runtimeControllerStore';
+  } from '../../../bridges/runtime/xln-store';
+  import { runtimeControllerHandle } from '../../../bridges/runtime/runtime-controller-store';
   import {
     runtimeViewPageInfo,
     runtimeViewPageNeedsNavigation,
@@ -22,11 +22,11 @@
     setRuntimeViewPage,
   } from '$lib/stores/runtimeViewStore';
   import { setLocalLauncherOnboarding } from '$lib/stores/localLauncherStore';
-  import { errorLog } from '$lib/stores/errorLogStore';
-  import { settingsOperations } from '$lib/stores/settingsStore';
+  import { errorLog } from '../../../packages/browser/src/logging/error-log-store';
+  import { settingsOperations } from '../../../packages/browser/src/settings-store';
   import { tabOperations } from '$lib/stores/ui/tabStore';
   import { timeOperations } from '$lib/stores/timeStore';
-  import { activeRuntime, vaultOperations } from '$lib/stores/vault/vaultStore';
+  import { activeRuntime, vaultOperations } from '../../../bridges/vault/vault-store';
   import { resetEverything } from '$lib/utils/control/resetEverything';
   import { parseStorageSchemaMismatch } from '$lib/utils/recovery/storageSchemaRecovery';
   import {
@@ -39,12 +39,12 @@
   import {
     describeRemoteRuntimeImportError,
     parseRemoteRuntimeImportPayload,
-  } from '$lib/utils/onboarding/remoteRuntimeImport';
+  } from '../../../packages/browser/src/runtime/session/remote-runtime-import';
   import {
     fetchRemoteRuntimeImportSource,
     importRemoteRuntimeEntries,
     persistActiveRemoteRuntimeImport,
-  } from '$lib/utils/onboarding/remoteRuntimeImportFlow';
+  } from '../../../bridges/runtime/remote-runtime-import-flow';
   import {
     consumeLocalRuntimePairing,
     readLocalRuntimeLaunchRequest,

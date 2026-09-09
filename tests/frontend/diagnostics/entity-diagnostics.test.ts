@@ -4,47 +4,47 @@ import { readFileSync } from 'node:fs';
 const diagnosticFiles = [
   {
     path: 'frontend/src/lib/components/Entity/payments/ActivityHistoryPanel.svelte',
-    importLine: "import { errorLog } from '$lib/stores/errorLogStore';",
+    importLine: "import { errorLog } from '../../../../../packages/browser/src/logging/error-log-store';",
     logLine: "errorLog.log('Activity history projection read failed', 'Activity History'",
   },
   {
     path: 'frontend/src/lib/components/Entity/account/ui/CollateralForm.svelte',
-    importLine: "import { errorLog } from '../../../../stores/errorLogStore';",
+    importLine: "import { errorLog } from '../../../../../../packages/browser/src/logging/error-log-store';",
     logLine: "errorLog.log('Collateral request failed', 'Collateral Form'",
   },
   {
     path: 'frontend/src/lib/components/Entity/account/ui/CreditForm.svelte',
-    importLine: "import { errorLog } from '../../../../stores/errorLogStore';",
+    importLine: "import { errorLog } from '../../../../../../packages/browser/src/logging/error-log-store';",
     logLine: "errorLog.log('Credit action failed', 'Credit Form'",
   },
   {
     path: 'frontend/src/lib/components/Entity/workspace/shell/EntitySettingsProjectionPanel.svelte',
-    importLine: "import { errorLog } from '$lib/stores/errorLogStore';",
+    importLine: "import { errorLog } from '../../../../../../packages/browser/src/logging/error-log-store';",
     logLine: "errorLog.log('Entity profile update failed', 'Entity Settings'",
   },
   {
     path: 'frontend/src/lib/components/Entity/onboarding/formation/FormationPanel.svelte',
-    importLine: "import { errorLog } from '../../../../stores/errorLogStore';",
+    importLine: "import { errorLog } from '../../../../../../packages/browser/src/logging/error-log-store';",
     logLine: "errorLog.log('Entity creation failed', 'Formation Panel'",
   },
   {
     path: 'frontend/src/lib/components/Entity/onboarding/HubDiscoveryPanel.svelte',
-    importLine: "import { errorLog } from '../../../stores/errorLogStore';",
+    importLine: "import { errorLog } from '../../../../../packages/browser/src/logging/error-log-store';",
     logLine: "errorLog.log('Hub connection failed', 'Hub Discovery'",
   },
   {
     path: 'frontend/src/lib/components/Entity/payments/PaymentPanel.svelte',
-    importLine: "import { errorLog } from '../../../stores/errorLogStore';",
+    importLine: "import { errorLog } from '../../../../../packages/browser/src/logging/error-log-store';",
     logLine: "errorLog.log(message, 'Payment Panel'",
   },
   {
     path: 'frontend/src/lib/components/Entity/payments/SettlementPanel.svelte',
-    importLine: "import { errorLog } from '../../../stores/errorLogStore';",
+    importLine: "import { errorLog } from '../../../../../packages/browser/src/logging/error-log-store';",
     logLine: "errorLog.log(message, 'Settlement Panel'",
   },
   {
     path: 'frontend/src/lib/components/Entity/swap/SwapPanel.svelte',
-    importLine: "import { errorLog } from '../../../stores/errorLogStore';",
+    importLine: "import { errorLog } from '../../../../../packages/browser/src/logging/error-log-store';",
     logLine: "errorLog.log(message, 'Swap Panel'",
   },
 ] as const;

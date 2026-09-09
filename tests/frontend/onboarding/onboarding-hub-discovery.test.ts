@@ -5,8 +5,8 @@ import {
   getProjectedHubDiscovery,
   targetJurisdictionMatches,
   type OnboardingTarget,
-} from '../../../frontend/src/lib/components/Entity/onboarding/onboarding-hub-discovery';
-import { emptyOnboardingRuntimeProjection } from '../../../frontend/src/lib/components/Entity/onboarding/onboarding-runtime-input';
+} from '../../../frontend/packages/ui/src/onboarding/onboarding-hub-discovery';
+import { emptyOnboardingRuntimeProjection } from '../../../frontend/packages/ui/src/onboarding/onboarding-runtime-input';
 import { hasAnyOnboardingCounterpartyAccount, resolveOnboardingTargets } from '../../../frontend/src/lib/components/Entity/onboarding/onboarding-targets';
 
 const entityId = `0x${'11'.repeat(32)}`;

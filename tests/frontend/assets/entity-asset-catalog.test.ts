@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import type { AssetLedgerRow } from '../../../frontend/src/lib/components/Entity/asset-ledger';
+import type { AssetLedgerRow } from '../../../frontend/packages/ui/src/entity/assets/asset-ledger';
 import {
   choosePreferredAssetSymbol,
   compareTokenSymbols,
@@ -14,7 +14,7 @@ import {
   resolveReserveTransferTokenBySymbol,
   sortExternalTokens,
   type ExternalToken,
-} from '../../../frontend/src/lib/components/Entity/assets/entity-asset-catalog';
+} from '../../../frontend/packages/ui/src/entity/assets/entity-asset-catalog';
 
 const token = (input: Partial<ExternalToken> & { symbol: string; balance?: bigint }): ExternalToken => ({
   symbol: input.symbol,

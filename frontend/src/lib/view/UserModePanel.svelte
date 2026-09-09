@@ -12,15 +12,16 @@
   import { onMount } from 'svelte';
   import type { Writable } from 'svelte/store';
   import { writable, get } from 'svelte/store';
-  import { activeRuntime as activeRuntimeStore, vaultOperations } from '$lib/stores/vault/vaultStore';
-  import { errorLog } from '$lib/stores/errorLogStore';
-  import { settings } from '$lib/stores/settingsStore';
+  import { vaultOperations } from '../../../bridges/vault/vault-store';
+  import { activeRuntime as activeRuntimeStore } from '../../../bridges/vault/vault-metadata-store';
+  import { errorLog } from '../../../packages/browser/src/logging/error-log-store';
+  import { settings } from '../../../packages/browser/src/settings-store';
   import {
     entityPositions,
     handleRuntimeProjectionRefreshError,
     refreshCurrentRuntimeProjection,
-  } from '$lib/stores/xlnStore';
-  import { runtimeControllerHandle } from '$lib/stores/runtimeControllerStore';
+  } from '../../../bridges/runtime/xln-store';
+  import { runtimeControllerHandle } from '../../../bridges/runtime/runtime-controller-store';
   import {
     clearLocalLauncherOnboarding,
     localLauncherOnboarding,
@@ -31,8 +32,8 @@
     runtimeViewActiveEntityId,
     setRuntimeViewActiveEntityId,
   } from '$lib/stores/runtimeViewStore';
-  import { runtimes, activeRuntimeId, runtimeOperations } from '$lib/stores/runtimeStore';
-  import { showVaultPanel, vaultUiOperations } from '$lib/stores/vault/vaultUiStore';
+  import { runtimes, activeRuntimeId, runtimeOperations } from '../../../bridges/runtime/runtime-store';
+  import { showVaultPanel, vaultUiOperations } from '../../../bridges/vault/vault-ui-store';
   import type { Tab } from '$lib/types/ui';
   import type { RuntimeReplica } from '@xln/core/api/public/runtime-module';
   import type { EntityReplica } from '@xln/core/entity/types';
@@ -41,9 +42,9 @@
     readAnyOnboardingComplete,
     readOnboardingComplete,
     writeOnboardingCompleteForEntities,
-  } from '$lib/utils/onboarding/onboardingState';
+  } from '../../../packages/browser/src/onboarding/onboarding-state';
   import { createRuntimeViewEnv, unwrapLiveRuntimeEnv } from '$lib/utils/runtime/liveRuntimeEnv';
-  import { panelBridge } from './utils/panelBridge';
+  import { panelBridge } from '../../../packages/browser/src/workspace/panel-bridge';
   import { resolveActiveLocalReplica } from './local-runtime-selection';
 
   import EntityWorkspace from '$lib/components/Entity/workspace/EntityWorkspace.svelte';
@@ -58,7 +59,7 @@
   import {
     importJMachineViaRuntime,
     type JMachineCreateDetail,
-  } from '$lib/components/Jurisdiction/import-jmachine-runtime';
+  } from '../../../bridges/runtime/import-jmachine-runtime';
   import TimeMachine from './core/TimeMachine.svelte';
   import {
     buildOnboardingRuntimeProjection,
@@ -174,7 +175,7 @@
   let activeInlinePanel = $state<InlinePanel>('none');
   let onboardingComplete = $state(false);
 
-  let selectedInitialAction = $state<import('$lib/view/utils/panelBridge').EntityOpenAction | undefined>(undefined);
+  let selectedInitialAction = $state<import('../../../packages/browser/src/workspace/panel-bridge').EntityOpenAction | undefined>(undefined);
   let workspaceActionRevision = $state(0);
 
   onMount(() => panelBridge.on('dock:selectEntity', ({ entityId, signerId, action }) => {

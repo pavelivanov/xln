@@ -1,6 +1,6 @@
 import { useEffect, useState, useSyncExternalStore } from 'react';
 import type { RuntimeAdapterSolvencySummary } from '@xln/core/api/public/runtime-module';
-import { networkMachineRuntimeOperations } from '../../../../../src/lib/stores/network/networkMachineRuntimeStore';
+import { networkMachineRuntimeOperations } from '../../../../../bridges/runtime/network-machine-runtime-store';
 import { workspaceNetwork } from '../session/ops-workspace-playback';
 
 import {

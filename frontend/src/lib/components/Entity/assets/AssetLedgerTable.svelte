@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { AssetLedgerRow, AssetLedgerTotals } from '../asset-ledger';
+  import type { AssetLedgerRow, AssetLedgerTotals } from '../../../../../packages/ui/src/entity/assets/asset-ledger';
 
   export let rows: AssetLedgerRow[] = [];
   export let totals: AssetLedgerTotals = { externalUsd: 0, reserveUsd: 0, accountUsd: 0 };

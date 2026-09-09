@@ -5,7 +5,7 @@ import {
   computeMoveSourceAvailableBalanceForEndpoint,
   getMoveMaxAmountForEndpoint,
   getPreferredMoveSourceAccountId,
-} from '../../../frontend/src/lib/components/Entity/move/move-balance';
+} from '../../../frontend/packages/ui/src/entity/move/move-balance';
 
 const reserveBalance = (tokenId: number) => tokenId === 1 ? 100n : 0n;
 const draftReserveDelta = (tokenId: number) => tokenId === 1 ? 25n : 0n;

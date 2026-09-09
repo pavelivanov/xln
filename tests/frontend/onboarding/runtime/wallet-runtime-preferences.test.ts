@@ -47,7 +47,7 @@ describe('browser wallet Runtime preferences', () => {
     expect(serializeWalletBrainVaultWorkerCap(-4)).toBe('1');
   });
 
-  test('keeps concrete localStorage effects in the Svelte event flow', () => {
+  test('keeps preference parsing pure and routes worker-cap persistence through the shared orchestrator', () => {
     const boundary = readFileSync(
       'frontend/packages/browser/src/runtime/wallet-runtime-preferences.ts',
       'utf8',
@@ -56,12 +56,17 @@ describe('browser wallet Runtime preferences', () => {
       'frontend/src/lib/components/Views/RuntimeCreation.svelte',
       'utf8',
     );
+    const browserDerivation = readFileSync(
+      'frontend/bridges/wallet/brainvault/wallet-brainvault-browser-derivation.ts',
+      'utf8',
+    );
 
     expect(boundary).not.toContain('localStorage');
     expect(boundary).not.toContain('svelte');
     expect(view).toContain('resolveWalletUnlockDurationMs(');
     expect(view).toContain('parseWalletBrainVaultWorkerCap(');
-    expect(view).toContain('serializeWalletBrainVaultWorkerCap(cap)');
+    expect(browserDerivation).toContain('serializeWalletBrainVaultWorkerCap(run.workerCap)');
+    expect(browserDerivation).toContain('localStorage.setItem(BRAINVAULT_WORKER_CAP_STORAGE_KEY');
     expect(view).toContain('localStorage.getItem(WALLET_AUTH_SCHEME_STORAGE_KEY)');
     expect(view).toContain('localStorage.setItem(WALLET_AUTH_SCHEME_STORAGE_KEY, next)');
     expect(view).not.toContain('const AUTH_SCHEME_STORAGE_KEY');

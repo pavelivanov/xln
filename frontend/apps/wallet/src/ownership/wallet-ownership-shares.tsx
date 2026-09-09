@@ -3,7 +3,7 @@ import { toEntityId } from '@xln/core/api/public/runtime-module';
 import type { WalletOwnership } from '../../../../bridges/wallet/wallet-canonical-ownership';
 import type { RuntimeQuerySnapshot } from '../../../../packages/runtime-client/src/runtime/query/runtime-query-observer';
 import type { WalletPaymentSource } from '../payments/wallet-payment-source';
-import { buildEntityShareReleaseInput, ENTITY_SHARE_SUPPLY } from '../../../../src/lib/components/Entity/ownership/ownership-flow';
+import { buildEntityShareReleaseInput, ENTITY_SHARE_SUPPLY } from '../../../../packages/runtime-client/src/entity/ownership-flow';
 import { createWalletOwnershipSource } from './wallet-ownership-source';
 import '../styles/wallet-ownership.css';
 

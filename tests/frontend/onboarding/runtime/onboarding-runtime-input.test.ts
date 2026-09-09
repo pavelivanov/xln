@@ -6,8 +6,8 @@ import {
   buildOnboardingHubOpenRuntimeInput,
   buildOnboardingProfileRuntimeInput,
   selectAdvertisedAutoJoinCandidates,
-} from '../../../../frontend/src/lib/components/Entity/onboarding/onboarding-runtime-input';
-import { getOpenAccountRebalancePolicyData } from '../../../../frontend/src/lib/utils/onboarding/onboardingPreferences';
+} from '../../../../frontend/packages/ui/src/onboarding/onboarding-runtime-input';
+import { getOpenAccountRebalancePolicyData } from '../../../../frontend/packages/browser/src/onboarding/onboarding-preferences';
 
 const ENTITY = `0x${'11'.repeat(32)}`;
 const SIGNER = `0x${'22'.repeat(20)}`;
@@ -189,7 +189,7 @@ test('onboarding creates every jurisdiction entity but only requires advertised 
 
 test('OnboardingPanel uses injected runtime projection and RuntimeInput helpers', () => {
   const source = readFileSync('frontend/src/lib/components/Entity/onboarding/OnboardingPanel.svelte', 'utf8');
-  const setup = readFileSync('frontend/src/lib/components/Entity/onboarding/onboarding-setup.ts', 'utf8');
+  const setup = readFileSync('frontend/packages/browser/src/onboarding/onboarding-setup.ts', 'utf8');
   const joins = readFileSync('frontend/src/lib/components/Entity/onboarding/onboarding-hub-join.ts', 'utf8');
   const parent = readFileSync('frontend/src/lib/view/UserModePanel.svelte', 'utf8');
   const projection = readFileSync('frontend/src/lib/components/Entity/onboarding/onboarding-runtime-projection.ts', 'utf8');
@@ -223,7 +223,7 @@ test('OnboardingPanel uses injected runtime projection and RuntimeInput helpers'
 test('OnboardingPanel never hides hub discovery or default-policy failures', () => {
   const source = readFileSync('frontend/src/lib/components/Entity/onboarding/OnboardingPanel.svelte', 'utf8');
   const joins = readFileSync('frontend/src/lib/components/Entity/onboarding/onboarding-hub-join.ts', 'utf8');
-  const inputSource = readFileSync('frontend/src/lib/components/Entity/onboarding/onboarding-runtime-input.ts', 'utf8');
+  const inputSource = readFileSync('frontend/packages/ui/src/onboarding/onboarding-runtime-input.ts', 'utf8');
 
   expect(joins).toContain('ONBOARDING_HUB_DISCOVERY_FAILED');
   expect(inputSource).toContain('ONBOARDING_HUB_CAPACITY_INSUFFICIENT');

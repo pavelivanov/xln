@@ -1,7 +1,7 @@
 import { expect, test } from 'bun:test';
 import { CONTENT_SECURITY_POLICY_DIRECTIVES } from '../../../frontend/config/security/content-security-policy.js';
 import svelteConfig from '../../../frontend/svelte.config.js';
-import { runtimeHttpOriginFromWsUrl } from '../../../frontend/src/lib/utils/runtime/wsUrl';
+import { runtimeHttpOriginFromWsUrl } from '../../../frontend/packages/runtime-client/src/runtime/ws-url';
 import { readFileSync } from 'node:fs';
 
 const source = (path: string): string => readFileSync(path, 'utf8');

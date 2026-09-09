@@ -517,7 +517,7 @@ describe('production startup wiring', () => {
       .map(file => readFileSync(join(repoRoot, file), 'utf8'))
       .join('\n');
     const appLayout = readFileSync(join(repoRoot, 'frontend/src/routes/app/+layout.svelte'), 'utf8');
-    const importFlow = readFileSync(join(repoRoot, 'frontend/src/lib/utils/onboarding/remoteRuntimeImportFlow.ts'), 'utf8');
+    const importFlow = readFileSync(join(repoRoot, 'frontend/bridges/runtime/remote-runtime-import-flow.ts'), 'utf8');
     const orchestrator = readOrchestratorSource();
     const runtimeImportHttp = readFileSync(join(repoRoot, 'core/orchestrator/replica-import/runtime-import-http.ts'), 'utf8');
     const bootstrapTimeline = readFileSync(join(repoRoot, 'core/orchestrator/bootstrap/bootstrap-timeline-stages.ts'), 'utf8');
@@ -1347,7 +1347,7 @@ describe('production startup wiring', () => {
   });
 
   test('frontend command submission never starts or directly drives the runtime loop', () => {
-    const xlnStore = readFileSync(join(repoRoot, 'frontend/src/lib/stores/xlnStore.ts'), 'utf8');
+    const xlnStore = readFileSync(join(repoRoot, 'frontend/bridges/runtime/xln-store.ts'), 'utf8');
     const drainStart = xlnStore.indexOf('const drainLocalRuntimeInput = async (');
     const drainEnd = xlnStore.indexOf('const normalizeRuntimeIdentifier =', drainStart);
     const submitStart = xlnStore.indexOf('export async function dispatchRuntimeInputToRuntimeEnv');
@@ -1585,8 +1585,8 @@ describe('production startup wiring', () => {
       'core/orchestrator/hub-node.ts',
       'core/orchestrator/market-maker/node/mm-node-core.ts',
       'core/runtime/swap-cmd/swap-command-plan.ts',
-      'frontend/src/lib/components/Entity/onboarding/onboarding-runtime-input.ts',
-      'frontend/src/lib/components/Entity/onboarding/hub-discovery-profile.ts',
+      'frontend/packages/ui/src/onboarding/onboarding-runtime-input.ts',
+      'frontend/packages/ui/src/onboarding/hub-discovery-profile.ts',
       'frontend/src/lib/components/Entity/swap-panel-core.ts',
       'frontend/src/lib/view/panels/ArchitectPanel.svelte',
     ].map(file => readFileSync(join(repoRoot, file), 'utf8'));
@@ -1653,7 +1653,7 @@ describe('production startup wiring', () => {
   test('orchestrator exposes the gossip profile bundle endpoint used by payments', () => {
     const debugApi = readFileSync(join(repoRoot, 'core/orchestrator/debug-api.ts'), 'utf8');
     const paymentPanel = readFileSync(join(repoRoot, 'frontend/src/lib/components/Entity/payments/PaymentPanel.svelte'), 'utf8');
-    const xlnStore = readFileSync(join(repoRoot, 'frontend/src/lib/stores/xlnStore.ts'), 'utf8');
+    const xlnStore = readFileSync(join(repoRoot, 'frontend/bridges/runtime/xln-store.ts'), 'utf8');
 
     expect(paymentPanel).not.toContain('/api/gossip/profile?entityId=');
     expect(paymentPanel).toContain('refreshPaymentRuntimeGossip');

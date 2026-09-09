@@ -5,7 +5,7 @@ import type { JAdapter, RuntimeReplica, ConsensusConfig } from '../../../../../c
 import { signAccountFrame } from '../../../../../core/account/crypto';
 import { buildQuorumHanko } from '../../../../../core/hanko/signing';
 import { createTestEntityImportRuntimeTx } from '../../../../../core/qa/entity-creation-fixture';
-import { ENTITY_SHARE_SUPPLY } from '../../../../src/lib/components/Entity/ownership/ownership-flow';
+import { ENTITY_SHARE_SUPPLY } from '../../../../packages/runtime-client/src/entity/ownership-flow';
 import { waitForWalletFixtureState } from './wallet-recovery-fixture';
 
 const registerOwnershipEntity = async (

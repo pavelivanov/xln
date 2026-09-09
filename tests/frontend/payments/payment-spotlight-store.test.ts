@@ -3,7 +3,7 @@ import { expect, test } from 'bun:test';
 import {
   createPaymentSpotlightStore,
   type PaymentSpotlight,
-} from '../../../frontend/src/lib/stores/network/paymentSpotlightStore';
+} from '../../../frontend/packages/browser/src/graph/payment-spotlight-store';
 
 const OWNER_A = `0x${'11'.repeat(32)}:0x${'aa'.repeat(32)}`;
 const OWNER_B = `0x${'22'.repeat(32)}:0x${'bb'.repeat(32)}`;

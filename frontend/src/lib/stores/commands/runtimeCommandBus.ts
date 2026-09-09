@@ -1,6 +1,9 @@
-import { get, writable } from 'svelte/store';
+import {
+  createObservableStore as writable,
+  readStoreValue as get,
+} from '../../../../packages/runtime-client/src/observable-store';
 import type { RuntimeInput } from '@xln/core/api/public/runtime-module';
-import { registerDebugSurface } from '$lib/utils/runtime/debugSurface';
+import { registerDebugSurface } from '../../utils/runtime/debugSurface';
 import {
   createRuntimeCommandId,
   listUnresolvedRemoteRuntimeCommandIntents,
@@ -21,7 +24,7 @@ export type RuntimeCommandExecutionOptions = RuntimeCommandIntentOptions & {
 import {
   classifyRuntimeFailure,
   type RuntimeFailureKind,
-} from '$lib/utils/runtime/runtimeFailure';
+} from '../../../../packages/runtime-client/src/runtime/runtime-failure';
 
 export type RuntimeCommandStatus = 'pending' | 'accepted' | 'observed' | 'committed' | 'error';
 

@@ -7,8 +7,8 @@ import {
   sameVaultProtectionLease,
   unprotectVaultSecrets,
   type ProtectedVaultSecrets,
-} from '../../../frontend/src/lib/security/vaultProtection';
-import { isVaultAuthorityLeaseExpired } from '../../../frontend/src/lib/security/vault-authority-lease';
+} from '../../../frontend/packages/browser/src/vault/vault-protection';
+import { isVaultAuthorityLeaseExpired } from '../../../frontend/packages/browser/src/vault/vault-authority-lease';
 
 const installSuccessfulKeyDb = (operations: Array<{ method: string; key: IDBValidKey }>): IDBFactory => ({
   open: () => {

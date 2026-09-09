@@ -1,13 +1,13 @@
 import { useEffect, useState, useSyncExternalStore } from 'react';
 import type { WalletAccountContext } from '../../../../bridges/wallet/wallet-canonical-account-context';
-import { buildAddTokenToAccountTx, buildDisputeFinalizeTx, buildPrepareDisputeTx } from '../../../../src/lib/components/Entity/account/entity-action-txs';
-import { buildCollateralRequest, collateralRequestFee, collateralRentEstimate, resolveCollateralFeePolicy } from '../../../../src/lib/components/Entity/account/collateral-request';
+import { buildAddTokenToAccountTx, buildDisputeFinalizeTx, buildPrepareDisputeTx } from '../../../../packages/runtime-client/src/entity/account-action-txs';
+import { buildCollateralRequest, collateralRequestFee, collateralRentEstimate, resolveCollateralFeePolicy } from '../../../../packages/runtime-client/src/entity/collateral-request';
 import type { WalletPaymentSource } from '../payments/wallet-payment-source';
 import type { WalletWorkspaceSelection } from '../runtime/wallet-workspace-selection';
 import { WalletLoadTesting } from './wallet-load-testing';
 import { requestWalletCredit } from './wallet-manage-credit';
-import { buildConfigureTokenOptions } from '../../../../src/lib/components/Entity/workspace/entity-panel-options';
-import { compareStableText } from '../../../../src/lib/utils/stableSort';
+import { buildConfigureTokenOptions } from '../../../../packages/ui/src/entity/entity-panel-options';
+import { compareStableText } from '../../../../packages/ui/src/stable-compare';
 import { formatWalletExternalAmount } from '../../../../packages/browser/src/wallet/wallet-external-provider';
 import type { AccountReplica } from '@xln/core/api/public/runtime-module';
 

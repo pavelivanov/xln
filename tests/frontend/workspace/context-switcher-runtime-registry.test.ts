@@ -18,7 +18,7 @@ test('ContextSwitcher hydrates the shared remote runtime registry before showing
 
   expect(source).toContain('onMount');
   expect(source).toContain('runtimeOperations.hydrateRemoteRuntimeImports()');
-  expect(source).toContain("import { runtimeControllerHandle } from '$lib/stores/runtimeControllerStore'");
+  expect(source).toContain("import { runtimeControllerHandle } from '../../../../../../bridges/runtime/runtime-controller-store'");
   expect(source).toContain("from '$lib/stores/runtimeViewStore'");
   expect(source).toContain('setRuntimeViewActiveEntityId');
   expect(source).toContain('controllerRuntimeId = normalizeId($runtimeControllerHandle.runtimeId || $runtimeControllerHandle.id)');

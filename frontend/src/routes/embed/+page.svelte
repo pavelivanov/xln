@@ -18,10 +18,10 @@
   import { onMount } from 'svelte';
   import { page } from '$app/stores';
   import View from '$lib/view/View.svelte';
-  import { settingsOperations } from '$lib/stores/settingsStore';
-  import { networkMachineRuntimeOperations } from '$lib/stores/network/networkMachineRuntimeStore';
-  import { networkMachineDemo } from '$lib/stores/network/networkMachineDemoStore';
-  import { decodeNetworkTrailFromHash } from '$lib/network3d/timeline/networkTimelineSource';
+  import { settingsOperations } from '../../../packages/browser/src/settings-store';
+  import { networkMachineRuntimeOperations } from '../../../bridges/runtime/network-machine-runtime-store';
+  import { networkMachineDemo } from '../../../packages/browser/src/graph/network-machine-demo-store';
+  import { decodeNetworkTrailFromHash } from '../../../packages/ui/src/graph/network-timeline-source';
   import { embedBootErrorMessage, embedBootTitle, parseEmbedBootRequest } from '../../../packages/runtime-client/src/scenario/embed-boot-model';
 
   let embedMode = true;

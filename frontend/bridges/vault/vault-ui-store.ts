@@ -1,0 +1,20 @@
+import { createObservableStore as writable } from '../../packages/runtime-client/src/observable-store';
+
+const deriveRequest = writable(0);
+const showVault = writable(false);
+
+export const deriveRequestSignal = deriveRequest;
+export const showVaultPanel = showVault;
+
+export const vaultUiOperations = {
+  requestDeriveNewVault() {
+    showVault.set(true);
+    deriveRequest.update(n => n + 1);
+  },
+  showVault() {
+    showVault.set(true);
+  },
+  hideVault() {
+    showVault.set(false);
+  },
+};

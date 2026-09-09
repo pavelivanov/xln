@@ -46,7 +46,7 @@ const loadWalletRuntimeMath = async (): Promise<WalletRuntimeReadDependencies['m
       ? ethers.parseUnits(amount, getTokenInfo(tokenId).decimals)
       : financial.parseTokenAmount(tokenId, amount),
     refreshTokenCatalog: async (apiBase) => {
-      const { fetchExternalTokenCatalog } = await import('../../../../src/lib/components/Entity/external-wallet-reader');
+      const { fetchExternalTokenCatalog } = await import('../../../../bridges/wallet/external-wallet-reader');
       const tokens = await fetchExternalTokenCatalog(apiBase);
       for (const token of tokens) {
         if (token.tokenId === undefined) continue;

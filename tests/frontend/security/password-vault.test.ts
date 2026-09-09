@@ -1,5 +1,5 @@
 import { expect, test } from 'bun:test';
-import { encryptPasswordVault, decryptPasswordVault } from '../../../frontend/src/lib/security/passwordVault';
+import { encryptPasswordVault, decryptPasswordVault } from '../../../frontend/packages/browser/src/vault/passwordVault';
 
 const password = 'same-as-brainvault-is-allowed';
 const seed = 'local-wallet-secret-test-vector';

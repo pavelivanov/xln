@@ -1,4 +1,9 @@
-import { derived, get, readable, writable } from 'svelte/store';
+import {
+  createDerivedStore as derived,
+  createObservableStore as writable,
+  createReadableStore as readable,
+  readStoreValue as get,
+} from '../../../packages/runtime-client/src/observable-store';
 import type {
   RuntimeAdapterEntitySummary,
   RuntimeAdapterReadQuery,
@@ -9,8 +14,8 @@ import {
   runtimeAdapter,
   runtimeAdapterHeight,
   runtimeControllerHandle,
-} from './runtimeControllerStore';
-import { errorLog } from './errorLogStore';
+} from '../../../bridges/runtime/runtime-controller-store';
+import { errorLog } from '../../../packages/browser/src/logging/error-log-store';
 import { runtimeQueryClient } from './runtimeQueryClient';
 import {
   assertRuntimeViewIsLive,

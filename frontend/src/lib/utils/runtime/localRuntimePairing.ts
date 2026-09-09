@@ -3,7 +3,7 @@ import { replaceState } from '$app/navigation';
 import {
   parseRemoteRuntimeImportSourcePayload,
   type RemoteRuntimeImportEntry,
-} from '../onboarding/remoteRuntimeImport';
+} from '../../../../packages/browser/src/runtime/session/remote-runtime-import';
 import { readJsonUnknown, requireUnknownRecord } from '../boundary';
 
 export const LOCAL_RUNTIME_PAIR_HASH_PARAM = 'xlnPair';

@@ -1,4 +1,4 @@
-import type { RecoveryTowerConfig, Runtime } from '../../stores/vault/vaultStore';
+import type { RecoveryTowerConfig, Runtime } from '../../../../bridges/vault/vault-recovery';
 
 export type RecoveryCoverageStatus = 'ready' | 'configured' | 'missing';
 export type RecoveryTowerStatusKind = 'receipt' | 'failure' | 'pending';

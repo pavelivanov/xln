@@ -5,23 +5,13 @@
  */
 
 import type { EnvSnapshot, Profile, RuntimeReplica } from '@xln/core/api/public/runtime-module';
+import { isMapLike } from '../../../../packages/runtime-client/src/boundary';
+
+export { isMapLike } from '../../../../packages/runtime-client/src/boundary';
 
 const LIVE_RUNTIME_ENV_KEY = '__xlnLiveEnv';
 
 type RuntimeViewEnv = RuntimeReplica & { [LIVE_RUNTIME_ENV_KEY]?: RuntimeReplica };
-
-/**
- * Committed/candidate Patricia maps (PersistentEntityAccountMap,
- * EntityAccountCandidateMap, ...) implement ReadonlyMap but are not
- * `instanceof Map`. Duck-type instead wherever code needs to recognize them.
- */
-export const isMapLike = (value: unknown): value is ReadonlyMap<unknown, unknown> => {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
-  const candidate = value as Partial<ReadonlyMap<unknown, unknown>> & { size?: unknown };
-  return typeof candidate.entries === 'function'
-    && typeof candidate.get === 'function'
-    && typeof candidate.size === 'number';
-};
 
 /**
  * UI snapshots cannot `structuredClone` Patricia maps: they are ReadonlyMap

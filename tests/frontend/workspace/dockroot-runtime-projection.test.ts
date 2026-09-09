@@ -9,7 +9,7 @@ test('DockRoot resolves entity panel seeds through RuntimeView projections', () 
   expect(source).toContain('refreshRuntimeView({');
   expect(source).toContain('seedFromViewFrame');
   expect(source).toContain("showEntityPanelStatus(div, 'Loading entity projection...')");
-  expect(source).toContain("import { errorLog } from '$lib/stores/errorLogStore'");
+  expect(source).toContain("import { errorLog } from '../../../packages/browser/src/logging/error-log-store'");
   expect(source).toContain("errorLog.log(message, 'DockRoot', details)");
   expect(source).toContain("logDockRootDiagnostic('Failed to resolve entity panel projection'");
   expect(source).not.toContain('console.warn');
@@ -70,7 +70,7 @@ test('DockRoot defaults to Graph left plus pinned wallet and tools on the right'
 test('DockRoot blocks RuntimeReplica-only panels on remote runtimes instead of mounting blank fake RuntimeReplica views', () => {
   const source = readFileSync('frontend/src/lib/view/DockRoot.svelte', 'utf8');
 
-  expect(source).toContain("import { runtimeControllerHandle } from '$lib/stores/runtimeControllerStore'");
+  expect(source).toContain("import { runtimeControllerHandle } from '../../../bridges/runtime/runtime-controller-store'");
   expect(source).toContain('const ENV_ONLY_PANEL_NAMES = new Set');
   const envOnlyStart = source.indexOf('const ENV_ONLY_PANEL_NAMES = new Set');
   const envOnlyEnd = source.indexOf(']);', envOnlyStart);

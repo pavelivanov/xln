@@ -1,17 +1,17 @@
 <script lang="ts">
   import { onDestroy, onMount } from 'svelte';
   import { get } from 'svelte/store';
-  import { networkMachineDemo } from '$lib/stores/network/networkMachineDemoStore';
+  import { networkMachineDemo } from '../../../../packages/browser/src/graph/network-machine-demo-store';
   import { Pause, Play, RefreshCw, SkipBack, SkipForward } from 'lucide-svelte';
   import { appState, appStateOperations } from '$lib/stores/appStateStore';
-  import { networkMachineConfig, networkMachineOperations } from '$lib/stores/network/networkMachineStore';
+  import { networkMachineConfig, networkMachineOperations } from '../../../../packages/browser/src/graph/network-machine-store';
   import {
     networkMachineRuntime,
     networkMachineRuntimeOperations,
-  } from '$lib/stores/network/networkMachineRuntimeStore';
-  import type { NetworkMachineTimelineMode } from '$lib/network3d/networkMachine';
-  import { captionForStep } from '$lib/network3d/timeline/networkCaption';
-  import { xlnFunctions } from '$lib/stores/xlnStore';
+  } from '../../../../bridges/runtime/network-machine-runtime-store';
+  import type { NetworkMachineTimelineMode } from '../../../../packages/runtime-client/src/scenario/network-machine';
+  import { captionForStep } from '../../../../packages/runtime-client/src/scenario/network-caption';
+  import { xlnFunctions } from '../../../../bridges/runtime/xln-store';
   import FrameSubtitle from '$lib/components/TimeMachine/FrameSubtitle.svelte';
 
   let playing = false;

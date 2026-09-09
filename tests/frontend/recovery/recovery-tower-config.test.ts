@@ -14,7 +14,7 @@ import {
   summarizeRuntimeRecoveryTowerFailure,
   summarizeRuntimeRecoveryTowerReceipt,
   tryRestoreRuntimeEnvFromTower,
-} from '../../../frontend/src/lib/stores/vault/vaultStore';
+} from '../../../frontend/bridges/vault/vault-store';
 import * as xln from '../../../core/runtime';
 import { decryptTowerPayloadWithWatchSeed } from '../../../core/storage/recovery/bundle/crypto';
 import { deserializeTaggedJson, safeStringify } from '../../../core/protocol/serialization';
@@ -79,7 +79,7 @@ test('runtime recovery modes keep tower setup out of seed creation defaults', ()
 });
 
 test('tower receipts block runtime output only when explicitly enabled', () => {
-  const source = readFileSync('frontend/src/lib/stores/vault/vaultStore.ts', 'utf8');
+  const source = readFileSync('frontend/bridges/vault/vault-store.ts', 'utf8');
   const registration = source.slice(
     source.indexOf('function registerRuntimeEnvChange('),
     source.indexOf('function runtimeToEntry(', source.indexOf('function registerRuntimeEnvChange(')),
@@ -160,23 +160,24 @@ test('runtime recovery tower status summaries are bounded, compact, and fail-fas
   expect(merged).toHaveLength(16);
   expect(merged[0]).toEqual(receipt);
 
-  const source = readFileSync('frontend/src/lib/stores/vault/vaultStore.ts', 'utf8');
+  const source = readFileSync('frontend/bridges/vault/vault-store.ts', 'utf8');
   expect(source).toContain('TOWER_RECEIPT_MISSING');
   expect(source).toContain('lastTowerFailures');
   expect(source).toContain('updateRuntimeRecoveryMetadata(normalizedRuntimeId');
 });
 
 test('vault runtime recovery and restore diagnostics use persistent error log', () => {
-  const source = readFileSync('frontend/src/lib/stores/vault/vaultStore.ts', 'utf8');
-  const bootstrapSource = readFileSync('frontend/src/lib/stores/vault/vault-bootstrap.ts', 'utf8');
-  const recoveryStart = source.indexOf('const persistRuntimeMetadataSnapshot');
+  const source = readFileSync('frontend/bridges/vault/vault-store.ts', 'utf8');
+  const metadataSource = readFileSync('frontend/bridges/vault/vault-metadata-store.ts', 'utf8');
+  const bootstrapSource = readFileSync('frontend/bridges/vault/vault-bootstrap.ts', 'utf8');
+  const recoveryStart = source.indexOf('const updateRuntimeRecoveryMetadata');
   const recoveryEnd = source.indexOf('async function cleanupRuntimeEnv', recoveryStart);
   const cleanupStart = recoveryEnd;
   const cleanupEnd = source.indexOf('async function stopRuntimeEnv', cleanupStart);
   const restoreStart = source.indexOf('async function buildOrRestoreRuntimeEnv');
   const restoreEnd = source.indexOf('function registerRuntimeResumeListener', restoreStart);
 
-  expect(source).toContain("import { errorLog } from '../errorLogStore';");
+  expect(source).toContain("import { errorLog } from '../../packages/browser/src/logging/error-log-store';");
   expect(recoveryStart).toBeGreaterThan(0);
   expect(recoveryEnd).toBeGreaterThan(recoveryStart);
   expect(cleanupStart).toBeGreaterThan(0);
@@ -187,9 +188,10 @@ test('vault runtime recovery and restore diagnostics use persistent error log', 
   const cleanupSource = source.slice(cleanupStart, cleanupEnd);
   const restoreSource = source.slice(restoreStart, restoreEnd);
 
-  expect(recoverySource).toContain("errorLog.log('Runtime metadata snapshot persistence failed', 'Runtime Recovery', error)");
+  expect(metadataSource).toContain("errorLog.log('Runtime metadata snapshot persistence failed', 'Runtime Recovery', error)");
   expect(recoverySource).toContain('Tower recovery upload failed');
   expect(bootstrapSource).not.toContain('/api/faucet');
+  expect(bootstrapSource).not.toContain('Faucet failed');
   expect(cleanupSource).toContain('RUNTIME_CLEANUP_STORAGE_FAILED');
   expect(cleanupSource).toContain("'Runtime Cleanup'");
   expect(cleanupSource).toContain('throw err;');
@@ -200,24 +202,26 @@ test('vault runtime recovery and restore diagnostics use persistent error log', 
   expect(restoreSource).not.toContain('Failed to load env from DB; falling back to fresh import');
   expect(restoreSource).toContain('Restored env missing J-replicas; retrying tower restore before local re-import');
   expect(restoreSource).toContain('${message}; waiting for jurisdiction import');
-  const diagnosticsSource = `${recoverySource}\n${cleanupSource}\n${restoreSource}\n${bootstrapSource}`;
+  const diagnosticsSource = `${metadataSource}\n${recoverySource}\n${cleanupSource}\n${restoreSource}\n${bootstrapSource}`;
   expect(diagnosticsSource).not.toContain('console.warn');
   expect(diagnosticsSource).not.toContain('console.error');
   expect(diagnosticsSource).not.toContain('console.info');
 });
 
 test('vaultStore diagnostics do not use raw console output', () => {
-  const source = readFileSync('frontend/src/lib/stores/vault/vaultStore.ts', 'utf8');
+  const source = readFileSync('frontend/bridges/vault/vault-store.ts', 'utf8');
+  const metadataSource = readFileSync('frontend/bridges/vault/vault-metadata-store.ts', 'utf8');
 
   expect(source).toContain("errorLog.log('Resume refresh failed', 'Runtime Resume', error)");
   expect(source).toContain('Broadcast refresh failed');
   expect(source).toContain("errorLog.log('Failed to load runtimes; preserved corrupted storage for recovery', 'Runtime Storage', error)");
-  const persistence = source.slice(
-    source.indexOf('const persistVaultStateOrThrow ='),
-    source.indexOf('const readPersistedVaultProtection ='),
+  const persistence = metadataSource.slice(
+    metadataSource.indexOf('export const persistVaultStateOrThrow ='),
+    metadataSource.indexOf('export const persistRuntimeMetadataSnapshot ='),
   );
-  expect(persistence).toContain('localStorage.setItem(VAULT_STORAGE_KEY, serializeVaultState(get(runtimesState)))');
+  expect(persistence).toContain('localStorage.setItem(WALLET_VAULT_STORAGE_KEY, serializeVaultState(readStoreValue(runtimesState)))');
   expect(persistence).not.toContain('catch');
+  expect(source).toContain('saveToStorage() {\n    persistVaultStateOrThrow();\n  }');
   expect(source).toContain('createRuntime failed for ${id.slice(0, 12)}');
   expect(source).toContain("errorLog.log('Failed to register key/create entity', 'Runtime Creation'");
   expect(source).toContain("errorLog.log('Failed to get balance', 'Runtime Balance'");

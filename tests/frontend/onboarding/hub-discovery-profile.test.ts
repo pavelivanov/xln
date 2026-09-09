@@ -12,8 +12,8 @@ import {
   hubDiscoveryJurisdictionKey,
   hubHasPublishedRuntimeRoute,
   isSameEntityId,
-} from '../../../frontend/src/lib/components/Entity/onboarding/hub-discovery-profile';
-import { connectDiscoveredHub } from '../../../frontend/src/lib/components/Entity/onboarding/hub-discovery-commands';
+} from '../../../frontend/packages/ui/src/onboarding/hub-discovery-profile';
+import { connectDiscoveredHub } from '../../../frontend/packages/browser/src/wallet/hub-discovery-commands';
 import { readFileSync } from 'node:fs';
 
 const SOURCE = `0x${'11'.repeat(32)}`;
@@ -662,9 +662,9 @@ test('hub discovery projection marks uncommitted account as opening', () => {
 
 test('HubDiscoveryPanel renders a supplied projection instead of scanning eReplicas', () => {
   const source = readFileSync('frontend/src/lib/components/Entity/onboarding/HubDiscoveryPanel.svelte', 'utf8');
-  const commands = readFileSync('frontend/src/lib/components/Entity/onboarding/hub-discovery-commands.ts', 'utf8');
-  const directCommands = readFileSync('frontend/src/lib/components/Entity/account/account-open-commands.ts', 'utf8');
-  const profile = readFileSync('frontend/src/lib/components/Entity/onboarding/hub-discovery-profile.ts', 'utf8');
+  const commands = readFileSync('frontend/packages/browser/src/wallet/hub-discovery-commands.ts', 'utf8');
+  const directCommands = readFileSync('frontend/packages/browser/src/wallet/account-open-commands.ts', 'utf8');
+  const profile = readFileSync('frontend/packages/ui/src/onboarding/hub-discovery-profile.ts', 'utf8');
   const accountOpen = readFileSync('frontend/src/lib/components/Entity/account/ui/AccountOpenPanel.svelte', 'utf8');
   const accountWorkspace = readFileSync('frontend/src/lib/components/Entity/workspace/AccountWorkspaceView.svelte', 'utf8');
   const tabs = readFileSync('frontend/src/lib/components/Entity/workspace/shell/EntityPanelTabs.svelte', 'utf8');
@@ -675,7 +675,7 @@ test('HubDiscoveryPanel renders a supplied projection instead of scanning eRepli
   expect(source).toContain('projection: hubDiscoveryProjection');
   expect(commands).toContain('context.projection.sourceSignerId');
   expect(commands).toContain('ensureHubOpenAccountProfileReady({');
-  expect(source).toContain("import { runtimeControllerHandle } from '../../../stores/runtimeControllerStore'");
+  expect(source).toContain("import { runtimeControllerHandle } from '../../../../../bridges/runtime/runtime-controller-store'");
   expect(source).toContain('adapterMode: $runtimeControllerHandle.mode');
   expect(source).toContain('authLevel: $runtimeControllerHandle.authLevel');
   expect(source).toContain('hubDiscoveryProjection.localHubs');
@@ -714,7 +714,7 @@ test('HubDiscoveryPanel renders a supplied projection instead of scanning eRepli
   expect(accountWorkspace).toContain('{submitRuntimeInput}');
   expect(tabs).toContain('canOpenAccounts = canSubmitHubOpenAccount');
   expect(tabs).toContain('profiles: panelProfiles');
-  expect(tabs).toMatch(/import \{ runtimes \} from ["']\.\.\/\.\.\/\.\.\/\.\.\/stores\/runtimeStore["']/);
+  expect(tabs).toMatch(/import \{ runtimes \} from ["']\.\.\/\.\.\/\.\.\/\.\.\/\.\.\/\.\.\/bridges\/runtime\/runtime-store["']/);
   expect(tabs).toContain('remoteHubs: remoteHubCandidates');
   expect(directCommands).toContain('if (!context.canOpenAccounts)');
   expect(directCommands).toContain('buildDirectOpenAccountRuntimeInput');
@@ -737,7 +737,7 @@ test('HubDiscoveryPanel renders a supplied projection instead of scanning eRepli
   expect(source).not.toContain('getEntityJurisdictionKey(');
   expect(source).not.toContain('appRuntimeAdapterMode');
   expect(source).not.toContain('runtimeAdapterAuthLevel');
-  expect(tabs).toMatch(/import \{ runtimeControllerHandle \} from ["']\.\.\/\.\.\/\.\.\/\.\.\/stores\/runtimeControllerStore["']/);
+  expect(tabs).toMatch(/import \{ runtimeControllerHandle \} from ["']\.\.\/\.\.\/\.\.\/\.\.\/\.\.\/\.\.\/bridges\/runtime\/runtime-controller-store["']/);
   expect(tabs).toContain('adapterMode: $runtimeControllerHandle.mode');
   expect(tabs).toContain('authLevel: $runtimeControllerHandle.authLevel');
   expect(tabs).not.toContain('appRuntimeAdapterMode');

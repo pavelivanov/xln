@@ -1,13 +1,13 @@
 <script lang="ts">
   import { get } from 'svelte/store';
   import type { RuntimeReplica, RuntimeInput } from '@xln/core/api/public/runtime-module';
-  import { xlnFunctions, error } from '../../../../stores/xlnStore';
-  import { errorLog } from '../../../../stores/errorLogStore';
-  import { runtimeControllerHandle } from '../../../../stores/runtimeControllerStore';
-  import { requireSignerIdForEntity } from '$lib/utils/identity/entityReplica';
+  import { xlnFunctions, error } from '../../../../../../bridges/runtime/xln-store';
+  import { errorLog } from '../../../../../../packages/browser/src/logging/error-log-store';
+  import { runtimeControllerHandle } from '../../../../../../bridges/runtime/runtime-controller-store';
+  import { requireSignerIdForEntity } from '../../../../../../packages/runtime-client/src/entity/entity-replica';
   import BigIntInput from '../../../Common/BigIntInput.svelte';
   import EntitySelect from '../../workspace/shell/EntitySelect.svelte';
-  import { requireTokenDecimals } from '../../token-metadata';
+  import { requireTokenDecimals } from '../../../../../../packages/runtime-client/src/token-metadata';
   import { optionalBoolean, optionalString, readJsonUnknown, rejectExtraKeys, requireUnknownRecord } from '$lib/utils/boundary';
 
   export let entityId: string;

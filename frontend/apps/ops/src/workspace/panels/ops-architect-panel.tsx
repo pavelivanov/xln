@@ -1,14 +1,14 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { safeStringify } from '@xln/core/protocol/serialization';
 import ahbScenarioCode from '@xln/core/scenarios/consensus/ahb.ts?raw';
-import { getXLN } from '../../../../../src/lib/stores/bootstrap/xlnRuntimeLoader';
+import { getXLN } from '../../../../../bridges/runtime/xln-runtime-loader';
 import { SCENARIO_OPTIONS } from '../../../../../packages/runtime-client/src/scenario/scenario-player-model';
 import { getArchitectScenarioScrollTop } from '../../../../../packages/runtime-client/src/panels/architect-panel-view';
 import { useWorkspaceEnvironment } from '../session/use-workspace-environment';
 import { loadWorkspaceScenario, pauseWorkspacePlayback, returnWorkspaceLive, workspaceNetwork } from '../session/ops-workspace-playback';
 import { OpsSolvencyPanel } from './ops-solvency-panel';
 import { OpsArchitectLiveControls } from '../architect/ops-architect-live-controls';
-import { networkMachineRuntimeOperations } from '../../../../../src/lib/stores/network/networkMachineRuntimeStore';
+import { networkMachineRuntimeOperations } from '../../../../../bridges/runtime/network-machine-runtime-store';
 import { useWorkspaceTranslation } from '../../../../../bridges/workspace-localization-react';
 
 export function OpsArchitectPanel() {

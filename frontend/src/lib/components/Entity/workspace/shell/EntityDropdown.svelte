@@ -6,10 +6,10 @@ import type { EntityReadView } from '$lib/components/Entity/core/entity-panel-ty
    * Declarative Svelte (no innerHTML), uses base Dropdown component
    */
   import { createEventDispatcher } from 'svelte';
-  import { xlnFunctions, xlnInstance } from '../../../../stores/xlnStore';
+  import { xlnFunctions, xlnInstance } from '../../../../../../bridges/runtime/xln-store';
   import Dropdown from '$lib/components/UI/Dropdown.svelte';
   import type { Tab } from '$lib/types/ui';
-  import type { FrontendXlnFunctions } from '$lib/stores/xlnStore';
+  import type { FrontendXlnFunctions } from '../../../../../../bridges/runtime/xln-store';
   import { entityAvatar, preferredAvatar } from '$lib/utils/identity/avatar';
   import { getJurisdictionBadgeInfo, type JurisdictionBadgeInfo } from '$lib/utils/identity/jurisdictionBadge';
 

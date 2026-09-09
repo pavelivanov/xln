@@ -6,7 +6,7 @@ import {
   getMoveRequiredAllowanceAmount,
   isMoveAllowanceSatisfied,
 } from '../../../frontend/src/lib/components/Entity/move/move-allowance';
-import { routeRequiresExplicitExternalAllowance } from '../../../frontend/src/lib/components/Entity/move-routes';
+import { routeRequiresExplicitExternalAllowance } from '../../../frontend/packages/ui/src/entity/move/move-routes';
 
 const fmt = (amount: bigint, decimals: number) => `${amount / (10n ** BigInt(decimals))}`;
 

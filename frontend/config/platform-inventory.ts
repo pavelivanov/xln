@@ -113,13 +113,14 @@ export const PLATFORM_INVENTORY = [
     status: 'owned-for-later-wp',
     interfaces: ['indexed-db', 'local-storage', 'web-locks'],
     sources: [
-      'frontend/src/lib/security/vaultProtection.ts',
+      'frontend/packages/browser/src/vault/passwordVault.ts',
+      'frontend/packages/browser/src/vault/vault-protection.ts',
       'frontend/packages/browser/src/commands/runtime-command-intent.ts',
       'frontend/packages/browser/src/commands/runtime-command-intent-codec.ts',
       'frontend/packages/browser/src/commands/runtime-command-journal-indexed-db.ts',
       'frontend/packages/browser/src/commands/runtime-command-journal-keyring.ts',
       'frontend/packages/browser/src/commands/runtime-command-journal-storage.ts',
-      'frontend/src/lib/stores/vault/vaultStore.ts',
+      'frontend/bridges/vault/vault-store.ts',
     ],
     consumers: ['frontend/src/routes/app/+layout.svelte'],
     evidence: [
@@ -155,6 +156,7 @@ export const PLATFORM_INVENTORY = [
     interfaces: ['asset', 'indexed-db', 'web-locks', 'worker', 'web-crypto'],
     sources: [
       'frontend/packages/browser/src/runtime/session/runtime-module-loader.ts',
+      'frontend/packages/browser/src/vault/runtimeSession.ts',
       'frontend/packages/browser/src/runtime/wallet-embedded-runtime-session.ts',
       'frontend/packages/browser/src/runtime/wallet-runtime-suspension.ts',
       'frontend/packages/browser/src/wallet/wallet-vault-storage.ts',
@@ -175,8 +177,8 @@ export const PLATFORM_INVENTORY = [
     consumers: [
       'frontend/apps/wallet/src/app-shell.tsx',
       'frontend/apps/wallet/src/runtime/wallet-runtime-read-boundary.ts',
-      'frontend/src/lib/stores/bootstrap/xlnRuntimeLoader.ts',
-      'frontend/src/lib/stores/vault/vaultStore.ts',
+      'frontend/bridges/runtime/xln-runtime-loader.ts',
+      'frontend/bridges/vault/vault-store.ts',
     ],
     evidence: [
       'tests/frontend/runtime/session/runtime-module-loader.test.ts',
@@ -440,7 +442,7 @@ export const PLATFORM_INVENTORY = [
     ],
     consumers: [
       'frontend/src/routes/embed/+page.svelte',
-      'frontend/src/lib/stores/network/networkMachineDemoStore.ts',
+      'frontend/packages/browser/src/graph/network-machine-demo-store.ts',
     ],
     evidence: [
       'tests/frontend/runtime/embed-boot-model.test.ts',
@@ -483,8 +485,8 @@ export const PLATFORM_INVENTORY = [
       'frontend/src/lib/view/components/Graph3DViewport.svelte',
       'frontend/src/lib/view/components/Graph3DFpsOverlay.svelte',
       'frontend/src/lib/view/components/VRControlsHUD.svelte',
-      'frontend/src/lib/network3d/runtimeGraphProjection.ts',
-      'frontend/src/lib/stores/network/runtimeGraphControlStore.ts',
+      'frontend/packages/ui/src/graph/runtime-graph-projection.ts',
+      'frontend/packages/browser/src/graph/runtime-graph-control-store.ts',
     ],
     evidence: [
       'tests/frontend/runtime/panels/console-panel-view.test.ts',
@@ -509,6 +511,7 @@ export const PLATFORM_INVENTORY = [
     interfaces: ['local-storage', 'route', 'registry', 'session-storage', 'ui'],
     sources: [
       'frontend/packages/runtime-client/src/entity/entity-workspace-navigation.ts',
+      'frontend/packages/runtime-client/src/entity/entity-panel-types.ts',
       'frontend/packages/runtime-client/src/entity/entity-workspace-context.ts',
       'frontend/packages/runtime-client/src/entity/entity-workspace-activity.ts',
       'frontend/packages/runtime-client/src/entity/entity-workspace-consensus-evidence.ts',
@@ -553,7 +556,6 @@ export const PLATFORM_INVENTORY = [
       'frontend/apps/ops/src/entity-workspace/ops-entity-workspace-runtime.ts',
     ],
     consumers: [
-      'frontend/src/lib/components/Entity/workspace/entity-panel-routing.ts',
       'frontend/src/lib/components/Entity/workspace/entity-panel-display.ts',
       'frontend/src/lib/components/Entity/workspace/shell/EntityPanelTabs.svelte',
       'frontend/apps/ops/src/ops-app.tsx',
@@ -614,7 +616,7 @@ export const PLATFORM_INVENTORY = [
     ],
     consumers: [
       'frontend/src/lib/view/panels/graph3d/Graph3DPanel.svelte',
-      'frontend/src/lib/view/panels/graph3d/graph3d-visuals.ts',
+      'frontend/packages/ui/src/graph/graph3d-visuals.ts',
     ],
     evidence: [
       'tests/frontend/graph/rendering/graph3d-lifecycle.test.ts',
@@ -640,7 +642,7 @@ export const PLATFORM_INVENTORY = [
       'frontend/packages/ui/src/workspace/command-palette-view.ts',
       'frontend/packages/ui/src/workspace/command-palette-suggestions.ts',
       'frontend/apps/ops/src/workspace/ops-command-palette.tsx',
-      'frontend/src/lib/i18n/index.ts',
+      'frontend/packages/browser/src/localization/index.ts',
       'frontend/bridges/workspace-localization.ts',
       'frontend/bridges/workspace-localization-react.ts',
       'frontend/apps/ops/src/workspace/ops-panel-title.ts',

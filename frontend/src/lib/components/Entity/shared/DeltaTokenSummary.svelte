@@ -1,11 +1,11 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
   import { iconForSymbol, normalizeAmount, stripTrailingSymbol, formatUsdHint, formatHoldHint } from '../../../../../packages/ui/src/rcpan/delta-token-format';
-  import { settings } from '$lib/stores/settingsStore';
+  import { settings } from '../../../../../packages/browser/src/settings-store';
   import DeltaCapacityBar from './DeltaCapacityBar.svelte';
   import DeltaTokenSummaryApple from './DeltaTokenSummaryApple.svelte';
-  import type { DeltaParts, DeltaVisualScale } from './delta-types';
-  import { buildTokenVisualScale } from './delta-visual';
+  import type { DeltaParts, DeltaVisualScale } from '../../../../../packages/ui/src/rcpan/delta-types';
+  import { buildTokenVisualScale } from '../../../../../packages/ui/src/account/delta-visual';
 
   export let symbol: string;
   export let name: string = '';

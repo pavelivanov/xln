@@ -4,14 +4,14 @@ import type { EntityReadView } from '$lib/components/Entity/core/entity-panel-ty
   import { onDestroy } from 'svelte';
   import type { RuntimeInput, RuntimeReplica } from '@xln/core/api/public/runtime-module';
   import { get } from 'svelte/store';
-  import { xlnFunctions } from '$lib/stores/xlnStore';
+  import { xlnFunctions } from '../../../../../../../bridges/runtime/xln-store';
   import type { PaymentPanelView } from '../../../payments/payment-panel-view';
   import type { SwapPanelRuntimeView } from '../../../swap/swap-panel-helpers';
-  import { createLoadTestingController } from '../../load-testing/load-testing-controller';
+  import { createLoadTestingController } from '../../../../../../../bridges/wallet/load-testing-controller';
   import {
     LoadTestScheduler,
     type LoadTestSchedulerSnapshot,
-  } from '../../load-testing/load-testing-scheduler';
+  } from '../../../../../../../packages/browser/src/testing/load-test-scheduler';
   import LoadTestingPanel, {
     type LoadTestingCallbacks,
     type LoadTestingControllerState,

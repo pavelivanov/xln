@@ -1,10 +1,10 @@
 <script lang="ts">
   import type { ComponentType } from 'svelte';
   import { Check, Copy } from 'lucide-svelte';
-  import type { FrontendXlnFunctions } from '$lib/stores/xlnStore';
+  import type { FrontendXlnFunctions } from '../../../../../bridges/runtime/xln-store';
   import type { Tab } from '$lib/types/ui';
   import ContextSwitcher from './shell/ContextSwitcher.svelte';
-  import type { ViewTab } from './entity-panel-routing';
+  import type { ViewTab } from '../../../../../packages/runtime-client/src/entity/entity-workspace-navigation';
 
   type JurisdictionBadge = {
     className: string;

@@ -131,6 +131,10 @@ describe('browser wallet node mnemonic reveal', () => {
 
   test('node wallet entry cannot request or retain remote recovery material and keeps local cleanup', () => {
     const view = readFileSync('frontend/src/lib/components/Views/RuntimeCreation.svelte', 'utf8');
+    const browserDerivation = readFileSync(
+      'frontend/bridges/wallet/brainvault/wallet-brainvault-browser-derivation.ts',
+      'utf8',
+    );
     expect(view).toContain('Recovery material stays in the owner-only node state and is never delivered to this browser.');
     expect(view).not.toContain('revealBrainVaultMnemonic');
     expect(view).not.toContain('revealedNodeMnemonic');
@@ -138,9 +142,10 @@ describe('browser wallet node mnemonic reveal', () => {
     expect(cleanup).toContain("mnemonic24 = ''");
     expect(cleanup).toContain("mnemonic12 = ''");
     expect(cleanup).toContain("devicePassphrase = ''");
-    expect(cleanup).toContain('wipeShardResults()');
+    expect(cleanup).toContain('browserBrainVaultDerivation.cancel()');
     expect(cleanup).toContain("passphrase = ''");
     expect(cleanup).toContain("mnemonicInput = ''");
+    expect(browserDerivation).toContain('wipeResults(run)');
     expect(view.slice(view.indexOf('onDestroy(() =>'))).toContain('clearSensitiveWalletMaterial()');
   });
 });

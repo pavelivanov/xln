@@ -1,8 +1,9 @@
-import { readStoreValue } from '../../src/lib/utils/observableStore';
+import { readStoreValue } from '../../packages/runtime-client/src/observable-store';
 import { isTronChainId, type RuntimeAdapter, type RuntimeAdapterViewFrame } from '@xln/core/api/public/runtime-module';
-import { allRuntimes, vaultOperations, vaultStorageLoaded } from '../../src/lib/stores/vault/vaultStore';
-import { getXLN, registerActiveNumberedEntities, submitRuntimeInput, xlnEnvironment } from '../../src/lib/stores/xlnStore';
-import { runtimeControllerHandle } from '../../src/lib/stores/runtimeControllerStore';
+import { vaultOperations } from '../vault/vault-store';
+import { allRuntimes, vaultStorageLoaded } from '../vault/vault-metadata-store';
+import { getXLN, registerActiveNumberedEntities, submitRuntimeInput, xlnEnvironment } from '../runtime/xln-store';
+import { runtimeControllerHandle } from '../runtime/runtime-controller-store';
 import { tabOperations } from '../../src/lib/stores/ui/tabStore';
 import { createFormationEntity } from '../../src/lib/components/Entity/onboarding/formation/formation-commands';
 import { buildFormationRuntimeProjection, buildFormationRuntimeViewProjection } from '../../src/lib/components/Entity/onboarding/formation/formation-runtime-projection';

@@ -5,7 +5,7 @@ import {
   type PaymentTerminalEvent,
   type PaymentTerminalReadRequest,
   type PaymentTerminalReceiptPage,
-} from '../../../frontend/src/lib/stores/network/paymentTerminalMonitor';
+} from '../../../frontend/packages/browser/src/graph/payment-terminal-monitor';
 
 const RUNTIME_A = `0x${'11'.repeat(32)}`;
 const RUNTIME_B = `0x${'22'.repeat(32)}`;

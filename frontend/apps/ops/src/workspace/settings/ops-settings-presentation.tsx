@@ -1,7 +1,7 @@
 import { useState, useSyncExternalStore } from 'react';
 import { safeStringify } from '@xln/core/protocol/serialization';
-import { parseNetworkMachineConfig } from '../../../../../src/lib/network3d/networkMachine';
-import { networkMachineConfig, networkMachineOperations } from '../../../../../src/lib/stores/network/networkMachineStore';
+import { parseNetworkMachineConfig } from '../../../../../packages/runtime-client/src/scenario/network-machine';
+import { networkMachineConfig, networkMachineOperations } from '../../../../../packages/browser/src/graph/network-machine-store';
 import { applyWorkspacePresentation } from '../session/ops-workspace-playback';
 
 export function OpsSettingsPresentation() {

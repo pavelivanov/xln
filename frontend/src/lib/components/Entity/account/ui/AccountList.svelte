@@ -5,7 +5,7 @@ import type { EntityReadView } from '$lib/components/Entity/core/entity-panel-ty
 
   import { createEventDispatcher } from 'svelte';
   import AccountPreview from './AccountPreview.svelte';
-  import { compareStableText } from '$lib/utils/stableSort';
+  import { compareStableText } from '../../../../../../packages/ui/src/stable-compare';
   import { buildAccountPageView, isAccountsMapLike, resolveAccountListEntityName } from '../../core/account-list-view';
 
   export let replica: EntityReadView | null;

@@ -1,12 +1,12 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
   import EntityIdentity from '../../shared/EntityIdentity.svelte';
-  import { xlnFunctions } from '$lib/stores/xlnStore';
-  import { amountToUsd } from '$lib/utils/assetPricing';
+  import { xlnFunctions } from '../../../../../bridges/runtime/xln-store';
+  import { amountToUsd } from '../../../../../packages/runtime-client/src/asset-pricing';
   import { getEntityDisplayName } from '$lib/utils/identity/entityNaming';
-  import { compareStableText } from '$lib/utils/stableSort';
+  import { compareStableText } from '../../../../../packages/ui/src/stable-compare';
   import type { DebtEntry, EntityState } from '@xln/core/api/public/runtime-module';
-  import { requireTokenDecimals } from '../token-metadata';
+  import { requireTokenDecimals } from '../../../../../packages/runtime-client/src/token-metadata';
   import type { DebtEnforceRequest } from './debt-enforce-request';
 
   type DebtState = Pick<EntityState, 'entityId' | 'outDebtsByToken' | 'inDebtsByToken' | 'reserves'>;

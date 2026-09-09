@@ -1,4 +1,4 @@
-import { amountToUsd, getAssetUsdPrice } from '$lib/utils/assetPricing';
+import { amountToUsd, getAssetUsdPrice } from '../../../../frontend/packages/runtime-client/src/asset-pricing';
 import { getTokenMeta } from '../format';
 
 /**

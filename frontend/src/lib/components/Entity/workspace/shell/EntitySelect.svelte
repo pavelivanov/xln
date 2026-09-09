@@ -1,6 +1,6 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
-  import { xlnFunctions } from '../../../../stores/xlnStore';
+  import { xlnFunctions } from '../../../../../../bridges/runtime/xln-store';
   import { entityAvatar } from '$lib/utils/identity/avatar';
 
   export let value: string = '';

@@ -25,10 +25,10 @@ const MULTILINGUAL_FILES = new Set([
   'docs/xln-gtm-review-2026-09-13.md',
   'debates/server.ts',
   'debates/tests/viral-surface.spec.ts',
-  'frontend/src/lib/ai/xln-guide-context.ts',
+  'frontend/packages/browser/src/ai/xln-guide-context.ts',
   'frontend/src/lib/components/Landing/content.ts',
-  'frontend/src/lib/i18n/index.ts',
-  'frontend/src/lib/i18n/locales/ru.json',
+  'frontend/packages/browser/src/localization/index.ts',
+  'frontend/packages/browser/src/localization/locales/ru.json',
 ]);
 
 // Bundled browser runtime embeds compressed BIP39 tables whose opaque byte

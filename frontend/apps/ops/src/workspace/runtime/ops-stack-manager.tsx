@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 
-import { getRuntimeControllerConfig, runtimeControllerConfig } from '../../../../../src/lib/stores/runtimeControllerStore';
-import { deriveJMachineCreatedAt, jmachineOperations, jmachineState, type JMachineConfig } from '../../../../../src/lib/stores/network/jmachineStore';
+import { getRuntimeControllerConfig, runtimeControllerConfig } from '../../../../../bridges/runtime/runtime-controller-store';
+import { deriveJMachineCreatedAt, jmachineOperations, jmachineState, type JMachineConfig } from '../../../../../packages/browser/src/jurisdiction/jmachine-store';
 import { runtimeHttpOriginFromWsUrl } from '../../../../../packages/runtime-client/src/runtime/ws-url';
 import {
   defaultStackStablecoinKind,
@@ -13,7 +13,7 @@ import {
   type StackManagerStatusResponse,
   type StackPublicationRequest,
   type StackStablecoinKind,
-} from '../../../../../src/lib/components/Settings/stack-manager-client';
+} from '../../../../../bridges/runtime/stack-manager-client';
 import { workspaceNetwork } from '../session/ops-workspace-playback';
 
 type Inspection = Readonly<{ response: StackManagerStatusResponse | null; issue: string; busy: boolean }>;

@@ -103,9 +103,13 @@ describe('browser wallet BrainVault worker resilience', () => {
     );
   });
 
-  test('keeps timers, storage, Workers, secrets, logging, and publication in Svelte', () => {
+  test('keeps resilience effects in the shared browser orchestrator', () => {
     const boundary = readFileSync(
       'frontend/packages/browser/src/identity/wallet-brainvault-worker-resilience.ts',
+      'utf8',
+    );
+    const orchestration = readFileSync(
+      'frontend/bridges/wallet/brainvault/wallet-brainvault-browser-derivation.ts',
       'utf8',
     );
     const view = readFileSync(
@@ -118,10 +122,12 @@ describe('browser wallet BrainVault worker resilience', () => {
     expect(boundary).not.toContain('postMessage');
     expect(boundary).not.toContain('new Worker');
     expect(boundary).not.toContain('passphrase');
-    expect(view).toContain('resolveWalletBrainVaultShardWatchdog(estimatedShardTimeMs, shardIndex)');
-    expect(view).toContain('resolveWalletBrainVaultMemoryReduction({');
-    expect(view).toContain('resolveWalletBrainVaultWorkerInitRetry({');
-    expect(view).toContain('persistWorkerCap(maxWorkers)');
-    expect(view).toContain('logRuntimeCreationDiagnostic(');
+    expect(orchestration).toContain('resolveWalletBrainVaultShardWatchdog(run.estimatedShardTimeMs, shardIndex)');
+    expect(orchestration).toContain('resolveWalletBrainVaultMemoryReduction({');
+    expect(orchestration).toContain('resolveWalletBrainVaultWorkerInitRetry({');
+    expect(orchestration).toContain('localStorage.setItem(BRAINVAULT_WORKER_CAP_STORAGE_KEY');
+    expect(view).toContain('new WalletBrainVaultBrowserDerivation()');
+    expect(view).not.toContain('resolveWalletBrainVaultWorkerInitRetry({');
+    expect(view).not.toContain('new Worker');
   });
 });

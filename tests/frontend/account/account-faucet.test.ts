@@ -4,7 +4,7 @@ import {
   OFFCHAIN_FAUCET_REQUEST_TIMEOUT_MS,
   faucetPendingKey,
   decodeFaucetApiResult,
-} from '../../../frontend/src/lib/components/Entity/account/account-faucet';
+} from '../../../frontend/packages/browser/src/wallet/account-faucet';
 
 // Exact successful response captured from the isolated Move E2E, block 42.
 const confirmedReserveResponse = {

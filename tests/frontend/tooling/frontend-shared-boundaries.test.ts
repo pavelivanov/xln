@@ -124,6 +124,10 @@ describe('frontend shared browser and Runtime-client boundaries', () => {
 
     expect(imports.some((specifier) => specifier.includes('/src/lib/'))).toBe(false);
     expect(imports.some((specifier) => specifier.startsWith('$lib/'))).toBe(false);
+    expect([...sources]
+      .filter(([, source]) => source.includes('$lib'))
+      .map(([pathname]) => pathname))
+      .toEqual([]);
     expect((await readFile(join(REPOSITORY_ROOT, 'frontend/config/create-react-app-config.ts'), 'utf8'))
       .includes("'$lib'"))
       .toBe(false);

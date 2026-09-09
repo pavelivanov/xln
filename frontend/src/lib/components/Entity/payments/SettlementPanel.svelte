@@ -1,17 +1,17 @@
 <script lang="ts">
 import type { AccountReadView, EntityReadView } from '$lib/components/Entity/core/entity-panel-types';
 
-  import { getXLN, submitEntityInputs, xlnFunctions } from '../../../stores/xlnStore';
-  import { requireSignerIdForEntity } from '$lib/utils/identity/entityReplica';
+  import { getXLN, submitEntityInputs, xlnFunctions } from '../../../../../bridges/runtime/xln-store';
+  import { requireSignerIdForEntity } from '../../../../../packages/runtime-client/src/entity/entity-replica';
   import type { EntityTx, EntityState } from '$lib/types/ui';
   import type { RuntimeReplica, EnvSnapshot, Profile as GossipProfile } from '@xln/core/api/public/runtime-module';
-  import { errorLog } from '../../../stores/errorLogStore';
+  import { errorLog } from '../../../../../packages/browser/src/logging/error-log-store';
   import { toasts } from '../../../stores/ui/toastStore';
   import { entityAvatar as resolveEntityAvatar } from '$lib/utils/identity/avatar';
   import EntityInput from '../../shared/EntityInput.svelte';
   import TokenSelect from '../../shared/TokenSelect.svelte';
   import ActivityHistoryPanel from './ActivityHistoryPanel.svelte';
-  import { requireTokenDecimals } from '../token-metadata';
+  import { requireTokenDecimals } from '../../../../../packages/runtime-client/src/token-metadata';
   import { withdrawableCollateral } from '../../../../../packages/runtime-client/src/payments/withdrawable-collateral';
 
   export let entityId: string;

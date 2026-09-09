@@ -2,12 +2,12 @@
   import { onMount, onDestroy } from 'svelte';
   import { writable, get } from 'svelte/store';
   import { formatUnits } from 'ethers';
-  import { requireTokenDecimals } from '$lib/components/Entity/token-metadata';
+  import { requireTokenDecimals } from '../../../packages/runtime-client/src/token-metadata';
   import type { RuntimeReplica } from '@xln/core/api/public/runtime-module';
   import type { RuntimeAdapterFrameReceiptResponse } from '@xln/core/api/runtime-adapter/types';
   import type { EnvSnapshot } from '@xln/core/runtime/types';
   import { toasts } from '$lib/stores/ui/toastStore';
-  import { paymentSpotlight } from '$lib/stores/network/paymentSpotlightStore';
+  import { paymentSpotlight } from '../../../packages/browser/src/graph/payment-spotlight-store';
   import UserModePanel from './UserModePanel.svelte';
   import CommandPalette from '../components/shared/CommandPalette.svelte';
   import {
@@ -17,15 +17,15 @@
     type CommandPaletteView,
   } from '../../../packages/ui/src/workspace/command-palette-view';
   import PaymentSpotlight from '$lib/components/PaymentSpotlight.svelte';
-  import { errorLog } from '$lib/stores/errorLogStore';
-  import { panelBridge } from './utils/panelBridge';
-  import { getEnv, getXLN, history as runtimeHistory, xlnEnvironment, xlnInstance } from '$lib/stores/xlnStore';
+  import { errorLog } from '../../../packages/browser/src/logging/error-log-store';
+  import { panelBridge } from '../../../packages/browser/src/workspace/panel-bridge';
+  import { getEnv, getXLN, history as runtimeHistory, xlnEnvironment, xlnInstance } from '../../../bridges/runtime/xln-store';
   import {
     onRuntimeControllerStatus,
     runtimeAdapter,
     runtimeControllerHandle,
-  } from '$lib/stores/runtimeControllerStore';
-  import { activeRuntimeId } from '$lib/stores/runtimeStore';
+  } from '../../../bridges/runtime/runtime-controller-store';
+  import { activeRuntimeId } from '../../../bridges/runtime/runtime-store';
   import {
     refreshSelectedRuntimeView,
     runtimeView,
@@ -41,7 +41,7 @@
     type PaymentTerminalEvent,
     type PaymentTerminalReadRequest,
     type PaymentTerminalReceiptPage,
-  } from '$lib/stores/network/paymentTerminalMonitor';
+  } from '../../../packages/browser/src/graph/payment-terminal-monitor';
 
   let commandPaletteOpen = false;
   let commandPaletteView: CommandPaletteView = emptyCommandPaletteView();

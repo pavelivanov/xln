@@ -11,32 +11,32 @@ import {
   type RuntimeGraphNodeState,
   type RuntimeGraphProjection,
   type RuntimeGraphSource,
-} from '../../../../frontend/src/lib/network3d/runtimeGraphProjection';
+} from '../../../../frontend/packages/ui/src/graph/runtime-graph-projection';
 import {
   mergeRuntimeTimelineIndexes,
   selectMergedTimelineAt,
   selectMergedTimelineEvent,
   runtimeTimelineColor,
-} from '../../../../frontend/src/lib/network3d/timeline/runtimeGraphTimeline';
+} from '../../../../frontend/packages/runtime-client/src/graph/runtime-graph-timeline';
 import {
   connectedRuntimeGraphEntityIds,
   layoutRuntimeGraph,
   resolveRuntimeGraphLayout,
-} from '../../../../frontend/src/lib/network3d/runtimeGraphLayout';
+} from '../../../../frontend/packages/ui/src/graph/runtime-graph-layout';
 import {
   GRAPH_POSITION_OVERRIDES_KEY,
   readGraphPositionOverrides,
   writeGraphPositionOverride,
-} from '../../../../frontend/src/lib/network3d/graphPositionOverrides';
-import { materializeRuntimeGraphReplicas } from '../../../../frontend/src/lib/network3d/runtimeGraphRender';
+} from '../../../../frontend/packages/browser/src/graph/graph-position-overrides';
+import { materializeRuntimeGraphReplicas } from '../../../../frontend/packages/ui/src/graph/runtime-graph-render';
 import {
   compileNetworkMachine,
   normalizeNetworkMachineConfig,
   parseNetworkMachineConfig,
   type NetworkMachineConfig,
-} from '../../../../frontend/src/lib/network3d/networkMachine';
-import { readTimelineIndexPages } from '../../../../frontend/src/lib/network3d/timeline/networkTimelineLoader';
-import { assertNetworkMachineIsLive } from '../../../../frontend/src/lib/stores/network/networkMachineRuntimeStore';
+} from '../../../../frontend/packages/runtime-client/src/scenario/network-machine';
+import { readTimelineIndexPages } from '../../../../frontend/bridges/runtime/network-timeline-loader';
+import { assertNetworkMachineIsLive } from '../../../../frontend/bridges/runtime/network-machine-runtime-store';
 import {
   beginGraphGesture,
   emptyGraphGestureState,
@@ -461,7 +461,7 @@ describe('NetworkMachine', () => {
 
 describe('NetworkMachine runtime indexes', () => {
   test('browser runtimes read their index through the adapter, not from in-memory history', () => {
-    const loader = readFileSync('frontend/src/lib/network3d/timeline/networkTimelineLoader.ts', 'utf8');
+    const loader = readFileSync('frontend/bridges/runtime/network-timeline-loader.ts', 'utf8');
 
     // `env.history` is permanently empty (RECENT_RUNTIME_HISTORY_LIMIT = 0), so deriving a
     // browser timeline from it produced zero frames and a dead time machine.

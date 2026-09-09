@@ -4,12 +4,12 @@
 -->
 <script lang="ts">
   import type { RuntimeReplica, RuntimeInput } from '@xln/core/api/public/runtime-module';
-  import { errorLog } from '../../../stores/errorLogStore';
-  import { runtimeControllerHandle } from '../../../stores/runtimeControllerStore';
-  import { xlnFunctions } from '../../../stores/xlnStore';
+  import { errorLog } from '../../../../../packages/browser/src/logging/error-log-store';
+  import { runtimeControllerHandle } from '../../../../../bridges/runtime/runtime-controller-store';
+  import { xlnFunctions } from '../../../../../bridges/runtime/xln-store';
   import {
     normalizeEntityId,
-  } from '$lib/utils/identity/entityReplica';
+  } from '../../../../../packages/runtime-client/src/entity/entity-replica';
   import {
     emptyHubDiscoveryProjection,
     canSubmitHubOpenAccount,
@@ -18,9 +18,9 @@
     normalizeHubEntityId,
     type HubDiscoveryHub,
     type HubDiscoveryProjection,
-  } from './hub-discovery-profile';
-  import { connectDiscoveredHub } from './hub-discovery-commands';
-  import { compareStableText } from '$lib/utils/stableSort';
+  } from '../../../../../packages/ui/src/onboarding/hub-discovery-profile';
+  import { connectDiscoveredHub } from '../../../../../packages/browser/src/wallet/hub-discovery-commands';
+  import { compareStableText } from '../../../../../packages/ui/src/stable-compare';
   import { RefreshCw, ChevronDown, ChevronUp, Plus, Check, AlertTriangle } from 'lucide-svelte';
 
   export let entityId: string = '';

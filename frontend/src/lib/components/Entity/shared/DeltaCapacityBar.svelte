@@ -1,8 +1,8 @@
 <script lang="ts">
   import { createEventDispatcher, onDestroy } from 'svelte';
   import { buildDeltaCapacityBarModel } from '../../../../../packages/ui/src/rcpan/delta-capacity-bar-model';
-  import { settings } from '$lib/stores/settingsStore';
-  import type { DeltaCapacityBarPresentation, DeltaParts, DeltaVisualScale } from './delta-types';
+  import { settings } from '../../../../../packages/browser/src/settings-store';
+  import type { DeltaCapacityBarPresentation, DeltaParts, DeltaVisualScale } from '../../../../../packages/ui/src/rcpan/delta-types';
 
   export let derived: DeltaParts;
   export let heightPx: number = 4;

@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { RuntimeAdapterActivityPage, RuntimeActivityEvent } from '@xln/core/api/public/runtime-module';
-  import { runtimeControllerHandle } from '$lib/stores/runtimeControllerStore';
+  import { runtimeControllerHandle } from '../../../../../bridges/runtime/runtime-controller-store';
   import { runtimeQueryClient } from '$lib/stores/runtimeQueryClient';
   import { refreshRuntimeView, runtimeView } from '$lib/stores/runtimeViewStore';
 
