@@ -1,5 +1,5 @@
-import { locale, LOCALES, t, translateForLocale, type Locale } from '../src/lib/i18n';
-import { readStoreValue } from '../src/lib/utils/observableStore';
+import { locale, LOCALES, t, translateForLocale, type Locale } from '../packages/browser/src/localization';
+import { readStoreValue } from '../packages/runtime-client/src/observable-store';
 
 export { LOCALES, t };
 export const workspaceTranslationsForKey = (key: string): readonly string[] =>

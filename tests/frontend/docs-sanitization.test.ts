@@ -9,7 +9,7 @@ test('DocsView sanitizes the final Markdown HTML at the shared security boundary
 
   expect(docsView).toContain('renderDocsMarkdown');
   expect(reactReader).toContain('dangerouslySetInnerHTML');
-  expect(docsModel).toContain("import { sanitizeRenderedHtml } from './safe-markdown';");
+  expect(docsModel).toContain("import { sanitizeRenderedHtml } from '../safe-markdown';");
   expect(docsModel).toContain('return sanitizeRenderedHtml(marked.parse(prepared');
   expect(sanitizer).toContain("const DROP_TAGS = new Set(['EMBED', 'IFRAME', 'MATH', 'OBJECT', 'SCRIPT', 'STYLE', 'SVG'])");
   expect(sanitizer).toContain("attribute.name === 'data-doc-link'");

@@ -1,5 +1,5 @@
 import { getAddress } from 'ethers';
-import { isUnknownRecord as isRecord } from '$lib/utils/boundary';
+import { isUnknownRecord as isRecord } from '../../../../packages/runtime-client/src/boundary';
 import {
   buildPushRegistrationMessage,
   buildPushUnregisterMessage,
@@ -10,7 +10,7 @@ import type {
   PushRegistrationRequestV1,
   PushUnregisterRequestV1,
 } from '@xln/core/watchtower/push/types';
-import { parseJsonUnknown } from '$lib/utils/boundary';
+import { parseJsonUnknown } from '../../../../packages/runtime-client/src/boundary';
 
 export type PushWakeDeviceToken = {
   token: string;
@@ -397,7 +397,7 @@ const normalizeBridgeToken = (
 };
 
 const waitForNativePushToken = async (timeoutMs: number): Promise<PushWakeDeviceToken> => {
-  const { requestNativePaymentWakeNotifications } = await import('$lib/native/capacitor');
+  const { requestNativePaymentWakeNotifications } = await import('../../native/capacitor');
   return new Promise((resolve, reject) => {
     if (typeof window === 'undefined') {
       reject(new Error('PUSH_NATIVE_WINDOW_UNAVAILABLE'));

@@ -1,6 +1,6 @@
 import { expect, test } from 'bun:test';
 
-import { formatErrorLog } from '../../frontend/src/lib/stores/errorLogStore';
+import { formatErrorLog } from '../../frontend/packages/browser/src/logging/error-log-store';
 
 test('error log formatter preserves Error and BigInt diagnostic details', () => {
   const error = new Error('projection failed');

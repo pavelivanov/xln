@@ -1,8 +1,8 @@
 import type { RuntimeReplica } from '@xln/core/api/public/runtime-module';
 import type { EntityReplica } from '@xln/core/entity/types';
 import type { EnvSnapshot } from '@xln/core/runtime/types';
-import { hubDiscoveryJurisdictionKey } from './hub-discovery-profile';
-import type { OnboardingHubCandidate, OnboardingRuntimeProjection, OnboardingRuntimeTarget } from './onboarding-runtime-input';
+import { hubDiscoveryJurisdictionKey } from '../../../../../packages/ui/src/onboarding/hub-discovery-profile';
+import type { OnboardingHubCandidate, OnboardingRuntimeProjection, OnboardingRuntimeTarget } from '../../../../../packages/ui/src/onboarding/onboarding-runtime-input';
 import type { OnboardingSigner } from './onboarding-targets';
 
 type RuntimeFrame = RuntimeReplica | EnvSnapshot;

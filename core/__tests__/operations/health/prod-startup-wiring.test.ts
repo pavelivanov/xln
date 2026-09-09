@@ -380,10 +380,10 @@ describe('production startup wiring', () => {
       join(repoRoot, 'frontend/src/lib/components/Views/RuntimeCreation.svelte'),
       'utf8',
     );
-    const xlnStore = readFileSync(join(repoRoot, 'frontend/src/lib/stores/xlnStore.ts'), 'utf8');
+    const xlnStore = readFileSync(join(repoRoot, 'frontend/bridges/runtime/xln-store.ts'), 'utf8');
     const deploy = readPlatformDeploy();
     const hubNode = readFileSync(join(repoRoot, 'core/orchestrator/hub-node.ts'), 'utf8');
-    const vaultStore = readFileSync(join(repoRoot, 'frontend/src/lib/stores/vault/vaultStore.ts'), 'utf8');
+    const vaultStore = readFileSync(join(repoRoot, 'frontend/bridges/vault/vault-store.ts'), 'utf8');
 
     expect(runtimeCreation).toContain('buildRemoteRuntimeRecoveryPeerSources({ runtimeId: recoveryRuntimeId })');
     expect(runtimeCreation).not.toContain("url.searchParams.set('allowPartial', '1')");
@@ -426,7 +426,7 @@ describe('production startup wiring', () => {
   });
 
   test('fresh browser runtimes replay EntityProvider authority from deployment', () => {
-    const vaultStore = readFileSync(join(repoRoot, 'frontend/src/lib/stores/vault/vaultStore.ts'), 'utf8');
+    const vaultStore = readFileSync(join(repoRoot, 'frontend/bridges/vault/vault-store.ts'), 'utf8');
     const freshRuntimeBootstrap = extractSourceBlock(
       vaultStore,
       '// Import the same primary jurisdiction name that hub profiles advertise.',
@@ -443,8 +443,8 @@ describe('production startup wiring', () => {
   });
 
   test('wallet entity configs commit the imported jurisdiction block time', () => {
-    const vaultStore = readFileSync(join(repoRoot, 'frontend/src/lib/stores/vault/vaultStore.ts'), 'utf8');
-    const vaultRecovery = readFileSync(join(repoRoot, 'frontend/src/lib/stores/vault/vault-recovery.ts'), 'utf8');
+    const vaultStore = readFileSync(join(repoRoot, 'frontend/bridges/vault/vault-store.ts'), 'utf8');
+    const vaultRecovery = readFileSync(join(repoRoot, 'frontend/bridges/vault/vault-recovery.ts'), 'utf8');
     const signerConfig = extractSourceBlock(
       vaultRecovery,
       'export const buildSignerEntityConfig = (',

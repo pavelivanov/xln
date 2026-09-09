@@ -1,8 +1,8 @@
 import type { RuntimeReplica, JAdapter } from '@xln/core/api/public/runtime-module';
-import { hasOnlyAllowedKeys as hasOnlyKeys, isUnknownRecord as isRecord } from '$lib/utils/boundary';
-import type { ExternalWalletSnapshotSource } from './../asset-ledger';
+import { hasOnlyAllowedKeys as hasOnlyKeys, isUnknownRecord as isRecord } from '../../../../../packages/runtime-client/src/boundary';
+import type { ExternalWalletSnapshotSource } from '../../../../../packages/ui/src/entity/assets/asset-ledger';
 
-export type { ExternalWalletSnapshotSource } from './../asset-ledger';
+export type { ExternalWalletSnapshotSource } from '../../../../../packages/ui/src/entity/assets/asset-ledger';
 
 export type ExternalAllowanceRead = { tokenAddress: string; spender: string };
 

@@ -1,6 +1,6 @@
 import { registerBrowserRuntimeEnvironment } from '../runtime/browser-runtime-context';
-import { runtimes } from '../../src/lib/stores/runtimeStore';
-import { readStoreValue } from '../../src/lib/utils/observableStore';
+import { runtimes } from '../runtime/runtime-store';
+import { readStoreValue } from '../../packages/runtime-client/src/observable-store';
 
 import type { RuntimeAdapter } from '../../../core/api/public/runtime-module';
 import {
@@ -25,17 +25,18 @@ import type {
 import {
   discoverCanonicalWalletRuntimeRecovery,
   executeCanonicalWalletRuntimeOpening,
-} from '../../src/lib/stores/vault/walletRuntimeOpeningAdapter';
-import { parseRuntimeRecoveryCandidateFile } from '../../src/lib/stores/vault/vault-recovery';
+} from '../vault/wallet-runtime-opening-adapter';
+import { parseRuntimeRecoveryCandidateFile } from '../vault/vault-recovery';
 import {
   disconnectRuntimeAdapter,
   getRuntimeControllerAdapter,
-} from '../../src/lib/stores/runtimeControllerStore';
-import { runtimesState, vaultOperations } from '../../src/lib/stores/vault/vaultStore';
+} from '../runtime/runtime-controller-store';
+import { vaultOperations } from '../vault/vault-store';
+import { runtimesState } from '../vault/vault-metadata-store';
 import { writeRuntimeRecoveryDiscoveryStatus } from '../../src/lib/utils/recovery/recoveryDiscoveryStatus';
-import type { RuntimeRecoveryCandidate } from '../../src/lib/stores/vault/vault-recovery';
+import type { RuntimeRecoveryCandidate } from '../vault/vault-recovery';
 import { WalletBrainVaultBrowserDerivation } from './brainvault/wallet-brainvault-browser-derivation';
-import type { VaultUnlockDurationMs } from '../../src/lib/security/vaultProtection';
+import type { VaultUnlockDurationMs } from '../../packages/browser/src/vault/vault-protection';
 
 type PageUnloadFenceSetter = (fence: () => void) => void;
 

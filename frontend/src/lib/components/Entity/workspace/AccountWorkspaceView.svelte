@@ -20,18 +20,18 @@
   import SettlementPanel from '../payments/SettlementPanel.svelte';
   import SwapPanel from '../swap/SwapPanel.svelte';
   import type { SwapPanelRuntimeView } from '../swap/swap-panel-helpers';
-  import type { DisputedAccountView } from '../account/account-dispute-view';
+  import type { DisputedAccountView } from '../../../../../packages/ui/src/account/account-dispute-view';
   import type { EntityActivityAccountOption, EntityActivityRow } from '../activity/entity-activity';
-  import type { AccountWorkspaceTab, ConfigureWorkspaceTab } from './entity-panel-routing';
+  import type { AccountWorkspaceTab, ConfigureWorkspaceTab } from '../../../../../packages/runtime-client/src/entity/entity-workspace-navigation';
   import {
     emptyHubDiscoveryProjection,
     type HubDiscoveryProjection,
-  } from '../onboarding/hub-discovery-profile';
+  } from '../../../../../packages/ui/src/onboarding/hub-discovery-profile';
   import {
     emptyPaymentPanelView,
     type PaymentPanelView,
   } from '../payments/payment-panel-view';
-  import type { MoveEndpoint } from '../move-routes';
+  import type { MoveEndpoint } from '../../../../../packages/ui/src/entity/move/move-routes';
 
   type IconTabConfig<T extends string> = {
     id: T;

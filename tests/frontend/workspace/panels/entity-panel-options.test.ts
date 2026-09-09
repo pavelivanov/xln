@@ -10,7 +10,7 @@ import {
   normalizeWorkspaceAccountId,
   resolveConfigureTokenId,
   resolveMoveTargetHubEntityId,
-} from '../../../../frontend/src/lib/components/Entity/workspace/entity-panel-options';
+} from '../../../../frontend/packages/ui/src/entity/entity-panel-options';
 
 const id = (suffix: string): string => `0x${suffix.padStart(64, '0')}`;
 

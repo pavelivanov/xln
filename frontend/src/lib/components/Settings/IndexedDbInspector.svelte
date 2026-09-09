@@ -1,9 +1,9 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { compareStableText } from '$lib/utils/stableSort';
+  import { compareStableText } from '../../../../packages/ui/src/stable-compare';
 
-  import { formatBytes, type DbKindFilter, type DbEntryView, type IndexedDbMeta } from '../../../../packages/runtime-client/src/storage/indexed-db-inspector-key';
-  import { compactValuePreview, renderBlobPretty, decodeBlob, decodeKeyBlob } from '../../../../packages/runtime-client/src/storage/indexed-db-inspector-value';
+  import { formatBytes, type DbKindFilter, type DbEntryView, type IndexedDbMeta } from '../../../../packages/ui/src/storage/indexed-db-inspector-key';
+  import { compactValuePreview, renderBlobPretty, decodeBlob, decodeKeyBlob } from '../../../../packages/ui/src/storage/indexed-db-inspector-value';
 
   export let databaseNames: string[] = [];
   export let databaseNamePrefixes: string[] = ['level-js-db-'];

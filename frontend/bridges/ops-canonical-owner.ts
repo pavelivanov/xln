@@ -1,10 +1,11 @@
 import type { RuntimeAdapter, RuntimeAdapterConfig } from '../../core/api/public/runtime-module';
-import { disconnectRuntimeAdapter, getRuntimeControllerAdapter } from '../src/lib/stores/runtimeControllerStore';
-import { resumeRemoteRuntimeCommandIntents, switchAppRuntimeAdapter } from '../src/lib/stores/xlnStore';
-import { runtimesState, unlockVaultRuntimeSecrets, vaultOperations, vaultStorageLoaded } from '../src/lib/stores/vault/vaultStore';
-import { readStoreValue } from '../src/lib/utils/observableStore';
-import type { VaultUnlockDurationMs } from '../src/lib/security/vaultProtection';
-import { isVaultAuthorityLeaseExpired } from '../src/lib/security/vault-authority-lease';
+import { disconnectRuntimeAdapter, getRuntimeControllerAdapter } from './runtime/runtime-controller-store';
+import { resumeRemoteRuntimeCommandIntents, switchAppRuntimeAdapter } from './runtime/xln-store';
+import { unlockVaultRuntimeSecrets, vaultOperations } from './vault/vault-store';
+import { runtimesState, vaultStorageLoaded } from './vault/vault-metadata-store';
+import { readStoreValue } from '../packages/runtime-client/src/observable-store';
+import type { VaultUnlockDurationMs } from '../packages/browser/src/vault/vault-protection';
+import { isVaultAuthorityLeaseExpired } from '../packages/browser/src/vault/vault-authority-lease';
 import { isRuntimeCommandJournalUnlocked } from '../packages/browser/src/commands/runtime-command-journal-keyring';
 import { browserRuntimeSession, installPagehideFence, setPageUnloadFence } from './runtime/browser-runtime-session';
 import { readRuntimeAdapterStorageSnapshot } from '../packages/browser/src/runtime/session/runtime-adapter-session';

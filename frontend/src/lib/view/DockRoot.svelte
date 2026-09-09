@@ -20,11 +20,11 @@
   import UserModePanel from './UserModePanel.svelte';
   import EntityPanelWrapper from './panels/wrappers/EntityPanelWrapper.svelte';
   import TimeMachine from './core/TimeMachine.svelte';
-  import { panelBridge, type EntityOpenAction } from './utils/panelBridge';
-  import { errorLog } from '$lib/stores/errorLogStore';
-  import { settings } from '$lib/stores/settingsStore';
+  import { panelBridge, type EntityOpenAction } from '../../../packages/browser/src/workspace/panel-bridge';
+  import { errorLog } from '../../../packages/browser/src/logging/error-log-store';
+  import { settings } from '../../../packages/browser/src/settings-store';
   import { refreshRuntimeView } from '$lib/stores/runtimeViewStore';
-  import { runtimeControllerHandle } from '$lib/stores/runtimeControllerStore';
+  import { runtimeControllerHandle } from '../../../bridges/runtime/runtime-controller-store';
   import { appStateOperations } from '$lib/stores/appStateStore';
   import {
     WORKSPACE_LAYOUT_STORAGE_KEY,

@@ -12,7 +12,7 @@ import {
   readRuntimeRecoveryDiscoveryStatus,
   writeRuntimeRecoveryDiscoveryStatus,
 } from '../../../frontend/src/lib/utils/recovery/recoveryDiscoveryStatus';
-import type { Runtime } from '../../../frontend/src/lib/stores/vault/vaultStore';
+import type { Runtime } from '../../../frontend/bridges/vault/vault-store';
 
 const runtimeFixture = (recovery: Runtime['recovery'] = {}): Runtime => ({
   id: '0x1111111111111111111111111111111111111111',

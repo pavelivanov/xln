@@ -99,8 +99,8 @@ describe('Graph3D viewport presentation model', () => {
     const viewport = readFileSync('frontend/src/lib/view/components/Graph3DViewport.svelte', 'utf8');
     const fps = readFileSync('frontend/src/lib/view/components/Graph3DFpsOverlay.svelte', 'utf8');
     const vr = readFileSync('frontend/src/lib/view/components/VRControlsHUD.svelte', 'utf8');
-    const projection = readFileSync('frontend/src/lib/network3d/runtimeGraphProjection.ts', 'utf8');
-    const controls = readFileSync('frontend/src/lib/stores/network/runtimeGraphControlStore.ts', 'utf8');
+    const projection = readFileSync('frontend/packages/ui/src/graph/runtime-graph-projection.ts', 'utf8');
+    const controls = readFileSync('frontend/packages/browser/src/graph/runtime-graph-control-store.ts', 'utf8');
 
     expect(viewport).toContain('createGraph3dViewportStatusView({');
     expect(viewport).toContain('GRAPH3D_CANONICITY_OPTIONS');

@@ -1,6 +1,6 @@
 <script lang="ts">
   import { page } from '$app/stores';
-  import { locale, LOCALES, type Locale } from '$lib/i18n';
+  import { locale, LOCALES, type Locale } from '../../../packages/browser/src/localization';
   import DeltaVisualizer from './Tools/DeltaVisualizer.svelte';
   import Dropdown from '$lib/components/UI/Dropdown.svelte';
 

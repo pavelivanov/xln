@@ -6,8 +6,8 @@ import {
   refreshRuntimeGraphFrameCache,
   runtimeGraphLiveFrameCache,
   watchRuntimeGraphFrameCache,
-} from '../../../../frontend/src/lib/network3d/runtimeGraphFrameCache';
-import type { Runtime } from '../../../../frontend/src/lib/stores/runtimeStore';
+} from '../../../../frontend/bridges/runtime/runtime-graph-frame-cache';
+import type { Runtime } from '../../../../frontend/bridges/runtime/runtime-store';
 
 const remoteRuntime = (id: string): Runtime => ({
   id,
@@ -41,7 +41,7 @@ const readCache = (): Map<string, RuntimeAdapterGraphFrame> => {
 describe('RuntimeGraphFrameCache', () => {
   test('timeline disposal cannot disconnect the graph live-reader pool', () => {
     const source = readFileSync(
-      new URL('../../../../frontend/src/lib/network3d/timeline/networkTimelineLoader.ts', import.meta.url),
+      new URL('../../../../frontend/bridges/runtime/network-timeline-loader.ts', import.meta.url),
       'utf8',
     );
     expect(source).toContain('const timelineRemoteReaders = new RemoteRuntimeReaderPool();');

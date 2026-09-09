@@ -1,4 +1,4 @@
-import type { NetworkMachineStep } from '../../../../../src/lib/network3d/networkMachine';
+import type { NetworkMachineStep } from '../../../../../packages/runtime-client/src/scenario/network-machine';
 
 export type OpsGuideFrameContext = Readonly<{
   key: string;

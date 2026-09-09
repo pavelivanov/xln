@@ -1,6 +1,6 @@
 import { expect, test } from 'bun:test';
 import { readFileSync } from 'node:fs';
-import { runtimeAdapterHeight } from '../../../../frontend/src/lib/stores/runtimeControllerStore';
+import { runtimeAdapterHeight } from '../../../../frontend/bridges/runtime/runtime-controller-store';
 import {
   RuntimeQueryClient,
   clearRuntimeQueryCache,
@@ -301,7 +301,7 @@ test('wallet UI and wallet-backed E2E helpers never import a second Runtime modu
 
 test('activity history panel reads activity through RuntimeQueryClient only', () => {
   const panelSource = readFileSync('frontend/src/lib/components/Entity/payments/ActivityHistoryPanel.svelte', 'utf8');
-  const querySource = readFileSync('frontend/src/lib/components/Entity/account/activity/activity-history-query.ts', 'utf8');
+  const querySource = readFileSync('frontend/packages/ui/src/account/activity/activity-history-query.ts', 'utf8');
   const addressRouteSource = readFileSync('frontend/src/routes/address/[entityId]/+page.svelte', 'utf8');
   const paymentSmokeSource = readFileSync('tests/e2e/payments/e2e-payment-smoke.spec.ts', 'utf8');
   const source = `${panelSource}\n${querySource}`;
@@ -326,7 +326,7 @@ test('activity history panel reads activity through RuntimeQueryClient only', ()
   expect(source).not.toContain('runtime.js');
   expect(source).not.toContain('/api/debug/activity');
   expect(source).not.toContain('readDebugActivitySource');
-  expect(source).not.toContain("from '$lib/stores/runtimeStore'");
+  expect(source).not.toContain("from '../../../../frontend/bridges/runtime/runtime-store'");
   expect(activityE2EHelper).not.toContain('isolatedEnv');
   expect(activityE2EHelper).not.toContain('window.XLN');
   expect(activityE2EHelper).not.toContain('view.XLN');
@@ -489,14 +489,14 @@ test('runtime recovery bundles read through typed query client without cache reu
 });
 
 test('runtime controller exposes only typed debug projection queries', () => {
-  const controllerSource = readFileSync('frontend/src/lib/stores/runtimeControllerStore.ts', 'utf8');
+  const controllerSource = readFileSync('frontend/bridges/runtime/runtime-controller-store.ts', 'utf8');
   const queryClientSource = readFileSync('frontend/src/lib/stores/runtimeQueryClient.ts', 'utf8');
   const queryBoundarySource = readFileSync(
     'frontend/packages/runtime-client/src/runtime/query/runtime-query-client.ts',
     'utf8',
   );
   const appTypes = readFileSync('frontend/src/app.d.ts', 'utf8');
-  const storeSource = readFileSync('frontend/src/lib/stores/xlnStore.ts', 'utf8');
+  const storeSource = readFileSync('frontend/bridges/runtime/xln-store.ts', 'utf8');
   const remoteE2ESource = [
     'tests/e2e/runtime/e2e-radapter-remote-part-1.spec.ts',
     'tests/e2e/runtime/e2e-radapter-remote-part-2.spec.ts',
@@ -572,7 +572,7 @@ test('runtime view-frame live reads do not force historical atHeight queries', a
 });
 
 test('remote runtime refresh reads typed RuntimeView projections without RuntimeReplica bridge', () => {
-  const source = readFileSync('frontend/src/lib/stores/xlnStore.ts', 'utf8');
+  const source = readFileSync('frontend/bridges/runtime/xln-store.ts', 'utf8');
   const historySource = readFileSync('frontend/src/lib/stores/runtimeHistoryStore.ts', 'utf8');
   const transportSource = readFileSync('frontend/packages/runtime-client/src/scenario/time-machine-transport.ts', 'utf8');
   const refreshIndex = source.indexOf('const refreshRemoteRuntimeProjection = async');
@@ -692,7 +692,7 @@ test('address explorer routes read runtime projections instead of debug entity A
   expect(runtimeConnection).toContain('readRemoteRuntimeRequestFromUrl');
   expect(runtimeConnection).toContain('persistRemoteRuntimeRequest');
   expect(runtimeConnection).toContain('stripRemoteRuntimeParamsFromHistory');
-  expect(runtimeConnection).toContain("from '$lib/stores/vault/vaultStore'");
+  expect(runtimeConnection).toContain("from '../../../../bridges/vault/vault-store'");
   expect(runtimeConnection).toContain('await vaultOperations.initialize()');
   expect(runtimeConnection).toContain('const runtime = get(activeRuntime)');
   expect(runtimeConnection).toContain('runtimeId: runtime.id');
@@ -714,7 +714,7 @@ test('health admin reads active runtime projections instead of debug event/entit
   expect(source).toContain('RuntimeActivityEvent');
   expect(source).toContain('RuntimeAdapterEntitySummary');
   expect(source).toContain("fetch('/api/health')");
-  expect(source).toContain("import { errorLog } from '$lib/stores/errorLogStore';");
+  expect(source).toContain("import { errorLog } from '../../../packages/browser/src/logging/error-log-store';");
   expect(source).toContain("errorLog.log(message, 'Health Admin', details)");
   expect(source).toContain("'RPC health check failed after retries'");
   expect(source).toContain("'Runtime projection health read failed'");

@@ -189,7 +189,7 @@ test('PaymentPanel clears every delayed payment callback on destroy', () => {
 });
 
 test('payment gossip refresh is owned by runtime store operation', () => {
-  const source = readFileSync('frontend/src/lib/stores/xlnStore.ts', 'utf8');
+  const source = readFileSync('frontend/bridges/runtime/xln-store.ts', 'utf8');
 
   expect(source).toContain('export async function refreshPaymentRuntimeGossip');
   expect(source).toContain('const xln = env ? await getXLN() : null;');

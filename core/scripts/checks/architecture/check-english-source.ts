@@ -10,10 +10,10 @@ const CHECKED_EXTENSION = /\.(?:cjs|js|json|md|mjs|py|sol|svelte|ts|tsx)$/u;
 const MULTILINGUAL_FILES = new Set([
   'debates/server.ts',
   'debates/tests/viral-surface.spec.ts',
-  'frontend/src/lib/ai/xln-guide-context.ts',
+  'frontend/packages/browser/src/ai/xln-guide-context.ts',
   'frontend/src/lib/components/Landing/content.ts',
-  'frontend/src/lib/i18n/index.ts',
-  'frontend/src/lib/i18n/locales/ru.json',
+  'frontend/packages/browser/src/localization/index.ts',
+  'frontend/packages/browser/src/localization/locales/ru.json',
 ]);
 
 // Bundled browser runtime embeds compressed BIP39 tables whose opaque byte

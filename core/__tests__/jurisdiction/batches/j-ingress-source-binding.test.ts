@@ -333,7 +333,7 @@ describe('manual J-event ingress source binding', () => {
     ), 'utf8');
     const walletSource = readFileSync(join(
       process.cwd(),
-      'frontend/src/lib/components/Entity/external-wallet-reader.ts',
+      'frontend/bridges/wallet/external-wallet-reader.ts',
     ), 'utf8');
     const snapshotSubstituteStart = walletSource.indexOf(
       'const response = await fetch(`${apiBase}/api/external-wallet/snapshot`',

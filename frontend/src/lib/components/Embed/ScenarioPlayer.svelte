@@ -1,14 +1,14 @@
 <script lang="ts">
   import { onDestroy, onMount } from 'svelte';
   import { goto } from '$app/navigation';
-  import { getXLN } from '$lib/stores/bootstrap/xlnRuntimeLoader';
+  import { getXLN } from '../../../../bridges/runtime/xln-runtime-loader';
   import {
     currentHeight,
     history,
     setXlnEnvironment,
-  } from '$lib/stores/xlnStore';
+  } from '../../../../bridges/runtime/xln-store';
   import { timeOperations } from '$lib/stores/timeStore';
-  import { errorLog } from '$lib/stores/errorLogStore';
+  import { errorLog } from '../../../../packages/browser/src/logging/error-log-store';
   import type { RuntimeReplica, EnvSnapshot } from '@xln/core/api/public/runtime-module';
   import {
     EMPTY_SCENARIO_VISUAL as emptyVisual,

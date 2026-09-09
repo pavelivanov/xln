@@ -4,11 +4,11 @@ import {
   canAddMoveRouteToDraft,
   getMovePrimaryActionLabel,
   isImmediateMoveExecutionRoute,
-} from '../../../frontend/src/lib/components/Entity/move-routes';
+} from '../../../frontend/packages/ui/src/entity/move/move-routes';
 import {
   getMoveValidationErrorForContext,
   type MoveValidationContext,
-} from '../../../frontend/src/lib/components/Entity/move/move-validation';
+} from '../../../frontend/packages/ui/src/entity/move/move-validation';
 
 const selfEntityId = '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
 const hubId = '0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb';

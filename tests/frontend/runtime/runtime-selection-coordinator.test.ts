@@ -99,7 +99,7 @@ describe('runtime-client selection coordinator', () => {
 
   test('keeps the Svelte store as the activation adapter', () => {
     const boundary = readFileSync('frontend/packages/runtime-client/src/runtime/runtime-selection.ts', 'utf8');
-    const store = readFileSync('frontend/src/lib/stores/runtimeStore.ts', 'utf8');
+    const store = readFileSync('frontend/bridges/runtime/runtime-store.ts', 'utf8');
 
     expect(boundary).not.toContain('svelte');
     expect(boundary).not.toContain('localStorage');

@@ -1,8 +1,8 @@
-import { createObservableStore } from '../../../../../src/lib/utils/observableStore';
-import { setFrontendVerboseLogging } from '../../../../../src/lib/view/utils/frontendLogger';
+import { createObservableStore } from '../../../../../packages/runtime-client/src/observable-store';
+import { setFrontendVerboseLogging } from '../../../../../packages/browser/src/logging/frontend-logger';
 import {
   readBirdViewSettings, writeBirdViewSettings, type BirdViewSettings, type BirdViewCameraState,
-} from '../../../../../src/lib/view/panels/graph3d/graph3d-settings';
+} from '../../../../../packages/browser/src/graph/graph3d-settings';
 import {
   createDefaultViewSettings, parseViewSettings, normalizeViewSettings, serializeViewSettings,
   VIEW_SETTINGS_STORAGE_KEY, type ViewSettings,

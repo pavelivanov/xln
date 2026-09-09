@@ -1,7 +1,7 @@
 import type * as THREE from 'three';
 import { applyGraphCameraPose, fitGraphCameraToEntities, type GraphCameraControls } from '../../../../../packages/ui/src/graph/graph3d-camera';
-import type { NetworkMachineCue } from '../../../../../src/lib/network3d/networkMachine';
-import type { MergedRuntimeGraph } from '../../../../../src/lib/network3d/runtimeGraphProjection';
+import type { NetworkMachineCue } from '../../../../../packages/runtime-client/src/scenario/network-machine';
+import type { MergedRuntimeGraph } from '../../../../../packages/ui/src/graph/runtime-graph-projection';
 
 export const applyOpsGraphCue = (
   camera: THREE.PerspectiveCamera, controls: GraphCameraControls,

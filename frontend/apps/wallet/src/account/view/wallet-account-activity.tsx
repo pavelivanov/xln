@@ -1,6 +1,6 @@
 import { useId, useMemo, useState } from 'react';
-import { createAccountActivityPresentation } from '../../../../../src/lib/components/Entity/account/activity/account-activity-presentation';
-import { compareStableText } from '../../../../../src/lib/utils/stableSort';
+import { createAccountActivityPresentation } from '../../../../../packages/ui/src/account/activity/account-activity-presentation';
+import { compareStableText } from '../../../../../packages/ui/src/stable-compare';
 import type { WalletAccountView } from './wallet-account-view-model';
 
 export function WalletAccountActivity({ view }: Readonly<{ view: WalletAccountView }>) {

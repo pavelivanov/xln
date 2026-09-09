@@ -3,7 +3,7 @@ import { opsEntityWorkspaceSource } from '../../entity-workspace/ops-entity-work
 import { readCanonicalOpsOwnerUnlocked, lockCanonicalOpsOwner, subscribeCanonicalOpsOwner, unlockCanonicalOpsOwner, unlockCanonicalOpsLocalOwner, lockCanonicalOpsLocalOwner } from '../../../../../bridges/ops-canonical-owner';
 import { browserRuntimeSession } from '../../../../../bridges/runtime/browser-runtime-session';
 import { selectWorkspaceRuntime } from '../runtime/ops-runtime-selection';
-import type { VaultUnlockDurationMs } from '../../../../../src/lib/security/vaultProtection';
+import type { VaultUnlockDurationMs } from '../../../../../packages/browser/src/vault/vault-protection';
 
 export function OpsOwnerUnlockForm({ runtimeId, local }: Readonly<{ runtimeId: string; local: boolean }>) {
   const adapter = useSyncExternalStore(opsEntityWorkspaceSource.subscribe, opsEntityWorkspaceSource.getAdapter);

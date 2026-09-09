@@ -1,4 +1,4 @@
-import { readStoreValue } from '../../src/lib/utils/observableStore';
+import { readStoreValue } from '../../packages/runtime-client/src/observable-store';
 
 import type {
   WalletRecoveryServiceRole,
@@ -9,11 +9,11 @@ import type {
 } from '../../packages/browser/src/recovery/wallet-recovery-services';
 import {
   buildRuntimeRecoveryConfigForMode,
-  runtimesState,
-  vaultOperations,
   type RecoveryTowerConfig,
   type Runtime,
-} from '../../src/lib/stores/vault/vaultStore';
+} from '../vault/vault-recovery';
+import { vaultOperations } from '../vault/vault-store';
+import { runtimesState } from '../vault/vault-metadata-store';
 import {
   getManualRecoveryTowers,
   inferRecoveryTowerSetupMode,

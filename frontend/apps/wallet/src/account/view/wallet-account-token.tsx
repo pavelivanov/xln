@@ -1,5 +1,5 @@
 import { useId, useState } from 'react';
-import type { AccountTokenDetailRow } from '../../../../../src/lib/components/Entity/shared/account-token-details';
+import type { AccountTokenDetailRow } from '../../../../../packages/ui/src/account/account-token-details';
 import { stripTrailingSymbol } from '../../../../../packages/ui/src/rcpan/delta-token-format';
 import type { useAccountAppearance } from '../controls/wallet-account-appearance-source';
 import { WalletAccountSummary } from './wallet-account-summary';

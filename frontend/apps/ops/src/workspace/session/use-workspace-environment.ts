@@ -1,7 +1,7 @@
 import { useEffect, useState, useSyncExternalStore } from 'react';
 import type { EnvSnapshot, RuntimeAdapter, RuntimeReplica } from '@xln/core/api/public/runtime-module';
 import { openBrowserRuntimeView, type BrowserRuntimeViewSnapshot } from '../../../../../bridges/runtime/browser-runtime-context';
-import { networkMachineRuntimeOperations } from '../../../../../src/lib/stores/network/networkMachineRuntimeStore';
+import { networkMachineRuntimeOperations } from '../../../../../bridges/runtime/network-machine-runtime-store';
 import { opsEntityWorkspaceSource } from '../../entity-workspace/ops-entity-workspace-runtime';
 import { workspaceNetwork } from './ops-workspace-playback';
 

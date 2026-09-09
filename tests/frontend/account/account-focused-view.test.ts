@@ -1,7 +1,7 @@
 import { expect, test } from 'bun:test';
-import { buildAccountDisputeDeadline, buildPendingSecretAckInfo } from '../../../frontend/src/lib/components/Entity/account/account-focused-view';
-import { createAccountActivityPresentation } from '../../../frontend/src/lib/components/Entity/account/activity/account-activity-presentation';
-import { requestAccountFaucet, type AccountFaucetRequest } from '../../../frontend/src/lib/components/Entity/account/account-faucet-command';
+import { buildAccountDisputeDeadline, buildPendingSecretAckInfo } from '../../../frontend/packages/ui/src/account/account-focused-view';
+import { createAccountActivityPresentation } from '../../../frontend/packages/ui/src/account/activity/account-activity-presentation';
+import { requestAccountFaucet, type AccountFaucetRequest } from '../../../frontend/packages/browser/src/wallet/account-faucet-command';
 
 test('focused dispute countdown uses observed Unix seconds and rounds a remaining partial second up', () => {
   const disputeTimeout = 1_800_000_000;

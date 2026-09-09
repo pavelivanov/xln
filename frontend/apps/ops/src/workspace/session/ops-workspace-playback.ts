@@ -1,11 +1,11 @@
 import { parseEmbedBootRequest } from '../../../../../packages/runtime-client/src/scenario/embed-boot-model';
 import { clampDemoSpeed } from '../../../../../packages/runtime-client/src/scenario/demo-playback-intent';
-import { createObservableStore } from '../../../../../src/lib/utils/observableStore';
-import { networkMachineRuntime, networkMachineRuntimeOperations } from '../../../../../src/lib/stores/network/networkMachineRuntimeStore';
-import { adapterNetworkTimelineSource, decodeNetworkTrailFromHash, encodeNetworkTrailForHash } from '../../../../../src/lib/network3d/timeline/networkTimelineSource';
+import { createObservableStore } from '../../../../../packages/runtime-client/src/observable-store';
+import { networkMachineRuntime, networkMachineRuntimeOperations } from '../../../../../bridges/runtime/network-machine-runtime-store';
+import { adapterNetworkTimelineSource, decodeNetworkTrailFromHash, encodeNetworkTrailForHash } from '../../../../../packages/ui/src/graph/network-timeline-source';
 import type { RuntimeAdapter } from '@xln/core/api/public/runtime-module';
-import { networkMachineOperations } from '../../../../../src/lib/stores/network/networkMachineStore';
-import type { NetworkMachineConfig } from '../../../../../src/lib/network3d/networkMachine';
+import { networkMachineOperations } from '../../../../../packages/browser/src/graph/network-machine-store';
+import type { NetworkMachineConfig } from '../../../../../packages/runtime-client/src/scenario/network-machine';
 
 export const workspaceBoot = parseEmbedBootRequest(new URL(window.location.href));
 export const workspaceNetwork = networkMachineRuntime;

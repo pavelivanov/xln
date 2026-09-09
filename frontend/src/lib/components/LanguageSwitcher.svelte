@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { locale, LOCALES, type Locale } from '$lib/i18n';
+  import { locale, LOCALES, type Locale } from '../../../packages/browser/src/localization';
   import Dropdown from '$lib/components/UI/Dropdown.svelte';
 
   let isOpen = false;

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { AssetLedgerRow } from '../asset-ledger';
+  import type { AssetLedgerRow } from '../../../../../packages/ui/src/entity/assets/asset-ledger';
 
   type FaucetTarget = 'external' | 'reserve' | 'account';
 

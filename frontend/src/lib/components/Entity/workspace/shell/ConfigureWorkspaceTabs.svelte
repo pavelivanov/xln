@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { ConfigureWorkspaceTab } from '../entity-panel-routing';
+  import type { ConfigureWorkspaceTab } from '../../../../../../packages/runtime-client/src/entity/entity-workspace-navigation';
 
   type ConfigureTabConfig = {
     id: ConfigureWorkspaceTab;

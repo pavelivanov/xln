@@ -1,7 +1,8 @@
 <script lang="ts">
   import { createEventDispatcher, onMount } from 'svelte';
   import Dropdown from '$lib/components/UI/Dropdown.svelte';
-  import { allRuntimes, activeRuntime, vaultOperations } from '$lib/stores/vault/vaultStore';
+  import { vaultOperations } from '../../../../../../bridges/vault/vault-store';
+  import { allRuntimes, activeRuntime } from '../../../../../../bridges/vault/vault-metadata-store';
   import {
     activeRuntimeId as activeStoreRuntimeId,
     coordinateRuntimeSelection,
@@ -9,17 +10,17 @@
     runtimes as runtimeEntries,
     type Runtime as StoreRuntime,
     type RuntimeSelectionLease,
-  } from '$lib/stores/runtimeStore';
-  import { runtimeControllerHandle } from '$lib/stores/runtimeControllerStore';
+  } from '../../../../../../bridges/runtime/runtime-store';
+  import { runtimeControllerHandle } from '../../../../../../bridges/runtime/runtime-controller-store';
   import { runtimeView, setRuntimeViewActiveEntityId } from '$lib/stores/runtimeViewStore';
-  import { errorLog } from '$lib/stores/errorLogStore';
+  import { errorLog } from '../../../../../../packages/browser/src/logging/error-log-store';
   import { resetEverything } from '$lib/utils/control/resetEverything';
-  import { refreshCurrentRuntimeProjection, xlnFunctions, xlnInstance } from '$lib/stores/xlnStore';
+  import { refreshCurrentRuntimeProjection, xlnFunctions, xlnInstance } from '../../../../../../bridges/runtime/xln-store';
   import type { RuntimeAdapterEntitySummary } from '@xln/core/api/public/runtime-module';
   import type { Tab } from '$lib/types/ui';
   import { entityAvatar, preferredAvatar } from '$lib/utils/identity/avatar';
   import { getJurisdictionBadgeInfo, type JurisdictionBadgeInfo } from '$lib/utils/identity/jurisdictionBadge';
-  import { compareStableText } from '$lib/utils/stableSort';
+  import { compareStableText } from '../../../../../../packages/ui/src/stable-compare';
 
   export let tab: Tab;
   export let allowAddRuntime = false;

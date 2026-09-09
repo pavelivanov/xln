@@ -2,8 +2,8 @@
   import { onMount } from 'svelte';
   import type { RuntimeAdapterEntitySummary } from '@xln/core/api/public/runtime-module';
   import EntityIdentity from '$lib/components/shared/EntityIdentity.svelte';
-  import { errorLog } from '$lib/stores/errorLogStore';
-  import { runtimeAdapterHeight, runtimeControllerHandle } from '$lib/stores/runtimeControllerStore';
+  import { errorLog } from '../../../packages/browser/src/logging/error-log-store';
+  import { runtimeAdapterHeight, runtimeControllerHandle } from '../../../bridges/runtime/runtime-controller-store';
   import { runtimeQueryClient } from '$lib/stores/runtimeQueryClient';
   import { ensureProjectionRuntimeConnected } from '$lib/utils/runtime/runtimeConnection';
 

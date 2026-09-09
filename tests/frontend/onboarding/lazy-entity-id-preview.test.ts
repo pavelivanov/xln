@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { generateLazyEntityIdPreview } from '../../../frontend/src/lib/utils/identity/lazyEntityId';
+import { generateLazyEntityIdPreview } from '../../../frontend/packages/browser/src/identity/lazy-entity-id';
 
 describe('wallet lazy Entity id preview', () => {
   test('matches the independently pinned canonical single-signer vector', () => {

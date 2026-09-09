@@ -77,10 +77,10 @@ describe('Graph3D shared renderer boundary', () => {
 
   test('moves renderer ownership out of the retained Svelte tree', () => {
     const panel = readFileSync('frontend/src/lib/view/panels/graph3d/Graph3DPanel.svelte', 'utf8');
-    const visuals = readFileSync('frontend/src/lib/view/panels/graph3d/graph3d-visuals.ts', 'utf8');
+    const visuals = readFileSync('frontend/packages/ui/src/graph/graph3d-visuals.ts', 'utf8');
 
     expect(panel).toContain('packages/ui/src/graph/graph3d-renderer');
-    expect(visuals).toContain('packages/ui/src/graph/graph3d-renderer');
+    expect(visuals).toContain("from './graph3d-renderer'");
     expect(() => readFileSync('frontend/src/lib/view/panels/graph3d/graph3d-renderer.ts', 'utf8')).toThrow();
   });
 });

@@ -4,8 +4,8 @@ import { resolveWalletAppRoute } from '../../../frontend/apps/wallet/src/navigat
 import { buildWalletMoveDraftTxs, type WalletMoveDraft } from '../../../frontend/apps/wallet/src/move/wallet-move-model';
 import { buildWalletLoanRepayment, createWalletLendingIntentId, decodeWalletLending } from '../../../frontend/apps/wallet/src/manage/wallet-lending-model';
 import { historyTimeRange } from '../../../frontend/apps/wallet/src/history/wallet-history-model';
-import { dedupeHistoryEvents } from '../../../frontend/src/lib/components/Entity/account/activity/activity-history-events';
-import { buildLendingTokenOptions } from '../../../frontend/src/lib/components/Entity/payments/lending-token-options';
+import { dedupeHistoryEvents } from '../../../frontend/packages/ui/src/account/activity/activity-history-events';
+import { buildLendingTokenOptions } from '../../../frontend/packages/ui/src/account/lending-token-options';
 
 const owner = `0x${'11'.repeat(32)}`, peer = `0x${'22'.repeat(32)}`, recipient = `0x${'33'.repeat(32)}`;
 const base: WalletMoveDraft = { entityId: owner, sourceAccountId: peer, targetEntityId: recipient, targetHubId: peer, reserveRecipient: recipient,

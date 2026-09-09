@@ -4,6 +4,7 @@ export type WalletBrainVaultDerivationInput = Readonly<{
   name: string;
   passphrase: string;
   factor: number;
+  shardCount?: number;
 }>;
 
 export type WalletBrainVaultDerivationProgress = Readonly<{
@@ -12,6 +13,8 @@ export type WalletBrainVaultDerivationProgress = Readonly<{
   total: number;
   workers: number;
   notice: string;
+  lastShardMs?: number;
+  workerLimit?: number;
 }>;
 
 export type WalletBrainVaultPreparedView = Readonly<{

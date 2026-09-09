@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onDestroy, onMount } from 'svelte';
   import { page } from '$app/stores';
-  import { settings, settingsOperations } from '$lib/stores/settingsStore';
+  import { settings, settingsOperations } from '../../../../packages/browser/src/settings-store';
   import XlnMascotChat from './XlnMascotChat.svelte';
   import XlnMascotLogo from './XlnMascotLogo.svelte';
   import type { MascotPresence } from './mascot-types';
@@ -16,7 +16,7 @@
     type MascotPoint,
     type MascotViewport,
   } from '../../../../packages/ui/src/mascot-geometry';
-  import type { XlnAssistantMessage } from '$lib/ai/xln-assistant-client';
+  import type { XlnAssistantMessage } from '../../../../packages/browser/src/ai/xln-assistant-client';
 
   let mounted = false;
   let expanded = false;

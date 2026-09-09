@@ -9,7 +9,7 @@ import {
   deployStack,
   fetchStackManagerStatus,
   requireStackManagerProbe,
-} from '../../../frontend/src/lib/components/Settings/stack-manager-client';
+} from '../../../frontend/bridges/runtime/stack-manager-client';
 import { createJurisdictionGossipAnnouncement } from '../../../core/jurisdiction/gossip/announcement';
 
 const ADDRESS = '0x1111111111111111111111111111111111111111';

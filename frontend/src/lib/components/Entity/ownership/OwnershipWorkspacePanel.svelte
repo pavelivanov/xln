@@ -7,10 +7,10 @@ import type {
 } from "@xln/core/api/public/runtime-module";
 import { isNumberedEntity, toEntityId } from "@xln/core/api/public/runtime-module";
 import type { EntityReplica } from "$lib/types/ui";
-import { getXLN, submitEntityInputs } from "$lib/stores/xlnStore";
+import { getXLN, submitEntityInputs } from "../../../../../bridges/runtime/xln-store";
 import { toasts } from "$lib/stores/ui/toastStore";
 import { requireRuntimeEnv } from "../core/entity-panel-model";
-import type { ExternalToken } from "../assets/entity-asset-catalog";
+import type { ExternalToken } from "../../../../../packages/ui/src/entity/assets/entity-asset-catalog";
 import OwnershipPanel from "./OwnershipPanel.svelte";
 import {
   buildControlBoardActivationInputs,
@@ -18,7 +18,7 @@ import {
   buildEntityShareReleaseInput,
   projectEntityShareTokens,
   type ControlTakeoverBoard,
-} from "./ownership-flow";
+} from "../../../../../packages/runtime-client/src/entity/ownership-flow";
 
 export let entityName: string;
 export let entityId: string;

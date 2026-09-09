@@ -141,9 +141,13 @@ describe('browser wallet BrainVault worker validation', () => {
     })).toThrow('BRAINVAULT_WORKER_DUPLICATE_SHARD:2');
   });
 
-  test('keeps Worker lifecycle, secret bytes, timers, and effects in Svelte', () => {
+  test('keeps worker validation effects in the shared browser orchestrator', () => {
     const boundary = readFileSync(
       'frontend/packages/browser/src/identity/wallet-brainvault-worker-validation.ts',
+      'utf8',
+    );
+    const orchestration = readFileSync(
+      'frontend/bridges/wallet/brainvault/wallet-brainvault-browser-derivation.ts',
       'utf8',
     );
     const view = readFileSync(
@@ -155,10 +159,13 @@ describe('browser wallet BrainVault worker validation', () => {
     expect(boundary).not.toContain('setTimeout');
     expect(boundary).not.toContain('hexToBytes');
     expect(boundary).not.toContain('passphrase');
-    expect(view).toContain('decodeWalletBrainVaultWorkerMessage(e.data, BRAINVAULT_V1_SPEC_ID)');
-    expect(view).toContain('validateWalletBrainVaultShardCompletion(message, {');
-    expect(view).toContain('worker.postMessage({');
-    expect(view).toContain('clearWorkerShardWatchdog(worker)');
-    expect(view).toContain('hexToBytes(completion.resultHex)');
+    expect(orchestration).toContain('decodeWalletBrainVaultWorkerMessage(value, BRAINVAULT_V1_SPEC_ID)');
+    expect(orchestration).toContain('validateWalletBrainVaultShardCompletion(message, {');
+    expect(orchestration).toContain('worker.postMessage({');
+    expect(orchestration).toContain('clearWatchdog(run, worker)');
+    expect(orchestration).toContain('hexToBytes(completion.resultHex)');
+    expect(view).toContain('new WalletBrainVaultBrowserDerivation()');
+    expect(view).not.toContain('decodeWalletBrainVaultWorkerMessage(');
+    expect(view).not.toContain('worker.postMessage({');
   });
 });

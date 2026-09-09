@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { listInspectableDatabases, listInspectableStores, readInspectableEntries } from '../../../../../packages/browser/src/indexed-db-inspector';
-import { formatBytes, type DbEntryView, type DbKindFilter, type IndexedDbMeta } from '../../../../../packages/runtime-client/src/storage/indexed-db-inspector-key';
-import { compactValuePreview, renderBlobPretty } from '../../../../../packages/runtime-client/src/storage/indexed-db-inspector-value';
+import { formatBytes, type DbEntryView, type DbKindFilter, type IndexedDbMeta } from '../../../../../packages/ui/src/storage/indexed-db-inspector-key';
+import { compactValuePreview, renderBlobPretty } from '../../../../../packages/ui/src/storage/indexed-db-inspector-value';
 import { useWorkspaceTranslation } from '../../../../../bridges/workspace-localization-react';
 
 const kindOf = (name: string) => name.endsWith('-infra') ? 'infra' : 'core';

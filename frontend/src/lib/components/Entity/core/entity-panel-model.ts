@@ -12,8 +12,8 @@ import {
   EntityAccountCandidateMap,
   PersistentEntityAccountMap,
 } from '@xln/core/entity/state/persistent-account-map';
-import type { EntityReplica } from '$lib/types/ui';
-import { unwrapLiveRuntimeEnv } from '$lib/utils/runtime/liveRuntimeEnv';
+import type { EntityReplica } from '../../../types/ui';
+import { unwrapLiveRuntimeEnv } from '../../../utils/runtime/liveRuntimeEnv';
 import { projectEntityWorkspaceContext } from '../../../../../packages/runtime-client/src/entity/entity-workspace-context';
 
 export function materializeReplicaView(candidate: EntityReplica | null | undefined): EntityReplica | null {

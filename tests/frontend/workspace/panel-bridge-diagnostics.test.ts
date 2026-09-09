@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, test } from 'bun:test';
 import { readFileSync } from 'node:fs';
 
-import { panelBridge } from '../../../frontend/src/lib/view/utils/panelBridge';
+import { panelBridge } from '../../../frontend/packages/browser/src/workspace/panel-bridge';
 
 afterEach(() => {
   panelBridge.clear();
@@ -9,7 +9,7 @@ afterEach(() => {
 
 describe('panel bridge diagnostics', () => {
   test('does not hide listener failures behind raw console output', () => {
-    const source = readFileSync('frontend/src/lib/view/utils/panelBridge.ts', 'utf8');
+    const source = readFileSync('frontend/packages/browser/src/workspace/panel-bridge.ts', 'utf8');
 
     expect(source).not.toContain('console.error');
     expect(source).not.toContain('console.warn');

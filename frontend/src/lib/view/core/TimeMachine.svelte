@@ -7,9 +7,9 @@
   import { ENTITY_WORKSPACE_TIME_MACHINE_HASH } from '../../../../packages/runtime-client/src/entity/entity-workspace-time-machine';
   import FrameSubtitle from '../../components/TimeMachine/FrameSubtitle.svelte';
   import NetworkMachineTimeline from './NetworkMachineTimeline.svelte';
-  import { runtimeGraphScope } from '$lib/stores/network/runtimeGraphControlStore';
-  import { runtimeControllerHandle } from '$lib/stores/runtimeControllerStore';
-  import { activeRuntimeId, runtimeOperations, runtimes } from '$lib/stores/runtimeStore';
+  import { runtimeGraphScope } from '../../../../packages/browser/src/graph/runtime-graph-control-store';
+  import { runtimeControllerHandle } from '../../../../bridges/runtime/runtime-controller-store';
+  import { activeRuntimeId, runtimeOperations, runtimes } from '../../../../bridges/runtime/runtime-store';
   import {
     runtimeView,
     runtimeViewActiveEntityId,
@@ -23,7 +23,7 @@
   import {
     getXLN,
     refreshCurrentRuntimeProjection,
-  } from '$lib/stores/xlnStore';
+  } from '../../../../bridges/runtime/xln-store';
   import {
     REMOTE_HISTORY_SCAN_CACHE_LIMIT,
     runtimeHistoryFrames,

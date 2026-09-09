@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { RuntimeReplica, Profile as GossipProfile, RuntimeInput } from '@xln/core/api/public/runtime-module';
-  import { runtimeControllerHandle } from '$lib/stores/runtimeControllerStore';
+  import { runtimeControllerHandle } from '../../../../../../bridges/runtime/runtime-controller-store';
   import type { EntityReplica, Tab } from '$lib/types/ui';
   import CollateralForm from './CollateralForm.svelte';
   import ConfigureAccountSelector from './ConfigureAccountSelector.svelte';
@@ -8,7 +8,7 @@
   import CreditForm from './CreditForm.svelte';
   import LiveRequiredState from '../../workspace/shell/LiveRequiredState.svelte';
   import LoadTestingController from './load-testing/LoadTestingController.svelte';
-  import type { ConfigureWorkspaceTab } from '../../workspace/entity-panel-routing';
+  import type { ConfigureWorkspaceTab } from '../../../../../../packages/runtime-client/src/entity/entity-workspace-navigation';
   import type { PaymentPanelView } from '../../payments/payment-panel-view';
   import type { SwapPanelRuntimeView } from '../../swap/swap-panel-helpers';
 

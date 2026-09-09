@@ -1,6 +1,6 @@
 import { useWorkspaceTranslation } from '../../../../../bridges/workspace-localization-react';
 import { useState, useSyncExternalStore } from 'react';
-import { captionForStep } from '../../../../../src/lib/network3d/timeline/networkCaption';
+import { captionForStep } from '../../../../../packages/runtime-client/src/scenario/network-caption';
 import { opsEntityWorkspaceSource } from '../../entity-workspace/ops-entity-workspace-runtime';
 import { copyWorkspaceTrail, pauseWorkspacePlayback, playWorkspace, refreshWorkspaceTimeline, returnWorkspaceLive, selectWorkspaceStep, setWorkspaceSpeed, workspaceBoot, workspaceNetwork, workspacePlayback } from './ops-workspace-playback';
 

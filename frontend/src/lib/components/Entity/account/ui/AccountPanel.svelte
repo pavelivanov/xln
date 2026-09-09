@@ -1,16 +1,16 @@
 <script lang="ts">
   import type { AccountReplica, EntityReplica } from '$lib/types/ui';
   import { createEventDispatcher, onMount, onDestroy } from 'svelte';
-  import { p2pState, xlnFunctions } from '../../../../stores/xlnStore';
-  import { settings } from '../../../../stores/settingsStore';
+  import { p2pState, xlnFunctions } from '../../../../../../bridges/runtime/xln-store';
+  import { settings } from '../../../../../../packages/browser/src/settings-store';
   import EntityIdentity from '../../../shared/EntityIdentity.svelte';
   import DeltaTokenSummary from '../../shared/DeltaTokenSummary.svelte';
   import AccountTokenDetails from '../../shared/AccountTokenDetails.svelte';
-  import { buildAccountTokenDetails, isAccountLeftPerspective } from '../../shared/account-token-details';
-  import { compareStableText } from '$lib/utils/stableSort';
-  import { buildAccountActivityRows, buildAccountDisputeView } from '../account-focused-view';
-  import { createAccountActivityPresentation } from '../activity/account-activity-presentation';
-  import { faucetPendingKey } from '../account-faucet';
+  import { buildAccountTokenDetails, isAccountLeftPerspective } from '../../../../../../packages/ui/src/account/account-token-details';
+  import { compareStableText } from '../../../../../../packages/ui/src/stable-compare';
+  import { buildAccountActivityRows, buildAccountDisputeView } from '../../../../../../packages/ui/src/account/account-focused-view';
+  import { createAccountActivityPresentation } from '../../../../../../packages/ui/src/account/activity/account-activity-presentation';
+  import { faucetPendingKey } from '../../../../../../packages/browser/src/wallet/account-faucet';
 
   export let account: AccountReplica;
   export let counterpartyId: string;

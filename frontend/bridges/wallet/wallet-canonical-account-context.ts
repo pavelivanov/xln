@@ -1,6 +1,6 @@
-import { readStoreValue } from '../../src/lib/utils/observableStore';
+import { readStoreValue } from '../../packages/runtime-client/src/observable-store';
 import type { RuntimeAdapter, RuntimeAdapterViewFrame } from '@xln/core/api/public/runtime-module';
-import { getXLN, xlnEnvironment, resolveConfiguredApiBase } from '../../src/lib/stores/xlnStore';
+import { getXLN, xlnEnvironment, resolveConfiguredApiBase } from '../runtime/xln-store';
 import { buildEntityPanelView } from '../../src/lib/components/Entity/core/entity-panel-model';
 import { buildPaymentPanelView, buildPaymentPanelViewFromRuntimeView } from '../../src/lib/components/Entity/payments/payment-panel-view';
 import { buildSwapPanelRuntimeView } from '../../src/lib/components/Entity/swap/swap-panel-helpers';

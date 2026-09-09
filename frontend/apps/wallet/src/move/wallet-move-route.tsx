@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { buildMoveArrowPath, MOVE_ENDPOINTS, MOVE_ENDPOINT_LABEL, type MoveEndpoint } from '../../../../src/lib/components/Entity/move-routes';
-import { createMoveVisualController } from '../../../../src/lib/components/Entity/move/move-visual-controller';
+import { buildMoveArrowPath, MOVE_ENDPOINTS, MOVE_ENDPOINT_LABEL, type MoveEndpoint } from '../../../../packages/ui/src/entity/move/move-routes';
+import { createMoveVisualController } from '../../../../packages/ui/src/entity/move/move-visual-controller';
 
 export function WalletMoveRoute({ from, to, disabled, onChange }: Readonly<{
   from: MoveEndpoint; to: MoveEndpoint; disabled: boolean; onChange: (from: MoveEndpoint, to: MoveEndpoint) => void;

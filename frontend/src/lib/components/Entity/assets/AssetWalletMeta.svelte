@@ -1,6 +1,6 @@
 <script lang="ts">
   import { Check, Copy } from 'lucide-svelte';
-  import type { ExternalWalletSnapshotSource } from '../asset-ledger';
+  import type { ExternalWalletSnapshotSource } from '../../../../../packages/ui/src/entity/assets/asset-ledger';
 
   export let externalEoaValue = '';
   export let copied = false;

@@ -1,17 +1,17 @@
-import { readStoreValue } from '../../src/lib/utils/observableStore';
+import { readStoreValue } from '../../packages/runtime-client/src/observable-store';
 import type { RuntimeAdapter, RuntimeAdapterViewFrame } from '@xln/core/api/public/runtime-module';
-import { getXLN, xlnEnvironment, p2pState, resolveConfiguredApiBase } from '../../src/lib/stores/xlnStore';
-import { runtimes } from '../../src/lib/stores/runtimeStore';
+import { getXLN, xlnEnvironment, p2pState, resolveConfiguredApiBase } from '../runtime/xln-store';
+import { runtimes } from '../runtime/runtime-store';
 import { buildEntityPanelView, findReplicaForEntityTab, isSameJurisdictionEntityInReplicas } from '../../src/lib/components/Entity/core/entity-panel-model';
-import { buildOpenAccountEntityOptions } from '../../src/lib/components/Entity/workspace/entity-panel-options';
+import { buildOpenAccountEntityOptions } from '../../packages/ui/src/entity/entity-panel-options';
 import { unwrapLiveRuntimeEnv } from '../../src/lib/utils/runtime/liveRuntimeEnv';
-import { buildHubDiscoveryProjection, buildHubDiscoveryRemoteHubsFromRuntimes, getHubOpenAccountPermissionError } from '../../src/lib/components/Entity/onboarding/hub-discovery-profile';
+import { buildHubDiscoveryProjection, buildHubDiscoveryRemoteHubsFromRuntimes, getHubOpenAccountPermissionError } from '../../packages/ui/src/onboarding/hub-discovery-profile';
 import type { WalletAccountOpenRead } from '../../apps/wallet/src/account/controls/wallet-account-open-model';
 import type { WalletAccountView } from '../../apps/wallet/src/account/view/wallet-account-view-model';
-import { buildAccountTokenDetails } from '../../src/lib/components/Entity/shared/account-token-details';
-import { buildAccountActivityRows } from '../../src/lib/components/Entity/account/account-focused-view';
-import { buildDisputedAccountViews } from '../../src/lib/components/Entity/account/account-dispute-view';
-import { buildAccountDropdownItems } from '../../src/lib/components/Entity/account/account-dropdown-model';
+import { buildAccountTokenDetails } from '../../packages/ui/src/account/account-token-details';
+import { buildAccountActivityRows } from '../../packages/ui/src/account/account-focused-view';
+import { buildDisputedAccountViews } from '../../packages/ui/src/account/account-dispute-view';
+import { buildAccountDropdownItems } from '../../packages/ui/src/account/account-dropdown-model';
 import { decodeWalletSettlementWorkspace } from '../../apps/wallet/src/portfolio/wallet-portfolio-model';
 import type { WalletBatchRuntimeSubmission } from '../../apps/wallet/src/commands/wallet-batch-model';
 

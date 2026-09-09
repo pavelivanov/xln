@@ -1,4 +1,4 @@
-import type { MoveEndpoint } from '../../../../../src/lib/components/Entity/move-routes';
+import type { MoveEndpoint } from '../../../../../packages/ui/src/entity/move/move-routes';
 import type { ConfigureWorkspaceTab } from '../../../../../packages/runtime-client/src/entity/entity-workspace-navigation';
 
 export type WalletAccountToolSelection = Readonly<{

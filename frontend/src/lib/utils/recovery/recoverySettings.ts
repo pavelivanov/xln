@@ -3,7 +3,7 @@ import {
   type RecoveryTowerConfig,
   type RuntimeRecoveryConfig,
   type RecoveryTowerSetupMode,
-} from '$lib/stores/vault/vaultStore';
+} from '../../../../bridges/vault/vault-recovery';
 
 export type RecoveryServiceMode = 'blind_backup' | 'delayed_last_resort';
 

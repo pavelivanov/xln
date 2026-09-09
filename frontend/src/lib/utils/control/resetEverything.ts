@@ -3,7 +3,7 @@ import {
   type ResetEverythingRequest,
 } from '../../../../packages/browser/src/runtime/session/browser-runtime-reset';
 import { publishBrowserHardResetRequest } from '../../../../packages/browser/src/hard-reset-request';
-import { shutdownRuntimeResumeListener, vaultOperations } from '../../stores/vault/vaultStore';
+import { shutdownRuntimeResumeListener, vaultOperations } from '../../../../bridges/vault/vault-store';
 
 export type { ResetEverythingRequest } from '../../../../packages/browser/src/runtime/session/browser-runtime-reset';
 

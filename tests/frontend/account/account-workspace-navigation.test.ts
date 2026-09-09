@@ -6,7 +6,7 @@ import {
   returnToAccountsWorkspace,
   selectAccountNavigation,
   selectTopLevelTabNavigation,
-} from '../../../frontend/src/lib/components/Entity/account/account-workspace-navigation';
+} from '../../../frontend/packages/runtime-client/src/entity/account-workspace-navigation';
 
 describe('account workspace navigation helpers', () => {
   test('matches workspace account ids case-insensitively', () => {

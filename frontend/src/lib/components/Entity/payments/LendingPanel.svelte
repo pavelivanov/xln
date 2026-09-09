@@ -3,18 +3,18 @@
   import type { RuntimeInput } from '@xln/core/runtime/types';
   import type { EntityTx } from '@xln/core/types/entity-tx';
   import type { EntityReplica } from '$lib/types/ui';
-  import { resolveConfiguredApiBase, xlnFunctions } from '../../../stores/xlnStore';
+  import { resolveConfiguredApiBase, xlnFunctions } from '../../../../../bridges/runtime/xln-store';
   import {
     getRuntimeControllerConfig,
     isRuntimeControllerConfigCurrent,
-  } from '../../../stores/runtimeControllerStore';
-  import { runtimeHttpOriginFromWsUrl } from '$lib/utils/runtime/wsUrl';
+  } from '../../../../../bridges/runtime/runtime-controller-store';
+  import { runtimeHttpOriginFromWsUrl } from '../../../../../packages/runtime-client/src/runtime/ws-url';
   import { toasts } from '../../../stores/ui/toastStore';
   import BigIntInput from '../../Common/BigIntInput.svelte';
   import EntitySelect from '../workspace/shell/EntitySelect.svelte';
-  import { requireTokenDecimals } from '../token-metadata';
+  import { requireTokenDecimals } from '../../../../../packages/runtime-client/src/token-metadata';
   import { parseJsonUnknown, requireUnknownRecord } from '$lib/utils/boundary';
-  import { buildLendingTokenOptions } from './lending-token-options';
+  import { buildLendingTokenOptions } from '../../../../../packages/ui/src/account/lending-token-options';
 
   export let entityId: string;
   export let replica: EntityReplica | null = null;

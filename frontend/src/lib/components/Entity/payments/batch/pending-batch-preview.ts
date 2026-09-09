@@ -3,11 +3,11 @@ import {
   simulateDraftBatchReserveAvailability,
   type DraftBatchReserveIssue,
 } from '@xln/core/jurisdiction/machine/batch';
-import type { FrontendXlnFunctions } from '$lib/stores/xlnStore';
+import type { FrontendXlnFunctions } from '../../../../../../bridges/runtime/xln-store';
 import type { EntityReplica } from '$lib/types/ui';
-import { amountToUsd } from '$lib/utils/assetPricing';
+import { amountToUsd } from '../../../../../../packages/runtime-client/src/asset-pricing';
 import { getEntityDisplayName } from '$lib/utils/identity/entityNaming';
-import { requireTokenDecimals } from '../../token-metadata';
+import { requireTokenDecimals } from '../../../../../../packages/runtime-client/src/token-metadata';
 
 type GossipSource = Parameters<typeof getEntityDisplayName>[1]['source'];
 

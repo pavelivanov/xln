@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import {
   clampDemoSpeed,
   normalizeDemo,
-} from '../../../../frontend/src/lib/stores/network/networkMachineDemoStore';
+} from '../../../../frontend/packages/browser/src/graph/network-machine-demo-store';
 
 describe('network machine demo playback', () => {
   test('clamps unusable speeds instead of freezing or fast-forwarding the demo', () => {
@@ -20,7 +20,7 @@ describe('network machine demo playback', () => {
   });
 
   test('autoplay is consumed once so a recompile does not restart the demo', () => {
-    const store = readFileSync('frontend/src/lib/stores/network/networkMachineDemoStore.ts', 'utf8');
+    const store = readFileSync('frontend/packages/browser/src/graph/network-machine-demo-store.ts', 'utf8');
     const neutral = readFileSync('frontend/packages/runtime-client/src/scenario/demo-playback-intent.ts', 'utf8');
     const timeline = readFileSync('frontend/src/lib/view/core/NetworkMachineTimeline.svelte', 'utf8');
 
@@ -62,7 +62,7 @@ describe('network machine demo playback', () => {
 
   test('a loaded scenario is not replaced by whatever runtimes happen to be connected', () => {
     const timeline = readFileSync('frontend/src/lib/view/core/NetworkMachineTimeline.svelte', 'utf8');
-    const store = readFileSync('frontend/src/lib/stores/network/networkMachineRuntimeStore.ts', 'utf8');
+    const store = readFileSync('frontend/bridges/runtime/network-machine-runtime-store.ts', 'utf8');
 
     expect(timeline).toContain('if (get(networkMachineRuntime).machine) return;');
     // One registry of sources: live adapters and recorded scenarios read the same way.

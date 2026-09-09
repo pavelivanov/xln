@@ -8,8 +8,8 @@
   import MoveWorkspace from '../MoveWorkspace.svelte';
   import PendingBatchNotice from '../payments/PendingBatchNotice.svelte';
   import SettlementPanel from '../payments/SettlementPanel.svelte';
-  import type { AssetLedgerRow, AssetLedgerTotals, ExternalWalletSnapshotSource } from '../asset-ledger';
-  import type { MoveEndpoint } from '../move-routes';
+  import type { AssetLedgerRow, AssetLedgerTotals, ExternalWalletSnapshotSource } from '../../../../../packages/ui/src/entity/assets/asset-ledger';
+  import type { MoveEndpoint } from '../../../../../packages/ui/src/entity/move/move-routes';
 
   export let replica: EntityReplica;
   export let tab: Tab;

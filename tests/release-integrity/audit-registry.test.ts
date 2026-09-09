@@ -89,8 +89,8 @@ describe('canonical audit registry', () => {
     const sources = [
       'frontend/src/lib/components/Entity/payments/PaymentPanel.svelte',
       'frontend/src/lib/components/PaymentSpotlight.svelte',
-      'frontend/src/lib/stores/network/paymentSpotlightStore.ts',
-      'frontend/src/lib/stores/network/paymentTerminalMonitor.ts',
+      'frontend/packages/browser/src/graph/payment-spotlight-store.ts',
+      'frontend/packages/browser/src/graph/payment-terminal-monitor.ts',
       'frontend/src/lib/view/View.svelte',
       'frontend/packages/runtime-client/src/payments/xln-invoice.ts',
     ];

@@ -1,18 +1,18 @@
 <script lang="ts">
   import { get } from 'svelte/store';
   import type { AccountReplica, RuntimeReplica, RuntimeInput } from '@xln/core/api/public/runtime-module';
-  import { xlnFunctions, error } from '../../../../stores/xlnStore';
-  import { errorLog } from '../../../../stores/errorLogStore';
-  import { runtimeControllerHandle } from '../../../../stores/runtimeControllerStore';
+  import { xlnFunctions, error } from '../../../../../../bridges/runtime/xln-store';
+  import { errorLog } from '../../../../../../packages/browser/src/logging/error-log-store';
+  import { runtimeControllerHandle } from '../../../../../../bridges/runtime/runtime-controller-store';
   import {
     getCounterpartyAccount,
     normalizeEntityId,
     requireSignerIdForEntity,
-  } from '$lib/utils/identity/entityReplica';
+  } from '../../../../../../packages/runtime-client/src/entity/entity-replica';
   import BigIntInput from '../../../Common/BigIntInput.svelte';
   import EntitySelect from '../../workspace/shell/EntitySelect.svelte';
-  import { resolveCollateralFeePolicy, collateralRequestFee, collateralRentEstimate } from '../collateral-request';
-  import { requireTokenDecimals } from '../../token-metadata';
+  import { resolveCollateralFeePolicy, collateralRequestFee, collateralRentEstimate } from '../../../../../../packages/runtime-client/src/entity/collateral-request';
+  import { requireTokenDecimals } from '../../../../../../packages/runtime-client/src/token-metadata';
 
   export let entityId: string;
   export let actionRuntimeEnv: RuntimeReplica | null = null;

@@ -1,13 +1,13 @@
 <script lang="ts">
   import type { RuntimeReplica, Profile as GossipProfile, RuntimeInput } from '@xln/core/api/public/runtime-module';
   import type { EntityReplica, Tab } from '$lib/types/ui';
-  import type { DisputedAccountView } from '../account-dispute-view';
+  import type { DisputedAccountView } from '../../../../../../packages/ui/src/account/account-dispute-view';
   import EntityInput from '../../../shared/EntityInput.svelte';
   import HubDiscoveryPanel from '../../onboarding/HubDiscoveryPanel.svelte';
   import {
     emptyHubDiscoveryProjection,
     type HubDiscoveryProjection,
-  } from '../../onboarding/hub-discovery-profile';
+  } from '../../../../../../packages/ui/src/onboarding/hub-discovery-profile';
 
   export let replica: EntityReplica | null = null;
   export let tab: Tab;

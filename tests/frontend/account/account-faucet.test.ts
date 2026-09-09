@@ -3,7 +3,7 @@ import { describe, expect, test } from 'bun:test';
 import {
   OFFCHAIN_FAUCET_REQUEST_TIMEOUT_MS,
   faucetPendingKey,
-} from '../../../frontend/src/lib/components/Entity/account/account-faucet';
+} from '../../../frontend/packages/browser/src/wallet/account-faucet';
 
 describe('account faucet UI state', () => {
   test('uses one canonical key only while the POST is in flight', () => {

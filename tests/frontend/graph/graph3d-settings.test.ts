@@ -6,7 +6,7 @@ import {
   buildBirdViewSettings,
   readBirdViewSettings,
   writeBirdViewSettings,
-} from '../../../frontend/src/lib/view/panels/graph3d/graph3d-settings';
+} from '../../../frontend/packages/browser/src/graph/graph3d-settings';
 
 function memoryStorage(seed?: Record<string, string>) {
   const values = new Map(Object.entries(seed || {}));

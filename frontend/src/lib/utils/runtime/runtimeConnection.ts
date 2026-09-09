@@ -1,13 +1,14 @@
 import { replaceState } from '$app/navigation';
-import { get } from 'svelte/store';
+import { readStoreValue as get } from '../../../../packages/runtime-client/src/observable-store';
 import {
   getRuntimeControllerAdapter,
   isRuntimeControllerConfigCurrent,
   onRuntimeControllerStatus,
   runtimeControllerHandle,
-} from '$lib/stores/runtimeControllerStore';
-import { activeRuntime, vaultOperations } from '$lib/stores/vault/vaultStore';
-import { initializeXLN, suspendClientActivity, switchAppRuntimeAdapter } from '$lib/stores/xlnStore';
+} from '../../../../bridges/runtime/runtime-controller-store';
+import { vaultOperations } from '../../../../bridges/vault/vault-store';
+import { activeRuntime } from '../../../../bridges/vault/vault-metadata-store';
+import { initializeXLN, suspendClientActivity, switchAppRuntimeAdapter } from '../../../../bridges/runtime/xln-store';
 import {
   adoptActiveTabLock,
   ownsActiveTabLock,
@@ -19,7 +20,7 @@ import {
   remoteRuntimeIdForWsUrl,
   readRemoteRuntimeTokenAudience,
   resolveStoredRemoteRuntimeAuthKey,
-} from '../onboarding/remoteRuntimeImport';
+} from '../../../../packages/browser/src/runtime/session/remote-runtime-import';
 import {
   decodeRemoteRuntimeRequest,
   hasRemoteRuntimeQueryBootstrap,

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { runtimeControllerHandle } from '$lib/stores/runtimeControllerStore';
+  import { runtimeControllerHandle } from '../../../../../bridges/runtime/runtime-controller-store';
   import { runtimeCommandLatestReceipt } from '$lib/stores/commands/runtimeCommandBus';
   import {
     runtimeView,
@@ -30,7 +30,7 @@
   export let selectedJurisdiction: string | null = null;
   export let allowHeaderAddRuntime: boolean = false;
   export let headerRuntimeAddLabel: string = '+ Add Runtime';
-  import type { EntityOpenAction } from '$lib/view/utils/panelBridge';
+  import type { EntityOpenAction } from '../../../../../packages/browser/src/workspace/panel-bridge';
   export let initialAction: EntityOpenAction | undefined = undefined;
   export let runtimeFrameContext: EntityWorkspaceRuntimeFrameContext = emptyEntityWorkspaceRuntimeFrameContext;
   export let embeddedRuntimeContext: EntityWorkspaceEmbeddedRuntimeContext = emptyEntityWorkspaceEmbeddedRuntimeContext;

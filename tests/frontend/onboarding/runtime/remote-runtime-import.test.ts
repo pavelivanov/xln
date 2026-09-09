@@ -17,8 +17,8 @@ import {
   remoteRuntimeIdForWsUrl,
   parseRemoteRuntimeImportSourcePayload,
   type StoredRemoteRuntimeImportEntry,
-} from '../../../../frontend/src/lib/utils/onboarding/remoteRuntimeImport';
-import { writeRemoteRuntimeImportSummary } from '../../../../frontend/src/lib/utils/onboarding/remoteRuntimeImportFlow';
+} from '../../../../frontend/packages/browser/src/runtime/session/remote-runtime-import';
+import { writeRemoteRuntimeImportSummary } from '../../../../frontend/bridges/runtime/remote-runtime-import-flow';
 import {
   buildRemoteRuntimeRecoveryPeerSources,
   buildRuntimeWsRecoveryPeerSource,
@@ -624,16 +624,20 @@ describe('remote runtime import manager utilities', () => {
   });
 
   test('app boot hydrates remote runtime handles from the import source through validation', () => {
-    const xlnStore = readFileSync('frontend/src/lib/stores/xlnStore.ts', 'utf8');
+    const xlnStore = readFileSync('frontend/bridges/runtime/xln-store.ts', 'utf8');
     const runtimeCreation = readFileSync('frontend/src/lib/components/Views/RuntimeCreation.svelte', 'utf8');
     const runtimeOpeningAdapter = readFileSync(
-      'frontend/src/lib/stores/vault/walletRuntimeOpeningAdapter.ts',
+      'frontend/bridges/vault/wallet-runtime-opening-adapter.ts',
       'utf8',
     );
-    const runtimeStore = readFileSync('frontend/src/lib/stores/runtimeStore.ts', 'utf8');
-    const vaultStore = readFileSync('frontend/src/lib/stores/vault/vaultStore.ts', 'utf8');
+    const runtimeStore = readFileSync('frontend/bridges/runtime/runtime-store.ts', 'utf8');
+    const vaultStore = readFileSync('frontend/bridges/vault/vault-store.ts', 'utf8');
     const appLayout = readFileSync('frontend/src/routes/app/+layout.svelte', 'utf8');
-    const importFlow = readFileSync('frontend/src/lib/utils/onboarding/remoteRuntimeImportFlow.ts', 'utf8');
+    const importFlow = readFileSync('frontend/bridges/runtime/remote-runtime-import-flow.ts', 'utf8');
+    const browserDerivation = readFileSync(
+      'frontend/bridges/wallet/brainvault/wallet-brainvault-browser-derivation.ts',
+      'utf8',
+    );
 
     expect(xlnStore).toContain('runtimeOperations.hydrateRemoteRuntimeImports()');
     expect(xlnStore).toContain("new URL('/api/runtime-import', resolveConfiguredApiBase(window.location.origin))");
@@ -647,11 +651,12 @@ describe('remote runtime import manager utilities', () => {
     expect(runtimeOpeningAdapter).toContain('peers: buildRemoteRuntimeRecoveryPeerSources({ runtimeId: expectedRuntimeId })');
     expect(runtimeCreation).toContain('const outcome = await walletRecoveryDiscovery.run({');
     expect(runtimeCreation).toContain('recoveryCheckedPeers = discovery.checkedPeers');
-    expect(runtimeCreation).toContain("import { errorLog } from '$lib/stores/errorLogStore';");
+    expect(runtimeCreation).toContain("import { errorLog } from '../../../../packages/browser/src/logging/error-log-store';");
     expect(runtimeCreation).toContain("errorLog.log(message, 'Runtime Creation', details)");
-    expect(runtimeCreation).toContain("logRuntimeCreationDiagnostic('BrainVault worker failed'");
+    expect(runtimeCreation).toContain("logRuntimeCreationDiagnostic('BrainVault derivation failed'");
     expect(runtimeCreation).toContain("logRuntimeCreationDiagnostic('Mnemonic import failed'");
-    expect(runtimeCreation).toContain("logRuntimeCreationDiagnostic('BrainVault worker initialization failed'");
+    expect(browserDerivation).toContain('normalizeWalletBrainVaultWorkerError(error)');
+    expect(browserDerivation).toContain('rejectRun(run, error)');
     expect(runtimeCreation).not.toContain('console.warn');
     expect(runtimeCreation).not.toContain('console.error');
     expect(runtimeCreation).not.toContain('console.info');
@@ -708,7 +713,7 @@ describe('remote runtime import manager utilities', () => {
   });
 
   test('remote projection refresh keeps imported non-hub runtime identity instead of first hub', () => {
-    const xlnStore = readFileSync('frontend/src/lib/stores/xlnStore.ts', 'utf8');
+    const xlnStore = readFileSync('frontend/bridges/runtime/xln-store.ts', 'utf8');
 
     expect(xlnStore).toContain('const entitySummaries = remoteEntitySummariesFromEntities(entities)');
     expect(xlnStore).toContain('const primarySummary = selectRemoteRuntimeProjectionPrimary(');

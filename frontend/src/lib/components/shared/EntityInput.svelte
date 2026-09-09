@@ -11,9 +11,9 @@
   import { parseEntityInput as parseSharedEntityInput } from '../../../../packages/ui/src/entity-input-model';
   import { createEventDispatcher } from 'svelte';
   import type { Profile as GossipProfile } from '@xln/core/api/public/runtime-module';
-  import { xlnFunctions } from '../../stores/xlnStore';
+  import { xlnFunctions } from '../../../../bridges/runtime/xln-store';
   import { entityAvatar } from '../../utils/identity/avatar';
-  import { compareStableText } from '$lib/utils/stableSort';
+  import { compareStableText } from '../../../../packages/ui/src/stable-compare';
 
   export let value: string = '';
   export let placeholder: string = 'Select or enter entity...';

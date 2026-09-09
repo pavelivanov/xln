@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { WalletAccountContext } from '../../../../bridges/wallet/wallet-canonical-account-context';
-import { buildActivityHistoryReadQuery, isTransientActivityReadError, type ActivityHistoryQueryInput } from '../../../../src/lib/components/Entity/account/activity/activity-history-query';
+import { buildActivityHistoryReadQuery, isTransientActivityReadError, type ActivityHistoryQueryInput } from '../../../../packages/ui/src/account/activity/activity-history-query';
 import { appendHistoryEvents, decodeWalletHistory, HISTORY_TYPES, historyTimeRange } from './wallet-history-model';
 import type { WalletPaymentSource } from '../payments/wallet-payment-source';
 

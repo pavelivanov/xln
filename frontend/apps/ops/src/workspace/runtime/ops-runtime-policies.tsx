@@ -5,7 +5,7 @@ import {
   buildStoragePolicy, readStoragePolicyFields, buildPerformancePolicy, readPerformancePolicyFields,
   type RuntimeStoragePolicy, type RuntimePerformancePolicy,
 } from '../../../../../packages/runtime-client/src/operator-policy-settings';
-import { assertNetworkMachineIsLive, networkMachineRuntime } from '../../../../../src/lib/stores/network/networkMachineRuntimeStore';
+import { assertNetworkMachineIsLive, networkMachineRuntime } from '../../../../../bridges/runtime/network-machine-runtime-store';
 import { opsEntityWorkspaceSource } from '../../entity-workspace/ops-entity-workspace-runtime';
 import { useWorkspaceEnvironment } from '../session/use-workspace-environment';
 

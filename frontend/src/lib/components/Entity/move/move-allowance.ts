@@ -1,5 +1,5 @@
-import { parsePositiveAssetAmount } from './../assets/entity-asset-values';
-import { getMoveRouteKey, type MoveEndpoint } from './../move-routes';
+import { parsePositiveAssetAmount } from '../../../../../packages/ui/src/entity/assets/entity-asset-values';
+import { getMoveRouteKey, type MoveEndpoint } from '../../../../../packages/ui/src/entity/move/move-routes';
 
 export type MoveAllowanceToken = {
   decimals: number;

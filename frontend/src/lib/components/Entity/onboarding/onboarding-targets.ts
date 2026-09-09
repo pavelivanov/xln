@@ -1,6 +1,6 @@
-import { normalizeEntityId } from '../../../utils/identity/entityReplica';
-import type { OnboardingRuntimeProjection } from './onboarding-runtime-input';
-import type { OnboardingTarget } from './onboarding-hub-discovery';
+import { normalizeEntityId } from '../../../../../packages/runtime-client/src/entity/entity-replica';
+import type { OnboardingRuntimeProjection } from '../../../../../packages/ui/src/onboarding/onboarding-runtime-input';
+import type { OnboardingTarget } from '../../../../../packages/ui/src/onboarding/onboarding-hub-discovery';
 
 export type OnboardingSigner = Readonly<{ entityId?: string; address: string; jurisdiction?: string }>;
 

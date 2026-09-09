@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { safeStringify } from '@xln/core/protocol/serialization';
-import { panelBridge } from '../../../../../src/lib/view/utils/panelBridge';
+import { panelBridge } from '../../../../../packages/browser/src/workspace/panel-bridge';
 import { mergeSettingsCameraState, type SettingsCameraState, type ViewSettings } from '../../../../../packages/runtime-client/src/panels/settings-panel-view';
 import { readOpsGraphCamera } from '../graph/ops-graph-preferences';
 import { SettingsRange } from './ops-settings-range';

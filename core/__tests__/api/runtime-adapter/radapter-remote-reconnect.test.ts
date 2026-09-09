@@ -5,7 +5,7 @@ import { BRAINVAULT_V1_SPEC_ID } from '../../../../brainvault/src/core/primitive
 import {
   createPaymentTerminalMonitor,
   PAYMENT_TERMINAL_EVENT_NAMES,
-} from '../../../../frontend/src/lib/stores/network/paymentTerminalMonitor';
+} from '../../../../frontend/packages/browser/src/graph/payment-terminal-monitor';
 import {
   decodeRuntimeAdapterBrowserMessage,
   decodeRuntimeAdapterMessage,

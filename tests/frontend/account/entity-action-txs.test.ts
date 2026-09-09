@@ -13,7 +13,7 @@ import {
   buildReserveToReserveTx,
   buildSettlementApproveTx,
   encodeExternalEoaAsEntity,
-} from '../../../frontend/src/lib/components/Entity/account/entity-action-txs';
+} from '../../../frontend/packages/runtime-client/src/entity/account-action-txs';
 
 const entityId = '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
 const hubId = '0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb';

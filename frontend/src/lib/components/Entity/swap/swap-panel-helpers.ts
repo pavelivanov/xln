@@ -1,5 +1,5 @@
-import { formatEntityId } from '$lib/utils/format';
-import type { EntityReplica } from '$lib/types/ui';
+import { formatEntityId } from '../../../utils/format';
+import type { EntityReplica } from '../../../types/ui';
 import type {
   BookState,
   EntityState,

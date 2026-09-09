@@ -1,6 +1,6 @@
 import type { RuntimeAdapter } from '@xln/core/api/public/runtime-module';
 import { RuntimeQueryObserver, type RuntimeQuerySnapshot } from '../../../../../packages/runtime-client/src/runtime/query/runtime-query-observer';
-import { requestAccountFaucet } from '../../../../../src/lib/components/Entity/account/account-faucet-command';
+import { requestAccountFaucet } from '../../../../../packages/browser/src/wallet/account-faucet-command';
 import { createWalletRuntimeQueryClient, walletRuntimeReadErrorMessage } from '../../runtime/wallet-runtime-read-boundary';
 import type { WalletAccountView } from './wallet-account-view-model';
 

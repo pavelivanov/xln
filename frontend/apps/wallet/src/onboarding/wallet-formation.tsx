@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { isTronChainId, type RuntimeAdapter } from '@xln/core/api/public/runtime-module';
 import type { WalletFormationResult, WalletFormationView } from '../../../../packages/browser/src/wallet/wallet-formation';
-import { generateLazyEntityIdPreview } from '../../../../src/lib/utils/identity/lazyEntityId';
+import { generateLazyEntityIdPreview } from '../../../../packages/browser/src/identity/lazy-entity-id';
 import { createWalletFormation, loadWalletFormation } from './wallet-formation-source';
 import '../styles/onboarding/wallet-formation.css';
 

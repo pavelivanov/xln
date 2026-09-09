@@ -1,15 +1,15 @@
 <script lang="ts">
   import { onDestroy, onMount, tick } from 'svelte';
   import { ArrowUp, ExternalLink, RotateCw, X } from 'lucide-svelte';
-  import './xln-mascot-chat.css';
+  import '../../../../packages/ui/src/content/xln-mascot-chat.css';
   import {
     loadXlnAssistantCatalog,
     streamXlnAssistantReply,
     type XlnAssistantCatalog,
     type XlnAssistantMessage,
-  } from '$lib/ai/xln-assistant-client';
-  import { buildXlnGuideMessages, suggestedXlnGuideQuestions } from '$lib/ai/xln-guide-context';
-  import { renderSafeMarkdown } from '$lib/security/safe-markdown';
+  } from '../../../../packages/browser/src/ai/xln-assistant-client';
+  import { buildXlnGuideMessages, suggestedXlnGuideQuestions } from '../../../../packages/browser/src/ai/xln-guide-context';
+  import { renderSafeMarkdown } from '../../../../packages/ui/src/safe-markdown';
 
   export let pathname = '/app';
   export let messages: XlnAssistantMessage[] = [];

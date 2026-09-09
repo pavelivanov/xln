@@ -2,18 +2,18 @@
   import type { Profile as GossipProfile } from '@xln/core/api/public/runtime-module';
   import type { AccountReplica, DerivedDelta } from '$lib/types/ui';
   import { createEventDispatcher, onDestroy, onMount } from 'svelte';
-  import { xlnFunctions } from '../../../../stores/xlnStore';
-  import { settings } from '$lib/stores/settingsStore';
-  import { p2pState } from '../../../../stores/xlnStore';
+  import { xlnFunctions } from '../../../../../../bridges/runtime/xln-store';
+  import { settings } from '../../../../../../packages/browser/src/settings-store';
+  import { p2pState } from '../../../../../../bridges/runtime/xln-store';
   import EntityIdentity from '../../../shared/EntityIdentity.svelte';
   import DeltaTokenSummary from '../../shared/DeltaTokenSummary.svelte';
   import AccountTokenDetails from '../../shared/AccountTokenDetails.svelte';
-  import { buildTokenVisualScale, sumVisualScales } from '../../shared/delta-visual';
-  import { buildAccountTokenDetails, isAccountLeftPerspective } from '../../shared/account-token-details';
-  import { amountToUsdMicros } from '$lib/utils/assetPricing';
+  import { buildTokenVisualScale, sumVisualScales } from '../../../../../../packages/ui/src/account/delta-visual';
+  import { buildAccountTokenDetails, isAccountLeftPerspective } from '../../../../../../packages/ui/src/account/account-token-details';
+  import { amountToUsdMicros } from '../../../../../../packages/runtime-client/src/asset-pricing';
   import { formatEntityId } from '$lib/utils/format';
-  import { getAccountUiStatus, getAccountUiStatusDescription } from '$lib/utils/accountStatus';
-  import { faucetPendingKey } from '../account-faucet';
+  import { getAccountUiStatus, getAccountUiStatusDescription } from '../../../../../../packages/ui/src/account/account-status';
+  import { faucetPendingKey } from '../../../../../../packages/browser/src/wallet/account-faucet';
   import { formatEntityNetworkLabel, normalizeJurisdictionDisplayName } from '../../swap/swap-panel-helpers';
 
   export let account: AccountReplica;

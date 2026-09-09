@@ -6,9 +6,9 @@
   import RuntimeAdapterPanel from '$lib/components/Health/RuntimeAdapterPanel.svelte';
   import EntityIdentity from '$lib/components/shared/EntityIdentity.svelte';
   import { probeRpcHealth } from '$lib/health/rpcHealth';
-  import { errorLog } from '$lib/stores/errorLogStore';
+  import { errorLog } from '../../../packages/browser/src/logging/error-log-store';
   import { runtimeQueryClient } from '$lib/stores/runtimeQueryClient';
-  import { runtimeControllerHandle } from '$lib/stores/runtimeControllerStore';
+  import { runtimeControllerHandle } from '../../../bridges/runtime/runtime-controller-store';
   import { ensureProjectionRuntimeConnected } from '$lib/utils/runtime/runtimeConnection';
   import {
     isRelayTimelineError,

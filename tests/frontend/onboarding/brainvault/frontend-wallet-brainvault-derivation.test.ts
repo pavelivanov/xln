@@ -15,7 +15,7 @@ describe('React wallet Brain Vault derivation boundary', () => {
     expect(derivation).toContain('validateWalletBrainVaultShardCompletion(');
     expect(derivation).toContain('resolveWalletBrainVaultShardDispatch(');
     expect(derivation).toContain('resolveWalletBrainVaultShardRetry(');
-    expect(derivation).toContain('run.workers.size >= run.workerTarget');
+    expect(derivation).toContain('run.workers.size - run.retiring.size >= run.workerTarget');
     expect(derivation).toContain('rejectRun(run, failure)');
     expect(runtime).toContain('worker.onmessage = null');
     expect(finalization).toContain('resolveWalletBrainVaultFinalizationShardOrder(');

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import type { AccountDropdownItem } from '../../../../src/lib/components/Entity/account/account-dropdown-model';
+import type { AccountDropdownItem } from './account-dropdown-model';
 import './account-dropdown.css';
 
 export function AccountDropdown({ accounts, selectedAccountId, onSelect, onAdd }: Readonly<{

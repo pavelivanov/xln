@@ -5,6 +5,15 @@
 export const isUnknownRecord = (value: unknown): value is Record<string, unknown> =>
   value !== null && typeof value === 'object' && !Array.isArray(value);
 
+/** Accepts JS Maps and the canonical Patricia map implementations used by detached Runtime views. */
+export const isMapLike = (value: unknown): value is ReadonlyMap<unknown, unknown> => {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
+  const candidate = value as Partial<ReadonlyMap<unknown, unknown>> & { size?: unknown };
+  return typeof candidate.entries === 'function'
+    && typeof candidate.get === 'function'
+    && typeof candidate.size === 'number';
+};
+
 export const requireUnknownRecord = (value: unknown, code: string): Record<string, unknown> => {
   if (!isUnknownRecord(value)) throw new Error(code);
   return value;

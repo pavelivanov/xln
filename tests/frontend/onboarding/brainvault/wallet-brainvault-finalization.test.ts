@@ -75,9 +75,13 @@ describe('browser wallet BrainVault finalization', () => {
     })).toEqual({ status: 'commit', recoveryLabel: 'Wallet 0x1234' });
   });
 
-  test('keeps shard bytes, cryptography, zeroization, persistence, and UI effects in Svelte', () => {
+  test('keeps secret finalization in one shared bridge outside both views', () => {
     const boundary = readFileSync(
       'frontend/packages/browser/src/identity/wallet-brainvault-finalization.ts',
+      'utf8',
+    );
+    const finalization = readFileSync(
+      'frontend/bridges/wallet/brainvault/wallet-brainvault-material-finalization.ts',
       'utf8',
     );
     const view = readFileSync(
@@ -91,12 +95,13 @@ describe('browser wallet BrainVault finalization', () => {
     expect(boundary).not.toContain('entropyToMnemonic');
     expect(boundary).not.toContain('passphrase');
     expect(boundary).not.toContain('vaultOperations');
-    expect(view).toContain('resolveWalletBrainVaultFinalizationStart({');
-    expect(view).toContain('resolveWalletBrainVaultFinalizationShardOrder(');
-    expect(view).toContain('resolveWalletBrainVaultFinalizationCommit({');
-    expect(view).toContain('masterKey = await combineShards(orderedResults, run.factor)');
-    expect(view).toContain("entropy = await deriveKey(masterKey, 'bip39/entropy/v1.0', 32)");
-    expect(view).toContain('for (const shard of orderedResults) shard.fill(0)');
-    expect(view).toContain('await prepareRecoveryDecisionFromCurrentSeed(commit.recoveryLabel)');
+    expect(finalization).toContain('resolveWalletBrainVaultFinalizationShardOrder(');
+    expect(finalization).toContain('master = await combineShards(ordered, input.factor)');
+    expect(finalization).toContain("entropy24 = await deriveKey(master, 'bip39/entropy/v1.0', 32)");
+    expect(finalization).toContain('master?.fill(0)');
+    expect(view).toContain('browserBrainVaultDerivation.derive(');
+    expect(view).not.toContain('combineShards(');
+    expect(view).not.toContain('deriveKey(');
+    expect(view).toContain('await prepareRecoveryDecisionFromCurrentSeed(recoveryLabel)');
   });
 });

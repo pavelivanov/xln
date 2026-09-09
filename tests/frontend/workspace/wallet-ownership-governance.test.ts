@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import { projectControlTakeoverTargets } from '../../../core/api/server/control/control-board-governance';
 import { getWalletControlActivationState } from '../../../frontend/bridges/wallet/wallet-canonical-ownership-governance';
-import { buildControlBoardActivationInputs } from '../../../frontend/src/lib/components/Entity/ownership/ownership-flow';
+import { buildControlBoardActivationInputs } from '../../../frontend/packages/runtime-client/src/entity/ownership-flow';
 
 const shareholder = `0x${'01'.repeat(32)}`;
 const signer = `0x${'02'.repeat(20)}`;

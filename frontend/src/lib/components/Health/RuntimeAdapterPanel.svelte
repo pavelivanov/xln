@@ -3,7 +3,7 @@
     connectRuntimeAdapter,
     disconnectRuntimeAdapter,
     runtimeControllerHandle,
-  } from '$lib/stores/runtimeControllerStore';
+  } from '../../../../bridges/runtime/runtime-controller-store';
   import { persistRuntimeAdapterSession } from '$lib/utils/runtime/runtimeConnection';
   import { refreshRuntimeView, runtimeView } from '$lib/stores/runtimeViewStore';
   import { makeQaSeveritySignal, type QaSeveritySignal } from '@xln/core/qa/severity';

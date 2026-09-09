@@ -10,18 +10,18 @@
   import type { Writable } from 'svelte/store';
   import { get } from 'svelte/store';
   import { onDestroy } from 'svelte';
-  import { panelBridge } from '../utils/panelBridge';
+  import { panelBridge } from '../../../../packages/browser/src/workspace/panel-bridge';
   import ahbScenarioCode from '../../../../../core/scenarios/consensus/ahb.ts?raw';
   import { shortAddress } from '$lib/utils/format';
-  import { getXLN, submitRuntimeInput } from '$lib/stores/xlnStore';
+  import { getXLN, submitRuntimeInput } from '../../../../bridges/runtime/xln-store';
   import type { EnvSnapshot, RuntimeInput, RuntimeReplica, XLNModule } from '@xln/core/api/public/runtime-module';
   import type { EntityReplica } from '@xln/core/entity/types';
   import type { JurisdictionConfig } from '@xln/core/protocol/config/jurisdiction-config';
   import type { JAdapter } from '@xln/core/jurisdiction/adapter';
   import { defaultAccountDisputeConfigForRoleEvidence } from '@xln/core/account/config/dispute-config';
   import { computeAddress, hexlify } from 'ethers';
-  import { activeRuntimeEntry as activeRuntimeStore } from '$lib/stores/runtimeStore';
-  import { activeRuntime as activeVaultRuntime } from '$lib/stores/vault/vaultStore';
+  import { activeRuntimeEntry as activeRuntimeStore } from '../../../../bridges/runtime/runtime-store';
+  import { activeRuntime as activeVaultRuntime } from '../../../../bridges/vault/vault-metadata-store';
   import SolvencyPanel from './solvency/SolvencyPanel.svelte';
   import {
     getArchitectErrorMessage as errorMessage,

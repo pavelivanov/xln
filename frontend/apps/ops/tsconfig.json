@@ -3,7 +3,6 @@
   "compilerOptions": {
     "baseUrl": "../..",
     "paths": {
-      "$lib/*": ["src/lib/*"],
       "@xln/core/*": ["../core/*"]
     },
     "types": ["vite/client", "node"]

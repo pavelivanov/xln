@@ -1,4 +1,4 @@
-import { readStoreValue } from '../../src/lib/utils/observableStore';
+import { readStoreValue } from '../../packages/runtime-client/src/observable-store';
 import { getAddress, getBytes, isAddress, Wallet, ZeroAddress } from 'ethers';
 
 import type { JAdapter, RuntimeReplica } from '@xln/core/api/public/runtime-module';
@@ -14,15 +14,12 @@ import type {
 import { walletExternalBindingMatches } from '../../packages/browser/src/wallet/wallet-external-provider';
 import {
   requestExternalWalletSnapshot,
-} from '../../src/lib/components/Entity/external-wallet-reader';
-import { getXLN } from '../../src/lib/stores/bootstrap/xlnRuntimeLoader';
-import {
-  runtimesState,
-  vaultOperations,
-  type Runtime,
-  type Signer,
-} from '../../src/lib/stores/vault/vaultStore';
-import { runtimes as runtimeRegistry } from '../../src/lib/stores/runtimeStore';
+} from './external-wallet-reader';
+import { getXLN } from '../runtime/xln-runtime-loader';
+import { vaultOperations } from '../vault/vault-store';
+import { runtimesState } from '../vault/vault-metadata-store';
+import type { Runtime, Signer } from '../vault/vault-recovery';
+import { runtimes as runtimeRegistry } from '../runtime/runtime-store';
 import { unwrapLiveRuntimeEnv } from '../../src/lib/utils/runtime/liveRuntimeEnv';
 import { resolveExternalWalletAuthorityPlatform } from '../../src/lib/native/external-wallet-authority';
 

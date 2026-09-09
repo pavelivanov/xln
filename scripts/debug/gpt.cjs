@@ -276,8 +276,8 @@ const CORE_FILES = {
     'src/lib/view/panels/graph3d/Graph3DPanel.svelte', // 3D graph visualization
     'src/lib/view/panels/ArchitectPanel.svelte', // Architect modes + workflows
     'src/lib/view/panels/JurisdictionPanel.svelte', // On-chain state viewer
-    'src/lib/view/utils/panelBridge.ts',    // Panel-to-panel messaging
-    'src/lib/network3d/networkMachine.ts',  // 3D graph scene orchestration
+    'packages/browser/src/workspace/panel-bridge.ts',    // Panel-to-panel messaging
+    'packages/runtime-client/src/scenario/network-machine.ts',  // 3D graph scene orchestration
   ]
 };
 
@@ -430,10 +430,10 @@ const CROSS_FILES = {
     'src/lib/components/Entity/routed-swap-planner.ts',
     'src/lib/components/Entity/swap-formatting.ts',
     'src/lib/components/Entity/swap/swap-order-history.ts',
-    'src/lib/components/Entity/move-routes.ts',
+    'packages/ui/src/entity/move/move-routes.ts',
     'src/lib/components/Trading/OrderbookPanel.svelte',
     'src/lib/components/Trading/orderbook-relay-url.ts',
-    'src/lib/stores/network/routePreviewStore.ts',
+    'packages/browser/src/graph/route-preview-store.ts',
     'src/lib/utils/identity/jurisdictionBadge.ts',
   ],
   tests: [
@@ -1457,8 +1457,8 @@ ${includeFrontend ? `
     src/lib/view/panels/graph3d/Graph3DPanel.svelte ${fileSizes['frontend/src/lib/view/panels/graph3d/Graph3DPanel.svelte'] || '?'} lines - 3D graph panel
     src/lib/view/panels/ArchitectPanel.svelte ${fileSizes['frontend/src/lib/view/panels/ArchitectPanel.svelte'] || '?'} lines - Architect workflows
     src/lib/view/panels/JurisdictionPanel.svelte ${fileSizes['frontend/src/lib/view/panels/JurisdictionPanel.svelte'] || '?'} lines - Jurisdiction viewer
-    src/lib/view/utils/panelBridge.ts   ${fileSizes['frontend/src/lib/view/utils/panelBridge.ts'] || '?'} lines - Panel messaging
-    src/lib/network3d/networkMachine.ts ${fileSizes['frontend/src/lib/network3d/networkMachine.ts'] || '?'} lines - 3D graph scene orchestration
+    packages/browser/src/workspace/panel-bridge.ts   ${fileSizes['frontend/packages/browser/src/workspace/panel-bridge.ts'] || '?'} lines - Panel messaging
+    packages/runtime-client/src/scenario/network-machine.ts ${fileSizes['frontend/packages/runtime-client/src/scenario/network-machine.ts'] || '?'} lines - 3D graph scene orchestration
 ` : ''}
 
 Reading Guide:

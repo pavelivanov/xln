@@ -3,7 +3,7 @@ import type { WalletAccountContext } from '../../../../bridges/wallet/wallet-can
 import { buildWalletLoanRepayment, createWalletLendingIntentId, decodeWalletLending, type WalletLendingState, type WalletLendingLoan } from './wallet-lending-model';
 import type { WalletPaymentSource } from '../payments/wallet-payment-source';
 import type { WalletWorkspaceSelection } from '../runtime/wallet-workspace-selection';
-import { buildLendingTokenOptions } from '../../../../src/lib/components/Entity/payments/lending-token-options';
+import { buildLendingTokenOptions } from '../../../../packages/ui/src/account/lending-token-options';
 
 export function WalletLending({ context, source, selection }: Readonly<{ context: WalletAccountContext; source: WalletPaymentSource; selection: WalletWorkspaceSelection }>) {
   const accounts = [...context.replica.state.accounts.keys()];

@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 
-import { createMoveVisualController } from '../../../frontend/src/lib/components/Entity/move/move-visual-controller';
-import type { MoveEndpoint } from '../../../frontend/src/lib/components/Entity/move-routes';
+import { createMoveVisualController } from '../../../frontend/packages/ui/src/entity/move/move-visual-controller';
+import type { MoveEndpoint } from '../../../frontend/packages/ui/src/entity/move/move-routes';
 
 type RectLike = Pick<DOMRect, 'left' | 'right' | 'top' | 'width' | 'height'>;
 

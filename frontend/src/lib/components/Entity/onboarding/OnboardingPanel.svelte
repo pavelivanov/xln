@@ -7,25 +7,25 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { createEventDispatcher } from 'svelte';
-  import { resolveConfiguredApiBase, submitRuntimeInput, xlnFunctions } from '../../../stores/xlnStore';
+  import { resolveConfiguredApiBase, submitRuntimeInput, xlnFunctions } from '../../../../../bridges/runtime/xln-store';
   import {
-    activeRuntime,
     buildRuntimeRecoveryConfigForMode,
     parseRuntimeRecoveryCandidateFile,
-    vaultOperations,
     type RecoveryTowerConfig,
     type RecoveryTowerSetupMode,
-  } from '../../../stores/vault/vaultStore';
+  } from '../../../../../bridges/vault/vault-recovery';
+  import { activeRuntime } from '../../../../../bridges/vault/vault-metadata-store';
+  import { vaultOperations } from '../../../../../bridges/vault/vault-store';
   import { entityAvatar } from '../../../utils/identity/avatar';
   import {
     type HubJoinPreference,
     hydrateJurisdictionPolicyDefaults,
     readHubJoinPreference,
     readSavedCollateralPolicy,
-  } from '../../../utils/onboarding/onboardingPreferences';
+  } from '../../../../../packages/browser/src/onboarding/onboarding-preferences';
   import {
     readOnboardingComplete,
-  } from '../../../utils/onboarding/onboardingState';
+  } from '../../../../../packages/browser/src/onboarding/onboarding-state';
   import {
     getManualRecoveryTowers,
     inferRecoveryTowerSetupMode,
@@ -45,10 +45,10 @@
   import {
     emptyOnboardingRuntimeProjection,
     type OnboardingRuntimeProjection,
-  } from './onboarding-runtime-input';
-  import type { OnboardingTarget } from './onboarding-hub-discovery';
+  } from '../../../../../packages/ui/src/onboarding/onboarding-runtime-input';
+  import type { OnboardingTarget } from '../../../../../packages/ui/src/onboarding/onboarding-hub-discovery';
   import { createOnboardingHubJoinCommands } from './onboarding-hub-join';
-  import { finishOnboardingSetup, toUsdInt } from './onboarding-setup';
+  import { finishOnboardingSetup, toUsdInt } from '../../../../../packages/browser/src/onboarding/onboarding-setup';
   import { hasAnyOnboardingCounterpartyAccount, resolveOnboardingTargets } from './onboarding-targets';
 
   export let entityId: string = '';

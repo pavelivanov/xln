@@ -59,8 +59,8 @@ test('runtime command bus records pending accepted observed committed error rece
 });
 
 test('browser E2E mutations use the live runtime command bus instead of a detached view RuntimeReplica', () => {
-  const storeSource = readFileSync('frontend/src/lib/stores/xlnStore.ts', 'utf8');
-  const embeddedSource = readFileSync('frontend/src/lib/stores/bootstrap/embeddedRuntimeStore.ts', 'utf8');
+  const storeSource = readFileSync('frontend/bridges/runtime/xln-store.ts', 'utf8');
+  const embeddedSource = readFileSync('frontend/bridges/runtime/embedded-runtime-store.ts', 'utf8');
   const helperSource = readFileSync('tests/utils/runtime/e2e-runtime-input.ts', 'utf8');
   const enqueueStart = helperSource.indexOf('export async function enqueueRuntimeInput');
   const enqueueEnd = helperSource.indexOf('export async function enqueueEntityTxs', enqueueStart);
@@ -380,7 +380,7 @@ test('remote command journal persists protected replayable intents outside local
   const indexedDbSource = readFileSync('frontend/packages/browser/src/commands/runtime-command-journal-indexed-db.ts', 'utf8');
   const keyringSource = readFileSync('frontend/packages/browser/src/commands/runtime-command-journal-keyring.ts', 'utf8');
   const storageSource = readFileSync('frontend/packages/browser/src/commands/runtime-command-journal-storage.ts', 'utf8');
-  const routeSource = readFileSync('frontend/src/lib/stores/xlnStore.ts', 'utf8');
+  const routeSource = readFileSync('frontend/bridges/runtime/xln-store.ts', 'utf8');
   const journalSource = `${intentSource}\n${codecSource}\n${indexedDbSource}\n${keyringSource}\n${storageSource}`;
 
   expect(journalSource).not.toContain('localStorage');
@@ -462,7 +462,7 @@ test('server results cannot synthesize command receipts or durable receipt URLs'
 });
 
 test('xlnStore routes RuntimeInput mutations through RuntimeCommandBus', () => {
-  const source = readFileSync('frontend/src/lib/stores/xlnStore.ts', 'utf8');
+  const source = readFileSync('frontend/bridges/runtime/xln-store.ts', 'utf8');
   const routeIndex = source.indexOf('const routeRuntimeInput = async');
   expect(routeIndex).toBeGreaterThan(0);
   const routeSource = source.slice(routeIndex, source.indexOf('// Enqueue entity inputs', routeIndex));
@@ -487,7 +487,7 @@ test('xlnStore routes RuntimeInput mutations through RuntimeCommandBus', () => {
 	  expect(source).not.toContain('commitAcceptedRuntimeCommands');
 		  expect(source).not.toContain("registerDebugSurface('submit'");
 		  expect(source).not.toContain('__xlnRuntimeSubmit');
-	  expect(source).toContain("from './runtimeStore';");
+	  expect(source).toContain("from './runtime-store';");
 	  expect(source).toContain('activeEnv');
 	  expect(source).toContain('activeRuntimeId');
 	  expect(source).toContain('runtimes');
@@ -499,7 +499,7 @@ test('xlnStore routes RuntimeInput mutations through RuntimeCommandBus', () => {
 	});
 
 test('remote command authority does not depend on a local vault Runtime', () => {
-  const source = readFileSync('frontend/src/lib/stores/xlnStore.ts', 'utf8');
+  const source = readFileSync('frontend/bridges/runtime/xln-store.ts', 'utf8');
   const submitStart = source.indexOf('export async function submitActiveRuntimeInput');
   const submitEnd = source.indexOf('async function waitForActiveRuntimeDrained', submitStart);
   const submitSource = source.slice(submitStart, submitEnd);
@@ -621,7 +621,7 @@ test('embedded command completion is multiset-exact and accepts only derived HTL
 });
 
 test('runtime controller forwards caller-owned commandId to the remote adapter', () => {
-  const source = readFileSync('frontend/src/lib/stores/runtimeControllerStore.ts', 'utf8');
+  const source = readFileSync('frontend/bridges/runtime/runtime-controller-store.ts', 'utf8');
   const sendIndex = source.indexOf('export const runtimeAdapterSend');
   expect(sendIndex).toBeGreaterThan(0);
   const sendSource = source.slice(sendIndex, source.indexOf('\n};', sendIndex) + 3);
@@ -631,7 +631,7 @@ test('runtime controller forwards caller-owned commandId to the remote adapter',
 });
 
 test('public mutation exports no longer accept caller-owned RuntimeReplica', () => {
-  const source = readFileSync('frontend/src/lib/stores/xlnStore.ts', 'utf8');
+  const source = readFileSync('frontend/bridges/runtime/xln-store.ts', 'utf8');
   expect(source).not.toContain('assertSubmittedEnvMatchesActiveRuntime');
 
   const submitRuntimeIndex = source.indexOf('export async function submitRuntimeInput');
@@ -671,7 +671,7 @@ test('server-side credit requests validate the result without synthesizing ingre
 test('credit and collateral configure forms submit RuntimeInput through shared command path', () => {
   const creditSource = readFileSync('frontend/src/lib/components/Entity/account/ui/CreditForm.svelte', 'utf8');
   const collateralSource = readFileSync('frontend/src/lib/components/Entity/account/ui/CollateralForm.svelte', 'utf8');
-  const collateralPolicySource = readFileSync('frontend/src/lib/components/Entity/account/collateral-request.ts', 'utf8');
+  const collateralPolicySource = readFileSync('frontend/packages/runtime-client/src/entity/collateral-request.ts', 'utf8');
   const configureSource = readFileSync('frontend/src/lib/components/Entity/account/ui/AccountConfigurePanel.svelte', 'utf8');
   const accountWorkspaceSource = readFileSync('frontend/src/lib/components/Entity/workspace/AccountWorkspaceView.svelte', 'utf8');
   const resolverSource = readFileSync('core/api/runtime-adapter/resolve.ts', 'utf8');
@@ -731,7 +731,7 @@ test('lending mutations use the signer runtime command path instead of unauthent
 
 test('server-side faucet results retain readiness guards without synthesizing ingress receipts', () => {
   const panelSource = readFileSync('frontend/src/lib/components/Entity/workspace/shell/EntityPanelTabs.svelte', 'utf8');
-  const faucetSource = readFileSync('frontend/src/lib/components/Entity/account/account-faucet.ts', 'utf8');
+  const faucetSource = readFileSync('frontend/packages/browser/src/wallet/account-faucet.ts', 'utf8');
   const assetFaucetSource = readFileSync('frontend/src/lib/components/Entity/assets/AssetFaucetCard.svelte', 'utf8');
   const assetsSource = readFileSync('frontend/src/lib/components/Entity/assets/EntityAssetsTab.svelte', 'utf8');
 

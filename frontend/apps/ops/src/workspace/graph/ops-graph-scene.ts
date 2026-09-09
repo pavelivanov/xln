@@ -10,16 +10,16 @@ import type { GraphEntityVisualData } from '../../../../../packages/ui/src/graph
 import { createExactGraphRenderer, disposeGraphObject3D } from '../../../../../packages/ui/src/graph/graph3d-renderer';
 import { fitGraphCameraToEntities, applyGraphCameraPose, applyGraphCameraTarget } from '../../../../../packages/ui/src/graph/graph3d-camera';
 import { bindGraphControlsLifecycle } from '../../../../../packages/ui/src/graph/graph3d-lifecycle';
-import type { MergedRuntimeGraph } from '../../../../../src/lib/network3d/runtimeGraphProjection';
-import type { RuntimeGraphLayoutCache } from '../../../../../src/lib/network3d/runtimeGraphLayout';
-import { writeGraphPositionOverride } from '../../../../../src/lib/network3d/graphPositionOverrides';
-import type { GraphXLNRuntime } from '../../../../../src/lib/view/panels/graph3d/graph3d-types';
-import { panelBridge } from '../../../../../src/lib/view/utils/panelBridge';
+import type { MergedRuntimeGraph } from '../../../../../packages/ui/src/graph/runtime-graph-projection';
+import type { RuntimeGraphLayoutCache } from '../../../../../packages/ui/src/graph/runtime-graph-layout';
+import { writeGraphPositionOverride } from '../../../../../packages/browser/src/graph/graph-position-overrides';
+import type { GraphXLNRuntime } from '../../../../../packages/ui/src/graph/graph3d-types';
+import { panelBridge } from '../../../../../packages/browser/src/workspace/panel-bridge';
 import { readOpsGraphCamera, saveOpsGraphCamera, opsGraphViewSettings } from './ops-graph-preferences';
 import { buildOpsGraphWorld, type OpsGraphConnection, type OpsGraphOptions } from './ops-graph-world';
 import { applyOpsGraphCue } from './ops-graph-cues';
 import { createOpsGraphStats } from './ops-graph-stats';
-import { logDebug } from '../../../../../src/lib/view/utils/frontendLogger';
+import { logDebug } from '../../../../../packages/browser/src/logging/frontend-logger';
 import { createOpsGraphEffects, type OpsGraphEffectSignal } from './ops-graph-effects';
 import { createOpsGraphXr, readOpsGraphXrSupport } from './ops-graph-xr';
 

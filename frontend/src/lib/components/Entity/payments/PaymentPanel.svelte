@@ -14,9 +14,9 @@
     refreshPaymentRuntimeGossip,
     sendRuntimeDebugEvent,
     xlnFunctions,
-  } from '../../../stores/xlnStore';
-  import { errorLog } from '../../../stores/errorLogStore';
-  import { requireSignerIdForEntity } from '$lib/utils/identity/entityReplica';
+  } from '../../../../../bridges/runtime/xln-store';
+  import { errorLog } from '../../../../../packages/browser/src/logging/error-log-store';
+  import { requireSignerIdForEntity } from '../../../../../packages/runtime-client/src/entity/entity-replica';
   import { toasts } from '$lib/stores/ui/toastStore';
   import { runtimeCommandLatestReceipt } from '$lib/stores/commands/runtimeCommandBus';
   import { classifyRuntimeFailure } from '$lib/utils/runtime/runtimeFailure';
@@ -24,8 +24,8 @@
   import TokenSelect from '../../shared/TokenSelect.svelte';
   import EntityIdentity from '../../shared/EntityIdentity.svelte';
   import { parseXlnInvoice, type ParsedXlnInvoice } from '$lib/utils/xlnInvoice';
-  import { parseTokenAmountInput, tokenAmountInputErrorMessage } from '../assets/token-amount-input';
-  import { requireTokenDecimals } from '../token-metadata';
+  import { parseTokenAmountInput, tokenAmountInputErrorMessage } from '../../../../../packages/ui/src/entity/assets/token-amount-input';
+  import { requireTokenDecimals } from '../../../../../packages/runtime-client/src/token-metadata';
   import {
     hasCertifiedEntityEncryptionKey,
     findProfileByEntityId,

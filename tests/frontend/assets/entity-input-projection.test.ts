@@ -53,7 +53,7 @@ test('entity naming helpers are projection-only and do not perform hidden runtim
 
 test('entity factory auto-create uses injected runtime env and fails loud', () => {
   const entityFactory = readFileSync('frontend/src/lib/utils/identity/entityFactory.ts', 'utf8');
-  const vaultStore = readFileSync('frontend/src/lib/stores/vault/vaultStore.ts', 'utf8');
+  const vaultStore = readFileSync('frontend/bridges/vault/vault-store.ts', 'utf8');
 
   expect(entityFactory).toContain('export async function autoCreateEntityForSigner');
   expect(entityFactory).toContain('env: RuntimeReplica,');
@@ -98,7 +98,7 @@ test('entity factory rechecks bootstrap ownership and dispatches only to its inj
 });
 
 test('vault user token helpers use active RuntimeStore env and RuntimeInput command path', () => {
-  const vaultStore = readFileSync('frontend/src/lib/stores/vault/vaultStore.ts', 'utf8');
+  const vaultStore = readFileSync('frontend/bridges/vault/vault-store.ts', 'utf8');
   const balanceStart = vaultStore.indexOf('async getEntityBalance');
   const clearStart = vaultStore.indexOf('// === MVP: Send tokens', balanceStart);
   const sendStart = vaultStore.indexOf('async sendTokens');

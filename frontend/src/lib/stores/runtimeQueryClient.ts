@@ -1,4 +1,4 @@
-import { get } from 'svelte/store';
+import { readStoreValue as get } from '../../../packages/runtime-client/src/observable-store';
 import type {
   EncryptedRuntimeRecoveryBundleV1,
   RuntimeAdapter,
@@ -18,8 +18,8 @@ import {
   runtimeAdapter,
   runtimeAdapterHeight,
   runtimeControllerHandle,
-} from './runtimeControllerStore';
-import { registerDebugSurface } from '$lib/utils/runtime/debugSurface';
+} from '../../../bridges/runtime/runtime-controller-store';
+import { registerDebugSurface } from '../utils/runtime/debugSurface';
 import {
   RuntimeQueryClient as RuntimeQueryClientBoundary,
   clearRuntimeQueryCache,

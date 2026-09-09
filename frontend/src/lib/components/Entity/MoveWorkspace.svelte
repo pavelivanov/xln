@@ -2,7 +2,7 @@
   import { onDestroy } from 'svelte';
   import type { Profile as GossipProfile } from '@xln/core/api/public/runtime-module';
   import EntityInput from '../shared/EntityInput.svelte';
-  import type { MoveEndpoint } from './move-routes';
+  import type { MoveEndpoint } from '../../../../packages/ui/src/entity/move/move-routes';
 
   type MoveEntityInputEvent = CustomEvent<{ value?: string }>;
   type MoveDisplayBalances = Record<MoveEndpoint, bigint>;

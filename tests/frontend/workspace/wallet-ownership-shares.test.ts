@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 import { projectWalletOwnership } from '../../../frontend/bridges/wallet/wallet-canonical-ownership';
-import { ENTITY_DIVIDEND_TOKEN_FLAG } from '../../../frontend/src/lib/components/Entity/ownership/ownership-flow';
+import { ENTITY_DIVIDEND_TOKEN_FLAG } from '../../../frontend/packages/runtime-client/src/entity/ownership-flow';
 
 const entityId = `0x${'0'.repeat(63)}1`;
 const peerId = `0x${'0'.repeat(63)}2`;

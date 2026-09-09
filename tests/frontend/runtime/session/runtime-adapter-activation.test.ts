@@ -197,7 +197,7 @@ describe('runtime-client adapter activation boundary', () => {
       'frontend/packages/runtime-client/src/runtime/runtime-adapter-activation.ts',
       'utf8',
     );
-    const store = readFileSync('frontend/src/lib/stores/runtimeStore.ts', 'utf8');
+    const store = readFileSync('frontend/bridges/runtime/runtime-store.ts', 'utf8');
 
     expect(boundary).not.toContain('svelte');
     expect(boundary).not.toContain('localStorage');

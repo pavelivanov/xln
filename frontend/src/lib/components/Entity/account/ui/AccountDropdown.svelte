@@ -4,11 +4,11 @@
    * Uses unified Dropdown base component
    */
   import { createEventDispatcher } from 'svelte';
-  import { xlnFunctions, xlnInstance } from '../../../../stores/xlnStore';
+  import { xlnFunctions, xlnInstance } from '../../../../../../bridges/runtime/xln-store';
   import type { EntityReplica } from '$lib/types/ui';
   import Dropdown from '$lib/components/UI/Dropdown.svelte';
   import { entityAvatar } from '$lib/utils/identity/avatar';
-  import { buildAccountDropdownItems } from '../account-dropdown-model';
+  import { buildAccountDropdownItems } from '../../../../../../packages/ui/src/account/account-dropdown-model';
 
   export let replica: EntityReplica | null = null;
   export let selectedAccountId: string | null = null;

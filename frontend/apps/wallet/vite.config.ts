@@ -9,7 +9,6 @@ export default defineConfig({ ...createReactAppConfig({
   rootDirectory: fileURLToPath(new URL('.', import.meta.url)),
   aliases: {
     '@xln/brainvault': fileURLToPath(new URL('../../../brainvault', import.meta.url)),
-    '$lib': fileURLToPath(new URL('../../src/lib', import.meta.url)),
   },
 }),
   // Recovery loads native capability bridges after the seed rehearsal. Resolve

@@ -159,9 +159,9 @@ describe('browser Runtime adapter session', () => {
 
   test('keeps canonical Svelte paths on one browser-session writer', () => {
     const connection = readFileSync('frontend/src/lib/utils/runtime/runtimeConnection.ts', 'utf8');
-    const importFlow = readFileSync('frontend/src/lib/utils/onboarding/remoteRuntimeImportFlow.ts', 'utf8');
-    const runtimeStore = readFileSync('frontend/src/lib/stores/runtimeStore.ts', 'utf8');
-    const xlnStore = readFileSync('frontend/src/lib/stores/xlnStore.ts', 'utf8');
+    const importFlow = readFileSync('frontend/bridges/runtime/remote-runtime-import-flow.ts', 'utf8');
+    const runtimeStore = readFileSync('frontend/bridges/runtime/runtime-store.ts', 'utf8');
+    const xlnStore = readFileSync('frontend/bridges/runtime/xln-store.ts', 'utf8');
     const appLayout = readFileSync('frontend/src/routes/app/+layout.svelte', 'utf8');
 
     for (const source of [connection, importFlow, runtimeStore]) {

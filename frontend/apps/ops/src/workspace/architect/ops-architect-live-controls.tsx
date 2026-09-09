@@ -1,8 +1,8 @@
 import { useEffect, useState, useSyncExternalStore } from 'react';
 
-import { getXLN } from '../../../../../src/lib/stores/bootstrap/xlnRuntimeLoader';
-import { jmachineState } from '../../../../../src/lib/stores/network/jmachineStore';
-import type { JMachineCreateDetail } from '../../../../../src/lib/components/Jurisdiction/import-jmachine-runtime';
+import { getXLN } from '../../../../../bridges/runtime/xln-runtime-loader';
+import { jmachineState } from '../../../../../packages/browser/src/jurisdiction/jmachine-store';
+import type { JMachineCreateDetail } from '../../../../../bridges/runtime/import-jmachine-runtime';
 import { useWorkspaceEnvironment } from '../session/use-workspace-environment';
 import {
   createArchitectDemoGrid,

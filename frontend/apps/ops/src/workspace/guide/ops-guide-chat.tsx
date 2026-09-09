@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState, type Dispatch, type SetStateAction } from 'react';
-import { loadXlnAssistantCatalog, streamXlnAssistantReply, type XlnAssistantCatalog, type XlnAssistantMessage } from '../../../../../src/lib/ai/xln-assistant-client';
-import { buildXlnGuideMessages, suggestedXlnGuideQuestions } from '../../../../../src/lib/ai/xln-guide-context';
-import { renderSafeMarkdown } from '../../../../../src/lib/security/safe-markdown';
-import '../../../../../src/lib/components/XlnMascot/xln-mascot-chat.css';
+import { loadXlnAssistantCatalog, streamXlnAssistantReply, type XlnAssistantCatalog, type XlnAssistantMessage } from '../../../../../packages/browser/src/ai/xln-assistant-client';
+import { buildXlnGuideMessages, suggestedXlnGuideQuestions } from '../../../../../packages/browser/src/ai/xln-guide-context';
+import { renderSafeMarkdown } from '../../../../../packages/ui/src/safe-markdown';
+import '../../../../../packages/ui/src/content/xln-mascot-chat.css';
 import type { OpsGuideFrameContext } from './ops-guide-context';
 
 type Props = Readonly<{ context: OpsGuideFrameContext; messages: XlnAssistantMessage[]; setMessages: Dispatch<SetStateAction<XlnAssistantMessage[]>>; onClose: () => void }>;

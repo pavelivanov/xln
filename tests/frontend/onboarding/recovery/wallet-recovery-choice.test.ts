@@ -103,7 +103,7 @@ describe('browser wallet recovery choice', () => {
       'utf8',
     );
     const adapter = readFileSync(
-      'frontend/src/lib/stores/vault/walletRuntimeOpeningAdapter.ts',
+      'frontend/bridges/vault/wallet-runtime-opening-adapter.ts',
       'utf8',
     );
 
