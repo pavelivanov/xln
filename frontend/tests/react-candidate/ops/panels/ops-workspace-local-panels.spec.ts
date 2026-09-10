@@ -14,7 +14,7 @@ test('recorded Gossip and Entity panels follow scenario selection without a live
   await page.getByRole('button', { name: 'Open Gossip panel', exact: true }).click();
   const gossip = page.getByTestId('runtime-gossip-panel');
   await expect(gossip).toContainText('4 profiles');
-  await expect(gossip).toContainText('Recorded Runtime');
+  await expect(gossip).toContainText('Historical Runtime · h126');
   await gossip.getByRole('button', { name: /^Open Entity / }).first().click();
   const entity = page.locator('.workspace-entity-pane[data-entity-id]');
   await expect(entity.getByTestId('entity-workspace-shell')).toHaveAttribute('data-read-status', 'ready');
