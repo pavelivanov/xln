@@ -113,6 +113,7 @@ describe('React wallet app shell', () => {
     expect(resolveWalletAppRoute('', '#settings')).toEqual({ view: 'settings', section: 'profile', entityId: '' });
     expect(resolveWalletAppRoute('', '#settings/entity?entity=0xABCD')).toEqual({ view: 'settings', section: 'profile', entityId: '0xABCD' });
     expect(resolveWalletAppRoute('', '#settings/recovery')).toEqual({ view: 'settings', section: 'recovery', entityId: '' });
+    expect(resolveWalletAppRoute('', '#settings/stack-manager?entity=0xABCD')).toEqual({ view: 'settings', section: 'stack-manager', entityId: '0xABCD' });
     expect(resolveWalletAppRoute('', '#settings/display')).toEqual({ view: 'settings', section: 'preferences', entityId: '' });
     expect(resolveWalletAppRoute('?markets=1', '#pay/ABC%3Fdesc%3DLunch')).toEqual({
       view: 'payments', tab: 'send', invoice: 'https://xln.finance/app#pay/ABC%3Fdesc%3DLunch',

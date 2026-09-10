@@ -2,6 +2,102 @@ import { expect, test } from '@playwright/test';
 import { expectNoBrowserErrors, expectPageContained, observeBrowserErrors, screenshotEvidence } from '../browser-evidence';
 import { selectWalletFixtureRuntime } from './fixtures/wallet-runtime-test-helpers';
 
+test(
+  'Wallet Stack Manager keeps explicit Entity selection and invalidates cancelled or changed reviews',
+  { tag: '@resilience' },
+  async ({ page }, testInfo) => {
+    const { readStackManagerRpcFixture } = await import('./fixtures/wallet-runtime-test-helpers');
+    const errors = observeBrowserErrors(page);
+    const fixture = await selectWalletFixtureRuntime(page);
+    const deploymentRpc = await readStackManagerRpcFixture(page);
+    const submissions: string[] = [];
+    page.on('request', request => {
+      if (request.method() === 'POST' && new URL(request.url()).pathname === '/api/control/stack-manager/deploy')
+        submissions.push(request.url());
+    });
+    await page.goto(`/app#settings?entity=${fixture.entityId}`);
+    await expect(page.getByLabel('Selected identity')).toHaveValue(fixture.entityId);
+    await page.getByRole('link', { name: 'Stack Manager', exact: true }).click();
+    const wallet = page.getByTestId('wallet-stack-manager');
+    const stack = page.getByTestId('workspace-stack-manager');
+    await expect(wallet).toHaveAttribute('data-entity-id', fixture.entityId);
+    await expect(wallet).toHaveAttribute('data-runtime-id', fixture.runtimeId);
+    await stack.getByTestId('stack-manager-rpc').fill(deploymentRpc.rpcUrl);
+    await stack.getByRole('button', { name: 'Probe RPC', exact: true }).click();
+    await expect(stack.getByTestId('stack-manager-probe')).toContainText(deploymentRpc.rpcUrl);
+    await stack.getByTestId('stack-manager-name').fill('Cancelled Wallet deployment');
+    await stack.getByTestId('stack-manager-stablecoin').selectOption('test');
+    await stack.getByTestId('stack-manager-confirm').check();
+    await expect(stack.getByTestId('stack-manager-deploy')).toBeEnabled();
+    await stack.getByTestId('stack-manager-confirm').uncheck();
+    await expect(stack.getByTestId('stack-manager-deploy')).toBeDisabled();
+    expect(submissions).toEqual([]);
+    await screenshotEvidence(page, testInfo, 'wallet-stack-manager-cancelled');
+    await page.getByLabel('Selected identity').selectOption(fixture.counterpartyEntityId);
+    await expect(wallet).toHaveAttribute('data-entity-id', fixture.counterpartyEntityId);
+    await expect(stack.getByTestId('stack-manager-probe')).toHaveCount(0);
+    await expect(stack.getByTestId('stack-manager-confirm')).not.toBeChecked();
+    await expect(page).toHaveURL(new RegExp(`#settings/stack-manager\\?entity=${fixture.counterpartyEntityId}$`));
+    await page.reload();
+    await expect(page.getByLabel('Selected identity')).toHaveValue(fixture.counterpartyEntityId);
+    await expect(stack.getByTestId('stack-manager-phase')).toBeVisible();
+    await expect(stack.getByTestId('stack-manager-rpc')).toHaveValue('');
+    expect(submissions).toEqual([]);
+    await screenshotEvidence(page, testInfo, 'wallet-stack-manager-reopened');
+    await page.evaluate(() => sessionStorage.removeItem('xln-runtime-adapter-key'));
+    await page.reload();
+    await expect(stack.getByRole('status')).toHaveText('STACK_MANAGER_ADMIN_CAPABILITY_REQUIRED');
+    await expect(stack.getByTestId('stack-manager-deployment')).toHaveCount(0);
+    await expectPageContained(page);
+    await screenshotEvidence(page, testInfo, 'wallet-stack-manager-revoked');
+    expectNoBrowserErrors(errors);
+  },
+);
+
+test(
+  'Wallet Stack Manager deploys and reopens the canonical configured stack through its selected daemon',
+  { tag: '@functional' },
+  async ({ page }, testInfo) => {
+    testInfo.setTimeout(180_000);
+    const { readStackManagerRpcFixture } = await import('./fixtures/wallet-runtime-test-helpers');
+    const errors = observeBrowserErrors(page);
+    const fixture = await selectWalletFixtureRuntime(page);
+    const deploymentRpc = await readStackManagerRpcFixture(page);
+    const name = `Wallet deployed ${testInfo.project.name}`;
+    await page.goto(`/app#settings/stack-manager?entity=${fixture.entityId}`);
+    const stack = page.getByTestId('workspace-stack-manager');
+    await expect(stack.getByTestId('stack-manager-phase')).toBeVisible();
+    await stack.getByTestId('stack-manager-rpc').fill(deploymentRpc.rpcUrl);
+    await stack.getByRole('button', { name: 'Probe RPC', exact: true }).click();
+    await expect(stack.getByTestId('stack-manager-probe')).toContainText(deploymentRpc.rpcUrl);
+    await stack.getByTestId('stack-manager-name').fill(name);
+    await stack.getByTestId('stack-manager-stablecoin').selectOption('test');
+    await stack.getByTestId('stack-manager-confirmations').fill('1');
+    await stack.getByTestId('stack-manager-confirm').check();
+    await stack.getByTestId('stack-manager-deploy').click();
+    await expect(stack.getByTestId('stack-manager-result')).toContainText(`${name} deployed and registered`, {
+      timeout: 150_000,
+    });
+    await expect(stack.getByLabel('Configured jurisdiction stack', { exact: true })).toHaveValue(name);
+    await expect(stack.getByTestId('configured-stack-inspection')).toContainText(deploymentRpc.rpcUrl);
+    await screenshotEvidence(page, testInfo, 'wallet-stack-manager-deployed');
+    expectNoBrowserErrors(errors);
+    await stack.getByTestId('stack-manager-confirm').check();
+    await stack.getByTestId('stack-manager-deploy').click();
+    await expect(stack.getByRole('alert')).toHaveText('STACK_MANAGER_DEPLOY_HTTP_400');
+    await page.reload();
+    await expect(stack.getByLabel('Configured jurisdiction stack', { exact: true })).toHaveValue(name);
+    await expect(stack.getByTestId('configured-stack-inspection')).toContainText(deploymentRpc.rpcUrl);
+    await expect(stack.getByTestId('stack-manager-probe')).toHaveCount(0);
+    await screenshotEvidence(page, testInfo, 'wallet-stack-manager-configured');
+    await expectPageContained(page);
+    expect(errors.pageErrors).toEqual([]);
+    expect(errors.consoleErrors).toEqual([
+      'Failed to load resource: the server responded with a status of 400 (Bad Request)',
+    ]);
+  },
+);
+
 test('Ownership and Consensus deep links follow the selected real Entity', { tag: '@functional' }, async ({ page }, testInfo) => {
   const errors = observeBrowserErrors(page);
   const fixture = await selectWalletFixtureRuntime(page);
