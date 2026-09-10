@@ -1,0 +1,80 @@
+--- a/frontend/package.json
++++ b/frontend/package.json
+@@ -4,19 +4,15 @@
+ 	"version": "0.1.31",
+ 	"type": "module",
+ 	"scripts": {
+-		"dev": "node copy-static-files.js && vite dev",
+-		"build": "node copy-static-files.js && vite build",
+-		"build:static": "node copy-static-files.js && vite build && echo 'Built for GitHub Pages deployment'",
++		"dev": "bun scripts/dev.ts --all",
++		"build": "bun scripts/prepare.ts --all && bun scripts/build.ts --all && bun scripts/assemble.ts",
++		"build:static": "bun run build",
+ 		"native:build": "bun run build && cap sync",
+ 		"native:ios": "bun run native:build && cap open ios",
+ 		"native:android": "bun run native:build && cap open android",
+ 		"native:sync": "cap sync",
+ 		"native:doctor": "cap doctor",
+-		"preview": "node scripts/prepare-preview-assets.js && vite preview",
+-		"prepare": "svelte-kit sync || echo ''",
+-		"check": "bun run check:unsafe-types && bun copy-static-files.js && svelte-kit sync && bun ../tools/run-parallel-checks.ts check:svelte check:build",
+-		"check:svelte": "svelte-check --config ./svelte.config.js --tsconfig ./tsconfig.json --threshold error",
+-		"check:build": "bun scripts/vite-build-check.ts",
++		"check": "bun scripts/check.ts --all --level=frontend && (cd .. && bun test tests/frontend)",
+ 		"check:react": "bun scripts/check.ts --all --level=local",
+ 		"prepare:react": "bun scripts/prepare.ts --all",
+ 		"build:react": "bun scripts/build.ts --all",
+@@ -37,7 +33,6 @@
+ 		"test:pwa:candidate": "bun run prepare:react && bun run build:react && playwright test --config playwright.pwa.config.ts",
+ 		"test:deployment:candidate": "bun run prepare:react && bun run build:react && playwright test --config playwright.deployment.config.ts",
+ 		"check:unsafe-types": "bun scripts/checks/check-unsafe-types.ts",
+-		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
+ 		"test": "bun ../core/scripts/e2e/runners/run-with-test-cleanup.ts --cwd=.. --reason=frontend-playwright --scope=e2e -- playwright test",
+ 		"test:landing": "bun ../core/scripts/e2e/runners/run-with-test-cleanup.ts --cwd=.. --reason=frontend-landing --scope=e2e -- playwright test tests/landing.spec.ts",
+ 		"test:fed": "bun ../core/scripts/e2e/runners/run-with-test-cleanup.ts --cwd=.. --reason=frontend-fed --scope=e2e -- playwright test tests/fed-chair-demo.spec.ts",
+@@ -47,18 +42,11 @@
+ 		"@capacitor/android": "^8.5.0",
+ 		"@capacitor/cli": "^8.5.0",
+ 		"@capacitor/ios": "^8.5.0",
+-		"@sveltejs/adapter-auto": "^6.1.1",
+-		"@sveltejs/adapter-static": "^3.0.10",
+-		"@sveltejs/kit": "^2.70.2",
+-		"@sveltejs/vite-plugin-svelte": "^6.2.4",
+ 		"@types/react": "^19.2.18",
+ 		"@types/react-dom": "^19.2.4",
+ 		"@vitejs/plugin-react": "^5.2.0",
+ 		"http-proxy-3": "1.22.0",
+ 		"marked": "^16.4.2",
+-		"svelte": "^5.56.8",
+-		"svelte-check": "^4.7.4",
+-		"svelte-multiselect": "^11.8.0",
+ 		"typescript": "^5.9.3",
+ 		"vite": "^7.3.6"
+ 	},
+@@ -79,7 +67,6 @@
+ 		"dockview": "^4.13.1",
+ 		"hash-wasm": "^4.12.0",
+ 		"jsqr": "^1.4.0",
+-		"lucide-svelte": "^0.544.0",
+ 		"qrcode": "^1.5.4",
+ 		"react": "^19.2.8",
+ 		"react-dom": "^19.2.8",
+--- a/.github/workflows/build-and-test.yml
++++ b/.github/workflows/build-and-test.yml
+@@ -138,10 +138,12 @@
+           cd frontend
+           bun run check
+ 
+-      - name: Build frontend
+-        run: |
+-          cd frontend
+-          bun run build:static
++      # The canonical check builds, assembles and tests the same candidate.
++      - name: Verify immutable frontend releases
++        run: |
++          for release in frontend/.artifacts/releases/sha256-*; do
++            bun frontend/scripts/release/candidate-release-verifier.ts "$release"
++          done
+ 
+   e2e-tests:
+     name: E2E Tests
