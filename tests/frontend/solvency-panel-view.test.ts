@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 
 import { buildSolvencyProjection } from '../../frontend/src/lib/view/panels/solvency/solvency-panel-view';
 
-test('solvency projection derives reserves and collateral from an injected runtime frame', () => {
+test('solvency projection includes only committed reserves and collateral from an injected runtime frame', () => {
   const left = `0x${'11'.repeat(32)}`;
   const right = `0x${'22'.repeat(32)}`;
   const depository = `0x${'33'.repeat(20)}`;
@@ -52,19 +52,20 @@ test('solvency projection derives reserves and collateral from an injected runti
   };
 
   expect(buildSolvencyProjection(frame)).toEqual({
-    assets: [{
-      stackId: `31337:${depository}`,
-      chainId: 31337,
-      depositoryAddress: depository,
-      tokenId: 1,
-      reserves: 150n,
-      confirmedCollateral: 100n,
-      pendingCollateral: 50n,
-      internalValue: 250n,
-      expectedInternalValue: null,
-      delta: null,
-      isValid: null,
-    }],
+    assets: [
+      {
+        stackId: `31337:${depository}`,
+        chainId: 31337,
+        depositoryAddress: depository,
+        tokenId: 1,
+        reserves: 150n,
+        confirmedCollateral: 100n,
+        internalValue: 250n,
+        expectedInternalValue: null,
+        delta: null,
+        isValid: null,
+      },
+    ],
     isValid: null,
   });
 });
