@@ -28,6 +28,8 @@ test('packaged extension action opens the exact Wallet and preserves preferences
   const directory = process.env['PLAYWRIGHT_PACKAGED_DIRECTORY'];
   const staging = process.env['PLAYWRIGHT_STAGING_DIRECTORY'];
   if (!directory || !staging) throw new Error('PACKAGED_BROWSER_INPUTS_REQUIRED');
+  const viewport = testInfo.project.use.viewport;
+  if (!viewport) throw new Error('PACKAGED_BROWSER_VIEWPORT_REQUIRED');
   const before = verifyPackage();
   const extension = join(directory, 'extension');
   const profile = await mkdtemp(join(tmpdir(), 'xln-extension-browser-'));
@@ -35,7 +37,7 @@ test('packaged extension action opens the exact Wallet and preserves preferences
     chromium.launchPersistentContext(profile, {
       channel: 'chromium',
       headless: true,
-      viewport: testInfo.project.use.viewport,
+      viewport,
       // Chromium requires an explicit opt-in for extension action automation.
       // This temporary profile contains only the verified candidate extension.
       args: [
