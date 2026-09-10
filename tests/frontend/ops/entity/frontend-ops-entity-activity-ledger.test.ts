@@ -163,6 +163,45 @@ describe('React Entity persisted activity ledger', () => {
     });
   });
 
+  test('exhausts a producer-certified partial history floor above height one', () => {
+    const terminal = page({
+      availability: 'partial',
+      availableFromHeight: 42,
+      unavailableThroughHeight: 41,
+      nextBeforeHeight: null,
+    });
+    const activity = projectEntityWorkspaceActivity({ context, page: terminal });
+    expect(activity).toMatchObject({
+      status: 'selected',
+      entityId: '0xaaaa',
+      fromHeight: 42,
+      toHeight: 44,
+      scannedFrames: 3,
+      nextBeforeHeight: null,
+      events: [{ id: 'runtime-a:44:1' }, { id: 'runtime-a:43:0' }],
+    });
+    const controller = new OpsEntityWorkspaceActivityController({
+      isHistoryActive: () => false,
+      refreshHistory: () => {
+        throw new Error('Unexpected history refresh');
+      },
+      refreshLive: () => {
+        throw new Error('Unexpected live refresh');
+      },
+    });
+    expect(() => controller.select(activity, 41)).toThrow('OPS_ENTITY_ACTIVITY_PAGE_INVALID');
+    expect(controller.readBeforeHeight()).toBeNull();
+    expect(() => projectEntityWorkspaceActivity({ context, page: { ...terminal, runtimeId: 'runtime-b' } })).toThrow(
+      'ENTITY_WORKSPACE_ACTIVITY_RUNTIME_MISMATCH',
+    );
+    expect(() => projectEntityWorkspaceActivity({ context, page: page({ nextBeforeHeight: 40 }) })).toThrow(
+      'ENTITY_WORKSPACE_ACTIVITY_CURSOR_MISMATCH',
+    );
+    expect(() => projectEntityWorkspaceActivity({ context, page: page({ nextBeforeHeight: 41.5 }) })).toThrow(
+      'ENTITY_WORKSPACE_ACTIVITY_CURSOR_INVALID',
+    );
+  });
+
   test('projects an earlier bounded page without changing adapter order', () => {
     const earlier = page({
       fromHeight: 10, toHeight: 13, scannedFrames: 4, nextBeforeHeight: 9,

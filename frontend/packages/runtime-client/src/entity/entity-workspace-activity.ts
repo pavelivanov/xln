@@ -246,7 +246,7 @@ const projectEvent = (
 
 const requireCursor = (value: unknown, fromHeight: number): number | null => {
   if (value === null) {
-    if (fromHeight > 1) throw new Error('ENTITY_WORKSPACE_ACTIVITY_CURSOR_MISMATCH');
+    // The producer exhausts at its available history floor, which may be above height one.
     return null;
   }
   const cursor = integer(value, 'ENTITY_WORKSPACE_ACTIVITY_CURSOR_INVALID', 1);
