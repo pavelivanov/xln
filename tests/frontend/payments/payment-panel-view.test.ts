@@ -6,7 +6,7 @@ import {
   buildPaymentPanelViewFromRuntimeView,
 } from '../../../frontend/src/lib/components/Entity/payments/payment-panel-view';
 import { hasCertifiedEntityEncryptionKey } from '../../../frontend/src/lib/components/Entity/payment-routing';
-import { buildPaymentRuntimeInput } from '../../../frontend/src/lib/components/Entity/payments/runtime/payment-command';
+import { buildPaymentRuntimeInput } from '../../../frontend/packages/runtime-client/src/payments/payment-command';
 
 const SOURCE = `0x${'11'.repeat(32)}`;
 const HUB = `0x${'22'.repeat(32)}`;
@@ -26,7 +26,6 @@ test('payment panel view projects only payment routing state from replicas', () 
         entityEncryptionPublicKey: `0x${'55'.repeat(32)}`,
         config: { hiddenFromPaymentView: true },
         reserves: new Map([[1, 100n]]),
-        lockBook: new Map([['lock-1', { accountId: HUB, tokenId: 1, direction: 'outgoing' }]]),
         accounts: new Map([
           [HUB, {
             state: {
@@ -57,7 +56,8 @@ test('payment panel view projects only payment routing state from replicas', () 
   expect(view.replicaMap.size).toBe(1);
   const projected = view.replicaMap.get(`${SOURCE}:${SIGNER}`);
   expect((projected?.state as Record<string, unknown>).entityEncryptionPublicKey).toBeUndefined();
-  expect(Object.keys(projected!.state)).toEqual(['accounts']);
+  if (!projected) throw new Error('Expected selected payment replica');
+  expect(Object.keys(projected.state)).toEqual(['accounts']);
   expect(projected?.state.accounts.get(HUB)?.deltas.get(1)).toBe(delta);
   expect((projected?.state as Record<string, unknown>).config).toBeUndefined();
   expect((projected?.state as Record<string, unknown>).reserves).toBeUndefined();
@@ -80,7 +80,6 @@ test('payment panel view projects payment routing state from runtime adapter fra
         entityId: SOURCE,
         signerId: SIGNER,
         entityEncryptionPublicKey: `0x${'66'.repeat(32)}`,
-        lockBook: new Map([['lock-2', { accountId: HUB, tokenId: 1, direction: 'outgoing' }]]),
       },
       accounts: {
         items: [
@@ -110,7 +109,8 @@ test('payment panel view projects payment routing state from runtime adapter fra
   expect(view.networkGraph).toBeNull();
   const projected = view.replicaMap.get(`${SOURCE}:${SIGNER.toLowerCase()}`);
   expect((projected?.state as Record<string, unknown>).entityEncryptionPublicKey).toBeUndefined();
-  expect(Object.keys(projected!.state)).toEqual(['accounts']);
+  if (!projected) throw new Error('Expected selected payment replica');
+  expect(Object.keys(projected.state)).toEqual(['accounts']);
   expect(projected?.state.accounts.get(HUB.toLowerCase())?.deltas.get(1)).toBe(delta);
 });
 
@@ -128,6 +128,44 @@ test('payment key coverage requires one certified Entity encryption key', () => 
   expect(hasCertifiedEntityEncryptionKey(new Map(), [profile] as never, HUB)).toBe(true);
 });
 
+test('the shared payment builder binds the selected Entity and signer to the reviewed route and amounts', () => {
+  const path = [SOURCE, HUB, RECIPIENT];
+  const command = buildPaymentRuntimeInput({
+    entityId: SOURCE,
+    signerId: SIGNER,
+    targetEntityId: HUB,
+    tokenId: 1,
+    deliveryMode: 'async',
+    description: ' Invoice 7 ',
+    route: { path, totalFee: 5n, senderAmount: 105n, recipientAmount: 100n },
+  });
+  path.pop();
+  expect(command).toEqual({
+    runtimeTxs: [],
+    jInputs: [],
+    entityInputs: [
+      {
+        entityId: SOURCE,
+        signerId: SIGNER,
+        entityTxs: [
+          {
+            type: 'htlcPayment',
+            data: {
+              targetEntityId: RECIPIENT,
+              tokenId: 1,
+              amount: 100n,
+              maxSenderDebit: 105n,
+              route: [SOURCE, HUB, RECIPIENT],
+              deliveryMode: 'async',
+              description: 'Invoice 7',
+            },
+          },
+        ],
+      },
+    ],
+  });
+});
+
 test('PaymentPanel consumes PaymentPanelView instead of owning full env reads', () => {
   const panel = readFileSync('frontend/src/lib/components/Entity/payments/PaymentPanel.svelte', 'utf8');
   const accountWorkspace = readFileSync('frontend/src/lib/components/Entity/workspace/AccountWorkspaceView.svelte', 'utf8');
@@ -137,29 +175,7 @@ test('PaymentPanel consumes PaymentPanelView instead of owning full env reads', 
   expect(panel).toContain('export let actionRuntimeEnv: RuntimeReplica | null');
   expect(panel).toContain('export let submitRuntimeInput');
   expect(panel).toContain('await submitRuntimeInput(buildPaymentRuntimeInput({');
-  expect(buildPaymentRuntimeInput({
-    entityId: SOURCE,
-    signerId: SIGNER,
-    targetEntityId: RECIPIENT,
-    tokenId: 1,
-    deliveryMode: 'instant',
-    description: ' invoice ',
-    route: { path: [SOURCE, HUB, RECIPIENT], hops: [], totalFee: 2n, senderAmount: 102n, recipientAmount: 100n },
-  })).toEqual({
-    runtimeTxs: [],
-    entityInputs: [{
-      entityId: SOURCE,
-      signerId: SIGNER,
-      entityTxs: [{
-        type: 'htlcPayment',
-        data: {
-          targetEntityId: RECIPIENT, tokenId: 1, amount: 100n, maxSenderDebit: 102n,
-          route: [SOURCE, HUB, RECIPIENT], deliveryMode: 'instant', description: 'invoice',
-        },
-      }],
-    }],
-    jInputs: [],
-  });
+  expect(panel).toContain('signerId: resolvedSignerId,');
   expect(panel).toContain('function resolveProjectedSignerId');
   expect(panel).toContain('function resolvePaymentSignerId(env: RuntimeReplica | null)');
   expect(panel).toContain('const resolvedSignerId = resolvePaymentSignerId(currentEnv)');
