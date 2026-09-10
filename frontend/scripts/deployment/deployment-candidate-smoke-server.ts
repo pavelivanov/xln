@@ -1,14 +1,14 @@
 #!/usr/bin/env bun
 
-import { createHash } from 'node:crypto';
 import { cp, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { extname, join } from 'node:path';
+import { join } from 'node:path';
 
 import { safeStringify } from '../../../core/protocol/serialization';
-import { SURFACES, SURFACE_IDS, matchesRoute, resolveRouteOwner, type SurfaceId } from '../../config/surfaces';
+import { SURFACE_IDS, type SurfaceId } from '../../config/surfaces';
 import { assembleCandidateRelease, type CandidateReleaseManifest } from '../release/candidate-release';
 import { verifyCandidateReleaseDirectory } from '../release/candidate-release-verifier';
+import { serveCandidateReleaseFile } from '../release/candidate-release-serving';
 import {
   activateDeploymentCandidate,
   deploymentReleaseDirectory,
@@ -20,7 +20,6 @@ const FRONTEND_ROOT = join(import.meta.dir, '../..');
 const HOST = process.env['XLN_DEPLOYMENT_SMOKE_HOST'] ?? '127.0.0.1';
 const PORT = Number(process.env['XLN_DEPLOYMENT_SMOKE_PORT'] ?? '19092');
 const UPDATE_MARKER = '<!-- xln-deployment-isolated-update -->';
-const hashBytes = (bytes: Uint8Array): string => createHash('sha256').update(bytes).digest('hex');
 
 type SmokeRelease = Readonly<{
   directory: string;
@@ -74,44 +73,6 @@ const smokeRelease = async (directory: string): Promise<SmokeRelease> => {
     docsEntrySha256: releaseEntryHash(manifest, 'docs'),
   };
 };
-
-const applicationEntry = (pathname: string): string | null => {
-  const owner = resolveRouteOwner(pathname);
-  if (owner === 'edge') return null;
-  const surface = SURFACES.find(({ id }) => id === owner);
-  return surface?.routes.some((rule) => matchesRoute(pathname, rule))
-    ? `apps/${owner}/index.html`
-    : null;
-};
-
-const requestedReleasePath = (pathname: string, manifest: CandidateReleaseManifest): string | null => {
-  let decoded: string;
-  try {
-    decoded = decodeURIComponent(pathname);
-  } catch {
-    return null;
-  }
-  const relative = decoded.replace(/^\/+/, '');
-  if (relative && (relative.includes('\\') || relative.split('/').some((part) => !part || part === '.' || part === '..'))) {
-    return null;
-  }
-  if (relative) {
-    if (relative === 'release-manifest.json' || manifest.files.some(({ path }) => path === relative)) return relative;
-  }
-  return applicationEntry(decoded);
-};
-
-const mimeTypes = new Map([
-  ['.html', 'text/html; charset=utf-8'],
-  ['.js', 'text/javascript; charset=utf-8'],
-  ['.css', 'text/css; charset=utf-8'],
-  ['.json', 'application/json; charset=utf-8'],
-  ['.png', 'image/png'],
-  ['.svg', 'image/svg+xml; charset=utf-8'],
-  ['.ico', 'image/x-icon'],
-  ['.wasm', 'application/wasm'],
-  ['.txt', 'text/plain; charset=utf-8'],
-]);
 
 const jsonResponse = (value: unknown, status = 200): Response => new Response(`${safeStringify(value, 2)}\n`, {
   status,
@@ -175,17 +136,11 @@ const main = async (): Promise<void> => {
       if (selection === null) return new Response('DEPLOYMENT_SMOKE_STATE_MISSING', { status: 500 });
       const release = releaseMap.get(selection.activeReleaseId);
       if (!release) return new Response('DEPLOYMENT_SMOKE_RELEASE_UNKNOWN', { status: 500 });
-      const relativePath = requestedReleasePath(url.pathname, release.manifest);
-      if (relativePath === null) return new Response('Not found', { status: 404 });
-      const bytes = await readFile(deploymentReleaseDirectory(deploymentRoot, selection.activeReleaseId) + `/${relativePath}`);
-      return new Response(bytes, {
-        headers: {
-          'cache-control': 'no-store',
-          'content-type': mimeTypes.get(extname(relativePath)) ?? 'application/octet-stream',
-          'x-xln-deployment-release': selection.activeReleaseId,
-          'x-xln-content-sha256': hashBytes(bytes),
-        },
-      });
+      return serveCandidateReleaseFile(
+        deploymentReleaseDirectory(deploymentRoot, selection.activeReleaseId),
+        release.manifest,
+        url.pathname,
+      );
     },
   });
 

@@ -6,6 +6,7 @@ import { tmpdir } from 'node:os';
 import { safeStringify } from '../../../../core/protocol/serialization';
 import { SURFACE_IDS, type SurfaceId } from '../../../../frontend/config/surfaces';
 import { assembleCandidateRelease } from '../../../../frontend/scripts/release/candidate-release';
+import { requestedReleasePath, serveCandidateReleaseFile } from '../../../../frontend/scripts/release/candidate-release-serving';
 import {
   DEPLOYMENT_CANDIDATE_STATE,
   activateDeploymentCandidate,
@@ -47,6 +48,47 @@ afterEach(async () => {
 });
 
 describe('isolated deployment candidate selection', () => {
+  test('serves exact release routes and asset hashes while rejecting unknown paths and changed bytes', async () => {
+    const { first } = await createReleasePair();
+    const routes = new Map([
+      ['/', 'site'],
+      ['/docs', 'docs'],
+      ['/app', 'wallet'],
+      ['/address/0x123', 'wallet'],
+      ['/health', 'ops'],
+    ]);
+    for (const [route, surface] of routes) {
+      expect(requestedReleasePath(route, first.manifest)).toBe(`apps/${surface}/index.html`);
+      const response = await serveCandidateReleaseFile(first.releaseDirectory, first.manifest, route);
+      expect(response.headers.get('x-xln-deployment-release')).toBe(first.releaseId);
+      expect(response.headers.get('content-type')).toBe('text/html; charset=utf-8');
+      expect(await response.text()).toBe(
+        await readFile(join(first.releaseDirectory, `apps/${surface}/index.html`), 'utf8'),
+      );
+    }
+    const asset = first.manifest.files.find(file => file.path === 'assets/wallet/index.js');
+    const response = await serveCandidateReleaseFile(first.releaseDirectory, first.manifest, '/assets/wallet/index.js');
+    expect(response.headers.get('x-xln-content-sha256')).toBe(asset?.sha256);
+    expect(response.headers.get('content-type')).toBe('text/javascript; charset=utf-8');
+    for (const path of [
+      '/unknown',
+      '/assets/wallet/missing.js',
+      '/__app/wallet/src/main.tsx',
+      '/%2e%2e/secret',
+      '/assets//wallet/index.js',
+      '/assets/%5csecret',
+      '/%invalid',
+      '/api/private',
+    ]) {
+      expect(requestedReleasePath(path, first.manifest)).toBeNull();
+      expect((await serveCandidateReleaseFile(first.releaseDirectory, first.manifest, path)).status).toBe(404);
+    }
+    await writeFile(join(first.releaseDirectory, 'assets/wallet/index.js'), 'changed');
+    await expect(
+      serveCandidateReleaseFile(first.releaseDirectory, first.manifest, '/assets/wallet/index.js'),
+    ).rejects.toThrow('CANDIDATE_RELEASE_FILE_MISMATCH:assets/wallet/index.js');
+  });
+
   test('atomically activates two exact releases and rolls back the whole release', async () => {
     const fixture = await createReleasePair();
     const firstSourceBefore = await readFile(join(fixture.first.releaseDirectory, 'release-manifest.json'));
