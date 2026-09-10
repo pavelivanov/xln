@@ -1,3 +1,4 @@
+import { walletBrowserHref } from '../navigation/wallet-entry-location';
 import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import type { WalletOnboardingReadyView, WalletOnboardingResult, WalletOnboardingView } from '../../../../packages/browser/src/wallet/wallet-onboarding';
 import type { WalletRecoveryServicesMutation } from '../../../../packages/browser/src/recovery/wallet-recovery-services';
@@ -146,7 +147,7 @@ export function WalletPostCreationSetup({ runtimeId, runtimeState, fallback }: R
   if (!result && fallback !== undefined) return fallback;
   return <>
     {result ? <p className="wallet-settings-status" role="status">Account configured for {result.displayName}. Joined {result.autoJoinedCount} hub accounts.</p> : null}
-    <a className="identity-primary-action wallet-onboarding-continue" href="/app?portfolio=1" onClick={event => {
+    <a className="identity-primary-action wallet-onboarding-continue" href={walletBrowserHref('/app?portfolio=1')} onClick={event => {
       if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
       event.preventDefault();
       navigateWallet('/app?portfolio=1');

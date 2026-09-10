@@ -1,3 +1,4 @@
+import { walletBrowserHref } from '../navigation/wallet-entry-location';
 import { walletDraftPayment, type WalletPayDraft, type WalletPaymentPrefill } from '../commands/wallet-command-draft';
 import { useWalletRuntimeLoader } from "../runtime/wallet-runtime-scope";
 import { lazy, Suspense, useEffect, useRef, useState, useSyncExternalStore } from 'react';
@@ -31,7 +32,7 @@ function PaymentsUnavailable({
       <p>{message}</p>
       <div>
         {error ? <button onClick={retry} type="button">Retry Runtime connection</button> : null}
-        <a href="/app?diagnostics=1">Review diagnostics</a>
+        <a href={walletBrowserHref('/app?diagnostics=1')}>Review diagnostics</a>
       </div>
     </section>
   );

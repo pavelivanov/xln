@@ -277,6 +277,7 @@ export const PLATFORM_INVENTORY = [
       'scripts/native/smoke-capacitor-candidate.ts',
       'scripts/native/copy-capacitor-shell-candidate.ts',
       'scripts/native/copy-packaged-shell-candidate.ts',
+      'frontend/playwright.packaged.config.ts',
     ],
     evidence: [
       'native/__tests__/capacitor/capacitor-config.test.ts',
@@ -286,6 +287,7 @@ export const PLATFORM_INVENTORY = [
       'native/__tests__/wallet-candidate-staging.test.ts',
       'native/__tests__/capacitor/capacitor-shell-candidate.test.ts',
       'native/__tests__/packaged-shell-candidate.test.ts',
+      'frontend/tests/packaged-candidate/extension.spec.ts',
     ],
   },
   {
@@ -694,6 +696,7 @@ export const PLATFORM_INVENTORY = [
       'scripts/native/copy-capacitor-shell-candidate.ts',
       'scripts/native/packaged-shell-candidate-manifest.ts',
       'scripts/native/copy-packaged-shell-candidate.ts',
+      'frontend/playwright.packaged.config.ts',
       'frontend/scripts/pwa/pwa-candidate.ts',
       'frontend/scripts/deployment/deployment-candidate.ts',
       'frontend/scripts/deployment/deployment-candidate-cli.ts',
@@ -709,6 +712,7 @@ export const PLATFORM_INVENTORY = [
       'native/__tests__/capacitor/capacitor-candidate-smoke.test.ts',
       'native/__tests__/capacitor/capacitor-shell-candidate.test.ts',
       'native/__tests__/packaged-shell-candidate.test.ts',
+      'frontend/tests/packaged-candidate/extension.spec.ts',
       'tests/frontend/tooling/build/frontend-deployment-candidate.test.ts',
       'frontend/tests/deployment-candidate/lifecycle.spec.ts',
       'frontend/tests/artifact-candidate/artifact-browser.spec.ts',

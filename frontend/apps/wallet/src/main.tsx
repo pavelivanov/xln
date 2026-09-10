@@ -4,11 +4,15 @@ import { createRoot } from 'react-dom/client';
 import { WalletApp } from './wallet-app';
 import { resolveWalletAppView } from './app-shell-model';
 import { resolveWalletPage, walletPageMetadata } from './wallet-model';
+import { resolveWalletEntryPath } from './navigation/wallet-entry-location';
 
 const rootElement = document.getElementById('root');
 if (!rootElement) throw new Error('FRONTEND_REACT_ROOT_MISSING');
 
-const page = resolveWalletPage(window.location.pathname, window.location.search);
+const page = resolveWalletPage(
+  resolveWalletEntryPath(window.location.pathname, window.location.protocol),
+  window.location.search,
+);
 const metadata = walletPageMetadata(page);
 const description = document.querySelector<HTMLMetaElement>('meta[name="description"]');
 if (!description) throw new Error('WALLET_DESCRIPTION_META_MISSING');
@@ -16,7 +20,9 @@ document.title = metadata.title;
 description.content = metadata.description;
 
 if (page.kind === 'app' && resolveWalletAppView(window.location.search, window.location.hash) === 'scenario-preview') {
-  void import('./scenario-preview/wallet-scenario-preview-runtime').then(module => module.startWalletScenarioPreviewRuntime());
+  void import('./scenario-preview/wallet-scenario-preview-runtime').then(module =>
+    module.startWalletScenarioPreviewRuntime(),
+  );
 }
 
 createRoot(rootElement).render(

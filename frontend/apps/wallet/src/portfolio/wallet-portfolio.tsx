@@ -1,3 +1,4 @@
+import { walletBrowserHref } from '../navigation/wallet-entry-location';
 import type { WalletOpenDraft } from '../commands/wallet-command-draft';
 import { useWalletRuntimeLoader } from "../runtime/wallet-runtime-scope";
 import { lazy, Suspense, useEffect, useState, useSyncExternalStore } from 'react';
@@ -38,7 +39,7 @@ function PortfolioUnavailable({
       <p>{message}</p>
       <div>
         {retryable ? <button onClick={retry} type="button">Retry Runtime read</button> : null}
-        <a href="/app?diagnostics=1">Review diagnostics</a>
+        <a href={walletBrowserHref('/app?diagnostics=1')}>Review diagnostics</a>
       </div>
     </section>
   );

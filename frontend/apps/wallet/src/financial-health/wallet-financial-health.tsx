@@ -1,3 +1,4 @@
+import { walletBrowserHref } from '../navigation/wallet-entry-location';
 import { useWalletRuntimeLoader } from "../runtime/wallet-runtime-scope";
 import { useEffect, useState, useSyncExternalStore } from 'react';
 
@@ -27,7 +28,7 @@ function HealthUnavailable({
       <p>{message}</p>
       <div>
         {error ? <button onClick={retry} type="button">Retry Runtime read</button> : null}
-        <a href="/app?diagnostics=1">Review diagnostics</a>
+        <a href={walletBrowserHref('/app?diagnostics=1')}>Review diagnostics</a>
       </div>
     </section>
   );

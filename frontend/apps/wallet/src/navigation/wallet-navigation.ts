@@ -1,6 +1,7 @@
 import { createContext, useContext, useSyncExternalStore } from 'react';
 
 import { resolveWalletAppRoute, type WalletAppRoute } from './wallet-navigation-model';
+import { walletBrowserHref } from './wallet-entry-location';
 
 const navigationEvent = 'xln:wallet-navigation';
 const readLocation = (): string => `${window.location.pathname}${window.location.search}${window.location.hash}`;
@@ -16,8 +17,9 @@ const subscribeLocation = (listener: () => void): (() => void) => {
 };
 
 export const navigateWallet = (href: string): void => {
-  if (href === readLocation()) return;
-  window.history.pushState(window.history.state, '', href);
+  const destination = walletBrowserHref(href);
+  if (destination === readLocation()) return;
+  window.history.pushState(window.history.state, '', destination);
   window.dispatchEvent(new Event(navigationEvent));
   window.scrollTo({ top: 0, behavior: 'auto' });
 };

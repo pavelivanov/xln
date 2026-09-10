@@ -1,3 +1,4 @@
+import { walletBrowserHref } from '../navigation/wallet-entry-location';
 import type { WalletSwapDraft } from '../commands/wallet-command-draft';
 import { useWalletRuntimeLoader } from "../runtime/wallet-runtime-scope";
 import { useEffect, useState, useSyncExternalStore } from 'react';
@@ -92,7 +93,7 @@ export function WalletMarkets({ tab, onTabChange, workspaceSelection, draft }: R
           <p className="wallet-shell-eyebrow">Market surface unavailable</p>
           <h2>No committed market can be read.</h2>
           <p>{snapshot.message}</p>
-          <div>{snapshot.status === 'error' ? <button onClick={() => void source.refresh()} type="button">Retry Runtime connection</button> : null}<a href="/app?diagnostics=1">Review diagnostics</a></div>
+          <div>{snapshot.status === 'error' ? <button onClick={() => void source.refresh()} type="button">Retry Runtime connection</button> : null}<a href={walletBrowserHref('/app?diagnostics=1')}>Review diagnostics</a></div>
         </section>
       )}
 

@@ -1,3 +1,4 @@
+import { walletBrowserHref } from '../navigation/wallet-entry-location';
 import { useEffect, useState, useSyncExternalStore } from 'react';
 
 import {
@@ -51,7 +52,7 @@ function Status({ source, error }: Readonly<{ source: WalletAddressSource; error
         <div>
           <button onClick={() => void source.refresh()} type="button">Retry Runtime read</button>
           <a href="/address">Directory</a>
-          <a href="/app">Wallet</a>
+          <a href={walletBrowserHref('/app')}>Wallet</a>
         </div>
       ) : null}
     </section>
@@ -86,7 +87,7 @@ function Directory({ source }: Readonly<{ source: WalletAddressSource }>) {
       <header className="wallet-address-header">
         <div><p>Selected Runtime · H{projection.height}</p><h1>Address directory</h1><span>Registered gossip profiles. Hubs first, then users.</span></div>
         <nav aria-label="Address directory actions">
-          <a href="/app">Wallet</a>
+          <a href={walletBrowserHref('/app')}>Wallet</a>
           <button disabled={snapshot.status === 'loading'} onClick={() => void source.refresh()} type="button">
             {snapshot.status === 'loading' ? 'Refreshing…' : 'Refresh'}
           </button>
@@ -170,7 +171,7 @@ function History({ projection }: Readonly<{ projection: WalletAddressDetailProje
         ? projection.history.map((event) => <HistoryEvent event={event} key={event.id} />)
         : <p className="wallet-address-empty">No committed activity for this Entity.</p>}
       {projection.historyNextBeforeHeight === null ? null : (
-        <a href="/app?health=1">Older activity is available in Financial health →</a>
+        <a href={walletBrowserHref('/app?health=1')}>Older activity is available in Financial health →</a>
       )}
     </section>
   );
