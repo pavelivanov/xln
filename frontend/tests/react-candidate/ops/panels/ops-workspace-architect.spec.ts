@@ -34,7 +34,7 @@ test('Architect records into shared playback and returns to the unchanged connec
   await architect.getByText('Selected frame', { exact: true }).click();
   await expect(architect.locator('pre')).toContainText('"height": 126');
   await architect.getByRole('button', { name: 'Solvency', exact: true }).click();
-  await expect(architect.getByTestId('solvency-panel')).toContainText('recorded h126');
+  await expect(architect.getByTestId('solvency-panel')).toContainText('Historical h126');
   await expect(architect.getByTestId('solvency-asset').first()).toBeVisible();
   await screenshotEvidence(page, testInfo, 'ops-architect-solvency');
   await page.getByRole('button', { name: 'Open Gossip panel', exact: true }).click();

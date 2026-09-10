@@ -13,7 +13,7 @@ test('Jurisdiction preserves exact recorded observations across frame and Entity
   await frame.press('End');
   await page.getByRole('button', { name: 'Open Jurisdiction panel', exact: true }).click();
   const panel = page.getByTestId('workspace-jurisdiction');
-  await expect(panel).toContainText('Recorded · Runtime h126');
+  await expect(panel).toContainText('Historical · Runtime h126');
   const observer = panel.getByLabel('Jurisdiction observing Entity');
   await expect(observer.locator('option')).toHaveCount(4);
   await observer.selectOption({ index: 1 });
@@ -35,7 +35,7 @@ test('Jurisdiction preserves exact recorded observations across frame and Entity
   await expect(panel).toContainText('State root');
   await screenshotEvidence(page, testInfo, 'ops-jurisdiction-overview');
   await frame.press('Home');
-  await expect(panel).toContainText('Recorded · Runtime h1');
+  await expect(panel).toContainText('Historical · Runtime h1');
   await frame.press('End');
   await panel.getByRole('button', { name: 'Balances', exact: true }).click();
   await expect(reserves.locator('tbody tr td').nth(1)).toHaveText(amount);
