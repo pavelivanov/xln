@@ -1,6 +1,8 @@
 # Finish the frontend refactor
 
-Status: **in progress**. Four React apps exist; behavior parity and framework isolation are incomplete. Svelte remains canonical.
+Status: **finishing behavior and release integration**. Four React apps and framework isolation are implemented. Remaining work is specific UI gaps, failing contracts/flows, device evidence and canonical cutover. Svelte remains canonical.
+
+Refreshed **2026-09-10**, against `main` at `4301b1796`, including the existing uncommitted B11/B12 findings. This assessment changes plans only; implementation and cutover are future work. Preserve unrelated `.gitignore` changes. Recheck cited symbols after later code changes; line references below are starting points, not immutable instructions.
 
 This is the only executable refactoring plan. Update task rows in place; do not append session histories, duplicate audits, or new completion ledgers.
 
@@ -28,12 +30,31 @@ Deliver independently checkable, testable and buildable **site, docs, wallet and
 | Public `/embed`, layout restore/reset/focus, dynamic panels, palette drafts, locale store and guide offline handling | `ops-public-embed.spec.ts`, `ops-command-palette.spec.ts`, `ops-workspace-localization.spec.ts`, `ops-workspace-guide.spec.ts` |
 | Candidate artifact verification, PWA/native/deployment and rollback tooling | `frontend/scripts/release/candidate-release-verifier.ts`, `frontend/config/platform-inventory.ts`; final acceptance remains below |
 
-Four-app local checks and targeted browser flows have passed. This is not a full-suite or cutover claim. Route counts and mounted panels do not measure behavioral completion.
+### Current assessment and fresh verification
+
+| Area | Implemented | Still required |
+|---|---|---|
+| Architecture | Four React roots; shared browser, Runtime-client and UI owners; vault/worker/session extraction; retained-tree import isolation. I01–I08 are closed. | Keep boundaries intact while finishing behavior; remove Svelte only in C02. |
+| Wallet | Ownership, onboarding/remote Formation/Hub, most settings, local settlement through finality, batch recovery, collateral, debt/dispute controls, cross-j submission and shared dock consumers. | W08d2 Stack Manager destination; remote W10/W11; W17 cancellation finality; W19 Lending; W20 lossless Activity. |
+| Ops | O01–O12 controls, shared workspace/playback, graph effects, localization and real guide streaming. | R01 activity cursor rejection, R02 stale historical-label assertions, R03 local recovery entry while remote is selected; G04b headset evidence. |
+| Site/Docs | Route implementations and Docs interactions; V02 recorded 15/15 browser cases. | Site release verification B9 and the previously observed market-cap 504; refresh evidence on final code. |
+| Release | Candidate assembly/verifier, PWA and isolated rollback; native staging/copy tooling. | Full unit/browser acceptance, built-artifact interaction evidence, actual native launches, root checks, canonical consumers and Svelte retirement. |
+
+Fresh checks on this checkout:
+
+- `cd frontend && bun scripts/check.ts --all --level=local`: **pass**, four app checks plus tooling; 825 files, 0 unsafe findings.
+- Six ownership/inventory contract files: **33 pass, 0 fail, 1,037 assertions**. The typed audit still reports 20 routes (18 complete/2 partial) and 12 capabilities (7 implemented/5 in progress). These are declarations, not passing-flow percentages.
+- `bun test tests/frontend`: **1,483 pass, 12 fail, 11,615 assertions**, 243 files, 6.27 seconds. The gateway and QA cache files then pass **7/7, 74 assertions** outside the sandbox: four failing cases were local-port permission failures. **Eight failures in six other files remain**; see R04 and B9. This is not a green aggregate run.
+- `bun run check`: **exit 127**; artifact-drift/file-size checks pass, `cargo` is missing, and concurrent gate termination does not establish additional root causes. No root aggregate pass is claimed.
+
+Earlier browser/build counts below are retained evidence, not fresh runs in this assessment. Browser suites, native launches, supported XR hardware, live financial outcomes, external CI and production were not re-run/audited here. The assessment is frontend migration scope, not a security or protocol audit.
+
+Two verification gaps need explicit ownership: `check.ts --all --level=frontend` runs four selected contract files, not all of `tests/frontend`; and `playwright.react.config.ts:55–66` starts `frontend/scripts/dev.ts`, so its full matrix is development-server evidence. V04 must include the full unit suite, and V05b must exercise built release bytes.
 
 ## How to execute one task
 
 1. Pick the next ready row. Trace its reachable Svelte control, existing helper/command and current React consumer before editing. If already implemented, verify and close it; do not rewrite it.
-2. Change one user operation or one dependency family. If a row needs multiple independent changes, split it into child IDs before coding. Keep one task per worktree and one implementer per area; independent tasks may run in parallel. The coordinator alone updates task rows during serial PR integration, after refreshing from the latest merged plan. Unrelated blocked rows do not stop ready work.
+2. Change one user operation or one dependency family. If a row needs multiple independent changes, split it into child IDs before coding. Keep one implementer per area and continue on the current checkout; do not create a worktree or delegate without owner authorization. Update task rows after refreshing the current plan. Unrelated blocked rows do not stop ready work.
 3. Reproduce the specific missing/broken behavior. Reuse real isolated Runtime/BrowserVM state; no fake success, mocks or alternate financial logic. Never read live state as historical evidence.
 4. Run narrow model/command checks, then one exact browser flow for visible changes. Assert committed results, cancellation/rejection and context ownership as relevant. Inspect screenshots and browser errors at 390×844, 1366×900 and 1920×1080.
 5. Mark the row `done` only with code and passing relevant evidence. Replace its status with `done — test/log path`; use `blocked Bn — exact failure` for dependencies. Keep evidence under `output/` or existing QA storage, not as another plan. Update typed inventories when their sources/capabilities change.
@@ -42,9 +63,103 @@ Do not add tests that merely mirror code. Preserve existing behavioral assertion
 
 ## Execution order
 
-**Start with W01.** Work down Wallet, then Ops, then framework isolation. Site/Docs and independent isolation rows can be used whenever the next behavior row is blocked. Finish integration verification only after implementation and isolation are ready. The former workspace goal is part of Ops, not a replacement for this plan.
+**Start with R01.** Then R02, W08d2 and R04's first in-scope failure. R03 needs a product choice; recommend the explicit target selector described below. Work on ready rows while that choice or protected dependencies are pending. Do not restart completed W01/O01/I01 work.
 
-Task dependencies are local to their row unless stated otherwise. `open` means work or verification remains, not that the entire implementation is absent.
+```text
+R01 -> local owner/workspace browser proof
+R02 -> recorded-panel browser proof
+O09b + O10 (done) -> W08d2
+R03 product choice -> local recovery + remote derivation proof
+R04 + B9 -> full frontend unit gate
+B1 -> W19; B2 -> W20; B3 -> remote W10/W11; B8 -> W17; B9 -> V01
+all affected behavior -> R06 inventory refresh -> V04 -> V05a + V05b
+V04 -> V06 + V07 + V08; final code -> V09; supported device -> G04b
+all acceptance + C01 review -> owner-authorized C02 -> separate release C03
+```
+
+C01 consumer mapping and V07/toolchain preparation can begin now. Actual cutover still waits for acceptance and owner authorization. New failures discovered after the first fixes become named, bounded child rows of the affected task; do not treat B10–B12 as an exhaustive explanation of 47 browser failures.
+
+### Ready implementation and verification repairs
+
+Effort: S = hours, M = roughly a day, L = multiple days, including tests. Estimates exclude toolchain/device access and protected dependency work. Confidence describes the diagnosis; it does not authorize a new product/protocol choice.
+
+| ID / status | Priority, effort, risk, confidence | Work and exact acceptance |
+|---|---|---|
+| R01 ready — B10 | P0, S, medium, high | Match the bounded-history activity cursor contract. Use the R01 steps below; local unlock must retain the selected Entity workspace and relock successfully. |
+| R02 ready — B11 | P1, S, low, high | Update the four stale historical-mode assertions in `frontend/tests/react-candidate/ops/panels/ops-workspace-{architect,local-panels,jurisdiction}.spec.ts`. Preserve exact heights, recorded values and Live restoration. No change to production translations. |
+| R03 product decision pending — B12 | P1, M, medium, high diagnosis | Restore explicit access to local creation/recovery alongside remote node derivation. Recommended UX and exact lifecycle checks below. Keep both existing positive tests. |
+| R04 open — R04a–R04e | P1, M overall, medium, high failures / diagnosis per child | Repair the seven remaining non-release unit failures below. B9 owns the eighth failure. Do not alter financial semantics or retire assertions merely to green the suite. |
+| R05 ready — V05b prerequisite | P1, M, medium, high | Add built-release browser verification, using the existing verified release serving/route policy. Development source imports must not be required for artifact tests. |
+| R06 ready, finalize after behavior fixes — V03 | P2, S, low, high | Reconcile stale `REMAINING_WALLET_REQUIREMENTS`, `PARITY_GAPS`, capability and platform descriptions with actual consumers and the rows here. Preserve unresolved positive-flow gaps. |
+
+#### R01: bounded-history cursor, first implementation task
+
+Evidence: `frontend/packages/runtime-client/src/entity/entity-workspace-activity.ts:247` contains:
+
+```ts
+if (value === null) {
+  if (fromHeight > 1) throw new Error('ENTITY_WORKSPACE_ACTIVITY_CURSOR_MISMATCH');
+  return null;
+}
+```
+
+The existing producer `core/storage/queries/history.ts:437–473` uses `floor = Math.max(1, availableFromHeight)` and `nextBeforeHeight: lastScannedHeight > floor ? lastScannedHeight - 1 : null`. Therefore a terminal page can legitimately end above height 1. This is separate from B2's within-frame truncation.
+
+1. Extend `tests/frontend/ops/entity/frontend-ops-entity-activity-ledger.test.ts` with an exact producer-shaped terminal page above height 1, including existing availability metadata. Assert the selected Runtime/Entity and events survive and Earlier is exhausted. Preserve rejection of non-integer/misaligned non-null cursors, bad ranges/counts, wrong Entity/Runtime and stale append pages. Use canonical producer output for integration; do not add a new mocked service.
+2. Update only the frontend projection/metadata validation needed to honor that contract. Keep the existing non-null cursor relationship. Do not add a backend cursor or assume older history exists when the producer reports exhaustion.
+3. Run `bun test tests/frontend/ops/entity/frontend-ops-entity-activity-ledger.test.ts tests/frontend/ops/entity/frontend-ops-entity-runtime-read.test.ts tests/frontend/ops/entity/frontend-ops-entity-time-machine.test.ts` from root; expected 0 failures. Then run the exact Ops local-owner slice in Commands, followed by Wallet history and Ops Entity regression slices if the shared reader changed their behavior. Inspect all three viewports and browser errors. Close B10 only after the original unlocked-workspace failure is absent.
+
+Keep deterministic decoding in Runtime-client and subscriptions/lifecycle in the existing app source/controller; do not catch the error and render an empty successful workspace.
+
+#### R02: historical labels
+
+Production `ops-solvency-panel.tsx:35` and `ops-jurisdiction-panel.tsx:34` use `time.historical`; English renders `Historical`, not the previous `recorded` label. Correct only the four mode-label assertions, not recipe text such as `126 recorded network steps`. Run each affected registered spec through `check.ts --surface=ops --level=slice --spec=<exact path>`; expected all cases pass across three viewports with the same financial/frame assertions. A later unrelated failure remains a separate open child, not grounds to weaken the test.
+
+#### W08d2: mount the completed Stack Manager in Wallet
+
+`wallet-settings.tsx:37–42` lists only Wallet, Display, Recovery and Consensus. `ops-stack-manager.tsx:38–160` now implements configured stacks and deploy/register, so O09b/O10 no longer block this task.
+
+1. Trace `frontend/apps/wallet/src/navigation/wallet-navigation-model.ts`, `settings/wallet-settings.tsx`, shared Entity settings routing and `frontend/apps/ops/src/workspace/runtime/ops-stack-manager.tsx`. Extract the reusable presentation/controller boundary into its existing shared UI/browser owners; retain `frontend/bridges/runtime/stack-manager-client.ts` as the one client. Ops becomes a thin context adapter; Wallet must not import Ops bootstrap or silently use a different global Runtime.
+2. Mount the retained Stack Manager settings destination, preserving explicit Entity selection, selected Runtime, canonical navigation/reload and shared configured-stack selection. Keep daemon admin-capability, live/recorded, embedded and RPC/signer restrictions. Use the selected context at action time; context switches invalidate inspection and deployment review.
+3. Extend `frontend/tests/react-candidate/wallet/wallet-entity-evidence.spec.ts` and the existing `ops/workspace/ops-workspace-settings.spec.ts` isolated-stack flow: list/select/reopen, allowed deploy/register against isolated Anvil, cancellation/rejection and wrong-context restrictions. No real infrastructure deployment.
+4. `bun test tests/frontend/settings/stack-manager-client.test.ts` plus affected routing/model tests, both registered browser slices and all-app local checks must pass. Reuse the same operation in both apps; do not duplicate deployment logic. Size S–M, medium authority/lifecycle risk.
+
+#### R03: preserve both BrainVault destinations
+
+Evidence: `frontend/apps/ops/src/workspace/panels/ops-brainvault-panel.tsx:37–42` conditionally replaces `IdentityOnboarding` with `OpsRemoteBrainVault` whenever `adapter.mode === 'remote'`. The first test in `frontend/tests/react-candidate/ops/panels/ops-workspace-brainvault.spec.ts` intentionally imports a remote Runtime then restores a local backup; the second verifies real native-node derivation.
+
+Recommended product choice: keep remote derivation as the initial remote-context destination, with an explicit **Create/recover local Runtime** action or target selector in the same panel. Selecting local entry does not change the shared active Runtime. Successful local opening performs the existing exact Runtime handoff; cancellation leaves the remote selection intact. Obtain that product choice before implementation, as required by the frontend override; continue other ready tasks while pending.
+
+Keep the existing `onRuntimeOpened` stale-adapter/unmount checks, remote abort handling and secret cleanup. Verify both positive tests, cancellation, panel close, selection change during derivation/recovery, no mnemonic in storage or remote payloads, and one shared Runtime after completion. Run the registered BrainVault slice and relevant `tests/frontend/onboarding/brainvault/` / recovery / Runtime-session tests. No BrainVault algorithm, vault schema or custody-policy changes.
+
+#### R04: explicit unit-failure queue
+
+Reproduce each file independently, inspect its canonical producer/caller, fix only its first divergence, then rerun that file. Test input shapes must reflect real committed data; preserve exact output/authority assertions. The current failures do not prove that all seven are implementation bugs.
+
+| Child / status | Evidence and bounded action | Root verification command |
+|---|---|---|
+| R04a ready | `tests/frontend/solvency-panel-view.test.ts:54` expects a pending-collateral field absent from the actual result; classify the mismatch before editing. Trace retained `solvency-panel-view.ts` into shared `packages/runtime-client/src/panels/solvency-panel-view.ts` and canonical calculation. Align the consumer/test with the committed summary contract; do not add a financial formula or promote pending state. | `bun test tests/frontend/solvency-panel-view.test.ts` |
+| R04b ready | Three failures in `tests/frontend/payments/payment-panel-view.test.ts:59,112,138`: absent `state.lockBook` and an obsolete inline submission assertion. Read `frontend/src/lib/components/Entity/payments/payment-panel-view.ts`, `PaymentPanel.svelte` and `runtime/payment-command.ts`; validate current canonical routing evidence and builder submission semantics. Retain no-secret projection and exact selected signer/Entity tests. | `bun test tests/frontend/payments/payment-panel-view.test.ts` |
+| R04c ready | `tests/frontend/payments/pending-batch-preview.test.ts:40`: expected 11 operations, actual 10. Trace `countBatchOps` in the retained batch helper against real `JBatch` bucket semantics before deciding whether test or helper is wrong. Preserve registration-only, malformed collection and empty-pair cases. | `bun test tests/frontend/payments/pending-batch-preview.test.ts tests/frontend/payments/frontend-wallet-batch.test.ts` |
+| R04d ready | `tests/frontend/diagnostics/docs-view-diagnostics.test.ts:18` expects filtering inline in `DocsView.svelte`, which delegates selection to a shared helper. Follow its imports and test canonical-only selection plus responsive scroll at the actual owner; keep error and archive-exclusion behavior. | `bun test tests/frontend/diagnostics/docs-view-diagnostics.test.ts` |
+| R04e ready | `tests/frontend/diagnostics/wire-debug-surface.test.ts:8` expects protocol 2 while `wireDebug.protocolVersion` exposes `XLN_PROTOCOL_VERSION` (1); the same test already expects peer envelope v1. Distinguish peer and rAdapter versions using existing constants/contracts, keeping both exact round trips. Never change a production wire version for this test. | `bun test tests/frontend/diagnostics/wire-debug-surface.test.ts` |
+
+Expected result for each command is 0 failures; preserve or strengthen the tested behavior. B9 separately owns `tests/frontend/tooling/pilots/frontend-releases-pilot.test.ts:34`. Gateway/QA cache failures were rejected as source-bug findings after their unsandboxed pass; do not schedule speculative networking/cache fixes. A full suite with networking permitted is still required at V04.
+
+#### R05/V05b: verify the built artifact
+
+`frontend/playwright.react.config.ts` runs `bun scripts/dev.ts`; some tests import `/__app/ops/src/...` directly. A green V05a therefore cannot certify a hashed production release.
+
+1. Add a distinct artifact browser entry point/config alongside the existing candidate config. Reuse routing, MIME, verification and same-origin policies from `frontend/scripts/deployment/deployment-candidate-smoke-server.ts`; do not introduce another production routing implementation. Accept an explicit verified release directory, serve its exact bytes without Vite/transpilation or rebuilding, and connect only the existing isolated Runtime fixture.
+2. Start with direct loads/back-forward across Site → Docs → Wallet → Ops and nested URLs. Prove namespaced lazy chunks, Runtime/Account/BrainVault worker URLs, same-origin API/WS routing, CSP, redirects, static docs/downloads and service-worker ownership on those bytes. Then exercise one real owner/open/payment or settlement path and one workspace graph/history path using UI plus existing fixture observations. No dynamic source-module imports in this suite.
+3. Add route/asset/unknown-path rejection coverage and release-id/hash assertions to the existing tooling tests. Register the new command in `frontend/package.json` and add its exact command here when implemented; no such complete artifact-interaction CLI exists yet. Existing `bun run test:deployment:candidate` validates activation/rollback, not these wallet/operator interactions.
+4. Pass the artifact browser flow on all three viewports; record source SHA, release ID and browser report. Verify hashes before/after. Keep V05a's full registered matrix and V06/V08 lifecycle tests intact. A built smoke is supplementary, not a replacement for any existing positive-flow assertion.
+
+#### R06: reconcile inventories without inflating completion
+
+`frontend/config/wallet-flow-audit.ts:462–474` still calls remote Hub opening unverified, debt enforcement incomplete and cross-j controls unported; W07/W15b/W16/W17 and real consumers contradict those descriptions. `frontend/config/parity-audit.ts` similarly says to finish Ownership commands, already closed in W01–W04. Update descriptions, sources, exact relocated browser paths and remaining dependencies. Keep B1/B2/B3/B8/B9, R01/R03, headset/native and aggregate verification visible until their exact evidence passes. Existing `browserEvidence: covered` denotes a registered test, not a green run; make that distinction explicit in inventory/report wording rather than claiming every covered route passed.
+
+Run the six inventory contract files listed in Commands and `bun scripts/checks/parity-audit.ts`; expected no missing paths/owners, no false completed flows and deterministic counts derived from honest statuses. Keep the single migration ledger here; do not create another task catalog or percentage-based completion target.
 
 ### Wallet — one operation at a time
 
@@ -65,7 +180,7 @@ Sources: `frontend/src/lib/components/Entity/` is the retained reference; `front
 | W08b done — `tests/frontend/ops/frontend-ops-display-preferences.test.ts`; `output/playwright/react-wallet/report/`; `output/playwright/react-ops/report/` | Close Display settings parity with the retained display subview. | Wallet Display now consumes the shared seven-palette model and one browser-owned observable preference source also used by Ops Entity panels. Theme selection applies immediately to the Wallet shell and docked Entity workspace, survives reload and uses field-scoped `xln-settings` writes that preserve Account skin, layout, style, scale and effects; Wallet-only unlock appearance and worker controls remain intact. The complete Account appearance spec passes 6/6 cases across 3 viewports in 46.0 seconds, and the docked Entity flow passes 3/3 viewports in 23.6 seconds with light-theme screenshots and browser/page errors inspected. 38 focused tests / 141 assertions, the four-app React local check (837 files / 0 unsafe findings) and four-app production build pass. |
 | W08c done — `tests/frontend/onboarding/recovery/frontend-wallet-recovery-services.test.ts`; `output/playwright/react-wallet/report/` | Close Recovery settings parity with the retained recovery subview. | The already-open local Runtime enters the canonical Recovery settings destination without exposing seed or identity-derivation controls. Official mode selection, invalid URL rejection, normalized manual last-resort service addition and the existing Runtime-authority save all work there; the exact mode, tower URL and role return after reload from canonical vault persistence. The focused Settings regression and original end-to-end recovery enrollment flow pass 6/6 browser cases across 390×844, 1366×900 and 1920×1080 in 46.7 seconds with screenshots and browser/page errors inspected. 31 focused recovery/navigation tests / 138 assertions, the four-app React local check (837 files / 0 unsafe findings) and four-app production build pass. |
 | W08d1 done — `tests/frontend/account/wallet-account-tools.test.ts`; `output/playwright/react-wallet/report/` | Verify the retained Consensus settings destination. | Wallet settings links now carry the explicit selected Entity into the existing committed-only Consensus evidence surface. Entity changes rewrite the canonical deep link, and reload restores the same Entity against the same selected Runtime instead of falling back to another projection; the panel continues to omit in-flight proposals, votes and locks. The focused browser flow passes 3/3 cases across 390×844, 1366×900 and 1920×1080 in 12.3 seconds with screenshots and browser/page errors inspected. 42 focused routing/consensus tests / 231 assertions, the four-app React local check (837 files / 0 unsafe findings) and four-app production build pass. |
-| W08d2 blocked O09b/O10 | Mount the shared Stack Manager settings destination after configured-stack selection and deploy/register are complete. | The shared destination must use the selected Entity/Runtime and preserve canonical live/recorded and authority restrictions. Do not mount the existing inspection-only Ops surface as a substitute for the missing configured-stack owner or deploy/register operation. Extend `wallet-entity-evidence.spec.ts` after O09b–O10. |
+| W08d2 ready — O09b/O10 done | Mount the shared Stack Manager settings destination after configured-stack selection and deploy/register are complete. | The shared destination must use the selected Entity/Runtime and preserve canonical live/recorded and authority restrictions. Reuse the now-complete configured-stack and deploy/register owner through a shared boundary; an inspection-only destination is insufficient. Extend `frontend/tests/react-candidate/wallet/wallet-entity-evidence.spec.ts` and preserve the Ops flow. |
 | W09 done — `tests/frontend/payments/frontend-wallet-payments.test.ts`; `output/playwright/react-wallet/report/` | Complete settlement proposal review/edit from `payments/SettlementPanel.svelte`. | The Wallet now prepares one immutable review containing the exact source Entity/signer, counterparty, token, display/raw amount, collateral-to-reserve operation, designated executor side/Entity and retained `settle-c2r` memo. Editing any input invalidates the review, cancellation leaves the exact Account workspace unchanged, and submission uses the reviewed transaction/context through the idempotent Runtime command lane; a real remote Runtime commits the intended 12,000,000-raw-unit proposal. The complete settlement spec passes 6/6 cases across 390×844, 1366×900 and 1920×1080 in 15.0 seconds with review screenshots and browser/page errors inspected. 11 focused payment tests / 48 assertions, the four-app React local check (837 files / 0 unsafe findings) and four-app production build pass. |
 | W10 blocked B3 — local complete; `tests/frontend/payments/frontend-wallet-payments.test.ts`; `output/playwright/react-wallet/report/` | Port settlement peer approval. Depends W09. | The embedded Wallet now reads the selected Entity's exact committed Account workspace from the canonical live replica without widening the compact remote projection. Its immutable peer-signature review binds the approving Entity/signer and Account side to the counterparty, proposer, designated executor, workspace hash/revision, operations and memo; cancellation is inert, the proposer cannot self-approve, and changed Entity/signature or stale workspace evidence is rejected before the canonical `settle_approve` command is submitted. A real unsafe `forgive` proposal advances from `awaiting_counterparty` to `ready-to-submit` only after the proper peer approves it. The complete W09–W10 settlement spec passes 9/9 cases across 390×844, 1366×900 and 1920×1080 in 38.9 seconds with six W10 screenshots and browser/page errors inspected. 12 focused payment tests / 53 assertions, the four-app React local check (839 files / 0 unsafe findings) and four-app production build pass. Remote approval proof remains blocked by B3. |
 | W11 blocked B3 — local complete; `tests/frontend/payments/frontend-wallet-payments.test.ts`; `output/playwright/react-wallet/w11-{mobile,laptop,wide}/` | Port designated-executor settlement execution. Depends W10. | The designated executor now derives one exact `settle_execute` command from a `ready_to_submit` committed workspace, bound to the selected Entity/signer, counterparty, executor side, workspace hash/revision, operations and memo. The non-executor remains gated, current committed evidence is revalidated immediately before submission, an already-sent jurisdiction batch suppresses execution, and the source-lifetime execution key prevents duplicate submission. A real unsafe `forgive` workspace advances through peer approval, designated execution and one signed Bilateral settlement J-batch; explicit broadcast reaches observed Account and chain finality, clears the workspace and batch, and reopening Operations creates no duplicate. The complete W09–W11 settlement spec passes 9/9 cases across isolated 390×844, 1366×900 and 1920×1080 origins in 53.0 seconds with nine W11 screenshots and browser/page errors inspected. 13 focused payment tests / 60 assertions, the four-app React local check (840 files / 0 unsafe findings) and four-app production build pass. Remote execution proof remains blocked by B3. |
@@ -98,7 +213,7 @@ Sources: `frontend/src/lib/view/DockRoot.svelte`, `frontend/src/lib/view/panels/
 | O06 done — `output/plan-ops-20260908/` | Finish Jurisdiction token registry labels and token selection. | Labels come from the exact selected live registry (`USDC · #1` in the fixture); generation guards discard stale metadata and failures remain visible. Included in the 18/18 browser result below. |
 | O07 done — `output/plan-ops-20260908/` | Port fresh external ERC20/native balance reads. Depends O06. | Fresh ERC20/native reads use the selected live adapter and signer; recorded frames expose the explicit no-provider boundary instead of querying live state. Included in the 18/18 browser result below. |
 | O08 done — `output/plan-ops-20260908/` | Port fresh on-chain debt reads. Depends O06. | Exact selected Entity/token debts render from the live adapter, with selection generations preventing late replacement. Included in the 18/18 browser result below. |
-| O09 done — `output/plan-ops-20260908/` | Finish Stack Manager list/inspect/select; retained inspection is closed in O09a, configured-stack selection remains O09b. | Daemon signer/RPC inspection and the jurisdiction configuration owner remain separate; configured-stack selection is shared through the canonical J-machine store. |
+| O09 done — `output/plan-ops-20260908/` | Finish Stack Manager list/inspect/select; retained inspection is closed in O09a and configured-stack selection is closed in O09b. | Daemon signer/RPC inspection and the jurisdiction configuration owner remain separate; configured-stack selection is shared through the canonical J-machine store. |
 | O09a done — `output/plan-execution-20260906/o09-browser/report/index.html` | Port retained daemon status, owned signer selection and exact RPC inspection into Ops Settings. | 6 browser cases pass across 390×844, 1366×900 and 1920×1080 with screenshots/F12 inspected; 6 client tests / 37 assertions pass. Real RPC/error, refresh, stale-probe clearing, reopen and embedded restrictions verified. No deploy action added. |
 | O09b done — `output/plan-ops-20260908/` | Add configured-stack list/inspect/shared selection using its actual jurisdiction/configuration owner. | Stack list/inspection reads the actual J-machine store, and selection is shared with Architect, Jurisdiction and the inspector without reusing Runtime signer selection. Included in the 18/18 browser result below. |
 | O10 done — `output/plan-ops-20260908/` | Port Stack Manager deploy/register through the existing endpoint. Depends O09. | The canonical endpoint deploys and verifies a real V1 stack on a lazy isolated Anvil chain, persists it locally and selects it; duplicate-key HTTP 400 remains visible. No user infrastructure is touched. |
@@ -162,27 +277,39 @@ These rows close the original Site/Docs, platform and parity work; passing a bui
 |---|---|---|
 | V01 blocked B9 — 17/21; `output/playwright/react-site/` | Verify Site links, retained interactions, direct loads and downloads. | All three `/releases` cases fail closed on the saved Hanko encoding; mobile `/market-cap` also saw one transient Vite 504. Site verification remains red. |
 | V02 done — 15/15; `output/playwright/react-docs/` | Verify Docs search, document selection, anchors, browser Back/Forward, direct links and errors. | Real generated inputs pass search, selection, direct anchor, Back/Forward and retryable error coverage across all three viewports. |
-| V03 done — 24/24 tests, 706 assertions | Reconcile typed route/capability/platform/parity inventories after implementation. | The audit reports 20 routes (18 complete, 2 partial), 12 capabilities (7 implemented, 5 in progress) and three explicit gaps. Inventory and shared-boundary checks pass; counts are not presented as complete parity. |
-| V04 done — 471-file candidate; `sha256-bac19b0227de62d3d696fbe56905dacca313e9f6c5221074ecd4797dc9162701` | Run all frontend contracts, build and assemble one candidate after I08/V03 and affected flow tests pass. | All-app frontend gate, 26 contract tests / 351 assertions, four builds and exact candidate byte verification pass. |
-| V05 blocked B10 — 47 failures observed by 117/408; `output/playwright/react-candidate/` | Run the complete registered candidate browser matrix after V04. | The unmodified matrix was stopped after fixture/runtime failures cascaded; no skips or checks were weakened, and no complete-matrix result is claimed. The first independent reproducible red is B10; B1–B3, B8 and B9 also remain before a green rerun. |
+| V03 refresh required — R06; previous 24/24 tests, 706 assertions | Reconcile typed route/capability/platform/parity inventories after implementation. | The audit reports 20 routes (18 complete, 2 partial), 12 capabilities (7 implemented, 5 in progress) and three explicit gaps. Inventory and shared-boundary checks pass; counts are not presented as complete parity. |
+| V04 previous candidate verified; final rerun required — 471-file candidate; `sha256-bac19b0227de62d3d696fbe56905dacca313e9f6c5221074ecd4797dc9162701` | Run the full `bun test tests/frontend` suite with networking permitted, the frontend gate, builds and assembly after R04/R06 and affected flows pass. | Previous all-app gate, 26 selected contract tests / 351 assertions, four builds and exact byte verification pass. That selected suite did not close the 8 remaining unit failures; final acceptance requires the full unit suite and new candidate ID. |
+| V05a blocked B10–B12 — 47 failures observed by 117/408; `output/playwright/react-candidate/` | Run the complete registered development-server browser matrix after V04 and named failures are resolved. | The unmodified matrix was stopped after fixture/runtime failures cascaded; no skips or checks were weakened, and no complete-matrix result is claimed. The first three independent reproducible reds are B10–B12; B1–B3, B8 and B9 also remain before a green rerun. |
+| V05b open — R05 | Run interaction acceptance against the exact V04 built release. | Public/direct routes, shared-origin auth/storage, lazy assets/workers and real Wallet/Ops flows pass across all three viewports with identical before/after manifest hashes; no Vite source imports. |
 | V06 done — 1/1; `output/playwright/pwa-candidate/` | Verify PWA lifecycle against that candidate. | Install/offline/update/rollback cache behavior, service-worker scope and push-wake pass against the candidate. |
-| V07 partial — 28 tests, 121 assertions; no device launch | Verify native/packaged consumers one platform at a time. | Exact candidate staging and Capacitor/desktop/extension copies pass. iOS has ten simulators but the copied shell references absent workspace `node_modules`; Android SDK 36/ADB are absent; Electron binary bootstrap did not complete. No launch/lifecycle claim is made. |
+| V07 partial — V07a–V07d; 28 tests, 121 assertions; no device launch | Verify native/packaged consumers one platform at a time. | Exact candidate staging and Capacitor/desktop/extension copies pass. iOS has ten simulators but the copied shell references absent workspace `node_modules`; Android SDK 36/ADB are absent; Electron binary bootstrap did not complete. No launch/lifecycle claim is made. |
 | V08 done — 1/1; `output/playwright/deployment-candidate/` | Verify isolated activation and whole-release rollback. | Valid bytes activate, invalid bytes fail closed and rollback restores the previous immutable release. |
 | V09 blocked B6 — exit 127 | Run `bun run check` from repository root on the final candidate. | Artifact drift and frontend file-size pass, then `check:src` stops at `cargo: command not found`; later parallel gates are not claimed. |
+
+V06 and V08 are prior-candidate evidence: rerun them against the final V04 bytes. Rebuild only after source/generated-input changes; reuse one verified release for browser, PWA, native and rollback checks.
+
+| Native child / status | Bounded work and acceptance |
+|---|---|
+| V07a ready to investigate — iOS | Fix dependency resolution in the disposable copied Capacitor workspace using the existing copy/staging owner; no live vault/data mutation. Build and launch on an available iOS simulator, then verify deep-link entry, background/resume, reload and storage continuity with the candidate identity recorded. Copy-only tests are not launch evidence. |
+| V07b tooling blocked — Android | Provision the configured SDK/ADB on an authorized test host, then build/install/launch the exact staged release and test the same lifecycle/deep-link cases. Keep absent tooling explicit; do not mark success from an APK copy. |
+| V07c tooling/bootstrap blocked — desktop | Complete the Electron binary setup in the isolated packaged workspace, launch the shell, verify route/deep-link, CSP, reload/storage and close/reopen behavior on the same candidate. |
+| V07d open — extension | Load the exact staged extension in an isolated Chromium profile, verify popup/tab opening, navigation and reload/storage behavior. Existing package-copy/hash contracts alone do not prove extension execution. |
+
+Use `scripts/native/{stage-wallet-candidate,smoke-capacitor-candidate,copy-capacitor-shell-candidate,copy-packaged-shell-candidate}.ts` and existing `native/__tests__/` contracts as the starting owners. Respect native project configuration and use its existing launch tooling; record exact successful launch commands per platform after resolving the current host limitations. Do not silently drop a supported platform. G04b remains a separate real-headset acceptance requirement before claiming complete retained behavior.
 
 ### Authorized finish
 
 | ID / status | Task | Pass condition / dependencies |
 |---|---|---|
-| C01 open | Prepare a concrete canonical-cutover diff/checklist after V01–V09. | Identify exact dev/build/check/package/CI/native/deploy consumers, Svelte removals and rollback artifact. No runtime activation. |
+| C01 ready to prepare; final review after acceptance | Prepare the concrete consumer-by-consumer cutover diff/checklist now; bind it to the final candidate after V01–V09, V05b and G04b. | Start with root/frontend `package.json`, `scripts/dev/run-dev.ts`, `scripts/release/build-xlnfinance-package.ts:26,84`, `scripts/native/build-platforms.ts:282–296`, `scripts/deployment/deploy-platform.sh`, `.github/workflows/build-and-test.yml:104–144`, `.github/workflows/distribution-release.yml`, and native shell/Capacitor paths from `platform-inventory.ts`. Current canonical builds still consume `frontend/build` and Svelte commands. Specify the React release consumer for each, deletions of Svelte-only routes/config/dependencies/tests, retained shared modules/static assets, and the previous immutable rollback release. Prepare a reviewable patch without activating it. |
 | C02 owner authorization | Apply canonical cutover and retire Svelte after C01 review. | Canonical commands and consumers use React; retired Svelte source/config/dependencies and temporary coexistence wiring are deleted. Rerun affected frontend/root/consumer gates. |
 | C03 separate release authorization | Activate the verified prebuilt release. | Applicable production smoke and rollback checks pass. Never compile on production. |
 
-The refactor is complete after C02 and its evidence pass. C03 is the separate production release, not permission to start normal frontend tasks.
+The refactor is complete after C02 and its evidence pass: all reachable behavior has accepted evidence, the full unit and browser gates are green, built/native/device checks are complete, canonical dev/build/check/package/CI consumers use React, and Svelte-only source/config/dependencies are retired. Retarget useful retained-source tests to their canonical shared/React owners before deletion; remove Svelte-only assertions only as part of the authorized retirement, not to evade current failures. C03 is the separate production release, not permission to start normal frontend tasks.
 
-## External dependencies — not backend implementation tasks
+## Dependency register — protected blockers and frontend regressions
 
-Keep each failure visible. Resolve frontend causes locally; ask before a protected backend change. A blocked dependency does not justify claiming the affected positive flow works. If the same behavior also fails in the retained UI, record that baseline; do not silently change acceptance or invent a replacement feature.
+Keep each failure visible. B1/B2/B3/B8/B9 are protected dependencies; B6 is a host/integration dependency; B10/B11/B12 map to frontend R01/R02/R03. Resolve frontend causes locally; ask before a protected backend change. A blocked dependency does not justify claiming the affected positive flow works. If the same behavior also fails in the retained UI, record that baseline; do not silently change acceptance or invent a replacement feature.
 
 | ID | Current dependency | Work it blocks |
 |---|---|---|
@@ -205,6 +332,8 @@ Keep each failure visible. Resolve frontend causes locally; ask before a protect
 | B8 | The canonical cross-j clear follow-up reaches committed Account input without resolvable cancel scope. After the exact order reaches `clear_requested`, Runtime fail-stops with `ACCOUNT_SWAP_CANCEL_SCOPE_UNRESOLVED:<orderId>`. Evidence: `output/plan-wallet-20260908/b8/`. | W17 final `cancelled` state. Submission, `resting` observation and exact cancel targeting are complete; keep the positive browser case registered and do not add a UI workaround. |
 | B9 | All 22 saved Site release attestations use a Hanko encoding rejected by the current canonical decoder with `HANKO_ABI_DECODE_INVALID:HANKO_ABI_SIZE_INVALID:33`; IDs and envelope/board hashes otherwise match. Evidence: `output/playwright/react-site/`. | V01 `/releases` and V05. Requires an owner-authorized signed-data migration or canonical decoder decision; the UI remains fail-closed. |
 | B10 | The local owner unlock flow reaches a ready embedded Runtime, then the Entity workspace fails with `ENTITY_WORKSPACE_ACTIVITY_CURSOR_MISMATCH`. The Runtime activity producer uses `nextBeforeHeight: null` at its available history floor, including floors above height 1, while the React activity projector rejects every null cursor when `fromHeight > 1`. The isolated mobile test reproduces 1/1 after 120 seconds; its screenshot shows owner unlocked with the complete Entity context discarded. Evidence: `output/playwright/react-ops/test-results/ops-owner-ops-local-owner--3ba98-Runtime-session-and-relocks-mobile-390x844/`. | V05 Ops owner flows. Align the frontend decoder with the existing bounded-history cursor contract and add the missing partial-floor regression; do not weaken Runtime history validation. |
+| B11 | The Architect recorded-solvency flow reaches the exact h126 frame and renders its asset data, then fails because the UI says `Historical h126` while the E2E contract still expects `recorded h126`. Commit `082d85b37` intentionally moved Solvency and Jurisdiction mode labels to localized `time.historical`, but four assertions across Architect, Local Panels and Jurisdiction retained the previous English wording. The isolated mobile Architect test reproduces 1/1; an isolated Jurisdiction test reaches the same label drift independently. Evidence: `output/playwright/react-ops/test-results/ops-panels-ops-workspace-a-cb51d--unchanged-connected-Wallet-mobile-390x844/`. | V05 recorded Ops panels. Synchronize the four stale assertions with the localized historical-mode contract while retaining exact mode and height coverage; do not weaken the assertions to substring-free smoke checks. |
+| B12 | The docked BrainVault recovery flow starts from an intentionally imported remote Runtime, but the panel exposes only native-node derivation and never renders the local `Mnemonic` onboarding tab. Commit `4d08db60b` changed the existing local onboarding into an adapter-mode conditional: selecting a remote Runtime now replaces `IdentityOnboarding` with `OpsRemoteBrainVault`, removing the previously covered remote-to-local recovery transition. The isolated mobile case reproduces 1/1 at the 150-second timeout, and the screenshot shows the remote form in place of the required local recovery entry. Evidence: `output/playwright/react-ops/test-results/ops-panels-ops-workspace-b-3ff76-ocal-Runtime-to-every-panel-mobile-390x844/`. | V05 docked BrainVault recovery. Decide and expose the explicit UX for retaining both remote-node derivation and local Runtime creation/recovery without silently switching targets; preserve the existing secret-handling and exact Runtime-selection contracts. |
 
 ## Commands
 
@@ -216,12 +345,42 @@ bun test tests/frontend/<family>/<exact-test>.test.ts
 
 # Frontend directory: affected app, then its registered browser slice.
 bun scripts/check.ts --surface=wallet --level=local
-bun scripts/check.ts --surface=wallet --level=slice --spec=tests/react-candidate/wallet-entity-evidence.spec.ts
+bun scripts/check.ts --surface=wallet --level=slice --spec=tests/react-candidate/wallet/wallet-entity-evidence.spec.ts
 
 # Final integration, after narrow failures are resolved.
 bun scripts/check.ts --all --level=frontend
-bun scripts/candidate-release-verifier.ts <release-directory-printed-by-assembly>
+bun scripts/release/candidate-release-verifier.ts <release-directory-printed-by-assembly>
 bun scripts/test-react-candidate.ts --all
 ```
 
 Use `bun scripts/build.ts --surface=<app>` for an isolated build. Existing PWA/deployment commands live in `frontend/package.json`; review their isolated configuration before running. Keep failing tests registered and preserve their assertions. Use the actual supported CLI arguments, not commands copied from deleted historical plans.
+
+
+Additional exact commands (run root tests from the repository root; other commands from `frontend/`):
+
+```bash
+# Root: current six-file inventory/ownership baseline (33 tests at assessment).
+bun test tests/frontend/tooling/frontend-shared-boundaries.test.ts tests/frontend/tooling/frontend-route-ownership.test.ts tests/frontend/tooling/frontend-capability-coverage.test.ts tests/frontend/tooling/frontend-platform-inventory.test.ts tests/frontend/tooling/frontend-parity-audit.test.ts tests/frontend/tooling/frontend-wallet-flow-audit.test.ts
+
+# Frontend: first visible regression; no stale pre-relocation spec paths.
+bun scripts/check.ts --surface=ops --level=slice --spec=tests/react-candidate/ops/owner/ops-local-owner-unlock.spec.ts
+bun scripts/check.ts --surface=ops --level=slice --spec=tests/react-candidate/ops/panels/ops-workspace-brainvault.spec.ts
+bun scripts/check.ts --surface=ops --level=slice --spec=tests/react-candidate/ops/workspace/ops-workspace-settings.spec.ts
+bun scripts/checks/parity-audit.ts
+
+# Root: full frontend suite, including files outside the selected frontend gate.
+bun test tests/frontend
+
+# Frontend: complete assembly and lifecycle acceptance (after fixes).
+bun scripts/check.ts --all --level=frontend
+bun scripts/test-react-candidate.ts --all
+bun run test:pwa:candidate
+bun run test:deployment:candidate
+
+# Root: final integrated candidate; missing cargo is a host dependency, not a waived gate.
+bun run check
+```
+
+Before heavy browser/scenario acceptance, run root `bun run stand:status`, then hold the existing stand lock with `bun run stand:run --reason <task-id> -- <command>` when the runner does not acquire it. Current React scripts do not themselves establish the machine lock. Use isolated fixture ports/origins and never reuse the user's live dev server. Honor the repository process budget; arrange sufficient owner-approved time or the appropriate CI/test host for long suites, and poll/terminate the exact process tree rather than restarting overlapping runs. A timeout or missing device/toolchain stays incomplete. Networking restrictions should be resolved in the test environment, not by weakening tests.
+
+Protected B1/B2/B3/B8/B9 work requires its own owner-authorized scope. For each handoff provide current SHA, last green command, first red/error, artifact path, next single reproduction command and remaining final gates. Do not choose a new lending admission policy, cursor schema, remote settlement contract, cancel semantics or signature migration inside a frontend task. No frozen-core approval, protocol edits, source cleanup outside scope, new financial calculations or live Runtime resets are authorized by this plan.
