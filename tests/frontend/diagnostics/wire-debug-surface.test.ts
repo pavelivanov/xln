@@ -5,19 +5,20 @@ import { wireDebug } from '../../../frontend/src/lib/utils/runtime/wireDebug';
 describe('browser wire debug surface', () => {
   test('decodes exact peer and rAdapter wire values without changing production codecs', () => {
     const peer = wireDebug.encodeWs({ type: 'ping' });
-    expect(wireDebug.protocolVersion).toBe(2);
+    // Both wire owners currently validate the canonical testnet protocol version, v1.
+    expect(wireDebug.protocolVersion).toBe(1);
     expect(wireDebug.decode(peer)).toEqual({ type: 'ping', v: 1 });
     expect(wireDebug.decodeWs(peer)).toEqual({ type: 'ping' });
 
     const adapter = wireDebug.encodeRadapter({
-      v: 2,
+      v: 1,
       op: 'tick',
       height: 9,
       commandReady: true,
       commandReadyReason: null,
     });
     expect(wireDebug.decodeRadapter(adapter)).toEqual({
-      v: 2,
+      v: 1,
       op: 'tick',
       height: 9,
       commandReady: true,
