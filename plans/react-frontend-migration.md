@@ -1,8 +1,8 @@
 # Finish the frontend refactor
 
-Status: **finishing behavior and release integration**. Four React apps and framework isolation are implemented. Remaining work is specific UI gaps, failing contracts/flows, device evidence and canonical cutover. Svelte remains canonical.
+Status: **all currently implementable finish rows completed; remaining rows blocked with reasons**. R01/R02/R04/R05/R06, Wallet Stack Manager, extension entry/lifecycle and C01 preparation are complete. Protected dependencies, R03’s product decision, aggregate/native/device acceptance and owner-authorized cutover remain open. Svelte remains canonical.
 
-Refreshed **2026-09-10**, against `main` at `4301b1796`, including the existing uncommitted B11/B12 findings. This assessment changes plans only; implementation and cutover are future work. Preserve unrelated `.gitignore` changes. Recheck cited symbols after later code changes; line references below are starting points, not immutable instructions.
+Refreshed **2026-09-10**, after implementation source `7a603c4b5`, cutover review `3beb0e92d` and integration test fix `1e93db101` on `main`. Each completed task has its own commit. The unrelated `.gitignore` changes remain untouched. Line references below are starting points; final evidence is under `output/react-finish-20260910/`.
 
 This is the only executable refactoring plan. Update task rows in place; do not append session histories, duplicate audits, or new completion ledgers.
 
@@ -35,21 +35,21 @@ Deliver independently checkable, testable and buildable **site, docs, wallet and
 | Area | Implemented | Still required |
 |---|---|---|
 | Architecture | Four React roots; shared browser, Runtime-client and UI owners; vault/worker/session extraction; retained-tree import isolation. I01–I08 are closed. | Keep boundaries intact while finishing behavior; remove Svelte only in C02. |
-| Wallet | Ownership, onboarding/remote Formation/Hub, most settings, local settlement through finality, batch recovery, collateral, debt/dispute controls, cross-j submission and shared dock consumers. | W08d2 Stack Manager destination; remote W10/W11; W17 cancellation finality; W19 Lending; W20 lossless Activity. |
-| Ops | O01–O12 controls, shared workspace/playback, graph effects, localization and real guide streaming. | R01 activity cursor rejection, R02 stale historical-label assertions, R03 local recovery entry while remote is selected; G04b headset evidence. |
+| Wallet | Ownership, onboarding/remote Formation/Hub, most settings, local settlement through finality, batch recovery, collateral, debt/dispute controls, cross-j submission and shared dock consumers. | Remote W10/W11; W17 cancellation finality; W19 Lending; W20 lossless Activity. |
+| Ops | O01–O12 controls, shared workspace/playback, graph effects, localization and real guide streaming. | R03 local recovery entry while remote is selected; G04b headset evidence. R01 cursor handling and R02 historical assertions are resolved. |
 | Site/Docs | Route implementations and Docs interactions; V02 recorded 15/15 browser cases. | Site release verification B9 and the previously observed market-cap 504; refresh evidence on final code. |
-| Release | Candidate assembly/verifier, PWA and isolated rollback; native staging/copy tooling. | Full unit/browser acceptance, built-artifact interaction evidence, actual native launches, root checks, canonical consumers and Svelte retirement. |
+| Release | Candidate assembly/verifier, PWA and isolated rollback; native staging/copy tooling. | B9 unit failure and full development matrix, iOS/Android/desktop/headset evidence, root checks, canonical consumers and Svelte retirement. Built release/PWA/extension/rollback checks pass. |
 
-Fresh checks on this checkout:
+Final checks on this checkout:
 
-- `cd frontend && bun scripts/check.ts --all --level=local`: **pass**, four app checks plus tooling; 825 files, 0 unsafe findings.
-- Six ownership/inventory contract files: **33 pass, 0 fail, 1,037 assertions**. The typed audit still reports 20 routes (18 complete/2 partial) and 12 capabilities (7 implemented/5 in progress). These are declarations, not passing-flow percentages.
-- `bun test tests/frontend`: **1,483 pass, 12 fail, 11,615 assertions**, 243 files, 6.27 seconds. The gateway and QA cache files then pass **7/7, 74 assertions** outside the sandbox: four failing cases were local-port permission failures. **Eight failures in six other files remain**; see R04 and B9. This is not a green aggregate run.
-- `bun run check`: **exit 127**; artifact-drift/file-size checks pass, `cargo` is missing, and concurrent gate termination does not establish additional root causes. No root aggregate pass is claimed.
+- `bun test tests/frontend`: **1500 pass, 1 fail, 11780 assertions**, 244 files, 6.36 seconds. Only the protected B9 saved-release signature case remains; no assertion was removed or weakened.
+- Final release **473 files**, `sha256-3d3d194d784e98cd78377996229eb3c396df8bb07a28a5083942d29691bb6718`: artifact interactions **9/9**, PWA lifecycle **1/1**, isolated activation/rollback **1/1**. The final generated Docs include the cutover review; all consumers use the same assembled bytes.
+- Extension toolbar opening/settings/reload/reopen **3/3 viewports**; native staging/copy contracts **16/16, 68 assertions**. Final staging's **94 Wallet files** are byte-identical to the tested extension payload. iOS/Android/desktop/headset limitations remain explicit under V07/G04b.
+- Four-app local checks and affected builds/contracts pass. Retained Svelte/TypeScript check after V09a: **0 errors, 0 warnings**. Root `bun run check` remains blocked by missing `cargo`; V09 records the final invocation and no aggregate success is claimed.
 
-Earlier browser/build counts below are retained evidence, not fresh runs in this assessment. Browser suites, native launches, supported XR hardware, live financial outcomes, external CI and production were not re-run/audited here. The assessment is frontend migration scope, not a security or protocol audit.
+The typed audit remains 20 routes (18 complete/2 partial), 12 capabilities (7 implemented/5 in progress), three explicit gaps. These declarations and the **414 registered browser cases in 40 files** are not passing-flow percentages. R01/R02 affected positive browser flows now pass; B1/B2/B3/B8/B9/R03 prevent complete accepted behavior.
 
-Two verification gaps need explicit ownership: `check.ts --all --level=frontend` runs four selected contract files, not all of `tests/frontend`; and `playwright.react.config.ts:55–66` starts `frontend/scripts/dev.ts`, so its full matrix is development-server evidence. V04 must include the full unit suite, and V05b must exercise built release bytes.
+`check.ts --all --level=frontend` still selects four contract files, so V04 additionally runs the full frontend unit suite. The normal React browser configuration still uses development servers; V05b separately verifies immutable release bytes. Neither the incomplete 30-second aggregate run nor the known-red full matrix is represented as green. The unapplied C01 patch addresses canonical consumer commands only as part of authorized C02.
 
 ## How to execute one task
 
@@ -63,7 +63,7 @@ Do not add tests that merely mirror code. Preserve existing behavioral assertion
 
 ## Execution order
 
-**Start with R01.** Then R02, W08d2 and R04's first in-scope failure. R03 needs a product choice; recommend the explicit target selector described below. Work on ready rows while that choice or protected dependencies are pending. Do not restart completed W01/O01/I01 work.
+**No ready finish row remains.** Resume R03 after the explicit destination choice, protected rows after their dependencies, and native/aggregate checks after host/run-budget availability. C01 preparation is committed; final binding and C02/C03 require their listed acceptance and authority. Do not restart completed frontend work or repeat unchanged known failures.
 
 ```text
 R01 -> local owner/workspace browser proof
@@ -77,7 +77,7 @@ V04 -> V06 + V07 + V08; final code -> V09; supported device -> G04b
 all acceptance + C01 review -> owner-authorized C02 -> separate release C03
 ```
 
-C01 consumer mapping and V07/toolchain preparation can begin now. Actual cutover still waits for acceptance and owner authorization. New failures discovered after the first fixes become named, bounded child rows of the affected task; do not treat B10–B12 as an exhaustive explanation of 47 browser failures.
+C01 consumer mapping and V07 preparation are complete. Actual cutover still waits for acceptance and owner authorization. B10/B11 are resolved; the older 47-failure partial matrix is historical evidence, not the final failure count. New concrete failures get bounded child rows, as V07d1 and V09a did.
 
 ### Ready implementation and verification repairs
 
@@ -290,7 +290,7 @@ These rows close the original Site/Docs, platform and parity work; passing a bui
 | V06 done — final 473-file release; 1/1 in 11.8 seconds | Verify PWA lifecycle against final V04/V05b bytes. | Install/offline/update/rejected incomplete update/whole-cache rollback and push wake pass through one real service worker. Source release `sha256-3d3d194d784e98cd78377996229eb3c396df8bb07a28a5083942d29691bb6718`; no app rebuild in the lifecycle runner. `output/react-finish-20260910/v06-final-release.log`. |
 | V07 partial — extension 3/3; copy contracts 16/16, 68 assertions | Verify native/packaged consumers one platform at a time. | Final 473-file release `sha256-3d3d194d784e98cd78377996229eb3c396df8bb07a28a5083942d29691bb6718` stages 94 Wallet files; packaged and Capacitor copies verify. All 94 native file hashes exactly match the extension-tested V07d1 candidate. iOS/Android/desktop lifecycle remains blocked as detailed below. Evidence: `output/react-finish-20260910/v07-final-*`. |
 | V08 done — final 473-file release; 1/1 in 4.6 seconds | Verify isolated activation and whole-release rollback. | Final release `sha256-3d3d194d784e98cd78377996229eb3c396df8bb07a28a5083942d29691bb6718` activates, corrupted bytes fail closed and rollback restores the previous complete immutable release. No production activation occurred. `output/react-finish-20260910/v08-final-release.log`. |
-| V09 blocked B6 — exit 127 | Run `bun run check` from repository root on the final candidate. | Artifact drift and frontend file-size pass, then `check:src` stops at `cargo: command not found`; later parallel gates are not claimed. |
+| V09 blocked B6 — final root exit 127 | Run `bun run check` after the final test correction. | Artifact drift and frontend file-size pass. `check:src` fails at `cargo: command not found`; parent termination prevents an aggregate frontend success claim. Its retained Svelte checker and build report passing separately after V09a. `output/react-finish-20260910/v09-final-root-recheck.log`; no frozen-core changes or approval bypass. |
 | V09a done — packaged test viewport type | Root integration exposed an optional Playwright viewport passed as a required launch option. Require the explicitly configured viewport before browser launch. | Retained Svelte/TypeScript checker passes 0 errors / 0 warnings after the fix; browser behavior and release bytes are unchanged. `output/react-finish-20260910/v09a-svelte-typecheck.log`. |
 
 V05b, V06 and V08 now verify the same final 473-file release. V07 verifies its exact copied native bytes, with extension lifecycle accepted and the other platform/device limitations explicit. Rebuild only after source/generated-input changes.
