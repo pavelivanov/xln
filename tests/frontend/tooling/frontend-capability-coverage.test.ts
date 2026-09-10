@@ -213,7 +213,7 @@ describe('frontend capability inventory', () => {
     expect(CAPABILITIES.find(({ id }) => id === 'wallet-payments-and-markets')?.currentSources)
       .toContain('frontend/apps/wallet/src/markets/wallet-market-source.ts');
     expect(CAPABILITIES.find(({ id }) => id === 'wallet-payments-and-markets')?.behavior)
-      .toContain('React-owned Runtime orderbooks, canonical same-j order and cancel commands, cross-j lifecycle, and persisted activity');
+      .toContain('React-owned orderbooks and same-j commands; cross-j submission/cancel targeting implemented, cancellation finality blocked by B8; lossless Activity blocked by B2');
     expect(CAPABILITIES.find(({ id }) => id === 'wallet-payments-and-markets')?.currentSources)
       .toContain('frontend/bridges/wallet/wallet-canonical-external-provider.ts');
     expect(CAPABILITIES.find(({ id }) => id === 'wallet-native-and-offline')?.status).toBe('implemented');

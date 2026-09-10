@@ -680,6 +680,7 @@ export const PLATFORM_INVENTORY = [
     sources: [
       'frontend/scripts/release/candidate-release.ts',
       'frontend/scripts/release/candidate-release-verifier.ts',
+      'frontend/scripts/release/candidate-release-serving.ts',
     ],
     consumers: [
       'scripts/native/wallet-candidate-manifest.ts',
@@ -694,6 +695,9 @@ export const PLATFORM_INVENTORY = [
       'frontend/scripts/deployment/deployment-candidate.ts',
       'frontend/scripts/deployment/deployment-candidate-cli.ts',
       'frontend/scripts/deployment/deployment-candidate-smoke-server.ts',
+      'frontend/scripts/release/artifact-browser-server.ts',
+      'frontend/scripts/test-artifact-candidate.ts',
+      'frontend/playwright.artifact.config.ts',
     ],
     evidence: [
       'tests/frontend/tooling/build/frontend-candidate-assembly.test.ts',
@@ -704,6 +708,7 @@ export const PLATFORM_INVENTORY = [
       'native/__tests__/packaged-shell-candidate.test.ts',
       'tests/frontend/tooling/build/frontend-deployment-candidate.test.ts',
       'frontend/tests/deployment-candidate/lifecycle.spec.ts',
+      'frontend/tests/artifact-candidate/artifact-browser.spec.ts',
       'tests/frontend/tooling/content-security-policy.test.ts',
     ],
   },
