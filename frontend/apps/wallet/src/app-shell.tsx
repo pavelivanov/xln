@@ -1,3 +1,4 @@
+import { walletBrowserHref } from './navigation/wallet-entry-location';
 import { lazy, Suspense, useEffect, useState, useSyncExternalStore, type MouseEvent as ReactMouseEvent } from 'react';
 import { useWorkspaceTranslation } from '../../../bridges/workspace-localization-react';
 
@@ -88,13 +89,13 @@ function WalletOverview({
           <h2 id="wallet-actions-title">Choose a wallet surface</h2>
         </div>
         <div className="wallet-shell-action-links">
-          <a href="/app?setup=1" onClick={(event) => navigate(event, '/app?setup=1')}>Review identity and recovery <span aria-hidden="true">→</span></a>
-          <a href="/app?portfolio=1" onClick={(event) => navigate(event, '/app?portfolio=1')}>Inspect assets and accounts <span aria-hidden="true">→</span></a>
-          <a href="/app?health=1" onClick={(event) => navigate(event, '/app?health=1')}>Review financial health <span aria-hidden="true">→</span></a>
-          <a href="/app?payments=1" onClick={(event) => navigate(event, '/app?payments=1')}>Send or receive payments <span aria-hidden="true">→</span></a>
-          <a href="/app?markets=1" onClick={(event) => navigate(event, '/app?markets=1')}>Trade committed markets <span aria-hidden="true">→</span></a>
-          <a href="/app?settings=1" onClick={(event) => navigate(event, '/app?settings=1')}>Adjust wallet settings <span aria-hidden="true">→</span></a>
-          <a href="/app?diagnostics=1" onClick={(event) => navigate(event, '/app?diagnostics=1')}>Review wallet diagnostics <span aria-hidden="true">→</span></a>
+          <a href={walletBrowserHref('/app?setup=1')} onClick={(event) => navigate(event, '/app?setup=1')}>Review identity and recovery <span aria-hidden="true">→</span></a>
+          <a href={walletBrowserHref('/app?portfolio=1')} onClick={(event) => navigate(event, '/app?portfolio=1')}>Inspect assets and accounts <span aria-hidden="true">→</span></a>
+          <a href={walletBrowserHref('/app?health=1')} onClick={(event) => navigate(event, '/app?health=1')}>Review financial health <span aria-hidden="true">→</span></a>
+          <a href={walletBrowserHref('/app?payments=1')} onClick={(event) => navigate(event, '/app?payments=1')}>Send or receive payments <span aria-hidden="true">→</span></a>
+          <a href={walletBrowserHref('/app?markets=1')} onClick={(event) => navigate(event, '/app?markets=1')}>Trade committed markets <span aria-hidden="true">→</span></a>
+          <a href={walletBrowserHref('/app?settings=1')} onClick={(event) => navigate(event, '/app?settings=1')}>Adjust wallet settings <span aria-hidden="true">→</span></a>
+          <a href={walletBrowserHref('/app?diagnostics=1')} onClick={(event) => navigate(event, '/app?diagnostics=1')}>Review wallet diagnostics <span aria-hidden="true">→</span></a>
           <a href="/testnet">Open testnet tools <span aria-hidden="true">↗</span></a>
           <a href="/health">Inspect network health <span aria-hidden="true">↗</span></a>
           <a href="/docs">Read documentation <span aria-hidden="true">↗</span></a>
@@ -164,13 +165,13 @@ export function WalletAppShell() {
   return (
     <main className={`wallet-shell${usesIdentityAppearance && authScheme === 'light' ? ' is-auth-light' : ''}`} data-display-theme={display.preferences.theme}>
       <aside className="wallet-shell-rail">
-        <a className="wallet-shell-brand" href="/app" aria-label="xln wallet">xln</a>
+        <a className="wallet-shell-brand" href={walletBrowserHref('/app')} aria-label="xln wallet">xln</a>
         <nav className="wallet-shell-nav" aria-label="Wallet navigation">
           {WALLET_APP_LINKS.map((link) => (
             <a
               aria-current={link.view === view ? 'page' : undefined}
               className={link.view === view ? 'wallet-shell-link is-current' : 'wallet-shell-link'}
-              href={link.href}
+              href={walletBrowserHref(link.href)}
               key={link.href}
               onClick={link.view ? (event) => navigate(event, link.href) : undefined}
             >

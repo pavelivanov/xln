@@ -16,6 +16,7 @@
     "scripts/release/artifact-browser-server.ts",
     "scripts/test-artifact-candidate.ts",
     "playwright.artifact.config.ts",
+    "playwright.packaged.config.ts",
     "scripts/check.ts",
     "scripts/shared/command-runner.ts",
     "scripts/dev/dev-gateway.ts",
