@@ -17,11 +17,11 @@ test('Jurisdiction preserves exact recorded observations across frame and Entity
   const observer = panel.getByLabel('Jurisdiction observing Entity');
   await expect(observer.locator('option')).toHaveCount(4);
   await observer.selectOption({ index: 1 });
-  await expect(panel.getByRole('table', { name: 'Jurisdiction reserves', exact: true }).locator('tbody tr')).not.toHaveCount(0);
+  await expect(panel.getByRole('table', { name: 'Jurisdiction Reserves', exact: true }).locator('tbody tr')).not.toHaveCount(0);
   const token = panel.getByLabel('Jurisdiction token', { exact: true });
   await token.selectOption('1');
   await expect(token.locator('option:checked')).toContainText('USDC · #1');
-  const reserves = panel.getByRole('table', { name: 'Jurisdiction reserves', exact: true });
+  const reserves = panel.getByRole('table', { name: 'Jurisdiction Reserves', exact: true });
   await expect(reserves.locator('tbody tr')).toHaveCount(1);
   await expect(reserves.locator('tbody tr td').first()).toHaveText('#1');
   const amount = await reserves.locator('tbody tr td').nth(1).innerText();
