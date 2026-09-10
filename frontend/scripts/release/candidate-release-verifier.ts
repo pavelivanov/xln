@@ -12,6 +12,7 @@ import {
 const MANIFEST_FILENAME = 'release-manifest.json';
 const SHA256_PATTERN = /^[0-9a-f]{64}$/u;
 const RELEASE_ID_PATTERN = /^sha256-[0-9a-f]{64}$/u;
+const isReleaseId = (value: string): value is CandidateReleaseManifest['releaseId'] => RELEASE_ID_PATTERN.test(value);
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   value !== null && typeof value === 'object' && !Array.isArray(value);
@@ -129,7 +130,7 @@ const decodeManifest = (value: unknown): CandidateReleaseManifest => {
   exactKeys(value, ['schemaVersion', 'releaseId', 'applications', 'generatedInputs', 'edgeRoutes', 'files'], 'CANDIDATE_RELEASE_MANIFEST_KEYS_INVALID');
   if (value['schemaVersion'] !== RELEASE_SCHEMA_VERSION) throw new Error('CANDIDATE_RELEASE_SCHEMA_UNSUPPORTED');
   const releaseId = requiredString(value['releaseId'], 'CANDIDATE_RELEASE_ID_INVALID');
-  if (!RELEASE_ID_PATTERN.test(releaseId)) throw new Error('CANDIDATE_RELEASE_ID_INVALID');
+  if (!isReleaseId(releaseId)) throw new Error('CANDIDATE_RELEASE_ID_INVALID');
   const applications = expectedApplications();
   if (safeStringify(value['applications']) !== safeStringify(applications)) {
     throw new Error('CANDIDATE_RELEASE_APPLICATIONS_INVALID');

@@ -64,7 +64,7 @@ const rejectUpgrade = (socket: Socket, status: number, message: string): void =>
   );
 };
 
-const forwardWebSocketUpgrade = (
+export const forwardWebSocketUpgrade = (
   request: IncomingMessage,
   socket: Socket,
   head: Buffer,

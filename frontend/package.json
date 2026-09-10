@@ -29,6 +29,7 @@
 		"dev:react:ops": "bun scripts/dev.ts --surface=ops",
 		"dev:react:gateway": "bun scripts/run-dev-gateway.ts",
 		"test:react:candidate": "bun scripts/test-react-candidate.ts --all",
+		"test:react:artifact": "bun scripts/test-artifact-candidate.ts",
 		"test:react:site": "bun scripts/test-react-candidate.ts --surface=site",
 		"test:react:docs": "bun scripts/test-react-candidate.ts --surface=docs",
 		"test:react:wallet": "bun scripts/test-react-candidate.ts --surface=wallet",
