@@ -15,6 +15,7 @@ const count = (values: readonly string[]): Record<string, number> => Object.from
 
 export const buildParityAuditReport = () => ({
   schemaVersion: 1,
+  browserEvidenceMeaning: 'Registered test coverage, not a passing run. Exact candidate/run evidence and remaining failures are recorded in plans/react-frontend-migration.md.',
   routes: {
     total: RETAINED_ROUTE_PARITY.length,
     implementation: count(RETAINED_ROUTE_PARITY.map(({ implementation }) => implementation)),

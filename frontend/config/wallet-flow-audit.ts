@@ -29,25 +29,54 @@ export type WalletRequirementAudit = Readonly<{
 
 export const WALLET_FLOW_AUDIT = [
   {
-    id: 'entity-ownership-evidence', pathname: '/app', search: '', hash: '#ownership', page: 'app', view: 'entity-tools',
-    sources: ['frontend/apps/wallet/src/entity/wallet-entity-evidence.tsx', 'frontend/packages/ui/src/entity/profile/entity-workspace-ownership-panel.tsx'],
+    id: 'entity-ownership-evidence',
+    pathname: '/app',
+    search: '',
+    hash: '#ownership',
+    page: 'app',
+    view: 'entity-tools',
+    sources: [
+      'frontend/apps/wallet/src/entity/wallet-entity-evidence.tsx',
+      'frontend/packages/ui/src/entity/profile/entity-workspace-ownership-panel.tsx',
+    ],
     tests: ['frontend/tests/react-candidate/wallet/wallet-entity-evidence.spec.ts'],
   },
   {
-    id: 'entity-consensus-evidence', pathname: '/app', search: '', hash: '#settings/consensus', page: 'app', view: 'entity-tools',
-    sources: ['frontend/apps/wallet/src/entity/wallet-entity-evidence.tsx', 'frontend/packages/ui/src/entity/accounts/entity-workspace-consensus-panel.tsx'],
+    id: 'entity-consensus-evidence',
+    pathname: '/app',
+    search: '',
+    hash: '#settings/consensus',
+    page: 'app',
+    view: 'entity-tools',
+    sources: [
+      'frontend/apps/wallet/src/entity/wallet-entity-evidence.tsx',
+      'frontend/packages/ui/src/entity/accounts/entity-workspace-consensus-panel.tsx',
+    ],
     tests: ['frontend/tests/react-candidate/wallet/wallet-entity-evidence.spec.ts'],
   },
   {
     id: 'account-dropdown',
-    pathname: '/app', search: '?portfolio=1', page: 'app', view: 'portfolio',
-    sources: ['frontend/apps/wallet/src/account/controls/wallet-account-dropdown.tsx', 'frontend/apps/wallet/src/account/controls/wallet-account-dropdown-source.ts',
-      'frontend/packages/ui/src/account/account-dropdown.tsx', 'frontend/packages/ui/src/account/account-dropdown-model.ts'],
-    tests: ['frontend/tests/react-candidate/wallet/account/wallet-account-dropdown.spec.ts', 'tests/frontend/account/account-dropdown-model.test.ts'],
+    pathname: '/app',
+    search: '?portfolio=1',
+    page: 'app',
+    view: 'portfolio',
+    sources: [
+      'frontend/apps/wallet/src/account/controls/wallet-account-dropdown.tsx',
+      'frontend/apps/wallet/src/account/controls/wallet-account-dropdown-source.ts',
+      'frontend/packages/ui/src/account/account-dropdown.tsx',
+      'frontend/packages/ui/src/account/account-dropdown-model.ts',
+    ],
+    tests: [
+      'frontend/tests/react-candidate/wallet/account/wallet-account-dropdown.spec.ts',
+      'tests/frontend/account/account-dropdown-model.test.ts',
+    ],
   },
   {
     id: 'account-rail-and-entity-selection',
-    pathname: '/app', search: '?portfolio=1', page: 'app', view: 'portfolio',
+    pathname: '/app',
+    search: '?portfolio=1',
+    page: 'app',
+    view: 'portfolio',
     sources: [
       'frontend/apps/wallet/src/runtime/wallet-workspace-selection.ts',
       'frontend/apps/wallet/src/account/wallet-account-rail.tsx',
@@ -61,14 +90,21 @@ export const WALLET_FLOW_AUDIT = [
       'frontend/packages/ui/src/account/account-workspace-rail.tsx',
       'frontend/packages/runtime-client/src/account-workspace-tabs.ts',
     ],
-    tests: ['frontend/tests/react-candidate/wallet/account/wallet-account-rail.spec.ts', 'frontend/tests/react-candidate/wallet/wallet-entity-selection.spec.ts',
-      'frontend/tests/react-candidate/wallet/account/wallet-account-workspace.spec.ts', 'tests/frontend/account/wallet-workspace-selection.test.ts',
+    tests: [
+      'frontend/tests/react-candidate/wallet/account/wallet-account-rail.spec.ts',
+      'frontend/tests/react-candidate/wallet/wallet-entity-selection.spec.ts',
+      'frontend/tests/react-candidate/wallet/account/wallet-account-workspace.spec.ts',
+      'tests/frontend/account/wallet-workspace-selection.test.ts',
       'frontend/tests/react-candidate/wallet/account/wallet-account-commands.spec.ts',
-      'tests/frontend/account/wallet-account-tools.test.ts'],
+      'tests/frontend/account/wallet-account-tools.test.ts',
+    ],
   },
   {
     id: 'account-appearance',
-    pathname: '/app', search: '?portfolio=1', page: 'app', view: 'portfolio',
+    pathname: '/app',
+    search: '?portfolio=1',
+    page: 'app',
+    view: 'portfolio',
     sources: [
       'frontend/apps/wallet/src/account/controls/wallet-account-appearance.tsx',
       'frontend/apps/wallet/src/account/controls/wallet-account-appearance-source.ts',
@@ -77,11 +113,17 @@ export const WALLET_FLOW_AUDIT = [
       'frontend/packages/ui/src/rcpan/delta-capacity-bar.tsx',
       'frontend/packages/ui/src/rcpan/delta-apple.tsx',
     ],
-    tests: ['frontend/tests/react-candidate/wallet/account/wallet-account-appearance.spec.ts', 'tests/frontend/account/account-bar-presentation.test.ts'],
+    tests: [
+      'frontend/tests/react-candidate/wallet/account/wallet-account-appearance.spec.ts',
+      'tests/frontend/account/account-bar-presentation.test.ts',
+    ],
   },
   {
     id: 'focused-account-view',
-    pathname: '/app', search: '?portfolio=1', page: 'app', view: 'portfolio',
+    pathname: '/app',
+    search: '?portfolio=1',
+    page: 'app',
+    view: 'portfolio',
     sources: [
       'frontend/apps/wallet/src/account/view/wallet-account-view.tsx',
       'frontend/apps/wallet/src/account/view/wallet-account-token.tsx',
@@ -91,11 +133,17 @@ export const WALLET_FLOW_AUDIT = [
       'frontend/packages/ui/src/account/activity/account-activity-presentation.ts',
       'frontend/packages/browser/src/wallet/account-faucet-command.ts',
     ],
-    tests: ['frontend/tests/react-candidate/wallet/account/wallet-account-view.spec.ts', 'tests/frontend/account/account-workspace-navigation.test.ts'],
+    tests: [
+      'frontend/tests/react-candidate/wallet/account/wallet-account-view.spec.ts',
+      'tests/frontend/account/account-workspace-navigation.test.ts',
+    ],
   },
   {
     id: 'direct-account-opening',
-    pathname: '/app', search: '?portfolio=1', page: 'app', view: 'portfolio',
+    pathname: '/app',
+    search: '?portfolio=1',
+    page: 'app',
+    view: 'portfolio',
     sources: [
       'frontend/apps/wallet/src/account/controls/wallet-account-open.tsx',
       'frontend/apps/wallet/src/entity/wallet-entity-input.tsx',
@@ -105,11 +153,17 @@ export const WALLET_FLOW_AUDIT = [
       'frontend/packages/browser/src/wallet/account-open-commands.ts',
       'frontend/packages/ui/src/entity-input-model.ts',
     ],
-    tests: ['tests/frontend/assets/entity-input-model.test.ts', 'frontend/tests/react-candidate/wallet/account/wallet-account-open.spec.ts'],
+    tests: [
+      'tests/frontend/assets/entity-input-model.test.ts',
+      'frontend/tests/react-candidate/wallet/account/wallet-account-open.spec.ts',
+    ],
   },
   {
     id: 'manual-hub-discovery',
-    pathname: '/app', search: '?portfolio=1', page: 'app', view: 'portfolio',
+    pathname: '/app',
+    search: '?portfolio=1',
+    page: 'app',
+    view: 'portfolio',
     sources: [
       'frontend/apps/wallet/src/onboarding/wallet-hub-discovery.tsx',
       'frontend/apps/wallet/src/onboarding/wallet-hub-discovery-source.ts',
@@ -117,22 +171,34 @@ export const WALLET_FLOW_AUDIT = [
       'frontend/packages/browser/src/wallet/hub-discovery-commands.ts',
       'frontend/packages/ui/src/onboarding/hub-discovery-profile.ts',
     ],
-    tests: ['tests/frontend/onboarding/hub-discovery-profile.test.ts', 'frontend/tests/react-candidate/wallet/onboarding/wallet-hub-discovery.spec.ts'],
+    tests: [
+      'tests/frontend/onboarding/hub-discovery-profile.test.ts',
+      'frontend/tests/react-candidate/wallet/onboarding/wallet-hub-discovery.spec.ts',
+    ],
   },
   {
     id: 'entity-formation',
-    pathname: '/app', search: '?portfolio=1', page: 'app', view: 'portfolio',
+    pathname: '/app',
+    search: '?portfolio=1',
+    page: 'app',
+    view: 'portfolio',
     sources: [
       'frontend/apps/wallet/src/onboarding/wallet-formation.tsx',
       'frontend/bridges/wallet/wallet-canonical-formation.ts',
       'frontend/src/lib/components/Entity/onboarding/formation/formation-commands.ts',
       'frontend/src/lib/components/Entity/onboarding/formation/formation-runtime-projection.ts',
     ],
-    tests: ['tests/frontend/onboarding/wallet-formation.test.ts', 'frontend/tests/react-candidate/wallet/onboarding/wallet-formation.spec.ts'],
+    tests: [
+      'tests/frontend/onboarding/wallet-formation.test.ts',
+      'frontend/tests/react-candidate/wallet/onboarding/wallet-formation.spec.ts',
+    ],
   },
   {
     id: 'post-creation-profile-and-preferences',
-    pathname: '/app', search: '?setup=1', page: 'app', view: 'identity',
+    pathname: '/app',
+    search: '?setup=1',
+    page: 'app',
+    view: 'identity',
     sources: [
       'frontend/apps/wallet/src/onboarding/wallet-onboarding.tsx',
       'frontend/bridges/wallet/wallet-canonical-onboarding.ts',
@@ -167,10 +233,7 @@ export const WALLET_FLOW_AUDIT = [
     search: '',
     page: 'testnet',
     view: null,
-    sources: [
-      'frontend/apps/wallet/src/testnet/testnet-model.ts',
-      'frontend/apps/wallet/src/testnet/testnet-page.tsx',
-    ],
+    sources: ['frontend/apps/wallet/src/testnet/testnet-model.ts', 'frontend/apps/wallet/src/testnet/testnet-page.tsx'],
     tests: ['tests/frontend/tooling/pilots/frontend-testnet-pilot.test.ts'],
   },
   {
@@ -213,10 +276,7 @@ export const WALLET_FLOW_AUDIT = [
     search: '',
     page: 'app',
     view: 'overview',
-    sources: [
-      'frontend/apps/wallet/src/app-shell-model.ts',
-      'frontend/apps/wallet/src/app-shell.tsx',
-    ],
+    sources: ['frontend/apps/wallet/src/app-shell-model.ts', 'frontend/apps/wallet/src/app-shell.tsx'],
     tests: ['tests/frontend/runtime/wallet/frontend-wallet-app-shell.test.ts'],
   },
   {
@@ -335,6 +395,23 @@ export const WALLET_FLOW_AUDIT = [
     ],
   },
   {
+    id: 'stack-manager',
+    pathname: '/app',
+    search: '',
+    hash: '#settings/stack-manager',
+    page: 'app',
+    view: 'settings',
+    sources: [
+      'frontend/apps/wallet/src/settings/wallet-stack-manager.tsx',
+      'frontend/packages/browser/src/stack-manager/stack-manager-controller.ts',
+      'frontend/packages/ui/src/stack-manager/stack-manager.tsx',
+    ],
+    tests: [
+      'tests/frontend/settings/stack-manager-client.test.ts',
+      'frontend/tests/react-candidate/wallet/wallet-entity-evidence.spec.ts',
+    ],
+  },
+  {
     id: 'preferences',
     pathname: '/app',
     search: '?settings=1',
@@ -448,7 +525,7 @@ export const WALLET_FLOW_DEFERRALS = [
     destination: 'WP9',
     evidenceSource: 'frontend/bridges/wallet/wallet-canonical-onboarding.ts',
     evidenceMarker: 'createOnboardingHubJoinCommands',
-    reason: 'React post-creation setup, automatic Hub joining and local/remote-owner Entity Formation are verified. Remote Hub opening and full reload parity remain open.',
+    reason: 'W05–W07 verify automatic Hub joining, local/remote-owner Formation and remote Hub opening. Complete onboarding/reload matrix acceptance remains V05a; the remote-to-local Ops BrainVault entry is the separate R03 product decision.',
   },
   {
     id: 'canonical-cutover',
@@ -460,17 +537,13 @@ export const WALLET_FLOW_DEFERRALS = [
 ] as const satisfies readonly WalletFlowDeferral[];
 
 const REMAINING_WALLET_REQUIREMENTS: Readonly<Record<string, string>> = {
-  onboarding: 'Remote Hub opening and the complete reload path remain unverified.',
-  settings: 'Committed Consensus is mounted; remaining retained settings and command controls are incomplete.',
-  credit: 'Manage commands are mounted; remote request-credit and full retained behavior require closure evidence.',
-  collateral: 'Request and Move forms are mounted; full positive collateral command matrix remains open.',
-  debt: 'Committed debt reads exist; full retained enforcement controls are incomplete.',
-  disputes: 'Prepare/finalize forms exist; the complete positive lifecycle is not browser-verified.',
-  history: 'Per-frame Activity pagination can omit events; backend query repair is outside the frontend boundary.',
-  lending: 'Forms exist; canonical admission rejects lending mutations with OUT_OF_PROFILE_TX_KINDS.',
-  settlement: 'Proposal exists; approval/execution controls and remote read projection remain open.',
-  'cross-j': 'Lifecycle reads exist; cross-j command controls are unported.',
-  activity: 'Same-frame history pagination loses the unreturned tail; complete history is not verified.',
+  onboarding: 'W05–W07 verify local/remote Formation and Hub opening; final onboarding/reload matrix acceptance remains V05a.',
+  credit: 'Credit controls are mounted; final aggregate positive-flow evidence remains V05a.',
+  history: 'B2: same-frame Activity pagination omits the unreturned tail; a protected Runtime query repair is required.',
+  lending: 'B1: canonical admission rejects lending mutations with OUT_OF_PROFILE_TX_KINDS.',
+  settlement: 'W09–W12 verify local proposal, approval, execution and chain finality. Remote approval/execution remains blocked by B3 compact-read projection.',
+  'cross-j': 'W16/W17 verify quote review, submission to resting and exact cancellation targeting. B8 fail-stops at ACCOUNT_SWAP_CANCEL_SCOPE_UNRESOLVED before cancelled.',
+  activity: 'B2: same-frame history pagination loses the unreturned tail; lossless complete history is not verified.',
 };
 
 export const WALLET_REQUIREMENT_AUDIT = ([
