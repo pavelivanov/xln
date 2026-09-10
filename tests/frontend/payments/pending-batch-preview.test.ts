@@ -8,20 +8,21 @@ import {
   countBatchOps,
 } from '../../../frontend/src/lib/components/Entity/payments/batch/pending-batch-preview';
 
-const batch = (input: Partial<JBatch>): JBatch => ({
-  counterDisputes: [],
-  reserveToCollateral: [],
-  collateralToReserve: [],
-  settlements: [],
-  reserveToReserve: [],
-  disputeStarts: [],
-  disputeFinalizations: [],
-  externalTokenToReserve: [],
-  reserveToExternalToken: [],
-  revealSecrets: [],
-  hashLadderRegistrations: [],
-  ...input,
-} as JBatch);
+const batch = (input: Partial<JBatch>): JBatch =>
+  ({
+    counterDisputes: [],
+    reserveToCollateral: [],
+    collateralToReserve: [],
+    settlements: [],
+    reserveToReserve: [],
+    disputeStarts: [],
+    disputeFinalizations: [],
+    externalTokenToReserve: [],
+    reserveToExternalToken: [],
+    revealSecrets: [],
+    hashLadderRegistrations: [],
+    ...input,
+  }) as JBatch;
 
 describe('pending batch helpers', () => {
   test('counts every visible batch operation bucket', () => {
