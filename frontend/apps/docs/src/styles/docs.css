@@ -58,6 +58,7 @@ button:focus-visible, input:focus-visible, a:focus-visible { outline: 2px solid 
   height: calc(100svh - var(--docs-header-height));
   padding: 24px 18px 48px;
   overflow-y: auto;
+  overscroll-behavior: contain;
   border-right: 1px solid var(--docs-line);
   background: rgb(8 10 8 / 74%);
   scrollbar-color: #333831 transparent;
@@ -152,10 +153,10 @@ button:focus-visible, input:focus-visible, a:focus-visible { outline: 2px solid 
 .markdown-body a:hover { text-decoration-color: currentColor; }
 .markdown-body ul, .markdown-body ol { padding-left: 1.4rem; }
 .markdown-body code { padding: .14rem .36rem; background: rgb(255 255 255 / 6%); color: #c7fa8b; font: .9em "SFMono-Regular", Consolas, monospace; }
-.markdown-body pre { margin: 1.4rem 0; padding: 16px 18px; overflow-x: auto; border: 1px solid var(--docs-line); background: #050705; }
+.markdown-body pre { margin: 1.4rem 0; padding: 16px 18px; overflow-x: auto; overscroll-behavior-inline: contain; border: 1px solid var(--docs-line); background: #050705; }
 .markdown-body pre code { padding: 0; background: transparent; color: #d5dad2; }
 .markdown-body blockquote { margin: 1.5rem 0; padding: 2px 0 2px 18px; border-left: 2px solid var(--docs-acid); color: #9ca298; }
-.markdown-body table { display: block; width: 100%; margin: 1.6rem 0; overflow-x: auto; border-collapse: collapse; font-size: 12px; }
+.markdown-body table { display: block; width: 100%; margin: 1.6rem 0; overflow-x: auto; overscroll-behavior-inline: contain; border-collapse: collapse; font-size: 12px; }
 .markdown-body th, .markdown-body td { padding: 11px 13px; border: 1px solid var(--docs-line); text-align: left; vertical-align: top; }
 .markdown-body th { color: #e7eae3; background: rgb(255 255 255 / 4%); }
 .markdown-body img { max-width: 100%; height: auto; margin: 1.4rem 0; border: 1px solid var(--docs-line); }
