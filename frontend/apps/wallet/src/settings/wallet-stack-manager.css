@@ -1,0 +1,46 @@
+.wallet-stack-manager {
+  padding: 24px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.wallet-stack-manager label {
+  display: grid;
+  gap: 8px;
+  margin-block: 16px;
+}
+.wallet-stack-manager input,
+.wallet-stack-manager select {
+  min-width: 0;
+  max-width: 100%;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px;
+  color: inherit;
+  background: transparent;
+  border: 1px solid currentColor;
+  border-radius: 4px;
+}
+.wallet-stack-manager .ops-settings-toggle {
+  display: flex;
+  align-items: center;
+}
+.wallet-stack-manager input[type='checkbox'] {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+.wallet-stack-manager button {
+  padding: 10px 14px;
+}
+.wallet-stack-manager .ops-audit-metrics {
+  display: grid;
+  gap: 14px;
+}
+.wallet-stack-manager dd {
+  margin: 4px 0 0;
+  overflow-wrap: anywhere;
+}
+.wallet-stack-manager [role='alert'] {
+  color: var(--wallet-danger, #dc4f4f);
+  overflow-wrap: anywhere;
+}

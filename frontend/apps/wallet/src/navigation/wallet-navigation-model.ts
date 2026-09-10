@@ -7,7 +7,7 @@ import type { WalletAppView } from '../app-shell-model';
 
 export type WalletPaymentTab = 'send' | 'receive' | 'operations' | 'external';
 export type WalletMarketTab = 'market' | 'activity';
-export type WalletSettingsSection = 'profile' | 'preferences' | 'recovery';
+export type WalletSettingsSection = 'profile' | 'preferences' | 'recovery' | 'stack-manager';
 export type WalletAppRoute =
   | Readonly<{ view: 'entity-tools'; tab: 'ownership' | 'consensus'; entityId: string }>
   | Readonly<{ view: 'account-tools'; tab: 'configure' | 'move' | 'lending' | 'history' }>
@@ -41,6 +41,7 @@ export const resolveWalletAppRoute = (search: string, hash = ''): WalletAppRoute
   if (route === 'accounts/swap') return { view: 'markets', tab: 'market' };
   if (route === 'accounts/activity') return { view: 'markets', tab: 'activity' };
   if (route === 'settings/recovery') return { view: 'settings', section: 'recovery', entityId: settingsEntityId };
+  if (route === 'settings/stack-manager') return { view: 'settings', section: 'stack-manager', entityId: settingsEntityId };
   if (route === 'settings/display') return { view: 'settings', section: 'preferences', entityId: settingsEntityId };
   if (route === 'settings' || route === 'settings/entity') return { view: 'settings', section: 'profile', entityId: settingsEntityId };
   if (params.get('setup') === '1' || params.has('demo')) return { view: 'identity' };

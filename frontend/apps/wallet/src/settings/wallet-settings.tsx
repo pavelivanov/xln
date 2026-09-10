@@ -16,6 +16,7 @@ import { EntityWorkspaceSettingsStage } from '../../../../packages/ui/src/entity
 import { EntityWorkspaceDisplayPanel } from '../../../../packages/ui/src/entity/settings/entity-workspace-display-panel';
 import { displayPreferencesSource } from '../../../../packages/browser/src/display-preferences-source';
 import { WalletProfileSettings } from './wallet-profile-settings';
+import { WalletStackManager } from './wallet-stack-manager';
 import '../styles/wallet-settings.css';
 import { useWorkspaceTranslation } from '../../../../bridges/workspace-localization-react';
 
@@ -39,6 +40,7 @@ export function WalletSettings({
     { id: 'display', label: t('settings.theme') },
     { id: 'recovery', label: 'Recovery' },
     { id: 'consensus', label: 'Consensus' },
+    { id: 'stack-manager', label: 'Stack Manager' },
   ] as const;
   const [preferences, setPreferences] = useState(() => readWalletPreferences(localStorage));
   const display = useSyncExternalStore(
@@ -95,9 +97,10 @@ export function WalletSettings({
       <EntityWorkspaceSettingsStage
         entityId={selectedWorkspace.entityId || entityId}
         sections={settingsSections}
-        settingsSubview={section === 'profile' ? 'wallet' : section === 'preferences' ? 'display' : 'recovery'}
+        settingsSubview={section === 'profile' ? 'wallet' : section === 'preferences' ? 'display' : section}
       >
         {section === 'profile' ? <WalletProfileSettings entityId={entityId} selection={workspaceSelection} /> : null}
+        {section === 'stack-manager' ? <WalletStackManager entityId={entityId} selection={workspaceSelection} /> : null}
         {section === 'preferences' ? <div className="wallet-settings-display">
           <EntityWorkspaceDisplayPanel
             issue={display.issue}

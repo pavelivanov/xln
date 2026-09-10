@@ -43,7 +43,9 @@ const persistedDeployment = (
   };
 };
 
-export function useStackManagerController({ origin, capability }: Readonly<{ origin: string; capability: string }>) {
+export type StackManagerTarget = Readonly<{ origin: string; capability: string; isCurrent: () => boolean }>;
+
+export function useStackManagerController({ origin, capability, isCurrent }: StackManagerTarget) {
   const [rpcUrl, setRpcUrl] = useState('');
   const [signerId, setSignerId] = useState('');
   const [networkName, setNetworkName] = useState('');
@@ -75,10 +77,11 @@ export function useStackManagerController({ origin, capability }: Readonly<{ ori
     setProbe(null);
     setResult(null);
     try {
+      if (!isCurrent()) throw new Error('STACK_MANAGER_CONTEXT_CHANGED');
       const response = await fetchStackManagerStatus(origin, nextRpc, nextSigner, capability, (input, init) =>
         fetch(input, { ...init, signal: controller.signal }),
       );
-      if (controller.signal.aborted || !alive.current) return;
+      if (controller.signal.aborted || !alive.current || !isCurrent()) return;
       const exactProbe = nextRpc ? requireStackManagerProbe(response, nextRpc, nextSigner) : null;
       const signer = response.signerIds.includes(signerId) ? signerId : (response.signerIds[0] ?? '');
       setSignerId(signer);
@@ -110,6 +113,7 @@ export function useStackManagerController({ origin, capability }: Readonly<{ ori
     request.current?.abort();
     setProbe(null);
     setResult(null);
+    setConfirmed(false);
     setInspection(current => ({
       ...current,
       busy: false,
@@ -123,10 +127,14 @@ export function useStackManagerController({ origin, capability }: Readonly<{ ori
     setResult(null);
     setInspection(current => ({ ...current, issue: '' }));
     try {
+      if (!isCurrent()) throw new Error('STACK_MANAGER_CONTEXT_CHANGED');
       if (!probe || probe.rpcUrl !== rpcUrl.trim() || probe.signerId !== signerId)
         throw new Error('STACK_MANAGER_FRESH_PROBE_REQUIRED');
       if (!networkName.trim() || !key.trim() || !foundation.trim() || !confirmed)
         throw new Error('STACK_MANAGER_DEPLOYMENT_FIELDS_REQUIRED');
+      const controller = new AbortController();
+      request.current?.abort();
+      request.current = controller;
       const response = await deployStack(
         origin,
         {
@@ -146,8 +154,9 @@ export function useStackManagerController({ origin, capability }: Readonly<{ ori
           confirmations,
         },
         capability,
+        (input, init) => fetch(input, { ...init, signal: controller.signal }),
       );
-      if (!alive.current) return;
+      if (!alive.current || controller.signal.aborted || !isCurrent()) return;
       jmachineOperations.upsert(persistedDeployment(response.result, rpcUrl.trim(), blockTimeMs, currency.trim()));
       jmachineOperations.setActive(response.result.localJurisdiction.name);
       setResult(response.result);

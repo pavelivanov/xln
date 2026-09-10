@@ -1,5 +1,8 @@
 import { ConfiguredStacks } from './configured-stacks';
-import { useStackManagerController } from '../../../../packages/browser/src/stack-manager/stack-manager-controller';
+import {
+  useStackManagerController,
+  type StackManagerTarget,
+} from '../../../../packages/browser/src/stack-manager/stack-manager-controller';
 import type { StackStablecoinKind, StackPublicationRequest } from '../../../../bridges/runtime/stack-manager-client';
 
 const normalizedKey = (value: string): string =>
@@ -9,7 +12,7 @@ const normalizedKey = (value: string): string =>
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '');
 
-function StackManagerWorkspace(props: Readonly<{ origin: string; capability: string }>) {
+function StackManagerWorkspace(props: StackManagerTarget) {
   const {
     rpcUrl,
     setRpcUrl,
@@ -267,9 +270,10 @@ function StackManagerWorkspace(props: Readonly<{ origin: string; capability: str
 export function StackManager({
   origin,
   capability,
+  isCurrent,
   restriction,
   contextKey = '',
-}: Readonly<{ origin: string; capability: string; restriction: string; contextKey?: string }>) {
+}: StackManagerTarget & Readonly<{ restriction: string; contextKey?: string }>) {
   return (
     <section className="ops-stack-manager" data-testid="workspace-stack-manager">
       <h3>Stack Manager V1</h3>
@@ -277,7 +281,12 @@ export function StackManager({
       {restriction ? (
         <p role="status">{restriction}</p>
       ) : (
-        <StackManagerWorkspace key={`${contextKey}:${origin}:${capability}`} origin={origin} capability={capability} />
+        <StackManagerWorkspace
+          key={`${contextKey}:${origin}:${capability}`}
+          origin={origin}
+          capability={capability}
+          isCurrent={isCurrent}
+        />
       )}
     </section>
   );

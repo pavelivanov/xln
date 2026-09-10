@@ -1,6 +1,7 @@
 import { useSyncExternalStore } from 'react';
 import {
   getRuntimeControllerConfig,
+  getRuntimeControllerAdapter,
   runtimeControllerConfig,
 } from '../../../../../bridges/runtime/runtime-controller-store';
 import { runtimeHttpOriginFromWsUrl } from '../../../../../packages/runtime-client/src/runtime/ws-url';
@@ -12,6 +13,11 @@ export function OpsStackManager() {
   const network = useSyncExternalStore(workspaceNetwork.subscribe, workspaceNetwork.get);
   const origin = config?.mode === 'remote' && config.wsUrl ? runtimeHttpOriginFromWsUrl(config.wsUrl) : '';
   const capability = config?.mode === 'remote' ? (config.authKey ?? '') : '';
+  const runtimeId = getRuntimeControllerAdapter()?.runtimeId ?? '';
+  const isCurrent = () =>
+    getRuntimeControllerConfig() === config &&
+    getRuntimeControllerAdapter()?.runtimeId === runtimeId &&
+    !workspaceNetwork.get().selectedStep;
   const restriction = network.selectedStep
     ? 'Stack Manager requires Live. Recorded scenarios do not query or mutate deployment state.'
     : !origin
@@ -19,5 +25,13 @@ export function OpsStackManager() {
       : !capability
         ? 'STACK_MANAGER_ADMIN_CAPABILITY_REQUIRED'
         : '';
-  return <StackManager origin={origin} capability={capability} restriction={restriction} />;
+  return (
+    <StackManager
+      origin={origin}
+      capability={capability}
+      restriction={restriction}
+      contextKey={runtimeId}
+      isCurrent={isCurrent}
+    />
+  );
 }

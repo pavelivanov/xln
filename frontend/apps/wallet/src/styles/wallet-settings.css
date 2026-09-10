@@ -27,6 +27,7 @@
 }
 
 .wallet-settings > .entity-workspace-settings-stage {
+  grid-template-columns: minmax(0, 1fr);
   margin-top: 2rem;
   border: 1px solid var(--line);
   background: transparent;
