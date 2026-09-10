@@ -54,6 +54,7 @@ describe('React docs pilot', () => {
     const manifest = decodeDocsManifest(manifestPayload);
     expect(manifest.counts).toEqual({ total: 3, live: 2, archive: 1 });
     expect(filterDocsSections(manifest, false, '')).toHaveLength(2);
+    expect(filterDocsSections(manifest, false, 'superseded')).toEqual([]);
     expect(filterDocsSections(manifest, true, '')).toHaveLength(3);
     expect(filterDocsSections(manifest, true, 'superseded')[0]?.items[0]?.id).toBe('archive/old-plan');
     expect(filterDocsSections(manifest, false, 'missing')).toEqual([]);

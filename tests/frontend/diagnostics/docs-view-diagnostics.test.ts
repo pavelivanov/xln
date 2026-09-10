@@ -12,15 +12,20 @@ test('docs view reports load failures through visible state without raw console 
   expect(source).not.toContain('console.warn');
 });
 
-test('docs view exposes only canonical docs and keeps responsive scroll local', () => {
+test('docs view defaults to live docs with explicit archive opt-in and keeps responsive scroll local', () => {
   const source = readFileSync('frontend/src/lib/components/Views/DocsView.svelte', 'utf8');
+  const model = readFileSync('frontend/packages/ui/src/content/docs-page-model.ts', 'utf8');
+  const reactStyles = readFileSync('frontend/apps/docs/src/styles/docs.css', 'utf8');
 
-  expect(source).toContain("manifest.sections.filter((section) => section.kind === 'live')");
-  expect(source).toContain("item.id === docId && item.kind === 'live'");
-  expect(source).not.toContain('Live + Archive');
-  expect(source).not.toContain('archive-toggle');
-  expect(source).not.toContain('showArchive');
+  expect(source).toContain('let showArchive = $state(false);');
+  expect(source).toContain('filterDocsSections(manifest, showArchive, searchQuery)');
+  expect(source).toContain('findManifestDocById(manifest, docId)');
+  expect(model).toContain("manifest.sections.filter((section) => showArchive || section.kind === 'live')");
+  expect(source).toContain('data-testid="archive-toggle"');
+  expect(source).toContain('onclick={() => (showArchive = true)}');
   expect(source).toContain('height: calc(100dvh - 56px);');
   expect(source).toContain('overscroll-behavior: contain;');
   expect(source).toContain('overscroll-behavior-inline: contain;');
+  expect(reactStyles).toContain('overscroll-behavior: contain;');
+  expect(reactStyles).toContain('overscroll-behavior-inline: contain;');
 });

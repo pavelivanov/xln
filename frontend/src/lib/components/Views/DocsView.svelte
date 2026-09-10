@@ -397,6 +397,7 @@
     align-self: start;
     height: calc(100dvh - 56px);
     overflow-y: auto;
+    overscroll-behavior: contain;
     border-right: 1px solid rgba(255, 255, 255, 0.08);
     background: rgba(7, 10, 8, 0.92);
     padding: 20px 16px 28px;
@@ -905,6 +906,7 @@
     padding: 14px 16px;
     border-radius: 8px;
     overflow-x: auto;
+    overscroll-behavior-inline: contain;
     border: 1px solid rgba(255, 255, 255, 0.08);
     background: rgba(5, 8, 6, 0.92);
   }
