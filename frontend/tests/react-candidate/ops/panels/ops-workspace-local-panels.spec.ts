@@ -42,7 +42,7 @@ test('recorded Gossip and Entity panels follow scenario selection without a live
   const solvency = page.getByTestId('solvency-panel');
   await expect(solvency.getByTestId('solvency-status')).toHaveText('?ASSET CONSERVATION NOT VERIFIED');
   await expect(solvency.getByTestId('solvency-asset').first()).toBeVisible();
-  await expect(solvency).toContainText('recorded h126');
+  await expect(solvency).toContainText('Historical h126');
   await screenshotEvidence(page, testInfo, 'ops-recorded-solvency');
   await page.getByRole('button', { name: 'Open Runtime Diagnostics panel', exact: true }).click();
   const diagnostics = page.getByTestId('runtime-diagnostics-panel');
