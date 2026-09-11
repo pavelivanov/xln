@@ -7,18 +7,18 @@ import {
   isRuntimeCommandJournalUnlocked,
   lockRuntimeCommandJournal,
   signRuntimeAdapterOwnerBinding,
-} from '../../../../frontend/src/lib/stores/commands/runtimeCommandJournalKeyring';
+} from '../../../../frontend/packages/browser/src/commands/runtime-command-journal-keyring';
 import {
   decryptProtectedRemoteRuntimeCommandIntentRecord,
   encryptProtectedRemoteRuntimeCommandIntentRecord,
 } from '../../../../frontend/src/lib/stores/commands/runtimeCommandJournalStorage';
-import { canonicalRuntimeInput } from '../../../../frontend/src/lib/stores/commands/runtimeCommandIntentCodec';
+import { canonicalRuntimeInput } from '../../../../frontend/packages/browser/src/commands/runtime-command-intent-codec';
 import {
   listUnresolvedRemoteRuntimeCommandIntents,
   resolveRemoteRuntimeCommandId,
   settleRemoteRuntimeCommandIntent,
-} from '../../../../frontend/src/lib/stores/commands/runtimeCommandIntent';
-import { submitRuntimeCommand } from '../../../../frontend/src/lib/stores/commands/runtimeCommandBus';
+} from '../../../../frontend/packages/browser/src/commands/runtime-command-intent';
+import { submitRuntimeCommand } from '../../../../frontend/bridges/runtime/runtime-command-bus';
 import { RuntimeAdapterError } from '../../../api/runtime-adapter/errors';
 import { verifyRuntimeAdapterOwnerBinding } from '../../../api/runtime-adapter/security/owner-binding';
 

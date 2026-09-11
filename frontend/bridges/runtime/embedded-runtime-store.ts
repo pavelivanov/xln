@@ -5,8 +5,8 @@ import {
 } from '../../packages/runtime-client/src/observable-store';
 import type { RuntimeReplica } from '@xln/core/api/public/runtime-module';
 import { activeRuntimeId, runtimes } from './runtime-store';
-import { createDetachedRuntimeViewEnv, createRuntimeViewEnv, unwrapLiveRuntimeEnv } from '../../src/lib/utils/runtime/liveRuntimeEnv';
-import { registerDebugSurface } from '../../src/lib/utils/runtime/debugSurface';
+import { createDetachedRuntimeViewEnv, createRuntimeViewEnv, unwrapLiveRuntimeEnv } from '../../packages/browser/src/runtime/live-runtime-env';
+import { registerDebugSurface } from '../../packages/browser/src/runtime/debug-surface';
 import { errorLog } from '../../packages/browser/src/logging/error-log-store';
 import { hasConnectedJurisdictionAdapter } from '../vault/vault-helpers';
 

@@ -9,7 +9,7 @@ import {
   type VaultUnlockDurationMs,
 } from '../../packages/browser/src/vault/vault-protection';
 import { isVaultAuthorityLeaseExpired } from '../../packages/browser/src/vault/vault-authority-lease';
-import { lockRuntimeCommandJournal } from '../../src/lib/stores/commands/runtimeCommandJournalKeyring';
+import { lockRuntimeCommandJournal } from '../../packages/browser/src/commands/runtime-command-journal-keyring';
 import { findRuntimeByIdCaseInsensitive } from './vault-helpers';
 import {
   deriveAddress,

@@ -150,10 +150,10 @@ describe('Time Machine transport model', () => {
   });
 
   test('keeps query effects, stores, selection publication, and clocks in the Svelte facade', () => {
-    const facade = readFileSync('frontend/src/lib/stores/runtimeHistoryStore.ts', 'utf8');
+    const facade = readFileSync('frontend/bridges/runtime/runtime-history-store.ts', 'utf8');
     const transport = readFileSync('frontend/packages/runtime-client/src/scenario/time-machine-transport.ts', 'utf8');
 
-    expect(facade).toContain("from '../../../packages/runtime-client/src/scenario/time-machine-transport'");
+    expect(facade).toContain("from '../../packages/runtime-client/src/scenario/time-machine-transport'");
     expect(facade).toContain('runtimeQueryClient.readHistoryFrameBatch');
     expect(facade).toContain('runtimeViewHistoryScan.set');
     expect(facade).toContain('setRuntimeViewActiveEntityId');

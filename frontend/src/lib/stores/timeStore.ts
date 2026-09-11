@@ -3,7 +3,7 @@ import {
   createObservableStore as writable,
   readStoreValue as get,
 } from '../../../packages/runtime-client/src/observable-store';
-import type { TimeState } from '$lib/types/ui';
+import type { TimeState } from '../../../packages/ui/src/workspace/ui-types';
 import { history } from '../../../bridges/runtime/xln-store';
 import { errorLog } from '../../../packages/browser/src/logging/error-log-store';
 

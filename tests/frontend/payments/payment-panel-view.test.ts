@@ -4,8 +4,8 @@ import { readFileSync } from 'node:fs';
 import {
   buildPaymentPanelView,
   buildPaymentPanelViewFromRuntimeView,
-} from '../../../frontend/src/lib/components/Entity/payments/payment-panel-view';
-import { hasCertifiedEntityEncryptionKey } from '../../../frontend/src/lib/components/Entity/payment-routing';
+} from '../../../frontend/bridges/wallet/payment-panel-view';
+import { hasCertifiedEntityEncryptionKey } from '../../../frontend/bridges/wallet/payment-routing';
 import { buildPaymentRuntimeInput } from '../../../frontend/packages/runtime-client/src/payments/payment-command';
 
 const SOURCE = `0x${'11'.repeat(32)}`;
@@ -212,7 +212,7 @@ test('PaymentPanel consumes PaymentPanelView instead of owning full env reads', 
   expect(tabs).toContain('networkGraph: actionRuntimeEnv?.gossip?.getNetworkGraph?.() ?? null');
   expect(tabs).toContain('{paymentView}');
 
-  const viewSource = readFileSync('frontend/src/lib/components/Entity/payments/payment-panel-view.ts', 'utf8');
+  const viewSource = readFileSync('frontend/bridges/wallet/payment-panel-view.ts', 'utf8');
   expect(viewSource).not.toContain('RuntimeReplica,');
   expect(viewSource).not.toContain('actionRuntimeEnv');
   expect(viewSource).not.toContain('gossip?.getNetworkGraph');

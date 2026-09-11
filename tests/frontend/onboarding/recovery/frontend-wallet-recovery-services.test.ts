@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import { readFileSync } from 'node:fs';
 
-import { inferRecoveryTowerSetupMode } from '../../../../frontend/src/lib/utils/recovery/recoverySettings';
+import { inferRecoveryTowerSetupMode } from '../../../../frontend/bridges/vault/recovery-settings';
 
 describe('React wallet recovery-service onboarding', () => {
   test('infers every canonical setup mode from persisted tower configuration', () => {

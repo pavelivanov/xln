@@ -54,7 +54,7 @@ describe('Graph3D framework-neutral lifecycle', () => {
 
   test('debug registrations expose an ownership-safe disposer', async () => {
     const [debugSource, graphSource] = await Promise.all([
-      read('frontend/src/lib/utils/runtime/debugSurface.ts'),
+      read('frontend/packages/browser/src/runtime/debug-surface.ts'),
       read('frontend/src/lib/view/panels/graph3d/Graph3DPanel.svelte'),
     ]);
 

@@ -7,7 +7,7 @@
   } from '@xln/core/api/public/runtime-module';
   import { errorLog } from '../../../../../packages/browser/src/logging/error-log-store';
   import { runtimeControllerHandle, runtimeAdapterHeight } from '../../../../../bridges/runtime/runtime-controller-store';
-  import { runtimeQueryClient } from '$lib/stores/runtimeQueryClient';
+  import { runtimeQueryClient } from '../../../../../bridges/runtime/runtime-query-client';
   import { settings } from '../../../../../packages/browser/src/settings-store';
   import { dedupeHistoryEvents as dedupe } from '../../../../../packages/ui/src/account/activity/activity-history-events';
   import { xlnFunctions } from '../../../../../bridges/runtime/xln-store';

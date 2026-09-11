@@ -20,8 +20,8 @@ import { vaultOperations } from '../vault/vault-store';
 import { runtimesState } from '../vault/vault-metadata-store';
 import type { Runtime, Signer } from '../vault/vault-recovery';
 import { runtimes as runtimeRegistry } from '../runtime/runtime-store';
-import { unwrapLiveRuntimeEnv } from '../../src/lib/utils/runtime/liveRuntimeEnv';
-import { resolveExternalWalletAuthorityPlatform } from '../../src/lib/native/external-wallet-authority';
+import { unwrapLiveRuntimeEnv } from '../../packages/browser/src/runtime/live-runtime-env';
+import { resolveExternalWalletAuthorityPlatform } from '../../packages/browser/src/native/external-wallet-authority';
 
 type AuthorityContext = Readonly<{
   runtime: Runtime;

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { AccountReplica, EntityReplica, Tab } from '$lib/types/ui';
+  import type { AccountReplica, EntityReplica, Tab } from '../../../../../../packages/ui/src/workspace/ui-types';
   import AccountPanel from '../../account/ui/AccountPanel.svelte';
 
   export let selectedAccount: AccountReplica;

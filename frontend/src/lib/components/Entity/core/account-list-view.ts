@@ -1,6 +1,6 @@
 import type { AccountReplica } from '@xln/core/api/public/runtime-module';
-import type { EntityReplica } from '$lib/types/ui';
-import { isMapLike } from '$lib/utils/runtime/liveRuntimeEnv';
+import type { EntityReplica } from '../../../../../packages/ui/src/workspace/ui-types';
+import { isMapLike } from '../../../../../packages/browser/src/runtime/live-runtime-env';
 
 const COLLAPSED_ACCOUNT_LIMIT = 5;
 const ACCOUNT_PAGE_SIZE = 50;

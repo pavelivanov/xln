@@ -264,7 +264,7 @@ describe('runtime-client RuntimeView publication coordinator', () => {
       'frontend/packages/runtime-client/src/runtime/view/runtime-view-publication.ts',
       'utf8',
     );
-    const store = readFileSync('frontend/src/lib/stores/runtimeViewStore.ts', 'utf8');
+    const store = readFileSync('frontend/bridges/runtime/runtime-view-store.ts', 'utf8');
 
     expect(boundary).not.toContain('svelte');
     expect(boundary).not.toContain('@xln/core');

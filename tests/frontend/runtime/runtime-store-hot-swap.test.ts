@@ -33,7 +33,7 @@ test('runtime controller is the single adapter lifecycle owner', () => {
   const xlnStoreSource = readFileSync('frontend/bridges/runtime/xln-store.ts', 'utf8');
   const contextSwitcherSource = readFileSync('frontend/src/lib/components/Entity/workspace/shell/ContextSwitcher.svelte', 'utf8');
   const runtimeStoreSource = readFileSync('frontend/bridges/runtime/runtime-store.ts', 'utf8');
-  const queryClientSource = readFileSync('frontend/src/lib/stores/runtimeQueryClient.ts', 'utf8');
+  const queryClientSource = readFileSync('frontend/bridges/runtime/runtime-query-client.ts', 'utf8');
 
   expect(controllerSource).toContain('new RemoteRuntimeAdapter');
   expect(controllerSource).toContain('export const connectRuntimeAdapter');
@@ -165,12 +165,12 @@ test('runtime store fails fast on cross-runtime env overwrite', () => {
 
 test('remote time-machine history requires radapter batch reads', () => {
   const xlnStoreSource = readFileSync('frontend/bridges/runtime/xln-store.ts', 'utf8');
-  const source = readFileSync('frontend/src/lib/stores/runtimeHistoryStore.ts', 'utf8');
+  const source = readFileSync('frontend/bridges/runtime/runtime-history-store.ts', 'utf8');
   const transportSource = readFileSync(
     'frontend/packages/runtime-client/src/scenario/time-machine-transport.ts',
     'utf8',
   );
-  const querySource = readFileSync('frontend/src/lib/stores/runtimeQueryClient.ts', 'utf8');
+  const querySource = readFileSync('frontend/bridges/runtime/runtime-query-client.ts', 'utf8');
   const queryBoundarySource = readFileSync(
     'frontend/packages/runtime-client/src/runtime/query/runtime-query-client.ts',
     'utf8',
@@ -264,10 +264,10 @@ test('remote runtime bulk import validates with bounded parallelism', () => {
 
 test('remote runtime switch resets runtime-scoped view selection without dropping auth', () => {
   const source = readFileSync('frontend/bridges/runtime/xln-store.ts', 'utf8');
-  const runtimeViewSource = readFileSync('frontend/src/lib/stores/runtimeViewStore.ts', 'utf8');
+  const runtimeViewSource = readFileSync('frontend/bridges/runtime/runtime-view-store.ts', 'utf8');
   expect(source).toContain('shouldResetRuntimeAdapterViewSelection(previousConfig, normalizedConfig)');
   expect(source).toContain('resetRuntimeAdapterViewSelection');
-  expect(source).toContain("import { clearRuntimeQueryCache } from '../../src/lib/stores/runtimeQueryClient';");
+  expect(source).toContain("import { clearRuntimeQueryCache } from './runtime-query-client';");
   expect(source).toContain('resetRuntimeView,');
   expect(source).toContain("const previousRuntimeId = normalizeRuntimeConfigId(previousConfig.runtimeId || '')");
   expect(source).toContain("const nextRuntimeId = normalizeRuntimeConfigId(nextConfig.runtimeId || '')");
@@ -356,7 +356,7 @@ test('remote runtime refresh ignores unchanged ticks and debounces projection re
 test('frontend remote runtime operations use short fail-fast budgets', () => {
   const xlnStoreSource = readFileSync('frontend/bridges/runtime/xln-store.ts', 'utf8');
   const runtimeConnectionSource = readFileSync('frontend/src/lib/utils/runtime/runtimeConnection.ts', 'utf8');
-  const importValidationSource = readFileSync('frontend/src/lib/utils/onboarding/remoteRuntimeValidation.ts', 'utf8');
+  const importValidationSource = readFileSync('frontend/bridges/runtime/remote-runtime-validation.ts', 'utf8');
 
   expect(xlnStoreSource).toContain('const FRONTEND_REMOTE_REQUEST_TIMEOUT_MS = 5_000');
   expect(xlnStoreSource).toContain('const FRONTEND_REMOTE_RECONNECT_MAX_MS = 2_000');
@@ -372,7 +372,7 @@ test('frontend remote runtime operations use short fail-fast budgets', () => {
 
 test('remote RuntimeView refresh stays projection-native without fake RuntimeReplica timestamps', () => {
   const storeSource = readFileSync('frontend/bridges/runtime/xln-store.ts', 'utf8');
-  const runtimeViewSource = readFileSync('frontend/src/lib/stores/runtimeViewStore.ts', 'utf8');
+  const runtimeViewSource = readFileSync('frontend/bridges/runtime/runtime-view-store.ts', 'utf8');
   const refreshStart = storeSource.indexOf('const refreshRemoteRuntimeProjection = async');
   const refreshEnd = storeSource.indexOf('const createEmbeddedRuntimeAdapter', refreshStart);
   expect(refreshStart).toBeGreaterThan(0);
@@ -453,8 +453,8 @@ test('localhost debug env surfaces expose RuntimeView with matching live runtime
   expect(viewSource).not.toContain("Object.defineProperty(window, 'isolatedEnv'");
   expect(viewSource).toContain('refreshSelectedRuntimeView,');
   expect(viewSource).toContain('runtimeViewActiveEntityId,');
-  expect(viewSource).toContain("from '$lib/stores/runtimeViewStore'");
-  expect(viewSource).toContain("from '$lib/utils/runtime/debugSurface'");
+  expect(viewSource).toContain("from '../../../bridges/runtime/runtime-view-store'");
+  expect(viewSource).toContain("from '../../../packages/browser/src/runtime/debug-surface'");
   expect(viewSource).toContain("registerDebugSurface('view', () => get(runtimeView)");
 });
 
@@ -788,7 +788,7 @@ test('direct remote adapter config carries token audience runtime identity', () 
 test('remote app can page through full hub account and book projections', () => {
   const layoutSource = readFileSync('frontend/src/routes/app/+layout.svelte', 'utf8');
   const xlnStoreSource = readFileSync('frontend/bridges/runtime/xln-store.ts', 'utf8');
-  const runtimeViewSource = readFileSync('frontend/src/lib/stores/runtimeViewStore.ts', 'utf8');
+  const runtimeViewSource = readFileSync('frontend/bridges/runtime/runtime-view-store.ts', 'utf8');
   const runtimeViewModelSource = readFileSync(
     'frontend/packages/runtime-client/src/runtime/view/runtime-view-model.ts',
     'utf8',
@@ -826,7 +826,7 @@ test('remote app can page through full hub account and book projections', () => 
   expect(runtimeViewModelSource).toContain('accountsPageCount: number');
   expect(runtimeViewModelSource).toContain('accountsHasMore: boolean');
   expect(runtimeViewModelSource).toContain('export const runtimeViewPageNeedsNavigation');
-  expect(runtimeViewSource).toContain("from '../../../packages/runtime-client/src/runtime/view/runtime-view-model'");
+  expect(runtimeViewSource).toContain("from '../../packages/runtime-client/src/runtime/view/runtime-view-model'");
   expect(runtimeViewSource).toContain('export const runtimeViewPageInfo');
 });
 

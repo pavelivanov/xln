@@ -1,17 +1,17 @@
 <script lang="ts">
   import { runtimeControllerHandle } from '../../../../../bridges/runtime/runtime-controller-store';
-  import { runtimeCommandLatestReceipt } from '$lib/stores/commands/runtimeCommandBus';
+  import { runtimeCommandLatestReceipt } from '../../../../../bridges/runtime/runtime-command-bus';
   import {
     runtimeView,
     runtimeViewAccountsPage,
     runtimeViewBooksPage,
     runtimeViewFrameMatchesAtHeight,
     runtimeViewQueryAtHeight,
-  } from '$lib/stores/runtimeViewStore';
-  import { runtimeQueryClient } from '$lib/stores/runtimeQueryClient';
+  } from '../../../../../bridges/runtime/runtime-view-store';
+  import { runtimeQueryClient } from '../../../../../bridges/runtime/runtime-query-client';
   import type { RuntimeAdapterViewFrame } from '@xln/core/api/public/runtime-module';
   import { REMOTE_RUNTIME } from '@xln/core/config/constants';
-  import type { Tab } from '$lib/types/ui';
+  import type { Tab } from '../../../../../packages/ui/src/workspace/ui-types';
   import EntityPanelTabs from './shell/EntityPanelTabs.svelte';
   import { runtimeProjectionMatchesRuntime } from '../core/entity-workspace';
   import {

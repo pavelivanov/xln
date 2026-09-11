@@ -138,7 +138,7 @@ export const PLATFORM_INVENTORY = [
       'frontend/packages/browser/src/active-tab-lock-support.ts',
     ],
     consumers: [
-      'frontend/src/lib/utils/control/activeTabLock.ts',
+      'frontend/packages/browser/src/active-tab-lock-store.ts',
       'frontend/apps/wallet/src/runtime/wallet-embedded-runtime.ts',
       'frontend/apps/wallet/src/onboarding/wallet-identity-opening.ts',
     ],
@@ -238,7 +238,7 @@ export const PLATFORM_INVENTORY = [
     interfaces: ['asset', 'local-storage', 'service-worker'],
     sources: [
       'frontend/static/push-wake-sw.js',
-      'frontend/src/lib/utils/recovery/pushWakeRegistration.ts',
+      'frontend/bridges/vault/push-wake-registration.ts',
       'frontend/packages/browser/src/wallet/wallet-push-wake.ts',
       'frontend/bridges/wallet/wallet-canonical-push-wake.ts',
     ],
@@ -260,8 +260,8 @@ export const PLATFORM_INVENTORY = [
     interfaces: ['capacitor', 'desktop-shell', 'extension-shell', 'release-artifact'],
     sources: [
       'frontend/capacitor.config.ts',
-      'frontend/src/lib/native/capacitor.ts',
-      'frontend/src/lib/native/deeplink.ts',
+      'frontend/packages/browser/src/native/capacitor.ts',
+      'frontend/packages/browser/src/native/deeplink.ts',
       'native/desktop/main.cjs',
       'native/extension/manifest.json',
       'scripts/native/wallet-candidate-manifest.ts',
@@ -477,7 +477,7 @@ export const PLATFORM_INVENTORY = [
       'frontend/src/lib/view/panels/RuntimeDiagnosticsPanel.svelte',
       'frontend/src/lib/view/panels/GossipPanel.svelte',
       'frontend/src/lib/components/Entity/activity/gossip-directory-view.ts',
-      'frontend/src/lib/stores/runtimeHistoryStore.ts',
+      'frontend/bridges/runtime/runtime-history-store.ts',
       'frontend/src/lib/view/panels/JurisdictionPanel.svelte',
       'frontend/src/lib/view/panels/SettingsPanel.svelte',
       'frontend/src/lib/view/panels/ArchitectPanel.svelte',
@@ -611,7 +611,7 @@ export const PLATFORM_INVENTORY = [
       'frontend/packages/ui/src/graph/graph3d-camera.ts',
       'frontend/packages/ui/src/graph/graph3d-hover.ts',
       'frontend/packages/ui/src/graph/graph3d-interaction.ts',
-      'frontend/src/lib/utils/runtime/debugSurface.ts',
+      'frontend/packages/browser/src/runtime/debug-surface.ts',
     ],
     consumers: [
       'frontend/src/lib/view/panels/graph3d/Graph3DPanel.svelte',

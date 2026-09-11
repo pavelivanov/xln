@@ -6,7 +6,7 @@
   import type { RuntimeReplica } from '@xln/core/api/public/runtime-module';
   import type { RuntimeAdapterFrameReceiptResponse } from '@xln/core/api/runtime-adapter/types';
   import type { EnvSnapshot } from '@xln/core/runtime/types';
-  import { toasts } from '$lib/stores/ui/toastStore';
+  import { toasts } from '../../../packages/browser/src/workspace/toast-store';
   import { paymentSpotlight } from '../../../packages/browser/src/graph/payment-spotlight-store';
   import UserModePanel from './UserModePanel.svelte';
   import CommandPalette from '../components/shared/CommandPalette.svelte';
@@ -30,9 +30,9 @@
     refreshSelectedRuntimeView,
     runtimeView,
     runtimeViewActiveEntityId,
-  } from '$lib/stores/runtimeViewStore';
-  import { createDetachedRuntimeViewEnv, createRuntimeViewEnv, unwrapLiveRuntimeEnv } from '$lib/utils/runtime/liveRuntimeEnv';
-  import { isLocalDebugSurfaceAllowed, registerDebugSurface } from '$lib/utils/runtime/debugSurface';
+  } from '../../../bridges/runtime/runtime-view-store';
+  import { createDetachedRuntimeViewEnv, createRuntimeViewEnv, unwrapLiveRuntimeEnv } from '../../../packages/browser/src/runtime/live-runtime-env';
+  import { isLocalDebugSurfaceAllowed, registerDebugSurface } from '../../../packages/browser/src/runtime/debug-surface';
   import {
     createPaymentTerminalMonitor,
     PAYMENT_TERMINAL_EVENT_NAMES,

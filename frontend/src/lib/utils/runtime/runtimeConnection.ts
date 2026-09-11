@@ -14,7 +14,7 @@ import {
   ownsActiveTabLock,
   tryInitializeActiveTabLock,
   waitForActiveTabLockLoss,
-} from '../control/activeTabLock';
+} from '../../../../packages/browser/src/active-tab-lock-store';
 import {
   persistRemoteRuntimeImports,
   remoteRuntimeIdForWsUrl,

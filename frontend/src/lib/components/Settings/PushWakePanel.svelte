@@ -14,11 +14,11 @@
     resolvePushWakeTarget,
     upsertPushWakeRegistrationRecord,
     type PushWakeRegistrationRecord,
-  } from '$lib/utils/recovery/pushWakeRegistration';
-  import { normalizeTowerMode } from '$lib/utils/recovery/recoverySettings';
+  } from '../../../../bridges/vault/push-wake-registration';
+  import { normalizeTowerMode } from '../../../../bridges/vault/recovery-settings';
   import { Bell, BellOff, Check, LoaderCircle } from 'lucide-svelte';
   import { onMount } from 'svelte';
-  import { parseJsonUnknown, requireUnknownRecord } from '$lib/utils/boundary';
+  import { parseJsonUnknown, requireUnknownRecord } from '../../../../packages/runtime-client/src/boundary';
 
   export let runtime: Runtime | null = null;
   export let env: RuntimeReplica | null = null;

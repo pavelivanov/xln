@@ -14,7 +14,7 @@ import {
   resolveHubIdCandidate,
   sameOrderbookPairLabel,
   tokenNetworkLabel,
-} from '../../../frontend/src/lib/components/Entity/swap/swap-panel-helpers';
+} from '../../../frontend/bridges/wallet/swap-panel-helpers';
 
 const tokenSymbol = (tokenId: number): string => {
   if (tokenId === 1) return 'WETH';

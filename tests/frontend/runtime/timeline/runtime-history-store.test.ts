@@ -3,7 +3,7 @@ import type { RuntimeAdapterViewFrame } from '@xln/core/api/public/runtime-modul
 import {
   mergeRuntimeHistoryFrame,
   runtimeHistoryFrameFromViewFrame,
-} from '../../../../frontend/src/lib/stores/runtimeHistoryStore';
+} from '../../../../frontend/bridges/runtime/runtime-history-store';
 
 const frameAt = (
   height: number,

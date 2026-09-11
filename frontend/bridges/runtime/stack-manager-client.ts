@@ -10,7 +10,7 @@ import type {
 } from '@xln/core/jurisdiction/adapter/stack-manager/types';
 import { safeStringify } from '@xln/core/protocol/serialization';
 import { DEV_CHAIN_IDS } from '@xln/core/jurisdiction/adapter/chain-ids';
-import { requireExactKeys as exactKeys, requireUnknownRecord as record } from '../../src/lib/utils/boundary';
+import { requireExactKeys as exactKeys, requireUnknownRecord as record } from '../../packages/runtime-client/src/boundary';
 import {
   decodeJurisdictionGossipAnnouncementStructure,
   type JurisdictionGossipAnnouncement,

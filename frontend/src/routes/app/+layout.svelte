@@ -18,22 +18,22 @@
     runtimeViewPageNeedsNavigation,
     setRuntimeViewActiveEntityId,
     setRuntimeViewPage,
-  } from '$lib/stores/runtimeViewStore';
+  } from '../../../bridges/runtime/runtime-view-store';
   import { setLocalLauncherOnboarding } from '$lib/stores/localLauncherStore';
   import { errorLog } from '../../../packages/browser/src/logging/error-log-store';
   import { settingsOperations } from '../../../packages/browser/src/settings-store';
-  import { tabOperations } from '$lib/stores/ui/tabStore';
+  import { tabOperations } from '../../../packages/browser/src/workspace/tab-store';
   import { timeOperations } from '$lib/stores/timeStore';
   import { vaultOperations } from '../../../bridges/vault/vault-store';
   import { resetEverything } from '$lib/utils/control/resetEverything';
-  import { parseStorageSchemaMismatch } from '$lib/utils/recovery/storageSchemaRecovery';
+  import { parseStorageSchemaMismatch } from '../../../packages/runtime-client/src/recovery/storage-schema-recovery';
   import {
     adoptActiveTabLock,
     clearInactiveTabStandby,
     initializeActiveTabLock,
     isInactiveTabStandby,
     waitForActiveTabLockLoss
-  } from '$lib/utils/control/activeTabLock';
+  } from '../../../packages/browser/src/active-tab-lock-store';
   import {
     describeRemoteRuntimeImportError,
     parseRemoteRuntimeImportPayload,

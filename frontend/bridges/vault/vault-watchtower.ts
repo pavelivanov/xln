@@ -7,7 +7,7 @@ import type {
   XLNModule,
 } from '@xln/core/api/public/runtime-module';
 import { Wallet } from 'ethers';
-import { isMapLike } from '../../src/lib/utils/runtime/liveRuntimeEnv';
+import { isMapLike } from '../../packages/browser/src/runtime/live-runtime-env';
 import { resolveRpcUrl } from './vault-helpers';
 import {
   derivePrivateKey,

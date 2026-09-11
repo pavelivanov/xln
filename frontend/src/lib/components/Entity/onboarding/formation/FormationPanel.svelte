@@ -9,15 +9,15 @@
   import { getXLN, registerActiveNumberedEntities, submitRuntimeInput } from '../../../../../../bridges/runtime/xln-store';
   import { errorLog } from '../../../../../../packages/browser/src/logging/error-log-store';
   import { activeRuntime } from '../../../../../../bridges/vault/vault-metadata-store';
-  import { tabOperations } from '../../../../stores/ui/tabStore';
+  import { tabOperations } from '../../../../../../packages/browser/src/workspace/tab-store';
   import { generateLazyEntityIdPreview } from '../../../../../../packages/browser/src/identity/lazy-entity-id';
   import { Plus, X, Shield, Hash, UserRound, UsersRound, Zap } from 'lucide-svelte';
   import {
     emptyFormationRuntimeProjection,
     type FormationRuntimeProjection,
-  } from './formation-runtime-projection';
+  } from '../../../../../../bridges/wallet/formation-runtime-projection';
 
-  import { createFormationEntity } from './formation-commands';
+  import { createFormationEntity } from '../../../../../../bridges/wallet/formation-commands';
 
   export let onCreated: ((entityId: string) => void) | undefined = undefined;
   export let runtimeProjection: FormationRuntimeProjection = emptyFormationRuntimeProjection();

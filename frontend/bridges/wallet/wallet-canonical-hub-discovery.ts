@@ -2,9 +2,9 @@ import { readStoreValue } from '../../packages/runtime-client/src/observable-sto
 import type { RuntimeAdapter, RuntimeAdapterViewFrame } from '@xln/core/api/public/runtime-module';
 import { getXLN, xlnEnvironment, p2pState, resolveConfiguredApiBase } from '../runtime/xln-store';
 import { runtimes } from '../runtime/runtime-store';
-import { buildEntityPanelView, findReplicaForEntityTab, isSameJurisdictionEntityInReplicas } from '../../src/lib/components/Entity/core/entity-panel-model';
+import { buildEntityPanelView, findReplicaForEntityTab, isSameJurisdictionEntityInReplicas } from './entity-panel-model';
 import { buildOpenAccountEntityOptions } from '../../packages/ui/src/entity/entity-panel-options';
-import { unwrapLiveRuntimeEnv } from '../../src/lib/utils/runtime/liveRuntimeEnv';
+import { unwrapLiveRuntimeEnv } from '../../packages/browser/src/runtime/live-runtime-env';
 import { buildHubDiscoveryProjection, buildHubDiscoveryRemoteHubsFromRuntimes, getHubOpenAccountPermissionError } from '../../packages/ui/src/onboarding/hub-discovery-profile';
 import type { WalletAccountOpenRead } from '../../apps/wallet/src/account/controls/wallet-account-open-model';
 import type { WalletAccountView } from '../../apps/wallet/src/account/view/wallet-account-view-model';

@@ -18,8 +18,8 @@
 
 <script lang="ts">
   import { onMount, onDestroy, createEventDispatcher } from 'svelte';
-  import { isUnknownRecord, parseJsonUnknown } from '$lib/utils/boundary';
-  import { formatEntityId } from '$lib/utils/format';
+  import { isUnknownRecord, parseJsonUnknown } from '../../../../packages/runtime-client/src/boundary';
+  import { formatEntityId } from '../../../../packages/ui/src/format';
   import { resolveOrderbookRelayWsUrl } from './orderbook-relay-url';
   import {
     decodeMarketWireResponse,

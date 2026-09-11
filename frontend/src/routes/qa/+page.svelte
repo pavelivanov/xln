@@ -48,7 +48,7 @@
     type QaAdminHealthSnapshot,
   } from '$lib/qa/adminEvidence';
   import { QA } from '@xln/core/config/constants';
-  import { readJsonUnknown } from '$lib/utils/boundary';
+  import { readJsonUnknown } from '../../../packages/runtime-client/src/boundary';
   import {
     decodeQaAuthInfo,
     decodeQaEnvelope,

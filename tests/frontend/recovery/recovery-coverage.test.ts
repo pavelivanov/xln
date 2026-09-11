@@ -11,7 +11,7 @@ import {
   formatRuntimeRecoveryDiscoveryFailure,
   readRuntimeRecoveryDiscoveryStatus,
   writeRuntimeRecoveryDiscoveryStatus,
-} from '../../../frontend/src/lib/utils/recovery/recoveryDiscoveryStatus';
+} from '../../../frontend/packages/browser/src/recovery/recovery-discovery-status';
 import type { Runtime } from '../../../frontend/bridges/vault/vault-store';
 
 const runtimeFixture = (recovery: Runtime['recovery'] = {}): Runtime => ({

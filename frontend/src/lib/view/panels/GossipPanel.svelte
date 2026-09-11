@@ -8,7 +8,7 @@
     getGossipDirectoryDisplayName,
   } from '../../../../packages/runtime-client/src/panels/gossip-panel-view';
   import { runtimeControllerHandle } from '../../../../bridges/runtime/runtime-controller-store';
-  import { createRuntimeQueryStore } from '$lib/stores/runtimeQueryClient';
+  import { createRuntimeQueryStore } from '../../../../bridges/runtime/runtime-query-client';
 
   const frameStore = createRuntimeQueryStore((client) => client.readViewFrame({
     accountsLimit: 1,

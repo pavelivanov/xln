@@ -72,7 +72,7 @@ describe('Foundation release Hanko', () => {
     const board = createFoundationReleaseBoard(ADDRESSES, 2);
     const attestation = signReleaseEnvelope(ENVELOPE, board, PRIVATE_KEYS);
     expect(verifyReleaseAttestation({ ...attestation, envelope: { ...ENVELOPE, version: '0.1.8' } }, board)).toBe(false);
-    expect(verifyReleaseAttestation({ ...attestation, hanko: `${attestation.hanko.slice(0, -2)}00` }, board)).toBe(false);
+    expect(verifyReleaseAttestation({ ...attestation, hanko: `${attestation.hanko.slice(0, -2)}01` }, board)).toBe(false);
   });
 
   test('hash and packed Hanko are deterministic for fixed inputs', () => {

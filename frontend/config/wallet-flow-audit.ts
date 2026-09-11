@@ -185,8 +185,8 @@ export const WALLET_FLOW_AUDIT = [
     sources: [
       'frontend/apps/wallet/src/onboarding/wallet-formation.tsx',
       'frontend/bridges/wallet/wallet-canonical-formation.ts',
-      'frontend/src/lib/components/Entity/onboarding/formation/formation-commands.ts',
-      'frontend/src/lib/components/Entity/onboarding/formation/formation-runtime-projection.ts',
+      'frontend/bridges/wallet/formation-commands.ts',
+      'frontend/bridges/wallet/formation-runtime-projection.ts',
     ],
     tests: [
       'tests/frontend/onboarding/wallet-formation.test.ts',
@@ -203,7 +203,7 @@ export const WALLET_FLOW_AUDIT = [
       'frontend/apps/wallet/src/onboarding/wallet-onboarding.tsx',
       'frontend/bridges/wallet/wallet-canonical-onboarding.ts',
       'frontend/packages/browser/src/onboarding/onboarding-setup.ts',
-      'frontend/src/lib/components/Entity/onboarding/onboarding-hub-join.ts',
+      'frontend/bridges/wallet/onboarding-hub-join.ts',
     ],
     tests: ['frontend/tests/react-candidate/wallet/onboarding/wallet-onboarding.spec.ts'],
   },
@@ -510,7 +510,7 @@ export const WALLET_FLOW_AUDIT = [
       'frontend/apps/wallet/src/onboarding/wallet-external-provider-source.ts',
       'frontend/bridges/wallet/wallet-canonical-external-provider.ts',
       'frontend/packages/browser/src/wallet/wallet-external-provider.ts',
-      'frontend/src/lib/native/external-wallet-authority.ts',
+      'frontend/packages/browser/src/native/external-wallet-authority.ts',
     ],
     tests: [
       'tests/frontend/payments/frontend-wallet-external-provider.test.ts',

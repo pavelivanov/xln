@@ -10,7 +10,7 @@ import { vaultOperations } from '../vault/vault-store';
 import { runtimesState } from '../vault/vault-metadata-store';
 import type { RecoveryTowerConfig, Runtime } from '../vault/vault-recovery';
 import { runtimes as runtimeRegistry } from '../runtime/runtime-store';
-import { unwrapLiveRuntimeEnv } from '../../src/lib/utils/runtime/liveRuntimeEnv';
+import { unwrapLiveRuntimeEnv } from '../../packages/browser/src/runtime/live-runtime-env';
 import {
   buildPushWakeRegistrationPayload,
   buildPushWakeRegistrationRequest,
@@ -23,12 +23,12 @@ import {
   resolvePushWakeTarget,
   upsertPushWakeRegistrationRecord,
   type PushWakeRegistrationRecord,
-} from '../../src/lib/utils/recovery/pushWakeRegistration';
+} from '../vault/push-wake-registration';
 import {
   normalizeRecoveryDraft,
   normalizeTowerMode,
-} from '../../src/lib/utils/recovery/recoverySettings';
-import { parseJsonUnknown, requireUnknownRecord } from '../../src/lib/utils/boundary';
+} from '../vault/recovery-settings';
+import { parseJsonUnknown, requireUnknownRecord } from '../../packages/runtime-client/src/boundary';
 
 const normalizeRuntimeId = (value: string): string => value.trim().toLowerCase();
 

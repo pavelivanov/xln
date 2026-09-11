@@ -4,7 +4,7 @@ import {
   parseRemoteRuntimeImportSourcePayload,
   type RemoteRuntimeImportEntry,
 } from '../../../../packages/browser/src/runtime/session/remote-runtime-import';
-import { readJsonUnknown, requireUnknownRecord } from '../boundary';
+import { readJsonUnknown, requireUnknownRecord } from '../../../../packages/runtime-client/src/boundary';
 
 export const LOCAL_RUNTIME_PAIR_HASH_PARAM = 'xlnPair';
 export const LOCAL_RUNTIME_ONBOARDING_HASH_PARAM = 'xlnOnboarding';

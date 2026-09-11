@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { Profile as GossipProfile } from '@xln/core/api/public/runtime-module';
-  import type { AccountReplica, DerivedDelta } from '$lib/types/ui';
+  import type { AccountReplica, DerivedDelta } from '../../../../../../packages/ui/src/workspace/ui-types';
   import { createEventDispatcher, onDestroy, onMount } from 'svelte';
   import { xlnFunctions } from '../../../../../../bridges/runtime/xln-store';
   import { settings } from '../../../../../../packages/browser/src/settings-store';
@@ -11,10 +11,10 @@
   import { buildTokenVisualScale, sumVisualScales } from '../../../../../../packages/ui/src/account/delta-visual';
   import { buildAccountTokenDetails, isAccountLeftPerspective } from '../../../../../../packages/ui/src/account/account-token-details';
   import { amountToUsdMicros } from '../../../../../../packages/runtime-client/src/asset-pricing';
-  import { formatEntityId } from '$lib/utils/format';
+  import { formatEntityId } from '../../../../../../packages/ui/src/format';
   import { getAccountUiStatus, getAccountUiStatusDescription } from '../../../../../../packages/ui/src/account/account-status';
   import { faucetPendingKey } from '../../../../../../packages/browser/src/wallet/account-faucet';
-  import { formatEntityNetworkLabel, normalizeJurisdictionDisplayName } from '../../swap/swap-panel-helpers';
+  import { formatEntityNetworkLabel, normalizeJurisdictionDisplayName } from '../../../../../../bridges/wallet/swap-panel-helpers';
 
   export let account: AccountReplica;
   export let counterpartyId: string;

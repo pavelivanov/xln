@@ -1,6 +1,6 @@
 <script lang="ts">
-  import type { EntityReplica, Tab } from '$lib/types/ui';
-  import type { EntityPanelJurisdictionView } from '../core/entity-panel-model';
+  import type { EntityReplica, Tab } from '../../../../../packages/ui/src/workspace/ui-types';
+  import type { EntityPanelJurisdictionView } from '../../../../../bridges/wallet/entity-panel-model';
   import JurisdictionDropdown from '$lib/components/Jurisdiction/JurisdictionDropdown.svelte';
   import EntityDropdown from './shell/EntityDropdown.svelte';
 

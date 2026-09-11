@@ -3,13 +3,13 @@ import {
   createObservableStore as writable,
   readStoreValue as get,
 } from '../../packages/runtime-client/src/observable-store';
-import { isUnknownRecord, parseJsonUnknown, readJsonUnknown } from '../../src/lib/utils/boundary';
+import { isUnknownRecord, parseJsonUnknown, readJsonUnknown } from '../../packages/runtime-client/src/boundary';
 import { errorLog } from '../../packages/browser/src/logging/error-log-store';
 import { settings } from '../../packages/browser/src/settings-store';
 import { activeEnv, activeRuntimeId, registerRuntimeAdapterSwitcher, runtimes, runtimeOperations } from './runtime-store';
 import { vaultOperations } from '../vault/vault-store';
 import { xlnEnvironment, setXlnEnvironment } from './embedded-runtime-store';
-import { toasts } from '../../src/lib/stores/ui/toastStore';
+import { toasts } from '../../packages/browser/src/workspace/toast-store';
 import {
   connectRuntimeAdapter,
   disconnectRuntimeAdapter,
@@ -26,24 +26,24 @@ import {
   submitRuntimeCommand,
   type RuntimeCommandExecutionOptions,
   type RuntimeCommandProgress,
-} from '../../src/lib/stores/commands/runtimeCommandBus';
+} from './runtime-command-bus';
 import {
   listUnresolvedRemoteRuntimeCommandIntents,
   withRemoteRuntimeCommandReplayLease,
-} from '../../src/lib/stores/commands/runtimeCommandIntent';
+} from '../../packages/browser/src/commands/runtime-command-intent';
 import {
   isRuntimeCommandJournalUnlocked,
   signRuntimeAdapterOwnerBinding,
-} from '../../src/lib/stores/commands/runtimeCommandJournalKeyring';
-import { findPersistedEmbeddedRuntimeInputHeight } from '../../src/lib/stores/commands/embeddedRuntimeCommandCompletion';
+} from '../../packages/browser/src/commands/runtime-command-journal-keyring';
+import { findPersistedRuntimeInputHeight } from '@xln/core/runtime/mempool/input-completion';
 import {
   REMOTE_HISTORY_SCAN_CACHE_LIMIT,
   ensureRuntimeHistoryContext,
   resetRuntimeHistoryFrames,
   runtimeHistoryFrameFromViewFrame,
   upsertRuntimeHistoryFrame,
-} from '../../src/lib/stores/runtimeHistoryStore';
-import { clearRuntimeQueryCache } from '../../src/lib/stores/runtimeQueryClient';
+} from './runtime-history-store';
+import { clearRuntimeQueryCache } from './runtime-query-client';
 import {
   assertRuntimeViewIsLive,
   runtimeView,
@@ -54,11 +54,11 @@ import {
   runtimeViewPublicationMatches,
   setRuntimeViewActiveEntityId,
   type RuntimeViewSelection,
-} from '../../src/lib/stores/runtimeViewStore';
+} from './runtime-view-store';
 import { assertNetworkMachineIsLive, networkMachineRuntime } from './network-machine-runtime-store';
 import { normalizeWsConnectUrl, normalizeWsUrl, sameWsEndpoint } from '../../packages/runtime-client/src/runtime/ws-url';
-import { createRuntimeViewEnv, unwrapLiveRuntimeEnv } from '../../src/lib/utils/runtime/liveRuntimeEnv';
-import { registerDebugSurface } from '../../src/lib/utils/runtime/debugSurface';
+import { createRuntimeViewEnv, unwrapLiveRuntimeEnv } from '../../packages/browser/src/runtime/live-runtime-env';
+import { registerDebugSurface } from '../../packages/browser/src/runtime/debug-surface';
 import {
   decodeProtectedVaultSecrets,
   deleteVaultDeviceKey,
@@ -1382,7 +1382,7 @@ const drainLocalRuntimeInput = async (
 ): Promise<number> => {
   const startedAt = Date.now();
   for (let i = 0; i < 80; i += 1) {
-    const persistedHeight = await findPersistedEmbeddedRuntimeInputHeight(
+    const persistedHeight = await findPersistedRuntimeInputHeight(
       (height) => xln.readPersistedStorageFrameRecord(env, height),
       input,
       afterHeight,

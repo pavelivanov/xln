@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { normalizeNativeDeepLinkPath } from '../../frontend/src/lib/native/deeplink';
+import { normalizeNativeDeepLinkPath } from '../../frontend/packages/browser/src/native/deeplink';
 
 describe('native deep-link routing', () => {
 	test('normalizes supported xln links into app routes', () => {

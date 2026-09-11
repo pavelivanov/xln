@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { AccountReplica, EntityReplica } from '$lib/types/ui';
+  import type { AccountReplica, EntityReplica } from '../../../../../../packages/ui/src/workspace/ui-types';
   import { createEventDispatcher, onMount, onDestroy } from 'svelte';
   import { p2pState, xlnFunctions } from '../../../../../../bridges/runtime/xln-store';
   import { settings } from '../../../../../../packages/browser/src/settings-store';

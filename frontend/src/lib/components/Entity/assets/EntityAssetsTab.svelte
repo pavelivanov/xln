@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { Profile as GossipProfile } from '@xln/core/api/public/runtime-module';
-  import type { EntityReplica, Tab } from '$lib/types/ui';
+  import type { EntityReplica, Tab } from '../../../../../packages/ui/src/workspace/ui-types';
   import AssetFaucetCard from './AssetFaucetCard.svelte';
   import AssetLedgerTable from './AssetLedgerTable.svelte';
   import AssetWalletMeta from './AssetWalletMeta.svelte';

@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { Profile as GossipProfile } from '@xln/core/api/public/runtime-module';
-  import type { EntityReplica } from '$lib/types/ui';
+  import type { EntityReplica } from '../../../../../../packages/ui/src/workspace/ui-types';
   import { createEventDispatcher } from 'svelte';
   import AccountPreview from './AccountPreview.svelte';
   import { compareStableText } from '../../../../../../packages/ui/src/stable-compare';

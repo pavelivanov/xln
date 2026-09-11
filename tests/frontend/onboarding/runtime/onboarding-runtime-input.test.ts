@@ -190,9 +190,9 @@ test('onboarding creates every jurisdiction entity but only requires advertised 
 test('OnboardingPanel uses injected runtime projection and RuntimeInput helpers', () => {
   const source = readFileSync('frontend/src/lib/components/Entity/onboarding/OnboardingPanel.svelte', 'utf8');
   const setup = readFileSync('frontend/packages/browser/src/onboarding/onboarding-setup.ts', 'utf8');
-  const joins = readFileSync('frontend/src/lib/components/Entity/onboarding/onboarding-hub-join.ts', 'utf8');
+  const joins = readFileSync('frontend/bridges/wallet/onboarding-hub-join.ts', 'utf8');
   const parent = readFileSync('frontend/src/lib/view/UserModePanel.svelte', 'utf8');
-  const projection = readFileSync('frontend/src/lib/components/Entity/onboarding/onboarding-runtime-projection.ts', 'utf8');
+  const projection = readFileSync('frontend/bridges/wallet/onboarding-runtime-projection.ts', 'utf8');
 
   expect(source).toContain('export let runtimeProjection: OnboardingRuntimeProjection');
   expect(source).toContain('emptyOnboardingRuntimeProjection');
@@ -222,7 +222,7 @@ test('OnboardingPanel uses injected runtime projection and RuntimeInput helpers'
 
 test('OnboardingPanel never hides hub discovery or default-policy failures', () => {
   const source = readFileSync('frontend/src/lib/components/Entity/onboarding/OnboardingPanel.svelte', 'utf8');
-  const joins = readFileSync('frontend/src/lib/components/Entity/onboarding/onboarding-hub-join.ts', 'utf8');
+  const joins = readFileSync('frontend/bridges/wallet/onboarding-hub-join.ts', 'utf8');
   const inputSource = readFileSync('frontend/packages/ui/src/onboarding/onboarding-runtime-input.ts', 'utf8');
 
   expect(joins).toContain('ONBOARDING_HUB_DISCOVERY_FAILED');

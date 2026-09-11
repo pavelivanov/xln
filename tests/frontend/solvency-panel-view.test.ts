@@ -100,7 +100,7 @@ test('SolvencyPanel reads adapter solvency-summary with the injected environment
   const dockRoot = readFileSync('frontend/src/lib/view/DockRoot.svelte', 'utf8');
   const architect = readFileSync('frontend/src/lib/view/panels/ArchitectPanel.svelte', 'utf8');
 
-  expect(source).toContain("import { createRuntimeQueryStore } from '$lib/stores/runtimeQueryClient'");
+  expect(source).toContain("import { createRuntimeQueryStore } from '../../../../../bridges/runtime/runtime-query-client'");
   expect(source).toContain('client.readSolvencySummary()');
   expect(source).toContain('$solvencyStore.data ?? buildSolvencyProjection($runtimeFrameEnv)');
   expect(source).toContain('Solvency projection failed');

@@ -17,8 +17,8 @@
     setRuntimeViewAtHeight,
     setRuntimeViewActiveEntityId,
     type RuntimeViewHistoryScanState,
-  } from '$lib/stores/runtimeViewStore';
-  import { toasts } from '$lib/stores/ui/toastStore';
+  } from '../../../../bridges/runtime/runtime-view-store';
+  import { toasts } from '../../../../packages/browser/src/workspace/toast-store';
   import { appState, appStateOperations } from '$lib/stores/appStateStore';
   import {
     getXLN,
@@ -29,7 +29,7 @@
     runtimeHistoryFrames,
     scanRuntimeAdapterHistoryAtHeight,
     type RuntimeHistoryFrame,
-  } from '$lib/stores/runtimeHistoryStore';
+  } from '../../../../bridges/runtime/runtime-history-store';
   // BrowserVM resolved via JAdapter
 
   // Props: Accept both Writable and Readable stores (for global vs isolated usage)

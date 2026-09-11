@@ -34,7 +34,7 @@ import {
 
 import { settings } from '../../packages/browser/src/settings-store';
 
-import { toasts } from '../../src/lib/stores/ui/toastStore';
+import { toasts } from '../../packages/browser/src/workspace/toast-store';
 
 import { errorLog } from '../../packages/browser/src/logging/error-log-store';
 
@@ -43,15 +43,15 @@ import { writeHubJoinPreference, writeSavedCollateralPolicy } from '../../packag
 import { writeOnboardingCompleteForEntities } from '../../packages/browser/src/onboarding/onboarding-state';
 
 
-import { isInactiveTabStandby } from '../../src/lib/utils/control/activeTabLock';
+import { isInactiveTabStandby } from '../../packages/browser/src/active-tab-lock-store';
 
-import { unwrapLiveRuntimeEnv } from '../../src/lib/utils/runtime/liveRuntimeEnv';
+import { unwrapLiveRuntimeEnv } from '../../packages/browser/src/runtime/live-runtime-env';
 
-import { registerDebugSurface } from '../../src/lib/utils/runtime/debugSurface';
+import { registerDebugSurface } from '../../packages/browser/src/runtime/debug-surface';
 
 import { generateLazyEntityIdPreview } from '../../packages/browser/src/identity/lazy-entity-id';
 
-import { parseStorageSchemaMismatch } from '../../src/lib/utils/recovery/storageSchemaRecovery';
+import { parseStorageSchemaMismatch } from '../../packages/runtime-client/src/recovery/storage-schema-recovery';
 
 import {
   deleteVaultDeviceKey,
@@ -60,7 +60,7 @@ import {
   type VaultUnlockDurationMs,
 } from '../../packages/browser/src/vault/vault-protection';
 
-import { lockRuntimeCommandJournal } from '../../src/lib/stores/commands/runtimeCommandJournalKeyring';
+import { lockRuntimeCommandJournal } from '../../packages/browser/src/commands/runtime-command-journal-keyring';
 
 import { deriveJurisdictionSignerIndex } from '../../../core/jurisdiction/machine/config/signer-derivation';
 
@@ -2372,7 +2372,7 @@ export const vaultOperations = {
       xln.registerSignerKey(runtime.seed, address, privateKeyBytes);
 
       // Now create entity (key is registered, signing will work)
-      const { autoCreateEntityForSigner } = await import('../../src/lib/utils/identity/entityFactory');
+      const { autoCreateEntityForSigner } = await import('../wallet/entity-factory');
       const runtimeEntry = get(runtimes).get(runtime.id);
       const runtimeEnv = runtimeEntry?.env ? (unwrapLiveRuntimeEnv(runtimeEntry.env) ?? runtimeEntry.env) : null;
       if (!runtimeEnv) {

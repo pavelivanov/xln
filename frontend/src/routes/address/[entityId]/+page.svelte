@@ -8,9 +8,9 @@
   import EntityIdentity from '$lib/components/shared/EntityIdentity.svelte';
   import { errorLog } from '../../../../packages/browser/src/logging/error-log-store';
   import { runtimeAdapterHeight, runtimeControllerHandle } from '../../../../bridges/runtime/runtime-controller-store';
-  import { runtimeQueryClient } from '$lib/stores/runtimeQueryClient';
+  import { runtimeQueryClient } from '../../../../bridges/runtime/runtime-query-client';
   import { runtimeOperations, runtimes } from '../../../../bridges/runtime/runtime-store';
-  import { refreshRuntimeView } from '$lib/stores/runtimeViewStore';
+  import { refreshRuntimeView } from '../../../../bridges/runtime/runtime-view-store';
   import { ensureProjectionRuntimeConnected } from '$lib/utils/runtime/runtimeConnection';
 
   type ExplorerEntity = {

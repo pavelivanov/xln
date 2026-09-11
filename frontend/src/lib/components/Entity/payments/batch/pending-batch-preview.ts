@@ -4,7 +4,7 @@ import {
   type DraftBatchReserveIssue,
 } from '@xln/core/jurisdiction/machine/batch';
 import type { FrontendXlnFunctions } from '../../../../../../bridges/runtime/xln-store';
-import type { EntityReplica } from '$lib/types/ui';
+import type { EntityReplica } from '../../../../../../packages/ui/src/workspace/ui-types';
 import { amountToUsd } from '../../../../../../packages/runtime-client/src/asset-pricing';
 import { getEntityDisplayName } from '$lib/utils/identity/entityNaming';
 import { requireTokenDecimals } from '../../../../../../packages/runtime-client/src/token-metadata';

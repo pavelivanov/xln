@@ -5,7 +5,7 @@
    */
   import { createEventDispatcher } from 'svelte';
   import { xlnFunctions, xlnInstance } from '../../../../../../bridges/runtime/xln-store';
-  import type { EntityReplica } from '$lib/types/ui';
+  import type { EntityReplica } from '../../../../../../packages/ui/src/workspace/ui-types';
   import Dropdown from '$lib/components/UI/Dropdown.svelte';
   import { entityAvatar } from '$lib/utils/identity/avatar';
   import { buildAccountDropdownItems } from '../../../../../../packages/ui/src/account/account-dropdown-model';

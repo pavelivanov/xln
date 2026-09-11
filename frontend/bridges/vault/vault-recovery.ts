@@ -10,7 +10,7 @@ import type {
   TowerReceiptV1,
   XLNModule,
 } from '@xln/core/api/public/runtime-module';
-import { isUnknownRecord as isRecord, parseJsonUnknown } from '../../src/lib/utils/boundary';
+import { isUnknownRecord as isRecord, parseJsonUnknown } from '../../packages/runtime-client/src/boundary';
 export { isRecord };
 import { HDNodeWallet, Mnemonic, getAddress, getIndexedAccountPath } from 'ethers';
 import {
@@ -18,8 +18,8 @@ import {
   type ProtectedVaultSecrets,
   type VaultUnlockDurationMs,
 } from '../../packages/browser/src/vault/vault-protection';
-import { unwrapLiveRuntimeEnv } from '../../src/lib/utils/runtime/liveRuntimeEnv';
-import { installRuntimeCommandJournalKeys } from '../../src/lib/stores/commands/runtimeCommandJournalKeyring';
+import { unwrapLiveRuntimeEnv } from '../../packages/browser/src/runtime/live-runtime-env';
+import { installRuntimeCommandJournalKeys } from '../../packages/browser/src/commands/runtime-command-journal-keyring';
 import { getXLN } from '../runtime/xln-store';
 
 const recoveryTowerInfoCache = new Map<string, { fetchedAt: number; info: TowerServerInfo }>();

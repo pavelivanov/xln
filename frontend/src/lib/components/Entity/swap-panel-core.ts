@@ -1,4 +1,4 @@
-import type { EntityReplica } from '$lib/types/ui';
+import type { EntityReplica } from '../../../../packages/ui/src/workspace/ui-types';
 import type { FrontendXlnFunctions } from '../../../../bridges/runtime/xln-store';
 import { amountToUsd } from '../../../../packages/runtime-client/src/asset-pricing';
 import type { SwapAccountCapacityView, SwapInboundCapacityPlan } from '@xln/core/api/public/runtime-module';

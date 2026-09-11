@@ -4,8 +4,8 @@ import {
   readStoreValue as get,
 } from '../../packages/runtime-client/src/observable-store';
 import type { RuntimeReplica, RuntimeAdapterConfig } from '@xln/core/api/public/runtime-module';
-import { createRuntimeViewEnv, unwrapLiveRuntimeEnv } from '../../src/lib/utils/runtime/liveRuntimeEnv';
-import { registerDebugSurface } from '../../src/lib/utils/runtime/debugSurface';
+import { createRuntimeViewEnv, unwrapLiveRuntimeEnv } from '../../packages/browser/src/runtime/live-runtime-env';
+import { registerDebugSurface } from '../../packages/browser/src/runtime/debug-surface';
 import {
   normalizeRemoteRuntimeWsUrl,
   describeRemoteRuntimeImportError,
@@ -20,7 +20,7 @@ import {
   type RemoteRuntimeImportEntry,
   type StoredRemoteRuntimeImportEntry,
 } from '../../packages/browser/src/runtime/session/remote-runtime-import';
-import { validateRemoteRuntimeEntry } from '../../src/lib/utils/onboarding/remoteRuntimeValidation';
+import { validateRemoteRuntimeEntry } from './remote-runtime-validation';
 import { getXLN } from './xln-runtime-loader';
 import {
   getRuntimeControllerConfig,

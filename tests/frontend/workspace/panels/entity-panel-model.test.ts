@@ -11,7 +11,7 @@ import {
   isSameJurisdictionEntity,
   isSameJurisdictionEntityInReplicas,
   jurisdictionKey,
-} from '../../../../frontend/src/lib/components/Entity/core/entity-panel-model';
+} from '../../../../frontend/bridges/wallet/entity-panel-model';
 import { buildAccountPageView, resolveAccountListEntityName } from '../../../../frontend/src/lib/components/Entity/core/account-list-view';
 
 describe('entity panel model helpers', () => {
@@ -392,7 +392,7 @@ describe('entity panel model helpers', () => {
     expect(chrome).toContain('{jurisdictions}');
     expect(chrome).not.toContain('activeEnv');
     expect(contextSwitcher).toContain("import { refreshCurrentRuntimeProjection, xlnFunctions, xlnInstance } from '../../../../../../bridges/runtime/xln-store'");
-    expect(contextSwitcher).toContain("import { runtimeView, setRuntimeViewActiveEntityId } from '$lib/stores/runtimeViewStore'");
+    expect(contextSwitcher).toContain("import { runtimeView, setRuntimeViewActiveEntityId } from '../../../../../../bridges/runtime/runtime-view-store'");
     expect(contextSwitcher).toContain('await refreshCurrentRuntimeProjection()');
     expect(contextSwitcher).toContain('projectionSummariesForRuntime(runtime.id');
     expect(contextSwitcher).not.toContain('runtime.env');

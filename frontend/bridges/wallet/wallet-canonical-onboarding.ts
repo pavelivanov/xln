@@ -4,11 +4,11 @@ import type { WalletOnboardingRequest, WalletOnboardingResult, WalletOnboardingV
 import { vaultOperations } from '../vault/vault-store';
 import { activeRuntime } from '../vault/vault-metadata-store';
 import { resolveConfiguredApiBase, submitRuntimeInput, xlnEnvironment, xlnFunctions } from '../runtime/xln-store';
-import { resolveActiveLocalReplica } from '../../src/lib/view/local-runtime-selection';
-import { buildOnboardingRuntimeProjection } from '../../src/lib/components/Entity/onboarding/onboarding-runtime-projection';
-import { createOnboardingHubJoinCommands } from '../../src/lib/components/Entity/onboarding/onboarding-hub-join';
+import { resolveActiveLocalReplica } from '../../packages/runtime-client/src/runtime/local-runtime-selection';
+import { buildOnboardingRuntimeProjection } from './onboarding-runtime-projection';
+import { createOnboardingHubJoinCommands } from './onboarding-hub-join';
 import { finishOnboardingSetup } from '../../packages/browser/src/onboarding/onboarding-setup';
-import { hasAnyOnboardingCounterpartyAccount, resolveOnboardingTargets } from '../../src/lib/components/Entity/onboarding/onboarding-targets';
+import { hasAnyOnboardingCounterpartyAccount, resolveOnboardingTargets } from './onboarding-targets';
 import { readAnyOnboardingComplete, writeOnboardingCompleteForEntities } from '../../packages/browser/src/onboarding/onboarding-state';
 import { readHubJoinPreference, readSavedCollateralPolicy } from '../../packages/browser/src/onboarding/onboarding-preferences';
 import { saveCanonicalWalletRecoveryServices } from './wallet-canonical-recovery-services';

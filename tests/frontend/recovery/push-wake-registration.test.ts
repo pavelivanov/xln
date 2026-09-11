@@ -12,7 +12,7 @@ import {
   resolvePushWakeTarget,
   upsertPushWakeRegistrationRecord,
   type PushWakeDeviceToken,
-} from '../../../frontend/src/lib/utils/recovery/pushWakeRegistration';
+} from '../../../frontend/bridges/vault/push-wake-registration';
 import {
   hashPushToken,
   verifyPushRegistration,

@@ -30,7 +30,7 @@
     normalizeTowerMode,
     resolveOfficialRecoveryTowerUrl,
     type RecoveryServiceMode,
-  } from '$lib/utils/recovery/recoverySettings';
+  } from '../../../../../../bridges/vault/recovery-settings';
   import {
     buildRecoveryTowerStatuses,
     buildRuntimeRecoveryCoverage,
@@ -38,8 +38,8 @@
   import {
     readRuntimeRecoveryDiscoveryStatus,
     type RuntimeRecoveryDiscoveryStatus,
-  } from '$lib/utils/recovery/recoveryDiscoveryStatus';
-  import { buildRemoteRuntimeRecoveryPeerSources } from '$lib/utils/onboarding/remoteRuntimeValidation';
+  } from '../../../../../../packages/browser/src/recovery/recovery-discovery-status';
+  import { buildRemoteRuntimeRecoveryPeerSources } from '../../../../../../bridges/runtime/remote-runtime-validation';
   import AddJMachine from '$lib/components/Jurisdiction/AddJMachine.svelte';
   import type { JMachineCreateDetail } from '../../../../../../bridges/runtime/import-jmachine-runtime';
   import PushWakePanel from '$lib/components/Settings/PushWakePanel.svelte';
@@ -47,7 +47,7 @@
   import EntityConsensusSettingsPanel from './EntityConsensusSettingsPanel.svelte';
   import type { EntityConsensusSettingsView } from '../entity-consensus-settings';
   import type { SettingsSubview } from '../../../../../../packages/runtime-client/src/entity/entity-workspace-navigation';
-  import type { ThemeName } from '$lib/types/ui';
+  import type { ThemeName } from '../../../../../../packages/ui/src/workspace/ui-types';
   import { getAvailableThemes } from '../../../../../../packages/browser/src/themes';
 
   type ProfileView = {

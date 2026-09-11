@@ -4,7 +4,7 @@ import { runtimeAdapterHeight } from '../../../../frontend/bridges/runtime/runti
 import {
   RuntimeQueryClient,
   clearRuntimeQueryCache,
-} from '../../../../frontend/src/lib/stores/runtimeQueryClient';
+} from '../../../../frontend/bridges/runtime/runtime-query-client';
 import {
   runtimeViewHeightRetryDelayMs,
   runtimeViewNeedsHeightRefresh,
@@ -19,13 +19,13 @@ import {
   runtimeViewSelectionMatches,
   setRuntimeViewActiveEntityId,
   setRuntimeViewPage,
-} from '../../../../frontend/src/lib/stores/runtimeViewStore';
+} from '../../../../frontend/bridges/runtime/runtime-view-store';
 import {
   ensureRuntimeHistoryContext,
   resetRuntimeHistoryFrames,
   runtimeHistoryFrames,
   upsertRuntimeHistoryFrame,
-} from '../../../../frontend/src/lib/stores/runtimeHistoryStore';
+} from '../../../../frontend/bridges/runtime/runtime-history-store';
 
 const readStore = <T>(store: { subscribe: (run: (value: T) => void) => () => void }): T => {
   let current!: T;
@@ -35,7 +35,7 @@ const readStore = <T>(store: { subscribe: (run: (value: T) => void) => () => voi
 };
 
 test('runtime query client exposes typed projection reads and bounded cache', () => {
-  const source = readFileSync('frontend/src/lib/stores/runtimeQueryClient.ts', 'utf8');
+  const source = readFileSync('frontend/bridges/runtime/runtime-query-client.ts', 'utf8');
   const boundary = readFileSync(
     'frontend/packages/runtime-client/src/runtime/query/runtime-query-client.ts',
     'utf8',
@@ -114,7 +114,7 @@ test('remote history cache clears synchronously and rejects a superseded selecti
 });
 
 test('runtime view store owns the active projected RuntimeView without RuntimeReplica access', () => {
-  const source = readFileSync('frontend/src/lib/stores/runtimeViewStore.ts', 'utf8');
+  const source = readFileSync('frontend/bridges/runtime/runtime-view-store.ts', 'utf8');
   const modelSource = readFileSync(
     'frontend/packages/runtime-client/src/runtime/view/runtime-view-model.ts',
     'utf8',
@@ -125,7 +125,7 @@ test('runtime view store owns the active projected RuntimeView without RuntimeRe
   );
 
   expect(source).toContain('export type RuntimeView');
-  expect(source).toContain("from '../../../packages/runtime-client/src/runtime/view/runtime-view-model'");
+  expect(source).toContain("from '../../packages/runtime-client/src/runtime/view/runtime-view-model'");
   expect(source).toContain('export const runtimeView');
   expect(source).toContain('export const refreshRuntimeView');
   expect(source).toContain('export const refreshSelectedRuntimeView');
@@ -251,7 +251,7 @@ test('runtime view queues committed heights that arrive during the initial proje
   expect(runtimeViewTracksHeightAdvance({ ...loadingLiveView, atHeight: 10 }, 'connected', 11)).toBe(false);
   expect(runtimeViewTracksHeightAdvance(loadingLiveView, 'connected', 0)).toBe(false);
 
-  const source = readFileSync('frontend/src/lib/stores/runtimeViewStore.ts', 'utf8');
+  const source = readFileSync('frontend/bridges/runtime/runtime-view-store.ts', 'utf8');
   const boundary = readFileSync(
     'frontend/packages/runtime-client/src/runtime/view/runtime-view-catchup.ts',
     'utf8',
@@ -264,7 +264,7 @@ test('runtime view queues committed heights that arrive during the initial proje
 
 test('runtime view catch-up retries back off instead of spinning', () => {
   expect([0, 1, 2, 3, 20].map(runtimeViewHeightRetryDelayMs)).toEqual([50, 100, 200, 250, 250]);
-  const source = readFileSync('frontend/src/lib/stores/runtimeViewStore.ts', 'utf8');
+  const source = readFileSync('frontend/bridges/runtime/runtime-view-store.ts', 'utf8');
   const boundary = readFileSync(
     'frontend/packages/runtime-client/src/runtime/view/runtime-view-catchup.ts',
     'utf8',
@@ -310,7 +310,7 @@ test('activity history panel reads activity through RuntimeQueryClient only', ()
     paymentSmokeSource.indexOf('test.describe'),
   );
   expect(panelSource).toContain('runtimeQueryClient.readActivity');
-  expect(panelSource).toContain("from '$lib/stores/runtimeQueryClient'");
+  expect(panelSource).toContain("from '../../../../../bridges/runtime/runtime-query-client'");
   expect(addressRouteSource).toContain("$page.url.searchParams.get('runtimeId')");
   expect(addressRouteSource).toContain("runtimeOperations.selectRuntime(targetRuntimeId)");
   expect(addressRouteSource).toContain('Runtime ${targetRuntimeId} is not imported');
@@ -490,7 +490,7 @@ test('runtime recovery bundles read through typed query client without cache reu
 
 test('runtime controller exposes only typed debug projection queries', () => {
   const controllerSource = readFileSync('frontend/bridges/runtime/runtime-controller-store.ts', 'utf8');
-  const queryClientSource = readFileSync('frontend/src/lib/stores/runtimeQueryClient.ts', 'utf8');
+  const queryClientSource = readFileSync('frontend/bridges/runtime/runtime-query-client.ts', 'utf8');
   const queryBoundarySource = readFileSync(
     'frontend/packages/runtime-client/src/runtime/query/runtime-query-client.ts',
     'utf8',
@@ -573,7 +573,7 @@ test('runtime view-frame live reads do not force historical atHeight queries', a
 
 test('remote runtime refresh reads typed RuntimeView projections without RuntimeReplica bridge', () => {
   const source = readFileSync('frontend/bridges/runtime/xln-store.ts', 'utf8');
-  const historySource = readFileSync('frontend/src/lib/stores/runtimeHistoryStore.ts', 'utf8');
+  const historySource = readFileSync('frontend/bridges/runtime/runtime-history-store.ts', 'utf8');
   const transportSource = readFileSync('frontend/packages/runtime-client/src/scenario/time-machine-transport.ts', 'utf8');
   const refreshIndex = source.indexOf('const refreshRemoteRuntimeProjection = async');
   expect(refreshIndex).toBeGreaterThan(0);
@@ -603,7 +603,7 @@ test('remote runtime refresh reads typed RuntimeView projections without Runtime
 test('runtime adapter health panel uses shared RuntimeView store instead of owning projection state', () => {
   const source = readFileSync('frontend/src/lib/components/Health/RuntimeAdapterPanel.svelte', 'utf8');
 
-  expect(source).toContain("from '$lib/stores/runtimeViewStore'");
+  expect(source).toContain("from '../../../../bridges/runtime/runtime-view-store'");
   expect(source).toContain('runtimeControllerHandle');
   expect(source).toContain('$runtimeControllerHandle.status');
   expect(source).toContain('$runtimeControllerHandle.height');
@@ -636,7 +636,7 @@ test('radapter page redirects remote users into the canonical app workspace', ()
 });
 
 test('remote Time Machine scan reads historical frames through history-frame-batch only', () => {
-  const source = readFileSync('frontend/src/lib/stores/runtimeHistoryStore.ts', 'utf8');
+  const source = readFileSync('frontend/bridges/runtime/runtime-history-store.ts', 'utf8');
   const transport = readFileSync('frontend/packages/runtime-client/src/scenario/time-machine-transport.ts', 'utf8');
   const scanStart = source.indexOf('export const scanRuntimeAdapterHistoryAtHeight');
   expect(scanStart).toBeGreaterThan(0);
@@ -669,8 +669,8 @@ test('address explorer routes read runtime projections instead of debug entity A
   expect(directory).not.toContain('fetch(');
   expect(directory).not.toContain('setInterval');
   expect(detail).toContain('ensureProjectionRuntimeConnected');
-  expect(detail).toContain("from '$lib/stores/runtimeViewStore'");
-  expect(detail).toContain("from '$lib/stores/runtimeQueryClient'");
+  expect(detail).toContain("from '../../../../bridges/runtime/runtime-view-store'");
+  expect(detail).toContain("from '../../../../bridges/runtime/runtime-query-client'");
   expect(detail).toContain('refreshRuntimeView({');
   expect(detail).toContain('selectEntityRuntimeFromDirectory');
   expect(detail).toContain('runtimeOperations.selectRuntime(targetRuntimeId)');
@@ -731,7 +731,7 @@ test('health admin reads active runtime projections instead of debug event/entit
 });
 
 test('remote runtime validation uses typed query client reads with runtime-scoped cache', () => {
-  const source = readFileSync('frontend/src/lib/utils/onboarding/remoteRuntimeValidation.ts', 'utf8');
+  const source = readFileSync('frontend/bridges/runtime/remote-runtime-validation.ts', 'utf8');
 
   expect(source).toContain('new RuntimeQueryClient(() => adapter, runtimeId)');
   expect(source).toContain('queryClient.readHead()');

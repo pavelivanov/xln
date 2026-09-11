@@ -9,7 +9,7 @@
 
   import type { Writable } from 'svelte/store';
   import type { EnvSnapshot } from '@xln/core/api/public/runtime-module';
-  import { shortAddress } from '$lib/utils/format';
+  import { shortAddress } from '../../../../packages/ui/src/format';
   import {
     RUNTIME_IO_ALL_CATEGORIES as ALL_CATEGORIES,
     RUNTIME_IO_ALL_LEVELS as ALL_LEVELS,

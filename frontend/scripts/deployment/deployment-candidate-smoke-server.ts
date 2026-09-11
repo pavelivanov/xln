@@ -1,13 +1,14 @@
 #!/usr/bin/env bun
 
-import { cp, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { cp, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 import { safeStringify } from '../../../core/protocol/serialization';
-import { SURFACE_IDS, type SurfaceId } from '../../config/surfaces';
-import { assembleCandidateRelease, type CandidateReleaseManifest } from '../release/candidate-release';
+import type { SurfaceId } from '../../config/surfaces';
+import type { CandidateReleaseManifest } from '../release/candidate-release';
 import { verifyCandidateReleaseDirectory } from '../release/candidate-release-verifier';
+import { readLifecycleReleaseInputs } from '../release/lifecycle-release-inputs';
 import { serveCandidateReleaseFile } from '../release/candidate-release-serving';
 import {
   activateDeploymentCandidate,
@@ -16,10 +17,8 @@ import {
   rollbackDeploymentCandidate,
 } from './deployment-candidate';
 
-const FRONTEND_ROOT = join(import.meta.dir, '../..');
 const HOST = process.env['XLN_DEPLOYMENT_SMOKE_HOST'] ?? '127.0.0.1';
 const PORT = Number(process.env['XLN_DEPLOYMENT_SMOKE_PORT'] ?? '19092');
-const UPDATE_MARKER = '<!-- xln-deployment-isolated-update -->';
 
 type SmokeRelease = Readonly<{
   directory: string;
@@ -32,28 +31,6 @@ const assertPort = (): void => {
   if (!Number.isSafeInteger(PORT) || PORT < 1 || PORT > 65_535) {
     throw new Error('DEPLOYMENT_SMOKE_PORT_INVALID');
   }
-};
-
-const prepareUpdateRelease = async (smokeRoot: string): Promise<SmokeRelease> => {
-  const frontendRoot = join(smokeRoot, 'frontend');
-  const artifacts = join(frontendRoot, '.artifacts');
-  await mkdir(artifacts, { recursive: true });
-  await Promise.all([
-    ...SURFACE_IDS.map((surface) => cp(
-      join(FRONTEND_ROOT, '.artifacts', surface),
-      join(artifacts, surface),
-      { recursive: true },
-    )),
-    cp(join(FRONTEND_ROOT, '.artifacts', 'inputs'), join(artifacts, 'inputs'), { recursive: true }),
-  ]);
-  const walletEntry = join(artifacts, 'wallet/index.html');
-  const html = await readFile(walletEntry, 'utf8');
-  if (html.includes(UPDATE_MARKER) || html.split('</body>').length !== 2) {
-    throw new Error('DEPLOYMENT_SMOKE_WALLET_ENTRY_INVALID');
-  }
-  await writeFile(walletEntry, html.replace('</body>', `${UPDATE_MARKER}</body>`));
-  const release = await assembleCandidateRelease(frontendRoot);
-  return smokeRelease(release.releaseDirectory);
 };
 
 const releaseEntryHash = (manifest: CandidateReleaseManifest, surface: SurfaceId): string => {
@@ -74,23 +51,24 @@ const smokeRelease = async (directory: string): Promise<SmokeRelease> => {
   };
 };
 
-const jsonResponse = (value: unknown, status = 200): Response => new Response(`${safeStringify(value, 2)}\n`, {
-  status,
-  headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' },
-});
+const jsonResponse = (value: unknown, status = 200): Response =>
+  new Response(`${safeStringify(value, 2)}\n`, {
+    status,
+    headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' },
+  });
 
 const main = async (): Promise<void> => {
   assertPort();
+  const inputs = await readLifecycleReleaseInputs();
   const smokeRoot = await mkdtemp(join(tmpdir(), 'xln-deployment-smoke-'));
   const deploymentRoot = join(smokeRoot, 'deployment');
-  const installPlan = await assembleCandidateRelease(FRONTEND_ROOT);
   const [install, update] = await Promise.all([
-    smokeRelease(installPlan.releaseDirectory),
-    prepareUpdateRelease(smokeRoot),
+    smokeRelease(inputs.install.directory),
+    smokeRelease(inputs.update.directory),
   ]);
   if (install.manifest.releaseId === update.manifest.releaseId) throw new Error('DEPLOYMENT_SMOKE_RELEASE_IDS_EQUAL');
   const releases = [install, update] as const;
-  const releaseMap = new Map(releases.map((release) => [release.manifest.releaseId, release]));
+  const releaseMap = new Map(releases.map(release => [release.manifest.releaseId, release]));
   await activateDeploymentCandidate(install.directory, deploymentRoot);
   const corruptDirectory = join(smokeRoot, 'corrupt', update.manifest.releaseId);
   await cp(update.directory, corruptDirectory, { recursive: true });
@@ -155,7 +133,7 @@ const main = async (): Promise<void> => {
   process.once('SIGTERM', () => void close().finally(() => process.exit(0)));
   console.info(
     `DEPLOYMENT_CANDIDATE_SMOKE_READY origin=http://${HOST}:${PORT} ` +
-    `install=${install.manifest.releaseId} update=${update.manifest.releaseId}`,
+      `install=${install.manifest.releaseId} update=${update.manifest.releaseId}`,
   );
 };
 

@@ -21,7 +21,7 @@ import {
   normalizeRecoveryDraft,
   normalizeRecoveryUrl,
   resolveOfficialRecoveryTowerUrl,
-} from '../../src/lib/utils/recovery/recoverySettings';
+} from '../vault/recovery-settings';
 
 const normalizeRuntimeId = (runtimeId: string): string => runtimeId.trim().toLowerCase();
 

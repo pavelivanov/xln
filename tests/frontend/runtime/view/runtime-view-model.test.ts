@@ -174,13 +174,13 @@ describe('runtime-client RuntimeView model boundary', () => {
       'frontend/packages/runtime-client/src/runtime/view/runtime-view-publication.ts',
       'utf8',
     );
-    const store = readFileSync('frontend/src/lib/stores/runtimeViewStore.ts', 'utf8');
+    const store = readFileSync('frontend/bridges/runtime/runtime-view-store.ts', 'utf8');
 
     expect(boundary).not.toContain('svelte');
     expect(boundary).not.toContain('@xln/core');
     expect(boundary).not.toContain('runtimeQueryClient');
     expect(boundary).not.toContain('writable');
-    expect(store).toContain("from '../../../packages/runtime-client/src/runtime/view/runtime-view-model'");
+    expect(store).toContain("from '../../packages/runtime-client/src/runtime/view/runtime-view-model'");
     expect(store).toContain('runtimeQueryClient.readViewFrame(query)');
     expect(publication).toContain('const requestStillCurrent = (): boolean =>');
     expect(store).toContain('export const runtimeView = writable<RuntimeView>');

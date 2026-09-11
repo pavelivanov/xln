@@ -1,13 +1,10 @@
 #!/usr/bin/env bun
 
-import { cp, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
-import { join, resolve } from 'node:path';
+import { join } from 'node:path';
 
 import { safeStringify } from '../../../core/protocol/serialization';
-import { SURFACE_IDS } from '../../config/surfaces';
-import { assembleCandidateRelease } from '../release/candidate-release';
-import { verifyCandidateReleaseDirectory } from '../release/candidate-release-verifier';
+
+import { readLifecycleReleaseInputs } from '../release/lifecycle-release-inputs';
 import {
   createPwaCandidatePlan,
   PWA_CANDIDATE_RELEASE_PATH,
@@ -22,42 +19,11 @@ type ServedRelease = Readonly<{
   walletEntrySha256: string;
 }>;
 
-const FRONTEND_ROOT = resolve(import.meta.dir, '../..');
 const HOST = process.env['XLN_PWA_SMOKE_HOST'] ?? '127.0.0.1';
 const PORT = Number(process.env['XLN_PWA_SMOKE_PORT'] ?? '19091');
-const UPDATE_MARKER = '<!-- xln-pwa-isolated-update -->';
-let temporaryUpdateRoot: string | null = null;
 
 const assertPort = (): void => {
   if (!Number.isSafeInteger(PORT) || PORT < 1 || PORT > 65_535) throw new Error('PWA_SMOKE_PORT_INVALID');
-};
-
-const prepareUpdateRelease = async (): Promise<Readonly<{ root: string; directory: string }>> => {
-  const root = await mkdtemp(join(tmpdir(), 'xln-pwa-smoke-'));
-  try {
-    const artifacts = join(root, '.artifacts');
-    await mkdir(artifacts);
-    await Promise.all([
-      ...SURFACE_IDS.map((surface) => cp(
-        join(FRONTEND_ROOT, '.artifacts', surface),
-        join(artifacts, surface),
-        { recursive: true },
-      )),
-      cp(join(FRONTEND_ROOT, '.artifacts', 'inputs'), join(artifacts, 'inputs'), { recursive: true }),
-    ]);
-    const walletEntry = join(artifacts, 'wallet', 'index.html');
-    const html = await readFile(walletEntry, 'utf8');
-    if (html.includes(UPDATE_MARKER) || html.split('</body>').length !== 2) {
-      throw new Error('PWA_SMOKE_WALLET_ENTRY_INVALID');
-    }
-    await writeFile(walletEntry, html.replace('</body>', `${UPDATE_MARKER}</body>`));
-    const release = await assembleCandidateRelease(root);
-    await verifyCandidateReleaseDirectory(release.releaseDirectory);
-    return { root, directory: release.releaseDirectory };
-  } catch (error: unknown) {
-    await rm(root, { recursive: true, force: true });
-    throw error;
-  }
 };
 
 const servedRelease = async (directory: string): Promise<ServedRelease> => {
@@ -81,26 +47,24 @@ const decodeReleasePath = (encoded: string): string | null => {
 };
 
 const responseHeaders = { 'cache-control': 'no-store' } as const;
-const textResponse = (body: string, status = 200): Response => new Response(body, {
-  status,
-  headers: { ...responseHeaders, 'content-type': 'text/plain; charset=utf-8' },
-});
+const textResponse = (body: string, status = 200): Response =>
+  new Response(body, {
+    status,
+    headers: { ...responseHeaders, 'content-type': 'text/plain; charset=utf-8' },
+  });
 
 const main = async (): Promise<void> => {
   assertPort();
-  const installed = await assembleCandidateRelease(FRONTEND_ROOT);
-  await verifyCandidateReleaseDirectory(installed.releaseDirectory);
-  const update = await prepareUpdateRelease();
-  temporaryUpdateRoot = update.root;
+  const inputs = await readLifecycleReleaseInputs();
   const [installRelease, updateRelease] = await Promise.all([
-    servedRelease(installed.releaseDirectory),
-    servedRelease(update.directory),
+    servedRelease(inputs.install.directory),
+    servedRelease(inputs.update.directory),
   ]);
   if (installRelease.plan.releaseId === updateRelease.plan.releaseId) {
     throw new Error('PWA_SMOKE_RELEASE_IDENTITIES_EQUAL');
   }
   const releases = [installRelease, updateRelease] as const;
-  const releaseMap = new Map(releases.map((release) => [release.plan.releaseId, release]));
+  const releaseMap = new Map<string, ServedRelease>(releases.map(release => [release.plan.releaseId, release]));
   let activeRelease: ServedRelease = installRelease;
   let releaseNetworkOnline = true;
 
@@ -174,20 +138,17 @@ const main = async (): Promise<void> => {
     if (stopping) return;
     stopping = true;
     server.stop();
-    await rm(update.root, { recursive: true, force: true });
-    temporaryUpdateRoot = null;
     process.exit(0);
   };
   process.once('SIGINT', () => void stop());
   process.once('SIGTERM', () => void stop());
   console.info(
     `PWA_SMOKE_SERVER_OK url=http://${HOST}:${PORT} install=${installRelease.plan.releaseId} ` +
-    `update=${updateRelease.plan.releaseId} files=${installRelease.plan.files.length}`,
+      `update=${updateRelease.plan.releaseId} files=${installRelease.plan.files.length}`,
   );
 };
 
 main().catch(async (error: unknown) => {
-  if (temporaryUpdateRoot !== null) await rm(temporaryUpdateRoot, { recursive: true, force: true });
   console.error(error instanceof Error ? error.message : String(error));
   process.exit(1);
 });

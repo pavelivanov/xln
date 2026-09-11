@@ -15,7 +15,7 @@
   import EntityWorkspace from '$lib/components/Entity/workspace/EntityWorkspace.svelte';
   import type { EntityWorkspaceRuntimeFrameContext } from '$lib/components/Entity/core/runtime-frame-context';
   import type { EntityWorkspaceEmbeddedRuntimeContext } from '$lib/components/Entity/core/embedded-runtime-context';
-  import type { Tab } from '$lib/types/ui';
+  import type { Tab } from '../../../../../packages/ui/src/workspace/ui-types';
   import type { RuntimeReplica, EnvSnapshot } from '@xln/core/api/public/runtime-module';
   import { runtimeControllerHandle } from '../../../../../bridges/runtime/runtime-controller-store';
   import type { EntityOpenAction } from '../../../../../packages/browser/src/workspace/panel-bridge';
