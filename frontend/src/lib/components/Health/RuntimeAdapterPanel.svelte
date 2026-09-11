@@ -5,7 +5,7 @@
     runtimeControllerHandle,
   } from '../../../../bridges/runtime/runtime-controller-store';
   import { persistRuntimeAdapterSession } from '$lib/utils/runtime/runtimeConnection';
-  import { refreshRuntimeView, runtimeView } from '$lib/stores/runtimeViewStore';
+  import { refreshRuntimeView, runtimeView } from '../../../../bridges/runtime/runtime-view-store';
   import { makeQaSeveritySignal, type QaSeveritySignal } from '@xln/core/qa/severity';
 
   let wsUrl = $state('');

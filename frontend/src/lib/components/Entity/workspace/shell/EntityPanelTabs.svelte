@@ -8,18 +8,18 @@ import type { EntityTx, RuntimeReplica, EnvSnapshot, JAdapter, Profile, RoutedEn
 import type { EntityReadView } from '../../core/entity-panel-types';
 import { buildDebtEnforcementRuntimeInputFromProjection } from "@xln/core/runtime/tx/debt-enforcement-input";
 import { getDraftBatchReserveDelta } from "@xln/core/jurisdiction/machine/batch";
-import type { Tab, EntityReplica } from "$lib/types/ui";
+import type { Tab, EntityReplica } from "../../../../../../packages/ui/src/workspace/ui-types";
 import { getXLN, resolveConfiguredApiBase } from "../../../../../../bridges/runtime/xln-store";
 import { settings } from "../../../../../../packages/browser/src/settings-store";
 import { runtimes } from "../../../../../../bridges/runtime/runtime-store";
 import { activeRuntime } from "../../../../../../bridges/vault/vault-metadata-store";
 import { submitEntityInputs, submitRuntimeInput, xlnFunctions } from "../../../../../../bridges/runtime/xln-store";
 import { runtimeControllerHandle } from "../../../../../../bridges/runtime/runtime-controller-store";
-import { toasts } from "../../../../stores/ui/toastStore";
+import { toasts } from "../../../../../../packages/browser/src/workspace/toast-store";
 import { errorLog } from "../../../../../../packages/browser/src/logging/error-log-store";
 import { openAccountById } from "../../../../../../packages/browser/src/wallet/account-open-commands";
 import { requireSignerIdForEntity } from "../../../../../../packages/runtime-client/src/entity/entity-replica";
-import { registerDebugSurface } from "$lib/utils/runtime/debugSurface";
+import { registerDebugSurface } from "../../../../../../packages/browser/src/runtime/debug-surface";
 import { getGossipProfiles } from "$lib/utils/identity/entityNaming";
 import { entityAvatar } from "$lib/utils/identity/avatar";
 import { getJurisdictionBadgeInfo } from "$lib/utils/identity/jurisdictionBadge";
@@ -45,10 +45,10 @@ import { choosePreferredMoveAssetSymbol, computeMoveSourceAvailableBalanceForEnd
 import { getMoveValidationErrorForContext, type MoveValidationMode } from "../../../../../../packages/ui/src/entity/move/move-validation";
 import { createMoveVisualController } from "../../../../../../packages/ui/src/entity/move/move-visual-controller";
 import type { AssetLedgerRow } from "../../../../../../packages/ui/src/entity/assets/asset-ledger";
-import { buildEntityPanelView, findLocalAccountByCounterparty, findReplicaForEntityTab, getCurrentEntityJurisdictionName, getRuntimeEnv, getRuntimeId, isSameJurisdictionEntityInReplicas, isAccountLeftPerspective, materializeAccountView, requireRuntimeEnv } from "../../core/entity-panel-model";
+import { buildEntityPanelView, findLocalAccountByCounterparty, findReplicaForEntityTab, getCurrentEntityJurisdictionName, getRuntimeEnv, getRuntimeId, isSameJurisdictionEntityInReplicas, isAccountLeftPerspective, materializeAccountView, requireRuntimeEnv } from "../../../../../../bridges/wallet/entity-panel-model";
 import { formatAddress, isPlaceholderEntityName, shortHash } from "../entity-panel-display";
 import { buildConfigureTokenOptions, buildMoveEntityOptions, buildMoveHubEntityOptions, buildMoveSourceAccountOptions, buildOpenAccountEntityOptions, normalizeWorkspaceAccountId, resolveConfigureTokenId, resolveMoveTargetHubEntityId } from "../../../../../../packages/ui/src/entity/entity-panel-options";
-import { type ExternalWalletReadResult, type ExternalWalletSnapshotSource } from "../../assets/external-wallet-snapshot";
+import { type ExternalWalletReadResult, type ExternalWalletSnapshotSource } from "../../../../../../bridges/wallet/external-wallet-snapshot";
 import { buildExternalWalletStateSyncSignature, buildOnchainReserves, createExternalTokenCatalogLoader, fetchExternalTokenCatalog, isExternalWalletSnapshotTransportFailure, readExternalWalletState, requestExternalWalletSnapshot, resolveExternalWalletSpender } from "../../../../../../bridges/wallet/external-wallet-reader";
 import { ENTITY_WORKSPACE_SECTIONS, buildEntityPanelHashRouteFromState, canonicalizeEntityPanelRoute, getLocationHashParams, getLocationHashRoute, resolveEntityPanelDeepLinkFromLocation, type AccountWorkspaceTab, type AssetWorkspaceTab, type ConfigureWorkspaceTab, type SettingsSubview, type ViewTab } from "../../../../../../packages/runtime-client/src/entity/entity-workspace-navigation";
 import { openDisputedAccountNavigation, returnToAccountsWorkspace, selectAccountNavigation, selectTopLevelTabNavigation, type AccountWorkspaceNavigationPatch } from "../../../../../../packages/runtime-client/src/entity/account-workspace-navigation";
@@ -56,8 +56,8 @@ import { buildEntityActivityAccounts, buildEntityActivityRows, filterEntityActiv
 import { emptyEntityWorkspaceRuntimeFrameContext, type EntityWorkspaceRuntimeFrameContext } from "../../core/runtime-frame-context";
 import { emptyEntityWorkspaceEmbeddedRuntimeContext, type EntityWorkspaceEmbeddedRuntimeContext } from "../../core/embedded-runtime-context";
 import { buildHubDiscoveryProjection, buildHubDiscoveryRemoteHubsFromRuntimes, canSubmitHubOpenAccount, emptyHubDiscoveryProjection, getHubOpenAccountPermissionError, type HubDiscoveryProjection } from "../../../../../../packages/ui/src/onboarding/hub-discovery-profile";
-import { buildPaymentPanelView, buildPaymentPanelViewFromRuntimeView, emptyPaymentPanelView, type PaymentPanelView } from "../../payments/payment-panel-view";
-import { buildSwapPanelRuntimeView, type SwapPanelRuntimeView } from "../../swap/swap-panel-helpers";
+import { buildPaymentPanelView, buildPaymentPanelViewFromRuntimeView, emptyPaymentPanelView, type PaymentPanelView } from "../../../../../../bridges/wallet/payment-panel-view";
+import { buildSwapPanelRuntimeView, type SwapPanelRuntimeView } from "../../../../../../bridges/wallet/swap-panel-helpers";
 import { buildAccountSpendableByToken, buildAccountPortfolioData, buildAssetLedger, createEntityAssetValueFormatters, parsePositiveAssetAmount, parseTokenAmountInput } from "../../../../../../packages/ui/src/entity/assets/entity-asset-values";
 import {
   choosePreferredAssetSymbol,

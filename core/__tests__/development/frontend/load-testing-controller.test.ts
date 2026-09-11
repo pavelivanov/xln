@@ -8,8 +8,8 @@ import {
   LoadTestScheduler,
   type LoadTestSchedulerSnapshot,
 } from '../../../../frontend/packages/browser/src/testing/load-test-scheduler';
-import type { PaymentPanelView } from '../../../../frontend/src/lib/components/Entity/payments/payment-panel-view';
-import type { DeriveDeltaFn } from '../../../../frontend/src/lib/components/Entity/payment-routing';
+import type { PaymentPanelView } from '../../../../frontend/bridges/wallet/payment-panel-view';
+import type { DeriveDeltaFn } from '../../../../frontend/bridges/wallet/payment-routing';
 import { applyCommand, createBook } from '../../../orderbook';
 import type { Delta, DerivedDelta } from '../../../types/account';
 

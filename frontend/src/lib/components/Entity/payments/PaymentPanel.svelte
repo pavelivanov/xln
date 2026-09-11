@@ -17,8 +17,8 @@
   } from '../../../../../bridges/runtime/xln-store';
   import { errorLog } from '../../../../../packages/browser/src/logging/error-log-store';
   import { requireSignerIdForEntity } from '../../../../../packages/runtime-client/src/entity/entity-replica';
-  import { toasts } from '$lib/stores/ui/toastStore';
-  import { runtimeCommandLatestReceipt } from '$lib/stores/commands/runtimeCommandBus';
+  import { toasts } from '../../../../../packages/browser/src/workspace/toast-store';
+  import { runtimeCommandLatestReceipt } from '../../../../../bridges/runtime/runtime-command-bus';
   import { classifyRuntimeFailure } from '$lib/utils/runtime/runtimeFailure';
   import EntityInput from '../../shared/EntityInput.svelte';
   import TokenSelect from '../../shared/TokenSelect.svelte';
@@ -30,17 +30,17 @@
     hasCertifiedEntityEncryptionKey,
     findProfileByEntityId,
     normalizeEntityId,
-  } from '../payment-routing';
+  } from '../../../../../bridges/wallet/payment-routing';
   import {
     emptyPaymentPanelView,
     type PaymentPanelView,
     type PaymentReplicaView,
-  } from './payment-panel-view';
-  import { buildPaymentRuntimeInput } from './runtime/payment-command';
+  } from '../../../../../bridges/wallet/payment-panel-view';
+  import { buildPaymentRuntimeInput } from '../../../../../packages/runtime-client/src/payments/payment-command';
   import {
     quotePaymentCandidateRoutes,
     type PaymentRouteQuote,
-  } from './runtime/payment-route-quote';
+  } from '../../../../../bridges/wallet/payment-route-quote';
 
   export let entityId: string;
   export let paymentView: PaymentPanelView = emptyPaymentPanelView();

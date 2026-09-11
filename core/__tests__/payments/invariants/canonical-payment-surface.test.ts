@@ -101,8 +101,9 @@ test('each payment operation retains one explicit canonical transaction path', (
   expect(ENTITY_TX_TYPES.includes('lendingRepay')).toBe(true);
   expect(ENTITY_TX_TYPES.includes('lendingClosePosition')).toBe(true);
 
-  expect(source('frontend/src/lib/components/Entity/payments/runtime/payment-command.ts').trim())
-    .toBe("export { buildPaymentRuntimeInput } from '../../../../../../packages/runtime-client/src/payments/payment-command';");
+  const commandOwners = trackedFiles().filter(path => path.startsWith('frontend/') &&
+    /\.(ts|tsx|svelte)$/.test(path) && source(path).includes('export const buildPaymentRuntimeInput ='));
+  expect(commandOwners).toEqual(['frontend/packages/runtime-client/src/payments/payment-command.ts']);
 
   const paymentCommand = source('frontend/packages/runtime-client/src/payments/payment-command.ts');
   expect(paymentCommand).toContain("const isDirect = input.deliveryMode === 'direct';");

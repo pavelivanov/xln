@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 test('DockRoot resolves entity panel seeds through RuntimeView projections', () => {
   const source = readFileSync('frontend/src/lib/view/DockRoot.svelte', 'utf8');
 
-  expect(source).toContain("import { refreshRuntimeView } from '$lib/stores/runtimeViewStore'");
+  expect(source).toContain("import { refreshRuntimeView } from '../../../bridges/runtime/runtime-view-store'");
   expect(source).toContain('resolveEntityPanelDataFromProjection');
   expect(source).toContain('refreshRuntimeView({');
   expect(source).toContain('seedFromViewFrame');
@@ -15,7 +15,7 @@ test('DockRoot resolves entity panel seeds through RuntimeView projections', () 
   expect(source).not.toContain('console.warn');
   expect(source).not.toContain('console.error');
   expect(source).not.toContain('console.info');
-  expect(source).not.toContain("from '$lib/stores/runtimeQueryClient'");
+  expect(source).not.toContain("from '../../../frontend/bridges/runtime/runtime-query-client'");
   expect(source).not.toContain('runtimeQueryClient.readViewFrame');
   expect(source).not.toContain('resolveEntityPanelData(panelId)');
   expect(source).not.toContain('env?.state.eReplicas');

@@ -5,8 +5,8 @@ import type { EntityReadView } from '$lib/components/Entity/core/entity-panel-ty
   import type { RuntimeInput, RuntimeReplica } from '@xln/core/api/public/runtime-module';
   import { get } from 'svelte/store';
   import { xlnFunctions } from '../../../../../../../bridges/runtime/xln-store';
-  import type { PaymentPanelView } from '../../../payments/payment-panel-view';
-  import type { SwapPanelRuntimeView } from '../../../swap/swap-panel-helpers';
+  import type { PaymentPanelView } from '../../../../../../../bridges/wallet/payment-panel-view';
+  import type { SwapPanelRuntimeView } from '../../../../../../../bridges/wallet/swap-panel-helpers';
   import { createLoadTestingController } from '../../../../../../../bridges/wallet/load-testing-controller';
   import {
     LoadTestScheduler,

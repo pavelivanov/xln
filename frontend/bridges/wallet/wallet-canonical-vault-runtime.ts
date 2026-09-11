@@ -33,7 +33,7 @@ import {
 } from '../runtime/runtime-controller-store';
 import { vaultOperations } from '../vault/vault-store';
 import { runtimesState } from '../vault/vault-metadata-store';
-import { writeRuntimeRecoveryDiscoveryStatus } from '../../src/lib/utils/recovery/recoveryDiscoveryStatus';
+import { writeRuntimeRecoveryDiscoveryStatus } from '../../packages/browser/src/recovery/recovery-discovery-status';
 import type { RuntimeRecoveryCandidate } from '../vault/vault-recovery';
 import { WalletBrainVaultBrowserDerivation } from './brainvault/wallet-brainvault-browser-derivation';
 import type { VaultUnlockDurationMs } from '../../packages/browser/src/vault/vault-protection';

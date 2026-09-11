@@ -1,6 +1,8 @@
+import { requireLifecycleReleaseDirectories } from './scripts/release/lifecycle-release-inputs';
 import { defineConfig, devices } from '@playwright/test';
 
 delete process.env['NO_COLOR'];
+requireLifecycleReleaseDirectories();
 
 const host = process.env['XLN_DEPLOYMENT_SMOKE_HOST'] ?? '127.0.0.1';
 const port = Number(process.env['XLN_DEPLOYMENT_SMOKE_PORT'] ?? '19092');

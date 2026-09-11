@@ -1,7 +1,7 @@
 import { isAddress, ZeroAddress } from 'ethers';
 import type { EntityReplica, JAdapter } from '@xln/core/api/public/runtime-module';
 import { safeParse } from '@xln/core/protocol/serialization';
-import { isUnknownRecord } from '../../src/lib/utils/boundary';
+import { isUnknownRecord } from '../../packages/runtime-client/src/boundary';
 import { readJsonResponse } from '../../packages/browser/src/wallet/account-faucet';
 import type { ExternalToken } from '../../packages/ui/src/entity/assets/entity-asset-catalog';
 import {
@@ -12,7 +12,7 @@ import {
   requireExternalSnapshotBigInt,
   type ExternalAllowanceRead,
   type ExternalWalletReadResult,
-} from '../../src/lib/components/Entity/assets/external-wallet-snapshot';
+} from './external-wallet-snapshot';
 
 const REQUEST_TIMEOUT_MS = 5_000;
 type JTokenRegistryItem = Awaited<ReturnType<JAdapter['getTokenRegistry']>>[number];

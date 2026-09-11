@@ -12,12 +12,12 @@
     type RuntimeSelectionLease,
   } from '../../../../../../bridges/runtime/runtime-store';
   import { runtimeControllerHandle } from '../../../../../../bridges/runtime/runtime-controller-store';
-  import { runtimeView, setRuntimeViewActiveEntityId } from '$lib/stores/runtimeViewStore';
+  import { runtimeView, setRuntimeViewActiveEntityId } from '../../../../../../bridges/runtime/runtime-view-store';
   import { errorLog } from '../../../../../../packages/browser/src/logging/error-log-store';
   import { resetEverything } from '$lib/utils/control/resetEverything';
   import { refreshCurrentRuntimeProjection, xlnFunctions, xlnInstance, error as runtimeError } from '../../../../../../bridges/runtime/xln-store';
   import type { RuntimeAdapterEntitySummary } from '@xln/core/api/public/runtime-module';
-  import type { Tab } from '$lib/types/ui';
+  import type { Tab } from '../../../../../../packages/ui/src/workspace/ui-types';
   import { entityAvatar, preferredAvatar } from '$lib/utils/identity/avatar';
   import { getJurisdictionBadgeInfo, type JurisdictionBadgeInfo } from '$lib/utils/identity/jurisdictionBadge';
   import { compareStableText } from '../../../../../../packages/ui/src/stable-compare';

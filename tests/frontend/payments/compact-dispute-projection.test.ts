@@ -6,15 +6,15 @@ import { createEmptyAccountJClaimAccumulator } from '../../../core/account/j-cla
 import {
   buildEntityPanelView,
   findReplicaForEntityTab,
-} from '../../../frontend/src/lib/components/Entity/core/entity-panel-model';
-import { buildPaymentPanelViewFromRuntimeView } from '../../../frontend/src/lib/components/Entity/payments/payment-panel-view';
-import { buildAccountSpendableByToken } from '../../../frontend/src/lib/components/Entity/assets/entity-asset-values';
-import type { ExternalToken } from '../../../frontend/src/lib/components/Entity/assets/entity-asset-catalog';
+} from '../../../frontend/bridges/wallet/entity-panel-model';
+import { buildPaymentPanelViewFromRuntimeView } from '../../../frontend/bridges/wallet/payment-panel-view';
+import { buildAccountSpendableByToken } from '../../../frontend/packages/ui/src/entity/assets/entity-asset-values';
+import type { ExternalToken } from '../../../frontend/packages/ui/src/entity/assets/entity-asset-catalog';
 import {
   buildExternalWalletStateSyncSignature,
   buildOnchainReserves,
   readExternalWalletState,
-} from '../../../frontend/src/lib/components/Entity/external-wallet-reader';
+} from '../../../frontend/bridges/wallet/external-wallet-reader';
 
 type ActiveEntity = NonNullable<RuntimeAdapterViewFrame['activeEntity']>;
 type AccountDoc = ActiveEntity['accounts']['items'][number];

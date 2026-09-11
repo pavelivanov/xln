@@ -1,7 +1,12 @@
 import { afterEach, describe, expect, test } from 'bun:test';
 import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { join, resolve } from 'node:path';
+import {
+  readLifecycleReleaseInputs,
+  requireLifecycleReleaseDirectories,
+  verifyLifecycleReleaseInputs,
+} from '../../../../frontend/scripts/release/lifecycle-release-inputs';
 
 import { SURFACE_IDS } from '../../../../frontend/config/surfaces';
 import { assembleCandidateRelease } from '../../../../frontend/scripts/release/candidate-release';
@@ -25,9 +30,12 @@ const createRelease = async (walletMarker: string) => {
       join(artifact, 'index.html'),
       `<!doctype html><body>${surface === 'wallet' ? walletMarker : surface}<script src="/${asset}"></script></body>`,
     );
-    await writeFile(join(artifact, 'manifest.json'), `${JSON.stringify({
-      'index.html': { file: asset, isEntry: true },
-    })}\n`);
+    await writeFile(
+      join(artifact, 'manifest.json'),
+      `${JSON.stringify({
+        'index.html': { file: asset, isEntry: true },
+      })}\n`,
+    );
     await writeFile(join(artifact, asset), `export default ${JSON.stringify(surface)};\n`);
   }
   return assembleCandidateRelease(frontendRoot, []);
@@ -71,7 +79,77 @@ describe('isolated PWA candidate plan', () => {
   test('rejects candidate corruption before generating a service worker', async () => {
     const release = await createRelease('corrupt');
     await writeFile(join(release.releaseDirectory, 'apps/wallet/index.html'), 'corrupt\n');
-    await expect(createPwaCandidatePlan(release.releaseDirectory))
-      .rejects.toThrow('CANDIDATE_RELEASE_FILE_MISMATCH:apps/wallet/index.html');
+    await expect(createPwaCandidatePlan(release.releaseDirectory)).rejects.toThrow(
+      'CANDIDATE_RELEASE_FILE_MISMATCH:apps/wallet/index.html',
+    );
   });
+});
+
+describe('explicit immutable lifecycle inputs', () => {
+  test('requires two distinct verified releases and detects changed bytes after acceptance', async () => {
+    expect(() => requireLifecycleReleaseDirectories({})).toThrow('LIFECYCLE_RELEASE_DIRECTORIES_REQUIRED');
+    const install = await createRelease('install');
+    const update = await createRelease('update');
+    await expect(readLifecycleReleaseInputs([install.releaseDirectory, install.releaseDirectory])).rejects.toThrow(
+      'LIFECYCLE_RELEASE_IDENTITIES_EQUAL',
+    );
+    await expect(
+      readLifecycleReleaseInputs([install.releaseDirectory, join(update.releaseDirectory, 'missing')]),
+    ).rejects.toThrow();
+    const inputs = await readLifecycleReleaseInputs([install.releaseDirectory, update.releaseDirectory]);
+    await verifyLifecycleReleaseInputs(inputs);
+    await writeFile(join(update.releaseDirectory, 'apps/wallet/index.html'), 'mutated');
+    await expect(verifyLifecycleReleaseInputs(inputs)).rejects.toThrow('CANDIDATE_RELEASE_FILE_MISMATCH');
+    await expect(readLifecycleReleaseInputs([install.releaseDirectory, update.releaseDirectory])).rejects.toThrow(
+      'CANDIDATE_RELEASE_FILE_MISMATCH',
+    );
+  });
+
+  for (const kind of ['pwa', 'deployment'] as const) {
+    test(`${kind} serves explicit releases with every mutable build directory removed`, async () => {
+      const install = await createRelease('install');
+      const update = await createRelease('update');
+      for (const root of roots)
+        for (const surface of SURFACE_IDS) await rm(join(root, '.artifacts', surface), { recursive: true });
+      const inputs = await readLifecycleReleaseInputs([install.releaseDirectory, update.releaseDirectory]);
+      const reservation = Bun.serve({ hostname: '127.0.0.1', port: 0, fetch: () => new Response('reserved') });
+      const port = reservation.port;
+      await reservation.stop(true);
+      const child = Bun.spawn(['bun', resolve(`frontend/scripts/${kind}/${kind}-candidate-smoke-server.ts`)], {
+        cwd: roots[0],
+        stdout: 'pipe',
+        stderr: 'pipe',
+        env: {
+          ...process.env,
+          XLN_LIFECYCLE_INSTALL_DIRECTORY: install.releaseDirectory,
+          XLN_LIFECYCLE_UPDATE_DIRECTORY: update.releaseDirectory,
+          [`XLN_${kind.toUpperCase()}_SMOKE_PORT`]: String(port),
+        },
+      });
+      try {
+        let response: Response | null = null;
+        const deadline = Date.now() + 4000;
+        while (Date.now() < deadline && child.exitCode === null) {
+          try {
+            response = await fetch(`http://127.0.0.1:${port}/__xln-${kind}/state`);
+          } catch (error: unknown) {
+            if (!(error instanceof Error) || !('code' in error) || error.code !== 'ConnectionRefused') throw error;
+          }
+          if (response) break;
+          await Bun.sleep(20);
+        }
+        if (!response) throw new Error(`LIFECYCLE_SERVER_NOT_READY:${kind}:${child.exitCode}`);
+        expect(response.status).toBe(200);
+        const state = await response.text();
+        expect(state).toContain(install.releaseId);
+        expect(state).toContain(update.releaseId);
+      } finally {
+        child.kill('SIGTERM');
+        await child.exited;
+        const errors = await new Response(child.stderr).text();
+        expect(errors).toBe('');
+      }
+      await verifyLifecycleReleaseInputs(inputs);
+    });
+  }
 });

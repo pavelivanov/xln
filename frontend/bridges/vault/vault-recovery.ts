@@ -23,7 +23,7 @@ import {
   deriveRuntimeSignerPrivateKey,
   normalizeRuntimeId,
 } from '@xln/core/storage/recovery/bundle/seed-identity';
-import { isUnknownRecord as isRecord, parseJsonUnknown } from '../../src/lib/utils/boundary';
+import { isUnknownRecord as isRecord, parseJsonUnknown } from '../../packages/runtime-client/src/boundary';
 export { isRecord };
 import { getAddress } from 'ethers';
 import {
@@ -31,8 +31,8 @@ import {
   type ProtectedVaultSecrets,
   type VaultUnlockDurationMs,
 } from '../../packages/browser/src/vault/vault-protection';
-import { unwrapLiveRuntimeEnv } from '../../src/lib/utils/runtime/liveRuntimeEnv';
-import { installRuntimeCommandJournalKeys } from '../../src/lib/stores/commands/runtimeCommandJournalKeyring';
+import { unwrapLiveRuntimeEnv } from '../../packages/browser/src/runtime/live-runtime-env';
+import { installRuntimeCommandJournalKeys } from '../../packages/browser/src/commands/runtime-command-journal-keyring';
 
 /**
  * Vault-shaped wrappers over the canonical recovery implementation in

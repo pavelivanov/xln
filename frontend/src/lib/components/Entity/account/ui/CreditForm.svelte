@@ -8,7 +8,7 @@
   import BigIntInput from '../../../Common/BigIntInput.svelte';
   import EntitySelect from '../../workspace/shell/EntitySelect.svelte';
   import { requireTokenDecimals } from '../../../../../../packages/runtime-client/src/token-metadata';
-  import { optionalBoolean, optionalString, readJsonUnknown, rejectExtraKeys, requireUnknownRecord } from '$lib/utils/boundary';
+  import { optionalBoolean, optionalString, readJsonUnknown, rejectExtraKeys, requireUnknownRecord } from '../../../../../../packages/runtime-client/src/boundary';
 
   export let entityId: string;
   export let actionRuntimeEnv: RuntimeReplica | null = null;

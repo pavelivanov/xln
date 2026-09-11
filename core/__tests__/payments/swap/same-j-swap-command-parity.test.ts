@@ -6,7 +6,7 @@ import {
   planSwapCommand,
   type SwapCommandPlanInput,
 } from '../../../runtime/swap-cmd/swap-command-plan';
-import { planSameJSwapCommand } from '../../../../frontend/src/lib/components/Entity/swap/commands/same-j-swap-command';
+import { planSameJSwapCommand } from '../../../../frontend/bridges/wallet/same-j-swap-command';
 import { entity, makeAccount } from '../../helpers/cross-j';
 
 const sourceEntityId = entity('11');

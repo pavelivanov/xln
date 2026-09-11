@@ -12,7 +12,7 @@ test('runtime projection cannot cross a runtime switch boundary', () => {
 
 test('entity workspace shell consumes a projected workspace view instead of traversing replicas inline', () => {
   const source = readFileSync('frontend/src/lib/components/Entity/workspace/EntityWorkspace.svelte', 'utf8');
-  expect(source).toContain("from '$lib/stores/runtimeViewStore'");
+  expect(source).toContain("from '../../../../../bridges/runtime/runtime-view-store'");
   expect(source).toContain('runtimeQueryClient.readViewFrame(runtimeViewQueryAtHeight({');
   expect(source).toContain('workspaceProjectionFrame = frame');
   expect(source).toContain("const entityId = handle.mode === 'remote'");
@@ -148,7 +148,7 @@ test('user mode remote workspace mounts from RuntimeView instead of RuntimeRepli
   expect(userMode).toContain('runtimeView,');
   expect(userMode).toContain('runtimeViewActiveEntityId,');
   expect(userMode).toContain('setRuntimeViewActiveEntityId,');
-  expect(userMode).toContain("from '$lib/stores/runtimeViewStore'");
+  expect(userMode).toContain("from '../../../bridges/runtime/runtime-view-store'");
   expect(userMode).toContain('setRuntimeViewActiveEntityId');
   expect(userMode).toContain("import { runtimeControllerHandle } from '../../../bridges/runtime/runtime-controller-store'");
   expect(userMode).toContain('$runtimeView.frame');

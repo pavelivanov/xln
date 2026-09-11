@@ -4,7 +4,7 @@
   import EntityIdentity from '$lib/components/shared/EntityIdentity.svelte';
   import { errorLog } from '../../../packages/browser/src/logging/error-log-store';
   import { runtimeAdapterHeight, runtimeControllerHandle } from '../../../bridges/runtime/runtime-controller-store';
-  import { runtimeQueryClient } from '$lib/stores/runtimeQueryClient';
+  import { runtimeQueryClient } from '../../../bridges/runtime/runtime-query-client';
   import { ensureProjectionRuntimeConnected } from '$lib/utils/runtime/runtimeConnection';
 
   type AddressEntity = {

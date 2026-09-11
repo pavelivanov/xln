@@ -2,8 +2,8 @@ import type { XLNModule } from '@xln/core/api/public/runtime-module';
 import { isXLNModuleLoaded } from '@xln/core/api/public/runtime-module-guard';
 import { createBrowserRuntimeModuleLoader } from '../../packages/browser/src/runtime/session/runtime-module-loader';
 import { createObservableStore } from '../../packages/runtime-client/src/observable-store';
-import { registerDebugSurface } from '../../src/lib/utils/runtime/debugSurface';
-import '../../src/lib/utils/runtime/wireDebug';
+import { registerDebugSurface } from '../../packages/browser/src/runtime/debug-surface';
+import './wire-debug';
 
 let XLN: XLNModule | null = null;
 

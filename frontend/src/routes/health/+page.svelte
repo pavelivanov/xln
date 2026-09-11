@@ -7,7 +7,7 @@
   import EntityIdentity from '$lib/components/shared/EntityIdentity.svelte';
   import { probeRpcHealth } from '$lib/health/rpcHealth';
   import { errorLog } from '../../../packages/browser/src/logging/error-log-store';
-  import { runtimeQueryClient } from '$lib/stores/runtimeQueryClient';
+  import { runtimeQueryClient } from '../../../bridges/runtime/runtime-query-client';
   import { runtimeControllerHandle } from '../../../bridges/runtime/runtime-controller-store';
   import { ensureProjectionRuntimeConnected } from '$lib/utils/runtime/runtimeConnection';
   import {

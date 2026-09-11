@@ -4,7 +4,7 @@
   import { runtimes, runtimeOperations } from '../../../../bridges/runtime/runtime-store';
   import { activeRuntime, activeSigner } from '../../../../bridges/vault/vault-metadata-store';
   import { errorLog } from '../../../../packages/browser/src/logging/error-log-store';
-  import { runtimeView } from '$lib/stores/runtimeViewStore';
+  import { runtimeView } from '../../../../bridges/runtime/runtime-view-store';
   import { buildHierarchicalNavigationView } from './runtime-navigation-view';
 
   $: navigationView = buildHierarchicalNavigationView($runtimes, $appState.navigation, $activeRuntime, $runtimeView);

@@ -4,7 +4,7 @@ import type { EntityReadView } from '$lib/components/Entity/core/entity-panel-ty
   import type { RuntimeReplica, EnvSnapshot, Profile as GossipProfile, RuntimeInput } from '@xln/core/api/public/runtime-module';
   import type { ComponentType } from 'svelte';
   import { ArrowDownLeft, ArrowUpRight, Activity, Banknote, Landmark, PlusCircle, Repeat, Settings as SettingsIcon, SlidersHorizontal } from 'lucide-svelte';
-  import type { Tab } from '$lib/types/ui';
+  import type { Tab } from '../../../../../packages/ui/src/workspace/ui-types';
   import AccountAppearancePanel from '../account/ui/AccountAppearancePanel.svelte';
   import AccountConfigurePanel from '../account/ui/AccountConfigurePanel.svelte';
   import AccountDropdown from '../account/ui/AccountDropdown.svelte';
@@ -22,7 +22,7 @@ import type { EntityReadView } from '$lib/components/Entity/core/entity-panel-ty
   import ReceivePanel from '../payments/ReceivePanel.svelte';
   import SettlementPanel from '../payments/SettlementPanel.svelte';
   import SwapPanel from '../swap/SwapPanel.svelte';
-  import type { SwapPanelRuntimeView } from '../swap/swap-panel-helpers';
+  import type { SwapPanelRuntimeView } from '../../../../../bridges/wallet/swap-panel-helpers';
   import type { DisputedAccountView } from '../../../../../packages/ui/src/account/account-dispute-view';
   import type { EntityActivityAccountOption, EntityActivityRow } from '../activity/entity-activity';
   import type { AccountWorkspaceTab, ConfigureWorkspaceTab } from '../../../../../packages/runtime-client/src/entity/entity-workspace-navigation';
@@ -33,7 +33,7 @@ import type { EntityReadView } from '$lib/components/Entity/core/entity-panel-ty
   import {
     emptyPaymentPanelView,
     type PaymentPanelView,
-  } from '../payments/payment-panel-view';
+  } from '../../../../../bridges/wallet/payment-panel-view';
   import type { MoveEndpoint } from '../../../../../packages/ui/src/entity/move/move-routes';
 
   type IconTabConfig<T extends string> = {

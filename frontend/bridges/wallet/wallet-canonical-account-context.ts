@@ -1,10 +1,10 @@
 import { readStoreValue } from '../../packages/runtime-client/src/observable-store';
 import type { RuntimeAdapter, RuntimeAdapterViewFrame } from '@xln/core/api/public/runtime-module';
 import { getXLN, xlnEnvironment, resolveConfiguredApiBase } from '../runtime/xln-store';
-import { buildEntityPanelView } from '../../src/lib/components/Entity/core/entity-panel-model';
-import { buildPaymentPanelView, buildPaymentPanelViewFromRuntimeView } from '../../src/lib/components/Entity/payments/payment-panel-view';
-import { buildSwapPanelRuntimeView } from '../../src/lib/components/Entity/swap/swap-panel-helpers';
-import { unwrapLiveRuntimeEnv } from '../../src/lib/utils/runtime/liveRuntimeEnv';
+import { buildEntityPanelView } from './entity-panel-model';
+import { buildPaymentPanelView, buildPaymentPanelViewFromRuntimeView } from './payment-panel-view';
+import { buildSwapPanelRuntimeView } from './swap-panel-helpers';
+import { unwrapLiveRuntimeEnv } from '../../packages/browser/src/runtime/live-runtime-env';
 
 export async function readCanonicalAccountContext(adapter: RuntimeAdapter, entityId: string, frame: RuntimeAdapterViewFrame) {
   const xln = await getXLN();

@@ -2,7 +2,7 @@ import { amountToUsd } from '../../../../../packages/runtime-client/src/asset-pr
 import { requireTokenDecimals } from '../../../../../packages/runtime-client/src/token-metadata';
 import type { SwapBookEntry } from '@xln/core/api/public/runtime-module';
 import { toBigIntSafe } from './../swap-formatting';
-import { requireExactKeys as requireExactKeysWithOptional, requireUnknownRecord as requireRecord } from '$lib/utils/boundary';
+import { requireExactKeys as requireExactKeysWithOptional, requireUnknownRecord as requireRecord } from '../../../../../packages/runtime-client/src/boundary';
 
 export type ClosedOrderStatus = 'filled' | 'partial' | 'canceled' | 'closed';
 

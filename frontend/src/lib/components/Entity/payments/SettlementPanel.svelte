@@ -3,10 +3,10 @@ import type { AccountReadView, EntityReadView } from '$lib/components/Entity/cor
 
   import { getXLN, submitEntityInputs, xlnFunctions } from '../../../../../bridges/runtime/xln-store';
   import { requireSignerIdForEntity } from '../../../../../packages/runtime-client/src/entity/entity-replica';
-  import type { EntityTx, EntityState } from '$lib/types/ui';
+  import type { EntityTx, EntityState } from '../../../../../packages/ui/src/workspace/ui-types';
   import type { RuntimeReplica, EnvSnapshot, Profile as GossipProfile } from '@xln/core/api/public/runtime-module';
   import { errorLog } from '../../../../../packages/browser/src/logging/error-log-store';
-  import { toasts } from '../../../stores/ui/toastStore';
+  import { toasts } from '../../../../../packages/browser/src/workspace/toast-store';
   import { entityAvatar as resolveEntityAvatar } from '$lib/utils/identity/avatar';
   import EntityInput from '../../shared/EntityInput.svelte';
   import TokenSelect from '../../shared/TokenSelect.svelte';

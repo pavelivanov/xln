@@ -12,7 +12,7 @@
   import { onDestroy } from 'svelte';
   import { panelBridge } from '../../../../packages/browser/src/workspace/panel-bridge';
   import ahbScenarioCode from '../../../../../core/scenarios/consensus/ahb.ts?raw';
-  import { shortAddress } from '$lib/utils/format';
+  import { shortAddress } from '../../../../packages/ui/src/format';
   import { getXLN, submitRuntimeInput } from '../../../../bridges/runtime/xln-store';
   import type { EnvSnapshot, RuntimeInput, RuntimeReplica, XLNModule } from '@xln/core/api/public/runtime-module';
   import type { EntityReplica } from '@xln/core/entity/types';

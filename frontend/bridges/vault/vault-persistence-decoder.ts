@@ -1,6 +1,6 @@
 import { getAddress } from 'ethers';
 import { decodeProtectedVaultSecrets } from '../../packages/browser/src/vault/vault-protection';
-import { hasOnlyAllowedKeys, requireUnknownRecord as record } from '../../src/lib/utils/boundary';
+import { hasOnlyAllowedKeys, requireUnknownRecord as record } from '../../packages/runtime-client/src/boundary';
 import type {
   RecoveryTowerConfig,
   Runtime,

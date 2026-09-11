@@ -2,7 +2,7 @@
 import type { EntityReadView } from '$lib/components/Entity/core/entity-panel-types';
 
 import { tick } from 'svelte';
-import type { Tab } from '$lib/types/ui';
+import type { Tab } from '../../../../../packages/ui/src/workspace/ui-types';
 import { writable } from 'svelte/store';
 import type { BookState, Profile, RuntimeReplica, SwapBookEntry } from '@xln/core/api/public/runtime-module';
 import {
@@ -14,15 +14,15 @@ import {
 } from '@xln/core/api/public/runtime-module';
 import type { AccountRoleEvidence } from '@xln/core/account/config/dispute-config';
 import { submitActiveCrossJurisdictionIntent, submitEntityInputs, submitRuntimeInput, xlnFunctions } from '../../../../../bridges/runtime/xln-store';
-import { readRuntimeEntityProjectionFrame, readRuntimeSwapHistory } from '../../../stores/runtimeViewStore';
-import { toasts } from '../../../stores/ui/toastStore';
+import { readRuntimeEntityProjectionFrame, readRuntimeSwapHistory } from '../../../../../bridges/runtime/runtime-view-store';
+import { toasts } from '../../../../../packages/browser/src/workspace/toast-store';
 import { errorLog } from '../../../../../packages/browser/src/logging/error-log-store';
 import { requireSignerIdForEntity } from '../../../../../packages/runtime-client/src/entity/entity-replica';
-import { isMapLike, unwrapLiveRuntimeEnv } from '$lib/utils/runtime/liveRuntimeEnv';
+import { isMapLike, unwrapLiveRuntimeEnv } from '../../../../../packages/browser/src/runtime/live-runtime-env';
 import { prewarmCounterpartyProfiles } from '../../../../../packages/runtime-client/src/runtime/p2p-prefetch';
 import { requireTokenDecimals } from '../../../../../packages/runtime-client/src/token-metadata';
-import { buildEntityPanelView } from '../core/entity-panel-model';
-import { formatEntityId } from '$lib/utils/format';
+import { buildEntityPanelView } from '../../../../../bridges/wallet/entity-panel-model';
+import { formatEntityId } from '../../../../../packages/ui/src/format';
 import {
   buildSwapPanelRuntimeView,
   buildCrossSwapSetupSteps,
@@ -37,7 +37,7 @@ import {
   tokenNetworkLabel,
   type CrossSwapSetupStep,
   type SwapPanelRuntimeView,
-} from './swap-panel-helpers';
+} from '../../../../../bridges/wallet/swap-panel-helpers';
 import { compareStableText, normalizeDecimalInput, normalizeDisplayPriceForInput, parseDecimalAmountToBigInt, toBigIntSafe } from '../swap-formatting';
 import {
   AGGREGATED_ORDERBOOK_DEPTH,
@@ -103,7 +103,7 @@ import {
   type SwapRouteOption,
   type PairOption,
 } from '../swap-panel-core';
-import { planSameJSwapCommand, resolveSameJSwapPartyRoles } from './commands/same-j-swap-command';
+import { planSameJSwapCommand, resolveSameJSwapPartyRoles } from '../../../../../bridges/wallet/same-j-swap-command';
 export let replica: EntityReadView | null;
 export let tab: Tab;
 export let env: RuntimeReplica | null = null;

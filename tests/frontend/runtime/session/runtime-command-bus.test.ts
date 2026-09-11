@@ -10,14 +10,14 @@ import {
   runtimeCommandRetryOptions,
   submitRuntimeCommand,
   type CommandReceipt,
-} from '../../../../frontend/src/lib/stores/commands/runtimeCommandBus';
+} from '../../../../frontend/bridges/runtime/runtime-command-bus';
 import { RuntimeAdapterError } from '../../../../core/api/runtime-adapter/errors';
 import { listUnresolvedRemoteRuntimeCommandIntents } from '../../../../frontend/packages/browser/src/commands/runtime-command-intent';
 import {
-  findCommittedEmbeddedRuntimeInputHeight,
-  findPersistedEmbeddedRuntimeInputHeight,
+  findCommittedRuntimeInputHeight,
+  findPersistedRuntimeInputHeight,
   runtimeFrameContainsSubmittedInput,
-} from '../../../../frontend/src/lib/stores/commands/embeddedRuntimeCommandCompletion';
+} from '../../../../core/runtime/mempool/input-completion';
 
 const SIGNED_SERVER_FINGERPRINT = '0x01fe56d4322ab531393851ee54e1f751c8358fc2fc3730a432963661e33f50d3';
 
@@ -39,7 +39,7 @@ const readStore = <T>(store: { subscribe: (run: (value: T) => void) => () => voi
 };
 
 test('runtime command bus records pending accepted observed committed error receipts deterministically', () => {
-  const source = readFileSync('frontend/src/lib/stores/commands/runtimeCommandBus.ts', 'utf8');
+  const source = readFileSync('frontend/bridges/runtime/runtime-command-bus.ts', 'utf8');
 
   expect(source).toContain("export type RuntimeCommandStatus = 'pending' | 'accepted' | 'observed' | 'committed' | 'error'");
   expect(source).toContain('receiptId: `runtime-command-${++receiptSequence}`');
@@ -469,7 +469,7 @@ test('remote command journal retains exact payload and status until observed', a
 });
 
 test('server results cannot synthesize command receipts or durable receipt URLs', () => {
-  const source = readFileSync('frontend/src/lib/stores/commands/runtimeCommandBus.ts', 'utf8');
+  const source = readFileSync('frontend/bridges/runtime/runtime-command-bus.ts', 'utf8');
   expect(source).not.toContain('recordRuntimeIngressReceipt');
   expect(source).not.toContain('statusUrl');
   expect(source).not.toContain('upstreamReceiptId');
@@ -556,8 +556,8 @@ test('embedded command completion follows the submitted input, not unrelated con
   const history = [{ height: 12, runtimeInput: committedWithBackground }] as never;
 
   expect(runtimeFrameContainsSubmittedInput(committedWithBackground, submitted)).toBe(true);
-  expect(findCommittedEmbeddedRuntimeInputHeight(history, submitted, 11)).toBe(12);
-  expect(findCommittedEmbeddedRuntimeInputHeight(history, submitted, 12)).toBeNull();
+  expect(findCommittedRuntimeInputHeight(history, submitted, 11)).toBe(12);
+  expect(findCommittedRuntimeInputHeight(history, submitted, 12)).toBeNull();
 });
 
 test('embedded command completion reads an evicted committed frame from durable storage', async () => {
@@ -582,8 +582,8 @@ test('embedded command completion reads an evicted committed frame from durable 
     [20, { height: 20, runtimeInput: unrelated }],
   ]);
 
-  expect(findCommittedEmbeddedRuntimeInputHeight([frames.get(20)!] as never, submitted, 15)).toBeNull();
-  expect(await findPersistedEmbeddedRuntimeInputHeight(
+  expect(findCommittedRuntimeInputHeight([frames.get(20)!] as never, submitted, 15)).toBeNull();
+  expect(await findPersistedRuntimeInputHeight(
     async (height) => frames.get(height) ?? null,
     submitted,
     15,
@@ -716,14 +716,12 @@ test('credit and collateral configure forms submit RuntimeInput through shared c
 
 test('payment panel submits RuntimeInput through shared command path', () => {
   const paymentSource = readFileSync('frontend/src/lib/components/Entity/payments/PaymentPanel.svelte', 'utf8');
-  const paymentCommandSource = readFileSync('frontend/src/lib/components/Entity/payments/runtime/payment-command.ts', 'utf8');
-  const sharedPaymentCommandSource = readFileSync('frontend/packages/runtime-client/src/payment-command.ts', 'utf8');
+  const sharedPaymentCommandSource = readFileSync('frontend/packages/runtime-client/src/payments/payment-command.ts', 'utf8');
   const accountWorkspaceSource = readFileSync('frontend/src/lib/components/Entity/workspace/AccountWorkspaceView.svelte', 'utf8');
 
   expect(paymentSource).toContain('export let submitRuntimeInput');
   expect(paymentSource).toContain('await submitRuntimeInput(buildPaymentRuntimeInput({');
-  expect(paymentSource).toContain("import { buildPaymentRuntimeInput } from './runtime/payment-command'");
-  expect(paymentCommandSource).toContain("export { buildPaymentRuntimeInput } from '../../../../../../packages/runtime-client/src/payment-command'");
+  expect(paymentSource).toContain("import { buildPaymentRuntimeInput } from '../../../../../packages/runtime-client/src/payments/payment-command'");
   expect(sharedPaymentCommandSource).toContain('): RuntimePaymentInput => {');
   expect(sharedPaymentCommandSource).toContain('runtimeTxs: [],');
   expect(sharedPaymentCommandSource).toContain('entityInputs: [{');

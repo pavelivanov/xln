@@ -3,7 +3,7 @@ import { buildOpenHubAccountInput } from '../lib/actions/open-account';
 import { buildPaymentInput, ensureCliPaymentProfiles } from '../lib/actions/pay';
 import { buildMoveInput } from '../lib/actions/move';
 import { buildReceiveInvoice } from '../lib/actions/pay';
-import { normalizeNativeDeepLinkPath } from '../../frontend/src/lib/native/deeplink';
+import { normalizeNativeDeepLinkPath } from '../../frontend/packages/browser/src/native/deeplink';
 import { parseXlnInvoice } from '../../frontend/src/lib/utils/xlnInvoice';
 import { resolveCliHubPartyRoles } from '../lib/account-role-evidence';
 

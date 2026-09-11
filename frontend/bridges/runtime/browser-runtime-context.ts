@@ -1,5 +1,5 @@
 import type { RuntimeAdapter, RuntimeReplica } from '../../../core/api/public/runtime-module';
-import { createRuntimeViewEnv, unwrapLiveRuntimeEnv } from '../../src/lib/utils/runtime/liveRuntimeEnv';
+import { createRuntimeViewEnv, unwrapLiveRuntimeEnv } from '../../packages/browser/src/runtime/live-runtime-env';
 import { snapshotRuntimeDiagnosticsIncidents, type RuntimeDiagnosticsIncident } from '../../packages/runtime-client/src/runtime/runtime-diagnostics-panel-view';
 
 // Local inspection is a capability of the already-owned browser session. A

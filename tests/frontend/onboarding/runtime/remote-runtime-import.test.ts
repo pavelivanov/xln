@@ -26,7 +26,7 @@ import {
   buildRuntimeWsRecoveryPeerSources,
   selectPrimaryRemoteEntitySummary,
   selectPrimaryRemoteHubSummary,
-} from '../../../../frontend/src/lib/utils/onboarding/remoteRuntimeValidation';
+} from '../../../../frontend/bridges/runtime/remote-runtime-validation';
 
 const token = `xlnra1.full.${Date.now() + 60 * 60 * 1000}.aud.kid.jti.sig`;
 

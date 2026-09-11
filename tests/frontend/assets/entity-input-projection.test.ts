@@ -52,7 +52,7 @@ test('entity naming helpers are projection-only and do not perform hidden runtim
 });
 
 test('entity factory auto-create uses injected runtime env and fails loud', () => {
-  const entityFactory = readFileSync('frontend/src/lib/utils/identity/entityFactory.ts', 'utf8');
+  const entityFactory = readFileSync('frontend/bridges/wallet/entity-factory.ts', 'utf8');
   const vaultStore = readFileSync('frontend/bridges/vault/vault-store.ts', 'utf8');
 
   expect(entityFactory).toContain('export async function autoCreateEntityForSigner');
@@ -75,7 +75,7 @@ test('entity factory auto-create uses injected runtime env and fails loud', () =
 });
 
 test('entity factory rechecks bootstrap ownership and dispatches only to its injected runtime', () => {
-  const source = readFileSync('frontend/src/lib/utils/identity/entityFactory.ts', 'utf8');
+  const source = readFileSync('frontend/bridges/wallet/entity-factory.ts', 'utf8');
   const userMode = readFileSync('frontend/src/lib/view/UserModePanel.svelte', 'utf8');
   const createStart = source.indexOf('export async function createEphemeralEntity(');
   const createEnd = source.indexOf('\nfunction findReplicaBySigner(', createStart);

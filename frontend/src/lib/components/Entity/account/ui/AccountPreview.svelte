@@ -2,7 +2,7 @@
 import type { AccountReadView } from '$lib/components/Entity/core/entity-panel-types';
 
   import type { Profile as GossipProfile } from '@xln/core/api/public/runtime-module';
-  import type { DerivedDelta } from '$lib/types/ui';
+  import type { DerivedDelta } from '../../../../../../packages/ui/src/workspace/ui-types';
   import { createEventDispatcher, onDestroy, onMount } from 'svelte';
   import { xlnFunctions } from '../../../../../../bridges/runtime/xln-store';
   import { settings } from '../../../../../../packages/browser/src/settings-store';
@@ -13,10 +13,10 @@ import type { AccountReadView } from '$lib/components/Entity/core/entity-panel-t
   import { buildTokenVisualScale, sumVisualScales } from '../../../../../../packages/ui/src/account/delta-visual';
   import { buildAccountTokenDetails, isAccountLeftPerspective } from '../../../../../../packages/ui/src/account/account-token-details';
   import { amountToUsdMicros } from '../../../../../../packages/runtime-client/src/asset-pricing';
-  import { formatEntityId } from '$lib/utils/format';
+  import { formatEntityId } from '../../../../../../packages/ui/src/format';
   import { getAccountUiStatus, getAccountUiStatusDescription } from '../../../../../../packages/ui/src/account/account-status';
   import { faucetPendingKey } from '../../../../../../packages/browser/src/wallet/account-faucet';
-  import { formatEntityNetworkLabel, normalizeJurisdictionDisplayName } from '../../swap/swap-panel-helpers';
+  import { formatEntityNetworkLabel, normalizeJurisdictionDisplayName } from '../../../../../../bridges/wallet/swap-panel-helpers';
 
   export let account: AccountReadView;
   export let counterpartyId: string;

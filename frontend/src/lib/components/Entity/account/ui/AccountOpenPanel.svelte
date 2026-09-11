@@ -2,7 +2,7 @@
 import type { EntityReadView } from '$lib/components/Entity/core/entity-panel-types';
 
   import type { RuntimeReplica, Profile as GossipProfile, RuntimeInput } from '@xln/core/api/public/runtime-module';
-  import type { Tab } from '$lib/types/ui';
+  import type { Tab } from '../../../../../../packages/ui/src/workspace/ui-types';
   import type { DisputedAccountView } from '../../../../../../packages/ui/src/account/account-dispute-view';
   import EntityInput from '../../../shared/EntityInput.svelte';
   import HubDiscoveryPanel from '../../onboarding/HubDiscoveryPanel.svelte';

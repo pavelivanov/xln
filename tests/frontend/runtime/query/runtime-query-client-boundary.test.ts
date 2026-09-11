@@ -196,7 +196,7 @@ describe('runtime-client query boundary', () => {
       'frontend/packages/runtime-client/src/runtime/query/runtime-query-client.ts',
       'utf8',
     );
-    const store = readFileSync('frontend/src/lib/stores/runtimeQueryClient.ts', 'utf8');
+    const store = readFileSync('frontend/bridges/runtime/runtime-query-client.ts', 'utf8');
 
     expect(boundary).not.toContain('svelte');
     expect(boundary).not.toContain('@xln/core');

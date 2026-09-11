@@ -8,7 +8,7 @@ import {
   requireExternalSnapshotBigInt,
   resolveExternalWalletSnapshotIngress,
   resolveExternalWalletFinalityDepth,
-} from '../../../frontend/src/lib/components/Entity/assets/external-wallet-snapshot';
+} from '../../../frontend/bridges/wallet/external-wallet-snapshot';
 
 const adapterFixture = (input: { head?: unknown; finalityDepth?: unknown; blockHash?: string | null }) => ({
   getCurrentBlockNumber: input.head === undefined ? undefined : async () => input.head,

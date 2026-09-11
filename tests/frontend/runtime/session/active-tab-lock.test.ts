@@ -226,7 +226,7 @@ describe('browser active-tab lock boundary', () => {
 
   test('keeps the Svelte module as a thin state adapter', () => {
     const boundary = readFileSync('frontend/packages/browser/src/active-tab-lock.ts', 'utf8');
-    const adapter = readFileSync('frontend/src/lib/utils/control/activeTabLock.ts', 'utf8');
+    const adapter = readFileSync('frontend/packages/browser/src/active-tab-lock-store.ts', 'utf8');
 
     expect(boundary).not.toContain('svelte');
     expect(adapter).toContain('createActiveTabLockController');

@@ -35,21 +35,21 @@
     normalizeTowerMode,
     resolveOfficialRecoveryTowerUrl,
     type RecoveryServiceMode,
-  } from '../../../utils/recovery/recoverySettings';
+  } from '../../../../../bridges/vault/recovery-settings';
   import {
     clearRuntimeRecoveryDiscoveryStatus,
     formatRuntimeRecoveryDiscoveryFailure,
     readRuntimeRecoveryDiscoveryStatus,
     type RuntimeRecoveryDiscoveryStatus,
-  } from '../../../utils/recovery/recoveryDiscoveryStatus';
+  } from '../../../../../packages/browser/src/recovery/recovery-discovery-status';
   import {
     emptyOnboardingRuntimeProjection,
     type OnboardingRuntimeProjection,
   } from '../../../../../packages/ui/src/onboarding/onboarding-runtime-input';
   import type { OnboardingTarget } from '../../../../../packages/ui/src/onboarding/onboarding-hub-discovery';
-  import { createOnboardingHubJoinCommands } from './onboarding-hub-join';
+  import { createOnboardingHubJoinCommands } from '../../../../../bridges/wallet/onboarding-hub-join';
   import { finishOnboardingSetup, toUsdInt } from '../../../../../packages/browser/src/onboarding/onboarding-setup';
-  import { hasAnyOnboardingCounterpartyAccount, resolveOnboardingTargets } from './onboarding-targets';
+  import { hasAnyOnboardingCounterpartyAccount, resolveOnboardingTargets } from '../../../../../bridges/wallet/onboarding-targets';
 
   export let entityId: string = '';
   export let runtimeProjection: OnboardingRuntimeProjection = emptyOnboardingRuntimeProjection();

@@ -1,14 +1,14 @@
 import { describe, expect, test } from 'bun:test';
 
-import { buildPaymentRuntimeInput } from '../../../../frontend/src/lib/components/Entity/payments/runtime/payment-command';
+import { buildPaymentRuntimeInput } from '../../../../frontend/packages/runtime-client/src/payments/payment-command';
 import {
   quotePaymentCandidateRoutes,
   quoteRequiredInboundForForward,
-} from '../../../../frontend/src/lib/components/Entity/payments/runtime/payment-route-quote';
+} from '../../../../frontend/bridges/wallet/payment-route-quote';
 import type {
   DeriveDeltaFn,
   LocalReplicaLike,
-} from '../../../../frontend/src/lib/components/Entity/payment-routing';
+} from '../../../../frontend/bridges/wallet/payment-routing';
 import type { Delta, DerivedDelta } from '../../../types/account';
 
 const derivedWithOutCapacity: DeriveDeltaFn = (delta): DerivedDelta => ({

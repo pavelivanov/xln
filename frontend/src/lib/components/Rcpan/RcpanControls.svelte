@@ -2,7 +2,7 @@
   import { Gauge, Palette, Pause, Play, RotateCcw, SlidersHorizontal } from 'lucide-svelte';
   import { settings, settingsOperations } from '../../../../packages/browser/src/settings-store';
   import { getAvailableThemes } from '../../../../packages/browser/src/themes';
-  import type { ThemeName } from '$lib/types/ui';
+  import type { ThemeName } from '../../../../packages/ui/src/workspace/ui-types';
   import type { RcpanTimelineState } from './microscope/model/microscope-timeline';
   import type { RcpanMicroscopeControls, RcpanMicroscopePalette } from './microscope/model/microscope-playground';
   import './rcpan-controls.css';

@@ -31,10 +31,10 @@
     runtimeView,
     runtimeViewActiveEntityId,
     setRuntimeViewActiveEntityId,
-  } from '$lib/stores/runtimeViewStore';
+  } from '../../../bridges/runtime/runtime-view-store';
   import { runtimes, activeRuntimeId, runtimeOperations } from '../../../bridges/runtime/runtime-store';
   import { showVaultPanel, vaultUiOperations } from '../../../bridges/vault/vault-ui-store';
-  import type { Tab } from '$lib/types/ui';
+  import type { Tab } from '../../../packages/ui/src/workspace/ui-types';
   import type { RuntimeReplica } from '@xln/core/api/public/runtime-module';
   import type { EntityReplica } from '@xln/core/entity/types';
   import type { EnvSnapshot } from '@xln/core/runtime/types';
@@ -43,9 +43,9 @@
     readOnboardingComplete,
     writeOnboardingCompleteForEntities,
   } from '../../../packages/browser/src/onboarding/onboarding-state';
-  import { createRuntimeViewEnv, unwrapLiveRuntimeEnv } from '$lib/utils/runtime/liveRuntimeEnv';
+  import { createRuntimeViewEnv, unwrapLiveRuntimeEnv } from '../../../packages/browser/src/runtime/live-runtime-env';
   import { panelBridge } from '../../../packages/browser/src/workspace/panel-bridge';
-  import { resolveActiveLocalReplica } from './local-runtime-selection';
+  import { resolveActiveLocalReplica } from '../../../packages/runtime-client/src/runtime/local-runtime-selection';
 
   import EntityWorkspace from '$lib/components/Entity/workspace/EntityWorkspace.svelte';
   import { runtimeProjectionMatchesRuntime } from '$lib/components/Entity/core/entity-workspace';
@@ -63,11 +63,11 @@
   import TimeMachine from './core/TimeMachine.svelte';
   import {
     buildOnboardingRuntimeProjection,
-  } from '$lib/components/Entity/onboarding/onboarding-runtime-projection';
+  } from '../../../bridges/wallet/onboarding-runtime-projection';
   import {
     buildFormationRuntimeProjection,
     type FormationRuntimeProjection,
-  } from '$lib/components/Entity/onboarding/formation/formation-runtime-projection';
+  } from '../../../bridges/wallet/formation-runtime-projection';
 
   type RuntimeFrame = RuntimeReplica | EnvSnapshot;
   type JurisdictionLike = { name: string };

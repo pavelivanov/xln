@@ -1,5 +1,5 @@
-import type { FormationDraft, FormationResult } from '../../../../src/lib/components/Entity/onboarding/formation/formation-commands';
-import type { FormationRuntimeProjection } from '../../../../src/lib/components/Entity/onboarding/formation/formation-runtime-projection';
+import type { FormationDraft, FormationResult } from '../../../../bridges/wallet/formation-commands';
+import type { FormationRuntimeProjection } from '../../../../bridges/wallet/formation-runtime-projection';
 
 export type WalletFormationView =
   | Readonly<{ state: 'unavailable'; message: string }>

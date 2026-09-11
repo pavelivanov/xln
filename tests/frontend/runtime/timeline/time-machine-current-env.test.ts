@@ -2,7 +2,7 @@ import { afterEach, describe, expect, test } from 'bun:test';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { runtimeControllerHandle } from '../../../../frontend/bridges/runtime/runtime-controller-store';
-import { runtimeQueryClient } from '../../../../frontend/src/lib/stores/runtimeQueryClient';
+import { runtimeQueryClient } from '../../../../frontend/bridges/runtime/runtime-query-client';
 import {
   assertRuntimeViewIsLive,
   normalizeRuntimeViewAtHeight,
@@ -17,7 +17,7 @@ import {
   runtimeViewQueryAtHeight,
   setRuntimeViewPage,
   setRuntimeViewAtHeight,
-} from '../../../../frontend/src/lib/stores/runtimeViewStore';
+} from '../../../../frontend/bridges/runtime/runtime-view-store';
 
 const repoRoot = process.cwd();
 
@@ -319,7 +319,7 @@ describe('frontend time-machine current env contract', () => {
     const source = read('frontend/src/lib/view/core/TimeMachine.svelte');
 
     expect(source).toContain("import { runtimeControllerHandle } from '../../../../bridges/runtime/runtime-controller-store';");
-    expect(source).toContain("from '$lib/stores/runtimeHistoryStore';");
+    expect(source).toContain("from '../../../../bridges/runtime/runtime-history-store';");
     expect(source).toContain('RuntimeAdapterViewFrame');
     expect(source).toContain('selectedRuntimeHistoryFrame = findRuntimeHistoryFrame($runtimeHistoryFrames');
     expect(source).toContain('remoteTargetOptions = buildRemoteTargetOptions($runtimeView.frame)');

@@ -128,7 +128,7 @@ test('recovery settings validate, save and restore services for the already-open
   await page.getByRole('link', { name: 'Settings', exact: true }).click();
   await page.getByRole('link', { name: 'Recovery', exact: true }).click();
 
-  await expect(page).toHaveURL(/#settings\/recovery$/);
+  await expect(page).toHaveURL(new RegExp(`#settings/recovery\\?entity=${fixture.recovery.entityId}$`));
   await expect(page.getByRole('heading', { name: 'Recovery services' })).toBeVisible();
   await expect(page.getByText(fixture.recovery.runtimeId, { exact: true })).toBeVisible();
   await expect(page.getByRole('textbox', { name: /^Seed phrase/ })).toHaveCount(0);

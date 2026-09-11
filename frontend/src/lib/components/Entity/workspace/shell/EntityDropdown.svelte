@@ -8,7 +8,7 @@ import type { EntityReadView } from '$lib/components/Entity/core/entity-panel-ty
   import { createEventDispatcher } from 'svelte';
   import { xlnFunctions, xlnInstance } from '../../../../../../bridges/runtime/xln-store';
   import Dropdown from '$lib/components/UI/Dropdown.svelte';
-  import type { Tab } from '$lib/types/ui';
+  import type { Tab } from '../../../../../../packages/ui/src/workspace/ui-types';
   import type { FrontendXlnFunctions } from '../../../../../../bridges/runtime/xln-store';
   import { entityAvatar, preferredAvatar } from '$lib/utils/identity/avatar';
   import { getJurisdictionBadgeInfo, type JurisdictionBadgeInfo } from '$lib/utils/identity/jurisdictionBadge';

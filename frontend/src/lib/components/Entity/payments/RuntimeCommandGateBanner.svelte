@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onDestroy, onMount } from 'svelte';
-  import { optionalString, readJsonUnknown, rejectExtraKeys, requireUnknownRecord } from '$lib/utils/boundary';
+  import { optionalString, readJsonUnknown, rejectExtraKeys, requireUnknownRecord } from '../../../../../packages/runtime-client/src/boundary';
 
   export let ready = false;
   export let reason: string | null = null;

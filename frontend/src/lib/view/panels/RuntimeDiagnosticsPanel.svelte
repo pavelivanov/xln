@@ -4,7 +4,7 @@
   import { safeStringify } from '@xln/core/protocol/serialization';
   import { runtimeControllerHandle } from '../../../../bridges/runtime/runtime-controller-store';
   import { getRuntimeControllerAdapter } from '../../../../bridges/runtime/runtime-controller-store';
-  import { runtimeQueryClient } from '$lib/stores/runtimeQueryClient';
+  import { runtimeQueryClient } from '../../../../bridges/runtime/runtime-query-client';
   import { activeRuntime } from '../../../../bridges/vault/vault-metadata-store';
   import {
     filterActiveRuntimeDiagnosticsIncidents,

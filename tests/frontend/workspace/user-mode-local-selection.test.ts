@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 import { readFileSync } from 'node:fs';
-import { resolveActiveLocalReplica } from '../../../frontend/src/lib/view/local-runtime-selection';
+import { resolveActiveLocalReplica } from '../../../frontend/packages/runtime-client/src/runtime/local-runtime-selection';
 
 type Replica = { entityId: string; signerId: string };
 

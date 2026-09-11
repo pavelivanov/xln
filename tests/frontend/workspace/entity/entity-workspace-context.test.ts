@@ -69,7 +69,7 @@ describe('Entity workspace context projection', () => {
 
   test('feeds both retained projection and React shell contracts from the shared boundary', async () => {
     const [retainedModel, reactShell, reactPage, reactSource, reactProjection] = await Promise.all([
-      Bun.file('frontend/src/lib/components/Entity/core/entity-panel-model.ts').text(),
+      Bun.file('frontend/bridges/wallet/entity-panel-model.ts').text(),
       Bun.file('frontend/packages/ui/src/entity/entity-workspace-shell.tsx').text(),
       Bun.file('frontend/apps/ops/src/entity-workspace/ops-entity-workspace.tsx').text(),
       Bun.file('frontend/apps/ops/src/entity-workspace/ops-entity-workspace-source.ts').text(),

@@ -21,7 +21,7 @@
   import { vaultOperations } from '../../../../bridges/vault/vault-store';
   import type { VaultUnlockDurationMs } from '../../../../packages/browser/src/vault/vault-protection';
   import { deriveRequestSignal, vaultUiOperations } from '../../../../bridges/vault/vault-ui-store';
-  import { writeRuntimeRecoveryDiscoveryStatus } from '$lib/utils/recovery/recoveryDiscoveryStatus';
+  import { writeRuntimeRecoveryDiscoveryStatus } from '../../../../packages/browser/src/recovery/recovery-discovery-status';
   import {
     BRAINVAULT_V1,
     BRAINVAULT_V1_SPEC_ID,

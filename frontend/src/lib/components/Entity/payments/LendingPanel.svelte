@@ -10,11 +10,11 @@ import type { EntityReadView } from '$lib/components/Entity/core/entity-panel-ty
     isRuntimeControllerConfigCurrent,
   } from '../../../../../bridges/runtime/runtime-controller-store';
   import { runtimeHttpOriginFromWsUrl } from '../../../../../packages/runtime-client/src/runtime/ws-url';
-  import { toasts } from '../../../stores/ui/toastStore';
+  import { toasts } from '../../../../../packages/browser/src/workspace/toast-store';
   import BigIntInput from '../../Common/BigIntInput.svelte';
   import EntitySelect from '../workspace/shell/EntitySelect.svelte';
   import { requireTokenDecimals } from '../../../../../packages/runtime-client/src/token-metadata';
-  import { parseJsonUnknown, requireUnknownRecord } from '$lib/utils/boundary';
+  import { parseJsonUnknown, requireUnknownRecord } from '../../../../../packages/runtime-client/src/boundary';
   import { buildLendingTokenOptions } from '../../../../../packages/ui/src/account/lending-token-options';
 
   export let entityId: string;

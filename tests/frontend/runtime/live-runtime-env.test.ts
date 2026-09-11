@@ -5,7 +5,7 @@ import {
   createRuntimeViewEnv,
   isRuntimeLikeEnv,
   unwrapLiveRuntimeEnv,
-} from '../../../frontend/src/lib/utils/runtime/liveRuntimeEnv';
+} from '../../../frontend/packages/browser/src/runtime/live-runtime-env';
 
 function makeLiveEnv() {
   const profiles = new Map();

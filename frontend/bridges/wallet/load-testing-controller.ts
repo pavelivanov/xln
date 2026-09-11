@@ -4,12 +4,12 @@ import {
   getBookSideLevels,
   getJurisdictionStackId,
 } from '@xln/core/api/public/runtime-module';
-import { hasCertifiedEntityEncryptionKey, normalizeEntityId } from '../../src/lib/components/Entity/payment-routing';
-import { buildPaymentRuntimeInput } from '../../src/lib/components/Entity/payments/runtime/payment-command';
-import { quotePaymentCandidateRoutes } from '../../src/lib/components/Entity/payments/runtime/payment-route-quote';
-import type { PaymentPanelView } from '../../src/lib/components/Entity/payments/payment-panel-view';
-import { planSameJSwapCommand, resolveSameJSwapPartyRoles } from '../../src/lib/components/Entity/swap/commands/same-j-swap-command';
-import type { SwapPanelRuntimeView } from '../../src/lib/components/Entity/swap/swap-panel-helpers';
+import { hasCertifiedEntityEncryptionKey, normalizeEntityId } from './payment-routing';
+import { buildPaymentRuntimeInput } from '../../packages/runtime-client/src/payments/payment-command';
+import { quotePaymentCandidateRoutes } from './payment-route-quote';
+import type { PaymentPanelView } from './payment-panel-view';
+import { planSameJSwapCommand, resolveSameJSwapPartyRoles } from './same-j-swap-command';
+import type { SwapPanelRuntimeView } from './swap-panel-helpers';
 import type { LoadTestAttemptResult, LoadTestLane } from '../../packages/browser/src/testing/load-test-scheduler';
 
 type LoadTestRuntimeFunctions = Pick<XLNModule,

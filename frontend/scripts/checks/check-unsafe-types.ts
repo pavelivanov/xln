@@ -14,6 +14,7 @@ const scanRoots = [
   sourceRoot,
   join(frontendRoot, 'apps'),
   join(frontendRoot, 'packages'),
+  join(frontendRoot, 'bridges'),
   join(frontendRoot, 'config'),
   join(frontendRoot, 'scripts'),
 ];

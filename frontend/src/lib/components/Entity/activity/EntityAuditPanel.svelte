@@ -1,8 +1,8 @@
 <script lang="ts">
   import type { RuntimeAdapterActivityPage, RuntimeActivityEvent } from '@xln/core/api/public/runtime-module';
   import { runtimeControllerHandle } from '../../../../../bridges/runtime/runtime-controller-store';
-  import { runtimeQueryClient } from '$lib/stores/runtimeQueryClient';
-  import { refreshRuntimeView, runtimeView } from '$lib/stores/runtimeViewStore';
+  import { runtimeQueryClient } from '../../../../../bridges/runtime/runtime-query-client';
+  import { refreshRuntimeView, runtimeView } from '../../../../../bridges/runtime/runtime-view-store';
 
   export let entityId: string;
 

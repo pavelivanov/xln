@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import { readFileSync } from 'node:fs';
 
-import { parseStorageSchemaMismatch } from '../../../frontend/src/lib/utils/recovery/storageSchemaRecovery';
+import { parseStorageSchemaMismatch } from '../../../frontend/packages/runtime-client/src/recovery/storage-schema-recovery';
 
 describe('storage schema recovery UX', () => {
   test('recognizes a wrapped durable storage schema mismatch', () => {

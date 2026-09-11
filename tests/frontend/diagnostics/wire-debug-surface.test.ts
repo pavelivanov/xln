@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { wireDebug } from '../../../frontend/src/lib/utils/runtime/wireDebug';
+import { wireDebug } from '../../../frontend/bridges/runtime/wire-debug';
 import { XLN_PROTOCOL_VERSION } from '../../../core/protocol/version';
 import { serializeWsMessage } from '../../../core/network/p2p/ws-protocol';
 import { encodeRuntimeAdapterMessage } from '../../../core/api/runtime-adapter/codec';

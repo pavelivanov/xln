@@ -5,9 +5,9 @@
 	import Topbar from '$lib/components/Topbar.svelte';
 	import Toast from '$lib/components/Toast.svelte';
 	import XlnMascot from '$lib/components/XlnMascot/XlnMascot.svelte';
-	import { initializeNativeShell } from '$lib/native/capacitor';
+	import { initializeNativeShell } from '../../packages/browser/src/native/capacitor';
 	import { installRangeSliderProgress } from '$lib/utils/rangeSliderProgress';
-	import { optionalString, readJsonUnknown, rejectExtraKeys, requireUnknownRecord } from '$lib/utils/boundary';
+	import { optionalString, readJsonUnknown, rejectExtraKeys, requireUnknownRecord } from '../../packages/runtime-client/src/boundary';
 	import '$lib/styles/apple-glass.css';
 	import '$lib/styles/checkbox-controls.css';
 	import '$lib/styles/form-controls.css';

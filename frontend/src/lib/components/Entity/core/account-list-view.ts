@@ -1,7 +1,7 @@
 import type { AccountReadView, EntityReadView } from '$lib/components/Entity/core/entity-panel-types';
 
 
-import { isMapLike } from '$lib/utils/runtime/liveRuntimeEnv';
+import { isMapLike } from '../../../../../packages/browser/src/runtime/live-runtime-env';
 
 const COLLAPSED_ACCOUNT_LIMIT = 5;
 const ACCOUNT_PAGE_SIZE = 50;

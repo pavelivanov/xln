@@ -4,9 +4,9 @@ import { vaultOperations } from '../vault/vault-store';
 import { allRuntimes, vaultStorageLoaded } from '../vault/vault-metadata-store';
 import { getXLN, registerActiveNumberedEntities, submitRuntimeInput, xlnEnvironment } from '../runtime/xln-store';
 import { runtimeControllerHandle } from '../runtime/runtime-controller-store';
-import { tabOperations } from '../../src/lib/stores/ui/tabStore';
-import { createFormationEntity } from '../../src/lib/components/Entity/onboarding/formation/formation-commands';
-import { buildFormationRuntimeProjection, buildFormationRuntimeViewProjection } from '../../src/lib/components/Entity/onboarding/formation/formation-runtime-projection';
+import { tabOperations } from '../../packages/browser/src/workspace/tab-store';
+import { createFormationEntity } from './formation-commands';
+import { buildFormationRuntimeProjection, buildFormationRuntimeViewProjection } from './formation-runtime-projection';
 import type { WalletFormationRequest, WalletFormationResult, WalletFormationView } from '../../packages/browser/src/wallet/wallet-formation';
 
 const normalize = (value: string) => value.trim().toLowerCase();
