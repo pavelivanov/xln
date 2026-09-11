@@ -155,7 +155,7 @@ test('docked directory and solvency read the selected real Runtime and reopen cl
   // The exact Entity ID above, not its editable label, selects the copy target.
   const copy = directory.getByRole('button', { name: /^Copy address for / });
   await copy.click();
-  await expect(copy).toHaveText('Copied');
+  await expect(copy).toHaveText('Copied!');
   expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(fixture.counterpartyEntityId);
   await search.fill('no-such-profile');
   await expect(page.getByTestId('runtime-gossip-empty')).toBeVisible();

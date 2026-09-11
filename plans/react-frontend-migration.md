@@ -5,6 +5,50 @@ Status: **implementation substantially complete; several positive flows, full ac
 Reassessed **2026-09-11** at `2d8050e3a747cd3605d320440cb5a9586ecbe9e9` on `main`. This replaces the previous execution queue in place. It is the single executable migration plan; prior detailed completion history remains in Git and the cited evidence directories. This assessment changed planning only. The unrelated `.gitignore` edit is not part of the work.
 
 
+## Further Ops acceptance — owner, diagnostics and public embed, 2026-09-11
+
+The owner chose to continue other Ops cases while R03 remains undecided. The next observed failure was the directory copy confirmation: localization renders **Copied!**, but the test required **Copied**. The expectation now matches the exact localized confirmation; the exact clipboard Entity ID, directory filtering/navigation, solvency values and shared-socket cleanup assertions are preserved.
+
+Mobile public-embed autoplay then exposed a UI interaction race: every frame read set `network.loading`, disabling the slider and interrupting keyboard focus before Home could select the first frame. Pause and the slider now remain enabled during autoplay reads. Manual selection still uses the existing playback cancellation and stale-selection rejection. The browser regression now requires slider focus to survive an actual frame advance before Home pauses at **h1 / 1 of 126**. No protected Runtime implementation changed.
+
+Fresh evidence is in `output/react-finish-20260911/ops-next/`. Completed coverage:
+
+| Flow | Passed cases across three viewports | Logs |
+| --- | --- | --- |
+| Local-only remote restrictions / Entity Audit; local inspectors close and reopen | 6/6 | `xln-ops-next-local-{laptop,rest}.log` |
+| Unavailable Runtime state and persisted-chain diagnostics | 6/6 | `xln-ops-next-panels-laptop.log` (two passing cases before the copy failure), `xln-ops-next-diagnostics-rest.log` |
+| Directory copy/navigation, solvency and connection disposal | 3/3 | `xln-ops-next-directory-final.log` |
+| Wrong-owner rejection, secret handling, lock and expiry revocation | 3/3 | `xln-ops-next-owner-{laptop,rest}.log` |
+| Local restore failure leaves keys revocable; successful recovery/unlock/relock | 6/6 | `xln-ops-next-local-owner-{laptop,rest}.log` |
+| Public embed full-layout persistence/reset, malformed trail and corrupt saved layout | 9/9 | `xln-ops-next-embed-{laptop,rest}.log` |
+| Autoplay focus retention and explicit keyboard pause (final regression) | 2/3; mobile and laptop pass, wide incomplete | `xln-ops-next-autoplay-focus-{mobile,laptop}.log`, 22.76 / 23.82 s |
+
+Completed final-case evidence totals **35**. Pre-fix laptop/wide autoplay passes are retained but do not substitute for final regression coverage. Wide final autoplay reached the 30-second process limit both during a concurrent build and in a standalone retry; exact detached fixture groups were stopped. The first shared-Runtime Graph3D/history attempt reached its diagnostic 20-second test limit at Fit network, with that control present in the failure snapshot; no Graph3D behavior defect is established. Both flows remain incomplete. Large viewport batches must be split within the existing 30-second process budget; interrupted batches are retained as incomplete evidence.
+
+Ops local checks pass: **874 files / zero unsafe-type findings**, tooling and Ops typechecks, **19.27 s**. The standalone Ops production build passes in **14.00 s**. The complete frontend unit suite passes **1,510/1,510**, **11,617 assertions**, **245 files**, **13.35 s**. Its first sandboxed run failed six localhost-server tests; the unchanged rerun with localhost permission passes. The interrupted concurrent build and its cleanup error remain in the logs; the subsequent process inspection found no remaining build process.
+
+Final `bun run check` reaches the **30-second process limit / exit 124** during `check:src` and `check:frontend`, after passing artifact-drift and frontend-file-size checks. It does not provide complete integration evidence; the prior missing-Cargo failure remains recorded separately below. Final diff whitespace checks pass and the stand is free. Mobile/laptop autoplay screenshots were inspected. No new commit, push or deployment was made. R03 remains unchanged and pending. Other registered Ops cases still require acceptance; this table does not close the entire matrix.
+
+## Ops matrix continuation — localized test selectors, 2026-09-11
+
+Starting from `86765de2d`, the next failures were three test selectors that no longer matched the localized UI. Database refresh now targets **Refresh** inside the database pane; performance-policy confirmation is scoped to `runtime-performance-budgets` so the XR scale output cannot collide with its status; Runtime I/O matches **Accounts** case-insensitively and asserts the Entity summary is visible before opening it. Existing data, ownership, history, persistence and no-browser-error assertions remain. Only frontend-owned tests and this plan changed; no UI or protected Runtime implementation changed.
+
+Clean completed browser runs: **21/21** across 390×844, 1366×900 and 1920×1080. Related Ops/inspector/policy units pass **108/108**, **1,874 assertions**, **19 files**, **0.39 seconds**.
+
+| Flow | Viewport coverage | Evidence log / process time |
+| --- | --- | --- |
+| Database paging/search/store switching/refresh and unchanged row count | 3/3 | `xln-ops-database-final.log`, 12.11 s |
+| Exact storage/performance policy save and reopen | 3/3 | `xln-ops-policy-final.log`, 11.40 s |
+| Locale persistence and effect/renderer/XR settings | 6/6 | `xln-ops-locale-effects.log`, 22.25 s |
+| Runtime attach/select plus expiry/retry/bulk validation | 6/6 | `xln-ops-runtime-manager-laptop.log`, 13.00 s; `xln-ops-runtime-manager-rest.log`, 17.80 s |
+| Scenario Console, Runtime I/O and historical J-Machine inspection | 3/3 | `xln-ops-io-{mobile,laptop,wide}.log`, 22.67 / 16.20 / 23.29 s |
+
+Evidence is under `output/react-finish-20260911/ops-matrix/`. Database, policy, locale and Runtime I/O screenshots were inspected at all three sizes. Initial broad batches and the stale Runtime I/O action reached the 30-second process limit; exact detached fixture groups were identified and stopped before reruns. Bounded failures and traces are retained. Interrupted runs are not counted as full-matrix acceptance.
+
+Final `bun run check`: **exit 127 / 22.92 seconds**, `cargo: command not found`. Retained Svelte check/build pass; repository integration remains incomplete. `git diff --check` passes, the stand lock is free, and no fixture process groups remain. No new commit or deployment was made.
+
+**R03 remains pending the owner's destination choice.** The explicit question offers the plan's recommended remote default plus local-create/recover entry, or a destination chooser. No answer has been received and no destination behavior has been implemented. The full Ops matrix remains open; after the completed rows and scenario-inspector case, continue the remaining `ops-workspace-local-panels.spec.ts` cases individually, then the registered panel/Graph/owner/public-embed cases. Keep the real guide/native BrainVault and protected dependency requirements visible.
+
 ## Ops independent-panel history — assertion timing repaired, 2026-09-11
 
 The owner selected the remaining Ops history failure. The retained failure was an exact-height assertion expiring at **5 seconds** while the canonical `history-frame-batch` read was still replaying WAL. Two fresh unchanged-spec runs passed with **4.548 s** and **3.695 s** reads. The repaired mobile run then demonstrated a successful **6.671 s** read, beyond the old assertion budget and within the existing remote adapter's **15-second** historical-read allowance. Only that completion assertion adopts the existing allowance; the 30-second process budget remains. No Runtime, persistence, transport or UI implementation changed.
