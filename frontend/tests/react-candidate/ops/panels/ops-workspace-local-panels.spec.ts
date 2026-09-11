@@ -87,7 +87,9 @@ test('scenario Console, Runtime I/O and J-Machine inspection follow the shared f
   await page.getByRole('button', { name: 'Open Runtime I/O panel', exact: true }).click();
   const io = page.getByTestId('workspace-runtime-io');
   await expect(io).toContainText('4 E-replicas');
-  await io.locator('details').filter({ has: page.locator('summary', { hasText: /accounts$/ }) }).first().locator('summary').click();
+  const entitySummary = io.locator('summary').filter({ hasText: /accounts$/i }).first();
+  await expect(entitySummary).toBeVisible();
+  await entitySummary.click();
   await expect(io.getByText('Accounts (Bilateral)', { exact: true }).first()).toBeVisible();
   await io.getByRole('searchbox', { name: 'Search Runtime logs' }).fill('no-matching-log');
   await expect(io).toContainText(/No logs match filters|No logs in this frame/);

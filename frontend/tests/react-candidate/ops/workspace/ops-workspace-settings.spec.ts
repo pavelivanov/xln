@@ -32,7 +32,7 @@ test('operator Settings save exact local policies and retain them across panel r
   await settings.getByTestId('perf-reducer-ms').fill('5');
   await settings.getByTestId('perf-wal-ms').fill('25');
   await settings.getByTestId('perf-budgets-save').click();
-  await expect(settings.getByRole('status')).toContainText('Performance budgets saved');
+  await expect(settings.getByTestId('runtime-performance-budgets').getByRole('status')).toContainText('Performance budgets saved');
   await screenshotEvidence(page, testInfo, 'ops-settings-performance');
   await settings.getByRole('button', { name: 'Storage', exact: true }).click();
   await expect(settings.getByTestId('storage-wal-gib')).toHaveValue('2');

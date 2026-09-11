@@ -66,6 +66,10 @@ test('public embed autoplay advances the real recording and pauses on explicit f
   await expect(timeline.getByRole('button', { name: 'Pause', exact: true })).toBeVisible({ timeout: 90_000 });
   const frame = timeline.getByLabel('Network frame', { exact: true });
   await expect.poll(async () => Number(await frame.inputValue())).toBeGreaterThan(0);
+  await frame.focus();
+  const focusedFrame = Number(await frame.inputValue());
+  await expect.poll(async () => Number(await frame.inputValue())).toBeGreaterThan(focusedFrame);
+  await expect(frame).toBeFocused();
   await frame.press('Home');
   await expect(timeline.getByRole('button', { name: 'Play', exact: true })).toBeVisible();
   await expect(timeline.locator('output')).toContainText('1/126');

@@ -42,7 +42,7 @@ test('database inspector pages, searches and switches isolated browser stores wi
   await inspector.getByRole('button', { name: 'infra', exact: true }).click();
   await inspector.getByRole('button', { name: 'level-js-db-react-inspector-infra infra', exact: true }).click();
   await expect(inspector.locator('.ops-db-entry')).toHaveCount(50);
-  await inspector.getByRole('button', { name: 'Refresh entries', exact: true }).click();
+  await inspector.locator('.ops-db-layout').getByRole('button', { name: 'Refresh', exact: true }).click();
   await expect(inspector.locator('.ops-db-entry')).toHaveCount(50);
   const count = await page.evaluate(() => new Promise<number>((resolve, reject) => {
     const open = indexedDB.open('level-js-db-react-inspector');
