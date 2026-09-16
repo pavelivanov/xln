@@ -25,7 +25,8 @@ describe('Stack Manager compiler bytecode evidence', () => {
         sources: { 'project/contracts/Account.sol': { ast: {
           nodes: [{ id: 42, mutability: 'immutable', name: 'depository' }],
         } } },
-      } }));
+        },
+      }));
       const evidence = await readCompilerBytecodeEvidence(
         new URL('./', pathToFileURL(join(directory, 'placeholder'))),
         'contracts/Account.sol',

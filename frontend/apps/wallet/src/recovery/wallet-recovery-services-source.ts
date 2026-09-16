@@ -4,9 +4,13 @@ import type {
   WalletRecoveryServicesView,
 } from '../../../../packages/browser/src/recovery/wallet-recovery-services';
 
-export const readWalletRecoveryServices = async (): Promise<WalletRecoveryServicesView> => {
+export const observeWalletRecoveryServices = async (
+  mutation: WalletRecoveryServicesMutation | null,
+  onChange: (view: WalletRecoveryServicesView) => void,
+  onError: (error: unknown) => void,
+): Promise<() => void> => {
   const canonical = await import('../../../../bridges/wallet/wallet-canonical-recovery-services');
-  return canonical.readCanonicalWalletRecoveryServices();
+  return canonical.observeCanonicalWalletRecoveryServices(mutation, onChange, onError);
 };
 
 export const previewWalletRecoveryServices = async (

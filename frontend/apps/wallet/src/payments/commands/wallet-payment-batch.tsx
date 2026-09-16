@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import type { WalletBatchAction, WalletBatchOperation } from '../../commands/wallet-batch-model';
+import { createPendingBatchActionRunner } from '../../../../../packages/browser/src/payments/pending-batch-actions';
+import type { WalletBatchOperation } from '../../commands/wallet-batch-model';
 import type { WalletPaymentProjection } from '../wallet-payment-model';
 import type { WalletPaymentSource, WalletPaymentSourceSnapshot } from '../wallet-payment-source';
 import { buildWalletBatchNotice } from './wallet-batch-notice-model';
@@ -19,12 +20,15 @@ export function WalletPaymentBatch({ projection, snapshot, source }: Readonly<{
   source: WalletPaymentSource;
 }>) {
   const [error, setError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const actionInFlight = useRef(false);
   const [clearReview, setClearReview] = useState<Readonly<{ entityId: string; reviewKey: string }> | null>(null);
   const [confirmed, setConfirmed] = useState<Readonly<{ entityId: string; batchHash: string }> | null>(null);
   const previousSubmission = useRef<Readonly<{ entityId: string; batchHash: string }> | null>(null);
   const clearingSubmission = useRef<Readonly<{ entityId: string; batchHash: string }> | null>(null);
   const batch = projection.batch;
-  const busy = snapshot.status !== 'ready' || snapshot.command.status === 'submitting'
+  const busy = submitting ||
+    snapshot.status !== 'ready' || snapshot.command.status === 'submitting'
     || snapshot.command.status === 'pending' || snapshot.command.retryable;
   const currentClearReview = clearReview?.entityId === projection.activeEntityId
     && clearReview.reviewKey === batch.reviewKey;
@@ -52,19 +56,35 @@ export function WalletPaymentBatch({ projection, snapshot, source }: Readonly<{
     setConfirmed(previous);
   }, [batch.sentHash, projection.activeEntityId]);
 
-  const submit = async (action: WalletBatchAction): Promise<void> => {
-    setError('');
-    if (action === 'clear') {
-      clearingSubmission.current = { entityId: projection.activeEntityId, batchHash: batch.sentHash };
-    }
-    try {
-      await source.submitBatch(action, projection.activeEntityId, batch);
-      if (action === 'clear') setClearReview(null);
-    } catch (failure: unknown) {
-      if (action === 'clear') clearingSubmission.current = null;
-      setError(failure instanceof Error ? failure.message : String(failure));
-    }
-  };
+  const submit = createPendingBatchActionRunner({
+    getState: () => ({
+      pendingBatchCount: batch.draft.length + batch.sent.length,
+      pendingBatchSubmitting: busy || actionInFlight.current,
+      pendingBatchReserveIssueText: null,
+      canBroadcastPendingBatch: batch.draft.length > 0 && !batch.sentHash,
+      hasSentBatch: Boolean(batch.sentHash),
+    }),
+    setSubmitting: value => {
+      actionInFlight.current = value;
+      setSubmitting(value);
+    },
+    confirmClear: () => Boolean(currentClearReview),
+    enqueueAction: async action => {
+      setError('');
+      if (action === 'clear') {
+        clearingSubmission.current = { entityId: projection.activeEntityId, batchHash: batch.sentHash };
+      }
+      try {
+        await source.submitBatch(action, projection.activeEntityId, batch);
+        if (action === 'clear') setClearReview(null);
+      } catch (failure: unknown) {
+        if (action === 'clear') clearingSubmission.current = null;
+        throw failure;
+      }
+    },
+    notifyError: setError,
+    formatError: failure => (failure instanceof Error ? failure.message : String(failure)),
+  });
   return (
     <section className="wallet-payments-pane wallet-batch" aria-labelledby="wallet-batch-title">
       <div className="wallet-payments-section-heading"><h2 id="wallet-batch-title">Jurisdiction batch</h2><span>{batch.status}</span></div>

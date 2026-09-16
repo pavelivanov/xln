@@ -3,7 +3,7 @@
   import EntityIdentity from '../../shared/EntityIdentity.svelte';
   import { xlnFunctions } from '../../../../../bridges/runtime/xln-store';
   import { amountToUsd } from '../../../../../packages/runtime-client/src/asset-pricing';
-  import { getEntityDisplayName } from '$lib/utils/identity/entityNaming';
+  import { getEntityDisplayName } from '../../../../../packages/ui/src/identity/entity-naming';
   import { compareStableText } from '../../../../../packages/ui/src/stable-compare';
   import type { DebtEntry, EntityState } from '@xln/core/api/public/runtime-module';
   import { requireTokenDecimals } from '../../../../../packages/runtime-client/src/token-metadata';

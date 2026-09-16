@@ -93,8 +93,9 @@ const args: Args = {
 };
 
 const keys = readKeys(args.keysPath);
-const web = `http://localhost:${args.webHttpPort}`;
-const webTls = args.webScheme === 'https' ? `https://localhost:${args.webPort}` : null;
+const configuredWebOrigin = flags.get('--web-origin');
+const web = configuredWebOrigin ? new URL(configuredWebOrigin).origin : `http://localhost:${args.webHttpPort}`;
+const webTls = args.webScheme === 'https' && !web.startsWith('https:') ? `https://localhost:${args.webPort}` : null;
 const api = `http://127.0.0.1:${args.apiPort}`;
 const custody = `${args.custodyScheme}://localhost:${args.custodyPort}`;
 const custodyDaemon = `http://127.0.0.1:${args.custodyDaemonPort}`;

@@ -223,9 +223,11 @@ test('selected Runtime frames drive controlled effects and exact renderer/XR cap
   await expect(graph).toHaveAttribute('data-renderer-request', 'webgpu');
   let rendererOutcome = '';
   await expect.poll(async () => {
-    rendererOutcome = await canvasOwner.getAttribute('data-renderer-mode') === 'webgpu'
+    // Initialization can finish successfully without ever rendering an alert.
+          // Read optional alerts without waiting so the next poll sees that success.
+          rendererOutcome = await canvasOwner.getAttribute('data-renderer-mode') === 'webgpu'
       ? 'webgpu'
-      : (await graph.getByRole('alert').textContent().catch(() => '')) ?? '';
+      : (await graph.getByRole('alert').allTextContents()).join('\n');
     return rendererOutcome;
   }, { timeout: 20_000 }).toMatch(/^(webgpu|GRAPH_WEBGPU_(UNSUPPORTED|INITIALIZATION_FAILED:.*))$/);
   await expect(canvasOwner).not.toHaveAttribute('data-renderer-mode', 'webgl');

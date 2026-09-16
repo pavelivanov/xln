@@ -12,10 +12,12 @@ import {
   writeFileSync,
 } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { basename, join, relative, resolve } from 'node:path';
+import { join, relative, resolve } from 'node:path';
 import { spawnSync } from 'node:child_process';
 
 import { RemoteRuntimeAdapter } from '../../core/api/runtime-adapter/remote';
+import { readCliOption } from '../../core/config/cli';
+import { verifyCandidateReleaseDirectory } from '../../packages/frontend-release/verify';
 import { BRAINVAULT_V1_SPEC_ID } from '../../brainvault/src/core/primitives/spec';
 
 const ROOT = resolve(import.meta.dir, '../..');
@@ -23,7 +25,10 @@ const PACKAGE_DIR = join(ROOT, 'packages/npm/xlnfinance');
 const DIST_DIR = join(PACKAGE_DIR, 'dist');
 const APP_DIR = join(PACKAGE_DIR, 'app');
 const CONFIG_DIR = join(PACKAGE_DIR, 'config');
-const FRONTEND_BUILD = join(ROOT, 'frontend/build');
+const frontendReleaseInput = readCliOption(process.argv.slice(2), '--frontend-release');
+if (!frontendReleaseInput)
+  throw new Error('XLNFINANCE_FRONTEND_RELEASE_REQUIRED: --frontend-release <verified-release-directory>');
+const frontendReleaseDirectory = resolve(frontendReleaseInput);
 const skipBuild = process.argv.includes('--skip-build');
 const shouldPack = process.argv.includes('--pack');
 const shouldSmoke = process.argv.includes('--smoke');
@@ -45,14 +50,6 @@ const walkFiles = (root: string): string[] => readdirSync(root, { withFileTypes:
 
 const sha256 = (path: string): string => createHash('sha256').update(readFileSync(path)).digest('hex');
 
-const includeLauncherAppAsset = (source: string): boolean => {
-  if (basename(source) === '.DS_Store') return false;
-  const asset = relative(FRONTEND_BUILD, source).replaceAll('\\', '/');
-  if (!asset || asset.startsWith('..')) return true;
-  const topLevel = asset.split('/')[0] || '';
-  return topLevel !== 'docs-catalog' && !topLevel.startsWith('llms');
-};
-
 const assertPortableServerBundle = (): void => {
   const server = readFileSync(join(DIST_DIR, 'server.js'), 'utf8');
   const worker = join(DIST_DIR, 'brainvault-worker-native.js');
@@ -73,15 +70,11 @@ const assertVersions = (): string => {
   return root.version;
 };
 
-const buildPackage = (): void => {
+const buildPackage = async (): Promise<void> => {
+  const frontend = await verifyCandidateReleaseDirectory(frontendReleaseDirectory);
   const version = assertVersions();
   if (!skipBuild) {
     run('bun', ['run', 'build']);
-    // The frontend embeds contract artifacts. A freshly merged checkout can still
-    // have ignored Hardhat artifacts from the previous source revision, so compile
-    // from the current Solidity sources before copy-static-files consumes them.
-    run('bun', ['run', 'compile'], join(ROOT, 'jurisdictions'));
-    run('bun', ['run', 'build'], join(ROOT, 'frontend'));
   }
   rmSync(DIST_DIR, { recursive: true, force: true });
   rmSync(APP_DIR, { recursive: true, force: true });
@@ -111,11 +104,20 @@ const buildPackage = (): void => {
     '--target=bun',
     `--outfile=${join(DIST_DIR, 'launcher-client.js')}`,
   ]);
+  run('bun', [
+    'build',
+    'packages/frontend-release/verify.ts',
+    '--target=bun',
+    `--outfile=${join(DIST_DIR, 'frontend-verifier.js')}`,
+  ]);
   assertPortableServerBundle();
-  cpSync(FRONTEND_BUILD, APP_DIR, {
-    recursive: true,
-    filter: includeLauncherAppAsset,
-  });
+  const packagedRelease = join(APP_DIR, frontend.releaseId);
+  cpSync(frontendReleaseDirectory, packagedRelease, { recursive: true });
+  await verifyCandidateReleaseDirectory(packagedRelease);
+  writeFileSync(
+    join(DIST_DIR, 'frontend-release.json'),
+    `${JSON.stringify({ schemaVersion: 1, releaseId: frontend.releaseId })}\n`,
+  );
   cpSync(join(ROOT, 'jurisdictions/jurisdictions.json'), join(CONFIG_DIR, 'jurisdictions.json'));
 
   const files = [...walkFiles(DIST_DIR), ...walkFiles(APP_DIR), ...walkFiles(CONFIG_DIR)];
@@ -314,7 +316,7 @@ const smokePackedPackage = async (version: string): Promise<void> => {
   }
 };
 
-buildPackage();
+await buildPackage();
 const version = assertVersions();
 if (shouldPack || shouldSmoke) run('bun', ['pm', 'pack'], PACKAGE_DIR);
 if (shouldSmoke) await smokePackedPackage(version);

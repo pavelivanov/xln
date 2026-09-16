@@ -3,8 +3,21 @@ import { MaxUint256, ZeroAddress } from 'ethers';
 import { getDraftBatchReserveDelta } from '@xln/core/jurisdiction/machine/batch';
 import type { WalletAccountContext } from '../../../../bridges/wallet/wallet-canonical-account-context';
 import { formatWalletExternalAmount } from '../../../../packages/browser/src/wallet/wallet-external-provider';
-import { getMovePrimaryActionLabel, MOVE_ENDPOINT_LABEL, routeRequiresExplicitExternalAllowance, type MoveEndpoint } from '../../../../packages/ui/src/entity/move/move-routes';
-import { getMoveMaxAmountForEndpoint, getPreferredMoveSourceAccountId, sumOpenMoveDebt } from '../../../../packages/ui/src/entity/move/move-balance';
+import {
+  getMovePrimaryActionLabel,
+  MOVE_ENDPOINT_LABEL,
+  routeRequiresExplicitExternalAllowance,
+  type MoveEndpoint,
+} from '../../../../packages/ui/src/entity/move/move-routes';
+import {
+  getMoveMaxAmountForEndpoint,
+  getPreferredMoveSourceAccountId,
+  sumOpenMoveDebt,
+} from '../../../../packages/ui/src/entity/move/move-balance';
+import {
+  buildMoveAllowanceStatusLabel,
+  getMoveRequiredAllowanceAmount,
+} from '../../../../packages/ui/src/entity/move/move-allowance';
 import { getMoveValidationErrorForContext } from '../../../../packages/ui/src/entity/move/move-validation';
 import { buildMoveHubEntityOptions } from '../../../../packages/ui/src/entity/entity-panel-options';
 import { parseEntityInput } from '../../../../packages/ui/src/entity-input-model';
@@ -75,18 +88,67 @@ export function WalletMove({ context, source, projection, selection }: Readonly<
   const busy = submitting || payment.status !== 'ready' || payment.command.status === 'submitting' || payment.command.status === 'pending' || externalSnapshot.operation.status === 'submitting';
   const allowanceRequired = routeRequiresExplicitExternalAllowance(from, to);
   const batch = context.replica.state.jBatchState;
-  const available = getMoveMaxAmountForEndpoint({ from, reserveToken: tokenId ? { tokenId } : null, externalToken: { balance }, sourceAccountId: sourceAccount,
-    reserveBalance: id => context.replica.state.reserves.get(id) || 0n,
-    draftReserveDelta: id => batch ? getDraftBatchReserveDelta(context.entityId, batch.batch, id) : 0n,
-    outgoingDebt: id => { const debts = context.replica.state.outDebtsByToken?.get(id); return sumOpenMoveDebt(debts ? debts.values() : []); },
-    accountSpendable,
-  }) || 0n;
-  const validation = amountError || getMoveValidationErrorForContext({ mode: from === 'external' && to === 'external' ? 'broadcast' : 'draft', from, to, amountInput: amount, executing: busy,
-    activeIsLive: context.commandsReady, awaitingCounterparty: Boolean(context.replica.state.settlementContinuations?.size), hasSentBatch: Boolean(projection.batch.sentHash), sourceAccountId: sourceAccount,
-    targetEntityId: target, targetHubId: hub, selfEntityId: context.entityId, selfExternalAddress: projection.signerId, reserveRecipientEntityId: recipient, externalRecipient: eoa,
-    reserveToken: tokenId ? token : null, externalToken: view ? token : null, sourceAvailableBalance: available,
-    allowanceRequired, allowanceLoading: externalSnapshot.status === 'loading', allowanceError: from === 'external' && !view ? externalSnapshot.message : null, allowanceRaw: externalToken ? externalToken.allowance : null });
-  const route = (from: MoveEndpoint, to: MoveEndpoint) => { update({ from, to, tokenId: tokenId === 0 && (from !== 'external' || to !== 'external') ? 1 : tokenId }); setAmount(''); setError(''); };
+  const available =
+    getMoveMaxAmountForEndpoint({
+      from,
+      reserveToken: tokenId ? { tokenId } : null,
+      externalToken: { balance },
+      sourceAccountId: sourceAccount,
+      reserveBalance: id => context.replica.state.reserves.get(id) || 0n,
+      draftReserveDelta: id => (batch ? getDraftBatchReserveDelta(context.entityId, batch.batch, id) : 0n),
+      outgoingDebt: id => {
+        const debts = context.replica.state.outDebtsByToken?.get(id);
+        return sumOpenMoveDebt(debts ? debts.values() : []);
+      },
+      accountSpendable,
+    }) || 0n;
+  const allowanceStatus = buildMoveAllowanceStatusLabel({
+    enabled: allowanceRequired,
+    tokenSymbol: token.symbol,
+    tokenDecimals: token.decimals,
+    metadataLoading: false,
+    raw: externalToken ? externalToken.allowance : null,
+    loading: externalSnapshot.status === 'loading',
+    error: !view ? externalSnapshot.message : null,
+    required: getMoveRequiredAllowanceAmount({
+      enabled: allowanceRequired,
+      token,
+      amountInput: amount,
+      sourceAvailableBalance: available,
+    }),
+    formatAmount: formatWalletExternalAmount,
+  });
+  const validation =
+    amountError ||
+    getMoveValidationErrorForContext({
+      mode: from === 'external' && to === 'external' ? 'broadcast' : 'draft',
+      from,
+      to,
+      amountInput: amount,
+      executing: busy,
+      activeIsLive: context.commandsReady,
+      awaitingCounterparty: Boolean(context.replica.state.settlementContinuations?.size),
+      hasSentBatch: Boolean(projection.batch.sentHash),
+      sourceAccountId: sourceAccount,
+      targetEntityId: target,
+      targetHubId: hub,
+      selfEntityId: context.entityId,
+      selfExternalAddress: projection.signerId,
+      reserveRecipientEntityId: recipient,
+      externalRecipient: eoa,
+      reserveToken: tokenId ? token : null,
+      externalToken: view ? token : null,
+      sourceAvailableBalance: available,
+      allowanceRequired,
+      allowanceLoading: externalSnapshot.status === 'loading',
+      allowanceError: from === 'external' && !view ? externalSnapshot.message : null,
+      allowanceRaw: externalToken ? externalToken.allowance : null,
+    });
+  const route = (from: MoveEndpoint, to: MoveEndpoint) => {
+    update({ from, to, tokenId: tokenId === 0 && (from !== 'external' || to !== 'external') ? 1 : tokenId });
+    setAmount('');
+    setError('');
+  };
   const approve = async (max: boolean) => {
     setError(''); setSubmitting(true);
     try {
@@ -107,28 +169,140 @@ export function WalletMove({ context, source, projection, selection }: Readonly<
       setAmount('');
     } catch (cause) { setError(String(cause)); } finally { setSubmitting(false); }
   };
-  return <section data-testid="move-workspace-accounts">
-    <WalletMoveRoute from={from} to={to} disabled={busy} onChange={route} />
-    <fieldset disabled={busy} className="wallet-tool-fields">
-      {from === 'account' ? <label>From Account<select aria-label="From Account" value={sourceAccount} onChange={event => setSourceAccount(event.target.value)}>{accounts.map(id => <option key={id} value={id}>{context.names.get(id) || id}</option>)}</select></label> : null}
-      {from === 'reserve' && to === 'reserve' ? <WalletEntityInput label="To reserve Entity" value={recipientInput} onChange={setRecipient} entities={entityOptions} profiles={profiles} disabled={busy} /> : null}
-      {from !== 'reserve' && to === 'reserve' ? <p>Funds enter this Entity’s reserve.</p> : null}
-      {to === 'account' ? <><WalletEntityInput value={targetInput} onChange={setTarget} entities={entityOptions} profiles={profiles} disabled={busy} />
-        <WalletEntityInput label="To Account" value={hubInput} onChange={setHub} entities={hubs} profiles={profiles} disabled={busy} /></> : null}
-      {to === 'external' ? <label>Recipient EOA<input value={eoa} onChange={event => setEoa(event.target.value)} /></label> : null}
-    </fieldset>
-    <h2>{MOVE_ENDPOINT_LABEL[from]} → {MOVE_ENDPOINT_LABEL[to]}</h2>
-    <form onSubmit={event => { event.preventDefault(); void submit(); }}><fieldset disabled={busy} className="wallet-tool-fields">
-      <label>Asset<select aria-label="Asset" value={tokenId} onChange={event => { setToken(Number(event.target.value)); setAmount(''); setAllowance(''); }}>{from === 'external' && to === 'external' ? <option value="0">ETH</option> : null}{tokenOptions.map(token => <option key={token.tokenId} value={token.tokenId}>{token.symbol}</option>)}</select></label>
-      <label>Amount<input inputMode="decimal" value={amount} onChange={event => setAmount(event.target.value)} /></label><button type="button" onClick={() => setAmount(formatWalletExternalAmount(available, token.decimals, token.decimals))}>Max</button>
-    </fieldset><p data-testid="move-available">Available {formatWalletExternalAmount(available, token.decimals)} {token.symbol}</p>
-      {from === 'external' && !view ? <p role="status">{externalSnapshot.message}</p> : null}
-      {allowanceRequired ? <section className="wallet-move-allowance"><h3>ERC20 allowance</h3><p>Current allowance {externalToken ? formatWalletExternalAmount(externalToken.allowance, token.decimals) : '—'} {token.symbol}</p>
-        <label>Allowance amount<input inputMode="decimal" disabled={busy} value={allowanceAmount || amount} onChange={event => setAllowance(event.target.value)} /></label>
-        <div className="wallet-tool-tabs"><button type="button" disabled={busy || !view || !view.writable} onClick={() => void approve(false)}>Allow amount</button><button type="button" disabled={busy || !view || !view.writable} onClick={() => void approve(true)}>Allow max</button></div></section> : null}
-      {validation ? <p role="status">{validation}</p> : null}<button disabled={Boolean(validation)}>{getMovePrimaryActionLabel(from, to)}</button>
-    </form>
-    {error ? <p role="alert">{error}</p> : null}{externalSnapshot.operation.status !== 'idle' ? <p role={externalSnapshot.operation.status === 'error' ? 'alert' : 'status'}>{externalSnapshot.operation.message} {externalSnapshot.operation.transactionHash}</p> : null}
-    <WalletPaymentBatch projection={projection} snapshot={payment} source={source} />
-  </section>;
+  return (
+    <section data-testid="move-workspace-accounts">
+      <WalletMoveRoute from={from} to={to} disabled={busy} onChange={route} />
+      <fieldset disabled={busy} className="wallet-tool-fields">
+        {from === 'account' ? (
+          <label>
+            From Account
+            <select
+              aria-label="From Account"
+              value={sourceAccount}
+              onChange={event => setSourceAccount(event.target.value)}
+            >
+              {accounts.map(id => (
+                <option key={id} value={id}>
+                  {context.names.get(id) || id}
+                </option>
+              ))}
+            </select>
+          </label>
+        ) : null}
+        {from === 'reserve' && to === 'reserve' ? (
+          <WalletEntityInput
+            label="To reserve Entity"
+            value={recipientInput}
+            onChange={setRecipient}
+            entities={entityOptions}
+            profiles={profiles}
+            disabled={busy}
+          />
+        ) : null}
+        {from !== 'reserve' && to === 'reserve' ? <p>Funds enter this Entity’s reserve.</p> : null}
+        {to === 'account' ? (
+          <>
+            <WalletEntityInput
+              value={targetInput}
+              onChange={setTarget}
+              entities={entityOptions}
+              profiles={profiles}
+              disabled={busy}
+            />
+            <WalletEntityInput
+              label="To Account"
+              value={hubInput}
+              onChange={setHub}
+              entities={hubs}
+              profiles={profiles}
+              disabled={busy}
+            />
+          </>
+        ) : null}
+        {to === 'external' ? (
+          <label>
+            Recipient EOA
+            <input value={eoa} onChange={event => setEoa(event.target.value)} />
+          </label>
+        ) : null}
+      </fieldset>
+      <h2>
+        {MOVE_ENDPOINT_LABEL[from]} → {MOVE_ENDPOINT_LABEL[to]}
+      </h2>
+      <form
+        onSubmit={event => {
+          event.preventDefault();
+          void submit();
+        }}
+      >
+        <fieldset disabled={busy} className="wallet-tool-fields">
+          <label>
+            Asset
+            <select
+              aria-label="Asset"
+              value={tokenId}
+              onChange={event => {
+                setToken(Number(event.target.value));
+                setAmount('');
+                setAllowance('');
+              }}
+            >
+              {from === 'external' && to === 'external' ? <option value="0">ETH</option> : null}
+              {tokenOptions.map(token => (
+                <option key={token.tokenId} value={token.tokenId}>
+                  {token.symbol}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            Amount
+            <input inputMode="decimal" value={amount} onChange={event => setAmount(event.target.value)} />
+          </label>
+          <button
+            type="button"
+            onClick={() => setAmount(formatWalletExternalAmount(available, token.decimals, token.decimals))}
+          >
+            Max
+          </button>
+        </fieldset>
+        <p data-testid="move-available">
+          Available {formatWalletExternalAmount(available, token.decimals)} {token.symbol}
+        </p>
+        {from === 'external' && !view ? <p role="status">{externalSnapshot.message}</p> : null}
+        {allowanceRequired ? (
+          <section className="wallet-move-allowance">
+            <h3>ERC20 allowance</h3>
+            <p data-testid="move-allow-status">{allowanceStatus}</p>
+            <label>
+              Allowance amount
+              <input
+                inputMode="decimal"
+                disabled={busy}
+                value={allowanceAmount || amount}
+                onChange={event => setAllowance(event.target.value)}
+              />
+            </label>
+            <div className="wallet-tool-tabs">
+              <button type="button" disabled={busy || !view || !view.writable} onClick={() => void approve(false)}>
+                Allow amount
+              </button>
+              <button type="button" disabled={busy || !view || !view.writable} onClick={() => void approve(true)}>
+                Allow max
+              </button>
+            </div>
+          </section>
+        ) : null}
+        {validation ? <p role="status">{validation}</p> : null}
+        <button disabled={Boolean(validation)}>{getMovePrimaryActionLabel(from, to)}</button>
+      </form>
+      {error ? <p role="alert">{error}</p> : null}
+      {externalSnapshot.operation.status !== 'idle' ? (
+        <p role={externalSnapshot.operation.status === 'error' ? 'alert' : 'status'}>
+          {externalSnapshot.operation.message} {externalSnapshot.operation.transactionHash}
+        </p>
+      ) : null}
+      <WalletPaymentBatch projection={projection} snapshot={payment} source={source} />
+    </section>
+  );
 }

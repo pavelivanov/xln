@@ -7,8 +7,8 @@ import {
   defaultAccountDisputeConfigForRoleEvidence,
   type AccountRoleEvidence,
 } from '@xln/core/account/config/dispute-config';
-import { compareStableText } from './swap-formatting';
-import { type PreparedSwapOrderLike } from './swap/swap-order-math';
+import { compareStableText } from '../../../../packages/ui/src/market/format/swap-formatting';
+import { type PreparedSwapOrderLike } from '../../../../packages/ui/src/market/orders/swap-order-math';
 import './swap/SwapPanel.css';
 
 export type BookSide = 'bid' | 'ask';

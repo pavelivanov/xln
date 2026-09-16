@@ -16,7 +16,7 @@ import {
 } from '../lib/api.js';
 import { ask } from '../lib/prompt.js';
 import { BRAINVAULT_V1_SPEC_ID, RemoteRuntimeAdapter } from '../dist/launcher-client.js';
-import { openSystemBrowser, spawnDaemon, stopDaemonProcess } from '../lib/process.js';
+import { openSystemBrowser, requireDistributionAssets, spawnDaemon, stopDaemonProcess } from '../lib/process.js';
 import {
   DEV_PATHS,
   TESTNET_PATHS,
@@ -30,17 +30,6 @@ import packageJson from '../package.json' with { type: 'json' };
 const VERSION = String(packageJson.version);
 
 const ALL_PATHS = [TESTNET_PATHS, DEV_PATHS];
-
-const requireDistributionAssets = (paths) => {
-  if (!existsSync(paths.server)) throw new Error(`XLN_SERVER_BUNDLE_MISSING:${paths.server}`);
-  if (!existsSync(paths.brainvaultWorker)) {
-    throw new Error(`XLN_BRAINVAULT_WORKER_BUNDLE_MISSING:${paths.brainvaultWorker}`);
-  }
-  if (!existsSync(paths.launcherClient)) {
-    throw new Error(`XLNFINANCE_LAUNCHER_CLIENT_BUNDLE_MISSING:${paths.launcherClient}`);
-  }
-  if (!existsSync(`${paths.app}/app.html`)) throw new Error(`XLN_APP_BUNDLE_MISSING:${paths.app}/app.html`);
-};
 
 const assertOwnedDaemon = (status, metadata) => {
   if (!status?.enabled) throw new Error('PORT_8080_IS_NOT_XLNFINANCE');
@@ -59,6 +48,7 @@ const ownedDaemon = (status) => {
 
 const startDaemon = async (mode = 'testnet') => {
   const paths = pathsForMode(mode);
+  await requireDistributionAssets(paths);
   const existingStatus = await readDaemonStatus();
   if (existingStatus) {
     const existing = ownedDaemon(existingStatus);
@@ -71,7 +61,6 @@ const startDaemon = async (mode = 'testnet') => {
   }
   await assertLauncherPortAvailable();
 
-  requireDistributionAssets(paths);
   const runtimeSeed = readOrCreateSecret(paths.runtimeSeed, 'xln-runtime', paths);
   const authSeed = readOrCreateSecret(paths.authSeed, 'xln-radapter', paths);
   const controlToken = readOrCreateSecret(paths.controlToken, 'xln-control', paths);

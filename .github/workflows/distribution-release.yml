@@ -36,8 +36,48 @@ jobs:
       - run: bun run test:release-integrity
       - run: bun run foundation-release:publish-check
 
-  mac-launcher-desktop-chrome:
+  frontend-release:
     needs: validate
+    runs-on: ubuntu-latest
+    outputs:
+      release-id: ${{ steps.assemble.outputs.release-id }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
+        with: { bun-version: 1.4.0 }
+      - run: bun install --frozen-lockfile
+      - run: bun install --frozen-lockfile
+        working-directory: frontend
+      - run: bun install --frozen-lockfile
+        working-directory: jurisdictions
+      - run: bun test ./tests/frontend
+      - run: bun run prepare:react
+        working-directory: frontend
+      - run: bun run check:react
+        working-directory: frontend
+      - run: bun run build:react
+        working-directory: frontend
+      - id: assemble
+        run: bun run assemble:react
+        working-directory: frontend
+      - name: Verify and archive the selected frontend release
+        env:
+          FRONTEND_RELEASE_ID: ${{ steps.assemble.outputs.release-id }}
+        run: |
+          bun frontend/scripts/release/candidate-release-verifier.ts "frontend/.artifacts/releases/$FRONTEND_RELEASE_ID"
+          tar -czf "$RUNNER_TEMP/frontend-release.tar.gz" -C frontend/.artifacts/releases "$FRONTEND_RELEASE_ID"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: verified-frontend-release
+          path: ${{ runner.temp }}/frontend-release.tar.gz
+          if-no-files-found: error
+
+  mac-launcher-desktop-chrome:
+    needs: frontend-release
+    env:
+      FRONTEND_RELEASE_DIRECTORY: frontend/.artifacts/releases/${{ needs.frontend-release.outputs.release-id }}
     runs-on: macos-15
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
@@ -50,7 +90,20 @@ jobs:
         working-directory: frontend
       - run: bun install --frozen-lockfile
         working-directory: jurisdictions
-      - run: bun run release:launcher:verify
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: verified-frontend-release
+          path: ${{ runner.temp }}/frontend-transfer
+      - name: Verify the transferred frontend release
+        run: |
+          mkdir -p frontend/.artifacts/releases
+          tar -xzf "$RUNNER_TEMP/frontend-transfer/frontend-release.tar.gz" -C frontend/.artifacts/releases
+          bun frontend/scripts/release/candidate-release-verifier.ts "$FRONTEND_RELEASE_DIRECTORY"
+      - run: bun run release:launcher:verify -- --frontend-release "$FRONTEND_RELEASE_DIRECTORY" --skip-build
+      - name: Verify installed npm frontend preflight
+        run: |
+          package_version="$(bun -p 'require("./packages/npm/xlnfinance/package.json").version')"
+          bun scripts/release/check-xlnfinance-frontend.ts --archive "packages/npm/xlnfinance/xlnfinance-${package_version}.tgz"
       - name: Install macOS release signing identity
         env:
           MACOS_CERTIFICATE_P12_BASE64: ${{ secrets.MACOS_CERTIFICATE_P12_BASE64 }}
@@ -76,19 +129,21 @@ jobs:
           XLN_MACOS_NOTARY_KEY_PATH: ${{ runner.temp }}/AuthKey.p8
           XLN_MACOS_NOTARY_KEY_ID: ${{ secrets.MACOS_NOTARY_KEY_ID }}
           XLN_MACOS_NOTARY_ISSUER_ID: ${{ secrets.MACOS_NOTARY_ISSUER_ID }}
-        run: bun scripts/native/build-platforms.ts desktop extension --package --smoke --no-build
+        run: bun scripts/native/build-platforms.ts desktop extension --package --smoke --frontend-release "$FRONTEND_RELEASE_DIRECTORY"
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: distribution-macos
           path: |
             packages/npm/xlnfinance/*.tgz
-            native/dist/desktop/*.zip
-            native/dist/desktop/*.release-proof.json
-            native/dist/chrome/*.zip
+            native/dist/releases/**/desktop/*.zip
+            native/dist/releases/**/desktop/*.release-proof.json
+            native/dist/releases/**/chrome/*.zip
           if-no-files-found: error
 
   android:
-    needs: validate
+    needs: frontend-release
+    env:
+      FRONTEND_RELEASE_DIRECTORY: frontend/.artifacts/releases/${{ needs.frontend-release.outputs.release-id }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
@@ -106,9 +161,15 @@ jobs:
         working-directory: frontend
       - run: bun install --frozen-lockfile
         working-directory: jurisdictions
-      - run: bun run build
-      - run: bun run build
-        working-directory: frontend
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: verified-frontend-release
+          path: ${{ runner.temp }}/frontend-transfer
+      - name: Verify the transferred frontend release
+        run: |
+          mkdir -p frontend/.artifacts/releases
+          tar -xzf "$RUNNER_TEMP/frontend-transfer/frontend-release.tar.gz" -C frontend/.artifacts/releases
+          bun frontend/scripts/release/candidate-release-verifier.ts "$FRONTEND_RELEASE_DIRECTORY"
       - name: Materialize Android release keystore
         env:
           ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
@@ -122,13 +183,13 @@ jobs:
           XLN_ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           XLN_ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
           XLN_ANDROID_SIGNER_CERT_SHA256: ${{ secrets.ANDROID_SIGNER_CERT_SHA256 }}
-        run: bun scripts/native/build-platforms.ts android --package --no-build
+        run: bun scripts/native/build-platforms.ts android --package --frontend-release "$FRONTEND_RELEASE_DIRECTORY"
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: distribution-android
           path: |
-            native/dist/android/*.apk
-            native/dist/android/*.release-proof.json
+            native/dist/releases/**/android/*.apk
+            native/dist/releases/**/android/*.release-proof.json
           if-no-files-found: error
 
   publish-github:
@@ -154,7 +215,7 @@ jobs:
         uses: actions/attest-build-provenance@e8998f949152b193b063cb0ec769d69d929409be # v2
         with:
           subject-path: |
-            native/dist/release-assets/*
+            native/dist/release-assets/**/*
             native/dist/release-manifest.json
             native/dist/SHA256SUMS
       - name: Create immutable GitHub release

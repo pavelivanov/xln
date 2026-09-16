@@ -4,9 +4,9 @@ import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 
 import { safeStringify } from '../../../../core/protocol/serialization';
-import { SURFACE_IDS, type SurfaceId } from '../../../../frontend/config/surfaces';
+import { SURFACE_IDS, type SurfaceId } from '../../../../packages/frontend-release/surfaces';
 import { assembleCandidateRelease } from '../../../../frontend/scripts/release/candidate-release';
-import { verifyCandidateReleaseDirectory } from '../../../../frontend/scripts/release/candidate-release-verifier';
+import { verifyCandidateReleaseDirectory } from '../../../../packages/frontend-release/verify';
 
 const temporaryRoots: string[] = [];
 

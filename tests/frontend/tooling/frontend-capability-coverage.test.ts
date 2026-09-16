@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 
 import { CAPABILITIES } from '../../../frontend/config/capabilities';
-import { SURFACE_IDS, resolveRouteOwner } from '../../../frontend/config/surfaces';
+import { SURFACE_IDS, resolveRouteOwner } from '../../../packages/frontend-release/surfaces';
 
 describe('frontend capability inventory', () => {
   test('uses stable unique capability identifiers', () => {
@@ -228,9 +228,9 @@ describe('frontend capability inventory', () => {
     expect(docs?.behavior).toContain('deterministic docs and llms outputs');
   });
 
-  test('records the completed React health, QA cockpit, and HLT capability', () => {
+  test('records implemented QA and HLT with remaining Health detail parity', () => {
     const opsHealth = CAPABILITIES.find(({ id }) => id === 'ops-health-and-qa');
-    expect(opsHealth?.status).toBe('implemented');
+    expect(opsHealth?.status).toBe('in_progress');
     expect(opsHealth?.currentSources).toContain('frontend/apps/ops/src/health/ops-health.tsx');
     expect(opsHealth?.currentSources).toContain('frontend/apps/ops/src/hlt/ops-hlt.tsx');
     expect(opsHealth?.currentSources).toContain('frontend/apps/ops/src/qa/ops-qa.tsx');

@@ -1,3 +1,9 @@
+import { buildRuntimeRecoveryCoverage, buildRecoveryTowerStatuses } from './recovery-coverage';
+import {
+  readRuntimeRecoveryDiscoveryStatus,
+  subscribeRuntimeRecoveryDiscoveryStatus,
+} from '../../packages/browser/src/recovery/recovery-discovery-status';
+import { buildRemoteRuntimeRecoveryPeerSources } from '../runtime/remote-runtime-validation';
 import { readStoreValue } from '../../packages/runtime-client/src/observable-store';
 
 import type {
@@ -67,6 +73,12 @@ const projectRecoveryServices = (runtime: Runtime): WalletRecoveryServicesReadyV
     services,
     writable: blockedReason === '',
     blockedReason,
+    coverage: buildRuntimeRecoveryCoverage({
+      runtime,
+      peerSourceCount: buildRemoteRuntimeRecoveryPeerSources({ runtimeId: runtime.id }).length,
+      discovery: readRuntimeRecoveryDiscoveryStatus(runtime.id),
+    }),
+    towerStatuses: buildRecoveryTowerStatuses(runtime, runtime.recovery?.towers),
   };
 };
 
@@ -129,4 +141,29 @@ export const saveCanonicalWalletRecoveryServices = async (
     recoveryConfigForMutation(runtime, mutation),
   );
   return projectRecoveryServices(updated);
+};
+
+export const observeCanonicalWalletRecoveryServices = (
+  mutation: WalletRecoveryServicesMutation | null,
+  onChange: (view: WalletRecoveryServicesView) => void,
+  onError: (error: unknown) => void,
+): (() => void) => {
+  const refresh = (): void => {
+    try {
+      const runtime = activeRuntime();
+      onChange(
+        runtime && mutation && normalizeRuntimeId(runtime.id) === normalizeRuntimeId(mutation.runtimeId)
+          ? previewCanonicalWalletRecoveryServices(mutation)
+          : readCanonicalWalletRecoveryServices(),
+      );
+    } catch (error: unknown) {
+      onError(error);
+    }
+  };
+  const stopDiscovery = mutation ? subscribeRuntimeRecoveryDiscoveryStatus(mutation.runtimeId, refresh) : () => {};
+  const stopMetadata = runtimesState.subscribe(refresh);
+  return () => {
+    stopMetadata();
+    stopDiscovery();
+  };
 };

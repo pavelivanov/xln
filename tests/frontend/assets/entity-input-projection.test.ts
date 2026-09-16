@@ -35,7 +35,7 @@ test('EntityInput consumes projected profiles instead of global runtime env', ()
 });
 
 test('entity naming helpers are projection-only and do not perform hidden runtime fetches', () => {
-  const entityNaming = readFileSync('frontend/src/lib/utils/identity/entityNaming.ts', 'utf8');
+  const entityNaming = readFileSync('frontend/packages/ui/src/identity/entity-naming.ts', 'utf8');
   const entitySelect = readFileSync('frontend/src/lib/components/Entity/workspace/shell/EntitySelect.svelte', 'utf8');
   const entityDropdown = readFileSync('frontend/src/lib/components/Entity/workspace/shell/EntityDropdown.svelte', 'utf8');
   const accountDropdown = readFileSync('frontend/src/lib/components/Entity/account/ui/AccountDropdown.svelte', 'utf8');

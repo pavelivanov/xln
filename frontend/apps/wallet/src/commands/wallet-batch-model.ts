@@ -1,3 +1,4 @@
+import { buildPendingBatchActionTxs } from '../../../../packages/runtime-client/src/payments/pending-batch-state';
 import { safeStringify } from '../../../../../core/protocol/serialization';
 import type { JBatch } from '../../../../../core/jurisdiction/machine/batch';
 import type { RuntimePaymentEntityTx } from '../../../../packages/runtime-client/src/payments/payment-command-types';
@@ -135,13 +136,13 @@ export const buildWalletBatchTx = (
   if (current.reviewKey !== reviewed.reviewKey) throw new Error('Batch changed. Review the current operations before submitting.');
   if (action === 'broadcast') {
     if (current.sentHash || current.draft.length === 0) throw new Error('A nonempty draft and no in-flight batch are required.');
-    return { type: 'j_broadcast', data: {} };
+    return buildPendingBatchActionTxs(action)[0];
   }
   if (action === 'rebroadcast') {
     if (!current.sentHash) throw new Error('No in-flight batch to rebroadcast.');
     if (current.failureKind === 'terminal') throw new Error('A terminally failed batch must be cleared before rebuilding.');
-    return { type: 'j_rebroadcast', data: { gasBumpBps: 1_000 } };
+    return buildPendingBatchActionTxs(action)[0];
   }
   if (!current.sentHash && current.draft.length === 0) throw new Error('No batch to clear.');
-  return { type: 'j_clear_batch', data: { reason: 'manual-clear-from-ui' } };
+  return buildPendingBatchActionTxs(action, 'manual-clear-from-ui')[0];
 };

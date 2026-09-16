@@ -1,6 +1,9 @@
 import { describe, expect, test } from 'bun:test';
 
-import { buildXlnInvoiceDeepLink, parseXlnInvoice } from '../../../../frontend/src/lib/utils/xlnInvoice';
+import {
+  buildXlnInvoiceDeepLink,
+  parseXlnInvoice,
+} from '../../../../frontend/packages/runtime-client/src/payments/xln-invoice';
 
 const TARGET = `0x${'ab'.repeat(32)}`;
 const PAYLOAD = encodeURIComponent(`${TARGET}?token=1&amount=5&desc=Local+payment`);

@@ -20,7 +20,7 @@ import { errorLog } from "../../../../../../packages/browser/src/logging/error-l
 import { openAccountById } from "../../../../../../packages/browser/src/wallet/account-open-commands";
 import { requireSignerIdForEntity } from "../../../../../../packages/runtime-client/src/entity/entity-replica";
 import { registerDebugSurface } from "../../../../../../packages/browser/src/runtime/debug-surface";
-import { getGossipProfiles } from "$lib/utils/identity/entityNaming";
+import { getGossipProfiles } from "../../../../../../packages/ui/src/identity/entity-naming";
 import { entityAvatar } from "$lib/utils/identity/avatar";
 import { getJurisdictionBadgeInfo } from "$lib/utils/identity/jurisdictionBadge";
 import { resetEverything } from "$lib/utils/control/resetEverything";
@@ -35,12 +35,12 @@ import RuntimeCommandGateBanner from "../../payments/RuntimeCommandGateBanner.sv
 import EntitySelectionEmptyState from "./EntitySelectionEmptyState.svelte";
 import EntitySettingsProjectionPanel from "./EntitySettingsProjectionPanel.svelte";
 import OwnershipWorkspacePanel from "../../ownership/OwnershipWorkspacePanel.svelte";
-import { buildEntityConsensusSettingsView } from "../entity-consensus-settings";
+import { buildEntityConsensusSettingsView } from "../../../../../../bridges/entity/consensus/entity-consensus-settings";
 import { importJMachineViaRuntime, type JMachineCreateDetail } from "../../../../../../bridges/runtime/import-jmachine-runtime";
 import { requestAccountFaucet } from "../../../../../../packages/browser/src/wallet/account-faucet-command";
 import { faucetPendingKey, type PendingReserveFaucet, readFaucetApiResult, reconcilePendingReserveFaucets } from "../../../../../../packages/browser/src/wallet/account-faucet";
 import { buildMoveArrowPath, buildMoveRouteSteps, canAddMoveRouteToDraft, getMovePrimaryActionLabel, getMoveRouteKey, isImmediateMoveExecutionRoute, isMoveRouteSupported, moveNeedsExternalRecipient, moveNeedsReserveRecipient, routeRequiresExplicitExternalAllowance, MOVE_ENDPOINT_LABEL, MOVE_ENDPOINTS, type MoveEndpoint } from "../../../../../../packages/ui/src/entity/move/move-routes";
-import { buildMoveAllowanceContextSignature, buildMoveAllowanceStatusLabel, getMoveRequiredAllowanceAmount, isMoveAllowanceSatisfied } from "../../move/move-allowance";
+import { buildMoveAllowanceContextSignature, buildMoveAllowanceStatusLabel, getMoveRequiredAllowanceAmount, isMoveAllowanceSatisfied } from "../../../../../../packages/ui/src/entity/move/move-allowance";
 import { choosePreferredMoveAssetSymbol, computeMoveSourceAvailableBalanceForEndpoint, getMoveMaxAmountForEndpoint, getPreferredMoveSourceAccountId, sumOpenMoveDebt } from "../../../../../../packages/ui/src/entity/move/move-balance";
 import { getMoveValidationErrorForContext, type MoveValidationMode } from "../../../../../../packages/ui/src/entity/move/move-validation";
 import { createMoveVisualController } from "../../../../../../packages/ui/src/entity/move/move-visual-controller";
@@ -74,8 +74,9 @@ import {
   type ReserveTransferAsset,
 } from "../../../../../../packages/ui/src/entity/assets/entity-asset-catalog";
 import { requireTokenDecimals } from "../../../../../../packages/runtime-client/src/token-metadata";
-import { buildOpenOutgoingDebtTotals, buildPendingBatchPreview, buildPendingBatchState, canBroadcastPendingBatch, formatBatchReserveIssue, getPendingBatchReserveIssue, pendingBatchEntityLabel } from "../../payments/batch/pending-batch-preview";
-import { createPendingBatchActionRunner, enqueuePendingBatchAction } from "../../payments/batch/pending-batch-actions";
+import { buildPendingBatchState, canBroadcastPendingBatch } from "../../../../../../packages/runtime-client/src/payments/pending-batch-state";
+import { buildOpenOutgoingDebtTotals, buildPendingBatchPreview, formatBatchReserveIssue, getPendingBatchReserveIssue, pendingBatchEntityLabel } from "../../../../../../bridges/wallet/payments/pending-batch-preview";
+import { createPendingBatchActionRunner, enqueuePendingBatchAction } from "../../../../../../packages/browser/src/payments/pending-batch-actions";
 import {
   buildAddTokenToAccountTx,
   buildBroadcastTx,
@@ -2591,7 +2592,7 @@ const runPendingBatchAction = createPendingBatchActionRunner({
   confirmClear: () => confirm("Clear current draft and any sent batch state?"),
   notifySuccess: toasts.success,
   notifyError: toasts.error,
-  formatError: toErrorMessage,
+  formatError: (cause, failurePrefix) => `${failurePrefix}: ${toErrorMessage(cause, "Unknown error")}`,
 });
 async function clearPendingBatch(): Promise<void> {
   await runPendingBatchAction("clear");

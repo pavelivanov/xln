@@ -1,4 +1,5 @@
 #!/usr/bin/env bun
+import { prepareFrontendHttpHandler } from './server/frontend-http';
 import type { ChildProcess } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
 import { existsSync, mkdirSync, rmSync } from 'node:fs';
@@ -45,7 +46,6 @@ import {
 import { handleMarketCapRequest } from './hub/market-cap-http';
 import { assertMinDiskFree, getStorageHealth, getStorageHealthSnapshotSync } from '../support/storage-monitor';
 import { maybeHandleQaRequest } from '../qa/api';
-import { serveStaticApp } from '../api/server/static-assets';
 import { enforceFaucetPolicy } from '../api/server/faucet/policy';
 import { handleWatchtowerProxy } from '../api/server/rpc/watchtower-proxy';
 import { createAssistantProxyFromEnv, resolveAssistantDirectClientIp, resolveAssistantRateClientId } from '../api/server/assistant/proxy';
@@ -2695,7 +2695,7 @@ const handleMetadataRequest = (
 };
 
 const httpDrain = createHttpDrainTracker();
-const FRONTEND_STATIC_DIR = './frontend/build';
+const handleFrontendRequest = await prepareFrontendHttpHandler(process.env['XLN_FRONTEND_DEPLOYMENT_ROOT']);
 
 const handlePerformanceControl = (
   request: Request,
@@ -2853,15 +2853,7 @@ const server = Bun.serve<OrchestratorWebSocket['data']>({
       return await proxyAnyHubRequest(request, `${pathname}${url.search}`);
     }
 
-    const staticResponse = await serveStaticApp(request, pathname, FRONTEND_STATIC_DIR);
-    if (staticResponse) return staticResponse;
-
-    return new Response(safeStringify({
-      error: `Unhandled mesh-control route: ${request.method} ${pathname}`,
-    }), {
-      status: 404,
-      headers,
-    });
+    return await handleFrontendRequest(request, pathname, headers);
     } finally {
       releaseHttp();
     }

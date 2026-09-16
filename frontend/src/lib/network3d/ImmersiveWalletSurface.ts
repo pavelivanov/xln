@@ -1,23 +1,16 @@
 import * as THREE from 'three';
 import type { EntityOpenAction } from '../../../packages/browser/src/workspace/panel-bridge';
 
-export type ImmersiveWalletSurfaceAction = EntityOpenAction | 'close';
+import {
+  immersiveWalletActionAt,
+  IMMERSIVE_WALLET_BUTTONS,
+} from '../../../packages/ui/src/graph/immersive/immersive-wallet-actions';
 
 type WalletIdentity = {
   entityId: string;
   entityName: string;
   signerId: string;
 };
-
-const BUTTONS: Array<{ action: ImmersiveWalletSurfaceAction; label: string; x: number; y: number; width: number; height: number; color: string }> = [
-  { action: 'pay', label: 'PAY', x: 70, y: 480, width: 205, height: 92, color: '#22c55e' },
-  { action: 'swap', label: 'SWAP', x: 300, y: 480, width: 205, height: 92, color: '#38bdf8' },
-  { action: 'dispute', label: 'DISPUTE', x: 530, y: 480, width: 250, height: 92, color: '#fb7185' },
-  { action: 'close', label: 'CLOSE', x: 805, y: 480, width: 150, height: 92, color: '#94a3b8' },
-];
-
-export const immersiveWalletActionAt = (x: number, y: number): ImmersiveWalletSurfaceAction | null =>
-  BUTTONS.find((button) => x >= button.x && x <= button.x + button.width && y >= button.y && y <= button.y + button.height)?.action ?? null;
 
 export class ImmersiveWalletSurface {
   private readonly canvas = document.createElement('canvas');
@@ -109,7 +102,7 @@ export class ImmersiveWalletSurface {
     ctx.fillStyle = '#cbd5e1';
     ctx.font = '28px system-ui, sans-serif';
     ctx.fillText('Choose an operation. Confirmation stays in the pinned wallet.', 70, 360);
-    for (const button of BUTTONS) {
+    for (const button of IMMERSIVE_WALLET_BUTTONS) {
       ctx.fillStyle = `${button.color}22`;
       ctx.strokeStyle = button.color;
       ctx.lineWidth = 3;

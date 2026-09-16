@@ -81,7 +81,9 @@ test('guide context follows the exact selected Runtime frame and is released on 
 
 test('guide streams a real selected-frame answer and aborts on context change', { tag: '@functional' }, async ({ page }, testInfo) => {
   testInfo.setTimeout(180_000);
-  const errors = observeBrowserErrors(page);
+  // The scenario can render before the edge fixture serving the catalog is ready.
+    await readWalletRuntimeFixture(page);
+    const errors = observeBrowserErrors(page);
   await page.addInitScript(() => localStorage.setItem('xln-settings', JSON.stringify({ showXlnMascot: true })));
   await page.goto('/__app/ops/entity-workspace?scenario=ahb');
   const timeline = page.getByTestId('workspace-network-timeline');

@@ -1,4 +1,4 @@
-import { getSurface, type SurfaceId } from '../../../../config/surfaces';
+import { getSurface, type SurfaceId } from '../../../../../packages/frontend-release/surfaces';
 import './candidate-shell.css';
 
 export type CandidateSurfaceCopy = Readonly<{

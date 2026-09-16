@@ -1,3 +1,4 @@
+import { RELEASE_SCHEMA_VERSION, type CandidateReleaseManifest } from '../../../packages/frontend-release/manifest';
 import { createHash } from 'node:crypto';
 import {
   copyFile,
@@ -13,51 +14,15 @@ import {
 import { dirname, join, relative, sep } from 'node:path';
 
 import { compareStableText, safeStringify } from '../../../core/protocol/serialization';
-import {
-  PREPARED_GENERATED_INPUTS,
-  type GeneratedInputOwner,
-  type PreparedGeneratedInputDefinition,
-} from '../../config/generated-inputs';
-import { EDGE_ROUTES, SURFACES, type RouteRule, type SurfaceId } from '../../config/surfaces';
+import { PREPARED_GENERATED_INPUTS, type PreparedGeneratedInputDefinition } from '../../config/generated-inputs';
+import { EDGE_ROUTES, SURFACES, type SurfaceId } from '../../../packages/frontend-release/surfaces';
 import { readPreparedGeneratedInputs } from '../inputs/generated-inputs';
-
-export const RELEASE_SCHEMA_VERSION = 2 as const;
 
 type CandidateFile = Readonly<{
   sourcePath: string;
   destinationPath: string;
   sha256: string;
   size: number;
-}>;
-
-type CandidateApplication = Readonly<{
-  id: SurfaceId;
-  entryHtml: `apps/${SurfaceId}/index.html`;
-  viteManifest: `apps/${SurfaceId}/manifest.json`;
-  assetDirectory: `assets/${SurfaceId}`;
-  routes: readonly RouteRule[];
-  assetRoutes: readonly RouteRule[];
-}>;
-
-type CandidateGeneratedInput = Readonly<{
-  id: string;
-  owner: GeneratedInputOwner;
-  outputNamespace: string;
-  definitionSha256: string;
-  files: readonly string[];
-}>;
-
-export type CandidateReleaseManifest = Readonly<{
-  schemaVersion: typeof RELEASE_SCHEMA_VERSION;
-  releaseId: `sha256-${string}`;
-  applications: readonly CandidateApplication[];
-  generatedInputs: readonly CandidateGeneratedInput[];
-  edgeRoutes: readonly RouteRule[];
-  files: readonly Readonly<{
-    path: string;
-    sha256: string;
-    size: number;
-  }>[];
 }>;
 
 export type CandidateReleasePlan = Readonly<{
@@ -186,7 +151,7 @@ const assertCollisionFree = (files: readonly CandidateFile[]): void => {
   }
 };
 
-const createApplications = (): readonly CandidateApplication[] => SURFACES.map((surface) => ({
+const createApplications = (): CandidateReleaseManifest['applications'] => SURFACES.map((surface) => ({
   id: surface.id,
   entryHtml: `apps/${surface.id}/index.html`,
   viteManifest: `apps/${surface.id}/manifest.json`,
@@ -208,7 +173,7 @@ export const planCandidateRelease = async (
   assertCollisionFree(files);
 
   const applications = createApplications();
-  const generatedInputs: readonly CandidateGeneratedInput[] = preparedInputs.map(({ manifest }) => ({
+  const generatedInputs: CandidateReleaseManifest['generatedInputs'] = preparedInputs.map(({ manifest }) => ({
     id: manifest.id,
     owner: manifest.owner,
     outputNamespace: manifest.outputNamespace,

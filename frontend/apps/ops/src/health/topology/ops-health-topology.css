@@ -1,0 +1,101 @@
+.ops-health-topology {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+}
+.ops-health-topology nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  font-size: 13px;
+}
+.ops-health-topology a {
+  color: var(--ops-accent, #ceaf72);
+}
+.ops-health-topology h2 {
+  margin: 0 0 12px;
+  font-size: 18px;
+}
+.ops-health-topology p {
+  color: #9d9e96;
+  font-size: 13px;
+}
+.ops-health-gates {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+  gap: 12px;
+}
+.ops-health-topology-row {
+  border: 1px solid #353731;
+  padding: 14px;
+  min-width: 0;
+  border-radius: 6px;
+}
+.ops-health-topology-row > header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 10px;
+}
+.ops-health-topology-row > header span {
+  font-size: 12px;
+  color: #a4a59c;
+}
+.ops-health-topology-row[data-state='ready'] > header span {
+  color: #8bcba4;
+}
+.ops-health-topology-row[data-state='blocked'] > header span {
+  color: #ed9393;
+}
+.ops-health-topology-row[data-state='active'] > header span {
+  color: #d4bd7b;
+}
+.ops-health-topology-row details {
+  margin-top: 12px;
+  font-size: 13px;
+}
+.ops-health-topology-row summary {
+  cursor: pointer;
+}
+.ops-health-detail-list {
+  display: grid;
+  gap: 10px;
+  font-size: 12px;
+}
+.ops-health-detail-list > div {
+  min-width: 0;
+}
+.ops-health-detail-list dt {
+  text-transform: capitalize;
+  color: #a4a59c;
+}
+.ops-health-detail-list dd {
+  margin: 4px 0 0;
+}
+.ops-health-detail-list pre {
+  margin: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  max-height: 240px;
+  overflow: auto;
+}
+.ops-health-topology-identity {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  font-size: 12px;
+}
+.ops-health-topology-identity code {
+  flex-basis: 100%;
+  overflow-wrap: anywhere;
+}
+.ops-health-topology-identity button {
+  background: transparent;
+  border: 1px solid #50534b;
+  border-radius: 4px;
+  padding: 5px 8px;
+  color: inherit;
+  cursor: pointer;
+}

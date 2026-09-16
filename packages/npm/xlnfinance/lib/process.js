@@ -1,9 +1,39 @@
-import { closeSync } from 'node:fs';
+import { closeSync, existsSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { spawn } from 'node:child_process';
 
+import { verifyCandidateReleaseDirectory } from '../dist/frontend-verifier.js';
 import { ensureJurisdictionsConfig, openDaemonLog, PACKAGE_ROOT } from './state.js';
 
+export const readFrontendReleaseDirectory = () => {
+  const pointer = JSON.parse(readFileSync(join(PACKAGE_ROOT, 'dist', 'frontend-release.json'), 'utf8'));
+  if (
+    !pointer ||
+    typeof pointer !== 'object' ||
+    Array.isArray(pointer) ||
+    Object.keys(pointer).sort().join(',') !== 'releaseId,schemaVersion' ||
+    pointer.schemaVersion !== 1 ||
+    typeof pointer.releaseId !== 'string' ||
+    !/^sha256-[0-9a-f]{64}$/.test(pointer.releaseId)
+  ) {
+    throw new Error('XLNFINANCE_FRONTEND_RELEASE_INVALID');
+  }
+  return join(PACKAGE_ROOT, 'app', pointer.releaseId);
+};
+
+export const requireDistributionAssets = async paths => {
+  if (!existsSync(paths.server)) throw new Error(`XLN_SERVER_BUNDLE_MISSING:${paths.server}`);
+  if (!existsSync(paths.brainvaultWorker)) {
+    throw new Error(`XLN_BRAINVAULT_WORKER_BUNDLE_MISSING:${paths.brainvaultWorker}`);
+  }
+  if (!existsSync(paths.launcherClient)) {
+    throw new Error(`XLNFINANCE_LAUNCHER_CLIENT_BUNDLE_MISSING:${paths.launcherClient}`);
+  }
+  await verifyCandidateReleaseDirectory(readFrontendReleaseDirectory());
+};
+
 export const spawnDaemon = async ({ instanceId, version, runtimeSeed, authSeed, controlToken, paths }) => {
+  const frontendRelease = readFrontendReleaseDirectory();
   const jurisdictions = await ensureJurisdictionsConfig(paths);
   if (jurisdictions.warning) {
     console.warn(`xlnfinance: live testnet config unavailable; using last verified cache (${jurisdictions.warning})`);
@@ -14,7 +44,7 @@ export const spawnDaemon = async ({ instanceId, version, runtimeSeed, authSeed, 
     paths.server,
     '--host', '127.0.0.1',
     '--port', '8080',
-    '--static-dir', paths.app,
+    '--frontend-release', frontendRelease,
     '--server-id', paths.mode === 'dev' ? 'xlnfinance-dev' : 'xlnfinance-testnet',
   ], {
     cwd: PACKAGE_ROOT,

@@ -1,3 +1,5 @@
+import { mergeWalletRecoveryServicesObservation } from '../../../../packages/browser/src/recovery/wallet-recovery-services';
+import { WalletRecoveryCoverage } from './wallet-recovery-coverage';
 import { useEffect, useState } from 'react';
 
 import type {
@@ -10,7 +12,7 @@ import type {
 import type { WalletRuntimeSummary } from '../app-shell-model';
 import {
   previewWalletRecoveryServices,
-  readWalletRecoveryServices,
+  observeWalletRecoveryServices,
   saveWalletRecoveryServices,
 } from './wallet-recovery-services-source';
 import { WalletPushWake } from '../push-wake/wallet-push-wake';
@@ -48,11 +50,19 @@ export function WalletRecoveryServices({
   const [savedRevision, setSavedRevision] = useState(0);
   const [status, setStatus] = useState('');
   const [error, setError] = useState('');
+  const [observationError, setObservationError] = useState('');
+  const visibleError = error || observationError;
+  const readyView = view?.state === 'ready' ? view : null;
+
+  useEffect(() => {
+    setStatus('');
+    setError('');
+  }, [runtimeState, readyView?.runtimeId]);
 
   useEffect(() => {
     let active = true;
-    setStatus('');
-    setError('');
+    let stop = () => {};
+    setObservationError('');
     if (runtimeState !== 'local-ready') {
       setView({
         state: 'unavailable',
@@ -62,17 +72,34 @@ export function WalletRecoveryServices({
       });
       return () => { active = false; };
     }
-    setView(null);
-    void readWalletRecoveryServices()
-      .then((next) => { if (active) setView(next); })
-      .catch((failure: unknown) => { if (active) setError(recoveryErrorMessage(failure)); });
-    return () => { active = false; };
-  }, [runtimeState]);
+    const mutation = readyView ? mutationFromView(readyView) : null;
+    void observeWalletRecoveryServices(
+      mutation,
+      next => {
+        if (!active) return;
+        setObservationError('');
+        setView(previous => mergeWalletRecoveryServicesObservation(previous, next, mutation));
+      },
+      failure => {
+        if (active) setObservationError(recoveryErrorMessage(failure));
+      },
+    )
+      .then(unsubscribe => {
+        if (active) stop = unsubscribe;
+        else unsubscribe();
+      })
+      .catch((failure: unknown) => {
+        if (active) setObservationError(recoveryErrorMessage(failure));
+      });
+    return () => {
+      active = false;
+      stop();
+    };
+  }, [runtimeState, readyView?.runtimeId, readyView?.mode, readyView?.services]);
 
   useEffect(() => {
-    onDraftChange?.(view?.state === 'ready' && view.writable && !busy && !error
-      ? mutationFromView(view) : null);
-  }, [view, busy, error, onDraftChange]);
+    onDraftChange?.(view?.state === 'ready' && view.writable && !busy && !visibleError ? mutationFromView(view) : null);
+  }, [view, busy, visibleError, onDraftChange]);
 
   const preview = async (mutation: WalletRecoveryServicesMutation): Promise<boolean> => {
     setBusy(true);
@@ -94,9 +121,13 @@ export function WalletRecoveryServices({
       <section className="wallet-recovery-services" aria-labelledby="wallet-recovery-services-title">
         <p className="wallet-shell-eyebrow">Runtime protection</p>
         <h2 id="wallet-recovery-services-title">Recovery services</h2>
-        {error
-          ? <p className="wallet-settings-error" role="alert">{error}</p>
-          : <p className="wallet-recovery-unavailable">Loading recovery services…</p>}
+        {visibleError ? (
+          <p className="wallet-settings-error" role="alert">
+            {visibleError}
+          </p>
+        ) : (
+          <p className="wallet-recovery-unavailable">Loading recovery services…</p>
+        )}
       </section>
     );
   }
@@ -106,11 +137,16 @@ export function WalletRecoveryServices({
         <p className="wallet-shell-eyebrow">Runtime protection</p>
         <h2 id="wallet-recovery-services-title">Recovery services</h2>
         <p className="wallet-recovery-unavailable">{view.reason}</p>
+        {visibleError ? (
+          <p className="wallet-settings-error" role="alert">
+            {visibleError}
+          </p>
+        ) : null}
       </section>
     );
   }
 
-  const disabled = busy || !view.writable;
+  const disabled = busy || !view.writable || Boolean(observationError);
   const updateRole = (url: string, role: WalletRecoveryServiceRole): void => {
     void preview(mutationFromView(view, {
       services: view.services.map((service) => service.url === url ? { ...service, role } : service),
@@ -194,18 +230,36 @@ export function WalletRecoveryServices({
           ))}
         </div>
 
+        <WalletRecoveryCoverage view={view} />
+
         <div className="wallet-recovery-manual-editor">
           <label><span>Service URL</span><input disabled={disabled} onChange={(event) => setManualUrl(event.target.value)} placeholder="https://tower.example.com" type="url" value={manualUrl} /></label>
           <label><span>Role</span><select aria-label="Manual recovery service role" disabled={disabled} onChange={(event) => setManualRole(event.target.value as WalletRecoveryServiceRole)} value={manualRole}><option value="blind_backup">Backup service</option><option value="delayed_last_resort">Last-resort disputer</option></select></label>
           <button disabled={disabled} onClick={addService} type="button">Add service</button>
         </div>
 
-        {onDraftChange
-          ? <p className="wallet-recovery-unavailable">These settings are saved when you finish account setup.</p>
-          : <button className="wallet-recovery-save" disabled={disabled} onClick={() => void save()} type="button">{busy ? 'Saving…' : 'Save recovery services'}</button>}
-        {!view.writable ? <p className="wallet-settings-error" role="alert">{view.blockedReason}</p> : null}
-        {status ? <p className="wallet-settings-status" aria-live="polite">{status}</p> : null}
-        {error ? <p className="wallet-settings-error" role="alert">{error}</p> : null}
+        {onDraftChange ? (
+          <p className="wallet-recovery-unavailable">These settings are saved when you finish account setup.</p>
+        ) : (
+          <button className="wallet-recovery-save" disabled={disabled} onClick={() => void save()} type="button">
+            {busy ? 'Saving…' : 'Save recovery services'}
+          </button>
+        )}
+        {!view.writable ? (
+          <p className="wallet-settings-error" role="alert">
+            {view.blockedReason}
+          </p>
+        ) : null}
+        {status ? (
+          <p className="wallet-settings-status" aria-live="polite">
+            {status}
+          </p>
+        ) : null}
+        {visibleError ? (
+          <p className="wallet-settings-error" role="alert">
+            {visibleError}
+          </p>
+        ) : null}
       </section>
       {onDraftChange ? null : <WalletPushWake refreshKey={savedRevision} runtimeState={runtimeState} />}
     </>

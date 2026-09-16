@@ -20,7 +20,7 @@
   import { onMount, onDestroy, createEventDispatcher } from 'svelte';
   import { isUnknownRecord, parseJsonUnknown } from '../../../../packages/runtime-client/src/boundary';
   import { formatEntityId } from '../../../../packages/ui/src/format';
-  import { resolveOrderbookRelayWsUrl } from './orderbook-relay-url';
+  import { resolveOrderbookRelayWsUrl } from '../../../../packages/browser/src/market/orderbook-relay-url';
   import {
     decodeMarketWireResponse,
     encodeMarketWireMessage,

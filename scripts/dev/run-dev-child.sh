@@ -12,7 +12,7 @@ if [[ -z "$role" ]]; then
 fi
 
 case "$role" in
-  anvil|anvil2|rpc-ready|backend-ready|mesh|watchtower|runtime|vite|vite-http|ui|ready)
+  anvil|anvil2|rpc-ready|backend-ready|mesh|watchtower|runtime|vite|vite-http|react|ui|ready)
     ;;
   *)
     echo "DEV_CHILD_ROLE_UNKNOWN:${role}" >&2
@@ -229,7 +229,7 @@ case "$role" in
         --allow-reset \
         --custody-port "$CUSTODY_PORT" \
         --custody-daemon-port "$CUSTODY_DAEMON_PORT" \
-        --wallet-url "http://localhost:${WEB_HTTP_PORT}/app"
+        --wallet-url "${DEV_WALLET_ORIGIN:-http://localhost:${WEB_HTTP_PORT}}/app"
     ;;
   watchtower)
     run_owned bun --no-orphans core/watchtower/standalone-server.ts \
@@ -248,13 +248,28 @@ case "$role" in
   vite-http)
     run_vite "$WEB_HTTP_PORT" --config vite.config.http.ts --logLevel warn
     ;;
+  react)
+    cd frontend
+    run_owned env \
+      XLN_REACT_PORT_OFFSET=0 \
+      XLN_REACT_LIVE_RUNTIME_DIRECTORY="$REPO_ROOT/frontend/static" \
+      XLN_REACT_GATEWAY_PORT="$WEB_PORT" \
+      XLN_REACT_EDGE_TARGET="http://127.0.0.1:${API_PORT}" \
+      XLN_REACT_EDGE_WEBSOCKET_TARGET="http://127.0.0.1:${API_PORT}" \
+      VITE_XLN_WATCHTOWER_URL="http://127.0.0.1:${WATCHTOWER_PORT}" \
+      ANVIL_RPC="http://localhost:${RPC_PORT}" \
+      ANVIL_RPC2="http://localhost:${RPC2_PORT}" \
+      RPC_ETHEREUM="http://localhost:${RPC_PORT}" \
+      RPC_TRON="http://localhost:${RPC2_PORT}" \
+      bun --no-orphans scripts/dev.ts --all
+    ;;
   ui)
     run_ui
     ;;
   ready)
     run_owned bun scripts/dev/wait-dev-ready.ts \
       --api-url "http://127.0.0.1:${API_PORT}" \
-      --web-url "http://localhost:${WEB_HTTP_PORT}" \
+      --web-url "${DEV_WALLET_ORIGIN:-http://localhost:${WEB_HTTP_PORT}}" \
       --relay-web-urls "$DEV_RELAY_WEB_URLS" \
       --watchtower-url "http://127.0.0.1:${WATCHTOWER_PORT}" \
       --runtime-bundle "$DEV_RUNTIME_BUNDLE_PATH" \

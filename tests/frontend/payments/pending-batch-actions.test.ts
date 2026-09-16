@@ -3,11 +3,11 @@ import { readFileSync } from 'node:fs';
 import {
   buildPendingBatchEntityInput,
   enqueuePendingBatchAction,
-} from '../../../frontend/src/lib/components/Entity/payments/batch/pending-batch-actions';
+} from '../../../frontend/packages/browser/src/payments/pending-batch-actions';
 
 describe('pending batch action helpers', () => {
   test('pending batch actions do not require embedded RuntimeReplica', () => {
-    const source = readFileSync('frontend/src/lib/components/Entity/payments/batch/pending-batch-actions.ts', 'utf8');
+    const source = readFileSync('frontend/packages/browser/src/payments/pending-batch-actions.ts', 'utf8');
     expect(source).not.toContain('EnvSnapshot');
     expect(source).not.toContain('requireRuntimeEnv');
     expect(source).not.toContain('activeEnv');

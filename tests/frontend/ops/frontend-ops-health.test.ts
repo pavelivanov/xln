@@ -80,6 +80,28 @@ describe('React ops health evidence', () => {
     )).toEqual({ status: 'FAIL', reason: 'Latest refresh failed; showing the last verified snapshot' });
   });
 
+  test('critical Runtime events prevent a healthy aggregate from showing READY', () => {
+    const health = decodeOpsHealthEvidence(HEALTH_PAYLOAD, 1);
+    const rpc = { ok: true, attempts: 1, latencyMs: 5, error: null };
+    expect(deriveOpsHealthDisplayVerdict(health, rpc, '', 1)).toEqual({
+      status: 'DEGRADED',
+      reason: '1 critical Runtime events in the latest window',
+    });
+    expect(deriveOpsHealthDisplayVerdict(health, { ...rpc, ok: false, error: 'HTTP 503' }, '', 1)).toEqual({
+      status: 'FAIL',
+      reason: 'RPC health check failed: HTTP 503',
+    });
+    expect(
+      deriveOpsHealthDisplayVerdict(
+        decodeOpsHealthEvidence({ ...HEALTH_PAYLOAD, coreOk: false, degraded: ['core'] }, 1),
+        rpc,
+        '',
+        1,
+      ),
+    ).toEqual({ status: 'FAIL', reason: 'core' });
+    expect(deriveOpsHealthDisplayVerdict(health, rpc, '', 0).status).toBe('READY');
+  });
+
   test('formats bounded operator metrics without inventing missing evidence', () => {
     const health = decodeOpsHealthEvidence(HEALTH_PAYLOAD, 1);
     const metrics = buildOpsHealthMetrics(health, { ok: true, attempts: 1, latencyMs: 8, error: null });

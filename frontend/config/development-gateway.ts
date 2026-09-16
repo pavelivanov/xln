@@ -1,15 +1,17 @@
 import {
+  resolvePublicRoute,
+  type GatewayRedirectDecision,
+  type GatewayResponseDecision,
+} from '../../packages/frontend-release/public-routes';
+import {
   SURFACES,
   isEdgeRoute,
   matchesRoute,
   resolveRouteOwner,
   type RouteOwner,
   type SurfaceId,
-} from './surfaces';
-import {
-  PREPARED_GENERATED_INPUTS,
-  isCommandGeneratedInput,
-} from './generated-inputs';
+} from '../../packages/frontend-release/surfaces';
+import { PREPARED_GENERATED_INPUTS, isCommandGeneratedInput } from './generated-inputs';
 
 export const DEVELOPMENT_GATEWAY_PORT = 8080;
 export const DEVELOPMENT_EDGE_PORT = 8082;
@@ -50,23 +52,7 @@ type GatewayProxyDecision = Readonly<{
   rewrite: 'none' | 'app-base';
 }>;
 
-type GatewayRedirectDecision = Readonly<{
-  kind: 'redirect';
-  status: 307 | 308;
-  location: `/${string}`;
-}>;
-
-type GatewayResponseDecision = Readonly<{
-  kind: 'response';
-  status: 200 | 400;
-  body: string;
-  headers: Readonly<Record<string, string>>;
-}>;
-
-export type DevelopmentGatewayDecision =
-  | GatewayProxyDecision
-  | GatewayRedirectDecision
-  | GatewayResponseDecision;
+export type DevelopmentGatewayDecision = GatewayProxyDecision | GatewayRedirectDecision | GatewayResponseDecision;
 
 const parseIncomingUrl = (rawUrl: string): URL => {
   if (!rawUrl.startsWith('/') || rawUrl.includes('#')) throw new Error('DEVELOPMENT_GATEWAY_URL_INVALID');
@@ -95,29 +81,8 @@ const findSurfaceByAsset = (pathname: string): SurfaceId | undefined =>
 
 export const resolveDevelopmentGatewayRequest = (rawUrl: string): DevelopmentGatewayDecision => {
   const url = parseIncomingUrl(rawUrl);
-  if (url.pathname === '/admin') return { kind: 'redirect', status: 308, location: '/health' };
-  if (url.pathname === '/radapter') {
-    if (url.search === '') return { kind: 'redirect', status: 307, location: '/app' };
-    return {
-      kind: 'response',
-      status: 400,
-      body: 'REMOTE_RUNTIME_QUERY_BOOTSTRAP_FORBIDDEN',
-      headers: { 'content-type': 'text/plain; charset=utf-8' },
-    };
-  }
-  if (url.pathname === '/resetdb') {
-    return {
-      kind: 'response',
-      status: 200,
-      body: 'Resetting local data',
-      headers: {
-        'cache-control': 'no-store, max-age=0',
-        'clear-site-data': '"*"',
-        refresh: '0;url=/app',
-        'content-type': 'text/plain; charset=utf-8',
-      },
-    };
-  }
+  const publicRoute = resolvePublicRoute(url);
+  if (publicRoute) return publicRoute;
 
   const hmrOwner = findSurfaceByHmrPath(url.pathname);
   if (hmrOwner !== undefined) return { kind: 'proxy', owner: hmrOwner, rewrite: 'none' };

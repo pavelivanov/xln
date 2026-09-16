@@ -37,6 +37,10 @@ describe('React wallet recovery-service onboarding', () => {
     expect(source).not.toContain('runtime.seed');
     expect(source).not.toContain('mnemonic');
     expect(source).toContain("import('../../../../bridges/wallet/wallet-canonical-recovery-services')");
-    expect(source).toContain('role="alert">{error}');
+    expect(source).toContain('role="alert">{visibleError}');
+    expect(source).toContain('const visibleError = error || observationError');
+    expect(source).toContain('Boolean(observationError)');
+    expect(source).toContain('else unsubscribe();');
+    expect(source).toContain('active = false; stop();');
   });
 });

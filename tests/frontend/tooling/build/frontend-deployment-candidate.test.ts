@@ -1,12 +1,14 @@
+import { prepareVerifiedDeployment } from '../../../../packages/frontend-release/deployment-http';
+import { prepareVerifiedRelease } from '../../../../packages/frontend-release/http';
 import { afterEach, describe, expect, test } from 'bun:test';
 import { cp, lstat, mkdir, mkdtemp, readFile, rm, symlink, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 
 import { safeStringify } from '../../../../core/protocol/serialization';
-import { SURFACE_IDS, type SurfaceId } from '../../../../frontend/config/surfaces';
+import { SURFACE_IDS, type SurfaceId } from '../../../../packages/frontend-release/surfaces';
 import { assembleCandidateRelease } from '../../../../frontend/scripts/release/candidate-release';
-import { requestedReleasePath, serveCandidateReleaseFile } from '../../../../frontend/scripts/release/candidate-release-serving';
+import { requestedReleasePath, serveCandidateReleaseFile } from '../../../../packages/frontend-release/serve';
 import {
   DEPLOYMENT_CANDIDATE_STATE,
   activateDeploymentCandidate,
@@ -16,7 +18,7 @@ import {
   rollbackDeploymentCandidate,
   stageDeploymentCandidateRelease,
   verifyDeploymentCandidateState,
-} from '../../../../frontend/scripts/deployment/deployment-candidate';
+} from '../../../../packages/frontend-release/deployment';
 
 const temporaryRoots: string[] = [];
 
@@ -48,6 +50,29 @@ afterEach(async () => {
 });
 
 describe('isolated deployment candidate selection', () => {
+  test('a live HTTP reader switches whole releases and rejects stale activation and rollback', async () => {
+    const fixture = await createReleasePair();
+    await activateDeploymentCandidate(fixture.first.releaseDirectory, fixture.deploymentRoot, null);
+    const reader = await prepareVerifiedDeployment(fixture.deploymentRoot);
+    const request = () => new Request('http://localhost/app');
+    expect((await reader.serve(request()))?.headers.get('x-xln-deployment-release')).toBe(fixture.first.releaseId);
+    await expect(
+      activateDeploymentCandidate(fixture.second.releaseDirectory, fixture.deploymentRoot, fixture.second.releaseId),
+    ).rejects.toThrow('DEPLOYMENT_CANDIDATE_ACTIVE_CHANGED');
+    await activateDeploymentCandidate(fixture.second.releaseDirectory, fixture.deploymentRoot, fixture.first.releaseId);
+    expect((await reader.serve(request()))?.headers.get('x-xln-deployment-release')).toBe(fixture.second.releaseId);
+    await expect(rollbackDeploymentCandidate(fixture.deploymentRoot, fixture.first.releaseId)).rejects.toThrow(
+      'DEPLOYMENT_CANDIDATE_ACTIVE_CHANGED',
+    );
+    await rollbackDeploymentCandidate(fixture.deploymentRoot, fixture.second.releaseId);
+    expect((await reader.serve(request()))?.headers.get('x-xln-deployment-release')).toBe(fixture.first.releaseId);
+    await writeFile(
+      join(deploymentReleaseDirectory(fixture.deploymentRoot, fixture.first.releaseId), 'apps/wallet/index.html'),
+      'corrupt',
+    );
+    await expect(reader.serve(request())).rejects.toThrow('CANDIDATE_RELEASE_FILE_MISMATCH');
+  });
+
   test('serves exact release routes and asset hashes while rejecting unknown paths and changed bytes', async () => {
     const { first } = await createReleasePair();
     const routes = new Map([
@@ -87,6 +112,27 @@ describe('isolated deployment candidate selection', () => {
     await expect(
       serveCandidateReleaseFile(first.releaseDirectory, first.manifest, '/assets/wallet/index.js'),
     ).rejects.toThrow('CANDIDATE_RELEASE_FILE_MISMATCH:assets/wallet/index.js');
+  });
+
+  test('verified HTTP serving preserves edge ownership and rejects corruption without a static fallback', async () => {
+    const { first } = await createReleasePair();
+    const release = await prepareVerifiedRelease(first.releaseDirectory);
+    const request = (path: string, method = 'GET') => new Request(`http://localhost:8080${path}`, { method });
+    const head = await release.serve(request('/app', 'HEAD'));
+    expect(head?.status).toBe(200);
+    expect(head?.headers.get('x-xln-deployment-release')).toBe(first.releaseId);
+    expect(await head?.text()).toBe('');
+    expect((await release.serve(request('/app', 'POST')))?.status).toBe(405);
+    expect(await release.serve(request('/api/tokens'))).toBeNull();
+    expect(await release.serve(request('/rpc', 'POST'))).toBeNull();
+    expect((await release.serve(request('/unknown')))?.status).toBe(404);
+    expect((await release.serve(request('/runtime.js')))?.status).toBe(404);
+    expect((await release.serve(request('/admin')))?.headers.get('location')).toBe('/health');
+    expect((await release.serve(request('/radapter?token=forbidden')))?.status).toBe(400);
+    expect((await release.serve(request('/resetdb')))?.headers.get('clear-site-data')).toBe('"*"');
+    await writeFile(join(first.releaseDirectory, 'apps/wallet/index.html'), 'corrupt');
+    await expect(release.serve(request('/app'))).rejects.toThrow('CANDIDATE_RELEASE_FILE_MISMATCH');
+    await expect(prepareVerifiedRelease(first.releaseDirectory)).rejects.toThrow('CANDIDATE_RELEASE_FILE_MISMATCH');
   });
 
   test('atomically activates two exact releases and rolls back the whole release', async () => {

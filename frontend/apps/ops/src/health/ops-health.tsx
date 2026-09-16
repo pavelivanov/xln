@@ -11,6 +11,10 @@ import {
 import { opsHealthSource } from './ops-health-runtime';
 import { OpsShell } from '../ops-shell';
 import '../styles/ops-health.css';
+import { OpsHealthEventsPanel } from './ops-health-events';
+import { useOpsHealthEvents } from './use-ops-health-events';
+import { isCriticalEvent } from '../../../../packages/ui/src/health/runtime-events';
+import { OpsHealthTopology } from './topology/ops-health-topology';
 
 const formatObservedAt = (timestamp: number): string =>
   new Intl.DateTimeFormat(undefined, {
@@ -117,8 +121,15 @@ export function OpsHealthPage() {
     opsHealthSource.getSnapshot,
     opsHealthSource.getSnapshot,
   );
+  const events = useOpsHealthEvents(snapshot.autoRefresh);
+  const criticalCount = events.snapshot.data?.events.filter(isCriticalEvent).length ?? 0;
   const verdict = snapshot.health
-    ? deriveOpsHealthDisplayVerdict(snapshot.health, snapshot.rpc, snapshot.error)
+    ? deriveOpsHealthDisplayVerdict(
+        snapshot.health,
+        snapshot.rpc,
+        snapshot.error || events.snapshot.error || '',
+        criticalCount,
+      )
     : null;
 
   return (
@@ -152,7 +163,7 @@ export function OpsHealthPage() {
       ) : null}
 
       {snapshot.status === 'error' ? (
-        <section className="ops-error" role="alert">
+        <section className="ops-error" role="alert" aria-label="Health availability">
           <span>UNAVAILABLE</span>
           <div><strong>Health evidence could not be refreshed.</strong><code>{snapshot.error}</code></div>
           <button onClick={() => void opsHealthSource.refresh()} type="button">Retry probe</button>
@@ -174,12 +185,14 @@ export function OpsHealthPage() {
           ) : null}
           <HealthMetrics health={snapshot.health} rpc={snapshot.rpc} />
           <RuntimeEvidence health={snapshot.health} />
+          <OpsHealthTopology topology={snapshot.health.topology} />
           <footer className="ops-health-footer">
             <span>Observed {formatObservedAt(snapshot.health.timestamp)}</span>
             <span>Endpoint /api/health · probe /rpc</span>
           </footer>
         </div>
       ) : null}
+      <OpsHealthEventsPanel {...events} />
     </OpsShell>
   );
 }

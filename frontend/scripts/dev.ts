@@ -1,6 +1,6 @@
 import { fileURLToPath } from 'node:url';
 
-import { getSurface, type SurfaceId } from '../config/surfaces';
+import { getSurface, type SurfaceId } from '../../packages/frontend-release/surfaces';
 import { prepareGeneratedInputs } from './inputs/generated-inputs';
 import { parseSurfaceSelection } from './shared/surface-selection';
 

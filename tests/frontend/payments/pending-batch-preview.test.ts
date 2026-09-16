@@ -6,7 +6,7 @@ import {
   buildPendingBatchState,
   canBroadcastPendingBatch,
   countBatchOps,
-} from '../../../frontend/src/lib/components/Entity/payments/batch/pending-batch-preview';
+} from '../../../frontend/packages/runtime-client/src/payments/pending-batch-state';
 
 const batch = (input: Partial<JBatch>): JBatch =>
   ({

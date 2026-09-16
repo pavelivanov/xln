@@ -1,15 +1,17 @@
 import { describe, expect, test } from 'bun:test';
 import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
 
 import {
-  BRAINVAULT_SHARD_TIME_MAX_MS,
   countMnemonicWords,
   estimateBrainVaultWork,
   hasSupportedMnemonicWordCount,
-  normalizeBrainVaultShardTimeSample,
   normalizeMnemonicPhrase,
-} from '../../../../frontend/src/lib/components/Views/runtime-creation-model';
+} from '../../../../frontend/packages/ui/src/runtime-creation-model';
+
+import {
+  BRAINVAULT_SHARD_TIME_MAX_MS,
+  normalizeWalletBrainVaultShardTimeSample,
+} from '../../../../frontend/packages/browser/src/identity/wallet-brainvault-worker-validation';
 
 describe('runtime creation', () => {
   test('accepts only the supported 12-word and 24-word mnemonic lengths', () => {
@@ -33,28 +35,33 @@ describe('runtime creation', () => {
   });
 
   test('keeps shard timing telemetry bounded without failing valid derivation work', () => {
-    expect(normalizeBrainVaultShardTimeSample(Number.NaN)).toBeNull();
-    expect(normalizeBrainVaultShardTimeSample('3000')).toBeNull();
-    expect(normalizeBrainVaultShardTimeSample(1)).toBe(100);
-    expect(normalizeBrainVaultShardTimeSample(750_000)).toBe(750_000);
-    expect(normalizeBrainVaultShardTimeSample(BRAINVAULT_SHARD_TIME_MAX_MS * 2))
-      .toBe(BRAINVAULT_SHARD_TIME_MAX_MS);
+    expect(normalizeWalletBrainVaultShardTimeSample(Number.NaN)).toBeNull();
+    expect(normalizeWalletBrainVaultShardTimeSample('3000')).toBeNull();
+    expect(normalizeWalletBrainVaultShardTimeSample(1)).toBe(100);
+    expect(normalizeWalletBrainVaultShardTimeSample(750_000)).toBe(750_000);
+    expect(normalizeWalletBrainVaultShardTimeSample(BRAINVAULT_SHARD_TIME_MAX_MS * 2)).toBe(
+      BRAINVAULT_SHARD_TIME_MAX_MS,
+    );
   });
 
-  test('keeps production wallet creation focused on Brain Vault and mnemonic inputs', () => {
-    const source = readFileSync(
-      join(process.cwd(), 'frontend/src/lib/components/Views/RuntimeCreation.svelte'),
+  test('keeps wallet identity inputs and worker cleanup at their canonical boundaries', () => {
+    const form = readFileSync('frontend/apps/wallet/src/identity/identity-entry-form.tsx', 'utf8');
+    const onboarding = readFileSync('frontend/apps/wallet/src/identity/identity-onboarding.tsx', 'utf8');
+    const derivation = readFileSync(
+      'frontend/bridges/wallet/brainvault/wallet-brainvault-browser-derivation.ts',
       'utf8',
     );
 
-    expect(source).toContain("type InputMode = 'brainvault' | 'mnemonic';");
-    expect(source).toContain('id="wallet-panel-brainvault"');
-    expect(source).toContain('id="wallet-panel-mnemonic"');
-    expect(source).not.toContain('wallet-panel-testnet');
-    expect(source).not.toContain('live-runtime-section');
-    expect(source).not.toContain('quick-login-section');
-    expect(source).toContain('detachWorkerHandlers(worker);');
-    expect(source).toContain('worker.onmessage = null;');
-    expect(source).toContain('Timing is telemetry: invalid or extreme samples must never discard valid Argon2 output.');
+    expect(form).toContain("(['brainvault', 'mnemonic'] as const).map");
+    expect(form).toContain('id="identity-panel-brainvault"');
+    expect(form).toContain('id="identity-panel-mnemonic"');
+    expect(form).not.toContain('wallet-panel-testnet');
+    expect(form).not.toContain('live-runtime-section');
+    expect(form).not.toContain('quick-login-section');
+    expect(onboarding).toContain('prepareWalletBrainVaultWithCanonicalVault(');
+    expect(derivation).toContain('terminateWorker(run, worker)');
+    expect(derivation).toContain('worker.onmessage = null;');
+    expect(derivation).toContain('worker.onerror = null;');
+    expect(derivation.indexOf('worker.onmessage = null;')).toBeLessThan(derivation.indexOf('worker.terminate();'));
   });
 });

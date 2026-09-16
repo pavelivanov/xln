@@ -248,6 +248,9 @@ const token = auth.deriveRuntimeAdapterCapabilityToken(
   { audience: runtimeId, keyId: 'wallet-address-e2e', tokenId: 'wallet-address-e2e' },
 );
 const recoveryFixture = await createWalletRecoveryFixture(port);
+let healthFixture: Awaited<
+  ReturnType<typeof import('../../fixtures/health-orchestrator-fixture').startHealthOrchestratorFixture>
+> | null = null;
 const relayPort = port + 3;
 if (relayPort > 65_535) throw new Error('WALLET_RUNTIME_FIXTURE_RELAY_PORT_INVALID');
 const gatewayPort = Number(process.env['XLN_REACT_GATEWAY_PORT'] ?? port - 12);
@@ -328,6 +331,20 @@ server = Bun.serve<FixtureSocketData>({
   idleTimeout: 30,
   async fetch(request, bunServer) {
     const url = new URL(request.url);
+    if (url.pathname === '/health-fixture/start' && request.method === 'POST') {
+      if (healthFixture) throw new Error('HEALTH_FIXTURE_ALREADY_STARTED');
+      healthFixture = await (
+        await import('../../fixtures/health-orchestrator-fixture')
+      ).startHealthOrchestratorFixture(port, `${databaseRoot}/health`);
+      return Response.json({ started: true });
+    }
+    if (url.pathname === '/health-fixture/stop' && request.method === 'POST') {
+      await healthFixture?.close();
+      healthFixture = null;
+      return Response.json({ stopped: true });
+    }
+    const healthResponse = await healthFixture?.handle(request);
+    if (healthResponse) return healthResponse;
     const assistantResponse = await assistantProxy.handle(request, url.pathname, '127.0.0.1');
     if (assistantResponse) return assistantResponse;
     const apiHeaders = { 'access-control-allow-origin': '*', 'access-control-allow-methods': 'GET, POST, OPTIONS', 'access-control-allow-headers': 'content-type, cache-control, pragma, authorization', 'content-type': 'application/json' };
@@ -737,6 +754,7 @@ const stop = async (): Promise<void> => {
   if (crossJFixture) await (await crossJFixture).close();
   await chainAdapter.close();
   await recoveryFixture.close();
+  await healthFixture?.close();
   await runtime.stopP2PAndWait(env, 1_000);
   relayServer.close();
   if (deploymentRpc) {

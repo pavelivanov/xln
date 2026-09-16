@@ -10,7 +10,7 @@ import {
   PREPARED_GENERATED_INPUTS,
   type CopyGeneratedInputDefinition,
 } from '../../../../frontend/config/generated-inputs';
-import { SURFACE_IDS, type SurfaceId } from '../../../../frontend/config/surfaces';
+import { SURFACE_IDS, type SurfaceId } from '../../../../packages/frontend-release/surfaces';
 import {
   assembleCandidateRelease,
   planCandidateRelease,

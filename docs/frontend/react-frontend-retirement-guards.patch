@@ -1,0 +1,208 @@
+--- a/frontend/config/capabilities.ts
++++ b/frontend/config/capabilities.ts
+@@ -20,2 +19,0 @@
+-      'frontend/src/routes/+page.svelte',
+-      'frontend/src/routes/install/+page.svelte',
+@@ -46 +43,0 @@
+-      'frontend/src/routes/docs/+page.svelte',
+@@ -123,5 +120,2 @@
+-      'frontend/src/lib/components/Views/RuntimeCreation.svelte',
+-      'frontend/src/routes/app/+layout.svelte',
+-      'frontend/src/routes/app/+page.svelte',
+-      'frontend/src/routes/address/+page.svelte',
+-      'frontend/src/routes/testnet/+page.svelte',
++      'frontend/apps/wallet/src/identity/identity-onboarding.tsx',
++      'frontend/apps/wallet/src/app-shell.tsx',
+@@ -178 +171,0 @@
+-      'frontend/src/lib/utils/control/resetEverything.ts',
+@@ -235 +227,0 @@
+-      'frontend/src/lib/utils/runtime/runtimeConnection.ts',
+@@ -284 +275,0 @@
+-      'frontend/src/lib/utils/recovery',
+@@ -294 +284,0 @@
+-      'frontend/src/lib/components/Entity',
+@@ -338 +327,0 @@
+-      'frontend/src/lib/components/Entity/swap',
+@@ -377 +365,0 @@
+-      'frontend/src/lib/native',
+@@ -426,4 +413,0 @@
+-      'frontend/src/routes/health/+page.svelte',
+-      'frontend/src/routes/qa/+page.svelte',
+-      'frontend/src/routes/qa/hlt/+page.svelte',
+-      'frontend/src/routes/qa/quorum/+page.svelte',
+@@ -475,3 +458,0 @@
+-      'frontend/src/routes/runs/+page.svelte',
+-      'frontend/src/routes/scenarios/+page.svelte',
+-      'frontend/src/routes/ai/[[chatId]]/+page.svelte',
+@@ -520,2 +500,0 @@
+-      'frontend/src/lib/view/View.svelte',
+-      'frontend/src/routes/embed/+page.svelte',
+--- a/frontend/config/platform-inventory.ts
++++ b/frontend/config/platform-inventory.ts
+@@ -98 +97,0 @@
+-      'frontend/src/lib/utils/runtime/runtimeConnection.ts',
+@@ -124 +123 @@
+-    consumers: ['frontend/src/routes/app/+layout.svelte'],
++    consumers: ['frontend/bridges/wallet/wallet-canonical-vault-runtime.ts', 'frontend/apps/wallet/src/runtime/wallet-embedded-runtime.ts'],
+@@ -205 +203,0 @@
+-      'frontend/src/lib/utils/control/resetEverything.ts',
+@@ -225 +222,0 @@
+-      'frontend/src/lib/components/Views/RuntimeCreation.svelte',
+@@ -247 +243,0 @@
+-      'frontend/src/lib/components/Settings/PushWakePanel.svelte',
+@@ -403 +398,0 @@
+-      'frontend/src/routes/qa/quorum/+page.svelte',
+@@ -445 +439,0 @@
+-      'frontend/src/routes/embed/+page.svelte',
+@@ -474,7 +467,0 @@
+-      'frontend/src/lib/view/panels/ConsolePanel.svelte',
+-      'frontend/src/lib/view/panels/RuntimeIOPanel.svelte',
+-      'frontend/src/lib/view/panels/solvency/solvency-panel-view.ts',
+-      'frontend/src/lib/view/panels/solvency/SolvencyPanel.svelte',
+-      'frontend/src/lib/view/panels/RuntimeDiagnosticsPanel.svelte',
+-      'frontend/src/lib/view/panels/GossipPanel.svelte',
+-      'frontend/src/lib/components/Entity/activity/gossip-directory-view.ts',
+@@ -482,7 +468,0 @@
+-      'frontend/src/lib/view/panels/JurisdictionPanel.svelte',
+-      'frontend/src/lib/view/panels/SettingsPanel.svelte',
+-      'frontend/src/lib/view/panels/ArchitectPanel.svelte',
+-      'frontend/src/lib/view/components/EntityMiniPanel.svelte',
+-      'frontend/src/lib/view/components/Graph3DViewport.svelte',
+-      'frontend/src/lib/view/components/Graph3DFpsOverlay.svelte',
+-      'frontend/src/lib/view/components/VRControlsHUD.svelte',
+@@ -559,2 +538,0 @@
+-      'frontend/src/lib/components/Entity/workspace/entity-panel-display.ts',
+-      'frontend/src/lib/components/Entity/workspace/shell/EntityPanelTabs.svelte',
+@@ -595 +572,0 @@
+-      'frontend/src/lib/view/DockRoot.svelte',
+@@ -618 +594,0 @@
+-      'frontend/src/lib/view/panels/graph3d/Graph3DPanel.svelte',
+@@ -640,2 +615,0 @@
+-      'frontend/src/lib/view/DockRoot.svelte',
+-      'frontend/src/lib/components/shared/CommandPalette.svelte',
+@@ -650 +624 @@
+-    consumers: ['frontend/src/lib/view/View.svelte', 'frontend/apps/ops/src/workspace/ops-workspace.tsx', 'frontend/apps/wallet/src/app-shell.tsx'],
++    consumers: ['frontend/apps/ops/src/workspace/ops-workspace.tsx', 'frontend/apps/wallet/src/app-shell.tsx'],
+--- a/frontend/config/parity-audit.ts
++++ b/frontend/config/parity-audit.ts
+@@ -17 +17 @@
+-export type RetainedRouteParity = Readonly<{
++export type RouteParity = Readonly<{
+@@ -21 +20,0 @@
+-  sveltePage: string;
+@@ -44,22 +43,22 @@
+-export const RETAINED_ROUTE_PARITY = [
+-  { id: 'home', pathname: '/', representativePath: '/', sveltePage: 'frontend/src/routes/+page.svelte', intendedOwner: 'site', implementation: 'complete', browserEvidence: 'covered', reactSource: 'frontend/apps/site/src/landing-page.tsx', focusedTests: ['tests/frontend/tooling/pilots/frontend-site-pilot.test.ts'], browserTests: siteBrowser, gapIds: [] },
+-  { id: 'install', pathname: '/install', representativePath: '/install', sveltePage: 'frontend/src/routes/install/+page.svelte', intendedOwner: 'site', implementation: 'complete', browserEvidence: 'covered', reactSource: 'frontend/apps/site/src/install-page.tsx', focusedTests: ['tests/frontend/tooling/pilots/frontend-site-pilot.test.ts'], browserTests: siteBrowser, gapIds: [] },
+-  { id: 'rcpan', pathname: '/rcpan', representativePath: '/rcpan', sveltePage: 'frontend/src/routes/rcpan/+page.svelte', intendedOwner: 'site', implementation: 'complete', browserEvidence: 'covered', reactSource: 'frontend/apps/site/src/rcpan/rcpan-page.tsx', focusedTests: ['tests/frontend/tooling/pilots/frontend-rcpan-pilot.test.ts'], browserTests: siteBrowser, gapIds: [] },
+-  { id: 'releases', pathname: '/releases', representativePath: '/releases', sveltePage: 'frontend/src/routes/releases/+page.svelte', intendedOwner: 'site', implementation: 'complete', browserEvidence: 'covered', reactSource: 'frontend/apps/site/src/releases/releases-page.tsx', focusedTests: ['tests/frontend/tooling/pilots/frontend-releases-pilot.test.ts'], browserTests: siteBrowser, gapIds: ['candidate-verification'] },
+-  { id: 'reviews', pathname: '/reviews', representativePath: '/reviews', sveltePage: 'frontend/src/routes/reviews/+page.svelte', intendedOwner: 'site', implementation: 'complete', browserEvidence: 'covered', reactSource: 'frontend/apps/site/src/reviews-page.tsx', focusedTests: ['tests/frontend/tooling/pilots/frontend-reviews-pilot.test.ts'], browserTests: siteBrowser, gapIds: [] },
+-  { id: 'unicast', pathname: '/unicast', representativePath: '/unicast', sveltePage: 'frontend/src/routes/unicast/+page.svelte', intendedOwner: 'site', implementation: 'complete', browserEvidence: 'covered', reactSource: 'frontend/apps/site/src/unicast/unicast-page.tsx', focusedTests: ['tests/frontend/tooling/pilots/frontend-unicast-pilot.test.ts'], browserTests: siteBrowser, gapIds: [] },
+-  { id: 'market-cap', pathname: '/market-cap', representativePath: '/market-cap', sveltePage: 'frontend/src/routes/market-cap/+page.svelte', intendedOwner: 'site', implementation: 'complete', browserEvidence: 'covered', reactSource: 'frontend/apps/site/src/market-cap-page.tsx', focusedTests: ['tests/frontend/tooling/pilots/frontend-market-cap-pilot.test.ts'], browserTests: siteBrowser, gapIds: [] },
+-  { id: 'docs', pathname: '/docs', representativePath: '/docs', sveltePage: 'frontend/src/routes/docs/+page.svelte', intendedOwner: 'docs', implementation: 'complete', browserEvidence: 'covered', reactSource: 'frontend/apps/docs/src/docs-app.tsx', focusedTests: ['tests/frontend/tooling/pilots/frontend-docs-pilot.test.ts'], browserTests: docsBrowser, gapIds: [] },
+-  { id: 'wallet-app', pathname: '/app', representativePath: '/app', sveltePage: 'frontend/src/routes/app/+page.svelte', intendedOwner: 'wallet', implementation: 'partial', browserEvidence: 'partial', reactSource: 'frontend/apps/wallet/src/app-shell.tsx', focusedTests: ['tests/frontend/runtime/wallet/frontend-wallet-app-shell.test.ts', 'tests/frontend/tooling/frontend-wallet-flow-audit.test.ts', 'tests/frontend/payments/frontend-wallet-external-provider.test.ts'], browserTests: [...walletBrowser, ...crossSurfaceBrowser], gapIds: ['wallet-operation-parity', 'candidate-verification'] },
+-  { id: 'wallet-address', pathname: '/address', representativePath: '/address', sveltePage: 'frontend/src/routes/address/+page.svelte', intendedOwner: 'wallet', implementation: 'complete', browserEvidence: 'covered', reactSource: 'frontend/apps/wallet/src/address/wallet-address.tsx', focusedTests: ['tests/frontend/runtime/wallet/frontend-wallet-address.test.ts'], browserTests: walletBrowser, gapIds: [] },
+-  { id: 'wallet-address-entity', pathname: '/address/:entityId', representativePath: '/address/0xabc', sveltePage: 'frontend/src/routes/address/[entityId]/+page.svelte', intendedOwner: 'wallet', implementation: 'complete', browserEvidence: 'covered', reactSource: 'frontend/apps/wallet/src/address/wallet-address.tsx', focusedTests: ['tests/frontend/runtime/wallet/frontend-wallet-address.test.ts'], browserTests: walletBrowser, gapIds: [] },
+-  { id: 'testnet', pathname: '/testnet', representativePath: '/testnet', sveltePage: 'frontend/src/routes/testnet/+page.svelte', intendedOwner: 'wallet', implementation: 'complete', browserEvidence: 'covered', reactSource: 'frontend/apps/wallet/src/testnet/testnet-page.tsx', focusedTests: ['tests/frontend/tooling/pilots/frontend-testnet-pilot.test.ts'], browserTests: walletBrowser, gapIds: [] },
+-  { id: 'health', pathname: '/health', representativePath: '/health', sveltePage: 'frontend/src/routes/health/+page.svelte', intendedOwner: 'ops', implementation: 'partial', browserEvidence: 'partial', reactSource: 'frontend/apps/ops/src/health/ops-health.tsx', focusedTests: ['tests/frontend/ops/frontend-ops-health.test.ts'], browserTests: [...opsBrowser, 'frontend/tests/react-candidate/ops/ops-health-events.spec.ts', 'frontend/tests/react-candidate/ops/ops-health-topology.spec.ts'], gapIds: ['ops-health-detail-parity'] },
+-  { id: 'qa', pathname: '/qa', representativePath: '/qa', sveltePage: 'frontend/src/routes/qa/+page.svelte', intendedOwner: 'ops', implementation: 'complete', browserEvidence: 'covered', reactSource: 'frontend/apps/ops/src/qa/ops-qa.tsx', focusedTests: ['tests/frontend/ops/frontend-ops-qa.test.ts'], browserTests: opsBrowser, gapIds: [] },
+-  { id: 'qa-hlt', pathname: '/qa/hlt', representativePath: '/qa/hlt', sveltePage: 'frontend/src/routes/qa/hlt/+page.svelte', intendedOwner: 'ops', implementation: 'complete', browserEvidence: 'covered', reactSource: 'frontend/apps/ops/src/hlt/ops-hlt.tsx', focusedTests: ['tests/frontend/ops/frontend-ops-hlt.test.ts'], browserTests: opsBrowser, gapIds: [] },
+-  { id: 'qa-quorum', pathname: '/qa/quorum', representativePath: '/qa/quorum', sveltePage: 'frontend/src/routes/qa/quorum/+page.svelte', intendedOwner: 'ops', implementation: 'complete', browserEvidence: 'covered', reactSource: 'frontend/apps/ops/src/quorum/ops-quorum.tsx', focusedTests: ['tests/frontend/ops/frontend-ops-quorum.test.ts'], browserTests: opsBrowser, gapIds: [] },
+-  { id: 'runs', pathname: '/runs', representativePath: '/runs', sveltePage: 'frontend/src/routes/runs/+page.svelte', intendedOwner: 'ops', implementation: 'complete', browserEvidence: 'covered', reactSource: 'frontend/apps/ops/src/runs/ops-runs.tsx', focusedTests: ['tests/frontend/ops/frontend-ops-runs.test.ts'], browserTests: opsBrowser, gapIds: [] },
+-  { id: 'scenarios', pathname: '/scenarios', representativePath: '/scenarios', sveltePage: 'frontend/src/routes/scenarios/+page.svelte', intendedOwner: 'ops', implementation: 'complete', browserEvidence: 'covered', reactSource: 'frontend/apps/ops/src/scenarios/ops-scenarios.tsx', focusedTests: ['tests/frontend/ops/frontend-ops-scenarios.test.ts'], browserTests: [...opsBrowser, ...crossSurfaceBrowser], gapIds: [] },
+-  { id: 'ai', pathname: '/ai/:chatId?', representativePath: '/ai/audit', sveltePage: 'frontend/src/routes/ai/[[chatId]]/+page.svelte', intendedOwner: 'ops', implementation: 'complete', browserEvidence: 'covered', reactSource: 'frontend/apps/ops/src/ai/ops-ai.tsx', focusedTests: ['tests/frontend/ops/frontend-ops-ai.test.ts'], browserTests: opsBrowser, gapIds: [] },
+-  { id: 'embed', pathname: '/embed', representativePath: '/embed', sveltePage: 'frontend/src/routes/embed/+page.svelte', intendedOwner: 'ops', implementation: 'partial', browserEvidence: 'partial', reactSource: 'frontend/apps/ops/src/workspace/ops-workspace.tsx', focusedTests: ['tests/frontend/ops/entity/frontend-ops-entity-workspace.test.ts', 'tests/frontend/ops/frontend-ops-display-preferences.test.ts', 'tests/frontend/ops/entity/frontend-ops-entity-time-machine.test.ts', 'tests/frontend/ops/entity/frontend-ops-entity-activity-ledger.test.ts', 'tests/frontend/workspace/entity/entity-workspace-profile-update.test.ts'], browserTests: opsBrowser, gapIds: ['ops-workspace-route'] },
+-] as const satisfies readonly RetainedRouteParity[];
++export const ROUTE_PARITY = [
++  { id: 'home', pathname: '/', representativePath: '/', intendedOwner: 'site', implementation: 'complete', browserEvidence: 'covered', reactSource: 'frontend/apps/site/src/landing-page.tsx', focusedTests: ['tests/frontend/tooling/pilots/frontend-site-pilot.test.ts'], browserTests: siteBrowser, gapIds: [] },
++  { id: 'install', pathname: '/install', representativePath: '/install', intendedOwner: 'site', implementation: 'complete', browserEvidence: 'covered', reactSource: 'frontend/apps/site/src/install-page.tsx', focusedTests: ['tests/frontend/tooling/pilots/frontend-site-pilot.test.ts'], browserTests: siteBrowser, gapIds: [] },
++  { id: 'rcpan', pathname: '/rcpan', representativePath: '/rcpan', intendedOwner: 'site', implementation: 'complete', browserEvidence: 'covered', reactSource: 'frontend/apps/site/src/rcpan/rcpan-page.tsx', focusedTests: ['tests/frontend/tooling/pilots/frontend-rcpan-pilot.test.ts'], browserTests: siteBrowser, gapIds: [] },
++  { id: 'releases', pathname: '/releases', representativePath: '/releases', intendedOwner: 'site', implementation: 'complete', browserEvidence: 'covered', reactSource: 'frontend/apps/site/src/releases/releases-page.tsx', focusedTests: ['tests/frontend/tooling/pilots/frontend-releases-pilot.test.ts'], browserTests: siteBrowser, gapIds: ['candidate-verification'] },
++  { id: 'reviews', pathname: '/reviews', representativePath: '/reviews', intendedOwner: 'site', implementation: 'complete', browserEvidence: 'covered', reactSource: 'frontend/apps/site/src/reviews-page.tsx', focusedTests: ['tests/frontend/tooling/pilots/frontend-reviews-pilot.test.ts'], browserTests: siteBrowser, gapIds: [] },
++  { id: 'unicast', pathname: '/unicast', representativePath: '/unicast', intendedOwner: 'site', implementation: 'complete', browserEvidence: 'covered', reactSource: 'frontend/apps/site/src/unicast/unicast-page.tsx', focusedTests: ['tests/frontend/tooling/pilots/frontend-unicast-pilot.test.ts'], browserTests: siteBrowser, gapIds: [] },
++  { id: 'market-cap', pathname: '/market-cap', representativePath: '/market-cap', intendedOwner: 'site', implementation: 'complete', browserEvidence: 'covered', reactSource: 'frontend/apps/site/src/market-cap-page.tsx', focusedTests: ['tests/frontend/tooling/pilots/frontend-market-cap-pilot.test.ts'], browserTests: siteBrowser, gapIds: [] },
++  { id: 'docs', pathname: '/docs', representativePath: '/docs', intendedOwner: 'docs', implementation: 'complete', browserEvidence: 'covered', reactSource: 'frontend/apps/docs/src/docs-app.tsx', focusedTests: ['tests/frontend/tooling/pilots/frontend-docs-pilot.test.ts'], browserTests: docsBrowser, gapIds: [] },
++  { id: 'wallet-app', pathname: '/app', representativePath: '/app', intendedOwner: 'wallet', implementation: 'partial', browserEvidence: 'partial', reactSource: 'frontend/apps/wallet/src/app-shell.tsx', focusedTests: ['tests/frontend/runtime/wallet/frontend-wallet-app-shell.test.ts', 'tests/frontend/tooling/frontend-wallet-flow-audit.test.ts', 'tests/frontend/payments/frontend-wallet-external-provider.test.ts'], browserTests: [...walletBrowser, ...crossSurfaceBrowser], gapIds: ['wallet-operation-parity', 'candidate-verification'] },
++  { id: 'wallet-address', pathname: '/address', representativePath: '/address', intendedOwner: 'wallet', implementation: 'complete', browserEvidence: 'covered', reactSource: 'frontend/apps/wallet/src/address/wallet-address.tsx', focusedTests: ['tests/frontend/runtime/wallet/frontend-wallet-address.test.ts'], browserTests: walletBrowser, gapIds: [] },
++  { id: 'wallet-address-entity', pathname: '/address/:entityId', representativePath: '/address/0xabc', intendedOwner: 'wallet', implementation: 'complete', browserEvidence: 'covered', reactSource: 'frontend/apps/wallet/src/address/wallet-address.tsx', focusedTests: ['tests/frontend/runtime/wallet/frontend-wallet-address.test.ts'], browserTests: walletBrowser, gapIds: [] },
++  { id: 'testnet', pathname: '/testnet', representativePath: '/testnet', intendedOwner: 'wallet', implementation: 'complete', browserEvidence: 'covered', reactSource: 'frontend/apps/wallet/src/testnet/testnet-page.tsx', focusedTests: ['tests/frontend/tooling/pilots/frontend-testnet-pilot.test.ts'], browserTests: walletBrowser, gapIds: [] },
++  { id: 'health', pathname: '/health', representativePath: '/health', intendedOwner: 'ops', implementation: 'partial', browserEvidence: 'partial', reactSource: 'frontend/apps/ops/src/health/ops-health.tsx', focusedTests: ['tests/frontend/ops/frontend-ops-health.test.ts'], browserTests: [...opsBrowser, 'frontend/tests/react-candidate/ops/ops-health-events.spec.ts', 'frontend/tests/react-candidate/ops/ops-health-topology.spec.ts'], gapIds: ['ops-health-detail-parity'] },
++  { id: 'qa', pathname: '/qa', representativePath: '/qa', intendedOwner: 'ops', implementation: 'complete', browserEvidence: 'covered', reactSource: 'frontend/apps/ops/src/qa/ops-qa.tsx', focusedTests: ['tests/frontend/ops/frontend-ops-qa.test.ts'], browserTests: opsBrowser, gapIds: [] },
++  { id: 'qa-hlt', pathname: '/qa/hlt', representativePath: '/qa/hlt', intendedOwner: 'ops', implementation: 'complete', browserEvidence: 'covered', reactSource: 'frontend/apps/ops/src/hlt/ops-hlt.tsx', focusedTests: ['tests/frontend/ops/frontend-ops-hlt.test.ts'], browserTests: opsBrowser, gapIds: [] },
++  { id: 'qa-quorum', pathname: '/qa/quorum', representativePath: '/qa/quorum', intendedOwner: 'ops', implementation: 'complete', browserEvidence: 'covered', reactSource: 'frontend/apps/ops/src/quorum/ops-quorum.tsx', focusedTests: ['tests/frontend/ops/frontend-ops-quorum.test.ts'], browserTests: opsBrowser, gapIds: [] },
++  { id: 'runs', pathname: '/runs', representativePath: '/runs', intendedOwner: 'ops', implementation: 'complete', browserEvidence: 'covered', reactSource: 'frontend/apps/ops/src/runs/ops-runs.tsx', focusedTests: ['tests/frontend/ops/frontend-ops-runs.test.ts'], browserTests: opsBrowser, gapIds: [] },
++  { id: 'scenarios', pathname: '/scenarios', representativePath: '/scenarios', intendedOwner: 'ops', implementation: 'complete', browserEvidence: 'covered', reactSource: 'frontend/apps/ops/src/scenarios/ops-scenarios.tsx', focusedTests: ['tests/frontend/ops/frontend-ops-scenarios.test.ts'], browserTests: [...opsBrowser, ...crossSurfaceBrowser], gapIds: [] },
++  { id: 'ai', pathname: '/ai/:chatId?', representativePath: '/ai/audit', intendedOwner: 'ops', implementation: 'complete', browserEvidence: 'covered', reactSource: 'frontend/apps/ops/src/ai/ops-ai.tsx', focusedTests: ['tests/frontend/ops/frontend-ops-ai.test.ts'], browserTests: opsBrowser, gapIds: [] },
++  { id: 'embed', pathname: '/embed', representativePath: '/embed', intendedOwner: 'ops', implementation: 'partial', browserEvidence: 'partial', reactSource: 'frontend/apps/ops/src/workspace/ops-workspace.tsx', focusedTests: ['tests/frontend/ops/entity/frontend-ops-entity-workspace.test.ts', 'tests/frontend/ops/frontend-ops-display-preferences.test.ts', 'tests/frontend/ops/entity/frontend-ops-entity-time-machine.test.ts', 'tests/frontend/ops/entity/frontend-ops-entity-activity-ledger.test.ts', 'tests/frontend/workspace/entity/entity-workspace-profile-update.test.ts'], browserTests: opsBrowser, gapIds: ['ops-workspace-route'] },
++] as const satisfies readonly RouteParity[];
+--- a/frontend/scripts/checks/parity-audit.ts
++++ b/frontend/scripts/checks/parity-audit.ts
+@@ -9 +9 @@
+-  RETAINED_ROUTE_PARITY,
++  ROUTE_PARITY,
+@@ -20,3 +20,3 @@
+-    total: RETAINED_ROUTE_PARITY.length,
+-    implementation: count(RETAINED_ROUTE_PARITY.map(({ implementation }) => implementation)),
+-    browserEvidence: count(RETAINED_ROUTE_PARITY.map(({ browserEvidence }) => browserEvidence)),
++    total: ROUTE_PARITY.length,
++    implementation: count(ROUTE_PARITY.map(({ implementation }) => implementation)),
++    browserEvidence: count(ROUTE_PARITY.map(({ browserEvidence }) => browserEvidence)),
+--- a/tests/frontend/tooling/frontend-parity-audit.test.ts
++++ b/tests/frontend/tooling/frontend-parity-audit.test.ts
+@@ -2,2 +2 @@
+-import { existsSync, readdirSync } from 'node:fs';
+-import { join } from 'node:path';
++import { existsSync } from 'node:fs';
+@@ -11 +10 @@
+-  RETAINED_ROUTE_PARITY,
++  ROUTE_PARITY,
+@@ -13 +12 @@
+-import { resolveRouteOwner } from '../../../packages/frontend-release/surfaces';
++import { resolveRouteOwner, SURFACES } from '../../../packages/frontend-release/surfaces';
+@@ -16,10 +15,4 @@
+-const listSveltePages = (directory: string): string[] => readdirSync(directory, { withFileTypes: true })
+-  .flatMap((entry) => entry.isDirectory()
+-    ? listSveltePages(join(directory, entry.name))
+-    : entry.name === '+page.svelte' ? [join(directory, entry.name)] : [])
+-  .toSorted();
+-
+-describe('WP9 retained-route and capability parity audit', () => {
+-  test('accounts for every retained Svelte page exactly once', () => {
+-    const actual = listSveltePages('frontend/src/routes');
+-    const audited = RETAINED_ROUTE_PARITY.map(({ sveltePage }) => sveltePage).toSorted();
++describe('frontend route and capability acceptance inventory', () => {
++  test('accounts for every canonical app route and keeps representative cases distinct', () => {
++    const actual = SURFACES.flatMap(surface => surface.routes.map(route => `${surface.id}:${route.pathname}`)).toSorted();
++    const audited = [...new Set(ROUTE_PARITY.map(route => `${route.intendedOwner}:${route.pathname.split('/:')[0]}`))].toSorted();
+@@ -27 +20,2 @@
+-    expect(new Set(audited).size).toBe(20);
++    expect(new Set(ROUTE_PARITY.map(route => route.id)).size).toBe(ROUTE_PARITY.length);
++    expect(new Set(ROUTE_PARITY.map(route => route.representativePath)).size).toBe(ROUTE_PARITY.length);
+@@ -31,2 +25 @@
+-    for (const route of RETAINED_ROUTE_PARITY) {
+-      expect(existsSync(route.sveltePage)).toBe(true);
++    for (const route of ROUTE_PARITY) {
+@@ -48 +41 @@
+-    for (const route of RETAINED_ROUTE_PARITY) {
++    for (const route of ROUTE_PARITY) {
+@@ -55 +48 @@
+-        expect(RETAINED_ROUTE_PARITY.some(({ id }) => id === routeId)).toBe(true);
++        expect(ROUTE_PARITY.some(({ id }) => id === routeId)).toBe(true);
+--- a/tests/frontend/tooling/frontend-shared-boundaries.test.ts
++++ b/tests/frontend/tooling/frontend-shared-boundaries.test.ts
+@@ -65,2 +65,2 @@
+-  test('has live retained-Svelte and React consumers for both shared packages', async () => {
+-    const consumers = await readSources(['frontend/src', 'frontend/apps']);
++  test('has live React consumers for both shared packages', async () => {
++    const consumers = await readSources(['frontend/apps']);
+@@ -71 +70,0 @@
+-      expect(paths.some(pathname => pathname.startsWith('frontend/src/'))).toBe(true);
+--- a/tests/frontend/tooling/frontend-capability-coverage.test.ts
++++ b/tests/frontend/tooling/frontend-capability-coverage.test.ts
+@@ -104,3 +104,3 @@
+-      .toContain('frontend/src/lib/components/Views/RuntimeCreation.svelte');
+-    expect(CAPABILITIES.find(({ id }) => id === 'wallet-shell-and-identity')?.currentSources)
+-      .toContain('frontend/src/routes/app/+layout.svelte');
++      .toContain('frontend/apps/wallet/src/identity/identity-onboarding.tsx');
++    expect(CAPABILITIES.find(({ id }) => id === 'wallet-shell-and-identity')?.currentSources)
++      .toContain('frontend/apps/wallet/src/app-shell.tsx');

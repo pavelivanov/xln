@@ -10,7 +10,7 @@ import {
   resolveDevelopmentSurfacePort,
 } from './development-gateway';
 import { hasPreparedGeneratedInputs } from './generated-inputs';
-import { getSurface, type SurfaceId } from './surfaces';
+import { getSurface, type SurfaceId } from '../../packages/frontend-release/surfaces';
 
 const FRONTEND_ROOT = fileURLToPath(new URL('..', import.meta.url));
 const REPOSITORY_ROOT = fileURLToPath(new URL('../..', import.meta.url));

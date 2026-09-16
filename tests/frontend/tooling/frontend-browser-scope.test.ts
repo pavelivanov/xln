@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 
 import packageJson from '../../../frontend/package.json';
-import { SURFACE_IDS } from '../../../frontend/config/surfaces';
+import { SURFACE_IDS } from '../../../packages/frontend-release/surfaces';
 import {
   CANDIDATE_BROWSER_TEST_FILES,
   CANDIDATE_BROWSER_READY_PATHS,

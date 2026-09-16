@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 
 import { createBuildCommands } from '../../../../frontend/scripts/build';
-import { SURFACE_IDS, SURFACES } from '../../../../frontend/config/surfaces';
+import { SURFACE_IDS, SURFACES } from '../../../../packages/frontend-release/surfaces';
 
 describe('React application build isolation', () => {
   test('uses one app config per selected surface', () => {

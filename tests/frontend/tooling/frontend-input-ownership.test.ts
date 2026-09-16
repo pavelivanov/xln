@@ -9,7 +9,7 @@ import {
   PREPARED_GENERATED_INPUTS,
   getGeneratedInputDevelopmentConsumers,
 } from '../../../frontend/config/generated-inputs';
-import { SURFACE_IDS } from '../../../frontend/config/surfaces';
+import { SURFACE_IDS } from '../../../packages/frontend-release/surfaces';
 
 const REPOSITORY_ROOT = fileURLToPath(new URL('../../..', import.meta.url));
 

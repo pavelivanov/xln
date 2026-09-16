@@ -1,7 +1,8 @@
 import { expect, test } from 'bun:test';
 import { readFileSync } from 'node:fs';
 
-import { buildSolvencyProjection } from '../../frontend/src/lib/view/panels/solvency/solvency-panel-view';
+import { calculateSolvency } from '../../core/api/public/public-utilities';
+import { buildSolvencyProjection } from '../../frontend/packages/runtime-client/src/panels/solvency-panel-view';
 
 test('solvency projection counts committed reserves and collateral once and excludes pending frames', () => {
   const left = `0x${'11'.repeat(32)}`;
@@ -51,19 +52,21 @@ test('solvency projection counts committed reserves and collateral once and excl
     ]) },
   };
 
-  expect(buildSolvencyProjection(frame)).toEqual({
-    assets: [{
-      stackId: `31337:${depository}`,
-      chainId: 31337,
-      depositoryAddress: depository,
-      tokenId: 1,
-      reserves: 150n,
-      confirmedCollateral: 100n,
-      internalValue: 250n,
-      expectedInternalValue: null,
-      delta: null,
-      isValid: null,
-    }],
+  expect(buildSolvencyProjection(calculateSolvency(frame))).toEqual({
+    assets: [
+      {
+        stackId: `31337:${depository}`,
+        chainId: 31337,
+        depositoryAddress: depository,
+        tokenId: 1,
+        reserves: 150n,
+        confirmedCollateral: 100n,
+        internalValue: 250n,
+        expectedInternalValue: null,
+        delta: null,
+        isValid: null,
+      },
+    ],
     isValid: null,
   });
 });
@@ -89,27 +92,39 @@ test('solvency projection fails loud on malformed amounts', () => {
     ]) },
   };
 
-  expect(() => buildSolvencyProjection(frame)).toThrow('bigint-compatible amount');
+  expect(() => buildSolvencyProjection(calculateSolvency(frame))).toThrow('bigint-compatible amount');
 });
 
-test('SolvencyPanel reads adapter solvency-summary with the injected environment', () => {
-  const source = readFileSync('frontend/src/lib/view/panels/solvency/SolvencyPanel.svelte', 'utf8');
+test('React Solvency reads the selected live or recorded source and preserves error and ownership boundaries', () => {
+  const panel = readFileSync('frontend/apps/ops/src/workspace/panels/ops-solvency-panel.tsx', 'utf8');
   const sharedView = readFileSync('frontend/packages/runtime-client/src/panels/solvency-panel-view.ts', 'utf8');
-  const dockRoot = readFileSync('frontend/src/lib/view/DockRoot.svelte', 'utf8');
-  const architect = readFileSync('frontend/src/lib/view/panels/ArchitectPanel.svelte', 'utf8');
+  const queries = readFileSync('frontend/apps/ops/src/workspace/session/ops-workspace-query.ts', 'utf8');
+  const subscription = readFileSync('frontend/apps/ops/src/workspace/session/use-workspace-query.ts', 'utf8');
+  const selected = readFileSync('frontend/bridges/runtime/network-machine-runtime-store.ts', 'utf8');
+  const sources = readFileSync('frontend/packages/ui/src/graph/network-timeline-source.ts', 'utf8');
+  const panels = readFileSync('frontend/apps/ops/src/workspace/session/ops-workspace-panels.ts', 'utf8');
+  const architect = readFileSync('frontend/apps/ops/src/workspace/panels/ops-architect-panel.tsx', 'utf8');
 
-  expect(source).toContain("import { createRuntimeQueryStore } from '../../../../../bridges/runtime/runtime-query-client'");
-  expect(source).toContain('client.readSolvencySummary()');
-  expect(source).toContain('$solvencyStore.data ?? buildSolvencyProjection($runtimeFrameEnv)');
-  expect(source).toContain('Solvency projection failed');
-  expect(source).toContain('buildSolvencyProjection($runtimeFrameEnv)');
-  expect(source).toContain('getSolvencyStatusView');
+  expect(panel).toContain('useWorkspaceQuery(readOpsSolvency)');
+  expect(queries).toContain('client.readSolvencySummary()');
+  expect(panel).toContain('networkMachineRuntimeOperations.readSelectedSolvency()');
+  expect(selected).toContain('requireSource(step.activeRuntimeId)');
+  expect(selected).toContain('source.readSolvency(step.event.height)');
+  expect(sources).toContain("adapter.read<RuntimeAdapterSolvencySummary>('solvency-summary', { atHeight: height })");
+  expect(sources).toContain('projectSolvency(snapshotAt(height))');
+  expect(panel).toContain('recorded?.step === step ? recorded : null');
+  expect(panel).toContain('return () => { current = false; }');
+  expect(subscription).toContain('query?.client === client && query?.reader === reader');
+  expect(subscription).toContain('return observer.destroy');
+  expect(panel).toContain('error={step ? selected?.error ?? null : snapshot.error}');
+  expect(panel).toContain('getSolvencyStatusView(data === null ? null : data.isValid)');
   expect(sharedView).toContain('ASSET CONSERVATION OK');
-  expect(source).not.toContain('SYSTEM SOLVENT');
-  expect(source).not.toContain("return `$${");
-  expect(source).not.toContain('xlnEnvironment');
-  expect(source).not.toContain('Date.now');
-  expect(dockRoot).toContain('mount(SolvencyPanel, { target: div, props: { runtimeFrameEnv } })');
-  expect(dockRoot).toContain("id: 'solvency'");
-  expect(architect).toContain('<SolvencyPanel {runtimeFrameEnv} />');
+  expect(panel).not.toContain('SYSTEM SOLVENT');
+  expect(panel).not.toContain("calculateSolvency");
+  expect(panel).not.toContain('xlnEnvironment');
+  expect(panel).not.toContain('Date.now');
+  expect(panel).not.toContain('return `$${');
+  expect(panels).toContain('solvency: OpsSolvencyPanel');
+  expect(panels).toContain("id: 'solvency', component: 'solvency'");
+  expect(architect).toContain('<OpsSolvencyPanel />');
 });

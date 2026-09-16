@@ -37,6 +37,7 @@ import { createJAdapter, createXlnJsonRpcProvider, type JAdapter } from '../../j
 import type { JAdapterConfig } from '../../jurisdiction/adapter/types';
 import { createMarketMakerServerState, resetMarketMakerServerState } from './health/market-maker';
 import { serveStaticApp } from './static-assets';
+import { prepareVerifiedRelease } from '../../../packages/frontend-release/http';
 import { hasDaemonControlAuth, parseTaggedControlBody, requireDaemonControlAuth } from './control/auth';
 import { resolveSocketPeerAddress } from './health/redaction';
 import { listLocalControlEntities } from './control/entities';
@@ -274,7 +275,12 @@ export type XlnServerOptions = {
   port: number;
   host?: string | undefined;
   staticDir?: string | undefined;
+  frontendRelease?: string | undefined;
   serverId?: string | undefined;
+};
+
+type PreparedServerOptions = XlnServerOptions & {
+  release: Awaited<ReturnType<typeof prepareVerifiedRelease>> | undefined;
 };
 
 const DEFAULT_OPTIONS: XlnServerOptions = {
@@ -909,7 +915,7 @@ type ServerSession = {
 };
 
 const handleHttpRequest = async (
-  options: XlnServerOptions,
+  options: PreparedServerOptions,
   session: ServerSession,
   req: Request,
   server: Server<RelaySocketData>,
@@ -960,6 +966,9 @@ const handleHttpRequest = async (
     }
   }
 
+  if (options.release) {
+    return (await options.release.serve(req)) ?? new Response('Not found', { status: 404 });
+  }
   if (options.staticDir) {
     const staticResponse = await serveStaticApp(req, pathname, options.staticDir);
     if (staticResponse) return staticResponse;
@@ -1121,7 +1130,7 @@ const serverIdleWatch = startIdleShutdownWatch('runtime-server', idleMs => {
   process.kill(process.pid, 'SIGTERM');
 });
 
-const createHttpServer = (options: XlnServerOptions, session: ServerSession) =>
+const createHttpServer = (options: PreparedServerOptions, session: ServerSession) =>
   Bun.serve<RelaySocketData>({
     port: options.port,
     hostname: options.host ?? '127.0.0.1',
@@ -1419,7 +1428,7 @@ type BoundServerSession = {
   server: ReturnType<typeof createHttpServer>;
 };
 
-const bindServerSession = (options: XlnServerOptions): BoundServerSession => {
+const bindServerSession = (options: PreparedServerOptions): BoundServerSession => {
   const incidentJournalPath = String(
     process.env['XLN_SERVER_DEBUG_INCIDENT_JOURNAL_PATH'] || `${dbRootPath}.debug-incidents.jsonl`,
   ).trim();
@@ -1504,7 +1513,13 @@ const configureServerRelayRouter = (
 };
 
 export async function startXlnServer(opts: Partial<XlnServerOptions> = {}): Promise<void> {
-  const options = { ...DEFAULT_OPTIONS, ...opts };
+  if (opts.frontendRelease !== undefined && !opts.frontendRelease.trim())
+    throw new Error('FRONTEND_RELEASE_DIRECTORY_REQUIRED');
+  const options: PreparedServerOptions = {
+    ...DEFAULT_OPTIONS,
+    ...opts,
+    release: opts.frontendRelease ? await prepareVerifiedRelease(opts.frontendRelease) : undefined,
+  };
   const bound = bindServerSession(options);
   let env: RuntimeReplica | null = null;
 
@@ -1649,6 +1664,7 @@ if (import.meta.main) {
     port: Number(readCliOption(args, '--port', '8080')),
     host: readCliOption(args, '--host', '127.0.0.1'),
     staticDir: readCliOption(args, '--static-dir', './frontend/build'),
+    frontendRelease: readCliOption(args, '--frontend-release'),
     serverId: readCliOption(args, '--server-id', 'xln-server'),
   };
 

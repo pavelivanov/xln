@@ -1,5 +1,5 @@
 import { fileURLToPath } from 'node:url';
-import type { SurfaceId } from '../config/surfaces';
+import type { SurfaceId } from '../../packages/frontend-release/surfaces';
 import { runCommands, type CommandSpec } from './shared/command-runner';
 import { createBuildCommands } from './build';
 import { parseCheckRequest, selectChangedSurfaces, type CheckRequest } from './checks/check-request';

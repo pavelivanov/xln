@@ -9,7 +9,7 @@
 #   matrix deployments are separate commands under `jurisdictions/scripts/`.
 #
 # Canonical commands
-#   bun run deploy                    Build locally; restart PM2 when available.
+#   bun run deploy                    Consume prebuilt frontend; restart PM2 when available.
 #   bun run deploy:fresh              Delete local db/log state, then rebuild.
 #   bun run deploy:prod               Full remote public-testnet reset/rollout.
 #   bun run deploy:prod:frontend      Upload frontend without restarting Runtime.
@@ -17,24 +17,24 @@
 #
 # Option model
 #   --remote <user@host>   Operate on a remote checkout over SSH. When frontend
-#                          is selected, build it locally and upload the artifact.
+#                          is selected, transfer an explicitly verified release.
 #   --push                 With `--remote`, require clean `main` and push first.
 #   --fresh                Delete checkout-local `db/`, `db-tmp/`, and `logs/*.log`.
 #   --frontend-only        Install the prebuilt frontend artifact only.
-#   --runtime-only         Skip frontend compilation and deploy Runtime services.
+#   --runtime-only         Verify the selected store and deploy Runtime services.
 #   --production           Enable production paths, health gates, and state roots.
 #   --code-only            Preserve existing production JDB/RDB mesh state.
 #   --reset-mesh           Delete and bootstrap production mesh state explicitly.
 #
 # Safety boundaries
 #   * Remote `--push` refuses non-main, tracked changes, and untracked files.
-#   * Remote deploy hard-resets the remote checkout to `origin/main`.
+#   * Remote Runtime deploy resets the checkout to the exact verified source SHA.
 #   * Production persistence belongs under `${XLN_STATE_ROOT:-/var/lib/xln}`;
 #     checkout-local state is migrated once and never treated as authoritative.
 #   * `--reset-mesh` is the destructive production mode. The existing public
 #     testnet production commands intentionally use it for deterministic resets;
 #     this relocation does not change that established rollout policy.
-#   * Production frontend builds happen off-host to avoid starving live chains.
+#   * Frontend releases are built beforehand; deployment never compiles app bytes.
 #
 # Inputs and dependencies
 #   Local builds require bash, Bun, Git, and the contract build dependencies.
@@ -43,8 +43,8 @@
 #   xln state directories. Environment overrides are named `XLN_*` here.
 #
 # Outputs and failure contract
-#   Every mode refreshes dependencies and the browser Runtime bundle. Frontend
-#   output is rebuilt only when selected. PM2 processes restart when PM2 exists;
+#   Runtime modes refresh dependencies and the browser Runtime bundle. Frontend
+#   modes activate verified releases after checking the expected current release. PM2 processes restart when PM2 exists;
 #   production mode also installs nginx config and enforces health gates.
 #   `set -euo pipefail` is the default. Required builds, migrations, process
 #   starts, and health gates fail loud; optional cleanup probes are explicit.
@@ -69,12 +69,17 @@ usage() {
 Usage: bun run deploy [options]
 
 Options:
-  --remote <user@host>  Operate remotely; selected frontend builds locally.
+  --remote <user@host>  Operate remotely; transfer verified prebuilt frontend bytes.
   --push                With --remote, push a clean main before rollout.
   --fresh               Delete local db/, db-tmp/, and logs/*.log.
-  --frontend            Build frontend (default).
+  --frontend            Activate an explicit verified release (default).
   --frontend-only       Upload frontend without restarting Runtime.
-  --runtime-only        Skip frontend build; production requires an artifact.
+  --runtime-only        Deploy Runtime; production requires a verified frontend store.
+  --frontend-release <dir>       Explicit verified release directory.
+  --frontend-root <absolute-dir> Deployment store (production: /var/lib/xln/frontend).
+  --expected-frontend-active <id> Exact current release ID; refuses stale activation.
+  --frontend-origin <origin>     Live HTTP(S) origin for byte checks before/after activation.
+  --frontend-rollback            Restore rollback release without restarting Runtime.
   --production          Enable production state paths and health gates.
   --code-only           Preserve production mesh state.
   --reset-mesh          Explicitly reset production mesh state.
@@ -89,7 +94,11 @@ BUILD_FRONTEND=1
 FRONTEND_ONLY=0
 PRODUCTION=0
 RESET_PRODUCTION_MESH=0
-PREBUILT_FRONTEND_ARCHIVE=""
+FRONTEND_RELEASE=""
+FRONTEND_ROOT="${XLN_FRONTEND_DEPLOYMENT_ROOT:-}"
+EXPECTED_FRONTEND_ACTIVE=""
+FRONTEND_ORIGIN=""
+FRONTEND_ROLLBACK=0
 pause_production_explorer_backend() {
   command -v docker >/dev/null 2>&1 || return 0
   local container
@@ -101,14 +110,6 @@ pause_production_explorer_backend() {
   docker stop --timeout 30 "$container" >/dev/null
   echo "[deploy] stopped production explorer backend: $container"
 }
-
-cleanup_local_deploy_artifacts() {
-  if [ -n "$PREBUILT_FRONTEND_ARCHIVE" ]; then
-    rm -f "$PREBUILT_FRONTEND_ARCHIVE"
-  fi
-}
-
-trap cleanup_local_deploy_artifacts EXIT
 
 while [ $# -gt 0 ]; do
   case "$1" in
@@ -124,6 +125,22 @@ while [ $# -gt 0 ]; do
       fi
       REMOTE_HOST="$2"
       shift 2
+      ;;
+    --frontend-release|--frontend-root|--expected-frontend-active|--frontend-origin)
+      [ "$#" -ge 2 ] && [ -n "$2" ] || { echo "DEPLOY_FRONTEND_VALUE_REQUIRED:$1" >&2; exit 1; }
+      case "$1" in
+        --frontend-release) FRONTEND_RELEASE="$2" ;;
+        --frontend-root) FRONTEND_ROOT="$2" ;;
+        --expected-frontend-active) EXPECTED_FRONTEND_ACTIVE="$2" ;;
+        --frontend-origin) FRONTEND_ORIGIN="$2" ;;
+      esac
+      shift 2
+      ;;
+    --frontend-rollback)
+      BUILD_FRONTEND=1
+      FRONTEND_ONLY=1
+      FRONTEND_ROLLBACK=1
+      shift
       ;;
     --push)
       PUSH=1
@@ -166,10 +183,39 @@ while [ $# -gt 0 ]; do
   esac
 done
 
-if [ "$FRONTEND_ONLY" = "1" ] && [ -z "$REMOTE_HOST" ]; then
-  echo "FRONTEND_ONLY_REQUIRES_REMOTE" >&2
+if [ "$FRONTEND_ONLY" = "1" ] && { [ "$BUILD_FRONTEND" != "1" ] || [ "$FRESH" = "1" ] || [ "$RESET_PRODUCTION_MESH" = "1" ]; }; then
+  echo "DEPLOY_FRONTEND_MODE_CONFLICT" >&2
   exit 1
 fi
+if [ "$PRODUCTION" = "1" ] && [ -z "$FRONTEND_ROOT" ]; then
+  FRONTEND_ROOT="${XLN_STATE_ROOT:-/var/lib/xln}/frontend"
+fi
+if [ "$BUILD_FRONTEND" = "1" ]; then
+  [ -n "$FRONTEND_ROOT" ] || { echo DEPLOY_FRONTEND_ROOT_REQUIRED >&2; exit 1; }
+  [[ "$EXPECTED_FRONTEND_ACTIVE" =~ ^sha256-[0-9a-f]{64}$ ]] || { echo DEPLOY_FRONTEND_EXPECTED_ACTIVE_REQUIRED >&2; exit 1; }
+  # Both local and remote activation must prove the live consumer before changing state.
+  [ -n "$FRONTEND_ORIGIN" ] || { echo DEPLOY_FRONTEND_ORIGIN_REQUIRED >&2; exit 1; }
+  if [ "$FRONTEND_ROLLBACK" = "1" ]; then
+    [ -z "$FRONTEND_RELEASE" ] || { echo DEPLOY_FRONTEND_RELEASE_FORBIDDEN >&2; exit 1; }
+  else
+    [ -n "$FRONTEND_RELEASE" ] || { echo DEPLOY_FRONTEND_RELEASE_REQUIRED >&2; exit 1; }
+    bun "$SCRIPT_DIR/frontend-release.ts" check "$FRONTEND_RELEASE"
+  fi
+elif [ -n "$FRONTEND_RELEASE$EXPECTED_FRONTEND_ACTIVE$FRONTEND_ORIGIN" ]; then
+  echo DEPLOY_RUNTIME_FRONTEND_ARGUMENT_CONFLICT >&2
+  exit 1
+fi
+if [ -n "$FRONTEND_ROOT" ] && [[ "$FRONTEND_ROOT" != /* ]]; then
+  echo DEPLOY_FRONTEND_ROOT_ABSOLUTE_REQUIRED >&2
+  exit 1
+fi
+
+transfer_frontend() {
+  local args=(--root "$FRONTEND_ROOT" --expected-active "$EXPECTED_FRONTEND_ACTIVE" --origin "$FRONTEND_ORIGIN")
+  if [ "$FRONTEND_ROLLBACK" = "1" ]; then args+=(--rollback); else args+=(--release "$FRONTEND_RELEASE"); fi
+  if [ -n "$REMOTE_HOST" ]; then args+=(--remote "$REMOTE_HOST"); fi
+  bash "$SCRIPT_DIR/frontend-transfer.sh" "${args[@]}"
+}
 
 if [ "$PUSH" = "1" ] && [ -z "$REMOTE_HOST" ]; then
   echo "DEPLOY_PUSH_REQUIRES_REMOTE" >&2
@@ -187,33 +233,6 @@ ensure_main_branch_for_push() {
 
 ensure_clean_worktree_for_remote_deploy() {
   bun "$REPO_ROOT/tools/release-snapshot/assert-clean.ts" "$REPO_ROOT"
-}
-
-ensure_committed_contract_artifacts() {
-  local changes
-  changes="$(git status --short -- frontend/static/contracts jurisdictions/artifacts jurisdictions/typechain-types)"
-  if [ -n "$changes" ]; then
-    echo "CONTRACT_ARTIFACTS_NOT_COMMITTED" >&2
-    printf '%s\n' "$changes" >&2
-    exit 1
-  fi
-}
-
-build_remote_frontend_archive() {
-  local deploy_build_number
-  deploy_build_number="$(date -u +%Y%m%d%H%M%S)-$(git rev-parse --short HEAD)"
-  echo "[deploy] building production frontend locally: $deploy_build_number"
-  bun install --frozen-lockfile
-  ./scripts/sync-contract-artifacts.sh
-  ensure_committed_contract_artifacts
-  ./scripts/build-runtime.sh
-  (
-    cd frontend
-    bun install --frozen-lockfile
-    XLN_BUILD_NUMBER="$deploy_build_number" bun run build
-  )
-  PREBUILT_FRONTEND_ARCHIVE="$(mktemp "${TMPDIR:-/tmp}/xln-frontend-build.XXXXXX.tar.gz")"
-  COPYFILE_DISABLE=1 tar --no-xattrs --no-mac-metadata -C frontend -czf "$PREBUILT_FRONTEND_ARCHIVE" build
 }
 
 wait_for_rpc_chain() {
@@ -514,14 +533,7 @@ import sys
 
 path = Path(sys.argv[1])
 text = path.read_text()
-marker = """    location = /app {
-        root /root/xln/frontend/build;
-        try_files /index.html =404;
-        default_type text/html;
-        add_header Content-Security-Policy "frame-ancestors 'self' https://xln.finance https://app.xln.finance https://custody.xln.finance https://localhost:* http://localhost:*" always;
-    }
-
-"""
+marker = "    location = /app {\n"
 block = """    location = /resetdb {
         default_type text/plain;
         add_header Cache-Control "no-store, max-age=0" always;
@@ -532,7 +544,7 @@ block = """    location = /resetdb {
 
 """
 if marker in text:
-    text = text.replace(marker, marker + block, 1)
+    text = text.replace(marker, block + marker, 1)
     path.write_text(text)
 PY
   fi
@@ -1099,6 +1111,15 @@ fi
 
 run_local_deploy() {
   export PATH="$HOME/.bun/bin:$PATH"
+  if [ -n "$FRONTEND_ROOT" ]; then
+    bun "$SCRIPT_DIR/frontend-release.ts" verify "$FRONTEND_ROOT"
+    export XLN_FRONTEND_DEPLOYMENT_ROOT="$FRONTEND_ROOT"
+  fi
+  if [ "$BUILD_FRONTEND" = "1" ]; then transfer_frontend; fi
+  if [ "$FRONTEND_ONLY" = "1" ]; then
+    echo '[deploy] frontend artifact installed without runtime restart'
+    return
+  fi
 
   if [ "$FRESH" = "1" ]; then
     if [ "$PRODUCTION" != "1" ]; then
@@ -1122,26 +1143,6 @@ run_local_deploy() {
 
   echo "[deploy] building browser runtime bundle"
   ./scripts/build-runtime.sh
-
-  if [ "$BUILD_FRONTEND" = "1" ]; then
-    DEPLOY_BUILD_NUMBER="$(date -u +%Y%m%d%H%M%S)"
-    if git rev-parse --short HEAD >/dev/null 2>&1; then
-      DEPLOY_BUILD_NUMBER="${DEPLOY_BUILD_NUMBER}-$(git rev-parse --short HEAD)"
-    fi
-    echo "[deploy] building frontend"
-    echo "[deploy] frontend version $DEPLOY_BUILD_NUMBER"
-    (
-      cd frontend
-      bun install --frozen-lockfile
-      XLN_BUILD_NUMBER="$DEPLOY_BUILD_NUMBER" bun run build
-    )
-  else
-    echo "[deploy] skipping frontend build (--runtime-only)"
-    if [ "$PRODUCTION" = "1" ] && [ ! -s frontend/build/index.html ]; then
-      echo "PRODUCTION_FRONTEND_ARTIFACT_MISSING: run a frontend deploy before runtime-only" >&2
-      exit 1
-    fi
-  fi
 
   if command -v pm2 >/dev/null 2>&1; then
     echo "[deploy] restarting pm2 service"
@@ -1268,14 +1269,6 @@ if [ -n "$REMOTE_HOST" ]; then
       ORIGIN_URL="https://github.com/${ORIGIN_URL#ssh://git@github.com/}"
       ;;
   esac
-  remote_frontend_archive=""
-  if [ "$BUILD_FRONTEND" = "1" ]; then
-    build_remote_frontend_archive
-    ensure_clean_worktree_for_remote_deploy
-    remote_frontend_archive="/tmp/$(basename "$PREBUILT_FRONTEND_ARCHIVE")"
-    echo "[deploy] uploading prebuilt frontend to $REMOTE_HOST"
-    scp "$PREBUILT_FRONTEND_ARCHIVE" "$REMOTE_HOST:$remote_frontend_archive"
-  fi
   if [ "$PUSH" = "1" ]; then
     ensure_clean_worktree_for_remote_deploy
     if [ "$(git rev-parse --verify 'HEAD^{commit}')" != "$EXPECTED_DEPLOY_SHA" ]; then
@@ -1286,39 +1279,38 @@ if [ -n "$REMOTE_HOST" ]; then
     git push origin main
   fi
 
-  # Remote deploy keeps the checkout self-healing. Frontend compilation happens on the
-  # caller so Vite cannot OOM-kill live Anvil processes on the production host.
+  if [ "$BUILD_FRONTEND" = "1" ]; then transfer_frontend; fi
+  if [ "$FRONTEND_ONLY" = "1" ]; then
+    echo '[deploy] frontend artifact installed without runtime restart'
+    exit 0
+  fi
+  if [ -n "$FRONTEND_ROOT" ]; then
+    bash "$SCRIPT_DIR/frontend-transfer.sh" --verify --root "$FRONTEND_ROOT" --remote "$REMOTE_HOST"
+  fi
+
+  # Runtime deploy retains the existing checkout reset policy. Frontend-only
+  # activation returned above without changing the checkout or managed processes.
   # A remote checkout is disposable. Durable production state exists only under
   # /var/lib/xln, so every deploy cleans the checkout before binding exact bytes.
   remote_cmd="set -e; XLN_DIR=\"\"; if [ -d /root/xln ]; then XLN_DIR=/root/xln; elif [ -d \"\$HOME/xln\" ]; then XLN_DIR=\"\$HOME/xln\"; else XLN_DIR=/root/xln; mkdir -p \"\$XLN_DIR\"; fi; cd \"\$XLN_DIR\"; PATH=\"\$HOME/.bun/bin:\$PATH\"; if [ ! -d .git ]; then echo '[deploy] remote checkout missing .git; reinitializing repository'; git init; fi; if ! git remote get-url origin >/dev/null 2>&1; then git remote add origin '$ORIGIN_URL'; else git remote set-url origin '$ORIGIN_URL'; fi; git fetch origin main; git cat-file -e '$EXPECTED_DEPLOY_SHA^{commit}'; git merge-base --is-ancestor '$EXPECTED_DEPLOY_SHA' origin/main; git reset --hard; git clean -fd; git checkout -B main '$EXPECTED_DEPLOY_SHA'; git reset --hard '$EXPECTED_DEPLOY_SHA'; test \"\$(git rev-parse HEAD)\" = '$EXPECTED_DEPLOY_SHA'; git clean -fd;"
-  if [ -n "$remote_frontend_archive" ]; then
-    remote_cmd="$remote_cmd rm -rf frontend/build; tar -xzf '$remote_frontend_archive' -C frontend; rm -f '$remote_frontend_archive';"
+  printf -v frontend_root_arg '%q' "$FRONTEND_ROOT"
+  remote_cmd="$remote_cmd XLN_DEPLOY_USE_COMMITTED_CONTRACTS=1 ./scripts/deployment/deploy-platform.sh --runtime-only"
+  if [ -n "$FRONTEND_ROOT" ]; then remote_cmd="$remote_cmd --frontend-root $frontend_root_arg"; fi
+  if [ "$FRESH" = "1" ]; then
+    remote_cmd="$remote_cmd --fresh"
   fi
-  if [ "$FRONTEND_ONLY" = "1" ]; then
-    remote_cmd="$remote_cmd test -s frontend/build/index.html; echo '[deploy] frontend artifact installed without runtime restart';"
+  if [ "$PRODUCTION" = "1" ]; then
+    remote_cmd="$remote_cmd --production"
+  fi
+  if [ "$RESET_PRODUCTION_MESH" = "1" ]; then
+    remote_cmd="$remote_cmd --reset-mesh"
   else
-    remote_cmd="$remote_cmd XLN_DEPLOY_USE_COMMITTED_CONTRACTS=1 ./scripts/deployment/deploy-platform.sh --runtime-only"
-    if [ "$FRESH" = "1" ]; then
-      remote_cmd="$remote_cmd --fresh"
-    fi
-    if [ "$PRODUCTION" = "1" ]; then
-      remote_cmd="$remote_cmd --production"
-    fi
-    if [ "$RESET_PRODUCTION_MESH" = "1" ]; then
-      remote_cmd="$remote_cmd --reset-mesh"
-    else
-      remote_cmd="$remote_cmd --code-only"
-    fi
+    remote_cmd="$remote_cmd --code-only"
   fi
 
   echo "[deploy] running remote deploy on $REMOTE_HOST"
   ssh "$REMOTE_HOST" "$remote_cmd"
   exit 0
-fi
-
-if [ "$PRODUCTION" = "1" ] && [ "$BUILD_FRONTEND" = "1" ] && [ "${XLN_ALLOW_IN_PLACE_PRODUCTION_FRONTEND_BUILD:-0}" != "1" ]; then
-  echo "PRODUCTION_FRONTEND_BUILD_FORBIDDEN: deploy from another host with --remote" >&2
-  exit 1
 fi
 
 run_local_deploy

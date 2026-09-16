@@ -1,3 +1,4 @@
+import { runWalletRecoveryServicesFlow } from './wallet/fixtures/wallet-recovery-services-flow';
 import { expect, test } from '@playwright/test';
 
 import {
@@ -6,7 +7,6 @@ import {
   RUNTIME_ADAPTER_MODE_KEY,
   RUNTIME_ADAPTER_WS_KEY,
 } from '../../packages/browser/src/runtime/session/runtime-adapter-session';
-import { WALLET_VAULT_STORAGE_KEY } from '../../packages/browser/src/wallet/wallet-vault-storage';
 
 import {
   expectNoBrowserErrors,
@@ -44,345 +44,259 @@ test('wallet app renders within the isolated wallet surface', { tag: '@functiona
   expectNoBrowserErrors(errors);
 });
 
-test('wallet app rehearses mnemonic recovery without creating or persisting a wallet', { tag: '@functional' }, async ({ page }, testInfo) => {
-  const errors = observeBrowserErrors(page);
-  const response = await page.goto('/app?setup=1', { waitUntil: 'domcontentloaded' });
-  expect(response?.ok(), 'document response for identity rehearsal').toBe(true);
-  await expect(page.locator('.wallet-shell-runtime-state')).toHaveText('Local Runtime', {
-    timeout: 90_000,
-  });
+test(
+  'wallet app rehearses mnemonic recovery without creating or persisting a wallet',
+  { tag: '@functional' },
+  async ({ page }, testInfo) => {
+    const errors = observeBrowserErrors(page);
+    const response = await page.goto('/app?setup=1', { waitUntil: 'domcontentloaded' });
+    expect(response?.ok(), 'document response for identity rehearsal').toBe(true);
+    await expect(page.locator('.wallet-shell-runtime-state')).toHaveText('Local Runtime', {
+      timeout: 90_000,
+    });
 
-  await page.getByRole('tab', { name: /Mnemonic/ }).click();
-  const seedInput = page.getByRole('textbox', { name: /^Seed phrase/ });
-  await seedInput.fill(INVALID_MNEMONIC);
-  await page.getByRole('button', { name: 'Review identity inputs' }).click();
-  await expect(page.getByText('Seed phrase checksum or words are invalid.')).toBeVisible();
+    await page.getByRole('tab', { name: /Mnemonic/ }).click();
+    const seedInput = page.getByRole('textbox', { name: /^Seed phrase/ });
+    await seedInput.fill(INVALID_MNEMONIC);
+    await page.getByRole('button', { name: 'Review identity inputs' }).click();
+    await expect(page.getByText('Seed phrase checksum or words are invalid.')).toBeVisible();
 
-  await seedInput.fill(FIRST_MNEMONIC);
-  await page.getByRole('button', { name: 'Review identity inputs' }).click();
-  await expect(page.getByRole('heading', { name: 'Review recovery requirements' })).toBeVisible();
-  await expect(page.getByText('0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266')).toBeVisible();
-  await expect(page.getByText('No wallet has been created and no secret has left this form.')).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Edit inputs' })).toBeInViewport();
-  await expectPageContained(page);
-  await screenshotEvidence(page, testInfo, 'wallet-identity-mnemonic-review');
+    await seedInput.fill(FIRST_MNEMONIC);
+    await page.getByRole('button', { name: 'Review identity inputs' }).click();
+    await expect(page.getByRole('heading', { name: 'Review recovery requirements' })).toBeVisible();
+    await expect(page.getByText('0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266')).toBeVisible();
+    await expect(page.getByText('No wallet has been created and no secret has left this form.')).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Edit inputs' })).toBeInViewport();
+    await expectPageContained(page);
+    await screenshotEvidence(page, testInfo, 'wallet-identity-mnemonic-review');
 
-  await page.getByRole('button', { name: 'Verify recovery' }).click();
-  await expect(page.getByRole('heading', { name: 'Re-enter your seed' })).toBeVisible();
-  const recoveryInput = page.getByRole('textbox', { name: /^Seed phrase/ });
-  await expect(recoveryInput).toHaveValue('');
-  await recoveryInput.fill(SECOND_MNEMONIC);
-  await page.getByRole('button', { name: 'Verify recovered wallet' }).click();
-  await expect(page.getByText('Recovery rehearsal did not reproduce the same wallet. Check every input and try again.')).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'Re-enter your seed' })).toBeVisible();
-  await expectPageContained(page);
-  await screenshotEvidence(page, testInfo, 'wallet-identity-recovery-mismatch');
+    await page.getByRole('button', { name: 'Verify recovery' }).click();
+    await expect(page.getByRole('heading', { name: 'Re-enter your seed' })).toBeVisible();
+    const recoveryInput = page.getByRole('textbox', { name: /^Seed phrase/ });
+    await expect(recoveryInput).toHaveValue('');
+    await recoveryInput.fill(SECOND_MNEMONIC);
+    await page.getByRole('button', { name: 'Verify recovered wallet' }).click();
+    await expect(
+      page.getByText('Recovery rehearsal did not reproduce the same wallet. Check every input and try again.'),
+    ).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Re-enter your seed' })).toBeVisible();
+    await expectPageContained(page);
+    await screenshotEvidence(page, testInfo, 'wallet-identity-recovery-mismatch');
 
-  await recoveryInput.fill(FIRST_MNEMONIC);
-  await page.getByRole('button', { name: 'Verify recovered wallet' }).click();
-  await expect(page.getByRole('heading', { name: 'The same wallet returned' })).toBeVisible();
-  await expect(page.getByText('Both seed entries were cleared.')).toBeVisible();
-  await expect(page.getByText('The verified phrase remains only in this tab until you open the wallet or reset.')).toBeVisible();
-  const browserStorage = await page.evaluate(() => JSON.stringify({
-    local: Object.entries(localStorage),
-    session: Object.entries(sessionStorage),
-  }));
-  expect(browserStorage).not.toContain(FIRST_MNEMONIC);
-  expect(browserStorage).not.toContain(SECOND_MNEMONIC);
-  await expectPageContained(page);
-  await screenshotEvidence(page, testInfo, 'wallet-identity-recovery-verified');
-  expectNoBrowserErrors(errors);
-});
-
-test('wallet derives and opens a canonical Brain Vault outside React state', { tag: '@functional' }, async ({ page }, testInfo) => {
-  testInfo.setTimeout(180_000);
-  const errors = observeBrowserErrors(page);
-  const fixture = await readWalletRuntimeFixture(page);
-  expect(fixture.recovery.brainVault.runtimeId).toBe('0x93bab14ed871462d414a7c0357bf1a76de741397');
-  await page.addInitScript((towerUrl: string) => {
-    localStorage.setItem('xln-watchtower-urls', JSON.stringify([towerUrl]));
-    (window as typeof window & { __XLN_WATCHTOWERS__?: string[] }).__XLN_WATCHTOWERS__ = [towerUrl];
-  }, fixture.recovery.towerUrl);
-  const response = await page.goto('/app?setup=1', { waitUntil: 'domcontentloaded' });
-  expect(response?.ok(), 'document response for canonical Brain Vault').toBe(true);
-  await expect(page.locator('.wallet-shell-runtime-state')).toHaveText('Local Runtime', {
-    timeout: 90_000,
-  });
-
-  await page.getByRole('textbox', { name: /Vault name/ }).fill('alice');
-  await page.getByLabel(/Secret passphrase/).fill('secret123456');
-  await page.locator('.identity-factor-row').getByRole('button', { name: '1', exact: true }).click();
-  await page.getByRole('button', { name: 'Review identity inputs' }).click();
-  await expect(page.getByRole('heading', { name: 'Review recovery requirements' })).toBeVisible();
-  await page.getByRole('button', { name: 'Derive Brain Vault' }).click();
-
-  await expect(page.getByRole('heading', { name: /Deriving Brain Vault|Checking encrypted backups/ })).toBeVisible();
-  await screenshotEvidence(page, testInfo, 'wallet-brainvault-deriving');
-  await expect(page.getByRole('heading', { name: 'Choose a backup' })).toBeVisible({ timeout: 120_000 });
-  await expect(page.getByText('0x93bab14ed871462d414a7c0357bf1a76de741397')).toBeVisible();
-  await expect(page.getByText('Derived wallet material remains outside React state.')).toBeVisible();
-  await expect(page.getByRole('radio', { name: /Latest backup/ }))
-    .toContainText(`H${fixture.recovery.brainVault.runtimeHeight}`);
-  await expectPageContained(page);
-  await screenshotEvidence(page, testInfo, 'wallet-brainvault-ready');
-
-  const importBackup = page.getByRole('button', { name: 'Import runtime backup' });
-  let fileChooserPromise = page.waitForEvent('filechooser');
-  await importBackup.click();
-  let fileChooser = await fileChooserPromise;
-  await fileChooser.setFiles({
-    name: 'invalid-brainvault-backup.json',
-    mimeType: 'application/json',
-    buffer: Buffer.from('{invalid'),
-  });
-  await expect(page.getByRole('alert')).toHaveText('Backup file is not valid recovery JSON.');
-  await expectPageContained(page);
-  await page.getByRole('button', { name: 'Start over' }).scrollIntoViewIfNeeded();
-  await page.evaluate(() => window.scrollBy(0, 160));
-  await screenshotEvidence(page, testInfo, 'wallet-brainvault-file-error');
-
-  fileChooserPromise = page.waitForEvent('filechooser');
-  await importBackup.click();
-  fileChooser = await fileChooserPromise;
-  await fileChooser.setFiles({
-    name: 'brainvault-backup.json',
-    mimeType: 'application/json',
-    buffer: Buffer.from(fixture.recovery.brainVault.backupFileContents),
-  });
-  const fileCandidate = page.getByRole('radio', { name: /brainvault-backup\.json/ });
-  await expect(fileCandidate).toHaveAttribute('aria-checked', 'true');
-  await expect(fileCandidate).toContainText(`H${fixture.recovery.brainVault.runtimeHeight}`);
-  await expect(page.getByRole('radio', { name: new RegExp(fixture.recovery.towerUrl.replaceAll('.', '\\.')) })).toBeVisible();
-  await expectPageContained(page);
-  await page.getByRole('button', { name: 'Start over' }).scrollIntoViewIfNeeded();
-  await page.evaluate(() => window.scrollBy(0, 160));
-  await screenshotEvidence(page, testInfo, 'wallet-brainvault-file-ready');
-
-  const storage = await page.evaluate(() => JSON.stringify({
-    local: Object.entries(localStorage),
-    session: Object.entries(sessionStorage),
-  }));
-  expect(storage).not.toContain('secret123456');
-  expect(storage).not.toContain(BRAINVAULT_MNEMONIC);
-  await page.getByRole('button', { name: 'Restore selected backup' }).click();
-  await expect(page.getByRole('heading', { name: 'Wallet opened' })).toBeVisible({ timeout: 90_000 });
-  await finishOpenedWalletSetup(page);
-  await expect(page.getByText('Active Runtime 0x93bab14ed871462d414a7c0357bf1a76de741397.', { exact: false })).toBeVisible();
-  await expectPageContained(page);
-  await screenshotEvidence(page, testInfo, 'wallet-brainvault-opened');
-  expectNoBrowserErrors(errors);
-});
-
-test('wallet restores a canonical backup and enrolls recovery services', { tag: '@functional' }, async ({ page }, testInfo) => {
-  testInfo.setTimeout(180_000);
-  const errors = observeBrowserErrors(page);
-  const fixture = await readWalletRuntimeFixture(page);
-  await page.addInitScript(({ rpcUrl, towerUrl }: { rpcUrl: string; towerUrl: string }) => {
-    localStorage.setItem('xln-watchtower-urls', JSON.stringify([towerUrl]));
-    const target = window as typeof window & {
-      __XLN_PUSH_WAKE_RPC_URLS__?: Record<string, string>;
-      __XLN_WATCHTOWERS__?: string[];
-      xlnDesktop?: {
-        platform: 'desktop';
-        getPushWakeToken: () => Promise<{ value: string; platform: 'desktop' }>;
-      };
-    };
-    target.__XLN_WATCHTOWERS__ = [towerUrl];
-    target.__XLN_PUSH_WAKE_RPC_URLS__ = { default: rpcUrl };
-    target.xlnDesktop = {
-      platform: 'desktop',
-      getPushWakeToken: async () => ({
-        value: 'react-wallet-device-wake-integration-token',
-        platform: 'desktop',
+    await recoveryInput.fill(FIRST_MNEMONIC);
+    await page.getByRole('button', { name: 'Verify recovered wallet' }).click();
+    await expect(page.getByRole('heading', { name: 'The same wallet returned' })).toBeVisible();
+    await expect(page.getByText('Both seed entries were cleared.')).toBeVisible();
+    await expect(
+      page.getByText('The verified phrase remains only in this tab until you open the wallet or reset.'),
+    ).toBeVisible();
+    const browserStorage = await page.evaluate(() =>
+      JSON.stringify({
+        local: Object.entries(localStorage),
+        session: Object.entries(sessionStorage),
       }),
-    };
-  }, { rpcUrl: fixture.recovery.rpcUrl, towerUrl: fixture.recovery.towerUrl });
-  const response = await page.goto('/app?setup=1', { waitUntil: 'domcontentloaded' });
-  expect(response?.ok(), 'document response for canonical recovery').toBe(true);
-  await expect(page.locator('.wallet-shell-runtime-state')).toHaveText('Local Runtime', {
-    timeout: 90_000,
-  });
+    );
+    expect(browserStorage).not.toContain(FIRST_MNEMONIC);
+    expect(browserStorage).not.toContain(SECOND_MNEMONIC);
+    await expectPageContained(page);
+    await screenshotEvidence(page, testInfo, 'wallet-identity-recovery-verified');
+    expectNoBrowserErrors(errors);
+  },
+);
 
-  await page.getByRole('tab', { name: /Mnemonic/ }).click();
-  const seedInput = page.getByRole('textbox', { name: /^Seed phrase/ });
-  await seedInput.fill(FIRST_MNEMONIC);
-  await page.getByRole('button', { name: 'Review identity inputs' }).click();
-  await page.getByRole('button', { name: 'Verify recovery' }).click();
-  const recoveryInput = page.getByRole('textbox', { name: /^Seed phrase/ });
-  await recoveryInput.fill(FIRST_MNEMONIC);
-  await page.getByRole('button', { name: 'Verify recovered wallet' }).click();
-  const fileChooserPromise = page.waitForEvent('filechooser');
-  await page.getByRole('button', { name: 'Import runtime backup' }).click();
-  const fileChooser = await fileChooserPromise;
-  await fileChooser.setFiles({
-    name: 'mnemonic-backup.json',
-    mimeType: 'application/json',
-    buffer: Buffer.from(fixture.recovery.backupFileContents),
-  });
+test(
+  'wallet derives and opens a canonical Brain Vault outside React state',
+  { tag: '@functional' },
+  async ({ page }, testInfo) => {
+    testInfo.setTimeout(180_000);
+    const errors = observeBrowserErrors(page);
+    const fixture = await readWalletRuntimeFixture(page);
+    expect(fixture.recovery.brainVault.runtimeId).toBe('0x93bab14ed871462d414a7c0357bf1a76de741397');
+    await page.addInitScript((towerUrl: string) => {
+      localStorage.setItem('xln-watchtower-urls', JSON.stringify([towerUrl]));
+      (window as typeof window & { __XLN_WATCHTOWERS__?: string[] }).__XLN_WATCHTOWERS__ = [towerUrl];
+    }, fixture.recovery.towerUrl);
+    const response = await page.goto('/app?setup=1', { waitUntil: 'domcontentloaded' });
+    expect(response?.ok(), 'document response for canonical Brain Vault').toBe(true);
+    await expect(page.locator('.wallet-shell-runtime-state')).toHaveText('Local Runtime', {
+      timeout: 90_000,
+    });
 
-  await expect(page.getByRole('heading', { name: 'Choose a backup' })).toBeVisible({ timeout: 90_000 });
-  await expect(page.getByText('Fresh creation is blocked. Restore one of the encrypted backups found for this wallet.')).toBeVisible();
-  const fileCandidate = page.getByRole('radio', { name: /mnemonic-backup\.json/ });
-  await expect(fileCandidate).toHaveAttribute('aria-checked', 'true');
-  await expect(fileCandidate).toContainText(`H${fixture.recovery.runtimeHeight}`);
-  const towerCandidate = page.getByRole('radio', {
-    name: new RegExp(fixture.recovery.towerUrl.replaceAll('.', '\\.')),
-  });
-  await towerCandidate.click();
-  await expect(towerCandidate).toHaveAttribute('aria-checked', 'true');
-  await expect(page.getByText('1 tower and 0 saved peers checked.')).toBeVisible();
-  await expectPageContained(page);
-  await page.evaluate(() => window.scrollBy(0, 320));
-  await screenshotEvidence(page, testInfo, 'wallet-canonical-recovery-choice');
+    await page.getByRole('textbox', { name: /Vault name/ }).fill('alice');
+    await page.getByLabel(/Secret passphrase/).fill('secret123456');
+    await page.locator('.identity-factor-row').getByRole('button', { name: '1', exact: true }).click();
+    await page.getByRole('button', { name: 'Review identity inputs' }).click();
+    await expect(page.getByRole('heading', { name: 'Review recovery requirements' })).toBeVisible();
+    await page.getByRole('button', { name: 'Derive Brain Vault' }).click();
 
-  const storage = await page.evaluate(() => JSON.stringify({
-    local: Object.entries(localStorage),
-    session: Object.entries(sessionStorage),
-  }));
-  expect(storage).not.toContain(FIRST_MNEMONIC);
-  await page.getByRole('button', { name: 'Restore selected backup' }).click();
-  await expect(page.getByRole('heading', { name: 'Wallet opened' })).toBeVisible({ timeout: 90_000 });
-  await finishOpenedWalletSetup(page);
-  await expect(page.getByText(`Active Runtime ${fixture.recovery.runtimeId}.`, { exact: false })).toBeVisible();
-  await expectPageContained(page);
-  await screenshotEvidence(page, testInfo, 'wallet-canonical-recovery-opened');
+    await expect(page.getByRole('heading', { name: /Deriving Brain Vault|Checking encrypted backups/ })).toBeVisible();
+    await screenshotEvidence(page, testInfo, 'wallet-brainvault-deriving');
+    await expect(page.getByRole('heading', { name: 'Choose a backup' })).toBeVisible({ timeout: 120_000 });
+    await expect(page.getByText('0x93bab14ed871462d414a7c0357bf1a76de741397')).toBeVisible();
+    await expect(page.getByText('Derived wallet material remains outside React state.')).toBeVisible();
+    await expect(page.getByRole('radio', { name: /Latest backup/ })).toContainText(
+      `H${fixture.recovery.brainVault.runtimeHeight}`,
+    );
+    await expectPageContained(page);
+    await screenshotEvidence(page, testInfo, 'wallet-brainvault-ready');
 
-  await expect(page.getByRole('heading', { name: 'Recovery services' })).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'Device wake' })).toBeVisible();
-  await expect(page.getByText(fixture.recovery.entityId.slice(0, 10), { exact: false })).toBeVisible();
-  const officialTower = page.getByText('Official xln tower').locator('..');
-  await expect(officialTower).toContainText(fixture.recovery.towerUrl);
-  await page.getByRole('button', { name: 'Register this device' }).click();
-  await expect(page.getByText('Registered with 1/1 recovery services.')).toBeVisible();
-  await expect(page.getByText('Registered', { exact: true })).toBeVisible();
-  await expect.poll(async () => {
-    const health = await page.request.get(`${fixture.recovery.towerUrl}/api/tower/healthz`);
-    const payload = await health.json() as { pushWake?: { stats?: { registrationCount?: number } } };
-    return payload.pushWake?.stats?.registrationCount ?? 0;
-  }).toBe(1);
-  const wakeStorage = await page.evaluate(() => localStorage.getItem('xln-push-wake-registrations-v1'));
-  expect(wakeStorage).toContain('"platform":"desktop"');
-  expect(wakeStorage).not.toContain('react-wallet-device-wake-integration-token');
-  await expectPageContained(page);
-  await screenshotEvidence(page, testInfo, 'wallet-device-wake-registered');
-  await page.getByRole('button', { name: 'Disable device wake' }).click();
-  await expect(page.getByText('Device wake disabled at 1/1 recovery services.')).toBeVisible();
-  await expect.poll(async () => {
-    const health = await page.request.get(`${fixture.recovery.towerUrl}/api/tower/healthz`);
-    const payload = await health.json() as { pushWake?: { stats?: { registrationCount?: number } } };
-    return payload.pushWake?.stats?.registrationCount ?? 0;
-  }).toBe(0);
-  await page.getByRole('radio', { name: /Backup only/ }).click();
-  await expect(page.getByRole('radio', { name: /Backup only/ })).toHaveAttribute('aria-checked', 'true');
+    const importBackup = page.getByRole('button', { name: 'Import runtime backup' });
+    let fileChooserPromise = page.waitForEvent('filechooser');
+    await importBackup.click();
+    let fileChooser = await fileChooserPromise;
+    await fileChooser.setFiles({
+      name: 'invalid-brainvault-backup.json',
+      mimeType: 'application/json',
+      buffer: Buffer.from('{invalid'),
+    });
+    await expect(page.getByRole('alert')).toHaveText('Backup file is not valid recovery JSON.');
+    await expectPageContained(page);
+    await page.getByRole('button', { name: 'Start over' }).scrollIntoViewIfNeeded();
+    await page.evaluate(() => window.scrollBy(0, 160));
+    await screenshotEvidence(page, testInfo, 'wallet-brainvault-file-error');
 
-  const serviceUrl = page.getByLabel('Service URL');
-  await serviceUrl.fill('ftp://invalid.example.com');
-  await page.getByRole('button', { name: 'Add service' }).click();
-  await expect(page.getByRole('alert')).toHaveText('Service URL must start with http:// or https://');
-  const manualUrl = `${fixture.recovery.towerUrl}/manual`;
-  await serviceUrl.fill(`${manualUrl}/`);
-  await page.getByLabel('Manual recovery service role').selectOption('delayed_last_resort');
-  await page.getByRole('button', { name: 'Add service' }).click();
-  const manualService = page.getByText('Manual service', { exact: true }).locator('..');
-  await expect(manualService).toContainText(manualUrl);
-  await expect(page.getByLabel(`Role for ${manualUrl}`)).toHaveValue('delayed_last_resort');
-  await page.getByRole('button', { name: 'Save recovery services' }).click();
-  await expect(page.getByText('Recovery services saved to the active Runtime.')).toBeVisible();
-  const persistedRecovery = await page.evaluate((storageKey) => (
-    localStorage.getItem(storageKey)
-  ), WALLET_VAULT_STORAGE_KEY);
-  expect(persistedRecovery).toContain(manualUrl);
-  expect(persistedRecovery).toContain('blind_backup');
-  expect(persistedRecovery).toContain('delayed_last_resort');
-  await expectPageContained(page);
-  await screenshotEvidence(page, testInfo, 'wallet-recovery-services-saved');
-  expectNoBrowserErrors(errors);
-});
+    fileChooserPromise = page.waitForEvent('filechooser');
+    await importBackup.click();
+    fileChooser = await fileChooserPromise;
+    await fileChooser.setFiles({
+      name: 'brainvault-backup.json',
+      mimeType: 'application/json',
+      buffer: Buffer.from(fixture.recovery.brainVault.backupFileContents),
+    });
+    const fileCandidate = page.getByRole('radio', { name: /brainvault-backup\.json/ });
+    await expect(fileCandidate).toHaveAttribute('aria-checked', 'true');
+    await expect(fileCandidate).toContainText(`H${fixture.recovery.brainVault.runtimeHeight}`);
+    await expect(
+      page.getByRole('radio', { name: new RegExp(fixture.recovery.towerUrl.replaceAll('.', '\\.')) }),
+    ).toBeVisible();
+    await expectPageContained(page);
+    await page.getByRole('button', { name: 'Start over' }).scrollIntoViewIfNeeded();
+    await page.evaluate(() => window.scrollBy(0, 160));
+    await screenshotEvidence(page, testInfo, 'wallet-brainvault-file-ready');
 
-test('wallet binds its recovered signer to real external transfers and reserve deposits', { tag: '@functional' }, async ({ page }, testInfo) => {
-  testInfo.setTimeout(240_000);
-  const depositAmount = testInfo.project.name === 'mobile-390x844'
-    ? '2'
-    : testInfo.project.name === 'laptop-1366x900' ? '3' : '4';
-  const errors = observeBrowserErrors(page);
-  const fixture = await readWalletRuntimeFixture(page);
-  await page.addInitScript(({ towerUrl }: { towerUrl: string }) => {
-    localStorage.setItem('xln-watchtower-urls', JSON.stringify([towerUrl]));
-    const target = window as typeof window & {
-      __XLN_WATCHTOWERS__?: string[];
-      xlnDesktop?: { platform: 'desktop' };
-    };
-    target.__XLN_WATCHTOWERS__ = [towerUrl];
-    target.xlnDesktop = { platform: 'desktop' };
-  }, { towerUrl: fixture.recovery.towerUrl });
-  const response = await page.goto('/app?setup=1', { waitUntil: 'domcontentloaded' });
-  expect(response?.ok(), 'document response for external wallet recovery').toBe(true);
-  await expect(page.locator('.wallet-shell-runtime-state')).toHaveText('Local Runtime', { timeout: 90_000 });
+    const storage = await page.evaluate(() =>
+      JSON.stringify({
+        local: Object.entries(localStorage),
+        session: Object.entries(sessionStorage),
+      }),
+    );
+    expect(storage).not.toContain('secret123456');
+    expect(storage).not.toContain(BRAINVAULT_MNEMONIC);
+    await page.getByRole('button', { name: 'Restore selected backup' }).click();
+    await expect(page.getByRole('heading', { name: 'Wallet opened' })).toBeVisible({ timeout: 90_000 });
+    await finishOpenedWalletSetup(page);
+    await expect(
+      page.getByText('Active Runtime 0x93bab14ed871462d414a7c0357bf1a76de741397.', { exact: false }),
+    ).toBeVisible();
+    await expectPageContained(page);
+    await screenshotEvidence(page, testInfo, 'wallet-brainvault-opened');
+    expectNoBrowserErrors(errors);
+  },
+);
 
-  await page.getByRole('tab', { name: /Mnemonic/ }).click();
-  await page.getByRole('textbox', { name: /^Seed phrase/ }).fill(FIRST_MNEMONIC);
-  await page.getByRole('button', { name: 'Review identity inputs' }).click();
-  await page.getByRole('button', { name: 'Verify recovery' }).click();
-  await page.getByRole('textbox', { name: /^Seed phrase/ }).fill(FIRST_MNEMONIC);
-  await page.getByRole('button', { name: 'Verify recovered wallet' }).click();
-  const fileChooserPromise = page.waitForEvent('filechooser');
-  await page.getByRole('button', { name: 'Import runtime backup' }).click();
-  const fileChooser = await fileChooserPromise;
-  await fileChooser.setFiles({
-    name: 'mnemonic-backup.json',
-    mimeType: 'application/json',
-    buffer: Buffer.from(fixture.recovery.backupFileContents),
-  });
-  await expect(page.getByRole('heading', { name: 'Choose a backup' })).toBeVisible({ timeout: 90_000 });
-  await page.getByRole('button', { name: 'Restore selected backup' }).click();
-  await expect(page.getByRole('heading', { name: 'Wallet opened' })).toBeVisible({ timeout: 90_000 });
-  await finishOpenedWalletSetup(page);
+test(
+  'wallet restores a canonical backup and enrolls recovery services',
+  { tag: '@functional' },
+  async ({ page }, testInfo) => {
+    await runWalletRecoveryServicesFlow(page, testInfo);
+  },
+);
 
-  await page.getByRole('link', { name: 'Payments', exact: true }).click();
-  await expect(page.getByRole('heading', { name: 'Payments' })).toBeVisible({ timeout: 90_000 });
-  const committedHeight = page.getByText(/^Committed height \d+$/);
-  const heightBeforeDeposit = await committedHeight.textContent();
-  expect(heightBeforeDeposit).toBeTruthy();
-  await page.getByRole('button', { name: 'External', exact: true }).click();
-  const externalProvider = page.getByTestId('wallet-external-provider');
-  await expect(externalProvider).toBeVisible({ timeout: 90_000 });
-  await expect(externalProvider).toContainText('desktop · rpc');
-  await expect(externalProvider).toContainText('react recovery mnemonic · 31337');
-  const usdcBalance = externalProvider.locator('.wallet-external-balances > div').filter({ hasText: 'USDC' });
-  await expect(usdcBalance.locator('small')).toContainText('allowance');
-  const balanceBefore = await usdcBalance.locator('strong').textContent();
-  expect(balanceBefore).toBeTruthy();
-  await expectPageContained(page);
-  await screenshotEvidence(page, testInfo, 'wallet-external-provider-ready');
+test(
+  'wallet binds its recovered signer to real external transfers and reserve deposits',
+  { tag: '@functional' },
+  async ({ page }, testInfo) => {
+    testInfo.setTimeout(240_000);
+    const depositAmount =
+      testInfo.project.name === 'mobile-390x844' ? '2' : testInfo.project.name === 'laptop-1366x900' ? '3' : '4';
+    const errors = observeBrowserErrors(page);
+    const fixture = await readWalletRuntimeFixture(page);
+    await page.addInitScript(
+      ({ towerUrl }: { towerUrl: string }) => {
+        localStorage.setItem('xln-watchtower-urls', JSON.stringify([towerUrl]));
+        const target = window as typeof window & {
+          __XLN_WATCHTOWERS__?: string[];
+          xlnDesktop?: { platform: 'desktop' };
+        };
+        target.__XLN_WATCHTOWERS__ = [towerUrl];
+        target.xlnDesktop = { platform: 'desktop' };
+      },
+      { towerUrl: fixture.recovery.towerUrl },
+    );
+    const response = await page.goto('/app?setup=1', { waitUntil: 'domcontentloaded' });
+    expect(response?.ok(), 'document response for external wallet recovery').toBe(true);
+    await expect(page.locator('.wallet-shell-runtime-state')).toHaveText('Local Runtime', { timeout: 90_000 });
 
-  await externalProvider.getByLabel('Asset').selectOption(fixture.recovery.external.tokenAddress);
-  await externalProvider.getByLabel('Amount').fill('1');
-  await externalProvider.getByLabel('Recipient EOA').fill(fixture.recovery.external.recipient);
-  await externalProvider.getByRole('button', { name: 'Sign wallet transfer' }).click();
-  await expect(externalProvider.getByText('Transfer confirmed. Finalized balances are refreshing.')).toBeVisible({ timeout: 90_000 });
-  await expect.poll(() => usdcBalance.locator('strong').textContent(), { timeout: 90_000 })
-    .not.toBe(balanceBefore);
-  await expect(externalProvider.locator('.wallet-external-operation code')).toHaveText(/^0x[0-9a-f]{64}$/);
-  await expectPageContained(page);
-  await screenshotEvidence(page, testInfo, 'wallet-external-provider-transfer-confirmed');
+    await page.getByRole('tab', { name: /Mnemonic/ }).click();
+    await page.getByRole('textbox', { name: /^Seed phrase/ }).fill(FIRST_MNEMONIC);
+    await page.getByRole('button', { name: 'Review identity inputs' }).click();
+    await page.getByRole('button', { name: 'Verify recovery' }).click();
+    await page.getByRole('textbox', { name: /^Seed phrase/ }).fill(FIRST_MNEMONIC);
+    await page.getByRole('button', { name: 'Verify recovered wallet' }).click();
+    const fileChooserPromise = page.waitForEvent('filechooser');
+    await page.getByRole('button', { name: 'Import runtime backup' }).click();
+    const fileChooser = await fileChooserPromise;
+    await fileChooser.setFiles({
+      name: 'mnemonic-backup.json',
+      mimeType: 'application/json',
+      buffer: Buffer.from(fixture.recovery.backupFileContents),
+    });
+    await expect(page.getByRole('heading', { name: 'Choose a backup' })).toBeVisible({ timeout: 90_000 });
+    await page.getByRole('button', { name: 'Restore selected backup' }).click();
+    await expect(page.getByRole('heading', { name: 'Wallet opened' })).toBeVisible({ timeout: 90_000 });
+    await finishOpenedWalletSetup(page);
 
-  await externalProvider.getByRole('radio', { name: /Deposit to reserve/ }).click();
-  await externalProvider.getByLabel('Asset').selectOption(fixture.recovery.external.tokenAddress);
-  await externalProvider.getByLabel('Amount').fill(depositAmount);
-  await externalProvider.getByRole('button', { name: 'Approve exact amount' }).click();
-  await expect(externalProvider.getByText('Approval confirmed. Finalized balances are refreshing.')).toBeVisible({ timeout: 90_000 });
-  await expect(usdcBalance).toContainText(`allowance ${depositAmount}`, { timeout: 90_000 });
-  await expectPageContained(page);
-  await screenshotEvidence(page, testInfo, 'wallet-external-provider-approved');
+    await page.getByRole('link', { name: 'Payments', exact: true }).click();
+    await expect(page.getByRole('heading', { name: 'Payments' })).toBeVisible({ timeout: 90_000 });
+    const committedHeight = page.getByText(/^Committed height \d+$/);
+    const heightBeforeDeposit = await committedHeight.textContent();
+    expect(heightBeforeDeposit).toBeTruthy();
+    await page.getByRole('button', { name: 'External', exact: true }).click();
+    const externalProvider = page.getByTestId('wallet-external-provider');
+    await expect(externalProvider).toBeVisible({ timeout: 90_000 });
+    await expect(externalProvider).toContainText('desktop · rpc');
+    await expect(externalProvider).toContainText('react recovery mnemonic · 31337');
+    const usdcBalance = externalProvider.locator('.wallet-external-balances > div').filter({ hasText: 'USDC' });
+    await expect(usdcBalance.locator('small')).toContainText('allowance');
+    const balanceBefore = await usdcBalance.locator('strong').textContent();
+    expect(balanceBefore).toBeTruthy();
+    await expectPageContained(page);
+    await screenshotEvidence(page, testInfo, 'wallet-external-provider-ready');
 
-  await externalProvider.getByRole('button', { name: 'Queue reserve deposit' }).click();
-  await expect(page.locator('.wallet-payment-command.is-accepted')).toContainText('accepted', { timeout: 90_000 });
-  await expect(page.locator('.wallet-payment-command.is-accepted')).toContainText('Queued after committed Runtime height');
-  await expect.poll(() => committedHeight.textContent(), { timeout: 90_000 }).not.toBe(heightBeforeDeposit);
-  await expectPageContained(page);
-  await screenshotEvidence(page, testInfo, 'wallet-external-provider-deposit-queued');
-  expectNoBrowserErrors(errors);
-});
+    await externalProvider.getByLabel('Asset').selectOption(fixture.recovery.external.tokenAddress);
+    await externalProvider.getByLabel('Amount').fill('1');
+    await externalProvider.getByLabel('Recipient EOA').fill(fixture.recovery.external.recipient);
+    await externalProvider.getByRole('button', { name: 'Sign wallet transfer' }).click();
+    await expect(externalProvider.getByText('Transfer confirmed. Finalized balances are refreshing.')).toBeVisible({
+      timeout: 90_000,
+    });
+    await expect.poll(() => usdcBalance.locator('strong').textContent(), { timeout: 90_000 }).not.toBe(balanceBefore);
+    await expect(externalProvider.locator('.wallet-external-operation code')).toHaveText(/^0x[0-9a-f]{64}$/);
+    await expectPageContained(page);
+    await screenshotEvidence(page, testInfo, 'wallet-external-provider-transfer-confirmed');
+
+    await externalProvider.getByRole('radio', { name: /Deposit to reserve/ }).click();
+    await externalProvider.getByLabel('Asset').selectOption(fixture.recovery.external.tokenAddress);
+    await externalProvider.getByLabel('Amount').fill(depositAmount);
+    await externalProvider.getByRole('button', { name: 'Approve exact amount' }).click();
+    await expect(externalProvider.getByText('Approval confirmed. Finalized balances are refreshing.')).toBeVisible({
+      timeout: 90_000,
+    });
+    await expect(usdcBalance).toContainText(`allowance ${depositAmount}`, { timeout: 90_000 });
+    await expectPageContained(page);
+    await screenshotEvidence(page, testInfo, 'wallet-external-provider-approved');
+
+    await externalProvider.getByRole('button', { name: 'Queue reserve deposit' }).click();
+    await expect(page.locator('.wallet-payment-command.is-accepted')).toContainText('accepted', { timeout: 90_000 });
+    await expect(page.locator('.wallet-payment-command.is-accepted')).toContainText(
+      'Queued after committed Runtime height',
+    );
+    await expect.poll(() => committedHeight.textContent(), { timeout: 90_000 }).not.toBe(heightBeforeDeposit);
+    await expectPageContained(page);
+    await screenshotEvidence(page, testInfo, 'wallet-external-provider-deposit-queued');
+    expectNoBrowserErrors(errors);
+  },
+);
 
 test('address directory reads the isolated wallet Runtime', { tag: '@functional' }, async ({ page }, testInfo) => {
   const errors = observeBrowserErrors(page);

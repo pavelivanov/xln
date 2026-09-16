@@ -12,7 +12,7 @@ import {
   isSameJurisdictionEntityInReplicas,
   jurisdictionKey,
 } from '../../../../frontend/bridges/wallet/entity-panel-model';
-import { buildAccountPageView, resolveAccountListEntityName } from '../../../../frontend/src/lib/components/Entity/core/account-list-view';
+import { buildAccountPageView, resolveAccountListEntityName } from '../../../../frontend/bridges/entity/accounts/account-list-view';
 
 describe('entity panel model helpers', () => {
   test('builds stable jurisdiction keys from contract config', () => {

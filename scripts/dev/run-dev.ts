@@ -7,6 +7,8 @@
  * process group so shutdown cannot leave ports or grandchildren behind.
  */
 
+import { readDevFrontend } from './supervise-dev';
+
 import { randomBytes, timingSafeEqual } from 'node:crypto';
 import { spawn, type ChildProcess } from 'node:child_process';
 
@@ -224,6 +226,7 @@ export const runDevCommands = async (
 
 const runDev = async (): Promise<number> => {
   if (process.env['XLN_PORT_BASE']) throw new Error('DEV_PORT_OVERRIDE_FORBIDDEN:XLN_PORT_BASE');
+  readDevFrontend();
   const { mode, commands } = parseInvocation();
   let lease: DevSingletonLease;
   try {

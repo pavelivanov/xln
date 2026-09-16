@@ -5,7 +5,7 @@ import {
   buildClosedOrderViews,
   decodeSwapHistoryPage,
   historyPageToOfferLifecycles,
-} from '../../../frontend/src/lib/components/Entity/swap/swap-order-history';
+} from '../../../frontend/packages/ui/src/market/history/swap-order-history';
 
 const WETH = 2;
 const USDC = 1;

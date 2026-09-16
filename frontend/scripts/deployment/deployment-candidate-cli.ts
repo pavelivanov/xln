@@ -5,7 +5,7 @@ import {
   resolveDeploymentRoot,
   rollbackDeploymentCandidate,
   verifyDeploymentCandidateState,
-} from './deployment-candidate';
+} from '../../../packages/frontend-release/deployment';
 
 const main = async (): Promise<void> => {
   const [command, rootArg, releaseArg, ...extra] = Bun.argv.slice(2);

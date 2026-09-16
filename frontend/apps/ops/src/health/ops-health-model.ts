@@ -5,8 +5,10 @@ import {
   type QaAdminHealthSnapshot,
 } from '../../../../packages/runtime-client/src/admin-health';
 import { isUnknownRecord } from '../../../../packages/runtime-client/src/boundary';
+import { decodeHealthTopology, type HealthTopology } from './topology/health-topology-model';
 
 export type OpsHealthEvidence = Readonly<{
+  topology: HealthTopology;
   admin: QaAdminHealthSnapshot;
   timestamp: number;
   uptimeMs: number | null;
@@ -77,6 +79,7 @@ export const decodeOpsHealthEvidence = (
   const uptimeSeconds = finiteNumber(process['uptimeSec']);
 
   return {
+    topology: decodeHealthTopology(payload),
     admin,
     timestamp,
     uptimeMs: uptime ?? (uptimeSeconds === null ? null : uptimeSeconds * 1_000),
@@ -114,9 +117,15 @@ export const deriveOpsHealthDisplayVerdict = (
   health: OpsHealthEvidence,
   rpc: RpcHealthProbeResult | null,
   refreshError: string,
-): OpsHealthVerdict => refreshError
-  ? { status: 'FAIL', reason: 'Latest refresh failed; showing the last verified snapshot' }
-  : deriveOpsHealthVerdict(health, rpc);
+  criticalEventCount = 0,
+): OpsHealthVerdict => {
+  if (refreshError) return { status: 'FAIL', reason: 'Latest refresh failed; showing the last verified snapshot' };
+  const verdict = deriveOpsHealthVerdict(health, rpc);
+  if (verdict.status === 'FAIL') return verdict;
+  return criticalEventCount > 0
+    ? { status: 'DEGRADED', reason: `${criticalEventCount} critical Runtime events in the latest window` }
+    : verdict;
+};
 
 const metricState = (value: boolean | null): OpsHealthMetric['state'] =>
   value === true ? 'ok' : value === false ? 'fail' : 'neutral';

@@ -1,6 +1,6 @@
 import { fileURLToPath } from 'node:url';
 
-import { SURFACE_IDS, type SurfaceId } from '../config/surfaces';
+import { SURFACE_IDS, type SurfaceId } from '../../packages/frontend-release/surfaces';
 import { parseSurfaceSelection } from './shared/surface-selection';
 
 export const CANDIDATE_BROWSER_TEST_FILES = {
@@ -28,6 +28,7 @@ export const CANDIDATE_BROWSER_TEST_FILES = {
   ],
   ops: [
     'tests/react-candidate/ops/ops.spec.ts',
+    'tests/react-candidate/ops/ops-health-events.spec.ts',
     'tests/react-candidate/ops/workspace/ops-command-palette.spec.ts',
     'tests/react-candidate/ops/ops-public-embed.spec.ts',
     'tests/react-candidate/ops/workspace/ops-workspace-localization.spec.ts',
@@ -46,6 +47,7 @@ export const CANDIDATE_BROWSER_TEST_FILES = {
     'tests/react-candidate/ops/panels/ops-workspace-architect.spec.ts',
     'tests/react-candidate/ops/panels/ops-workspace-brainvault.spec.ts',
     'tests/react-candidate/ops/panels/ops-brainvault-destination.spec.ts',
+    'tests/react-candidate/ops/panels/ops-brainvault-late-open.spec.ts',
   ],
 } as const satisfies Readonly<Record<SurfaceId, readonly string[]>>;
 

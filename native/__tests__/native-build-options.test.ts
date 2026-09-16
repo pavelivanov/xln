@@ -1,20 +1,44 @@
 import { describe, expect, test } from 'bun:test';
+import { resolve } from 'node:path';
 import { readFileSync } from 'node:fs';
 import {
 	expandTargets,
-	parseNativeBuildOptions,
+	validateNativeReleaseVersions,
+  parseNativeBuildOptions,
 	requiredNativeToolCommands,
 	resolveIosXcodebuildProjectArgs,
 } from '../../scripts/native/build-platforms';
 
 describe('native build pipeline options', () => {
-	test('defaults to both mobile shells from the shared frontend build', () => {
+	test('defaults to both mobile shells with an explicit release supplied by the caller', () => {
 		expect(parseNativeBuildOptions([]).targets).toEqual(['ios', 'android']);
 		expect(expandTargets(['mobile'])).toEqual(['ios', 'android']);
 		expect(expandTargets(['all'])).toEqual(['ios', 'android', 'desktop', 'extension']);
 	});
 
-	test('rejects unknown targets before running platform tooling', () => {
+	test('parses one explicit release and rejects ambiguous or retired artifact selection', () => {
+    expect(parseNativeBuildOptions(['extension', '--frontend-release', './release']).frontendRelease).toBe(
+      resolve('release'),
+    );
+    expect(parseNativeBuildOptions(['--frontend-release=./release', 'desktop']).targets).toEqual(['desktop']);
+    expect(() => parseNativeBuildOptions(['--frontend-release'])).toThrow('NATIVE_FRONTEND_RELEASE_REQUIRED');
+    expect(() => parseNativeBuildOptions(['--frontend-release='])).toThrow('NATIVE_FRONTEND_RELEASE_REQUIRED');
+    expect(() => parseNativeBuildOptions(['--frontend-release=a', '--frontend-release=b'])).toThrow(
+      'NATIVE_FRONTEND_RELEASE_DUPLICATE',
+    );
+    expect(() => parseNativeBuildOptions(['--no-build'])).toThrow('Unknown native flag: --no-build');
+    expect(parseNativeBuildOptions(['-h']).flags.has('-h')).toBe(true);
+  });
+
+  test('release packaging rejects inconsistent native, npm and source versions before signing', () => {
+    expect(validateNativeReleaseVersions({ VERSION: '0.1.31', 'package.json': '0.1.31' })).toBe('0.1.31');
+    expect(() => validateNativeReleaseVersions({ VERSION: '0.1.31', 'package.json': '0.1.32' })).toThrow(
+      'NATIVE_RELEASE_VERSION_MISMATCH',
+    );
+    expect(() => validateNativeReleaseVersions({ VERSION: '' })).toThrow('NATIVE_RELEASE_VERSION_INVALID');
+  });
+
+  test('rejects unknown targets before running platform tooling', () => {
 		expect(() => expandTargets(['watch'])).toThrow('Unknown native target: watch');
 	});
 

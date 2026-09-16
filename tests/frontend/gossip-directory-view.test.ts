@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 import {
   buildGossipDirectoryView,
   buildGossipDirectoryViewFromRuntimeEntities,
-} from '../../frontend/src/lib/components/Entity/activity/gossip-directory-view';
+} from '../../frontend/packages/runtime-client/src/panels/gossip-panel-view';
 
 const ALICE = `0x${'11'.repeat(32)}`;
 const HUB = `0x${'22'.repeat(32)}`;

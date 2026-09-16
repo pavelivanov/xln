@@ -24,7 +24,7 @@ const DEV_APPLICATION_ROLES = [...DEV_BACKEND_ROLES, ...DEV_FRONTEND_ROLES] as c
 const DEV_CHAIN_BARRIER_ROLE = 'rpc-ready' as const;
 const DEV_BACKEND_BARRIER_ROLE = 'backend-ready' as const;
 
-type DevRole = typeof DEV_ROLES[number];
+type DevRole = typeof DEV_ROLES[number] | 'react';
 type DevChildRole = DevRole | typeof DEV_CHAIN_BARRIER_ROLE | typeof DEV_BACKEND_BARRIER_ROLE;
 type DevRoleProcess = {
   readonly role: DevChildRole;
@@ -34,6 +34,7 @@ type DevRoleProcess = {
 };
 
 export type DevSupervisorOptions = Readonly<{
+  frontend?: 'react' | 'svelte';
   childScript: string;
   cwd: string;
   logDir: string;
@@ -48,10 +49,20 @@ const parsePositiveInteger = (name: string, value: string | undefined): number =
   return parsed;
 };
 
+export const readDevFrontend = (value = process.env['XLN_DEV_FRONTEND']): 'react' | 'svelte' => {
+  if (value === undefined || value === 'svelte') return 'svelte';
+  if (value === 'react') return 'react';
+  throw new Error(`DEV_FRONTEND_INVALID:${value}`);
+};
+
+export const developmentFrontendRoles = (frontend: 'react' | 'svelte'): readonly DevRole[] =>
+  frontend === 'react' ? ['react', 'ui', 'ready'] : DEV_FRONTEND_ROLES;
+
 export const readDevSupervisorOptions = (): DevSupervisorOptions => {
   const cwd = process.cwd();
   return {
     cwd,
+    frontend: readDevFrontend(),
     childScript: join(cwd, 'scripts/dev/run-dev-child.sh'),
     logDir: process.env['DEV_LOG_DIR'] || join(cwd, '.logs/dev'),
     shutdownTimeoutMs: parsePositiveInteger(
@@ -124,7 +135,8 @@ export async function superviseDev(options: DevSupervisorOptions): Promise<numbe
   };
 
   const spawnRole = (role: DevChildRole): DevRoleProcess => {
-    const chainsReady = DEV_APPLICATION_ROLES.includes(role as typeof DEV_APPLICATION_ROLES[number])
+    const chainsReady = role === 'react' ||
+      DEV_APPLICATION_ROLES.includes(role as typeof DEV_APPLICATION_ROLES[number])
       || role === DEV_BACKEND_BARRIER_ROLE;
     const child = spawn('bash', [options.childScript, role], {
       cwd: options.cwd,
@@ -192,7 +204,7 @@ export async function superviseDev(options: DevSupervisorOptions): Promise<numbe
       terminal.then(() => 'terminal' as const),
     ]);
     if (backendOutcome === 'backend' && !stopping) {
-      for (const role of DEV_FRONTEND_ROLES) spawnRole(role);
+      for (const role of developmentFrontendRoles(options.frontend ?? 'svelte')) spawnRole(role);
     }
   }
 

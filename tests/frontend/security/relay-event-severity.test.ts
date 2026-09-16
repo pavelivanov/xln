@@ -3,7 +3,7 @@ import {
   isRelayTimelineError,
   isRelayTimelineWarning,
   relayTimelineTone,
-} from '../../../frontend/src/lib/health/relayEventSeverity';
+} from '../../../frontend/packages/ui/src/health/relay-event-severity';
 
 describe('relay event severity', () => {
   test('uses typed delivery metadata', () => {

@@ -46,6 +46,7 @@ if [[ ! "$DEV_SHUTDOWN_TIMEOUT_MS" =~ ^[1-9][0-9]*$ ]]; then
   exit 1
 fi
 
+unset XLN_REACT_GATEWAY_TLS_CERT XLN_REACT_GATEWAY_TLS_KEY
 DEV_WEB_SCHEME=http
 if [[ "${XLN_VITE_FORCE_HTTP:-0}" != "1" ]]; then
   for cert_base in \
@@ -54,6 +55,10 @@ if [[ "${XLN_VITE_FORCE_HTTP:-0}" != "1" ]]; then
     "$REPO_ROOT/192.168.1.23+2"; do
     if [[ -f "${cert_base}.pem" && -f "${cert_base}-key.pem" ]]; then
       DEV_WEB_SCHEME=https
+      if [[ "${XLN_DEV_FRONTEND:-svelte}" == "react" ]]; then
+        export XLN_REACT_GATEWAY_TLS_CERT="${cert_base}.pem"
+        export XLN_REACT_GATEWAY_TLS_KEY="${cert_base}-key.pem"
+      fi
       break
     fi
   done
@@ -63,6 +68,13 @@ case "${CUSTODY_HTTPS:-}" in
   1|[Tt][Rr][Uu][Ee]|[Yy][Ee][Ss]) DEV_CUSTODY_SCHEME=https ;;
 esac
 DEV_RELAY_WEB_URLS="${DEV_WEB_SCHEME}://localhost:${WEB_PORT},http://localhost:${WEB_HTTP_PORT},http://localhost:${UI_PORT}"
+
+DEV_WALLET_ORIGIN="http://localhost:${WEB_HTTP_PORT}"
+if [[ "${XLN_DEV_FRONTEND:-svelte}" == "react" ]]; then
+  DEV_WALLET_ORIGIN="${DEV_WEB_SCHEME}://localhost:${WEB_PORT}"
+  DEV_RELAY_WEB_URLS="${DEV_WALLET_ORIGIN},http://localhost:${UI_PORT}"
+fi
+export DEV_WALLET_ORIGIN
 
 export XLN_JURISDICTIONS_PATH="$XLN_RDB_ROOT/jurisdictions.json"
 XLN_MESH_ROOT_SEED_FILE="${XLN_MESH_ROOT_SEED_FILE:-$DEV_DATA_ROOT/secrets/mesh-root.seed}"
@@ -140,7 +152,7 @@ DEV_RADAPTER_KEYS_JSON="$DEV_DATA_ROOT/radapter-keys.json"
 DEV_RADAPTER_KEYS_ENV="$DEV_DATA_ROOT/radapter-keys.env"
 bun core/scripts/operations/development/dev-radapter-keys.ts \
   --web-port "${WEB_PORT}" \
-  --manager-origin "http://localhost:${WEB_HTTP_PORT}" \
+  --manager-origin "$DEV_WALLET_ORIGIN" \
   --api-port "${API_PORT}" \
   --out "$DEV_RADAPTER_KEYS_JSON" \
   --env-out "$DEV_RADAPTER_KEYS_ENV" \
@@ -149,6 +161,7 @@ bun core/scripts/operations/development/dev-radapter-keys.ts \
 source "$DEV_RADAPTER_KEYS_ENV"
 
 bun core/scripts/operations/development/print-dev-links.ts \
+  --web-origin "$DEV_WALLET_ORIGIN" \
   --web-port "${WEB_PORT}" \
   --web-http-port "${WEB_HTTP_PORT}" \
   --web-scheme "${DEV_WEB_SCHEME}" \
@@ -162,7 +175,7 @@ bun core/scripts/operations/development/print-dev-links.ts \
   --ui-port "${UI_PORT}" \
   --keys "$DEV_RADAPTER_KEYS_JSON"
 
-echo "DEV_BOOTING wallet=http://localhost:${WEB_HTTP_PORT}/app ui=http://localhost:${UI_PORT}/ api=http://127.0.0.1:${API_PORT}"
+echo "DEV_BOOTING wallet=${DEV_WALLET_ORIGIN}/app ui=http://localhost:${UI_PORT}/ api=http://127.0.0.1:${API_PORT}"
 
 if [[ "$DEV_VERBOSE" != "1" ]]; then
   echo "anvil logs             ${DEV_LOG_DIR}/anvil-${RPC_PORT}.log"

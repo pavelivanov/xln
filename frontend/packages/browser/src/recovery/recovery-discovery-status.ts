@@ -18,6 +18,11 @@ export type RuntimeRecoveryDiscoveryFailureStatus = {
 };
 
 const STORAGE_PREFIX = 'xln-runtime-recovery-discovery:';
+const discoveryListeners = new Map<string, Set<() => void>>();
+
+const publishDiscoveryChange = (runtimeId: string): void => {
+  for (const listener of discoveryListeners.get(runtimeId) ?? []) listener();
+};
 
 const normalizeRuntimeId = (value: string | null | undefined): string =>
   String(value || '').trim().toLowerCase();
@@ -69,6 +74,7 @@ export function writeRuntimeRecoveryDiscoveryStatus(status: RuntimeRecoveryDisco
     failures: normalizeFailureStatuses(status.failures),
     checkedAt: Math.max(0, Math.floor(Number(status.checkedAt || Date.now()))),
   }));
+  publishDiscoveryChange(runtimeId);
 }
 
 export function readRuntimeRecoveryDiscoveryStatus(
@@ -105,5 +111,25 @@ export function clearRuntimeRecoveryDiscoveryStatus(runtimeId: string | null | u
   const normalizedRuntimeId = normalizeRuntimeId(runtimeId);
   if (!normalizedRuntimeId) return;
   localStorage.removeItem(storageKey(normalizedRuntimeId));
+  publishDiscoveryChange(normalizedRuntimeId);
 }
 import { isUnknownRecord, parseJsonUnknown } from '../../../runtime-client/src/boundary';
+
+export const subscribeRuntimeRecoveryDiscoveryStatus = (runtimeId: string, listener: () => void): (() => void) => {
+  const id = normalizeRuntimeId(runtimeId);
+  const listeners = discoveryListeners.get(id) ?? new Set<() => void>();
+  listeners.add(listener);
+  discoveryListeners.set(id, listeners);
+  const onStorage = (event: StorageEvent): void => {
+    if (event.storageArea === localStorage && (event.key === null || event.key === storageKey(id))) listener();
+  };
+  if (typeof window !== 'undefined') window.addEventListener('storage', onStorage);
+  let subscribed = true;
+  return () => {
+    if (!subscribed) return;
+    subscribed = false;
+    listeners.delete(listener);
+    if (listeners.size === 0) discoveryListeners.delete(id);
+    if (typeof window !== 'undefined') window.removeEventListener('storage', onStorage);
+  };
+};

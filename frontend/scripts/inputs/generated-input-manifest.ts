@@ -10,7 +10,7 @@ import {
   type GeneratedInputOwner,
   type PreparedGeneratedInputDefinition,
 } from '../../config/generated-inputs';
-import { matchesRoute } from '../../config/surfaces';
+import { matchesRoute } from '../../../packages/frontend-release/surfaces';
 
 export const GENERATED_INPUT_SCHEMA_VERSION = 2 as const;
 

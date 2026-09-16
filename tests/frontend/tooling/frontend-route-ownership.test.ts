@@ -5,7 +5,7 @@ import {
   SURFACES,
   getSurface,
   resolveRouteOwner,
-} from '../../../frontend/config/surfaces';
+} from '../../../packages/frontend-release/surfaces';
 
 describe('frontend route ownership', () => {
   test('assigns every planned application route', () => {

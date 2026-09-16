@@ -36,13 +36,28 @@ case "$DEV_DATA_ROOT" in
     ;;
 esac
 
-if [[ ! -x "$ROOT_DIR/frontend/node_modules/.bin/vite" \
-  || ! -f "$ROOT_DIR/frontend/node_modules/@sveltejs/kit/svelte-kit.js" \
-  || ! -f "$ROOT_DIR/frontend/node_modules/@sveltejs/vite-plugin-svelte/package.json" \
-  || ! -f "$ROOT_DIR/frontend/node_modules/svelte/package.json" ]]; then
-  echo "DEV_DEPENDENCIES_MISSING:frontend; run: cd frontend && bun install --frozen-lockfile" >&2
+if [[ ! -x "$ROOT_DIR/frontend/node_modules/.bin/vite" ]]; then
+  echo "DEV_DEPENDENCIES_MISSING:frontend-vite; run: cd frontend && bun install --frozen-lockfile" >&2
   exit 1
 fi
+frontend_packages=(vite/package.json)
+react_ports=()
+if [[ "${XLN_DEV_FRONTEND:-svelte}" == "react" ]]; then
+  if ! command -v node >/dev/null 2>&1; then
+    echo "DEV_DEPENDENCIES_MISSING:node" >&2
+    exit 1
+  fi
+  frontend_packages+=(@vitejs/plugin-react/package.json react/package.json react-dom/package.json)
+  react_ports=(8083 8084 8085)
+else
+  frontend_packages+=(@sveltejs/kit/svelte-kit.js @sveltejs/vite-plugin-svelte/package.json svelte/package.json)
+fi
+for dependency in "${frontend_packages[@]}"; do
+  if [[ ! -f "$ROOT_DIR/frontend/node_modules/$dependency" ]]; then
+    echo "DEV_DEPENDENCIES_MISSING:frontend:$dependency; run: cd frontend && bun install --frozen-lockfile" >&2
+    exit 1
+  fi
+done
 if [[ ! -x "$ROOT_DIR/ui/node_modules/.bin/vite" || ! -f "$ROOT_DIR/ui/node_modules/@vitejs/plugin-react/package.json" ]]; then
   echo "DEV_DEPENDENCIES_MISSING:ui; run: cd ui && bun install" >&2
   exit 1
@@ -59,7 +74,7 @@ assert_dev_ports_clear "$DEV_PID_DIR" "$DEV_OWNER_FILE" \
   "$RPC_PORT" "$RPC2_PORT" "$WEB_PORT" "$WEB_HTTP_PORT" "$API_PORT" \
   "$CUSTODY_PORT" "$CUSTODY_DAEMON_PORT" "$WATCHTOWER_PORT" "$UI_PORT" \
   "$((API_PORT + 10))" "$((API_PORT + 11))" "$((API_PORT + 12))" "$((API_PORT + 13))" \
-  "$((API_PORT + 14))"
+  "$((API_PORT + 14))" ${react_ports[@]+"${react_ports[@]}"}
 rm -f "$DEV_OWNER_FILE" "$DEV_PID_DIR"/*.pid
 
 "$ROOT_DIR/scripts/sync-contract-artifacts.sh"

@@ -11,7 +11,7 @@ import {
 import {
   decryptProtectedRemoteRuntimeCommandIntentRecord,
   encryptProtectedRemoteRuntimeCommandIntentRecord,
-} from '../../../../frontend/src/lib/stores/commands/runtimeCommandJournalStorage';
+} from '../../../../frontend/packages/browser/src/commands/runtime-command-journal-storage';
 import { canonicalRuntimeInput } from '../../../../frontend/packages/browser/src/commands/runtime-command-intent-codec';
 import {
   listUnresolvedRemoteRuntimeCommandIntents,

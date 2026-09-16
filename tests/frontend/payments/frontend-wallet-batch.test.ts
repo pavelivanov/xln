@@ -41,7 +41,10 @@ describe('wallet jurisdiction batch controls', () => {
     });
     expect(() => buildWalletBatchTx('broadcast', sent, sent)).toThrow('no in-flight batch');
     expect(buildWalletBatchTx('rebroadcast', sent, sent)).toEqual({ type: 'j_rebroadcast', data: { gasBumpBps: 1_000 } });
-    expect(buildWalletBatchTx('clear', sent, sent)).toMatchObject({ type: 'j_clear_batch' });
+    expect(buildWalletBatchTx('clear', sent, sent)).toEqual({
+      type: 'j_clear_batch',
+      data: { reason: 'manual-clear-from-ui' },
+    });
   });
 
   test('quarantines terminal failure and reports observed finality', () => {

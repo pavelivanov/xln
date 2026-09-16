@@ -74,7 +74,6 @@ export const createOpsHealthSource = (
     publish({
       status: snapshot.health ? snapshot.status : 'loading',
       refreshing: true,
-      error: '',
     });
     try {
       const [health, rpc] = await Promise.all([

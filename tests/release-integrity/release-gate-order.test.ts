@@ -97,8 +97,8 @@ describe('release gate ordering', () => {
     expect(actions.length).toBeGreaterThan(0);
     expect(actions.every((revision) => /^[0-9a-f]{40}$/.test(revision))).toBe(true);
     expect(workflow).toContain('permissions:\n  contents: read');
-    expect(workflow.match(/persist-credentials: false/g)).toHaveLength(4);
-    expect(workflow.match(/working-directory: jurisdictions/g)).toHaveLength(3);
+    expect(workflow.match(/persist-credentials: false/g)).toHaveLength(5);
+    expect(workflow.match(/working-directory: jurisdictions/g)).toHaveLength(4);
     expect(workflow).toContain('RELEASE_TAG: ${{ github.ref_name }}');
     expect(workflow).toContain('test "$RELEASE_REF_TYPE" = tag');
     expect(workflow).toContain('test "$(git rev-parse HEAD)" = "$RELEASE_SHA"');

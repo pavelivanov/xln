@@ -7,7 +7,7 @@ import {
   parseSwapDisplayPriceTicks,
   type SwapFormValidationInput,
   validateSwapForm,
-} from '../../../frontend/src/lib/components/Entity/swap/swap-order-math';
+} from '../../../frontend/packages/ui/src/market/orders/swap-order-math';
 import { getSwapLotScale, requantizeRemainingSwapAtPrice } from '../../../core/orderbook';
 
 describe('swap order math', () => {
