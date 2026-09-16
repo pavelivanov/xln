@@ -6,7 +6,7 @@ import { withRuntimeCommittedRead } from '../../../runtime/frame/lifecycle/write
 import { RuntimeAdapterError } from '../../runtime-adapter/errors';
 import { buildSettlementEvidence } from '../../runtime-adapter/control/settlement-evidence';
 import type { RuntimeAdapterControlAction } from '../../runtime-adapter/types';
-import { resolveControlBoardGovernance } from './control-board-governance';
+import { resolveControlBoardGovernance } from '../../runtime-adapter/control/control-board-governance-resolver';
 
 export const resolveRuntimeAdminControl = async (
   env: RuntimeReplica,

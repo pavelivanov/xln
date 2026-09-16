@@ -1,5 +1,5 @@
 import { expect, test } from 'bun:test';
-import { resolveOrderbookRelayWsUrl } from '../../../../frontend/src/lib/components/Trading/orderbook-relay-url';
+import { resolveOrderbookRelayWsUrl } from '../../../../frontend/packages/browser/src/market/orderbook-relay-url';
 import { resolveOrchestratorSocketType } from '../../../orchestrator/orchestrator-types';
 
 const localHttps = {

@@ -151,7 +151,11 @@ test('Architect creates an exact BrowserVM stack, 3x3 topology, reserves, and R2
   await expect(architect.getByText('Observed 9 reserves at or above 1000000 raw units.', { exact: true })).toBeVisible({ timeout: 30_000 });
   await architect.getByRole('button', { name: 'Send R2R transfer', exact: true }).click();
   await expect(architect.getByText(/^R2R committed at Runtime h\d+\.$/)).toBeVisible({ timeout: 30_000 });
-  await screenshotEvidence(page, testInfo, 'ops-architect-live-economy');
+  expect(
+      await architect.evaluate(panel => panel.scrollWidth - panel.clientWidth),
+      'Live controls fit inside the Architect scroll root',
+    ).toBe(0);
+    await screenshotEvidence(page, testInfo, 'ops-architect-live-economy');
   await page.getByRole('button', { name: 'Open Jurisdiction panel', exact: true }).click();
   const jurisdiction = page.getByTestId('workspace-jurisdiction');
   await expect(jurisdiction.getByLabel('Jurisdiction', { exact: true })).toHaveValue(name);
@@ -191,7 +195,11 @@ test('Architect creates an exact BrowserVM stack, 3x3 topology, reserves, and R2
   await expect(architect.getByText(new RegExp(`${rpcName} committed on chain ${rpcManifest.chainId}`))).toBeVisible({ timeout: 60_000 });
   await expect(architect.getByLabel('Architect selected stack', { exact: true })).toHaveValue(rpcName);
   await expect(architect.getByRole('button', { name: 'Reset isolated demo', exact: true })).toBeDisabled();
-  await page.getByRole('button', { name: 'Open Settings panel', exact: true }).click();
+  expect(
+      await architect.evaluate(panel => panel.scrollWidth - panel.clientWidth),
+      'RPC import controls fit inside the Architect scroll root',
+    ).toBe(0);
+    await page.getByRole('button', { name: 'Open Settings panel', exact: true }).click();
   const settings = page.getByTestId('workspace-settings');
   await settings.getByRole('button', { name: 'Stack Manager', exact: true }).click();
   const configuredStack = settings.getByLabel('Configured jurisdiction stack', { exact: true });

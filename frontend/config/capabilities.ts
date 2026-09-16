@@ -1,4 +1,4 @@
-import type { SurfaceId } from './surfaces';
+import type { SurfaceId } from '../../packages/frontend-release/surfaces';
 
 export type CapabilityStatus = 'unstarted' | 'in_progress' | 'implemented' | 'verified' | 'blocked';
 
@@ -35,7 +35,7 @@ export const CAPABILITIES = [
       'frontend/packages/ui/src/rcpan/microscope/microscope-playground.ts',
       'frontend/packages/ui/src/rcpan/microscope/microscope-timeline.ts',
     ],
-    behavior: ['public navigation', 'install detection', 'deterministic RCPAN dispute microscope', 'broadcast/unicast scale visualization', 'signature-checked release ledger; saved-data acceptance blocked by B9', 'AI review prompt slideshow', 'live market-cap data'],
+    behavior: ['public navigation', 'install detection', 'deterministic RCPAN dispute microscope', 'broadcast/unicast scale visualization', 'signature-checked release ledger with verified migrated saved envelopes', 'AI review prompt slideshow', 'live market-cap data'],
     status: 'implemented',
   },
   {
@@ -58,6 +58,10 @@ export const CAPABILITIES = [
     owner: 'wallet',
     routes: ['/app', '/address', '/testnet'],
     currentSources: [
+      'frontend/packages/runtime-client/src/runtime/projection/runtime-projection-identity.ts',
+      'frontend/packages/ui/src/navigation/runtime-navigation-view.ts',
+      'frontend/packages/ui/src/navigation/navigation-selection.ts',
+      'frontend/packages/ui/src/entity/shared/formatters.ts',
       'frontend/bridges/runtime/remote-runtime-validation.ts',
       'frontend/bridges/runtime/runtime-command-bus.ts',
       'frontend/bridges/runtime/runtime-query-client.ts',
@@ -327,9 +331,15 @@ export const CAPABILITIES = [
     owner: 'wallet',
     routes: ['/app'],
     currentSources: [
+      'frontend/packages/browser/src/market/orderbook-relay-url.ts',
+      'frontend/packages/ui/src/market/history/swap-order-history.ts',
+      'frontend/packages/ui/src/market/orders/swap-order-math.ts',
+      'frontend/packages/ui/src/market/format/swap-formatting.ts',
       'frontend/src/lib/components/Entity/swap',
       'frontend/packages/runtime-client/src/payments/payment-command.ts',
       'frontend/packages/runtime-client/src/payments/payment-command-types.ts',
+      'frontend/packages/runtime-client/src/payments/pending-batch-state.ts',
+      'frontend/packages/browser/src/payments/pending-batch-actions.ts',
       'frontend/packages/runtime-client/src/payments/xln-invoice.ts',
       'frontend/packages/browser/src/commands/runtime-command-intent.ts',
       'frontend/packages/browser/src/commands/runtime-command-intent-codec.ts',
@@ -380,7 +390,7 @@ export const CAPABILITIES = [
       'scripts/native/copy-capacitor-shell-candidate.ts',
       'scripts/native/copy-packaged-shell-candidate.ts',
       'scripts/native/packaged-shell-candidate-manifest.ts',
-      'frontend/scripts/deployment/deployment-candidate.ts',
+      'packages/frontend-release/deployment.ts',
       'frontend/scripts/deployment/deployment-candidate-smoke-server.ts',
     ],
     behavior: [
@@ -418,6 +428,15 @@ export const CAPABILITIES = [
       'frontend/src/routes/qa/hlt/+page.svelte',
       'frontend/src/routes/qa/quorum/+page.svelte',
       'frontend/apps/ops/src/health/ops-health-model.ts',
+      'frontend/apps/ops/src/health/topology/health-topology-model.ts',
+      'frontend/apps/ops/src/health/topology/ops-health-topology.tsx',
+      'frontend/apps/ops/src/health/ops-health-events.tsx',
+      'frontend/apps/ops/src/health/ops-health-events-source.ts',
+      'frontend/apps/ops/src/health/use-ops-health-events.ts',
+      'frontend/packages/ui/src/health/relay-event-severity.ts',
+      'frontend/packages/ui/src/health/runtime-events.ts',
+      'frontend/packages/ui/src/health/runtime-projections.ts',
+      'frontend/apps/ops/src/health/ops-health-runtime-projections.tsx',
       'frontend/apps/ops/src/health/ops-health-source.ts',
       'frontend/apps/ops/src/health/ops-health-runtime.ts',
       'frontend/apps/ops/src/health/ops-health.tsx',
@@ -446,7 +465,7 @@ export const CAPABILITIES = [
       'React-owned QA run ledger, verdict, protected artifacts, restart authority, history maintenance, and page teardown',
       'React-owned strict audit-registry projection, model usefulness timeline, evidence detail, leaderboard, and explicit review chains',
     ],
-    status: 'implemented',
+    status: 'in_progress',
   },
   {
     id: 'ops-runs-scenarios-and-ai',
@@ -494,6 +513,10 @@ export const CAPABILITIES = [
     owner: 'ops',
     routes: ['/embed'],
     currentSources: [
+      'frontend/bridges/entity/consensus/entity-consensus-settings.ts',
+      'frontend/bridges/entity/consensus/entity-consensus-payment-view.ts',
+      'frontend/bridges/entity/accounts/account-list-view.ts',
+      'frontend/packages/ui/src/graph/immersive/immersive-wallet-actions.ts',
       'frontend/src/lib/view/View.svelte',
       'frontend/src/routes/embed/+page.svelte',
       'frontend/packages/runtime-client/src/panels/console-panel-view.ts',

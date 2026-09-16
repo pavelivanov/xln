@@ -1,6 +1,6 @@
 import { expect, test } from 'bun:test';
 import { readFileSync } from 'node:fs';
-import { runtimeProjectionMatchesRuntime } from '../../../frontend/src/lib/components/Entity/core/entity-workspace';
+import { runtimeProjectionMatchesRuntime } from '../../../frontend/packages/runtime-client/src/runtime/projection/runtime-projection-identity';
 
 test('runtime projection cannot cross a runtime switch boundary', () => {
   expect(runtimeProjectionMatchesRuntime('runtime-a', 'runtime-a')).toBe(true);
@@ -49,7 +49,10 @@ test('entity workspace shell consumes a projected workspace view instead of trav
 
 test('entity workspace has no separate audit ops or liquidity projection lenses in app flow', () => {
   const workspace = readFileSync('frontend/src/lib/components/Entity/workspace/EntityWorkspace.svelte', 'utf8');
-  const model = readFileSync('frontend/src/lib/components/Entity/core/entity-workspace.ts', 'utf8');
+  const model = readFileSync(
+    'frontend/packages/runtime-client/src/runtime/projection/runtime-projection-identity.ts',
+    'utf8',
+  );
 
   expect(model).not.toContain("'audit'");
   expect(model).not.toContain("'ops'");
@@ -120,7 +123,10 @@ test('entity panel routing is owned by the existing wallet app tabs', () => {
 });
 
 test('entity workspace runtime boundary helper stays projection-only', () => {
-  const source = readFileSync('frontend/src/lib/components/Entity/core/entity-workspace.ts', 'utf8');
+  const source = readFileSync(
+    'frontend/packages/runtime-client/src/runtime/projection/runtime-projection-identity.ts',
+    'utf8',
+  );
   expect(source).toContain('runtimeProjectionMatchesRuntime');
   expect(source).not.toContain('RuntimeAdapterViewFrame');
   expect(source).not.toContain('RuntimeReplica, EnvSnapshot');

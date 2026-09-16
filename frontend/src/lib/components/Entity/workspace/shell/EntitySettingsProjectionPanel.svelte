@@ -34,7 +34,7 @@
   import {
     buildRecoveryTowerStatuses,
     buildRuntimeRecoveryCoverage,
-  } from '$lib/utils/recovery/recoveryCoverage';
+  } from '../../../../../../bridges/wallet/recovery-coverage';
   import {
     readRuntimeRecoveryDiscoveryStatus,
     type RuntimeRecoveryDiscoveryStatus,
@@ -45,7 +45,7 @@
   import PushWakePanel from '$lib/components/Settings/PushWakePanel.svelte';
   import StackManager from '$lib/components/Settings/StackManager.svelte';
   import EntityConsensusSettingsPanel from './EntityConsensusSettingsPanel.svelte';
-  import type { EntityConsensusSettingsView } from '../entity-consensus-settings';
+  import type { EntityConsensusSettingsView } from '../../../../../../bridges/entity/consensus/entity-consensus-settings';
   import type { SettingsSubview } from '../../../../../../packages/runtime-client/src/entity/entity-workspace-navigation';
   import type { ThemeName } from '../../../../../../packages/ui/src/workspace/ui-types';
   import { getAvailableThemes } from '../../../../../../packages/browser/src/themes';

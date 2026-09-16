@@ -1,17 +1,16 @@
 #!/usr/bin/env bun
+import {
+  createNativeReleaseBuild,
+  requireNativeWorkspace,
+  verifyNativeReleaseBuildInputs,
+  verifyNativeDesktopCopy,
+  type NativeReleaseBuild,
+} from './native-release-build';
+import { verifyCandidateReleaseDirectory } from '../../packages/frontend-release/verify';
+
 import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import {
-	copyFileSync,
-	cpSync,
-	existsSync,
-	mkdirSync,
-	readdirSync,
-	readFileSync,
-	rmSync,
-	unlinkSync,
-	writeFileSync,
-} from 'node:fs';
+import { copyFileSync, cpSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -26,13 +25,13 @@ type NativeArtifact = {
 	proofPath?: string;
 };
 type NativeBuildOptions = {
-	flags: Set<string>;
-	targets: Platform[];
+  frontendRelease?: string;
+  flags: Set<string>;
+  targets: Platform[];
 };
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const FRONTEND = path.join(ROOT, 'frontend');
-const BUILD_DIR = path.join(FRONTEND, 'build');
 const NATIVE_DIR = path.join(ROOT, 'native');
 const DIST_DIR = path.join(NATIVE_DIR, 'dist');
 const ARTIFACT_MANIFEST = path.join(DIST_DIR, 'native-artifacts.json');
@@ -43,28 +42,28 @@ function printHelp(): void {
 	console.log(`XLN native build pipeline
 
 Usage:
-  bun scripts/native/build-platforms.ts [mobile|ios|android|desktop|extension|all] [--open] [--smoke] [--no-build] [--package]
+  bun scripts/native/build-platforms.ts [mobile|ios|android|desktop|extension|all] --frontend-release <verified-directory> [--open] [--smoke] [--package]
 
 Targets:
-  mobile     Build/sync iOS + Android from frontend/build
+  mobile     Sync iOS + Android in copied Wallet shell workspaces
   ios        Build/sync Capacitor iOS
   android    Build/sync Capacitor Android
   desktop    Prepare Electron shell; --open launches it
-  extension  Prepare browser companion extension in native/extension/dist
+  extension  Prepare the verified browser companion extension workspace
   all        mobile + desktop + extension
 
 Flags:
-  --no-build     Reuse an existing frontend/build artifact
+  --frontend-release <directory>  Required verified release; never rebuild application bytes
   --open         Open the native IDE/shell after sync
   --smoke        Launch desktop shell once and exit
   --package      Produce signed release packages; missing signing/notarization fails closed
 
 Examples:
-  bun run native:mobile
-  bun run native:mobile -- --package
-  bun run native:package
-  bun run native:ios -- --open
-  bun run native desktop --open
+  bun run native:mobile -- --frontend-release <directory>
+  bun run native:mobile -- --frontend-release <directory> --package
+  bun run native:package -- --frontend-release <directory>
+  bun run native:ios -- --frontend-release <directory> --open
+  bun run native desktop --frontend-release <directory> --open
 `);
 }
 
@@ -84,74 +83,77 @@ function run(command: string, commandArgs: string[], cwd: string, env: NodeJS.Pr
 }
 
 function existingJavaHome(): string | null {
-	const candidates = [
-		process.env.JAVA_HOME,
-		'/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home',
-		'/opt/homebrew/opt/openjdk/libexec/openjdk.jdk/Contents/Home',
-		'/usr/local/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home',
-		'/usr/local/opt/openjdk/libexec/openjdk.jdk/Contents/Home',
-	].filter((value): value is string => typeof value === 'string' && value.length > 0);
-	for (const candidate of candidates) {
-		if (existsSync(path.join(candidate, 'bin/java'))) return candidate;
-	}
-	return null;
+  const candidates = [
+    process.env['JAVA_HOME'],
+    '/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home',
+    '/opt/homebrew/opt/openjdk/libexec/openjdk.jdk/Contents/Home',
+    '/usr/local/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home',
+    '/usr/local/opt/openjdk/libexec/openjdk.jdk/Contents/Home',
+  ].filter((value): value is string => typeof value === 'string' && value.length > 0);
+  for (const candidate of candidates) {
+    if (existsSync(path.join(candidate, 'bin/java'))) return candidate;
+  }
+  return null;
 }
 
 function javaEnv(): NodeJS.ProcessEnv {
-	const javaHome = existingJavaHome();
-	if (!javaHome) return process.env;
-	return {
-		...process.env,
-		JAVA_HOME: javaHome,
-		PATH: `${path.join(javaHome, 'bin')}${path.delimiter}${process.env.PATH || ''}`,
-	};
+  const javaHome = existingJavaHome();
+  if (!javaHome) return process.env;
+  return {
+    ...process.env,
+    JAVA_HOME: javaHome,
+    PATH: `${path.join(javaHome, 'bin')}${path.delimiter}${process.env['PATH'] || ''}`,
+  };
 }
 
 function existingAndroidHome(): string | null {
-	const candidates = [
-		process.env.ANDROID_HOME,
-		process.env.ANDROID_SDK_ROOT,
-		path.join(process.env.HOME || '', 'Library/Android/sdk'),
-		'/opt/homebrew/share/android-commandlinetools',
-	].filter((value): value is string => typeof value === 'string' && value.length > 0);
-	for (const candidate of candidates) {
-		if (existsSync(path.join(candidate, 'platforms/android-36')) && existsSync(path.join(candidate, 'build-tools/36.0.0'))) {
-			return candidate;
-		}
-	}
-	return null;
+  const candidates = [
+    process.env['ANDROID_HOME'],
+    process.env['ANDROID_SDK_ROOT'],
+    path.join(process.env['HOME'] || '', 'Library/Android/sdk'),
+    '/opt/homebrew/share/android-commandlinetools',
+  ].filter((value): value is string => typeof value === 'string' && value.length > 0);
+  for (const candidate of candidates) {
+    if (
+      existsSync(path.join(candidate, 'platforms/android-36')) &&
+      existsSync(path.join(candidate, 'build-tools/36.0.0'))
+    ) {
+      return candidate;
+    }
+  }
+  return null;
 }
 
 function androidEnv(): NodeJS.ProcessEnv {
-	const base = javaEnv();
-	const androidHome = existingAndroidHome();
-	if (!androidHome) return base;
-	return {
-		...base,
-		ANDROID_HOME: androidHome,
-		ANDROID_SDK_ROOT: androidHome,
-		PATH: `${path.join(androidHome, 'platform-tools')}${path.delimiter}${base.PATH || ''}`,
-	};
+  const base = javaEnv();
+  const androidHome = existingAndroidHome();
+  if (!androidHome) return base;
+  return {
+    ...base,
+    ANDROID_HOME: androidHome,
+    ANDROID_SDK_ROOT: androidHome,
+    PATH: `${path.join(androidHome, 'platform-tools')}${path.delimiter}${base['PATH'] || ''}`,
+  };
 }
 
 function runCapture(
-	command: string,
-	commandArgs: string[],
-	cwd = ROOT,
-	env: NodeJS.ProcessEnv = process.env,
-): { status: number | null; output: string; error?: Error } {
-	const result = spawnSync(command, commandArgs, {
-		cwd,
-		env: command === 'java' ? javaEnv() : env,
-		encoding: 'utf8',
-		stdio: ['ignore', 'pipe', 'pipe'],
-		shell: false,
-	});
-	return {
-		status: result.status,
-		output: `${result.stdout || ''}${result.stderr || ''}`.trim(),
-		error: result.error,
-	};
+  command: string,
+  commandArgs: string[],
+  cwd = ROOT,
+  env: NodeJS.ProcessEnv = process.env,
+): { status: number | null; output: string; error: Error | undefined } {
+  const result = spawnSync(command, commandArgs, {
+    cwd,
+    env: command === 'java' ? javaEnv() : env,
+    encoding: 'utf8',
+    stdio: ['ignore', 'pipe', 'pipe'],
+    shell: false,
+  });
+  return {
+    status: result.status,
+    output: `${result.stdout || ''}${result.stderr || ''}`.trim(),
+    error: result.error,
+  };
 }
 
 export function expandTargets(input: string[]): Platform[] {
@@ -173,16 +175,23 @@ export function expandTargets(input: string[]): Platform[] {
 }
 
 export function parseNativeBuildOptions(argv: string[]): NativeBuildOptions {
-	const flags = new Set(argv.filter(arg => arg.startsWith('--')));
-	const allowedFlags = new Set(['--help', '-h', '--no-build', '--open', '--smoke', '--package']);
-	for (const flag of flags) {
-		if (!allowedFlags.has(flag)) throw new Error(`Unknown native flag: ${flag}`);
-	}
-	const tokens = argv.filter(arg => !arg.startsWith('--'));
-	return {
-		flags,
-		targets: expandTargets(tokens),
-	};
+  const flags = new Set<string>();
+  const tokens: string[] = [];
+  let frontendRelease: string | undefined;
+  const allowedFlags = new Set(['--help', '-h', '--open', '--smoke', '--package']);
+  for (let index = 0; index < argv.length; index += 1) {
+    const arg = argv[index]!;
+    if (arg === '--frontend-release' || arg.startsWith('--frontend-release=')) {
+      if (frontendRelease !== undefined) throw new Error('NATIVE_FRONTEND_RELEASE_DUPLICATE');
+      const value = arg === '--frontend-release' ? argv[++index] : arg.slice('--frontend-release='.length);
+      if (!value?.trim() || value.startsWith('-')) throw new Error('NATIVE_FRONTEND_RELEASE_REQUIRED');
+      frontendRelease = path.resolve(value);
+    } else if (arg.startsWith('-')) {
+      if (!allowedFlags.has(arg)) throw new Error(`Unknown native flag: ${arg}`);
+      flags.add(arg);
+    } else tokens.push(arg);
+  }
+  return { flags, targets: expandTargets(tokens), ...(frontendRelease ? { frontendRelease } : {}) };
 }
 
 export function requiredNativeToolCommands(targets: Platform[], flags: Set<string>): string[] {
@@ -249,93 +258,37 @@ const requiredEnvironment = (names: readonly string[]): void => {
 };
 
 export const assertNativeReleaseCredentials = (targets: Platform[], flags: Set<string>): void => {
-	if (!flags.has('--package')) return;
-	if (targets.includes('android')) {
-		requiredEnvironment([
-			'XLN_ANDROID_KEYSTORE_PATH',
-			'XLN_ANDROID_KEYSTORE_PASSWORD',
-			'XLN_ANDROID_KEY_ALIAS',
-			'XLN_ANDROID_KEY_PASSWORD',
-			'XLN_ANDROID_SIGNER_CERT_SHA256',
-		]);
-		const keystore = String(process.env.XLN_ANDROID_KEYSTORE_PATH);
-		if (!existsSync(keystore)) throw new Error(`ANDROID_RELEASE_KEYSTORE_MISSING:${keystore}`);
-	}
-	if (targets.includes('ios')) {
-		requiredEnvironment(['XLN_IOS_DEVELOPMENT_TEAM']);
-	}
-	if (targets.includes('desktop') && process.platform === 'darwin') {
-		requiredEnvironment([
-			'XLN_MACOS_CODESIGN_IDENTITY',
-			'XLN_MACOS_NOTARY_KEY_PATH',
-			'XLN_MACOS_NOTARY_KEY_ID',
-			'XLN_MACOS_NOTARY_ISSUER_ID',
-		]);
-		const notaryKey = String(process.env.XLN_MACOS_NOTARY_KEY_PATH);
-		if (!existsSync(notaryKey)) throw new Error(`MACOS_NOTARY_KEY_MISSING:${notaryKey}`);
-	}
+  if (!flags.has('--package')) return;
+  if (targets.includes('android')) {
+    requiredEnvironment([
+      'XLN_ANDROID_KEYSTORE_PATH',
+      'XLN_ANDROID_KEYSTORE_PASSWORD',
+      'XLN_ANDROID_KEY_ALIAS',
+      'XLN_ANDROID_KEY_PASSWORD',
+      'XLN_ANDROID_SIGNER_CERT_SHA256',
+    ]);
+    const keystore = String(process.env['XLN_ANDROID_KEYSTORE_PATH']);
+    if (!existsSync(keystore)) throw new Error(`ANDROID_RELEASE_KEYSTORE_MISSING:${keystore}`);
+  }
+  if (targets.includes('ios')) {
+    requiredEnvironment(['XLN_IOS_DEVELOPMENT_TEAM']);
+  }
+  if (targets.includes('desktop') && process.platform === 'darwin') {
+    requiredEnvironment([
+      'XLN_MACOS_CODESIGN_IDENTITY',
+      'XLN_MACOS_NOTARY_KEY_PATH',
+      'XLN_MACOS_NOTARY_KEY_ID',
+      'XLN_MACOS_NOTARY_ISSUER_ID',
+    ]);
+    const notaryKey = String(process.env['XLN_MACOS_NOTARY_KEY_PATH']);
+    if (!existsSync(notaryKey)) throw new Error(`MACOS_NOTARY_KEY_MISSING:${notaryKey}`);
+  }
 };
 
-function ensureFrontendBuild(flags: Set<string>): NativeArtifact[] {
-	if (flags.has('--no-build')) {
-		if (!existsSync(path.join(BUILD_DIR, 'index.html'))) {
-			throw new Error('--no-build was requested, but frontend/build/index.html does not exist');
-		}
-		if (!existsSync(path.join(BUILD_DIR, 'runtime.js'))) {
-			throw new Error('--no-build was requested, but frontend/build/runtime.js does not exist');
-		}
-		return [
-			{ target: 'runtime', kind: 'browser-runtime', status: 'reused', path: path.join(BUILD_DIR, 'runtime.js') },
-			{ target: 'frontend', kind: 'sveltekit-static', status: 'reused', path: BUILD_DIR },
-		];
-	}
-	run('bun', ['run', 'build'], ROOT);
-	run('bun', ['run', 'build'], FRONTEND);
-	return [
-		{ target: 'runtime', kind: 'browser-runtime', status: 'built', path: path.join(BUILD_DIR, 'runtime.js') },
-		{ target: 'frontend', kind: 'sveltekit-static', status: 'built', path: BUILD_DIR },
-	];
-}
-
-function walkFiles(root: string): string[] {
-	if (!existsSync(root)) return [];
-	const files: string[] = [];
-	for (const entry of readdirSync(root, { withFileTypes: true })) {
-		const fullPath = path.join(root, entry.name);
-		if (entry.isDirectory()) files.push(...walkFiles(fullPath));
-		else if (entry.isFile()) files.push(fullPath);
-	}
-	return files;
-}
-
-function sanitizeNativeWebBuild(): void {
-	for (const file of walkFiles(BUILD_DIR)) {
-		if (path.basename(file) === '.DS_Store') {
-			unlinkSync(file);
-		}
-	}
-}
-
-function pruneGeneratedNoise(root: string): void {
-	for (const file of walkFiles(root)) {
-		if (path.basename(file) === '.DS_Store') unlinkSync(file);
-	}
-}
-
-function syncCapacitorPlatform(platform: 'ios' | 'android'): NativeArtifact {
-	const platformDir = path.join(FRONTEND, platform);
-	if (existsSync(platformDir)) {
-		run('bunx', ['cap', 'sync', platform], FRONTEND);
-		pruneGeneratedNoise(platform === 'ios'
-			? path.join(FRONTEND, 'ios/App/App/public')
-			: path.join(FRONTEND, 'android/app/src/main/assets/public'));
-		return { target: platform, kind: 'capacitor-sync', status: 'synced', path: platformDir };
-	}
-	run('bunx', ['cap', 'add', platform], FRONTEND);
-	pruneGeneratedNoise(platform === 'ios'
-		? path.join(FRONTEND, 'ios/App/App/public')
-		: path.join(FRONTEND, 'android/app/src/main/assets/public'));
-	return { target: platform, kind: 'capacitor-add', status: 'synced', path: platformDir };
+function syncCapacitorPlatform(platform: 'ios' | 'android', build: NativeReleaseBuild): NativeArtifact {
+  const workspace = requireNativeWorkspace(build, 'capacitor');
+  run(path.join(FRONTEND, 'node_modules/.bin/cap'), ['sync', platform], workspace);
+  return { target: platform, kind: 'capacitor-sync', status: 'synced', path: path.join(workspace, platform) };
 }
 
 export function resolveIosXcodebuildProjectArgs(iosAppDir = path.join(FRONTEND, 'ios/App')): string[] {
@@ -345,11 +298,9 @@ export function resolveIosXcodebuildProjectArgs(iosAppDir = path.join(FRONTEND, 
 }
 
 function resolveIosSigningArgs(): string[] {
-	const envTeam = String(process.env.XLN_IOS_DEVELOPMENT_TEAM || '').trim();
-	if (envTeam) return ['-allowProvisioningUpdates', `DEVELOPMENT_TEAM=${envTeam}`, 'CODE_SIGN_STYLE=Automatic'];
-	throw new Error(
-		'Missing iOS release signing team. Set XLN_IOS_DEVELOPMENT_TEAM=<TEAM_ID> for release packaging.',
-	);
+  const envTeam = String(process.env['XLN_IOS_DEVELOPMENT_TEAM'] || '').trim();
+  if (envTeam) return ['-allowProvisioningUpdates', `DEVELOPMENT_TEAM=${envTeam}`, 'CODE_SIGN_STYLE=Automatic'];
+  throw new Error('Missing iOS release signing team. Set XLN_IOS_DEVELOPMENT_TEAM=<TEAM_ID> for release packaging.');
 }
 
 const fileSha256 = (file: string): string => createHash('sha256').update(readFileSync(file)).digest('hex');
@@ -387,95 +338,135 @@ const androidReleaseVersionCode = (version: string): number => {
 	return (parts[0]! * 1_000_000) + (parts[1]! * 1_000) + parts[2]!;
 };
 
-const verifyAndroidRelease = (
-	source: string,
-	version: string,
-	env: NodeJS.ProcessEnv,
-): string => {
-	const androidHome = existingAndroidHome();
-	if (!androidHome) throw new Error('ANDROID_RELEASE_SDK_MISSING');
-	const apkSigner = path.join(androidHome, 'build-tools/36.0.0/apksigner');
-	const aapt2 = path.join(androidHome, 'build-tools/36.0.0/aapt2');
-	if (!existsSync(apkSigner)) throw new Error(`ANDROID_APKSIGNER_MISSING:${apkSigner}`);
-	if (!existsSync(aapt2)) throw new Error(`ANDROID_AAPT2_MISSING:${aapt2}`);
-	const signer = runCapture(apkSigner, ['verify', '--verbose', '--print-certs', source], ROOT, env);
-	if (signer.error || signer.status !== 0) throw new Error(`ANDROID_RELEASE_SIGNATURE_INVALID:${signer.output}`);
-	if (/android debug/i.test(signer.output)) throw new Error('ANDROID_RELEASE_DEBUG_CERTIFICATE_FORBIDDEN');
-	const digest = signer.output.match(/certificate SHA-256 digest:\s*([0-9a-f:]+)/i)?.[1]
-		?.replaceAll(':', '').toLowerCase();
-	if (!digest || !/^[0-9a-f]{64}$/.test(digest)) throw new Error('ANDROID_RELEASE_CERTIFICATE_DIGEST_MISSING');
-	const expectedDigest = String(process.env.XLN_ANDROID_SIGNER_CERT_SHA256 || '')
-		.replaceAll(':', '').toLowerCase();
-	if (!/^[0-9a-f]{64}$/.test(expectedDigest) || digest !== expectedDigest) {
-		throw new Error(`ANDROID_RELEASE_CERTIFICATE_MISMATCH:expected=${expectedDigest}:actual=${digest}`);
-	}
-	const badging = runCapture(aapt2, ['dump', 'badging', source], ROOT, env);
-	if (badging.error || badging.status !== 0) throw new Error(`ANDROID_RELEASE_MANIFEST_INVALID:${badging.output}`);
-	if (badging.output.includes('application-debuggable')) throw new Error('ANDROID_RELEASE_DEBUGGABLE_FORBIDDEN');
-	if (!badging.output.includes("package: name='finance.xln.wallet'")) throw new Error('ANDROID_RELEASE_PACKAGE_ID_INVALID');
-	if (!badging.output.includes(`versionName='${version}'`)) throw new Error(`ANDROID_RELEASE_VERSION_MISMATCH:${version}`);
-	return digest;
+const verifyAndroidRelease = (source: string, version: string, env: NodeJS.ProcessEnv): string => {
+  const androidHome = existingAndroidHome();
+  if (!androidHome) throw new Error('ANDROID_RELEASE_SDK_MISSING');
+  const apkSigner = path.join(androidHome, 'build-tools/36.0.0/apksigner');
+  const aapt2 = path.join(androidHome, 'build-tools/36.0.0/aapt2');
+  if (!existsSync(apkSigner)) throw new Error(`ANDROID_APKSIGNER_MISSING:${apkSigner}`);
+  if (!existsSync(aapt2)) throw new Error(`ANDROID_AAPT2_MISSING:${aapt2}`);
+  const signer = runCapture(apkSigner, ['verify', '--verbose', '--print-certs', source], ROOT, env);
+  if (signer.error || signer.status !== 0) throw new Error(`ANDROID_RELEASE_SIGNATURE_INVALID:${signer.output}`);
+  if (/android debug/i.test(signer.output)) throw new Error('ANDROID_RELEASE_DEBUG_CERTIFICATE_FORBIDDEN');
+  const digest = signer.output
+    .match(/certificate SHA-256 digest:\s*([0-9a-f:]+)/i)?.[1]
+    ?.replaceAll(':', '')
+    .toLowerCase();
+  if (!digest || !/^[0-9a-f]{64}$/.test(digest)) throw new Error('ANDROID_RELEASE_CERTIFICATE_DIGEST_MISSING');
+  const expectedDigest = String(process.env['XLN_ANDROID_SIGNER_CERT_SHA256'] || '')
+    .replaceAll(':', '')
+    .toLowerCase();
+  if (!/^[0-9a-f]{64}$/.test(expectedDigest) || digest !== expectedDigest) {
+    throw new Error(`ANDROID_RELEASE_CERTIFICATE_MISMATCH:expected=${expectedDigest}:actual=${digest}`);
+  }
+  const badging = runCapture(aapt2, ['dump', 'badging', source], ROOT, env);
+  if (badging.error || badging.status !== 0) throw new Error(`ANDROID_RELEASE_MANIFEST_INVALID:${badging.output}`);
+  if (badging.output.includes('application-debuggable')) throw new Error('ANDROID_RELEASE_DEBUGGABLE_FORBIDDEN');
+  if (!badging.output.includes("package: name='finance.xln.wallet'"))
+    throw new Error('ANDROID_RELEASE_PACKAGE_ID_INVALID');
+  if (!badging.output.includes(`versionName='${version}'`))
+    throw new Error(`ANDROID_RELEASE_VERSION_MISMATCH:${version}`);
+  return digest;
 };
 
-const packageAndroidRelease = (): NativeArtifact => {
-	const version = packageJsonVersion();
-	const env = {
-		...androidEnv(),
-		XLN_ANDROID_VERSION_NAME: version,
-		XLN_ANDROID_VERSION_CODE: String(androidReleaseVersionCode(version)),
-	};
-	run('./gradlew', ['assembleRelease'], path.join(FRONTEND, 'android'), env);
-	const source = path.join(FRONTEND, 'android/app/build/outputs/apk/release/app-release.apk');
-	if (!existsSync(source)) throw new Error(`Signed Android release APK was not produced at ${source}`);
-	const certificateDigest = verifyAndroidRelease(source, version, env);
-	const destination = path.join(DIST_DIR, `android/xln-finance-${version}-android-release-signed.apk`);
-	mkdirSync(path.dirname(destination), { recursive: true });
-	copyFileSync(source, destination);
-	const proofPath = writeReleaseProof(destination, {
-		platform: 'android', signed: true, notarized: false, debuggable: false,
-		applicationId: 'finance.xln.wallet', signerCertificateSha256: certificateDigest,
-	});
-	return { target: 'android', kind: 'release-apk', status: 'built', path: destination, releaseTrust: 'signed', proofPath };
+const packageAndroidRelease = (build: NativeReleaseBuild): NativeArtifact => {
+  const workspace = requireNativeWorkspace(build, 'capacitor');
+  const version = packageJsonVersion();
+  const env = {
+    ...androidEnv(),
+    XLN_ANDROID_VERSION_NAME: version,
+    XLN_ANDROID_VERSION_CODE: String(androidReleaseVersionCode(version)),
+  };
+  run('./gradlew', ['assembleRelease'], path.join(workspace, 'android'), env);
+  const source = path.join(workspace, 'android/app/build/outputs/apk/release/app-release.apk');
+  if (!existsSync(source)) throw new Error(`Signed Android release APK was not produced at ${source}`);
+  const certificateDigest = verifyAndroidRelease(source, version, env);
+  const destination = path.join(build.outputDirectory, `android/xln-finance-${version}-android-release-signed.apk`);
+  mkdirSync(path.dirname(destination), { recursive: true });
+  copyFileSync(source, destination);
+  const proofPath = writeReleaseProof(destination, {
+    frontendReleaseId: build.releaseId,
+    platform: 'android',
+    signed: true,
+    notarized: false,
+    debuggable: false,
+    applicationId: 'finance.xln.wallet',
+    signerCertificateSha256: certificateDigest,
+  });
+  return {
+    target: 'android',
+    kind: 'release-apk',
+    status: 'built',
+    path: destination,
+    releaseTrust: 'signed',
+    proofPath,
+  };
 };
 
-const packageIosRelease = (): NativeArtifact => {
-	const derivedDataPath = path.join(DIST_DIR, 'ios-derived-data');
-	const iosAppDir = path.join(FRONTEND, 'ios/App');
-	rmSync(derivedDataPath, { recursive: true, force: true });
-	run('xcodebuild', [
-		...resolveIosXcodebuildProjectArgs(iosAppDir),
-		'-scheme',
-		'App',
-		'-configuration',
-		'Release',
-		'-destination',
-		'generic/platform=iOS',
-		'-derivedDataPath',
-		derivedDataPath,
-		...resolveIosSigningArgs(),
-		'build',
-	], iosAppDir);
-	const appPath = path.join(derivedDataPath, 'Build/Products/Release-iphoneos/App.app');
-	if (!existsSync(appPath)) throw new Error(`Signed iOS release app was not produced at ${appPath}`);
-	run('codesign', ['--verify', '--deep', '--strict', '--verbose=2', appPath], ROOT);
-	const signature = runCapture('codesign', ['-dv', '--verbose=4', appPath]);
-	const teamId = signature.output.match(/TeamIdentifier=([A-Z0-9]+)/)?.[1];
-	if (signature.status !== 0 || !teamId || teamId !== String(process.env.XLN_IOS_DEVELOPMENT_TEAM)) {
-		throw new Error(`IOS_RELEASE_SIGNATURE_IDENTITY_INVALID:${signature.output}`);
-	}
-	return { target: 'ios', kind: 'release-ios-app', status: 'built', path: appPath, releaseTrust: 'signed' };
+const packageIosRelease = (build: NativeReleaseBuild): NativeArtifact => {
+  const workspace = requireNativeWorkspace(build, 'capacitor');
+  const derivedDataPath = path.join(build.outputDirectory, 'ios-derived-data');
+  const iosAppDir = path.join(workspace, 'ios/App');
+  rmSync(derivedDataPath, { recursive: true, force: true });
+  run(
+    'xcodebuild',
+    [
+      ...resolveIosXcodebuildProjectArgs(iosAppDir),
+      '-scheme',
+      'App',
+      '-configuration',
+      'Release',
+      '-destination',
+      'generic/platform=iOS',
+      '-derivedDataPath',
+      derivedDataPath,
+      ...resolveIosSigningArgs(),
+      'build',
+    ],
+    iosAppDir,
+  );
+  const appPath = path.join(derivedDataPath, 'Build/Products/Release-iphoneos/App.app');
+  if (!existsSync(appPath)) throw new Error(`Signed iOS release app was not produced at ${appPath}`);
+  run('codesign', ['--verify', '--deep', '--strict', '--verbose=2', appPath], ROOT);
+  const signature = runCapture('codesign', ['-dv', '--verbose=4', appPath]);
+  const teamId = signature.output.match(/TeamIdentifier=([A-Z0-9]+)/)?.[1];
+  if (signature.status !== 0 || !teamId || teamId !== String(process.env['XLN_IOS_DEVELOPMENT_TEAM'])) {
+    throw new Error(`IOS_RELEASE_SIGNATURE_IDENTITY_INVALID:${signature.output}`);
+  }
+  return { target: 'ios', kind: 'release-ios-app', status: 'built', path: appPath, releaseTrust: 'signed' };
 };
 
-function packageCapacitorPlatform(platform: 'ios' | 'android', _flags: Set<string>): NativeArtifact {
-	assertCapacitorPackageTools(platform);
-	return platform === 'android' ? packageAndroidRelease() : packageIosRelease();
+function packageCapacitorPlatform(platform: 'ios' | 'android', build: NativeReleaseBuild): NativeArtifact {
+  assertCapacitorPackageTools(platform);
+  return platform === 'android' ? packageAndroidRelease(build) : packageIosRelease(build);
 }
 
+export const validateNativeReleaseVersions = (versions: Readonly<Record<string, string>>): string => {
+  const selected = versions['VERSION'];
+  if (!selected || !/^\d+\.\d+\.\d+$/.test(selected)) throw new Error('NATIVE_RELEASE_VERSION_INVALID:VERSION');
+  if (Object.values(versions).some(version => version !== selected)) {
+    throw new Error(`NATIVE_RELEASE_VERSION_MISMATCH:${JSON.stringify(versions)}`);
+  }
+  return selected;
+};
+
 function packageJsonVersion(): string {
-	const packageJson = JSON.parse(readFileSync(path.join(ROOT, 'package.json'), 'utf8')) as { version?: unknown };
-	const version = String(packageJson.version || '');
-	if (!/^\d+\.\d+\.\d+$/.test(version)) throw new Error(`NATIVE_RELEASE_VERSION_INVALID:${version}`);
-	return version;
+  const paths = [
+    'package.json',
+    'frontend/package.json',
+    'native/extension/manifest.json',
+    'packages/npm/xlnfinance/package.json',
+  ];
+  const versions = Object.fromEntries(
+    paths.map(file => {
+      const value = JSON.parse(readFileSync(path.join(ROOT, file), 'utf8')) as { version?: unknown };
+      return [file, String(value.version || '')];
+    }),
+  );
+  return validateNativeReleaseVersions({
+    VERSION: readFileSync(path.join(ROOT, 'VERSION'), 'utf8').trim(),
+    ...versions,
+  });
 }
 
 function setPlistString(plist: string, key: string, value: string): string {
@@ -521,207 +512,217 @@ function updateDesktopInfoPlist(appPath: string): void {
 	writeFileSync(plistPath, plist);
 }
 
-function packageDesktopApp(): NativeArtifact[] {
-	if (process.platform !== 'darwin') {
-		throw new Error(`MACOS_RELEASE_REQUIRES_DARWIN:current=${process.platform}`);
-	}
+async function packageDesktopApp(build: NativeReleaseBuild): Promise<NativeArtifact[]> {
+  const desktopDirectory = path.join(requireNativeWorkspace(build, 'packaged'), 'desktop');
+  if (process.platform !== 'darwin') {
+    throw new Error(`MACOS_RELEASE_REQUIRES_DARWIN:current=${process.platform}`);
+  }
 
-	const electronApp = path.join(ROOT, 'node_modules/electron/dist/Electron.app');
-	if (!existsSync(electronApp)) {
-		run('bunx', ['electron', '--version'], ROOT);
-	}
-	if (!existsSync(electronApp)) {
-		throw new Error(`Electron bootstrap completed without creating ${electronApp}`);
-	}
-	if (!existsSync(path.join(BUILD_DIR, 'index.html'))) {
-		throw new Error(`Missing ${path.join(BUILD_DIR, 'index.html')}. Build frontend before packaging desktop.`);
-	}
-	if (!existsSync(path.join(BUILD_DIR, 'runtime.js'))) {
-		throw new Error(`Missing ${path.join(BUILD_DIR, 'runtime.js')}. Build runtime before packaging desktop.`);
-	}
-
-	const platformTag = `mac-${process.arch}`;
-	const outputDir = path.join(DIST_DIR, 'desktop', platformTag);
-	const appPath = path.join(outputDir, `${APP_NAME}.app`);
-	const resourcesApp = path.join(appPath, 'Contents/Resources/app');
-	rmSync(appPath, { recursive: true, force: true });
-	mkdirSync(outputDir, { recursive: true });
-	cpSync(electronApp, appPath, { recursive: true });
-	rmSync(resourcesApp, { recursive: true, force: true });
-	mkdirSync(resourcesApp, { recursive: true });
-	writeFileSync(path.join(resourcesApp, 'package.json'), JSON.stringify({
-		name: 'xln-wallet-desktop',
-		version: packageJsonVersion(),
-		main: 'native/desktop/main.cjs',
-		private: true,
-	}, null, 2));
-	cpSync(path.join(NATIVE_DIR, 'desktop'), path.join(resourcesApp, 'native/desktop'), { recursive: true });
-	cpSync(BUILD_DIR, path.join(resourcesApp, 'frontend/build'), {
-		recursive: true,
-		filter: source => !source.includes(`${path.sep}.DS_Store`),
-	});
-	updateDesktopInfoPlist(appPath);
-	pruneGeneratedNoise(appPath);
-	const identity = String(process.env.XLN_MACOS_CODESIGN_IDENTITY);
-	run('codesign', ['--deep', '--force', '--options', 'runtime', '--timestamp', '--sign', identity, appPath], ROOT);
-	run('codesign', ['--verify', '--deep', '--strict', '--verbose=2', appPath], ROOT);
-	const submissionZip = path.join(DIST_DIR, 'desktop', `.notary-submission-${process.arch}.zip`);
-	rmSync(submissionZip, { force: true });
-	run('ditto', ['-c', '-k', '--sequesterRsrc', '--keepParent', appPath, submissionZip], ROOT);
-	run('xcrun', [
-		'notarytool', 'submit', submissionZip,
-		'--key', String(process.env.XLN_MACOS_NOTARY_KEY_PATH),
-		'--key-id', String(process.env.XLN_MACOS_NOTARY_KEY_ID),
-		'--issuer', String(process.env.XLN_MACOS_NOTARY_ISSUER_ID),
-		'--wait',
-	], ROOT);
-	run('xcrun', ['stapler', 'staple', appPath], ROOT);
-	run('xcrun', ['stapler', 'validate', appPath], ROOT);
-	const assessment = runCapture('spctl', ['--assess', '--type', 'execute', '--verbose=2', appPath]);
-	if (assessment.error || assessment.status !== 0 || !/source=Notarized Developer ID/i.test(assessment.output)) {
-		throw new Error(`MACOS_NOTARIZATION_ASSESSMENT_INVALID:${assessment.output}`);
-	}
-	const signature = runCapture('codesign', ['-dv', '--verbose=4', appPath]);
-	const teamId = signature.output.match(/TeamIdentifier=([A-Z0-9]+)/)?.[1];
-	const identityTeamId = identity.match(/\(([A-Z0-9]+)\)\s*$/)?.[1];
-	if (
-		signature.status !== 0 ||
-		!teamId ||
-		!identity.startsWith('Developer ID Application:') ||
-		identityTeamId !== teamId
-	) {
-		throw new Error(`MACOS_RELEASE_SIGNATURE_IDENTITY_INVALID:${signature.output}`);
-	}
-	rmSync(submissionZip, { force: true });
-	const zipPath = path.join(DIST_DIR, 'desktop', `xln-finance-${packageJsonVersion()}-mac-${process.arch}-signed-notarized.zip`);
-	rmSync(zipPath, { force: true });
-	run('ditto', ['-c', '-k', '--sequesterRsrc', '--keepParent', appPath, zipPath], ROOT);
-	const proofPath = writeReleaseProof(zipPath, {
-		platform: `macos-${process.arch}`,
-		signed: true,
-		notarized: true,
-		debuggable: false,
-		teamId,
-		codesignIdentity: identity,
-	});
-	return [
-		{ target: 'desktop', kind: 'mac-app', status: 'built', path: appPath, releaseTrust: 'signed-notarized' },
-		{
-			target: 'desktop', kind: 'mac-zip', status: 'built', path: zipPath,
-			releaseTrust: 'signed-notarized', proofPath,
-		},
-	];
+  const electronApp = path.join(ROOT, 'node_modules/electron/dist/Electron.app');
+  if (!existsSync(electronApp)) {
+    run('bunx', ['electron', '--version'], ROOT);
+  }
+  if (!existsSync(electronApp)) {
+    throw new Error(`Electron bootstrap completed without creating ${electronApp}`);
+  }
+  const platformTag = `mac-${process.arch}`;
+  const outputDir = path.join(build.outputDirectory, 'desktop', platformTag);
+  const appPath = path.join(outputDir, `${APP_NAME}.app`);
+  const resourcesApp = path.join(appPath, 'Contents/Resources/app');
+  rmSync(appPath, { recursive: true, force: true });
+  mkdirSync(outputDir, { recursive: true });
+  cpSync(electronApp, appPath, { recursive: true });
+  rmSync(resourcesApp, { recursive: true, force: true });
+  mkdirSync(resourcesApp, { recursive: true });
+  cpSync(desktopDirectory, resourcesApp, { recursive: true });
+  await verifyNativeDesktopCopy(build, resourcesApp);
+  updateDesktopInfoPlist(appPath);
+  const identity = String(process.env['XLN_MACOS_CODESIGN_IDENTITY']);
+  run('codesign', ['--deep', '--force', '--options', 'runtime', '--timestamp', '--sign', identity, appPath], ROOT);
+  run('codesign', ['--verify', '--deep', '--strict', '--verbose=2', appPath], ROOT);
+  const submissionZip = path.join(build.outputDirectory, 'desktop', `.notary-submission-${process.arch}.zip`);
+  rmSync(submissionZip, { force: true });
+  run('ditto', ['-c', '-k', '--sequesterRsrc', '--keepParent', appPath, submissionZip], ROOT);
+  run(
+    'xcrun',
+    [
+      'notarytool',
+      'submit',
+      submissionZip,
+      '--key',
+      String(process.env['XLN_MACOS_NOTARY_KEY_PATH']),
+      '--key-id',
+      String(process.env['XLN_MACOS_NOTARY_KEY_ID']),
+      '--issuer',
+      String(process.env['XLN_MACOS_NOTARY_ISSUER_ID']),
+      '--wait',
+    ],
+    ROOT,
+  );
+  run('xcrun', ['stapler', 'staple', appPath], ROOT);
+  run('xcrun', ['stapler', 'validate', appPath], ROOT);
+  const assessment = runCapture('spctl', ['--assess', '--type', 'execute', '--verbose=2', appPath]);
+  if (assessment.error || assessment.status !== 0 || !/source=Notarized Developer ID/i.test(assessment.output)) {
+    throw new Error(`MACOS_NOTARIZATION_ASSESSMENT_INVALID:${assessment.output}`);
+  }
+  const signature = runCapture('codesign', ['-dv', '--verbose=4', appPath]);
+  const teamId = signature.output.match(/TeamIdentifier=([A-Z0-9]+)/)?.[1];
+  const identityTeamId = identity.match(/\(([A-Z0-9]+)\)\s*$/)?.[1];
+  if (
+    signature.status !== 0 ||
+    !teamId ||
+    !identity.startsWith('Developer ID Application:') ||
+    identityTeamId !== teamId
+  ) {
+    throw new Error(`MACOS_RELEASE_SIGNATURE_IDENTITY_INVALID:${signature.output}`);
+  }
+  rmSync(submissionZip, { force: true });
+  const zipPath = path.join(
+    build.outputDirectory,
+    'desktop',
+    `xln-finance-${packageJsonVersion()}-mac-${process.arch}-signed-notarized.zip`,
+  );
+  rmSync(zipPath, { force: true });
+  run('ditto', ['-c', '-k', '--sequesterRsrc', '--keepParent', appPath, zipPath], ROOT);
+  const proofPath = writeReleaseProof(zipPath, {
+    frontendReleaseId: build.releaseId,
+    platform: `macos-${process.arch}`,
+    signed: true,
+    notarized: true,
+    debuggable: false,
+    teamId,
+    codesignIdentity: identity,
+  });
+  return [
+    { target: 'desktop', kind: 'mac-app', status: 'built', path: appPath, releaseTrust: 'signed-notarized' },
+    {
+      target: 'desktop',
+      kind: 'mac-zip',
+      status: 'built',
+      path: zipPath,
+      releaseTrust: 'signed-notarized',
+      proofPath,
+    },
+  ];
 }
 
-function desktopLaunchCommand(artifact: NativeArtifact | null): [string, string[], string] {
-	if (artifact?.status === 'built' && artifact.path && process.platform === 'darwin') {
-		const executable = path.join(artifact.path, 'Contents/MacOS/Electron');
-		if (existsSync(executable)) return [executable, [], ROOT];
-	}
-	return ['bunx', ['electron', 'native/desktop/main.cjs'], ROOT];
+function desktopLaunchCommand(artifact: NativeArtifact | null, desktopDirectory: string): [string, string[], string] {
+  if (artifact?.status === 'built' && artifact.path && process.platform === 'darwin') {
+    const executable = path.join(artifact.path, 'Contents/MacOS/Electron');
+    if (existsSync(executable)) return [executable, [], ROOT];
+  }
+  return [path.join(ROOT, 'node_modules/.bin/electron'), ['native/desktop/main.cjs'], desktopDirectory];
 }
 
-function prepareDesktop(flags: Set<string>): NativeArtifact[] {
-	const main = path.join(NATIVE_DIR, 'desktop/main.cjs');
-	if (!existsSync(main)) throw new Error(`Missing ${main}`);
-	const artifacts: NativeArtifact[] = [];
-	const packageArtifacts = flags.has('--package') ? packageDesktopApp() : [];
-	artifacts.push(...packageArtifacts);
-	console.log('\nDesktop shell ready: native/desktop/main.cjs');
-	if (flags.has('--open') || flags.has('--smoke')) {
-		const appArtifact = packageArtifacts.find(artifact => artifact.kind === 'mac-app') || null;
-		const [command, commandArgs, cwd] = desktopLaunchCommand(appArtifact);
-		run(command, commandArgs, cwd, {
-			...process.env,
-			...(flags.has('--smoke') ? { XLN_ELECTRON_SMOKE: '1' } : {}),
-		});
-	}
-	if (packageArtifacts.length === 0) {
-		artifacts.push({ target: 'desktop', kind: 'electron-shell', status: 'synced', path: main });
-	}
-	return artifacts;
+async function prepareDesktop(flags: Set<string>, build: NativeReleaseBuild): Promise<NativeArtifact[]> {
+  const desktopDirectory = path.join(requireNativeWorkspace(build, 'packaged'), 'desktop');
+  const main = path.join(desktopDirectory, 'native', 'desktop/main.cjs');
+  if (!existsSync(main)) throw new Error(`Missing ${main}`);
+  const artifacts: NativeArtifact[] = [];
+  const packageArtifacts = flags.has('--package') ? await packageDesktopApp(build) : [];
+  artifacts.push(...packageArtifacts);
+  console.log(`\nDesktop shell ready: ${main}`);
+  if (flags.has('--open') || flags.has('--smoke')) {
+    const appArtifact = packageArtifacts.find(artifact => artifact.kind === 'mac-app') || null;
+    const [command, commandArgs, cwd] = desktopLaunchCommand(appArtifact, desktopDirectory);
+    run(command, commandArgs, cwd, {
+      ...process.env,
+      ...(flags.has('--smoke') ? { XLN_ELECTRON_SMOKE: '1' } : {}),
+    });
+  }
+  if (packageArtifacts.length === 0) {
+    artifacts.push({ target: 'desktop', kind: 'electron-shell', status: 'synced', path: main });
+  }
+  return artifacts;
 }
 
-function prepareExtension(flags: Set<string>): NativeArtifact[] {
-	const sourceDir = path.join(NATIVE_DIR, 'extension');
-	const distDir = path.join(sourceDir, 'dist');
-	rmSync(distDir, { recursive: true, force: true });
-	mkdirSync(distDir, { recursive: true });
-
-	copyFileSync(path.join(sourceDir, 'manifest.json'), path.join(distDir, 'manifest.json'));
-	copyFileSync(path.join(sourceDir, 'extension-service-worker.js'), path.join(distDir, 'extension-service-worker.js'));
-	copyFileSync(path.join(sourceDir, 'extension-security.js'), path.join(distDir, 'extension-security.js'));
-
-	const iconSource = path.join(BUILD_DIR, 'android-chrome-192x192.png');
-	if (existsSync(iconSource)) {
-		copyFileSync(iconSource, path.join(distDir, 'icon-128.png'));
-	}
-
-	cpSync(BUILD_DIR, distDir, {
-		recursive: true,
-		filter: source => source === BUILD_DIR || !source.includes(`${path.sep}.DS_Store`),
-	});
-	copyFileSync(path.join(sourceDir, 'manifest.json'), path.join(distDir, 'manifest.json'));
-	copyFileSync(path.join(sourceDir, 'extension-service-worker.js'), path.join(distDir, 'extension-service-worker.js'));
-	copyFileSync(path.join(sourceDir, 'extension-security.js'), path.join(distDir, 'extension-security.js'));
-	pruneGeneratedNoise(distDir);
-	const artifacts: NativeArtifact[] = [
-		{ target: 'extension', kind: 'chrome-extension-unpacked', status: 'built', path: distDir },
-	];
-	if (flags.has('--package')) {
-		const zipPath = path.join(DIST_DIR, `chrome/xln-finance-chrome-${packageJsonVersion()}.zip`);
-		mkdirSync(path.dirname(zipPath), { recursive: true });
-		rmSync(zipPath, { force: true });
-		run('zip', ['-q', '-r', zipPath, '.'], distDir);
-		artifacts.push({ target: 'extension', kind: 'chrome-extension-zip', status: 'built', path: zipPath });
-	}
-	console.log('\nChrome extension ready: native/extension/dist');
-	return artifacts;
+function prepareExtension(flags: Set<string>, build: NativeReleaseBuild): NativeArtifact[] {
+  const distDir = path.join(requireNativeWorkspace(build, 'packaged'), 'extension');
+  const artifacts: NativeArtifact[] = [
+    { target: 'extension', kind: 'chrome-extension-unpacked', status: 'built', path: distDir },
+  ];
+  if (flags.has('--package')) {
+    const zipPath = path.join(build.outputDirectory, `chrome/xln-finance-chrome-${packageJsonVersion()}.zip`);
+    mkdirSync(path.dirname(zipPath), { recursive: true });
+    rmSync(zipPath, { force: true });
+    run('zip', ['-q', '-r', zipPath, '.'], distDir);
+    artifacts.push({ target: 'extension', kind: 'chrome-extension-zip', status: 'built', path: zipPath });
+  }
+  console.log(`\nChrome extension ready: ${distDir}`);
+  return artifacts;
 }
 
-function writeArtifactManifest(targets: Platform[], flags: Set<string>, artifacts: NativeArtifact[]): void {
-	mkdirSync(DIST_DIR, { recursive: true });
-	const unavailableTools = requiredNativeToolCommands(targets, flags)
-		.filter(command => !commandAvailable(command))
-		.map(command => ({ command, reason: nativeToolMissingReason(command) }));
-	writeFileSync(ARTIFACT_MANIFEST, JSON.stringify({
-		generatedAt: new Date().toISOString(),
-		repoRoot: ROOT,
-		targets,
-		flags: [...flags].sort(),
-		artifacts,
-		unavailableTools,
-	}, null, 2));
-	console.log(`\nArtifact manifest: ${ARTIFACT_MANIFEST}`);
+function writeArtifactManifest(
+  targets: Platform[],
+  flags: Set<string>,
+  artifacts: NativeArtifact[],
+  build: NativeReleaseBuild,
+): void {
+  mkdirSync(DIST_DIR, { recursive: true });
+  const unavailableTools = requiredNativeToolCommands(targets, flags)
+    .filter(command => !commandAvailable(command))
+    .map(command => ({ command, reason: nativeToolMissingReason(command) }));
+  writeFileSync(
+    ARTIFACT_MANIFEST,
+    JSON.stringify(
+      {
+        generatedAt: new Date().toISOString(),
+        repoRoot: ROOT,
+        frontendRelease: build,
+        targets,
+        flags: [...flags].sort(),
+        artifacts,
+        unavailableTools,
+      },
+      null,
+      2,
+    ),
+  );
+  copyFileSync(ARTIFACT_MANIFEST, path.join(build.outputDirectory, 'native-artifacts.json'));
+  console.log(`\nArtifact manifest: ${ARTIFACT_MANIFEST}`);
 }
 
 async function main(): Promise<void> {
-	const { flags, targets } = parseNativeBuildOptions(process.argv.slice(2));
-	if (flags.has('--help') || flags.has('-h')) {
-		printHelp();
-		return;
-	}
+  const { flags, targets, frontendRelease } = parseNativeBuildOptions(process.argv.slice(2));
+  if (flags.has('--help') || flags.has('-h')) {
+    printHelp();
+    return;
+  }
 
-	assertNativeToolingAvailable(targets, flags);
-	assertNativeReleaseCredentials(targets, flags);
-	const artifacts: NativeArtifact[] = [];
-	artifacts.push(...ensureFrontendBuild(flags));
-	sanitizeNativeWebBuild();
+  if (!frontendRelease) throw new Error('NATIVE_FRONTEND_RELEASE_REQUIRED: --frontend-release <verified-directory>');
+  await verifyCandidateReleaseDirectory(frontendRelease);
+  if (flags.has('--package')) packageJsonVersion();
+  assertNativeToolingAvailable(targets, flags);
+  assertNativeReleaseCredentials(targets, flags);
+  const build = await createNativeReleaseBuild(frontendRelease, targets);
+  await verifyNativeReleaseBuildInputs(build);
+  const artifacts: NativeArtifact[] = [
+    { target: 'frontend', kind: 'verified-wallet-release', status: 'reused', path: build.stagingDirectory },
+    {
+      target: 'runtime',
+      kind: 'browser-runtime',
+      status: 'reused',
+      path: path.join(build.stagingDirectory, 'runtime.js'),
+    },
+  ];
 
-	for (const target of targets) {
-		if (target === 'ios' || target === 'android') {
-			artifacts.push(syncCapacitorPlatform(target));
-			if (flags.has('--package')) artifacts.push(packageCapacitorPlatform(target, flags));
-			if (flags.has('--open')) run('bunx', ['cap', 'open', target], FRONTEND);
-		} else if (target === 'desktop') {
-			artifacts.push(...prepareDesktop(flags));
-		} else if (target === 'extension') {
-			artifacts.push(...prepareExtension(flags));
-		}
-	}
+  for (const target of targets) {
+    if (target === 'ios' || target === 'android') {
+      artifacts.push(syncCapacitorPlatform(target, build));
+      await verifyNativeReleaseBuildInputs(build);
+      if (flags.has('--package')) artifacts.push(packageCapacitorPlatform(target, build));
+      if (flags.has('--open'))
+        run(path.join(FRONTEND, 'node_modules/.bin/cap'), ['open', target], requireNativeWorkspace(build, 'capacitor'));
+    } else if (target === 'desktop') {
+      artifacts.push(...(await prepareDesktop(flags, build)));
+    } else if (target === 'extension') {
+      artifacts.push(...prepareExtension(flags, build));
+    }
+  }
 
-	writeArtifactManifest(targets, flags, artifacts);
-	console.log(`\nxln native pipeline complete: ${targets.join(', ')}`);
+  await verifyNativeReleaseBuildInputs(build);
+  writeArtifactManifest(targets, flags, artifacts, build);
+  console.log(`\nxln native pipeline complete: ${targets.join(', ')}`);
 }
 
 if (import.meta.main) {

@@ -8,7 +8,7 @@ import {
   verifyLifecycleReleaseInputs,
 } from '../../../../frontend/scripts/release/lifecycle-release-inputs';
 
-import { SURFACE_IDS } from '../../../../frontend/config/surfaces';
+import { SURFACE_IDS } from '../../../../packages/frontend-release/surfaces';
 import { assembleCandidateRelease } from '../../../../frontend/scripts/release/candidate-release';
 import {
   createPwaCandidatePlan,

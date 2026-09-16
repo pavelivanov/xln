@@ -56,9 +56,10 @@ test('Manage preserves focused Account and token context and commits credit and 
 
 test('Lending renders real API state and preserves its own selection across Account tools', { tag: '@functional' }, async ({ page }, testInfo) => {
   const errors = observeBrowserErrors(page), fixture = await selectWalletFixtureRuntime(page);
-  await page.goto('/app#accounts/lending');
+  await page.goto('/app#accounts/configure');
   await page.getByLabel('Entity', { exact: true }).selectOption(fixture.entityId);
-  await expect(page.getByLabel('Hub Account', { exact: true })).toHaveValue(fixture.counterpartyEntityId);
+  await openTool(page, 'lending');
+    await expect(page.getByLabel('Hub Account', { exact: true })).toHaveValue(fixture.counterpartyEntityId);
   await page.getByLabel('Asset', { exact: true }).selectOption('2');
   await expect(page.getByTestId('wallet-lending').getByText('Available', { exact: false })).toBeVisible();
   await expectPageContained(page); await screenshotEvidence(page, testInfo, 'lending-state-and-forms');
@@ -111,9 +112,18 @@ test('Move uses the recovered external signer for transfer, allowance and a real
   await expectPageContained(page); await screenshotEvidence(page, testInfo, 'move-external-transfer-confirmed');
   await page.getByTestId('move-target-reserve').click();
   await page.getByLabel('Amount', { exact: true }).fill('1');
-  await page.getByRole('button', { name: 'Allow amount', exact: true }).click();
-  await expect(page.getByText('Approval confirmed.', { exact: false })).toBeVisible({ timeout: 30000 });
-  await page.getByRole('button', { name: 'Add to Batch', exact: true }).click();
+  // The fixture chain is shared by viewport cases; establish the insufficient
+    // allowance through the real approval flow instead of assuming a fresh EOA.
+    await page.getByLabel('Allowance amount', { exact: true }).fill('0.5');
+    await page.getByRole('button', { name: 'Allow amount', exact: true }).click();
+  await expect(page.getByTestId('move-allow-status')).toHaveText('Current allowance 0.5 USDC · required 1 USDC');
+    await expect(page.getByRole('button', { name: 'Add to Batch', exact: true })).toBeDisabled();
+    await page.getByLabel('Allowance amount', { exact: true }).fill('1');
+    await page.getByRole('button', { name: 'Allow amount', exact: true }).click();
+    await expect(page.getByText('Approval confirmed.', { exact: false })).toBeVisible({ timeout: 30000 });
+  await expect(page.getByTestId('move-allow-status')).toHaveText('Current allowance 1 USDC · required 1 USDC');
+    await screenshotEvidence(page, testInfo, 'move-allowance-required-approved');
+    await page.getByRole('button', { name: 'Add to Batch', exact: true }).click();
   await expect(page.getByRole('region', { name: 'Jurisdiction batch' })).toContainText('Draft · 1 operations');
   await expectPageContained(page); await screenshotEvidence(page, testInfo, 'move-external-deposit-draft');
   expectNoBrowserErrors(errors);
@@ -143,11 +153,13 @@ test('Manage runs and stops the retained local load controls and prepares a real
   await page.getByTestId('configure-dispute-prepare').click();
   const batch = page.getByRole('region', { name: 'Jurisdiction batch' });
   await expect(batch.getByText('Start dispute', { exact: false })).toBeVisible({ timeout: 20000 });
-  await expect(page.getByTestId('configure-dispute-finalize')).toBeVisible();
-  page.once('dialog', dialog => dialog.dismiss());
-  await page.getByTestId('configure-dispute-finalize').click();
+  await expect(page.getByTestId('configure-dispute-finalize')).toBeDisabled();
+  await expect(page.getByTestId('configure-dispute-evidence')).toHaveText(
+      'Dispute queued: awaiting the authoritative on-chain start and timeout.',
+    );
+    // Finalization cancellation is exercised below after the real on-chain start.
   await expect(batch.getByText('Draft · 1 operations')).toBeVisible();
-  await expectPageContained(page); await screenshotEvidence(page, testInfo, 'manage-dispute-start-draft-finalize-cancelled');
+  await expectPageContained(page); await screenshotEvidence(page, testInfo, 'manage-dispute-start-draft-finalize-guarded');
   expectNoBrowserErrors(errors);
 });
 
@@ -248,9 +260,15 @@ test('Move selects routes with pointer and keyboard, queues a real draft and can
   const batch = page.getByRole('region', { name: 'Jurisdiction batch' });
   await expect(batch.getByRole('heading', { name: 'Draft · 1 operations' })).toBeVisible();
   await expectPageContained(page); await screenshotEvidence(page, testInfo, 'move-reserve-account-draft');
-  page.once('dialog', dialog => dialog.dismiss()); await batch.getByRole('button', { name: 'Clear batch' }).click();
+  await batch.getByRole('button', { name: 'Review clear' }).click(); await batch
+      .getByRole('region', { name: 'Confirm clear batch' })
+      .getByRole('button', { name: 'Keep batch' })
+      .click();
   await expect(batch.getByRole('heading', { name: 'Draft · 1 operations' })).toBeVisible();
-  page.once('dialog', dialog => dialog.accept()); await batch.getByRole('button', { name: 'Clear batch' }).click();
+  await batch.getByRole('button', { name: 'Review clear' }).click(); await batch
+      .getByRole('region', { name: 'Confirm clear batch' })
+      .getByRole('button', { name: 'Clear exact batch' })
+      .click();
   await expect(batch.getByText('No queued operations.')).toBeVisible();
   const manual = `0x${'77'.repeat(32)}`, counterparty = page.getByLabel('To Account', { exact: true });
   page.once('dialog', dialog => dialog.dismiss()); await counterparty.fill(manual);

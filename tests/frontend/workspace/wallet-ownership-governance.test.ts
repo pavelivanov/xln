@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { projectControlTakeoverTargets } from '../../../core/api/server/control/control-board-governance';
+import { projectControlTakeoverTargets } from '../../../core/api/runtime-adapter/control/control-board-governance-resolver';
 import { getWalletControlActivationState } from '../../../frontend/bridges/wallet/wallet-canonical-ownership-governance';
 import { buildControlBoardActivationInputs } from '../../../frontend/packages/runtime-client/src/entity/ownership-flow';
 

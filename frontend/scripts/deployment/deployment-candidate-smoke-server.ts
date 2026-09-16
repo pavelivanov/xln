@@ -5,17 +5,17 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 import { safeStringify } from '../../../core/protocol/serialization';
-import type { SurfaceId } from '../../config/surfaces';
-import type { CandidateReleaseManifest } from '../release/candidate-release';
-import { verifyCandidateReleaseDirectory } from '../release/candidate-release-verifier';
+import type { SurfaceId } from '../../../packages/frontend-release/surfaces';
+import type { CandidateReleaseManifest } from '../../../packages/frontend-release/manifest';
+import { verifyCandidateReleaseDirectory } from '../../../packages/frontend-release/verify';
 import { readLifecycleReleaseInputs } from '../release/lifecycle-release-inputs';
-import { serveCandidateReleaseFile } from '../release/candidate-release-serving';
+import { serveCandidateReleaseFile } from '../../../packages/frontend-release/serve';
 import {
   activateDeploymentCandidate,
   deploymentReleaseDirectory,
   readDeploymentCandidateState,
   rollbackDeploymentCandidate,
-} from './deployment-candidate';
+} from '../../../packages/frontend-release/deployment';
 
 const HOST = process.env['XLN_DEPLOYMENT_SMOKE_HOST'] ?? '127.0.0.1';
 const PORT = Number(process.env['XLN_DEPLOYMENT_SMOKE_PORT'] ?? '19092');

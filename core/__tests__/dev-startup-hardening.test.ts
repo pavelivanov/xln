@@ -132,7 +132,9 @@ test('dev starts application services only after both exact Anvil chains are rea
   const barrier = supervisor.indexOf('const barrier = spawnRole(DEV_CHAIN_BARRIER_ROLE)');
   const backendStart = supervisor.indexOf('for (const role of DEV_BACKEND_ROLES) spawnRole(role)');
   const backendBarrier = supervisor.indexOf('const backendBarrier = spawnRole(DEV_BACKEND_BARRIER_ROLE)');
-  const frontendStart = supervisor.indexOf('for (const role of DEV_FRONTEND_ROLES) spawnRole(role)');
+  const frontendStart = supervisor.indexOf(
+    "for (const role of developmentFrontendRoles(options.frontend ?? 'svelte')) spawnRole(role)",
+  );
   expect(firstReady).toBeGreaterThan(0);
   expect(secondReady).toBeGreaterThan(firstReady);
   expect(child).toContain('rpc-ready)\n    wait_for_dev_chains');

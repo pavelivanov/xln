@@ -4,7 +4,6 @@ const config: CapacitorConfig = {
 	appId: 'finance.xln.wallet',
 	appName: 'xln finance',
 	webDir: 'build',
-	bundledWebRuntime: false,
 	server: {
 		hostname: 'localhost',
 		androidScheme: 'https',

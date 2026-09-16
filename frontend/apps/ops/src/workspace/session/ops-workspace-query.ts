@@ -1,6 +1,7 @@
 import type {
   RuntimeAdapter,
   RuntimeAdapterActivityPage,
+  RuntimeAdapterEntitySummary,
   RuntimeAdapterHistoryFrameBatch,
   RuntimeAdapterGraphFrame,
   RuntimeAdapterReadQuery,
@@ -19,7 +20,8 @@ import { buildGossipDirectoryViewFromRuntimeEntities } from '../../../../../pack
 
 type WorkspaceQueryResults = RuntimeQueryResultSchema & Readonly<{
   activity: RuntimeAdapterActivityPage;
-  historyFrameBatch: RuntimeAdapterHistoryFrameBatch;
+  entities: RuntimeAdapterEntitySummary[];
+    historyFrameBatch: RuntimeAdapterHistoryFrameBatch;
   viewFrame: RuntimeAdapterViewFrame;
   graphFrame: RuntimeAdapterGraphFrame;
   solvencySummary: RuntimeAdapterSolvencySummary;

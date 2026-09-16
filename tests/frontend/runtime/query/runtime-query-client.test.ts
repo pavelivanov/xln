@@ -711,8 +711,12 @@ test('health admin reads active runtime projections instead of debug event/entit
   expect(source).toContain('ensureProjectionRuntimeConnected');
   expect(source).toContain('runtimeQueryClient.readActivity');
   expect(source).toContain('runtimeQueryClient.readEntities');
-  expect(source).toContain('RuntimeActivityEvent');
-  expect(source).toContain('RuntimeAdapterEntitySummary');
+  const eventProjection = readFileSync('frontend/packages/ui/src/health/runtime-events.ts', 'utf8');
+  expect(source).toContain("from '../../../packages/ui/src/health/runtime-events'");
+  expect(eventProjection).toContain('RuntimeActivityEvent');
+  const entityProjection = readFileSync('frontend/packages/ui/src/health/runtime-projections.ts', 'utf8');
+  expect(source).toContain("from '../../../packages/ui/src/health/runtime-projections'");
+  expect(entityProjection).toContain('RuntimeAdapterEntitySummary');
   expect(source).toContain("fetch('/api/health')");
   expect(source).toContain("import { errorLog } from '../../../packages/browser/src/logging/error-log-store';");
   expect(source).toContain("errorLog.log(message, 'Health Admin', details)");

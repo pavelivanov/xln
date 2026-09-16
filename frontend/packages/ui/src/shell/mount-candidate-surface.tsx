@@ -1,7 +1,7 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 
-import type { SurfaceId } from '../../../../config/surfaces';
+import type { SurfaceId } from '../../../../../packages/frontend-release/surfaces';
 import { CandidateShell, type CandidateSurfaceCopy } from './candidate-shell';
 
 const getRootElement = (): HTMLElement => {

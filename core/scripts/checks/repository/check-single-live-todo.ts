@@ -19,6 +19,7 @@ const GENERATED_OR_VENDOR_DIRS = new Set([
   'test-results',
 ]);
 const GENERATED_PREFIXES = [
+  `frontend${sep}.artifacts${sep}`,
   `frontend${sep}build${sep}`,
   `frontend${sep}static${sep}`,
   `frontend${sep}ios${sep}App${sep}App${sep}public${sep}`,

@@ -37,8 +37,8 @@ test('wallet profile settings cancel or commit against the selected identity and
   await expect(save).toBeDisabled();
   await screenshotEvidence(page, testInfo, 'wallet-profile-cancelled');
 
-  await page.getByRole('link', { name: 'Display', exact: true }).click();
-  await expect(page).toHaveURL(/#settings\/display$/);
+  await page.getByRole('link', { name: 'Theme', exact: true }).click();
+  await expect(page).toHaveURL(new RegExp(`#settings/display\\?entity=${fixture.entityId}$`));
   await expect(page.getByLabel('BrainVault worker cap')).toBeVisible();
   await page.goBack();
   await expect(identity).toHaveValue(fixture.entityId);
@@ -98,8 +98,8 @@ test('wallet canonical links select subviews and retain Entity through hash and 
   await expect(page.getByLabel('BrainVault worker cap')).toHaveCount(0);
   await expectPageContained(page);
   await screenshotEvidence(page, testInfo, 'wallet-canonical-recovery');
-  await page.getByRole('link', { name: 'Display', exact: true }).click();
-  await expect(page).toHaveURL(/#settings\/display$/);
+  await page.getByRole('link', { name: 'Theme', exact: true }).click();
+  await expect(page).toHaveURL(new RegExp(`#settings/display\\?entity=${fixture.entityId}$`));
   await expect(page.getByLabel('BrainVault worker cap')).toBeVisible();
   await page.goBack();
   await expect(page.getByRole('heading', { name: 'Recovery services' })).toBeVisible();

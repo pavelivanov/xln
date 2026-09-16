@@ -1,4 +1,4 @@
-import { SURFACE_IDS, type SurfaceId } from '../../config/surfaces';
+import { SURFACE_IDS, type SurfaceId } from '../../../packages/frontend-release/surfaces';
 import { parseSurfaceSelection } from '../shared/surface-selection';
 import { CANDIDATE_BROWSER_TEST_FILES } from '../test-react-candidate';
 

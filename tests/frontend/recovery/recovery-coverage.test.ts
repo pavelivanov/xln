@@ -1,3 +1,7 @@
+import {
+  mergeWalletRecoveryServicesObservation,
+  type WalletRecoveryServicesReadyView,
+} from '../../../frontend/packages/browser/src/recovery/wallet-recovery-services';
 import { expect, test } from 'bun:test';
 import { readFileSync } from 'fs';
 
@@ -5,11 +9,12 @@ import {
   buildRecoveryTowerStatuses,
   buildRuntimeRecoveryCoverage,
   formatRecoveryBytes,
-} from '../../../frontend/src/lib/utils/recovery/recoveryCoverage';
+} from '../../../frontend/bridges/wallet/recovery-coverage';
 import {
   clearRuntimeRecoveryDiscoveryStatus,
   formatRuntimeRecoveryDiscoveryFailure,
   readRuntimeRecoveryDiscoveryStatus,
+  subscribeRuntimeRecoveryDiscoveryStatus,
   writeRuntimeRecoveryDiscoveryStatus,
 } from '../../../frontend/packages/browser/src/recovery/recovery-discovery-status';
 import type { Runtime } from '../../../frontend/bridges/vault/vault-store';
@@ -362,17 +367,20 @@ test('recovery tower statuses prefer current failures over stale receipts', () =
   });
 });
 
-test('recovery settings panel renders the coverage grid inside existing recovery UI', () => {
-  const source = readFileSync('frontend/src/lib/components/Entity/workspace/shell/EntitySettingsProjectionPanel.svelte', 'utf8');
-  expect(source).toContain('buildRuntimeRecoveryCoverage');
-  expect(source).toContain('buildRecoveryTowerStatuses');
-  expect(source).toContain('readRuntimeRecoveryDiscoveryStatus(activeRecoveryRuntimeId)');
-  expect(source).toContain('buildRemoteRuntimeRecoveryPeerSources({ runtimeId: activeRecoveryRuntimeId }).length');
-  expect(source).toContain('peerSourceCount: recoveryPeerSourceCount');
-  expect(source).toContain('discovery: recoveryDiscoveryStatus');
-  expect(source).toContain('data-testid="recovery-coverage-grid"');
-  expect(source).toContain('data-testid={`recovery-coverage-${item.id}`}');
-  expect(source).toContain('class="recovery-service-status"');
+test('React recovery settings renders coverage and tower status from the canonical projection', () => {
+  const panel = readFileSync('frontend/apps/wallet/src/recovery/wallet-recovery-services.tsx', 'utf8');
+  const coverage = readFileSync('frontend/apps/wallet/src/recovery/wallet-recovery-coverage.tsx', 'utf8');
+  const source = readFileSync('frontend/bridges/wallet/wallet-canonical-recovery-services.ts', 'utf8');expect(panel).toContain('<WalletRecoveryCoverage view={view} />');
+  expect(source).toContain('coverage: buildRuntimeRecoveryCoverage({');
+  expect(source).toContain('towerStatuses: buildRecoveryTowerStatuses(runtime, runtime.recovery?.towers)');
+  expect(source).toContain('readRuntimeRecoveryDiscoveryStatus(runtime.id)');
+  expect(source).toContain('buildRemoteRuntimeRecoveryPeerSources({ runtimeId: runtime.id }).length');
+  expect(coverage).toContain('view.coverage.map');
+  expect(coverage).toContain('view.towerStatuses.map');
+  expect(coverage).toContain('data-testid="recovery-coverage-grid"');
+  expect(coverage).toContain('data-testid={`recovery-coverage-${item.id}`}');
+  expect(coverage).toContain('tower.label');
+  expect(coverage).toContain('tower.detail');
 });
 
 test('onboarding recovery check renders typed discovery failures', () => {
@@ -387,4 +395,131 @@ test('formatRecoveryBytes keeps recovery coverage labels compact', () => {
   expect(formatRecoveryBytes(64)).toBe('64 B');
   expect(formatRecoveryBytes(1536)).toBe('1.5 KB');
   expect(formatRecoveryBytes(2 * 1024 * 1024)).toBe('2.0 MB');
+});
+
+test('discovery observers follow only their Runtime and stop receiving writes after cleanup', () => {
+  installMemoryLocalStorage();
+  const id = runtimeFixture().id;
+  const observed: Array<number | null> = [];
+  const stop = subscribeRuntimeRecoveryDiscoveryStatus(id.toUpperCase(), () => {
+    observed.push(readRuntimeRecoveryDiscoveryStatus(id)?.backupCount ?? null);
+  });
+  const status = { runtimeId: id, checkedTowers: 1, backupCount: 2, errors: [], checkedAt: 1 };
+  writeRuntimeRecoveryDiscoveryStatus({ ...status, runtimeId: 'another-runtime' });
+  expect(observed).toEqual([]);
+  writeRuntimeRecoveryDiscoveryStatus(status);
+  clearRuntimeRecoveryDiscoveryStatus(id);
+  expect(observed).toEqual([2, null]);
+  stop();
+  const second = subscribeRuntimeRecoveryDiscoveryStatus(id, () => {
+    observed.push(9);
+  });
+  stop();
+  writeRuntimeRecoveryDiscoveryStatus(status);
+  expect(observed).toEqual([2, null, 9]);
+  second();
+  writeRuntimeRecoveryDiscoveryStatus(status);
+  expect(observed).toEqual([2, null, 9]);
+});
+
+test('live recovery evidence preserves unsaved service drafts and rejects stale Runtime or draft observers', () => {
+  const current: WalletRecoveryServicesReadyView = {
+    state: 'ready',
+    runtimeId: 'runtime-a',
+    mode: 'backup_only',
+    officialAvailable: true,
+    services: [{ id: 'draft', url: 'https://draft.example.com', role: 'blind_backup', official: false }],
+    writable: true,
+    blockedReason: '',
+    coverage: [],
+    towerStatuses: [],
+  };
+  const mutation = { runtimeId: current.runtimeId, mode: current.mode, services: current.services };
+  const coverage = buildRuntimeRecoveryCoverage({ runtime: runtimeFixture(), peerSourceCount: 1 });
+  const observed = { ...current, services: [], coverage, writable: false, blockedReason: 'Owner locked' };
+  const merged = mergeWalletRecoveryServicesObservation(current, observed, mutation);
+  expect(merged).toEqual({ ...current, coverage, writable: false, blockedReason: 'Owner locked' });
+  if (merged.state !== 'ready') throw new Error('Expected ready recovery view');
+  expect(merged.services).toBe(current.services);
+  const newerMode = { ...current, mode: 'local_only' as const };
+  expect(mergeWalletRecoveryServicesObservation(newerMode, observed, mutation)).toBe(newerMode);
+  const newerDraft = { ...current, services: [...current.services] };
+  expect(mergeWalletRecoveryServicesObservation(newerDraft, observed, mutation)).toBe(newerDraft);
+  const nextRuntime = { ...current, runtimeId: 'runtime-b', services: [] };
+  expect(mergeWalletRecoveryServicesObservation(current, nextRuntime, mutation)).toBe(nextRuntime);
+  expect(mergeWalletRecoveryServicesObservation(nextRuntime, observed, mutation)).toBe(nextRuntime);
+  expect(
+    mergeWalletRecoveryServicesObservation(current, { state: 'unavailable', reason: 'Vault closed' }, mutation),
+  ).toEqual({ state: 'unavailable', reason: 'Vault closed' });
+});
+
+test('canonical recovery observation follows receipts, discovery and Runtime changes without leaking subscriptions', async () => {
+  installMemoryLocalStorage();
+  const { runtimesState } = await import('../../../frontend/bridges/vault/vault-metadata-store');
+  const { observeCanonicalWalletRecoveryServices } =
+    await import('../../../frontend/bridges/wallet/wallet-canonical-recovery-services');
+  const previous = runtimesState.get();
+  const runtime = runtimeFixture({
+    towers: [{ url: 'https://manual.example.com', towerMode: 'blind_backup', enabled: true }],
+  });
+  const views: Array<
+    import('../../../frontend/packages/browser/src/recovery/wallet-recovery-services').WalletRecoveryServicesView
+  > = [];
+  const errors: unknown[] = [];
+  let stop = () => {};
+  try {
+    runtimesState.set({ runtimes: { [runtime.id]: runtime }, activeRuntimeId: runtime.id });
+    stop = observeCanonicalWalletRecoveryServices(
+      {
+        runtimeId: runtime.id,
+        mode: 'local_only',
+        services: [{ id: 'manual', url: 'https://manual.example.com', role: 'blind_backup', official: false }],
+      },
+      view => views.push(view),
+      error => errors.push(error),
+    );
+    const ready = () => {
+      const view = views.at(-1);
+      if (!view || view.state !== 'ready') throw new Error('Expected ready observed recovery view');
+      return view;
+    };
+    expect(ready().towerStatuses[0]?.label).toBe('Awaiting upload');
+    const receipt = {
+      towerUrl: 'https://manual.example.com',
+      towerMode: 'blind_backup' as const,
+      height: 8,
+      bundleHash: `0x${'ab'.repeat(32)}`,
+      sequence: 1,
+      receivedAt: 100,
+      storedBytes: 4096,
+    };
+    runtimesState.set({
+      runtimes: { [runtime.id]: { ...runtime, recovery: { ...runtime.recovery, lastTowerReceipts: [receipt] } } },
+      activeRuntimeId: runtime.id,
+    });
+    expect(ready().towerStatuses[0]).toMatchObject({ label: 'Receipt observed', detail: 'h8 · seq 1 · 4.0 KB' });
+    writeRuntimeRecoveryDiscoveryStatus({
+      runtimeId: runtime.id,
+      checkedTowers: 1,
+      checkedPeers: 2,
+      peerBackupCount: 1,
+      backupCount: 1,
+      errors: [],
+      checkedAt: 100,
+    });
+    expect(ready().coverage.find(item => item.id === 'peer_refresh')).toMatchObject({ statusLabel: 'Backup observed' });
+    const other = { ...runtimeFixture(), id: `0x${'22'.repeat(20)}` };
+    runtimesState.set({ runtimes: { [runtime.id]: runtime, [other.id]: other }, activeRuntimeId: other.id });
+    expect(ready().runtimeId).toBe(other.id);
+    expect(ready().towerStatuses).toEqual([]);
+    expect(errors).toEqual([]);
+    stop();
+    const count = views.length;
+    runtimesState.set(previous);
+    clearRuntimeRecoveryDiscoveryStatus(runtime.id);
+    expect(views).toHaveLength(count);
+  } finally {
+    stop();
+    runtimesState.set(previous);
+  }
 });

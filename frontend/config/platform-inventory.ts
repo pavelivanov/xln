@@ -1,4 +1,4 @@
-import type { SurfaceId } from './surfaces';
+import type { SurfaceId } from '../../packages/frontend-release/surfaces';
 
 export type PlatformInventoryOwner = SurfaceId | 'assembly';
 export type PlatformInventoryStatus = 'implemented' | 'owned-for-later-wp';
@@ -39,7 +39,7 @@ export const PLATFORM_INVENTORY = [
     status: 'implemented',
     interfaces: ['route', 'registry'],
     sources: [
-      'frontend/config/surfaces.ts',
+      'packages/frontend-release/surfaces.ts',
       'frontend/config/capabilities.ts',
       'frontend/config/development-gateway.ts',
     ],
@@ -160,6 +160,7 @@ export const PLATFORM_INVENTORY = [
       'frontend/packages/browser/src/wallet/wallet-vault-storage.ts',
       'frontend/packages/browser/src/recovery/wallet-recovery-selection-session.ts',
       'frontend/packages/browser/src/recovery/wallet-recovery-services.ts',
+      'frontend/packages/browser/src/recovery/recovery-coverage-view.ts',
       'frontend/packages/browser/src/identity/wallet-brainvault-material-session.ts',
       'frontend/packages/browser/src/identity/wallet-brainvault-opening.ts',
       'frontend/bridges/runtime/browser-runtime-adapter.ts',
@@ -682,7 +683,11 @@ export const PLATFORM_INVENTORY = [
     sources: [
       'frontend/scripts/release/candidate-release.ts',
       'frontend/scripts/release/candidate-release-verifier.ts',
-      'frontend/scripts/release/candidate-release-serving.ts',
+      'packages/frontend-release/manifest.ts',
+      'packages/frontend-release/verify.ts',
+      'packages/frontend-release/http.ts',
+      'packages/frontend-release/public-routes.ts',
+      'packages/frontend-release/serve.ts',
     ],
     consumers: [
       'scripts/native/wallet-candidate-manifest.ts',
@@ -695,16 +700,22 @@ export const PLATFORM_INVENTORY = [
       'scripts/native/copy-packaged-shell-candidate.ts',
       'frontend/playwright.packaged.config.ts',
       'frontend/scripts/pwa/pwa-candidate.ts',
-      'frontend/scripts/deployment/deployment-candidate.ts',
+      'packages/frontend-release/deployment.ts',
       'frontend/scripts/deployment/deployment-candidate-cli.ts',
       'frontend/scripts/deployment/deployment-candidate-smoke-server.ts',
       'frontend/scripts/release/artifact-browser-server.ts',
+      'frontend/scripts/preview.ts',
+      'frontend/scripts/release/verified-release-server.ts',
+      'scripts/release/build-xlnfinance-package.ts',
+      'core/api/server/index.ts',
       'frontend/scripts/test-artifact-candidate.ts',
       'frontend/playwright.artifact.config.ts',
     ],
     evidence: [
       'tests/frontend/tooling/build/frontend-candidate-assembly.test.ts',
       'tests/frontend/tooling/build/frontend-candidate-release-verifier.test.ts',
+      'tests/frontend/tooling/build/frontend-release-preview.test.ts',
+      'frontend/scripts/release/check-preview-consumer.ts',
       'native/__tests__/wallet-candidate-staging.test.ts',
       'native/__tests__/capacitor/capacitor-candidate-smoke.test.ts',
       'native/__tests__/capacitor/capacitor-shell-candidate.test.ts',
@@ -725,7 +736,7 @@ export const PLATFORM_INVENTORY = [
     sources: [
       'frontend/config/capabilities.ts',
       'frontend/config/parity-audit.ts',
-      'frontend/config/surfaces.ts',
+      'packages/frontend-release/surfaces.ts',
       'frontend/config/wallet-flow-audit.ts',
     ],
     consumers: ['frontend/scripts/checks/parity-audit.ts'],
@@ -744,10 +755,13 @@ export const PLATFORM_INVENTORY = [
     consumers: [
       'scripts/release/build-xlnfinance-package.ts',
       'scripts/native/build-platforms.ts',
+      'scripts/native/native-release-build.ts',
+      '.github/workflows/distribution-release.yml',
       'scripts/deployment/deploy-platform.sh',
     ],
     evidence: [
       'native/__tests__/native-build-options.test.ts',
+      'tests/frontend/tooling/build/frontend-distribution-consumers.test.ts',
       'tests/frontend/tooling/build/frontend-candidate-release-verifier.test.ts',
     ],
   },

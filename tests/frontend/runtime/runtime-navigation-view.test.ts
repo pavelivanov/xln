@@ -1,7 +1,7 @@
 import { expect, test } from 'bun:test';
 import { readFileSync } from 'node:fs';
 
-import { buildHierarchicalNavigationView } from '../../../frontend/src/lib/components/Navigation/runtime-navigation-view';
+import { buildHierarchicalNavigationView } from '../../../frontend/packages/ui/src/navigation/runtime-navigation-view';
 
 const runtimeA = 'runtime-a';
 const runtimeB = 'runtime-b';
@@ -129,7 +129,7 @@ test('remote runtime navigation does not inherit local vault signer selection', 
 
 test('HierarchicalNav consumes a projected navigation view instead of reading full runtime env', () => {
   const source = readFileSync('frontend/src/lib/components/Navigation/HierarchicalNav.svelte', 'utf8');
-  const helper = readFileSync('frontend/src/lib/components/Navigation/runtime-navigation-view.ts', 'utf8');
+  const helper = readFileSync('frontend/packages/ui/src/navigation/runtime-navigation-view.ts', 'utf8');
   expect(source).toContain('buildHierarchicalNavigationView');
   expect(source).toContain('$runtimeView');
   expect(source).toContain('navigationView.runtimeItems');

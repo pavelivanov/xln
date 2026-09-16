@@ -36,7 +36,7 @@ import {
   type CrossSwapSetupStep,
   type SwapPanelRuntimeView,
 } from '../../../../../bridges/wallet/swap-panel-helpers';
-import { compareStableText, normalizeDecimalInput, normalizeDisplayPriceForInput, parseDecimalAmountToBigInt, toBigIntSafe } from '../swap-formatting';
+import { compareStableText, normalizeDecimalInput, normalizeDisplayPriceForInput, parseDecimalAmountToBigInt, toBigIntSafe } from '../../../../../packages/ui/src/market/format/swap-formatting';
 import {
   AGGREGATED_ORDERBOOK_DEPTH,
   FILLED_DISPLAY_PPM_THRESHOLD,
@@ -53,7 +53,7 @@ import {
   type PreparedSwapOrderLike,
   type SwapFormValidationInput,
   validateSwapForm,
-} from './swap-order-math';
+} from '../../../../../packages/ui/src/market/orders/swap-order-math';
 import {
   buildRoutedRouteCandidates,
   estimateRoutedHopOutput,
@@ -85,7 +85,7 @@ import {
   type OfferLifecycle,
   type OfferLike,
   type SwapCompletionModal,
-} from './swap-order-history';
+} from '../../../../../packages/ui/src/market/history/swap-order-history';
 import SwapOrderList from './SwapOrderList.svelte';
 import SwapCompletionDialog from './SwapCompletionDialog.svelte';
 import SwapOrderbookSection from './SwapOrderbookSection.svelte';

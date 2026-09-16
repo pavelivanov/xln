@@ -9,11 +9,14 @@
     "config/generated-inputs.ts",
     "scripts/assemble.ts",
     "config/create-react-app-config.ts",
-    "config/surfaces.ts",
+    "../packages/frontend-release/surfaces.ts",
     "scripts/build.ts",
     "scripts/release/candidate-release.ts",
-    "scripts/release/candidate-release-serving.ts",
+    "../packages/frontend-release/serve.ts",
     "scripts/release/artifact-browser-server.ts",
+    "scripts/preview.ts",
+    "scripts/release/check-preview-consumer.ts",
+    "scripts/release/preview-server.ts",
     "scripts/test-artifact-candidate.ts",
     "scripts/test-lifecycle-candidate.ts",
     "scripts/pwa/pwa-candidate-smoke-server.ts",
@@ -31,6 +34,11 @@
     "scripts/inputs/generated-inputs.ts",
     "scripts/prepare.ts",
     "scripts/run-dev-gateway.ts",
-    "scripts/shared/surface-selection.ts"
+    "scripts/shared/surface-selection.ts",
+    "../scripts/native/build-platforms.ts",
+    "../scripts/native/native-release-build.ts",
+    "../scripts/deployment/frontend-release.ts",
+    "../scripts/release/check-xlnfinance-frontend.ts",
+    "../packages/frontend-release/deployment-http.ts"
   ]
 }

@@ -134,7 +134,11 @@ describe('frontend shared browser and Runtime-client boundaries', () => {
     for (const [pathname, source] of sources)
       for (const specifier of importSpecifiers(source)) {
         const target = resolveSourceImport(pathname, specifier);
-        if (!target.startsWith('frontend/') || target.startsWith('frontend/src/')) continue;
+        if (
+          (!target.startsWith('frontend/') && !target.startsWith('packages/frontend-release/')) ||
+          target.startsWith('frontend/src/')
+        )
+          continue;
         const resolved = [target, `${target}.ts`, `${target}.tsx`, `${target}.js`, `${target}/index.ts`].find(
           candidate => /\.[cm]?[jt]sx?$/.test(candidate) && existsSync(join(REPOSITORY_ROOT, candidate)),
         );

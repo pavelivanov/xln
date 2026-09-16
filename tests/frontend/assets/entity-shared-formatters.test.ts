@@ -5,7 +5,7 @@ import {
   formatCurrency,
   formatTimestamp,
   formatTokenAmount,
-} from '../../../frontend/src/lib/view/components/entity/shared/formatters';
+} from '../../../frontend/packages/ui/src/entity/shared/formatters';
 
 describe('entity shared formatters', () => {
   test('formatTokenAmount handles zero-decimal tokens exactly', () => {
@@ -14,7 +14,7 @@ describe('entity shared formatters', () => {
   });
 
   test('formatters fail loudly without raw console substitution', () => {
-    const source = readFileSync('frontend/src/lib/view/components/entity/shared/formatters.ts', 'utf8');
+    const source = readFileSync('frontend/packages/ui/src/entity/shared/formatters.ts', 'utf8');
 
     expect(source).not.toContain('console.error');
     expect(source).not.toContain('console.warn');

@@ -5,15 +5,16 @@ import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 import { readCompilerBytecodeEvidence } from '../../jurisdiction/adapter/stack-manager/compiler-bytecode';
+import { safeStringify } from '../../protocol/serialization';
 
 describe('Stack Manager compiler bytecode evidence', () => {
   test('resolves Hardhat 3 split build-info source names', async () => {
     const directory = await mkdtemp(join(tmpdir(), 'xln-stack-build-info-'));
     try {
-      await writeFile(join(directory, 'build.json'), JSON.stringify({
+      await writeFile(join(directory, 'build.json'), safeStringify({
         userSourceNameMap: { 'contracts/Account.sol': 'project/contracts/Account.sol' },
       }));
-      await writeFile(join(directory, 'build.output.json'), JSON.stringify({ output: {
+      await writeFile(join(directory, 'build.output.json'), safeStringify({ output: {
         contracts: { 'project/contracts/Account.sol': { Account: { evm: { deployedBytecode: {
           immutableReferences: { 42: [{ start: 3, length: 32 }] },
         } } } } },

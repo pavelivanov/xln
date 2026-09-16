@@ -1,7 +1,7 @@
 import { buffersEqual } from '../../../core/protocol/serialization';
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
-import { verifyCandidateReleaseDirectory } from './candidate-release-verifier';
+import { verifyCandidateReleaseDirectory } from '../../../packages/frontend-release/verify';
 
 export const requireLifecycleReleaseDirectories = (env = process.env): readonly [string, string] => {
   const install = env['XLN_LIFECYCLE_INSTALL_DIRECTORY'];

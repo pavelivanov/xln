@@ -16,13 +16,7 @@ import { errorLog } from '../../../packages/browser/src/logging/error-log-store'
 export type AppMode = 'user' | 'dev';
 export type ViewMode = 'home' | 'settings' | 'docs' | 'brainvault' | 'panels' | 'graph3d' | 'terminal';
 
-export interface NavigationSelection {
-  runtime: string | null;      // Runtime ID
-  jurisdiction: string | null;  // Jurisdiction name
-  signer: string | null;        // Signer address
-  entity: string | null;        // Entity ID
-  account: string | null;       // Account key (bilateral)
-}
+import type { NavigationSelection } from '../../../packages/ui/src/navigation/navigation-selection';
 
 export interface AppState {
   // Mode toggles (from modeStore)

@@ -1,6 +1,6 @@
 import { resolve } from 'node:path';
 import { readFile } from 'node:fs/promises';
-import { verifyCandidateReleaseDirectory } from './release/candidate-release-verifier';
+import { verifyCandidateReleaseDirectory } from '../../packages/frontend-release/verify';
 
 const [rawDirectory, ...args] = Bun.argv.slice(2);
 if (!rawDirectory || rawDirectory.startsWith('-')) throw new Error('ARTIFACT_BROWSER_DIRECTORY_REQUIRED');

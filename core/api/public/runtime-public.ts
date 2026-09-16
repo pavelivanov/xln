@@ -28,7 +28,7 @@ export type {
 } from '../../runtime/swap-cmd/swap-command-plan';
 export { enqueueRuntimeInput } from '../../runtime/mempool/input-queue';
 export { resolveRuntimeAdapterRead, EmbeddedRuntimeAdapter, RemoteRuntimeAdapter } from '../runtime-adapter';
-export { resolveControlBoardGovernance } from '../server/control/control-board-governance';
+export { resolveControlBoardGovernance } from '../runtime-adapter/control/control-board-governance-resolver';
 export type {
   RuntimeAdapter,
   RuntimeAdapterConfig,

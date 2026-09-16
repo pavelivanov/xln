@@ -1,0 +1,182 @@
+.ops-health-events {
+  margin-top: 2rem;
+  border: 1px solid var(--line);
+}
+.ops-health-events > p,
+.ops-health-events > section {
+  margin: 1rem;
+}
+.ops-health-events button,
+.ops-event-filters input,
+.ops-event-filters select {
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 0.6rem;
+  background: var(--panel);
+  color: inherit;
+  font: inherit;
+}
+.ops-health-events button {
+  cursor: pointer;
+}
+.ops-health-events button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.ops-events-context {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.7rem 2rem;
+  overflow-wrap: anywhere;
+}
+.ops-events-window {
+  color: #aaa9a2;
+  font-size: 0.8rem;
+}
+.ops-event-filters {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.8rem;
+  padding: 1rem;
+  border-block: 1px solid var(--line);
+}
+.ops-event-filters label {
+  display: grid;
+  gap: 0.4rem;
+  font-size: 0.8rem;
+}
+.ops-event-filters input,
+.ops-event-filters select {
+  width: 100%;
+  min-width: 0;
+}
+.ops-event-filters .ops-critical-filter {
+  display: flex;
+  align-items: center;
+}
+.ops-critical-filter input {
+  width: auto;
+}
+.ops-event-feed {
+  max-height: 42rem;
+  overflow: auto;
+}
+.ops-runtime-event {
+  padding: 1rem;
+  border-bottom: 1px solid var(--line);
+  border-left: 3px solid transparent;
+  min-width: 0;
+}
+.ops-runtime-event[data-tone='warning'] {
+  border-left-color: #e2a35d;
+}
+.ops-runtime-event[data-tone='error'] {
+  border-left-color: #ff8072;
+}
+.ops-runtime-event > header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem 1rem;
+  padding: 0;
+  border: 0;
+  min-height: 0;
+  overflow-wrap: anywhere;
+}
+.ops-runtime-event > header time {
+  color: #aaa9a2;
+  font-size: 0.75rem;
+}
+.ops-runtime-event > p {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  overflow-wrap: anywhere;
+  font-size: 0.75rem;
+  color: #aaa9a2;
+}
+.ops-runtime-event summary {
+  overflow-wrap: anywhere;
+  cursor: pointer;
+}
+.ops-runtime-event pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-size: 0.75rem;
+}
+@media (max-width: 760px) {
+  .ops-event-filters {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 420px) {
+  .ops-event-filters {
+    grid-template-columns: 1fr;
+  }
+}
+
+.ops-health-projection-entities > div {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+.ops-health-entity {
+  display: flex;
+  gap: 0.7rem;
+  min-width: 0;
+  padding: 1rem;
+  border: 1px solid var(--line);
+}
+.ops-health-entity > div {
+  min-width: 0;
+}
+.ops-health-entity img {
+  flex-shrink: 0;
+}
+.ops-health-entity strong,
+.ops-health-entity code,
+.ops-health-entity span {
+  display: block;
+  overflow-wrap: anywhere;
+}
+.ops-health-entity code,
+.ops-health-entity span {
+  margin-top: 0.4rem;
+  font-size: 0.75rem;
+  color: #aaa9a2;
+}
+.ops-health-entity-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 0.7rem;
+  font-size: 0.8rem;
+}
+.ops-health-flow > div {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+.ops-health-flow article {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) auto;
+  gap: 0.6rem;
+  align-items: center;
+  padding: 0.7rem;
+  border: 1px solid var(--line);
+  font-size: 0.75rem;
+  overflow-wrap: anywhere;
+}
+.ops-health-flow article[data-critical='true'] {
+  border-color: #e2a35d;
+}
+.ops-health-flow small {
+  grid-column: 1 / -1;
+  color: #e2a35d;
+}
+@media (max-width: 760px) {
+  .ops-health-projection-entities > div,
+  .ops-health-flow > div {
+    grid-template-columns: 1fr;
+  }
+}

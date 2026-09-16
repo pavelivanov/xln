@@ -37,8 +37,14 @@ for (const route of unavailableOpsRoutes) {
     const response = await page.goto(route.pathname, { waitUntil: 'networkidle' });
     expect(response?.ok()).toBe(true);
     await expect(page.getByRole('heading', { exact: true, name: route.heading })).toBeVisible();
-    await expect(page.getByRole('alert')).toContainText(route.failure);
-    await expectPageContained(page);
+    const failureAlert =
+        route.id === 'ops-health' ? page.getByRole('alert', { name: 'Health availability' }) : page.getByRole('alert');
+      await expect(failureAlert).toContainText(route.failure);
+    if (route.id === 'ops-health')
+        await expect(page.getByTestId('health-runtime-events').getByRole('alert')).toContainText(
+          'Select a Runtime in Wallet',
+        );
+      await expectPageContained(page);
     await screenshotEvidence(page, testInfo, route.id);
     // The isolated edge is reachable; these operator APIs are absent from its
     // real Wallet fixture. Require that exact failure, not a relay HTML response.

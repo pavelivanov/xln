@@ -13,7 +13,7 @@
   import { REMOTE_RUNTIME } from '@xln/core/config/constants';
   import type { Tab } from '../../../../../packages/ui/src/workspace/ui-types';
   import EntityPanelTabs from './shell/EntityPanelTabs.svelte';
-  import { runtimeProjectionMatchesRuntime } from '../core/entity-workspace';
+  import { runtimeProjectionMatchesRuntime } from '../../../../../packages/runtime-client/src/runtime/projection/runtime-projection-identity';
   import {
     emptyEntityWorkspaceRuntimeFrameContext,
     type EntityWorkspaceRuntimeFrameContext,

@@ -173,10 +173,10 @@ test('Ownership reads real released shares, refreshes and discards a delayed rea
   await expect(shares.getByTestId('ownership-dividend-reserve')).toHaveText('40');
   await expectPageContained(page);
   await page.reload();
-  await expect(shares).not.toHaveAttribute('data-entity-id', company.entityId);
-  await expect(shares.getByTestId('ownership-control-reserve')).toHaveCount(0);
-  await expect(shares).toHaveAttribute('data-entity-id', await entity.inputValue());
-  await entity.selectOption(company.entityId);
+  await expect(shares).toHaveAttribute('data-entity-id', company.entityId);
+  await expect(shares.getByTestId('ownership-control-reserve')).toHaveText('80');
+  await expect(entity).toHaveValue(company.entityId);
+    await expect(page).toHaveURL(new RegExp(`#ownership\\?entity=${company.entityId}$`));
   await expect(shares.getByTestId('ownership-control-reserve')).toHaveText('80');
   await expect(shares.getByTestId('ownership-dividend-reserve')).toHaveText('40');
   await expect(shares.getByTestId('ownership-confirmed-nonce')).toHaveText('Confirmed action nonce 1');

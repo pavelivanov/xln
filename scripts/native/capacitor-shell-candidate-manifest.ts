@@ -175,7 +175,7 @@ const readManifest = async (workspaceDirectory: string): Promise<CapacitorShellC
 const comparableWebFiles = (files: readonly RegularTreeFile[]) =>
   files.map(({ path, sha256, size }) => ({ path, sha256, size }));
 
-const verifyCopiedWebRoot = async (stagingDirectory: string, webRoot: string): Promise<void> => {
+export const verifyCopiedWebRoot = async (stagingDirectory: string, webRoot: string): Promise<void> => {
   const [source, copied] = await Promise.all([
     snapshotRegularTree(stagingDirectory),
     snapshotRegularTree(webRoot),
@@ -210,7 +210,7 @@ const verifyPreservedShellFiles = async (workspaceDirectory: string): Promise<vo
   }
 };
 
-const verifyGeneratedConfig = async (
+export const verifyCapacitorGeneratedConfig = async (
   pathname: string,
   expected: CapacitorShellCandidatePlan['config'],
   ios: boolean,
@@ -262,8 +262,8 @@ export const verifyCapacitorShellCandidateDirectory = async (
   await Promise.all([
     verifyCopiedWebRoot(stagingDirectory, join(workspaceDirectory, 'ios/App/App/public')),
     verifyCopiedWebRoot(stagingDirectory, join(workspaceDirectory, 'android/app/src/main/assets/public')),
-    verifyGeneratedConfig(join(workspaceDirectory, 'ios/App/App/capacitor.config.json'), plan.config, true),
-    verifyGeneratedConfig(join(workspaceDirectory, 'android/app/src/main/assets/capacitor.config.json'), plan.config, false),
+    verifyCapacitorGeneratedConfig(join(workspaceDirectory, 'ios/App/App/capacitor.config.json'), plan.config, true),
+    verifyCapacitorGeneratedConfig(join(workspaceDirectory, 'android/app/src/main/assets/capacitor.config.json'), plan.config, false),
     verifyPreservedShellFiles(workspaceDirectory),
   ]);
   const [plist, androidManifest] = await Promise.all([

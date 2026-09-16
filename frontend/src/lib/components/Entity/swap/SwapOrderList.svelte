@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { SwapBookEntry } from '@xln/core/api/public/runtime-module';
-  import { toBigIntSafe } from '../swap-formatting';
-  import type { ClosedOrderStatus, ClosedOrderView, OfferLike, PairOrientation } from './swap-order-history';
+  import { toBigIntSafe } from '../../../../../packages/ui/src/market/format/swap-formatting';
+  import type { ClosedOrderStatus, ClosedOrderView, OfferLike, PairOrientation } from '../../../../../packages/ui/src/market/history/swap-order-history';
 
   export let orderListTab: 'open' | 'closed' = 'open';
   export let orderRouteFilter: 'all' | 'same' | 'cross' = 'all';

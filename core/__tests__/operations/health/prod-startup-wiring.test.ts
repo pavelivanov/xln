@@ -339,29 +339,26 @@ describe('production startup wiring', () => {
     expect(runtimeLoop).not.toContain('.exit?.(1)');
   });
 
-  test('production frontend deploy builds off-host and uploads a complete artifact', () => {
+  test('production frontend deploy transfers a verified release without compiling or replacing the rollback', () => {
     const deploy = readPlatformDeploy();
     const packageJson = JSON.parse(readFileSync(join(repoRoot, 'package.json'), 'utf8')) as {
       scripts: Record<string, string>;
     };
-
-    expect(deploy).toContain('build_remote_frontend_archive');
+    const transfer = readFileSync(join(repoRoot, 'scripts/deployment/frontend-transfer.sh'), 'utf8');
     expect(deploy).toContain('bun "$REPO_ROOT/tools/release-snapshot/assert-clean.ts" "$REPO_ROOT"');
-    expect(deploy).toContain('ensure_committed_contract_artifacts');
-    expect(deploy).toContain('CONTRACT_ARTIFACTS_NOT_COMMITTED');
-    expect(deploy).toContain(
-      'COPYFILE_DISABLE=1 tar --no-xattrs --no-mac-metadata -C frontend -czf "$PREBUILT_FRONTEND_ARCHIVE" build',
-    );
-    expect(deploy).toContain('scp "$PREBUILT_FRONTEND_ARCHIVE" "$REMOTE_HOST:$remote_frontend_archive"');
-    expect(deploy).toContain("tar -xzf '$remote_frontend_archive' -C frontend");
+    expect(deploy).toContain('bash "$SCRIPT_DIR/frontend-transfer.sh" "${args[@]}"');
+    expect(transfer).toContain('scp "$WORK/transfer.tar.gz" "$REMOTE_HOST:$REMOTE_ARCHIVE"');
+    expect(deploy).toContain('DEPLOY_FRONTEND_EXPECTED_ACTIVE_REQUIRED');
+    expect(deploy).toContain('DEPLOY_FRONTEND_ORIGIN_REQUIRED');
+    expect(deploy).toContain('export XLN_FRONTEND_DEPLOYMENT_ROOT="$FRONTEND_ROOT"');
+    expect(deploy).toContain('bun "$SCRIPT_DIR/frontend-release.ts" verify "$FRONTEND_ROOT"');
     expect(deploy).toContain(
       'remote_cmd="$remote_cmd XLN_DEPLOY_USE_COMMITTED_CONTRACTS=1 ./scripts/deployment/deploy-platform.sh --runtime-only"',
     );
     expect(deploy).toContain('if [ "${XLN_DEPLOY_USE_COMMITTED_CONTRACTS:-0}" = "1" ]');
-    expect(deploy).toContain('PRODUCTION_FRONTEND_BUILD_FORBIDDEN');
-    expect(deploy).toContain('if [ "$BUILD_FRONTEND" = "1" ]; then');
-    expect(deploy).not.toContain('|| [ ! -d frontend/build ]');
-    expect(deploy).toContain('PRODUCTION_FRONTEND_ARTIFACT_MISSING');
+    expect(deploy).not.toContain('bun run build');
+    expect(deploy).not.toContain('frontend/build');
+    expect(deploy).not.toContain('XLN_ALLOW_IN_PLACE_PRODUCTION_FRONTEND_BUILD');
     expect(deploy).toContain('DEPLOY_PUSH_REQUIRES_REMOTE');
     expect(deploy).toContain('EXPECTED_DEPLOY_SHA="$(git rev-parse --verify \'HEAD^{commit}\')"');
     expect(deploy).toContain("git cat-file -e '$EXPECTED_DEPLOY_SHA^{commit}'");

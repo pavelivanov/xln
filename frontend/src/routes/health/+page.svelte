@@ -13,11 +13,16 @@
   import {
     isRelayTimelineError,
     isRelayTimelineWarning,
-    type RelayTimelineDelivery,
-  } from '$lib/health/relayEventSeverity';
-  import type { RuntimeActivityEvent, RuntimeAdapterEntitySummary } from '@xln/core/api/public/runtime-module';
+  } from '../../../packages/ui/src/health/relay-event-severity';
+  import { buildFlowEdges, projectionEntityFromSummary, type ProjectionEntity } from '../../../packages/ui/src/health/runtime-projections';
   import { makeQaSeveritySignal, type QaSeverity, type QaSeveritySignal } from '@xln/core/qa/severity';
   import { DISPLAY } from '@xln/core/config/constants';
+
+  import { filterRuntimeProjectionEvents, isCriticalEvent, projectionEventFromActivity, type RuntimeProjectionEvent } from '../../../packages/ui/src/health/runtime-events';
+
+  function applyFilters(): void {
+    filteredEvents = filterRuntimeProjectionEvents(events, { search, filterRuntime, filterFrom, filterTo, filterEvent, filterMsgType, filterStatus, onlyCritical });
+  }
 
   type HealthData = {
     timestamp: number;
@@ -250,48 +255,11 @@
     };
   };
 
-  type RuntimeProjectionEvent = {
-    id: string;
-    ts: number;
-    event: string;
-    runtimeId?: string;
-    from?: string;
-    to?: string;
-    msgType?: string;
-    status?: string;
-    reason?: string;
-    encrypted?: boolean;
-    size?: number;
-    queueSize?: number;
-    delivery?: RelayTimelineDelivery;
-    details?: unknown;
-  };
-
-  type ProjectionEntity = {
-    entityId: string;
-    runtimeId?: string;
-    name: string;
-    isHub: boolean;
-    online: boolean;
-    lastUpdated: number;
-    capabilities: string[];
-    metadata: Record<string, unknown>;
-  };
-
   type TestnetGate = QaSeveritySignal & {
     label: string;
     value: string;
     detail: string;
     ok: boolean | null;
-  };
-
-  type FlowEdge = {
-    key: string;
-    from: string;
-    to: string;
-    count: number;
-    critical: number;
-    lastTs: number;
   };
 
   let health = $state<HealthData | null>(null);
@@ -323,19 +291,6 @@
   function logHealthDiagnostic(message: string, details?: unknown): void {
     errorLog.log(message, 'Health Admin', details);
   }
-
-  const BUG_PATTERNS = [
-    'jsonrpcprovider failed to detect network',
-    'testnet j-machine not found',
-    'server_error',
-    'requesturl',
-    '/rpc',
-    'ws_client_error',
-    'envelope_decrypt_fail',
-    'frame_consensus_failed',
-    'route-defer',
-    'deferred',
-  ];
 
   function formatUptime(ms: number | null): string {
     if (ms === null || ms === undefined) return 'N/A';
@@ -425,17 +380,6 @@
     return id.length <= len ? id : `${id.slice(0, len)}...`;
   }
 
-  function eventBlob(e: RuntimeProjectionEvent): string {
-    return JSON.stringify(e).toLowerCase();
-  }
-
-  function isCriticalEvent(e: RuntimeProjectionEvent): boolean {
-    if (e.delivery?.fatal === true) return true;
-    if (e.event === 'error') return true;
-    const blob = eventBlob(e);
-    return BUG_PATTERNS.some((p) => blob.includes(p));
-  }
-
   const criticalSignals = $derived(
     events.filter(isCriticalEvent).slice(-30).reverse()
   );
@@ -452,33 +396,6 @@
   const overallOk = $derived(
     healthVerdict === 'READY'
   );
-
-  function applyFilters(): void {
-    const q = search.trim().toLowerCase();
-    const r = filterRuntime.trim().toLowerCase();
-    const f = filterFrom.trim().toLowerCase();
-    const t = filterTo.trim().toLowerCase();
-
-    filteredEvents = events
-      .filter((e) => {
-        if (filterEvent && e.event !== filterEvent) return false;
-        if (filterMsgType && e.msgType !== filterMsgType) return false;
-        if (filterStatus && e.status !== filterStatus) return false;
-        if (r) {
-          const hit =
-            (e.runtimeId || '').toLowerCase().includes(r) ||
-            (e.from || '').toLowerCase().includes(r) ||
-            (e.to || '').toLowerCase().includes(r);
-          if (!hit) return false;
-        }
-        if (f && !(e.from || '').toLowerCase().includes(f)) return false;
-        if (t && !(e.to || '').toLowerCase().includes(t)) return false;
-        if (onlyCritical && !isCriticalEvent(e)) return false;
-        if (q && !eventBlob(e).includes(q)) return false;
-        return true;
-      })
-      .reverse();
-  }
 
   function clearFilters(): void {
     search = '';
@@ -545,13 +462,6 @@
   function healthSourceHeightLabel(data: HealthData | null): string {
     const sourceHeight = Number(data?.source?.height ?? data?.jMachines?.[0]?.lastBlock ?? 0);
     return Number.isFinite(sourceHeight) && sourceHeight > 0 ? `#${Math.floor(sourceHeight)}` : 'n/a';
-  }
-
-  function endpointLabel(value?: string): string {
-    if (!value) return 'local';
-    const maxInline = DISPLAY.ENDPOINT_PREFIX_CHARS + DISPLAY.ENDPOINT_SUFFIX_CHARS + 2;
-    if (value.length <= maxInline) return value;
-    return `${value.slice(0, DISPLAY.ENDPOINT_PREFIX_CHARS)}...${value.slice(-DISPLAY.ENDPOINT_SUFFIX_CHARS)}`;
   }
 
   function gateSeverity(
@@ -632,21 +542,6 @@
       owner: 'health',
       evidence,
     });
-  }
-
-  function buildFlowEdges(input: RuntimeProjectionEvent[]): FlowEdge[] {
-    const edges = new Map<string, FlowEdge>();
-    for (const event of input) {
-      const from = endpointLabel(event.from || event.runtimeId || 'runtime');
-      const to = endpointLabel(event.to || event.msgType || event.event || 'sink');
-      const key = `${from}->${to}`;
-      const existing = edges.get(key) ?? { key, from, to, count: 0, critical: 0, lastTs: 0 };
-      existing.count += 1;
-      existing.lastTs = Math.max(existing.lastTs, event.ts || 0);
-      if (isCriticalEvent(event)) existing.critical += 1;
-      edges.set(key, existing);
-    }
-    return Array.from(edges.values()).sort((a, b) => b.count - a.count || b.lastTs - a.lastTs);
   }
 
   function buildTestnetGates(data: HealthData | null, rpcHealthy: boolean | null): TestnetGate[] {
@@ -739,52 +634,6 @@
     document.getElementById(section)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
-  function projectionEventFromActivity(event: RuntimeActivityEvent): RuntimeProjectionEvent {
-    return {
-      id: String(event.id || `${event.height}:${event.rawType}`),
-      ts: Math.max(0, Number(event.timestamp || 0)),
-      event: String(event.rawType || event.type || 'runtime_event'),
-      ...(event.runtimeId ? { runtimeId: event.runtimeId } : {}),
-      ...(event.entityId ? { from: event.entityId } : {}),
-      ...(event.counterpartyId ? { to: event.counterpartyId } : {}),
-      msgType: event.type,
-      status: event.status,
-      ...(event.subtitle ? { reason: event.subtitle } : {}),
-      encrypted: false,
-      details: {
-        height: event.height,
-        kind: event.kind,
-        source: event.source,
-        direction: event.direction,
-        title: event.title,
-        amount: event.amount,
-        tokenId: event.tokenId,
-        hash: event.hash,
-      },
-    };
-  }
-
-  function projectionEntityFromSummary(summary: RuntimeAdapterEntitySummary): ProjectionEntity {
-    const handle = $runtimeControllerHandle;
-    const entityId = String(summary.entityId || '').trim().toLowerCase();
-    const name = String(summary.label || entityId || 'Unknown').trim();
-    return {
-      entityId,
-      runtimeId: String(handle.id || '').trim(),
-      name,
-      isHub: summary.isHub === true,
-      online: handle.status === 'connected',
-      lastUpdated: Math.max(0, Math.floor(Number(summary.height || handle.height || 0))),
-      capabilities: summary.isHub === true ? ['hub', 'routing'] : ['entity'],
-      metadata: {
-        height: summary.height,
-        jurisdiction: summary.jurisdiction ?? null,
-        runtimeMode: handle.mode,
-        authLevel: handle.authLevel,
-      },
-    };
-  }
-
   async function fetchRuntimeProjections(): Promise<void> {
     await ensureProjectionRuntimeConnected();
     const [activity, summaries] = await Promise.all([
@@ -792,7 +641,7 @@
       runtimeQueryClient.readEntities({ limit: 1000 }),
     ]);
     events = (activity.events ?? []).map(projectionEventFromActivity);
-    entities = summaries.map(projectionEntityFromSummary);
+    entities = summaries.map(summary => projectionEntityFromSummary(summary, $runtimeControllerHandle));
   }
 
   async function fetchHealth(): Promise<void> {

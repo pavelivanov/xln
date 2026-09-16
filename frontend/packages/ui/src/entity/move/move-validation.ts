@@ -1,5 +1,6 @@
 import { isAddress } from 'ethers';
 
+import { isMoveAllowanceSatisfied } from './move-allowance';
 import { parsePositiveAssetAmount } from '../assets/entity-asset-values';
 import {
   canAddMoveRouteToDraft,
@@ -120,7 +121,7 @@ export function getMoveValidationErrorForContext(context: MoveValidationContext)
   if (context.mode === 'draft' && context.allowanceRequired) {
     if (context.allowanceLoading) return 'Checking ERC20 allowance';
     if (context.allowanceError) return context.allowanceError;
-    if (context.allowanceRaw === null || context.allowanceRaw < parsedAmount) {
+    if (!isMoveAllowanceSatisfied(parsedAmount, context.allowanceRaw)) {
       return 'Allow ERC20 before adding to batch';
     }
   }

@@ -1,4 +1,4 @@
-import type { RouteRule, SurfaceId } from './surfaces';
+import type { RouteRule, SurfaceId } from '../../packages/frontend-release/surfaces';
 
 export type GeneratedInputOwner = SurfaceId;
 

@@ -3,7 +3,7 @@ import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
 import { compareStableText, safeStringify } from '../../../core/protocol/serialization';
-import { verifyCandidateReleaseDirectory } from '../release/candidate-release-verifier';
+import { verifyCandidateReleaseDirectory } from '../../../packages/frontend-release/verify';
 
 export const PWA_CANDIDATE_CACHE_PREFIX = 'xln-react-candidate:';
 export const PWA_CANDIDATE_SCOPE = '/';

@@ -7,11 +7,11 @@ import {
   getAssetValueUsd,
   getExternalTokenValueUsd,
 } from '../../../../frontend/packages/ui/src/entity/assets/entity-asset-values';
-import { remainingOfferUsd } from '../../../../frontend/src/lib/components/Entity/swap/swap-order-history';
+import { remainingOfferUsd } from '../../../../frontend/packages/ui/src/market/history/swap-order-history';
 import {
   RCPAN_MICROSCOPE_TOKENS,
   tokenAmountToUsdMicros,
-} from '../../../../frontend/src/lib/components/Rcpan/microscope/model/microscope-tokens';
+} from '../../../../frontend/packages/ui/src/rcpan/microscope/microscope-tokens';
 import type { SwapBookEntry } from '../../../entity/types';
 import {
   formatGraphEntityReserveBalances,

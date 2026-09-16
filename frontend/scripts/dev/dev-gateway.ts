@@ -3,6 +3,9 @@ import {
   type IncomingMessage,
   type ServerResponse,
 } from 'node:http';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { createServer as createSecureServer } from 'node:https';
 import { createConnection, type Socket } from 'node:net';
 import { connect as createTlsConnection } from 'node:tls';
 
@@ -18,12 +21,14 @@ import {
   type DevelopmentGatewayDecision,
   type GatewayProxyOwner,
 } from '../../config/development-gateway';
-import { SURFACE_IDS, type SurfaceId } from '../../config/surfaces';
+import { SURFACE_IDS, type SurfaceId } from '../../../packages/frontend-release/surfaces';
 
 type GatewayTargets = Readonly<Record<GatewayProxyOwner, string>>;
 type GatewayProxyOwners = Readonly<Partial<Record<SurfaceId, SurfaceId>>>;
 
 export type DevelopmentGatewayOptions = Readonly<{
+  runtimeDirectory?: string;
+  tls?: Readonly<{ cert: Buffer; key: Buffer }>;
   targets: GatewayTargets;
   proxyOwners?: GatewayProxyOwners;
   edgeWebSocketTarget?: string;
@@ -102,11 +107,22 @@ export const forwardWebSocketUpgrade = (
     rejectUpgrade(socket, 502, `DEVELOPMENT_GATEWAY_WS_FAILED:${error.message}`);
   });
   socket.once('error', (error) => upstreamSocket.destroy(error));
+  // Closing a preview/dev listener also closes upgraded connections. Propagate
+  // that closure to its upstream so the owned process can finish on SIGTERM.
+  socket.once('close', () => upstreamSocket.destroy());
+  upstreamSocket.once('close', () => socket.destroy());
 };
 
-export const createDevelopmentGateway = ({ targets, proxyOwners = {}, edgeWebSocketTarget = targets.edge }: DevelopmentGatewayOptions) => {
+export const resolveLiveRuntimeFilename = (rawUrl: string): string | undefined => {
+  const pathname = new URL(rawUrl, 'http://localhost').pathname;
+  return /^\/(?:__app\/(?:wallet|ops)\/)?(runtime\.js|account-worker\.js)$/.exec(pathname)?.[1];
+};
+
+export const createDevelopmentGateway = ({ targets, tls,
+  runtimeDirectory,
+  proxyOwners = {}, edgeWebSocketTarget = targets.edge }: DevelopmentGatewayOptions) => {
   const proxy = createProxyServer({ xfwd: true, changeOrigin: false });
-  const server = createServer((request: IncomingMessage, response: ServerResponse) => {
+  const handleRequest = (request: IncomingMessage, response: ServerResponse): void => {
     const rawUrl = request.url ?? '/';
     let decision: DevelopmentGatewayDecision;
     try {
@@ -125,13 +141,32 @@ export const createDevelopmentGateway = ({ targets, proxyOwners = {}, edgeWebSoc
       return;
     }
 
+    // Root dev owns continuously rebuilt browser bundles. Read those exact
+    // files on every request; release/standalone app preparation stays immutable.
+    const runtimeFile = runtimeDirectory ? resolveLiveRuntimeFilename(rawUrl) : undefined;
+    if (runtimeFile && runtimeDirectory) {
+      if (request.method !== 'GET' && request.method !== 'HEAD') {
+        writeLocalResponse(response, 405, '', { allow: 'GET, HEAD' });
+        return;
+      }
+      try {
+        const bytes = readFileSync(join(runtimeDirectory, runtimeFile));
+        response.writeHead(200, { 'content-type': 'text/javascript; charset=utf-8', 'cache-control': 'no-store' });
+        response.end(request.method === 'HEAD' ? undefined : bytes);
+      } catch (error) {
+        writeProxyFailure(response, 'wallet', error instanceof Error ? error : new Error(String(error)));
+      }
+      return;
+    }
+
     const proxyOwner = resolveDevelopmentProxyOwner(decision.owner, proxyOwners);
     const routedDecision = proxyOwner === decision.owner ? decision : { ...decision, owner: proxyOwner };
     request.url = rewriteDevelopmentGatewayUrl(rawUrl, routedDecision);
     proxy.web(request, response, { target: targets[proxyOwner], changeOrigin: false }, (error) => {
       writeProxyFailure(response, proxyOwner, error);
     });
-  });
+  };
+  const server = tls ? createSecureServer(tls, handleRequest) : createServer(handleRequest);
 
   server.on('upgrade', (request: IncomingMessage, socket: Socket, head: Buffer) => {
     const rawUrl = request.url ?? '/';
@@ -156,6 +191,15 @@ export const createDevelopmentGateway = ({ targets, proxyOwners = {}, edgeWebSoc
     rejectUpgrade(socket, 400, `DEVELOPMENT_GATEWAY_CLIENT_ERROR:${error.message}`);
   });
   return server;
+};
+
+export const readDevelopmentGatewayTls = (
+  certPath = process.env['XLN_REACT_GATEWAY_TLS_CERT'],
+  keyPath = process.env['XLN_REACT_GATEWAY_TLS_KEY'],
+): DevelopmentGatewayOptions['tls'] => {
+  if (certPath === undefined && keyPath === undefined) return undefined;
+  if (!certPath?.trim() || !keyPath?.trim()) throw new Error('DEVELOPMENT_GATEWAY_TLS_PAIR_REQUIRED');
+  return { cert: readFileSync(certPath), key: readFileSync(keyPath) };
 };
 
 const run = (): void => {
@@ -185,8 +229,13 @@ const run = (): void => {
   if (walletProxyOwnerRaw !== undefined && walletProxyOwner === undefined) {
     throw new Error(`DEVELOPMENT_GATEWAY_WALLET_PROXY_OWNER_INVALID:${walletProxyOwnerRaw}`);
   }
+  const tls = readDevelopmentGatewayTls();
   const server = createDevelopmentGateway({
     targets,
+    ...(tls ? { tls } : {}),
+    ...(process.env['XLN_REACT_LIVE_RUNTIME_DIRECTORY']
+      ? { runtimeDirectory: process.env['XLN_REACT_LIVE_RUNTIME_DIRECTORY'] }
+      : {}),
     ...(process.env['XLN_REACT_EDGE_WEBSOCKET_TARGET'] ? { edgeWebSocketTarget: process.env['XLN_REACT_EDGE_WEBSOCKET_TARGET'] } : {}),
     proxyOwners: {
       ...(docsProxyOwner === undefined ? {} : { docs: docsProxyOwner }),
@@ -196,12 +245,21 @@ const run = (): void => {
   server.listen(parseDevelopmentGatewayPort(process.env['XLN_REACT_GATEWAY_PORT']), host, () => {
     const address = server.address();
     if (address === null || typeof address === 'string') throw new Error('DEVELOPMENT_GATEWAY_ADDRESS_INVALID');
-    console.info(`FRONTEND_GATEWAY_READY origin=http://${host}:${address.port}`);
+    console.info(`FRONTEND_GATEWAY_READY origin=${tls ? 'https' : 'http'}://${host}:${address.port}`);
   });
+  const connections = new Set<Socket>();
+  server.on('connection', socket => {
+    connections.add(socket);
+    socket.once('close', () => connections.delete(socket));
+  });
+  let closing = false;
   const close = (): void => {
+    if (closing) return;
+    closing = true;
     server.close((error?: Error) => {
       if (error !== undefined) throw error;
     });
+    for (const socket of connections) socket.destroy();
   };
   process.once('SIGINT', close);
   process.once('SIGTERM', close);

@@ -10,7 +10,7 @@ import {
   PARITY_GAPS,
   RETAINED_ROUTE_PARITY,
 } from '../../../frontend/config/parity-audit';
-import { resolveRouteOwner } from '../../../frontend/config/surfaces';
+import { resolveRouteOwner } from '../../../packages/frontend-release/surfaces';
 import { buildParityAuditReport } from '../../../frontend/scripts/checks/parity-audit';
 
 const listSveltePages = (directory: string): string[] => readdirSync(directory, { withFileTypes: true })
@@ -78,8 +78,8 @@ describe('WP9 retained-route and capability parity audit', () => {
       schemaVersion: 1,
       routes: {
         total: 20,
-        implementation: { complete: 18, partial: 2 },
-        browserEvidence: { covered: 18, partial: 2 },
+        implementation: { complete: 17, partial: 3 },
+        browserEvidence: { covered: 17, partial: 3 },
       },
       capabilities: { total: 12, accounted: 12 },
     });

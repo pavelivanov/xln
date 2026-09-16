@@ -260,6 +260,38 @@
 .ops-architect-panel > nav { display: flex; gap: 8px; margin: 12px 0; }
 .ops-architect-code { margin-top: 18px; }
 .ops-architect-code textarea { min-height: 280px; resize: vertical; font: 12px/18px monospace; white-space: pre; }
+.ops-architect-controls {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.ops-architect-controls > header {
+  flex-wrap: wrap;
+}
+/* Long Entity IDs must not set the minimum width of the docked form. */
+.ops-architect-controls fieldset {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 12px;
+  min-width: 0;
+  margin: 12px 0;
+  padding: 12px;
+}
+.ops-architect-controls label {
+  display: grid;
+  gap: 6px;
+  flex: 1 1 200px;
+  min-width: 0;
+}
+.ops-architect-controls :is(input, select) {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+}
+.ops-architect-controls fieldset > p {
+  flex-basis: 100%;
+}
 .ops-brainvault-panel { height: 100%; overflow: auto; box-sizing: border-box; padding: 20px; color: #e5edf3; background: #080d12; }
 .ops-brainvault-panel > header { max-width: 640px; margin: 0 auto 24px; }
 .ops-brainvault-panel h2 { font-size: 20px; }

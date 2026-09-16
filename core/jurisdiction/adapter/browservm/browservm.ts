@@ -35,6 +35,19 @@ import { createBrowserVmIoMethods } from './browservm-io';
 import { createSignerNonceSequencer } from '../rpc/write/rpc-transaction-sequencer';
 import { prepareDurableEvmTransaction } from '../rpc/write/evm-durable-transaction';
 
+const withRefreshedSignerNonce =
+  <Args extends unknown[], Result>(signer: Signer, write: (...args: Args) => Promise<Result>) =>
+  async (...args: Args): Promise<Result> => {
+    try {
+      return await write(...args);
+    } finally {
+      // BrowserVM writes bypass ethers' signer. Refresh after success or failure
+      // so the next direct contract call reads the newly committed nonce.
+      const resetNonce = Reflect.get(signer, 'resetNonce');
+      if (typeof resetNonce === 'function') resetNonce.call(signer);
+    }
+  };
+
 export async function createBrowserVMAdapter(
   config: JAdapterConfig,
   provider: Provider,
@@ -88,20 +101,7 @@ export async function createBrowserVMAdapter(
     addresses,
     browserVM,
   });
-  const refreshSignerNonce = (): void => {
-    const resetNonce = Reflect.get(signer, 'resetNonce');
-    if (typeof resetNonce === 'function') resetNonce.call(signer);
-  };
-  const submitAndRefreshSignerNonce: JAdapter['submitTx'] = async (jTx, options) => {
-    try {
-      return await submitTx(jTx, options);
-    } finally {
-      // BrowserVM J submission mines directly against the in-process EVM,
-      // bypassing ethers' signer. Reset a nonce-tracking signer before the
-      // next direct contract call so it reads the newly committed nonce.
-      refreshSignerNonce();
-    }
-  };
+  const submitAndRefreshSignerNonce: JAdapter['submitTx'] = withRefreshedSignerNonce(signer, submitTx);
   const stateMethods = createBrowserVmStateMethods(
     browserVM,
     () => {
@@ -110,20 +110,12 @@ export async function createBrowserVMAdapter(
     verifyStackBinding,
   );
   const ioMethods = createBrowserVmIoMethods(browserVM);
-  const debugFundReserves: JAdapter['debugFundReserves'] = async (...args) => {
-    try {
-      return await ioMethods.debugFundReserves(...args);
-    } finally {
-      refreshSignerNonce();
-    }
-  };
-  const debugFundReservesBatch: JAdapter['debugFundReservesBatch'] = async (...args) => {
-    try {
-      return await ioMethods.debugFundReservesBatch(...args);
-    } finally {
-      refreshSignerNonce();
-    }
-  };
+  const debugFundReserves: JAdapter['debugFundReserves'] = withRefreshedSignerNonce(signer, (...args) =>
+    ioMethods.debugFundReserves(...args),
+  );
+  const debugFundReservesBatch: JAdapter['debugFundReservesBatch'] = withRefreshedSignerNonce(signer, (...args) =>
+    ioMethods.debugFundReservesBatch(...args),
+  );
   const nonceSequencer = createSignerNonceSequencer(provider, true);
 
   const adapter: JAdapter = {

@@ -1,5 +1,8 @@
 import { afterEach, describe, expect, test } from 'bun:test';
 import { createServer, type Server } from 'node:http';
+import { mkdtemp, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { createConnection } from 'node:net';
 
 import {
@@ -11,7 +14,7 @@ import {
   rewriteDevelopmentGatewayUrl,
   type GatewayProxyOwner,
 } from '../../../frontend/config/development-gateway';
-import { SURFACE_IDS } from '../../../frontend/config/surfaces';
+import { SURFACE_IDS } from '../../../packages/frontend-release/surfaces';
 import {
   getReactAppBase,
   getReactPublicDirectory,
@@ -268,6 +271,69 @@ describe('React development gateway', () => {
 
     expect(response).toContain('101 Switching Protocols');
     expect(upstreamReached).toBe(true);
+  });
+
+  test('serves TLS and closes active upgraded connections on SIGTERM', async () => {
+    const directory = await mkdtemp(join(tmpdir(), 'xln-gateway-tls-'));
+    const key = join(directory, 'key.pem');
+    const cert = join(directory, 'cert.pem');
+    let socket: WebSocket | undefined;
+    try {
+      const certificate = Bun.spawn(
+        [
+          'openssl',
+          'req',
+          '-x509',
+          '-newkey',
+          'rsa:2048',
+          '-nodes',
+          '-keyout',
+          key,
+          '-out',
+          cert,
+          '-days',
+          '1',
+          '-subj',
+          '/CN=localhost',
+        ],
+        { stdout: 'ignore', stderr: 'pipe' },
+      );
+      expect(await certificate.exited).toBe(0);
+      const targets = await createTargets();
+      const websocketTarget = createWebSocketTarget(() => {});
+      const port = nextTestPort++;
+      const gateway = Bun.spawn(['bun', 'frontend/scripts/run-dev-gateway.ts'], {
+        cwd: process.cwd(),
+        env: {
+          ...process.env,
+          XLN_REACT_GATEWAY_PORT: String(port),
+          XLN_REACT_GATEWAY_TLS_CERT: cert,
+          XLN_REACT_GATEWAY_TLS_KEY: key,
+          XLN_REACT_SITE_TARGET: targets.site,
+          XLN_REACT_DOCS_TARGET: websocketTarget,
+        },
+        stdout: 'pipe',
+        stderr: 'pipe',
+      });
+      gatewayProcesses.push(gateway);
+      await waitForGateway(gateway);
+      const response = await fetch(`https://127.0.0.1:${port}/`, { tls: { rejectUnauthorized: false } });
+      expect(await response.text()).toBe('site:/__app/site/');
+      socket = new WebSocket(`wss://127.0.0.1:${port}/__hmr/docs`, { tls: { rejectUnauthorized: false } });
+      await new Promise<void>((resolve, reject) => {
+        socket!.onopen = () => resolve();
+        socket!.onerror = () => reject(new Error('TEST_TLS_UPGRADE_FAILED'));
+      });
+      const closed = new Promise<void>(resolve => {
+        socket!.onclose = () => resolve();
+      });
+      gateway.kill('SIGTERM');
+      expect(await gateway.exited).toBe(0);
+      await closed;
+    } finally {
+      socket?.close();
+      await rm(directory, { recursive: true, force: true });
+    }
   });
 
   test('launches four gateway-aware Vite roots plus one public gateway', () => {

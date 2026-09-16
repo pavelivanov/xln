@@ -1,4 +1,4 @@
-import type { SurfaceId } from '../config/surfaces';
+import type { SurfaceId } from '../../packages/frontend-release/surfaces';
 import { runCommands, type CommandSpec } from './shared/command-runner';
 import { parseSurfaceSelection } from './shared/surface-selection';
 

@@ -525,7 +525,7 @@ export const WALLET_FLOW_DEFERRALS = [
     destination: 'WP9',
     evidenceSource: 'frontend/bridges/wallet/wallet-canonical-onboarding.ts',
     evidenceMarker: 'createOnboardingHubJoinCommands',
-    reason: 'W05–W07 verify automatic Hub joining, local/remote-owner Formation and remote Hub opening. Complete onboarding/reload matrix acceptance remains V05a; the remote-to-local Ops BrainVault entry is the separate R03 product decision.',
+    reason: 'W05–W07 verify automatic Hub joining, local/remote-owner Formation and remote Hub opening. R03 dual-destination Ops BrainVault and late-completion development cases pass; complete onboarding/reload acceptance on final release bytes remains V05a.',
   },
   {
     id: 'canonical-cutover',

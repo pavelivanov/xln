@@ -1,4 +1,4 @@
-import { SURFACE_IDS, type SurfaceId } from '../../config/surfaces';
+import { SURFACE_IDS, type SurfaceId } from '../../../packages/frontend-release/surfaces';
 
 const isSurfaceId = (value: string): value is SurfaceId =>
   SURFACE_IDS.some((surfaceId) => surfaceId === value);
