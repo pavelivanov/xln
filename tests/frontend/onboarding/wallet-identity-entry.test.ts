@@ -135,22 +135,22 @@ describe('browser wallet identity entry', () => {
     })).toBeNull();
   });
 
-  test('keeps focus and field publication in the canonical Svelte view', () => {
+  test('keeps focus and field publication in the canonical React view', () => {
     const boundary = readFileSync(
       'frontend/packages/browser/src/identity/wallet-identity-entry.ts',
       'utf8',
     );
     const view = readFileSync(
-      'frontend/src/lib/components/Views/RuntimeCreation.svelte',
+      'frontend/apps/wallet/src/identity/identity-entry-form.tsx',
       'utf8',
     );
 
     expect(boundary).not.toContain('svelte');
     expect(boundary).not.toContain('document.');
     expect(boundary).not.toContain('@xln/brainvault');
-    expect(view).toContain('const nextState = selectWalletIdentityMode({');
     expect(view).toContain('const nextMode = resolveWalletIdentityModeNavigation({');
-    expect(view).toContain('document.getElementById(`wallet-mode-${next}`)?.focus()');
+    expect(view).toContain('props.onMode(nextMode);');
+    expect(view).toContain('tabRefs.current[nextMode]?.focus();');
     expect(view).toContain('event.preventDefault()');
     expect(view).not.toContain("(['brainvault', 'mnemonic'] as const).filter");
   });

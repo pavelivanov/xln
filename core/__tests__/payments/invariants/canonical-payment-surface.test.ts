@@ -127,9 +127,10 @@ test('each payment operation retains one explicit canonical transaction path', (
   expect(source('core/entity/tx/handlers/account/lifecycle/admin.ts'))
     .toContain("type: 'set_credit_limit'");
 
-  const lendingPanel = source('frontend/src/lib/components/Entity/payments/LendingPanel.svelte');
+  const lendingPanel = source('frontend/apps/wallet/src/manage/wallet-lending.tsx');
+  expect(lendingPanel).toContain('Lending transactions are outside the current production admission profile.');
   for (const type of ['lendingOffer', 'lendingBorrow', 'lendingRepay']) {
-    expect(lendingPanel).toContain(`type: '${type}'`);
+    expect(lendingPanel).not.toContain(`type: '${type}'`);
   }
   const lendingHandler = source('core/entity/tx/handlers/payments/lending.ts');
   for (const type of ['lending_fund', 'lending_borrow_request', 'lending_repay', 'lending_close_request']) {
@@ -173,9 +174,9 @@ test('four payment modes stay distinct while retired swap alternatives fail loud
     },
   }, 'CANONICAL_SWAP')).toThrow();
 
-  const paymentPanel = source('frontend/src/lib/components/Entity/payments/PaymentPanel.svelte');
+  const paymentPanel = source('frontend/apps/wallet/src/payments/wallet-payment-send.tsx');
   for (const mode of ['direct', 'instant', 'async', 'trusted']) {
-    expect(paymentPanel).toContain(`value: '${mode}'`);
+    expect(paymentPanel).toContain(`id: '${mode}'`);
   }
   expect(source('frontend/packages/runtime-client/src/payments/payment-command.ts'))
     .toContain("type: 'directPayment'");

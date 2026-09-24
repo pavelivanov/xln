@@ -20,7 +20,7 @@ import {
   type RemoteRuntimeImportEntry,
   type StoredRemoteRuntimeImportEntry,
 } from '../../packages/browser/src/runtime/session/remote-runtime-import';
-import { validateRemoteRuntimeEntry } from './remote-runtime-validation';
+import { validateRemoteRuntimeEntry } from './remote/remote-runtime-validation';
 import { getXLN } from './xln-runtime-loader';
 import {
   getRuntimeControllerConfig,

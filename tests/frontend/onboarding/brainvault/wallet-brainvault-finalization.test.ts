@@ -85,7 +85,7 @@ describe('browser wallet BrainVault finalization', () => {
       'utf8',
     );
     const view = readFileSync(
-      'frontend/src/lib/components/Views/RuntimeCreation.svelte',
+      'frontend/bridges/wallet/canonical/wallet-canonical-vault-runtime.ts',
       'utf8',
     );
 
@@ -99,9 +99,9 @@ describe('browser wallet BrainVault finalization', () => {
     expect(finalization).toContain('master = await combineShards(ordered, input.factor)');
     expect(finalization).toContain("entropy24 = await deriveKey(master, 'bip39/entropy/v1.0', 32)");
     expect(finalization).toContain('master?.fill(0)');
-    expect(view).toContain('browserBrainVaultDerivation.derive(');
+    expect(view).toContain('brainVaultDerivation.derive(input, onProgress)');
     expect(view).not.toContain('combineShards(');
     expect(view).not.toContain('deriveKey(');
-    expect(view).toContain('await prepareRecoveryDecisionFromCurrentSeed(recoveryLabel)');
+    expect(view).toContain('await discoverCanonicalWalletRuntimeRecoveryView(');
   });
 });

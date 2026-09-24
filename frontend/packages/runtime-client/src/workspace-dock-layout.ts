@@ -21,6 +21,7 @@ export type WorkspaceDockApi = Readonly<{
   fromJSON: (layout: SerializedDockview) => void;
   getPanel: (id: string) => unknown | undefined;
   onDidLayoutChange: (listener: () => void) => Readonly<{ dispose: () => void }>;
+  onDidMaximizedGroupChange: (listener: () => void) => Readonly<{ dispose: () => void }>;
   toJSON: () => SerializedDockview;
 }>;
 
@@ -179,7 +180,7 @@ export const openWorkspaceDockSession = (
   }
   ensurePanels(api, panels);
 
-  const layoutDisposable = api.onDidLayoutChange(() => {
+  const scheduleSave = (): void => {
     if (!storage) return;
     if (saveTimer !== null) cancel(saveTimer);
     saveTimer = schedule(() => {
@@ -193,13 +194,16 @@ export const openWorkspaceDockSession = (
         onDiagnostic({ operation: 'save', cause });
       }
     }, WORKSPACE_LAYOUT_SAVE_DELAY_MS);
-  });
+  };
+  const layoutDisposable = api.onDidLayoutChange(scheduleSave);
+  const maximizedGroupDisposable = api.onDidMaximizedGroupChange(scheduleSave);
 
   return {
     dispose: () => {
       if (saveTimer !== null) cancel(saveTimer);
       saveTimer = null;
       layoutDisposable.dispose();
+      maximizedGroupDisposable.dispose();
     },
   };
 };

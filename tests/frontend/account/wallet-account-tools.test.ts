@@ -2,10 +2,9 @@ import { expect, test } from 'bun:test';
 import { WalletWorkspaceSelection } from '../../../frontend/apps/wallet/src/runtime/wallet-workspace-selection';
 import { resolveWalletAppRoute } from '../../../frontend/apps/wallet/src/navigation/wallet-navigation-model';
 import { buildWalletMoveDraftTxs, type WalletMoveDraft } from '../../../frontend/apps/wallet/src/move/wallet-move-model';
-import { buildWalletLoanRepayment, createWalletLendingIntentId, decodeWalletLending } from '../../../frontend/apps/wallet/src/manage/wallet-lending-model';
+import { WALLET_LENDING_UNSUPPORTED_REASON } from '../../../frontend/apps/wallet/src/manage/wallet-lending';
 import { historyTimeRange } from '../../../frontend/apps/wallet/src/history/wallet-history-model';
 import { dedupeHistoryEvents } from '../../../frontend/packages/ui/src/account/activity/activity-history-events';
-import { buildLendingTokenOptions } from '../../../frontend/packages/ui/src/account/lending-token-options';
 
 const owner = `0x${'11'.repeat(32)}`, peer = `0x${'22'.repeat(32)}`, recipient = `0x${'33'.repeat(32)}`;
 const base: WalletMoveDraft = { entityId: owner, sourceAccountId: peer, targetEntityId: recipient, targetHubId: peer, reserveRecipient: recipient,
@@ -27,13 +26,10 @@ test('tool selections preserve independent ownership and reset at Entity and Run
   const selection = new WalletWorkspaceSelection();
   selection.bindRuntime('runtime'); selection.observeEntity('runtime', owner, true); selection.focusAccount('runtime', owner, peer);
   selection.selectAccountTool('runtime', owner, 'manage', { tokenId: 2, tab: 'collateral' });
-  selection.selectAccountTool('runtime', owner, 'lending', { tokenId: 3, hub: recipient });
   expect(selection.getAccountTools().manage).toEqual({ tokenId: 2, tab: 'collateral' });
   expect(selection.getSnapshot().workspaceAccountId).toBe(peer);
   expect(selection.getAccountTools().move.target).toBe('');
-  expect(() => selection.selectAccountTool('runtime', peer, 'lending', { tokenId: 1, hub: peer })).toThrow('TOOL_ENTITY_MISMATCH');
   selection.selectEntity('runtime', peer);
-  expect(selection.getAccountTools().lending).toEqual({ tokenId: 1, hub: '' });
   selection.selectAccountTool('runtime', peer, 'manage', { tokenId: 3, tab: 'dispute' });
   selection.bindRuntime('other');
   expect(selection.getAccountTools().manage).toEqual({ tokenId: 1, tab: 'extend-credit' });
@@ -56,36 +52,15 @@ test('Move uses ordered existing draft operations and canonical c2r continuation
   expect(() => buildWalletMoveDraftTxs({ ...base, amount: 0n })).toThrow('NOT_POSITIVE');
 });
 
-test('Lending rejects stale Hub/token/user reads and derives only the selected borrower repayment', () => {
-  const loan = { hubEntityId: peer, borrowerEntityId: owner, lenderEntityId: recipient, tokenId: 1, loanId: 'loan-one', principalAmount: '100', repaymentAmount: '110', repaidAmount: '10', interestBps: 1000, termId: '1d', dueAt: 1000, status: 'active' };
-  const page = { success: true, hubEntityId: peer, pools: [], loans: [loan], totals: { availableAmount: '100', borrowedAmount: '100' } };
-  const state = decodeWalletLending(page, peer, 1, owner);
-  const decoded = state.loans[0]; if (!decoded) throw new Error('Expected loan');
-  expect(buildWalletLoanRepayment(decoded, owner, peer)).toEqual({ type: 'lendingRepay', data: { hubEntityId: peer, loanId: 'loan-one', tokenId: 1, amount: 100n } });
-  expect(() => buildWalletLoanRepayment(decoded, recipient, peer)).toThrow('BORROWER_MISMATCH');
-  expect(() => decodeWalletLending(page, owner, 1, owner)).toThrow('HUB_MISMATCH');
-  expect(() => decodeWalletLending(page, peer, 2, owner)).toThrow('ROW_CONTEXT_MISMATCH');
-  expect(() => decodeWalletLending({ ...page, loans: [{ ...loan, principalAmount: 'bad' }] }, peer, 1, owner)).toThrow('AMOUNT_INVALID');
-  expect(() => decodeWalletLending({ ...page, loans: [{ ...loan, borrowerEntityId: recipient }] }, peer, 1, owner)).toThrow('USER_MISMATCH');
+test('Lending states the production admission boundary without implying command availability', () => {
+  expect(WALLET_LENDING_UNSUPPORTED_REASON).toContain('outside the current production admission profile');
+  expect(WALLET_LENDING_UNSUPPORTED_REASON).toContain('No lending command can be submitted');
 });
 
 test('History rejects invalid and reversed time windows', () => {
   expect(historyTimeRange('', '')).toEqual({ fromTimestamp: undefined, toTimestamp: undefined });
   expect(() => historyTimeRange('bad', '')).toThrow('Invalid history date');
   expect(() => historyTimeRange('2026-09-05T12:00', '2026-09-04T12:00')).toThrow('start must precede end');
-});
-
-test('Lending UI intent IDs satisfy the canonical admission format', () => {
-  expect(createWalletLendingIntentId('lend')).toMatch(/^lend-[0-9a-f]{16}$/);
-  expect(createWalletLendingIntentId('borrow')).toMatch(/^borrow-[0-9a-f]{16}$/);
-});
-
-test('Lending keeps default assets before token deltas exist and otherwise uses only Account assets', () => {
-  const symbols = new Map([[1, 'USDC'], [2, 'USDT'], [3, 'WETH'], [4, 'AAA'], [5, 'AAA']]);
-  const symbol = (id: number) => { const value = symbols.get(id); if (!value) throw new Error('Unknown token'); return value; };
-  expect(buildLendingTokenOptions([], symbol)).toEqual([{ id: 1, symbol: 'USDC' }, { id: 2, symbol: 'USDT' }, { id: 3, symbol: 'WETH' }]);
-  expect(buildLendingTokenOptions([3, 1], symbol).map(token => token.id)).toEqual([1, 3]);
-  expect(buildLendingTokenOptions([5, 4, 4], symbol).map(token => token.id)).toEqual([4, 5]);
 });
 
 test('History coalesces repeated HTLC observations without merging opposite directions or distinct hashes', () => {

@@ -7,14 +7,14 @@ import {
   buildEntityWorkspaceActivityQuery,
   type EntityWorkspaceActivity,
   type EntityWorkspaceActivityQueryOptions,
-} from '../../../../packages/runtime-client/src/entity/entity-workspace-activity';
+} from '../../../../packages/runtime-client/src/entity/workspace/entity-workspace-activity';
 import {
   assertTimeMachineHistorySelection,
   createTimeMachineHistoryBatchQuery,
   requireTimeMachineHistoryFrame,
   runtimeHistoryFrameFromViewFrame,
 } from '../../../../packages/runtime-client/src/scenario/time-machine-transport';
-import { requireEntityWorkspaceHistoryHeight } from '../../../../packages/runtime-client/src/entity/entity-workspace-time-machine';
+import { requireEntityWorkspaceHistoryHeight } from '../../../../packages/runtime-client/src/entity/workspace/entity-workspace-time-machine';
 import {
   projectOpsEntityWorkspaceActivityPage,
   projectOpsEntityWorkspaceFrame,

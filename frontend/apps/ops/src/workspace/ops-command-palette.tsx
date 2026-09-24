@@ -23,12 +23,20 @@ export function OpsCommandPalette({ onCommand }: Readonly<{ onCommand: (command:
   const suggestions = buildCommandPaletteSuggestions(query, { entities }).map(suggestion => localizeCommandPaletteSuggestion(suggestion, t));
   const active = Math.min(selected, Math.max(0, suggestions.length - 1));
   const close = (): void => { setOpen(false); };
+  const openPalette = (): void => {
+    setQuery('');
+    setSelected(0);
+    setIssue('');
+    setOpen(true);
+  };
   useEffect(() => {
     const key = (event: KeyboardEvent): void => {
       if (!(event.metaKey || event.ctrlKey) || event.key.toLowerCase() !== 'k') return;
       const target = event.target;
       if (!open && target instanceof HTMLElement && (target.isContentEditable || target.closest('input, textarea, select'))) return;
-      event.preventDefault(); setOpen(value => !value);
+      event.preventDefault();
+      if (open) close();
+      else openPalette();
     };
     window.addEventListener('keydown', key);
     return () => window.removeEventListener('keydown', key);
@@ -36,7 +44,7 @@ export function OpsCommandPalette({ onCommand }: Readonly<{ onCommand: (command:
   useEffect(() => {
     const element = dialog.current;
     if (!element) return;
-    if (open) { setQuery(''); setSelected(0); setIssue(''); element.showModal(); input.current?.focus(); }
+    if (open) { element.showModal(); input.current?.focus(); }
     else if (element.open) { element.close(); trigger.current?.focus(); }
   }, [open]);
   const choose = (suggestion: CommandPaletteSuggestion): void => {
@@ -47,7 +55,7 @@ export function OpsCommandPalette({ onCommand }: Readonly<{ onCommand: (command:
     catch (cause) { setIssue(cause instanceof Error ? cause.message : String(cause)); }
   };
   return <>
-    <button ref={trigger} type="button" aria-label={t('workspace.openPalette')} onClick={() => setOpen(true)}>{t('workspace.commands')} <kbd>⌘K</kbd></button>
+    <button ref={trigger} type="button" aria-label={t('workspace.openPalette')} onClick={openPalette}>{t('workspace.commands')} <kbd>⌘K</kbd></button>
     <dialog className="ops-command-palette" ref={dialog} aria-label={t('workspace.paletteTitle')} onCancel={event => { event.preventDefault(); close(); }} onClick={event => { if (event.target === event.currentTarget) close(); }}>
       <section>
         <header><label htmlFor="workspace-command-input">{t('workspace.paletteTitle')}</label><button type="button" onClick={close} aria-label={t('workspace.closePalette')}>Esc</button></header>

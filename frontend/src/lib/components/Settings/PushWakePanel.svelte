@@ -15,7 +15,7 @@
     upsertPushWakeRegistrationRecord,
     type PushWakeRegistrationRecord,
   } from '../../../../bridges/vault/push-wake-registration';
-  import { normalizeTowerMode } from '../../../../bridges/vault/recovery-settings';
+  import { normalizeTowerMode } from '../../../../bridges/vault/recovery/recovery-settings';
   import { Bell, BellOff, Check, LoaderCircle } from 'lucide-svelte';
   import { onMount } from 'svelte';
   import { parseJsonUnknown, requireUnknownRecord } from '../../../../packages/runtime-client/src/boundary';

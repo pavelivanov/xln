@@ -7,11 +7,9 @@ import {
   renderContentSecurityPolicy,
 } from '../../../frontend/config/security/content-security-policy.js';
 import { getReactContentSecurityPolicy } from '../../../frontend/config/create-react-app-config';
-import svelteConfig from '../../../frontend/svelte.config.js';
 
 describe('frontend content security policy', () => {
-  test('keeps Svelte and the React wallet on one canonical directive map', () => {
-    expect(svelteConfig.kit.csp?.directives).toBe(CONTENT_SECURITY_POLICY_DIRECTIVES);
+  test('keeps the React wallet on the canonical directive map', () => {
     expect(renderContentSecurityPolicy(CONTENT_SECURITY_POLICY_DIRECTIVES)).toBe(CONTENT_SECURITY_POLICY);
     expect(getReactContentSecurityPolicy('wallet')).toBe(CONTENT_SECURITY_POLICY);
     expect(getReactContentSecurityPolicy('site')).toBeNull();

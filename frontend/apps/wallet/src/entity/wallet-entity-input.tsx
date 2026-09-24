@@ -1,6 +1,6 @@
 import { useId, useState, type KeyboardEvent, type Ref } from 'react';
 import { compareStableText } from '../../../../packages/ui/src/stable-compare';
-import { parseEntityInput, type EntityInputProfile } from '../../../../packages/ui/src/entity-input-model';
+import { parseEntityInput, type EntityInputProfile } from '../../../../packages/ui/src/entity/entity-input-model';
 import '../styles/account/wallet-entity-input.css';
 
 export function WalletEntityInput({ value, onChange, entities, profiles, disabled, label = 'Recipient', inputRef }: Readonly<{

@@ -1,15 +1,15 @@
 import { useEffect, useState } from 'react';
-import type { WalletAccountContext } from '../../../../bridges/wallet/wallet-canonical-account-context';
+import type { WalletAccountContext } from '../../../../bridges/wallet/canonical/wallet-canonical-account-context';
 import { buildActivityHistoryReadQuery, isTransientActivityReadError, type ActivityHistoryQueryInput } from '../../../../packages/ui/src/account/activity/activity-history-query';
 import { appendHistoryEvents, decodeWalletHistory, HISTORY_TYPES, historyTimeRange } from './wallet-history-model';
 import type { WalletPaymentSource } from '../payments/wallet-payment-source';
 
-const initialFilters = { kind: 'all', pageSize: 80, selectedTypes: [], search: '', mode: 'paged', beforeHeight: null } satisfies Omit<ActivityHistoryQueryInput, 'entityId'>;
+const initialFilters = { kind: 'all', pageSize: 80, selectedTypes: [], search: '', mode: 'paged' } satisfies Omit<ActivityHistoryQueryInput, 'entityId' | 'cursor'>;
 type HistoryPage = ReturnType<typeof decodeWalletHistory>;
 
 export function WalletHistory({ context, source }: Readonly<{ context: WalletAccountContext; source: WalletPaymentSource }>) {
-  const [filters, setFilters] = useState<Omit<ActivityHistoryQueryInput, 'entityId'>>(initialFilters);
-  const [cursors, setCursors] = useState<Array<number | null>>([null]);
+  const [filters, setFilters] = useState<Omit<ActivityHistoryQueryInput, 'entityId' | 'cursor'>>(initialFilters);
+  const [cursors, setCursors] = useState<Array<string | null>>([null]);
   const [index, setIndex] = useState(0);
   const [revision, setRevision] = useState(0);
   const [page, setPage] = useState<HistoryPage | null>(null);
@@ -23,7 +23,7 @@ export function WalletHistory({ context, source }: Readonly<{ context: WalletAcc
     const lifetime = new AbortController();
     setLoading(true); setError('');
     const read = async () => {
-      const query = buildActivityHistoryReadQuery({ ...filters, entityId: context.entityId, beforeHeight: cursors[index] ?? null });
+      const query = buildActivityHistoryReadQuery({ ...filters, entityId: context.entityId, cursor: cursors[index] ?? null });
       const delays = [100, 250, 500];
       for (let attempt = 0; ; attempt += 1) {
         lifetime.signal.throwIfAborted();
@@ -45,8 +45,8 @@ export function WalletHistory({ context, source }: Readonly<{ context: WalletAcc
   }, [adapter, math, context.entityId, filters, cursors, index, revision]);
   const update = (patch: Partial<typeof filters>) => { setFilters(current => ({ ...current, ...patch })); setCursors([null]); setIndex(0); setPage(null); };
   const older = () => {
-    if (!page || page.nextBeforeHeight === null) return;
-    setCursors(current => [...current.slice(0, index + 1), page.nextBeforeHeight]); setIndex(index + 1);
+    if (!page || page.nextCursor === null) return;
+    setCursors(current => [...current.slice(0, index + 1), page.nextCursor]); setIndex(index + 1);
   };
   return <section data-testid="entity-history-panel" aria-label="Entity history">
     <div className="wallet-tool-heading"><h2>Entity activity</h2><button data-testid="history-refresh" disabled={loading} onClick={() => setRevision(revision + 1)}>Refresh history</button></div>
@@ -63,12 +63,12 @@ export function WalletHistory({ context, source }: Readonly<{ context: WalletAcc
     {error ? <p role="alert">{error}</p> : null}{page && page.failures.length ? <p role="alert">Partial history: {page.failures.join('; ')}</p> : null}
     {loading ? <p role="status">Loading history…</p> : null}
     {page && !page.events.length ? <p>No history in this window. Try fewer filters or an older frame window.</p> : null}
-    <ol className="wallet-history-list">{page?.events.map(event => <li key={event.id} data-testid="entity-history-event">
+    <ol className="wallet-history-list">{page?.events.map(event => <li data-event-id={event.id} key={event.id} data-testid="entity-history-event">
       <div><strong>{event.title}</strong><p>{event.subtitle}</p><small>{event.direction} · {event.kind} · {event.type} · R#{event.height}</small>
         {event.counterpartyId ? <small title={event.counterpartyId}>{context.names.get(event.counterpartyId) || event.counterpartyId}</small> : null}{event.orderId ? <small>Order {event.orderId}</small> : null}</div>
       <div><strong data-testid="history-event-amount">{event.amountLabel ?? event.status}</strong><time>{event.timestamp < 946684800000 ? `Runtime t+${event.timestamp}ms` : new Date(event.timestamp).toLocaleString()}</time></div>
     </li>)}</ol>
-    <footer className="wallet-tool-heading">{filters.mode === 'paged' ? <><button disabled={loading || index === 0} data-testid="history-newer-page" onClick={() => setIndex(index - 1)}>Newer</button><span>Page {index + 1}</span><button disabled={loading || !page || page.nextBeforeHeight === null} data-testid="history-older-page" onClick={older}>Older</button></>
-      : <><button disabled={loading || !page || page.nextBeforeHeight === null} data-testid="history-load-older" onClick={older}>Load older</button><span>{page?.nextBeforeHeight === null ? 'End of retained history' : `${page?.events.length ?? 0} loaded`}</span></>}</footer>
+    <footer className="wallet-tool-heading">{filters.mode === 'paged' ? <><button disabled={loading || index === 0} data-testid="history-newer-page" onClick={() => setIndex(index - 1)}>Newer</button><span>Page {index + 1}</span><button disabled={loading || !page || page.nextCursor === null} data-testid="history-older-page" onClick={older}>Older</button></>
+      : <><button disabled={loading || !page || page.nextCursor === null} data-testid="history-load-older" onClick={older}>Load older</button><span>{page?.nextCursor === null ? 'End of retained history' : `${page?.events.length ?? 0} loaded`}</span></>}</footer>
   </section>;
 }

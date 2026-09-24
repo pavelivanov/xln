@@ -4,34 +4,79 @@ import { initJBatch } from '../../../core/jurisdiction/machine/batch';
 import {
   buildWalletBatchTx,
   decodeWalletBatch,
+  mergeWalletBatchPreflight,
   mergeWalletBatchRuntimeSubmission,
+  type WalletBatchProjection,
 } from '../../../frontend/apps/wallet/src/commands/wallet-batch-model';
 import { buildWalletBatchNotice } from '../../../frontend/apps/wallet/src/payments/commands/wallet-batch-notice-model';
+
+const operationCounts = (total: number) => ({
+  total,
+  reserveToReserve: total,
+  reserveToCollateral: 0,
+  reserveToCollateralPairs: 0,
+  collateralToReserve: 0,
+  settlements: 0,
+  settlementDiffs: 0,
+  disputeStarts: 0,
+  counterDisputes: 0,
+  disputeFinalizations: 0,
+  externalTokenToReserve: 0,
+  reserveToExternalToken: 0,
+  revealSecrets: 0,
+  hashLadderRegistrations: 0,
+});
+
+const withPreflight = (batch: WalletBatchProjection): WalletBatchProjection =>
+  mergeWalletBatchPreflight(batch, {
+    ok: true,
+    runtimeId: 'runtime-1',
+    height: 7,
+    entityId: `0x${'11'.repeat(32)}`,
+    status: batch.status,
+    reserveTokenCount: 1,
+    openDebtTokenCount: 0,
+    draft: {
+      identity: `draft:${batch.compactReviewKey}`,
+      counts: operationCounts(batch.draft.length),
+      issue: null,
+    },
+    sent: batch.sentHash ? {
+      identity: `sent:${batch.compactReviewKey}`,
+      batchHash: batch.sentHash,
+      entityNonce: batch.submission?.entityNonce ?? 1,
+      counts: operationCounts(batch.sent.length),
+    } : null,
+  });
 
 describe('wallet jurisdiction batch controls', () => {
   test('reviews all returned operations and refuses a changed draft', () => {
     const state = initJBatch();
     state.batch.reserveToReserve.push({ toEntity: `0x${'22'.repeat(32)}`, tokenId: 1, amount: 25_000_000n });
     state.status = 'accumulating';
-    const reviewed = decodeWalletBatch(state, { formatTokenAmount });
+    const reviewed = withPreflight(decodeWalletBatch(state, { formatTokenAmount }));
     expect(reviewed.draft).toHaveLength(1);
     expect(reviewed.draft[0]?.details).toContain('25000000');
     expect(buildWalletBatchTx('broadcast', reviewed, reviewed)).toEqual({ type: 'j_broadcast', data: {} });
     state.batch.reserveToReserve[0]!.amount += 1n;
-    expect(() => buildWalletBatchTx('broadcast', decodeWalletBatch(state, { formatTokenAmount }), reviewed)).toThrow('Batch changed');
+    expect(() => buildWalletBatchTx(
+      'broadcast',
+      withPreflight(decodeWalletBatch(state, { formatTokenAmount })),
+      reviewed,
+    )).toThrow('Batch changed');
   });
 
   test('keeps draft broadcast and in-flight rebroadcast mutually exclusive', () => {
     const state = initJBatch();
-    const empty = decodeWalletBatch(state, { formatTokenAmount });
+    const empty = withPreflight(decodeWalletBatch(state, { formatTokenAmount }));
     expect(() => buildWalletBatchTx('broadcast', empty, empty)).toThrow('nonempty draft');
     expect(() => buildWalletBatchTx('rebroadcast', empty, empty)).toThrow('No in-flight batch');
     state.batch.reserveToReserve.push({ toEntity: `0x${'22'.repeat(32)}`, tokenId: 1, amount: 1n });
-    const sent = decodeWalletBatch({ ...state, status: 'sent', sentBatch: {
+    const sent = withPreflight(decodeWalletBatch({ ...state, status: 'sent', sentBatch: {
       batch: state.batch, batchHash: `0x${'ab'.repeat(32)}`,
       entityNonce: 4, submitAttempts: 2, firstSubmittedAt: 10, lastSubmittedAt: 20,
       lastFailure: { message: 'RPC unavailable', failedAt: 21 },
-    } }, { formatTokenAmount });
+    } }, { formatTokenAmount }));
     expect(sent.failure).toBe('RPC unavailable');
     expect(sent).toMatchObject({ failureKind: 'retryable', failureAt: 21, submission: {
       entityNonce: 4, submitAttempts: 2, txHash: '',
@@ -51,12 +96,12 @@ describe('wallet jurisdiction batch controls', () => {
     const state = initJBatch();
     state.batch.reserveToReserve.push({ toEntity: `0x${'22'.repeat(32)}`, tokenId: 1, amount: 1n });
     const hash = `0x${'cd'.repeat(32)}`;
-    const terminal = decodeWalletBatch({ ...state, status: 'failed', sentBatch: {
+    const terminal = withPreflight(decodeWalletBatch({ ...state, status: 'failed', sentBatch: {
       batch: state.batch, batchHash: hash, txHash: `0x${'ef'.repeat(32)}`,
       entityNonce: 7, submitAttempts: 1, firstSubmittedAt: 30, lastSubmittedAt: 30,
       lastFailure: { message: 'nonce consumed', failedAt: 31 },
       terminalFailure: { message: 'nonce consumed', failedAt: 31 },
-    } }, { formatTokenAmount });
+    } }, { formatTokenAmount }));
     expect(buildWalletBatchNotice(terminal)).toMatchObject({
       kind: 'terminal', title: 'Submission quarantined', batchHash: hash,
     });

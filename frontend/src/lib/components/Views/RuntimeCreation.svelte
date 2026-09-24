@@ -11,7 +11,7 @@
     type RuntimeRecoveryCandidate,
     type RuntimeRecoveryDiscoveryFailure,
     type RuntimeRecoveryDiscoveryResult,
-  } from '../../../../bridges/vault/vault-recovery';
+  } from '../../../../bridges/vault/recovery/vault-recovery';
   import { DEFAULT_VAULT_UNLOCK_DURATION_MS } from '../../../../bridges/vault/vault-authority-lifecycle';
   import { allRuntimes } from '../../../../bridges/vault/vault-metadata-store';
   import { vaultOperations } from '../../../../bridges/vault/vault-store';

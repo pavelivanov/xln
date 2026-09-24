@@ -11,7 +11,7 @@ import {
   isCanonicalFoundationBoard,
   verifyReleaseSnapshot,
   type FoundationReleaseBoard,
-} from '../frontend/src/lib/releases/release-signature.ts';
+} from '../frontend/packages/ui/src/releases/release-signature.ts';
 import type { FoundationReleaseKeys } from './release-snapshot/sign.ts';
 import type { ReleaseSnapshot } from './release-snapshot/types.ts';
 import {

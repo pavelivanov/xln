@@ -7,8 +7,8 @@ import { errorLog } from '../../packages/browser/src/logging/error-log-store';
 import { WALLET_VAULT_STORAGE_KEY } from '../../packages/browser/src/wallet/wallet-vault-storage';
 import { parseJsonUnknown } from '../../packages/runtime-client/src/boundary';
 import type { ProtectedVaultSecrets } from '../../packages/browser/src/vault/vault-protection';
-import { decodePersistedVaultState } from './vault-persistence-decoder';
-import { serializeVaultState, type RuntimesState } from './vault-recovery';
+import { decodePersistedVaultState } from './recovery/vault-persistence-decoder';
+import { serializeVaultState, type RuntimesState } from './recovery/vault-recovery';
 
 export const emptyVaultState: RuntimesState = {
   runtimes: {},

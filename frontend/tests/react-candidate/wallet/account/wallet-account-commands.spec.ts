@@ -10,6 +10,7 @@ test('Move broadcasts its reviewed collateral draft and observes exact Runtime a
   await page.getByLabel('Entity', { exact: true }).selectOption(fixture.entityId);
   await page.getByTestId('move-source-reserve').click();
   await page.getByTestId('move-target-account').click();
+  await page.getByLabel('To Account', { exact: true }).fill(fixture.counterpartyEntityId);
   await page.getByLabel('Asset', { exact: true }).selectOption('1');
   await page.getByLabel('Amount', { exact: true }).fill('10');
   await page.getByRole('button', { name: 'Add to Batch', exact: true }).click();
@@ -47,8 +48,8 @@ test('Manage commits the exact collateral request and prepaid peer fee on both A
     await expect(page.getByRole('heading', { name: 'Payments' })).toBeVisible({ timeout: 90_000 });
     await page.getByLabel('Entity', { exact: true }).selectOption(fixture.counterpartyEntityId);
     const recipient = page.getByLabel('Recipient', { exact: true });
-    await expect(recipient.locator('option')).toContainText('Browser Alice');
-    await recipient.selectOption({ label: 'Browser Alice' });
+    await expect(recipient.locator(`option[value="${fixture.entityId}"]`)).toHaveText('Browser Alice');
+    await recipient.selectOption(fixture.entityId);
     await expect(recipient.locator('option:checked')).toHaveText('Browser Alice');
     await page.getByLabel('Asset').first().selectOption(String(tokenId));
     await page.getByLabel('Recipient amount').fill('25');

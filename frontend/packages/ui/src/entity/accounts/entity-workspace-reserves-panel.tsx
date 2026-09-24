@@ -1,4 +1,4 @@
-import type { EntityWorkspaceReserves } from '../../../../runtime-client/src/entity/entity-workspace-reserves';
+import type { EntityWorkspaceReserves } from '../../../../runtime-client/src/entity/workspace/entity-workspace-reserves';
 import './entity-workspace-reserves-panel.css';
 
 export function EntityWorkspaceReservesPanel({

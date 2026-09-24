@@ -1,5 +1,5 @@
 import { useEffect, useState, useSyncExternalStore } from 'react';
-import type { WalletAccountContext } from '../../../../bridges/wallet/wallet-canonical-account-context';
+import type { WalletAccountContext } from '../../../../bridges/wallet/canonical/wallet-canonical-account-context';
 import { buildAddTokenToAccountTx, buildDisputeFinalizeTx, buildPrepareDisputeTx } from '../../../../packages/runtime-client/src/entity/account-action-txs';
 import { buildCollateralRequest, collateralRequestFee, collateralRentEstimate, resolveCollateralFeePolicy } from '../../../../packages/runtime-client/src/entity/collateral-request';
 import type { WalletPaymentSource } from '../payments/wallet-payment-source';

@@ -19,20 +19,18 @@ const repoRoot = resolve(import.meta.dir, '../..');
 test('dev wallet uses one shared web-origin list for relay authorization and readiness', () => {
   const dev = readFileSync(join(repoRoot, 'scripts/dev/run-dev.sh'), 'utf8');
   const devChild = readFileSync(join(repoRoot, 'scripts/dev/run-dev-child.sh'), 'utf8');
-  const httpVite = readFileSync(join(repoRoot, 'frontend/vite.config.http.ts'), 'utf8');
-  const relayProxy = httpVite.slice(
-    httpVite.indexOf("'/relay':"),
-    httpVite.indexOf('},', httpVite.indexOf("'/relay':")) + 2,
-  );
+  const gateway = readFileSync(join(repoRoot, 'frontend/scripts/dev/dev-gateway.ts'), 'utf8');
 
   expect(devChild).toContain('--relay-url "ws://127.0.0.1:${API_PORT}/relay"');
-  expect(dev).toContain('DEV_RELAY_WEB_URLS="${DEV_WEB_SCHEME}://localhost:${WEB_PORT},http://localhost:${WEB_HTTP_PORT}"');
+  expect(dev).toContain('DEV_RELAY_WEB_URLS="${DEV_WEB_SCHEME}://localhost:${WEB_PORT},http://localhost:${WEB_HTTP_PORT},http://localhost:${UI_PORT}"');
+  expect(dev).toContain('DEV_RELAY_WEB_URLS="${DEV_WALLET_ORIGIN},http://localhost:${UI_PORT}"');
   expect(devChild).toContain('--relay-web-urls "$DEV_RELAY_WEB_URLS"');
-  expect(devChild).toContain('--web-url "http://localhost:${WEB_HTTP_PORT}"');
+  expect(devChild).toContain('--web-url "${DEV_WALLET_ORIGIN:-http://localhost:${WEB_HTTP_PORT}}"');
   expect(devChild).toContain('XLN_PUBLIC_FAUCET="${XLN_PUBLIC_FAUCET:-1}"');
   expect(devChild.match(/--relay-web-urls "\$DEV_RELAY_WEB_URLS"/g)).toHaveLength(2);
-  expect(relayProxy).toContain('changeOrigin: false');
-  expect(relayProxy).not.toContain('changeOrigin: true');
+  expect(gateway).toContain('createProxyServer({ xfwd: true, changeOrigin: false })');
+  expect(gateway).toContain('Preserve the browser\'s original Host and upgrade headers byte-for-byte.');
+  expect(gateway).not.toContain('changeOrigin: true');
 });
 
 test('relay proxy selects only exact configured HTTP and HTTPS browser audiences', () => {

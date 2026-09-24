@@ -193,7 +193,7 @@ const activity = () => ({
     orderId: 'alice-open',
     rawType: 'placeSwapOffer',
   }],
-  nextBeforeHeight: 21,
+  nextCursor: 'cursor-21',
 });
 
 const projection = () => decodeWalletMarketProjection({
@@ -214,7 +214,7 @@ describe('React wallet markets', () => {
       activeEntityId: alice,
       selectedHubId: hub,
       selectedPairId: canonicalPair(1, 2).pairId,
-      activityNextBeforeHeight: 21,
+      activityNextCursor: 'cursor-21',
     });
     expect(result.hubs[0]).toMatchObject({ label: 'North Hub', feeBps: 25 });
     expect(result.pairs[0]?.bids[0]).toMatchObject({ priceTicks: 2_400_000n, quantityLots: 20n });

@@ -1,8 +1,15 @@
 import { expect, test } from 'bun:test';
 import { decodeHealthTopology } from '../../../../frontend/apps/ops/src/health/topology/health-topology-model';
 
-test('missing capabilities remain unknown and redacted client detail remains unavailable', () => {
-  const topology = decodeHealthTopology({ relay: { activeClientCount: 3 } });
+test('canonical relay inventory stays truthful when per-client detail is not reported', () => {
+  const topology = decodeHealthTopology({
+    relay: {
+      clientCount: 3,
+      managedRuntimeIds: ['runtime-1'],
+      externalClientIds: ['runtime-2', 'runtime-3'],
+      marketSubscriptions: { total: 2, byIp: { '127.0.0.1': 2 } },
+    },
+  });
   expect(topology.gates.every(gate => gate.state === 'unknown')).toBe(true);
   expect(topology.timeline).toBeNull();
   expect(topology.sections.find(section => section.label === 'Active Relay Clients')?.rows).toBeNull();

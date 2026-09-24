@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 
-import type { EntityWorkspaceReadState } from '../../../../../packages/runtime-client/src/entity/entity-workspace-context';
+import type { EntityWorkspaceReadState } from '../../../../../packages/runtime-client/src/entity/workspace/entity-workspace-context';
 import { opsEntityWorkspaceSource } from '../../entity-workspace/ops-entity-workspace-runtime';
 
 export function WorkspaceReadBoundary({ connected, connection, loading, error, children }: Readonly<{

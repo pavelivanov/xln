@@ -43,7 +43,7 @@
 -      'frontend/src/lib/utils/runtime/runtimeConnection.ts',
 @@ -124 +123 @@
 -    consumers: ['frontend/src/routes/app/+layout.svelte'],
-+    consumers: ['frontend/bridges/wallet/wallet-canonical-vault-runtime.ts', 'frontend/apps/wallet/src/runtime/wallet-embedded-runtime.ts'],
++    consumers: ['frontend/bridges/wallet/canonical/wallet-canonical-vault-runtime.ts', 'frontend/apps/wallet/src/runtime/wallet-embedded-runtime.ts'],
 @@ -205 +203,0 @@
 -      'frontend/src/lib/utils/control/resetEverything.ts',
 @@ -225 +222,0 @@
@@ -90,50 +90,51 @@
 +export type RouteParity = Readonly<{
 @@ -21 +20,0 @@
 -  sveltePage: string;
-@@ -44,22 +43,22 @@
+@@ -44 +43 @@
 -export const RETAINED_ROUTE_PARITY = [
--  { id: 'home', pathname: '/', representativePath: '/', sveltePage: 'frontend/src/routes/+page.svelte', intendedOwner: 'site', implementation: 'complete', browserEvidence: 'covered', reactSource: 'frontend/apps/site/src/landing-page.tsx', focusedTests: ['tests/frontend/tooling/pilots/frontend-site-pilot.test.ts'], browserTests: siteBrowser, gapIds: [] },
--  { id: 'install', pathname: '/install', representativePath: '/install', sveltePage: 'frontend/src/routes/install/+page.svelte', intendedOwner: 'site', implementation: 'complete', browserEvidence: 'covered', reactSource: 'frontend/apps/site/src/install-page.tsx', focusedTests: ['tests/frontend/tooling/pilots/frontend-site-pilot.test.ts'], browserTests: siteBrowser, gapIds: [] },
--  { id: 'rcpan', pathname: '/rcpan', representativePath: '/rcpan', sveltePage: 'frontend/src/routes/rcpan/+page.svelte', intendedOwner: 'site', implementation: 'complete', browserEvidence: 'covered', reactSource: 'frontend/apps/site/src/rcpan/rcpan-page.tsx', focusedTests: ['tests/frontend/tooling/pilots/frontend-rcpan-pilot.test.ts'], browserTests: siteBrowser, gapIds: [] },
--  { id: 'releases', pathname: '/releases', representativePath: '/releases', sveltePage: 'frontend/src/routes/releases/+page.svelte', intendedOwner: 'site', implementation: 'complete', browserEvidence: 'covered', reactSource: 'frontend/apps/site/src/releases/releases-page.tsx', focusedTests: ['tests/frontend/tooling/pilots/frontend-releases-pilot.test.ts'], browserTests: siteBrowser, gapIds: ['candidate-verification'] },
--  { id: 'reviews', pathname: '/reviews', representativePath: '/reviews', sveltePage: 'frontend/src/routes/reviews/+page.svelte', intendedOwner: 'site', implementation: 'complete', browserEvidence: 'covered', reactSource: 'frontend/apps/site/src/reviews-page.tsx', focusedTests: ['tests/frontend/tooling/pilots/frontend-reviews-pilot.test.ts'], browserTests: siteBrowser, gapIds: [] },
--  { id: 'unicast', pathname: '/unicast', representativePath: '/unicast', sveltePage: 'frontend/src/routes/unicast/+page.svelte', intendedOwner: 'site', implementation: 'complete', browserEvidence: 'covered', reactSource: 'frontend/apps/site/src/unicast/unicast-page.tsx', focusedTests: ['tests/frontend/tooling/pilots/frontend-unicast-pilot.test.ts'], browserTests: siteBrowser, gapIds: [] },
--  { id: 'market-cap', pathname: '/market-cap', representativePath: '/market-cap', sveltePage: 'frontend/src/routes/market-cap/+page.svelte', intendedOwner: 'site', implementation: 'complete', browserEvidence: 'covered', reactSource: 'frontend/apps/site/src/market-cap-page.tsx', focusedTests: ['tests/frontend/tooling/pilots/frontend-market-cap-pilot.test.ts'], browserTests: siteBrowser, gapIds: [] },
--  { id: 'docs', pathname: '/docs', representativePath: '/docs', sveltePage: 'frontend/src/routes/docs/+page.svelte', intendedOwner: 'docs', implementation: 'complete', browserEvidence: 'covered', reactSource: 'frontend/apps/docs/src/docs-app.tsx', focusedTests: ['tests/frontend/tooling/pilots/frontend-docs-pilot.test.ts'], browserTests: docsBrowser, gapIds: [] },
--  { id: 'wallet-app', pathname: '/app', representativePath: '/app', sveltePage: 'frontend/src/routes/app/+page.svelte', intendedOwner: 'wallet', implementation: 'partial', browserEvidence: 'partial', reactSource: 'frontend/apps/wallet/src/app-shell.tsx', focusedTests: ['tests/frontend/runtime/wallet/frontend-wallet-app-shell.test.ts', 'tests/frontend/tooling/frontend-wallet-flow-audit.test.ts', 'tests/frontend/payments/frontend-wallet-external-provider.test.ts'], browserTests: [...walletBrowser, ...crossSurfaceBrowser], gapIds: ['wallet-operation-parity', 'candidate-verification'] },
--  { id: 'wallet-address', pathname: '/address', representativePath: '/address', sveltePage: 'frontend/src/routes/address/+page.svelte', intendedOwner: 'wallet', implementation: 'complete', browserEvidence: 'covered', reactSource: 'frontend/apps/wallet/src/address/wallet-address.tsx', focusedTests: ['tests/frontend/runtime/wallet/frontend-wallet-address.test.ts'], browserTests: walletBrowser, gapIds: [] },
--  { id: 'wallet-address-entity', pathname: '/address/:entityId', representativePath: '/address/0xabc', sveltePage: 'frontend/src/routes/address/[entityId]/+page.svelte', intendedOwner: 'wallet', implementation: 'complete', browserEvidence: 'covered', reactSource: 'frontend/apps/wallet/src/address/wallet-address.tsx', focusedTests: ['tests/frontend/runtime/wallet/frontend-wallet-address.test.ts'], browserTests: walletBrowser, gapIds: [] },
--  { id: 'testnet', pathname: '/testnet', representativePath: '/testnet', sveltePage: 'frontend/src/routes/testnet/+page.svelte', intendedOwner: 'wallet', implementation: 'complete', browserEvidence: 'covered', reactSource: 'frontend/apps/wallet/src/testnet/testnet-page.tsx', focusedTests: ['tests/frontend/tooling/pilots/frontend-testnet-pilot.test.ts'], browserTests: walletBrowser, gapIds: [] },
--  { id: 'health', pathname: '/health', representativePath: '/health', sveltePage: 'frontend/src/routes/health/+page.svelte', intendedOwner: 'ops', implementation: 'partial', browserEvidence: 'partial', reactSource: 'frontend/apps/ops/src/health/ops-health.tsx', focusedTests: ['tests/frontend/ops/frontend-ops-health.test.ts'], browserTests: [...opsBrowser, 'frontend/tests/react-candidate/ops/ops-health-events.spec.ts', 'frontend/tests/react-candidate/ops/ops-health-topology.spec.ts'], gapIds: ['ops-health-detail-parity'] },
--  { id: 'qa', pathname: '/qa', representativePath: '/qa', sveltePage: 'frontend/src/routes/qa/+page.svelte', intendedOwner: 'ops', implementation: 'complete', browserEvidence: 'covered', reactSource: 'frontend/apps/ops/src/qa/ops-qa.tsx', focusedTests: ['tests/frontend/ops/frontend-ops-qa.test.ts'], browserTests: opsBrowser, gapIds: [] },
--  { id: 'qa-hlt', pathname: '/qa/hlt', representativePath: '/qa/hlt', sveltePage: 'frontend/src/routes/qa/hlt/+page.svelte', intendedOwner: 'ops', implementation: 'complete', browserEvidence: 'covered', reactSource: 'frontend/apps/ops/src/hlt/ops-hlt.tsx', focusedTests: ['tests/frontend/ops/frontend-ops-hlt.test.ts'], browserTests: opsBrowser, gapIds: [] },
--  { id: 'qa-quorum', pathname: '/qa/quorum', representativePath: '/qa/quorum', sveltePage: 'frontend/src/routes/qa/quorum/+page.svelte', intendedOwner: 'ops', implementation: 'complete', browserEvidence: 'covered', reactSource: 'frontend/apps/ops/src/quorum/ops-quorum.tsx', focusedTests: ['tests/frontend/ops/frontend-ops-quorum.test.ts'], browserTests: opsBrowser, gapIds: [] },
--  { id: 'runs', pathname: '/runs', representativePath: '/runs', sveltePage: 'frontend/src/routes/runs/+page.svelte', intendedOwner: 'ops', implementation: 'complete', browserEvidence: 'covered', reactSource: 'frontend/apps/ops/src/runs/ops-runs.tsx', focusedTests: ['tests/frontend/ops/frontend-ops-runs.test.ts'], browserTests: opsBrowser, gapIds: [] },
--  { id: 'scenarios', pathname: '/scenarios', representativePath: '/scenarios', sveltePage: 'frontend/src/routes/scenarios/+page.svelte', intendedOwner: 'ops', implementation: 'complete', browserEvidence: 'covered', reactSource: 'frontend/apps/ops/src/scenarios/ops-scenarios.tsx', focusedTests: ['tests/frontend/ops/frontend-ops-scenarios.test.ts'], browserTests: [...opsBrowser, ...crossSurfaceBrowser], gapIds: [] },
--  { id: 'ai', pathname: '/ai/:chatId?', representativePath: '/ai/audit', sveltePage: 'frontend/src/routes/ai/[[chatId]]/+page.svelte', intendedOwner: 'ops', implementation: 'complete', browserEvidence: 'covered', reactSource: 'frontend/apps/ops/src/ai/ops-ai.tsx', focusedTests: ['tests/frontend/ops/frontend-ops-ai.test.ts'], browserTests: opsBrowser, gapIds: [] },
--  { id: 'embed', pathname: '/embed', representativePath: '/embed', sveltePage: 'frontend/src/routes/embed/+page.svelte', intendedOwner: 'ops', implementation: 'partial', browserEvidence: 'partial', reactSource: 'frontend/apps/ops/src/workspace/ops-workspace.tsx', focusedTests: ['tests/frontend/ops/entity/frontend-ops-entity-workspace.test.ts', 'tests/frontend/ops/frontend-ops-display-preferences.test.ts', 'tests/frontend/ops/entity/frontend-ops-entity-time-machine.test.ts', 'tests/frontend/ops/entity/frontend-ops-entity-activity-ledger.test.ts', 'tests/frontend/workspace/entity/entity-workspace-profile-update.test.ts'], browserTests: opsBrowser, gapIds: ['ops-workspace-route'] },
--] as const satisfies readonly RetainedRouteParity[];
 +export const ROUTE_PARITY = [
-+  { id: 'home', pathname: '/', representativePath: '/', intendedOwner: 'site', implementation: 'complete', browserEvidence: 'covered', reactSource: 'frontend/apps/site/src/landing-page.tsx', focusedTests: ['tests/frontend/tooling/pilots/frontend-site-pilot.test.ts'], browserTests: siteBrowser, gapIds: [] },
-+  { id: 'install', pathname: '/install', representativePath: '/install', intendedOwner: 'site', implementation: 'complete', browserEvidence: 'covered', reactSource: 'frontend/apps/site/src/install-page.tsx', focusedTests: ['tests/frontend/tooling/pilots/frontend-site-pilot.test.ts'], browserTests: siteBrowser, gapIds: [] },
-+  { id: 'rcpan', pathname: '/rcpan', representativePath: '/rcpan', intendedOwner: 'site', implementation: 'complete', browserEvidence: 'covered', reactSource: 'frontend/apps/site/src/rcpan/rcpan-page.tsx', focusedTests: ['tests/frontend/tooling/pilots/frontend-rcpan-pilot.test.ts'], browserTests: siteBrowser, gapIds: [] },
-+  { id: 'releases', pathname: '/releases', representativePath: '/releases', intendedOwner: 'site', implementation: 'complete', browserEvidence: 'covered', reactSource: 'frontend/apps/site/src/releases/releases-page.tsx', focusedTests: ['tests/frontend/tooling/pilots/frontend-releases-pilot.test.ts'], browserTests: siteBrowser, gapIds: ['candidate-verification'] },
-+  { id: 'reviews', pathname: '/reviews', representativePath: '/reviews', intendedOwner: 'site', implementation: 'complete', browserEvidence: 'covered', reactSource: 'frontend/apps/site/src/reviews-page.tsx', focusedTests: ['tests/frontend/tooling/pilots/frontend-reviews-pilot.test.ts'], browserTests: siteBrowser, gapIds: [] },
-+  { id: 'unicast', pathname: '/unicast', representativePath: '/unicast', intendedOwner: 'site', implementation: 'complete', browserEvidence: 'covered', reactSource: 'frontend/apps/site/src/unicast/unicast-page.tsx', focusedTests: ['tests/frontend/tooling/pilots/frontend-unicast-pilot.test.ts'], browserTests: siteBrowser, gapIds: [] },
-+  { id: 'market-cap', pathname: '/market-cap', representativePath: '/market-cap', intendedOwner: 'site', implementation: 'complete', browserEvidence: 'covered', reactSource: 'frontend/apps/site/src/market-cap-page.tsx', focusedTests: ['tests/frontend/tooling/pilots/frontend-market-cap-pilot.test.ts'], browserTests: siteBrowser, gapIds: [] },
-+  { id: 'docs', pathname: '/docs', representativePath: '/docs', intendedOwner: 'docs', implementation: 'complete', browserEvidence: 'covered', reactSource: 'frontend/apps/docs/src/docs-app.tsx', focusedTests: ['tests/frontend/tooling/pilots/frontend-docs-pilot.test.ts'], browserTests: docsBrowser, gapIds: [] },
-+  { id: 'wallet-app', pathname: '/app', representativePath: '/app', intendedOwner: 'wallet', implementation: 'partial', browserEvidence: 'partial', reactSource: 'frontend/apps/wallet/src/app-shell.tsx', focusedTests: ['tests/frontend/runtime/wallet/frontend-wallet-app-shell.test.ts', 'tests/frontend/tooling/frontend-wallet-flow-audit.test.ts', 'tests/frontend/payments/frontend-wallet-external-provider.test.ts'], browserTests: [...walletBrowser, ...crossSurfaceBrowser], gapIds: ['wallet-operation-parity', 'candidate-verification'] },
-+  { id: 'wallet-address', pathname: '/address', representativePath: '/address', intendedOwner: 'wallet', implementation: 'complete', browserEvidence: 'covered', reactSource: 'frontend/apps/wallet/src/address/wallet-address.tsx', focusedTests: ['tests/frontend/runtime/wallet/frontend-wallet-address.test.ts'], browserTests: walletBrowser, gapIds: [] },
-+  { id: 'wallet-address-entity', pathname: '/address/:entityId', representativePath: '/address/0xabc', intendedOwner: 'wallet', implementation: 'complete', browserEvidence: 'covered', reactSource: 'frontend/apps/wallet/src/address/wallet-address.tsx', focusedTests: ['tests/frontend/runtime/wallet/frontend-wallet-address.test.ts'], browserTests: walletBrowser, gapIds: [] },
-+  { id: 'testnet', pathname: '/testnet', representativePath: '/testnet', intendedOwner: 'wallet', implementation: 'complete', browserEvidence: 'covered', reactSource: 'frontend/apps/wallet/src/testnet/testnet-page.tsx', focusedTests: ['tests/frontend/tooling/pilots/frontend-testnet-pilot.test.ts'], browserTests: walletBrowser, gapIds: [] },
-+  { id: 'health', pathname: '/health', representativePath: '/health', intendedOwner: 'ops', implementation: 'partial', browserEvidence: 'partial', reactSource: 'frontend/apps/ops/src/health/ops-health.tsx', focusedTests: ['tests/frontend/ops/frontend-ops-health.test.ts'], browserTests: [...opsBrowser, 'frontend/tests/react-candidate/ops/ops-health-events.spec.ts', 'frontend/tests/react-candidate/ops/ops-health-topology.spec.ts'], gapIds: ['ops-health-detail-parity'] },
-+  { id: 'qa', pathname: '/qa', representativePath: '/qa', intendedOwner: 'ops', implementation: 'complete', browserEvidence: 'covered', reactSource: 'frontend/apps/ops/src/qa/ops-qa.tsx', focusedTests: ['tests/frontend/ops/frontend-ops-qa.test.ts'], browserTests: opsBrowser, gapIds: [] },
-+  { id: 'qa-hlt', pathname: '/qa/hlt', representativePath: '/qa/hlt', intendedOwner: 'ops', implementation: 'complete', browserEvidence: 'covered', reactSource: 'frontend/apps/ops/src/hlt/ops-hlt.tsx', focusedTests: ['tests/frontend/ops/frontend-ops-hlt.test.ts'], browserTests: opsBrowser, gapIds: [] },
-+  { id: 'qa-quorum', pathname: '/qa/quorum', representativePath: '/qa/quorum', intendedOwner: 'ops', implementation: 'complete', browserEvidence: 'covered', reactSource: 'frontend/apps/ops/src/quorum/ops-quorum.tsx', focusedTests: ['tests/frontend/ops/frontend-ops-quorum.test.ts'], browserTests: opsBrowser, gapIds: [] },
-+  { id: 'runs', pathname: '/runs', representativePath: '/runs', intendedOwner: 'ops', implementation: 'complete', browserEvidence: 'covered', reactSource: 'frontend/apps/ops/src/runs/ops-runs.tsx', focusedTests: ['tests/frontend/ops/frontend-ops-runs.test.ts'], browserTests: opsBrowser, gapIds: [] },
-+  { id: 'scenarios', pathname: '/scenarios', representativePath: '/scenarios', intendedOwner: 'ops', implementation: 'complete', browserEvidence: 'covered', reactSource: 'frontend/apps/ops/src/scenarios/ops-scenarios.tsx', focusedTests: ['tests/frontend/ops/frontend-ops-scenarios.test.ts'], browserTests: [...opsBrowser, ...crossSurfaceBrowser], gapIds: [] },
-+  { id: 'ai', pathname: '/ai/:chatId?', representativePath: '/ai/audit', intendedOwner: 'ops', implementation: 'complete', browserEvidence: 'covered', reactSource: 'frontend/apps/ops/src/ai/ops-ai.tsx', focusedTests: ['tests/frontend/ops/frontend-ops-ai.test.ts'], browserTests: opsBrowser, gapIds: [] },
-+  { id: 'embed', pathname: '/embed', representativePath: '/embed', intendedOwner: 'ops', implementation: 'partial', browserEvidence: 'partial', reactSource: 'frontend/apps/ops/src/workspace/ops-workspace.tsx', focusedTests: ['tests/frontend/ops/entity/frontend-ops-entity-workspace.test.ts', 'tests/frontend/ops/frontend-ops-display-preferences.test.ts', 'tests/frontend/ops/entity/frontend-ops-entity-time-machine.test.ts', 'tests/frontend/ops/entity/frontend-ops-entity-activity-ledger.test.ts', 'tests/frontend/workspace/entity/entity-workspace-profile-update.test.ts'], browserTests: opsBrowser, gapIds: ['ops-workspace-route'] },
+@@ -49 +47,0 @@
+-    sveltePage: 'frontend/src/routes/+page.svelte',
+@@ -62 +59,0 @@
+-    sveltePage: 'frontend/src/routes/install/+page.svelte',
+@@ -75 +71,0 @@
+-    sveltePage: 'frontend/src/routes/rcpan/+page.svelte',
+@@ -88 +83,0 @@
+-    sveltePage: 'frontend/src/routes/releases/+page.svelte',
+@@ -101 +95,0 @@
+-    sveltePage: 'frontend/src/routes/reviews/+page.svelte',
+@@ -114 +107,0 @@
+-    sveltePage: 'frontend/src/routes/unicast/+page.svelte',
+@@ -127 +119,0 @@
+-    sveltePage: 'frontend/src/routes/market-cap/+page.svelte',
+@@ -140 +131,0 @@
+-    sveltePage: 'frontend/src/routes/docs/+page.svelte',
+@@ -153 +143,0 @@
+-    sveltePage: 'frontend/src/routes/app/+page.svelte',
+@@ -170 +159,0 @@
+-    sveltePage: 'frontend/src/routes/address/+page.svelte',
+@@ -183 +171,0 @@
+-    sveltePage: 'frontend/src/routes/address/[entityId]/+page.svelte',
+@@ -196 +183,0 @@
+-    sveltePage: 'frontend/src/routes/testnet/+page.svelte',
+@@ -209 +195,0 @@
+-    sveltePage: 'frontend/src/routes/health/+page.svelte',
+@@ -226 +211,0 @@
+-    sveltePage: 'frontend/src/routes/qa/+page.svelte',
+@@ -239 +223,0 @@
+-    sveltePage: 'frontend/src/routes/qa/hlt/+page.svelte',
+@@ -252 +235,0 @@
+-    sveltePage: 'frontend/src/routes/qa/quorum/+page.svelte',
+@@ -265 +247,0 @@
+-    sveltePage: 'frontend/src/routes/runs/+page.svelte',
+@@ -278 +259,0 @@
+-    sveltePage: 'frontend/src/routes/scenarios/+page.svelte',
+@@ -291 +271,0 @@
+-    sveltePage: 'frontend/src/routes/ai/[[chatId]]/+page.svelte',
+@@ -304 +283,0 @@
+-    sveltePage: 'frontend/src/routes/embed/+page.svelte',
+@@ -319 +298 @@
+-] as const satisfies readonly RetainedRouteParity[];
 +] as const satisfies readonly RouteParity[];
 --- a/frontend/scripts/checks/parity-audit.ts
 +++ b/frontend/scripts/checks/parity-audit.ts
@@ -147,8 +148,8 @@
 +    total: ROUTE_PARITY.length,
 +    implementation: count(ROUTE_PARITY.map(({ implementation }) => implementation)),
 +    browserEvidence: count(ROUTE_PARITY.map(({ browserEvidence }) => browserEvidence)),
---- a/tests/frontend/tooling/frontend-parity-audit.test.ts
-+++ b/tests/frontend/tooling/frontend-parity-audit.test.ts
+--- a/tests/frontend/tooling/audit/frontend-parity-audit.test.ts
++++ b/tests/frontend/tooling/audit/frontend-parity-audit.test.ts
 @@ -2,2 +2 @@
 -import { existsSync, readdirSync } from 'node:fs';
 -import { join } from 'node:path';
@@ -157,8 +158,8 @@
 -  RETAINED_ROUTE_PARITY,
 +  ROUTE_PARITY,
 @@ -13 +12 @@
--import { resolveRouteOwner } from '../../../packages/frontend-release/surfaces';
-+import { resolveRouteOwner, SURFACES } from '../../../packages/frontend-release/surfaces';
+-import { resolveRouteOwner } from '../../../../packages/frontend-release/surfaces';
++import { resolveRouteOwner, SURFACES } from '../../../../packages/frontend-release/surfaces';
 @@ -16,10 +15,4 @@
 -const listSveltePages = (directory: string): string[] => readdirSync(directory, { withFileTypes: true })
 -  .flatMap((entry) => entry.isDirectory()
@@ -197,12 +198,19 @@
 +    const consumers = await readSources(['frontend/apps']);
 @@ -71 +70,0 @@
 -      expect(paths.some(pathname => pathname.startsWith('frontend/src/'))).toBe(true);
---- a/tests/frontend/tooling/frontend-capability-coverage.test.ts
-+++ b/tests/frontend/tooling/frontend-capability-coverage.test.ts
-@@ -104,3 +104,3 @@
+--- a/tests/frontend/tooling/audit/frontend-capability-coverage.test.ts
++++ b/tests/frontend/tooling/audit/frontend-capability-coverage.test.ts
+@@ -104 +104 @@
 -      .toContain('frontend/src/lib/components/Views/RuntimeCreation.svelte');
--    expect(CAPABILITIES.find(({ id }) => id === 'wallet-shell-and-identity')?.currentSources)
--      .toContain('frontend/src/routes/app/+layout.svelte');
 +      .toContain('frontend/apps/wallet/src/identity/identity-onboarding.tsx');
-+    expect(CAPABILITIES.find(({ id }) => id === 'wallet-shell-and-identity')?.currentSources)
+@@ -106 +106 @@
+-      .toContain('frontend/src/routes/app/+layout.svelte');
 +      .toContain('frontend/apps/wallet/src/app-shell.tsx');
+--- a/core/__tests__/development/frontend/frontend-check-output.test.ts
++++ b/core/__tests__/development/frontend/frontend-check-output.test.ts
+@@ -18 +18 @@
+-    expect(checkScript).toContain('bun copy-static-files.js');
++    expect(checkScript).toBe('bun scripts/check.ts --all --level=frontend');
+@@ -20 +20 @@
+-    expect(buildCheckScript).toBe('bun scripts/vite-build-check.ts');
++    expect(buildCheckScript).toBeUndefined();

@@ -92,17 +92,21 @@ describe('Settings panel view model', () => {
     expect(resolveEntityOpenMode(null)).toBe('replace');
   });
 
-  test('keeps browser, Dockview, NetworkMachine, and event effects in Svelte', () => {
-    const source = readFileSync('frontend/src/lib/view/panels/SettingsPanel.svelte', 'utf8');
+  test('keeps browser, graph, NetworkMachine, and display effects in React owners', () => {
+    const source = readFileSync('frontend/apps/ops/src/workspace/settings/ops-settings-panel.tsx', 'utf8');
+    const graph = readFileSync('frontend/apps/ops/src/workspace/graph/ops-graph-preferences.ts', 'utf8');
+    const presentation = readFileSync('frontend/apps/ops/src/workspace/settings/ops-settings-presentation.tsx', 'utf8');
     const shared = readFileSync('frontend/packages/runtime-client/src/panels/settings-panel-view.ts', 'utf8');
 
     expect(formatSettingsPanelError('load', new Error('denied'))).toBe('Settings load failed: denied');
     expect(formatSettingsPanelError('save', 'quota')).toBe('Settings save failed: quota');
-    expect(source).toContain("from '../../../../packages/runtime-client/src/panels/settings-panel-view'");
-    expect(source).toContain('localStorage.getItem(VIEW_SETTINGS_STORAGE_KEY)');
-    expect(source).toContain("panelBridge.emit('settings:update'");
-    expect(source).toContain('window.__dockview_instance');
-    expect(source).toContain('networkMachineOperations.importJson');
+    expect(source).toContain("from '../../../../../packages/runtime-client/src/panels/settings-panel-view'");
+    expect(source).toContain('opsGraphViewSettings.subscribe');
+    expect(source).toContain('opsDisplayPreferencesSource.subscribe');
+    expect(graph).toContain('storage?.getItem(VIEW_SETTINGS_STORAGE_KEY)');
+    expect(graph).toContain('storage?.setItem(VIEW_SETTINGS_STORAGE_KEY');
+    expect(presentation).toContain('networkMachineOperations.exportJson()');
+    expect(presentation).toContain('applyWorkspacePresentation(parseNetworkMachineConfig(text))');
     expect(source).not.toContain('interface ViewSettings');
     expect(shared).not.toContain('localStorage');
     expect(shared).not.toContain('panelBridge');

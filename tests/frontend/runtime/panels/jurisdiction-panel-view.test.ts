@@ -86,14 +86,14 @@ describe('Jurisdiction panel view model', () => {
     expect(rows).toHaveLength(2);
   });
 
-  test('keeps Runtime/JAdapter reads, time travel, and panel events in Svelte', () => {
-    const source = readFileSync('frontend/src/lib/view/panels/JurisdictionPanel.svelte', 'utf8');
+  test('keeps Runtime/JAdapter reads and selection effects in the React jurisdiction boundary', () => {
+    const source = readFileSync('frontend/apps/ops/src/workspace/jurisdiction/ops-jurisdiction-panel.tsx', 'utf8');
     const shared = readFileSync('frontend/packages/runtime-client/src/panels/jurisdiction-panel-view.ts', 'utf8');
 
-    expect(source).toContain("from '../../../../packages/runtime-client/src/panels/jurisdiction-panel-view'");
-    expect(source).toContain('$runtimeFrameEnv');
-    expect(source).toContain('jadapter.timeTravel');
-    expect(source).toContain("panelBridge.emit('entity:selected'");
+    expect(source).toContain("from '../../../../../packages/runtime-client/src/panels/jurisdiction-panel-view'");
+    expect(source).toContain('useWorkspaceEnvironment()');
+    expect(source).toContain('useOpsJurisdictionLive(');
+    expect(source).toContain('jmachineOperations.setActive(name)');
     expect(source).toContain('buildJurisdictionTokenOptions');
     expect(source).not.toContain('function toBigInt');
     expect(shared).not.toContain('runtimeFrameEnv');

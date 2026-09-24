@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import type { PaymentDeliveryMode } from '@xln/core/api/public/runtime-module';
-import { parseXlnInvoice, type ParsedXlnInvoice } from '$lib/utils/xlnInvoice';
+import { parseXlnInvoice, type ParsedXlnInvoice } from '../../../frontend/packages/runtime-client/src/payments/xln-invoice';
 import { Bar, DeltaBar, DeltaCaption } from '../components/Bars';
 import { Icon } from '../components/Icons';
 import { ScanSheet } from '../components/ScanSheet';

@@ -78,7 +78,7 @@ describe('React wallet external provider', () => {
       { type: 'j_broadcast', data: {} },
     ]).entityInputs[0]?.entityTxs.map(({ type }) => type)).toEqual(['r2e', 'j_broadcast']);
 
-    const bridge = readFileSync('frontend/bridges/wallet/wallet-canonical-external-provider.ts', 'utf8');
+    const bridge = readFileSync('frontend/bridges/wallet/canonical/wallet-canonical-external-provider.ts', 'utf8');
     const react = readFileSync('frontend/apps/wallet/src/payments/wallet-payment-external.tsx', 'utf8');
     expect(bridge.match(/assertCurrent\(request\.binding\)/g)).toHaveLength(4);
     expect(bridge).toContain('EXTERNAL_WALLET_APPROVAL_POSTCONDITION_FAILED');

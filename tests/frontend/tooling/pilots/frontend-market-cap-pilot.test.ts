@@ -86,10 +86,9 @@ describe('React market-cap pilot', () => {
     const fetcher: MarketCapFetcher = (_input, _init) => Promise.resolve(Response.json({ ...PAYLOAD, staleAfterMs: 1 }));
     await expect(fetchMarketCapResponse(REQUEST, { fetcher })).rejects.toThrow('MARKET_CAP_RESPONSE_STALE_WINDOW_INVALID');
     const reactSource = readFileSync(resolve(ROOT, 'frontend/apps/site/src/market-cap-page.tsx'), 'utf8');
-    const svelteSource = readFileSync(resolve(ROOT, 'frontend/src/routes/market-cap/+page.svelte'), 'utf8');
     expect(reactSource).toContain("from '../../../packages/ui/src/content/market-cap-page-model'");
     expect(reactSource).toContain('AbortController');
-    expect(svelteSource).toContain('fetchMarketCapResponse');
-    expect(svelteSource).not.toContain('decodeMarketCapPublicResponse');
+    expect(reactSource).toContain('fetchMarketCapResponse');
+    expect(reactSource).not.toContain('decodeMarketCapPublicResponse');
   });
 });

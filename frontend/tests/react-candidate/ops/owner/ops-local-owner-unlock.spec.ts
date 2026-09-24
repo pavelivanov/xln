@@ -2,6 +2,7 @@ import { openWorkspaceStorageOrigin } from '../../browser-evidence';
 import { expect, test } from '@playwright/test';
 import { expectNoBrowserErrors, expectPageContained, observeBrowserErrors, screenshotEvidence } from '../../browser-evidence';
 import { readWalletRuntimeFixture } from '../../wallet/fixtures/wallet-runtime-test-helpers';
+import { WALLET_RECOVERY_FIXTURE_MNEMONIC } from '../../wallet/fixtures/wallet-fixture-identities';
 import { installOpsOwnerMetadata } from './ops-owner-test-helpers';
 
 test('local restoration failure keeps unlocked keys revocable without claiming a ready Runtime', { tag: '@resilience' }, async ({ page }, testInfo) => {
@@ -40,7 +41,11 @@ test('a locked local vault visibly unlocks through the shared Runtime session an
     (window as typeof window & { __XLN_API_BASE_URL__?: string }).__XLN_API_BASE_URL__ = apiUrl;
   }, { towerUrl: fixture.recovery.towerUrl, apiUrl: new URL(fixture.wsUrl.replace('ws:', 'http:')).origin });
   await openWorkspaceStorageOrigin(page);
-  await installOpsOwnerMetadata(page, { ...fixture, entityId: fixture.recovery.entityId });
+  await installOpsOwnerMetadata(page, {
+    ...fixture,
+    runtimeId: fixture.recovery.runtimeId,
+    entityId: fixture.recovery.entityId,
+  });
   await page.evaluate(() => localStorage.setItem('xln-runtime-adapter-mode', 'embedded'));
   await page.goto('/__app/ops/entity-workspace');
   await page.getByRole('button', { name: 'Owner locked', exact: true }).click();
@@ -49,7 +54,7 @@ test('a locked local vault visibly unlocks through the shared Runtime session an
   await form.getByLabel('Owner wallet seed phrase').fill('abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about');
   await form.getByRole('button', { name: 'Unlock owner', exact: true }).click();
   await expect(form.getByRole('alert')).toHaveText('RUNTIME_UNLOCK_SEED_MISMATCH', { timeout: 45_000 });
-  await form.getByLabel('Owner wallet seed phrase').fill(fixture.walletSeed);
+  await form.getByLabel('Owner wallet seed phrase').fill(WALLET_RECOVERY_FIXTURE_MNEMONIC);
   await form.getByRole('button', { name: 'Unlock owner', exact: true }).click();
   await expect(form.getByRole('button', { name: 'Working…', exact: true })).toHaveCount(0, { timeout: 60_000 });
   await expect(form.getByRole('alert')).toHaveCount(0);
@@ -68,10 +73,10 @@ test('a locked local vault visibly unlocks through the shared Runtime session an
     const adapter = module.opsEntityWorkspaceSource.getAdapter();
     return { runtimeId: adapter.runtimeId, mode: adapter.mode };
   });
-  expect(selected).toEqual({ runtimeId: fixture.runtimeId, mode: 'embedded' });
+  expect(selected).toEqual({ runtimeId: fixture.recovery.runtimeId, mode: 'embedded' });
   const stored = await page.evaluate(() => localStorage.getItem('xln-vaults'));
   expect(stored).toContain('protectedSecrets');
-  expect(stored).not.toContain(fixture.walletSeed);
+  expect(stored).not.toContain(WALLET_RECOVERY_FIXTURE_MNEMONIC);
   await page.getByRole('button', { name: 'Open Entity panel', exact: true }).click();
   await page.getByTestId('entity-workspace-tab-settings').click();
   await page.getByTestId('settings-profile-name-input').fill(`Local owner ${testInfo.project.name}`);
@@ -104,7 +109,7 @@ test('a locked local vault visibly unlocks through the shared Runtime session an
   await expect(page.getByRole('button', { name: 'Owner locked', exact: true })).toBeVisible();
   await expect(form.getByRole('button', { name: 'Unlock owner', exact: true })).toBeDisabled();
   await screenshotEvidence(page, testInfo, 'ops-local-owner-locked');
-  await form.getByLabel('Owner wallet seed phrase').fill(fixture.walletSeed);
+  await form.getByLabel('Owner wallet seed phrase').fill(WALLET_RECOVERY_FIXTURE_MNEMONIC);
   await form.getByRole('button', { name: 'Unlock owner', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Owner unlocked', exact: true })).toBeVisible({ timeout: 60_000 });
   await expect(page.getByTestId('settings-profile-name-input')).toHaveValue(`Local owner ${testInfo.project.name}`);

@@ -370,7 +370,7 @@ test('recovery tower statuses prefer current failures over stale receipts', () =
 test('React recovery settings renders coverage and tower status from the canonical projection', () => {
   const panel = readFileSync('frontend/apps/wallet/src/recovery/wallet-recovery-services.tsx', 'utf8');
   const coverage = readFileSync('frontend/apps/wallet/src/recovery/wallet-recovery-coverage.tsx', 'utf8');
-  const source = readFileSync('frontend/bridges/wallet/wallet-canonical-recovery-services.ts', 'utf8');expect(panel).toContain('<WalletRecoveryCoverage view={view} />');
+  const source = readFileSync('frontend/bridges/wallet/canonical/wallet-canonical-recovery-services.ts', 'utf8');expect(panel).toContain('<WalletRecoveryCoverage view={view} />');
   expect(source).toContain('coverage: buildRuntimeRecoveryCoverage({');
   expect(source).toContain('towerStatuses: buildRecoveryTowerStatuses(runtime, runtime.recovery?.towers)');
   expect(source).toContain('readRuntimeRecoveryDiscoveryStatus(runtime.id)');
@@ -384,10 +384,12 @@ test('React recovery settings renders coverage and tower status from the canonic
 });
 
 test('onboarding recovery check renders typed discovery failures', () => {
-  const source = readFileSync('frontend/src/lib/components/Entity/onboarding/OnboardingPanel.svelte', 'utf8');
+  const source = readFileSync('frontend/bridges/wallet/canonical/wallet-canonical-recovery-services.ts', 'utf8');
+  const coverage = readFileSync('frontend/apps/wallet/src/recovery/wallet-recovery-coverage.tsx', 'utf8');
   expect(source).toContain('formatRuntimeRecoveryDiscoveryFailure');
-  expect(source).toContain('recoveryDiscoveryFailureLabels');
-  expect(source).toContain('data-testid="runtime-recovery-check-failures"');
+  expect(source).toContain('(discovery?.failures ?? []).map(formatRuntimeRecoveryDiscoveryFailure)');
+  expect(coverage).toContain('view.discoveryFailures.map');
+  expect(coverage).toContain('data-testid="runtime-recovery-check-failures"');
 });
 
 test('formatRecoveryBytes keeps recovery coverage labels compact', () => {
@@ -433,12 +435,13 @@ test('live recovery evidence preserves unsaved service drafts and rejects stale 
     blockedReason: '',
     coverage: [],
     towerStatuses: [],
+    discoveryFailures: [],
   };
   const mutation = { runtimeId: current.runtimeId, mode: current.mode, services: current.services };
   const coverage = buildRuntimeRecoveryCoverage({ runtime: runtimeFixture(), peerSourceCount: 1 });
-  const observed = { ...current, services: [], coverage, writable: false, blockedReason: 'Owner locked' };
+  const observed = { ...current, services: [], coverage, discoveryFailures: ['peer: retry pending (RACE)'], writable: false, blockedReason: 'Owner locked' };
   const merged = mergeWalletRecoveryServicesObservation(current, observed, mutation);
-  expect(merged).toEqual({ ...current, coverage, writable: false, blockedReason: 'Owner locked' });
+  expect(merged).toEqual({ ...current, coverage, discoveryFailures: ['peer: retry pending (RACE)'], writable: false, blockedReason: 'Owner locked' });
   if (merged.state !== 'ready') throw new Error('Expected ready recovery view');
   expect(merged.services).toBe(current.services);
   const newerMode = { ...current, mode: 'local_only' as const };
@@ -457,7 +460,7 @@ test('canonical recovery observation follows receipts, discovery and Runtime cha
   installMemoryLocalStorage();
   const { runtimesState } = await import('../../../frontend/bridges/vault/vault-metadata-store');
   const { observeCanonicalWalletRecoveryServices } =
-    await import('../../../frontend/bridges/wallet/wallet-canonical-recovery-services');
+    await import('../../../frontend/bridges/wallet/canonical/wallet-canonical-recovery-services');
   const previous = runtimesState.get();
   const runtime = runtimeFixture({
     towers: [{ url: 'https://manual.example.com', towerMode: 'blind_backup', enabled: true }],

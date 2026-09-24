@@ -1,20 +1,21 @@
 import { expect, test } from 'bun:test';
 import { readFileSync } from 'node:fs';
 
-const diagnosticFiles = [
+const visibleDiagnosticFiles = [
   {
-    path: 'frontend/src/routes/app/+layout.svelte',
-    importLine: "import { errorLog } from '../../../packages/browser/src/logging/error-log-store';",
-    logLine: "errorLog.log(message, 'App Shell', details)",
+    path: 'frontend/apps/wallet/src/app-shell.tsx',
+    markers: ["const [recoveryError, setRecoveryError]", 'role="alert"', '{recoveryError ? <span role="alert">'],
   },
   {
-    path: 'frontend/src/lib/stores/appStateStore.ts',
-    importLine: "import { errorLog } from '../../../packages/browser/src/logging/error-log-store';",
-    logLine: "errorLog.log('localStorage get failed', 'App State'",
+    path: 'frontend/apps/ops/src/workspace/ops-workspace.tsx',
+    markers: ["const [issue, setIssue]", 'role="alert"', 'onDiagnostic={diagnostic => setIssue'],
   },
+] as const;
+
+const persistentDiagnosticFiles = [
   {
-    path: 'frontend/packages/browser/src/settings-store.ts',
-    importLine: "import { errorLog } from './logging/error-log-store';",
+    path: 'frontend/packages/browser/src/preferences/settings-store.ts',
+    importLine: "import { errorLog } from '../logging/error-log-store';",
     logLine: "errorLog.log('Failed to load settings; clearing corrupted storage', 'Settings'",
   },
   {
@@ -23,24 +24,31 @@ const diagnosticFiles = [
     logLine: "errorLog.log('Failed to load tabs; clearing corrupted storage', 'Tabs'",
   },
   {
-    path: 'frontend/src/lib/stores/timeStore.ts',
-    importLine: "import { errorLog } from '../../../packages/browser/src/logging/error-log-store';",
-    logLine: "errorLog.log('TIME_MACHINE_HISTORY_NOT_READY: skipping max-index update', 'Time Machine'",
-  },
-  {
     path: 'frontend/packages/browser/src/jurisdiction/jmachine-store.ts',
     importLine: "import { errorLog } from '../logging/error-log-store';",
     logLine: "errorLog.log('Failed to load J-Machine configs; clearing corrupted storage', 'J-Machine Store'",
   },
 ] as const;
 
-test('app shell and small stores persist diagnostics instead of raw console output', () => {
-  for (const file of diagnosticFiles) {
+const expectNoRawConsole = (source: string): void => {
+  expect(source).not.toContain('console.error');
+  expect(source).not.toContain('console.warn');
+  expect(source).not.toContain('console.info');
+};
+
+test('React app shells surface actionable diagnostics without raw console output', () => {
+  for (const file of visibleDiagnosticFiles) {
+    const source = readFileSync(file.path, 'utf8');
+    for (const marker of file.markers) expect(source).toContain(marker);
+    expectNoRawConsole(source);
+  }
+});
+
+test('retained browser stores persist diagnostics without raw console output', () => {
+  for (const file of persistentDiagnosticFiles) {
     const source = readFileSync(file.path, 'utf8');
     expect(source).toContain(file.importLine);
     expect(source).toContain(file.logLine);
-    expect(source).not.toContain('console.error');
-    expect(source).not.toContain('console.warn');
-    expect(source).not.toContain('console.info');
+    expectNoRawConsole(source);
   }
 });

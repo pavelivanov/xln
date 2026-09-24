@@ -1,4 +1,4 @@
-import type { AccountWorkspaceTab } from './entity/entity-workspace-navigation';
+import type { AccountWorkspaceTab } from './entity/workspace/entity-workspace-navigation';
 
 export const ACCOUNT_WORKSPACE_TABS = [
   { id: 'open', label: 'Open Account' },

@@ -22,21 +22,6 @@ type ExternalRuntimeConsumer = {
 };
 
 const EXTERNAL_RUNTIME_CONSUMERS: Readonly<Record<string, readonly ExternalRuntimeConsumer[]>> = {
-  'core/api/server/rpc/proxy-safety.ts': [{
-    consumer: 'frontend/src/routes/rpc-proxy-safety.ts',
-    specifier: '@xln/core/api/server/rpc/proxy-safety',
-    downstream: {
-      consumer: 'frontend/src/routes/rpc/+server.ts',
-      specifier: '../rpc-proxy-safety',
-    },
-  }, {
-    consumer: 'frontend/src/routes/rpc-proxy-safety.ts',
-    specifier: '@xln/core/api/server/rpc/proxy-safety',
-    downstream: {
-      consumer: 'frontend/src/routes/rpc2/+server.ts',
-      specifier: '../rpc-proxy-safety',
-    },
-  }],
   'core/network/relay/market/wire.ts': [{
     consumer: 'frontend/src/lib/components/Trading/OrderbookPanel.svelte',
     specifier: '@xln/core/network/relay/market/wire',

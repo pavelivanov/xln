@@ -5,7 +5,7 @@ import * as THREE from '../../../../frontend/node_modules/three';
 import {
   highlightGraphHoverTarget,
   resolveGraphHoverHit,
-} from '../../../../frontend/packages/ui/src/graph/graph3d-hover';
+} from '../../../../frontend/packages/ui/src/graph/three/interaction/graph3d-hover';
 
 const createRaycaster = (): THREE.Raycaster =>
   new THREE.Raycaster(new THREE.Vector3(0, 0, 5), new THREE.Vector3(0, 0, -1));
@@ -91,13 +91,13 @@ describe('Graph3D shared hover mechanics', () => {
     );
   });
 
-  test('moves reusable hover mechanics out of the canonical Svelte panel', () => {
-    const shared = readFileSync('frontend/packages/ui/src/graph/graph3d-hover.ts', 'utf8');
-    const panel = readFileSync('frontend/src/lib/view/panels/graph3d/Graph3DPanel.svelte', 'utf8');
+  test('keeps reusable hover mechanics outside the React scene owner', () => {
+    const shared = readFileSync('frontend/packages/ui/src/graph/three/interaction/graph3d-hover.ts', 'utf8');
+    const panel = readFileSync('frontend/apps/ops/src/workspace/graph/ops-graph-scene.ts', 'utf8');
 
     expect(shared).toContain('export function resolveGraphHoverHit');
     expect(shared).toContain('export function highlightGraphHoverTarget');
-    expect(panel).toContain('packages/ui/src/graph/graph3d-hover');
+    expect(panel).toContain('packages/ui/src/graph/three/interaction/graph3d-hover');
     expect(panel).not.toContain('const entityIntersects = raycaster.intersectObjects');
     expect(panel).not.toContain('const lineIntersects = raycaster.intersectObjects');
     expect(panel).not.toContain('material.emissive.setHex(0x444400)');

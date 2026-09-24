@@ -1,14 +1,13 @@
 import { expect, test } from 'bun:test';
 import { readFileSync } from 'node:fs';
 
-test('JurisdictionDropdown consumes projected jurisdiction rows instead of the runtime env store', () => {
-  const dropdown = readFileSync('frontend/src/lib/components/Jurisdiction/JurisdictionDropdown.svelte', 'utf8');
-  const chrome = readFileSync('frontend/src/lib/components/Entity/workspace/EntityPanelChrome.svelte', 'utf8');
+test('React jurisdiction selector consumes the projected graph instead of a global runtime store', () => {
+  const dropdown = readFileSync('frontend/apps/ops/src/workspace/graph/ops-graph-panel.tsx', 'utf8');
+  const projection = readFileSync('frontend/packages/ui/src/graph/runtime-graph-projection.ts', 'utf8');
 
-  expect(dropdown).toContain('export let jurisdictions: JurisdictionDropdownItem[]');
+  expect(dropdown).toContain('graph.jMachines.map(machine =>');
+  expect(dropdown).toContain('openJurisdiction?.(event.currentTarget.value)');
   expect(dropdown).not.toContain('xlnEnvironment');
   expect(dropdown).not.toContain('$xlnEnvironment');
-  expect(dropdown).not.toContain('jReplicas');
-  expect(chrome).toContain('{jurisdictions}');
-  expect(chrome).toContain('<JurisdictionDropdown');
+  expect(projection).toContain('jMachines: MergedRuntimeGraphJMachine[]');
 });

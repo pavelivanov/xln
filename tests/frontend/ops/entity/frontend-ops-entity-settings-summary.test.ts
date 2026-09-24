@@ -3,7 +3,7 @@ import { describe, expect, test } from 'bun:test';
 import {
   emptyEntityWorkspaceContext,
   projectEntityWorkspaceContext,
-} from '../../../../frontend/packages/runtime-client/src/entity/entity-workspace-context';
+} from '../../../../frontend/packages/runtime-client/src/entity/workspace/entity-workspace-context';
 import {
   emptyEntityWorkspaceProfile,
   projectEntityWorkspaceProfile,
@@ -11,15 +11,15 @@ import {
 import {
   emptyEntityWorkspaceReserves,
   projectEntityWorkspaceReserves,
-} from '../../../../frontend/packages/runtime-client/src/entity/entity-workspace-reserves';
+} from '../../../../frontend/packages/runtime-client/src/entity/workspace/entity-workspace-reserves';
 import {
   emptyEntityWorkspaceSettingsSummary,
   projectEntityWorkspaceSettingsSummary,
-} from '../../../../frontend/packages/runtime-client/src/entity/entity-workspace-settings-summary';
+} from '../../../../frontend/packages/runtime-client/src/entity/workspace/entity-workspace-settings-summary';
 import {
   createEntityWorkspaceHistoryState,
   createEntityWorkspaceLiveState,
-} from '../../../../frontend/packages/runtime-client/src/entity/entity-workspace-time-machine';
+} from '../../../../frontend/packages/runtime-client/src/entity/workspace/entity-workspace-time-machine';
 
 const frame = (entityId: string) => ({
   height: 42,

@@ -1,4 +1,4 @@
-import type { AccountWorkspaceTab, ViewTab } from './entity-workspace-navigation';
+import type { AccountWorkspaceTab, ViewTab } from './workspace/entity-workspace-navigation';
 
 export type AccountWorkspaceNavigationState = {
   activeTab: ViewTab;

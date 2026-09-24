@@ -1,8 +1,8 @@
-import type { WalletAccountContext } from '../../../../bridges/wallet/wallet-canonical-account-context';
-import { projectEntityWorkspaceContext } from '../../../../packages/runtime-client/src/entity/entity-workspace-context';
-import { projectEntityWorkspaceAccounts } from '../../../../packages/runtime-client/src/entity/entity-workspace-accounts';
-import { projectEntityWorkspaceOwnership } from '../../../../packages/runtime-client/src/entity/entity-workspace-ownership';
-import { projectEntityWorkspaceConsensusEvidence } from '../../../../packages/runtime-client/src/entity/entity-workspace-consensus-evidence';
+import type { WalletAccountContext } from '../../../../bridges/wallet/canonical/wallet-canonical-account-context';
+import { projectEntityWorkspaceContext } from '../../../../packages/runtime-client/src/entity/workspace/entity-workspace-context';
+import { projectEntityWorkspaceAccounts } from '../../../../packages/runtime-client/src/entity/workspace/entity-workspace-accounts';
+import { projectEntityWorkspaceOwnership } from '../../../../packages/runtime-client/src/entity/workspace/entity-workspace-ownership';
+import { projectEntityWorkspaceConsensusEvidence } from '../../../../packages/runtime-client/src/entity/workspace/entity-workspace-consensus-evidence';
 import { EntityWorkspaceOwnershipPanel } from '../../../../packages/ui/src/entity/profile/entity-workspace-ownership-panel';
 import { EntityWorkspaceConsensusPanel } from '../../../../packages/ui/src/entity/accounts/entity-workspace-consensus-panel';
 import '../../../../packages/ui/src/entity/entity-workspace-shell.css';

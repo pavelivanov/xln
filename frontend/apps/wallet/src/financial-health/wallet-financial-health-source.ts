@@ -5,6 +5,7 @@ import {
   RuntimeQueryObserver,
   type RuntimeQuerySnapshot,
 } from '../../../../packages/runtime-client/src/runtime/query/runtime-query-observer';
+import { runtimeHttpOriginFromWsUrl } from '../../../../packages/runtime-client/src/runtime/ws-url';
 import { normalizeEntityIdForRuntimeView } from '../../../../packages/runtime-client/src/runtime/view/runtime-view-model';
 import { requireWalletWorkspaceEntity, WalletWorkspaceSelection } from '../runtime/wallet-workspace-selection';
 import {
@@ -74,7 +75,7 @@ export class WalletFinancialHealthSource {
   private started = false;
   private selectedEntityId = '';
   private accountsPage = 0;
-  private historyCursors: Array<number | null> = [null];
+  private historyCursors: Array<string | null> = [null];
   private historyPage = 0;
   private commandState: WalletFinancialHealthCommandState = { status: 'idle', message: '' };
   private commandBusy = false;
@@ -144,7 +145,7 @@ export class WalletFinancialHealthSource {
           tokenId: group.tokenId,
           maxIterations: 100,
           signerId: projection.signerId,
-          timestamp: Date.now(),
+          timestamp: projection.timestamp,
         }),
       );
       const result = await executeWalletPaymentCommand(adapter, prepared);
@@ -191,7 +192,7 @@ export class WalletFinancialHealthSource {
 
   readonly selectOlderHistory = (): void => {
     if (this.snapshot.status === 'loading') throw new Error('WALLET_HEALTH_HISTORY_BUSY');
-    const next = this.snapshot.projection?.historyNextBeforeHeight ?? null;
+    const next = this.snapshot.projection?.historyNextCursor ?? null;
     if (next === null) throw new Error('WALLET_HEALTH_HISTORY_OLDER_UNAVAILABLE');
     if (this.historyPage === this.historyCursors.length - 1) this.historyCursors.push(next);
     this.historyPage += 1;
@@ -228,19 +229,31 @@ export class WalletFinancialHealthSource {
         ...(entityId ? { entityId } : {}),
       });
       const activeEntityId = readWalletFrameActiveEntityId(frame);
+      const cursor = this.historyCursors[this.historyPage] ?? null;
       const activity = activeEntityId ? await client.readActivity({
         entityId: activeEntityId,
         kind: 'all',
         limit: 25,
         scanLimit: 250,
-        beforeHeight: this.historyCursors[this.historyPage] ?? height + 1,
+        ...(cursor ? { cursor } : { beforeHeight: height }),
       }) : null;
-      return requireWalletWorkspaceEntity(decodeWalletFinancialHealthProjection({
+      const decode = () => requireWalletWorkspaceEntity(decodeWalletFinancialHealthProjection({
         frame,
         solvency,
         activity,
         historyPage: this.historyPage,
       }, math), entityId);
+      try {
+        return decode();
+      } catch (error: unknown) {
+        if (!/^TOKEN_METADATA_UNAVAILABLE:\d+$/u.test(walletRuntimeReadErrorMessage(error))) throw error;
+        await math.refreshTokenCatalog(
+          this.config.mode === 'remote'
+            ? runtimeHttpOriginFromWsUrl(this.config.wsUrl || '')
+            : window.location.origin,
+        );
+        return decode();
+      }
     }, {
       readHeight: () => adapter.currentHeight,
       subscribeHeight: (listener) => adapter.onChange(() => listener()),

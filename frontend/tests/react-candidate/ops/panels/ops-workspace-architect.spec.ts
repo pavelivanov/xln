@@ -2,6 +2,7 @@ import { openWorkspaceStorageOrigin } from '../../browser-evidence';
 import { expect, test, type WebSocket } from '@playwright/test';
 import { expectNoBrowserErrors, expectPageContained, observeBrowserErrors, screenshotEvidence } from '../../browser-evidence';
 import { createIsolatedRecoveryTowerFixture, installImportedRuntime, readStackManagerRpcFixture, readWalletRuntimeFixture } from '../../wallet/fixtures/wallet-runtime-test-helpers';
+import { WALLET_RECOVERY_FIXTURE_MNEMONIC } from '../../wallet/fixtures/wallet-fixture-identities';
 import { installOpsOwnerMetadata } from '../owner/ops-owner-test-helpers';
 
 test('Architect records into shared playback and returns to the unchanged connected Wallet', { tag: '@functional' }, async ({ page }, testInfo) => {
@@ -125,12 +126,16 @@ test('Architect creates an exact BrowserVM stack, 3x3 topology, reserves, and R2
     (window as typeof window & { __XLN_API_BASE_URL__?: string }).__XLN_API_BASE_URL__ = apiUrl;
   }, { towerUrl, apiUrl: new URL(fixture.wsUrl.replace('ws:', 'http:')).origin });
   await openWorkspaceStorageOrigin(page);
-  await installOpsOwnerMetadata(page, { ...fixture, entityId: fixture.recovery.entityId });
+  await installOpsOwnerMetadata(page, {
+    ...fixture,
+    runtimeId: fixture.recovery.runtimeId,
+    entityId: fixture.recovery.entityId,
+  });
   await page.evaluate(() => localStorage.setItem('xln-runtime-adapter-mode', 'embedded'));
   await page.goto('/__app/ops/entity-workspace');
   await page.getByRole('button', { name: 'Owner locked', exact: true }).click();
   const unlock = page.getByRole('form', { name: 'Unlock Runtime owner' });
-  await unlock.getByLabel('Owner wallet seed phrase').fill(fixture.walletSeed);
+  await unlock.getByLabel('Owner wallet seed phrase').fill(WALLET_RECOVERY_FIXTURE_MNEMONIC);
   await unlock.getByRole('button', { name: 'Unlock owner', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Owner unlocked', exact: true })).toBeVisible({ timeout: 60_000 });
   const runtimeId = await page.getByTestId('ops-owner-unlock').getAttribute('data-runtime-id');

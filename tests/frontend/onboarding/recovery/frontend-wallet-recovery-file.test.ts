@@ -7,7 +7,7 @@ const read = (path: string): string => readFileSync(path, 'utf8');
 
 describe('React wallet recovery file boundary', () => {
   test('decrypts and retains full file candidates only in the canonical bridge session', () => {
-    const bridge = read('frontend/bridges/wallet/wallet-canonical-vault-runtime.ts');
+    const bridge = read('frontend/bridges/wallet/canonical/wallet-canonical-vault-runtime.ts');
 
     expect(bridge).toContain('parseRuntimeRecoveryCandidateFile(request.seed, file.contents');
     expect(bridge.indexOf('recoverySelection.read(token, runtimeId)'))
@@ -21,7 +21,7 @@ describe('React wallet recovery file boundary', () => {
   });
 
   test('reads Brain Vault seed material without consuming its one-shot opening token', () => {
-    const bridge = read('frontend/bridges/wallet/wallet-canonical-vault-runtime.ts');
+    const bridge = read('frontend/bridges/wallet/canonical/wallet-canonical-vault-runtime.ts');
     const embedded = read('frontend/apps/wallet/src/runtime/wallet-embedded-runtime.ts');
     const onboarding = read('frontend/apps/wallet/src/identity/identity-onboarding.tsx');
 

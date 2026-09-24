@@ -1,13 +1,13 @@
 import type { RuntimeAdapter } from '../../../../../core/api/runtime-adapter/types';
 import type {
   EntityWorkspaceActivityQueryOptions,
-} from '../../../../packages/runtime-client/src/entity/entity-workspace-activity';
+} from '../../../../packages/runtime-client/src/entity/workspace/entity-workspace-activity';
 import {
   createEntityWorkspaceHistoryState,
   createEntityWorkspaceLiveState,
   requireEntityWorkspaceHistoryHeight,
   updateEntityWorkspaceLatestHeight,
-} from '../../../../packages/runtime-client/src/entity/entity-workspace-time-machine';
+} from '../../../../packages/runtime-client/src/entity/workspace/entity-workspace-time-machine';
 import {
   readOpsEntityWorkspaceHistory,
   type OpsEntityWorkspaceHistoryReader,
@@ -15,10 +15,10 @@ import {
 import type { OpsEntityWorkspaceSourceSnapshot } from './ops-entity-workspace-projection';
 
 type HistoryControllerDependencies = Readonly<{
-  cancelActivityAppend(beforeHeight: number): void;
-  completeActivityAppend(beforeHeight: number): void;
+  cancelActivityAppend(cursor: string): void;
+  completeActivityAppend(cursor: string): void;
   publish(snapshot: OpsEntityWorkspaceSourceSnapshot): void;
-  readActivityAppendBeforeHeight(): number | null;
+  readActivityAppendCursor(): string | null;
   readActivityOptions(): EntityWorkspaceActivityQueryOptions;
   readAccountsPage(): number;
   readAdapter(): RuntimeAdapter | null;
@@ -95,18 +95,18 @@ export class OpsEntityWorkspaceHistoryController {
       timeMachine: createEntityWorkspaceHistoryState({ latestHeight, loading: true, selectedHeight: requestedHeight }),
     });
     const activity = this.dependencies.readActivityOptions();
-    const appendBeforeHeight = this.dependencies.readActivityAppendBeforeHeight();
+    const appendCursor = this.dependencies.readActivityAppendCursor();
     try {
       const projection = await readOpsEntityWorkspaceHistory({
         activity,
-        appendActivity: appendBeforeHeight !== null && activity.beforeHeight === appendBeforeHeight,
+        appendActivity: appendCursor !== null && activity.cursor === appendCursor,
         accountsPage: this.dependencies.readAccountsPage(), client,
         entityId: context.entityId, latestHeight, requestedHeight, runtimeId: adapter.runtimeId,
         previousActivity: previous.activity,
       });
       if (!this.isCurrent(request, requestedHeight, client)) return false;
-      if (appendBeforeHeight !== null) {
-        this.dependencies.completeActivityAppend(appendBeforeHeight);
+      if (appendCursor !== null) {
+        this.dependencies.completeActivityAppend(appendCursor);
       }
       const next: OpsEntityWorkspaceSourceSnapshot = {
         ...projection,
@@ -121,8 +121,8 @@ export class OpsEntityWorkspaceHistoryController {
       return true;
     } catch (error: unknown) {
       if (!this.isCurrent(request, requestedHeight, client)) return false;
-      if (appendBeforeHeight !== null) {
-        this.dependencies.cancelActivityAppend(appendBeforeHeight);
+      if (appendCursor !== null) {
+        this.dependencies.cancelActivityAppend(appendCursor);
       }
       this.selectedHeight = fallback.timeMachine.mode === 'history'
         ? fallback.timeMachine.selectedHeight

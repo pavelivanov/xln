@@ -7,7 +7,7 @@ import {
   detachGraphObject3D,
   disposeGraphObject3D,
   getGraphThemeColors,
-} from '../../../../frontend/packages/ui/src/graph/graph3d-renderer';
+} from '../../../../frontend/packages/ui/src/graph/three/core/graph3d-renderer';
 
 describe('Graph3D shared renderer boundary', () => {
   test('preserves the canonical graph palette', () => {
@@ -75,12 +75,12 @@ describe('Graph3D shared renderer boundary', () => {
     expect(disposals).toBe(1);
   });
 
-  test('moves renderer ownership out of the retained Svelte tree', () => {
-    const panel = readFileSync('frontend/src/lib/view/panels/graph3d/Graph3DPanel.svelte', 'utf8');
-    const visuals = readFileSync('frontend/packages/ui/src/graph/graph3d-visuals.ts', 'utf8');
+  test('keeps renderer ownership in shared UI behind the React scene owner', () => {
+    const panel = readFileSync('frontend/apps/ops/src/workspace/graph/ops-graph-scene.ts', 'utf8');
+    const visuals = readFileSync('frontend/packages/ui/src/graph/three/visuals/graph3d-visuals.ts', 'utf8');
 
-    expect(panel).toContain('packages/ui/src/graph/graph3d-renderer');
-    expect(visuals).toContain("from './graph3d-renderer'");
-    expect(() => readFileSync('frontend/src/lib/view/panels/graph3d/graph3d-renderer.ts', 'utf8')).toThrow();
+    expect(panel).toContain('packages/ui/src/graph/three/core/graph3d-renderer');
+    expect(visuals).toContain("from '../core/graph3d-renderer'");
+    expect(() => readFileSync('frontend/apps/ops/src/workspace/graph/graph3d-renderer.ts', 'utf8')).toThrow();
   });
 });

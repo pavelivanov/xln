@@ -88,7 +88,7 @@ export type WalletMarketProjection = WalletPaymentProjection & Readonly<{
   activity: readonly WalletMarketActivityEvent[];
   activityKind: WalletMarketActivityKind;
   activityPage: number;
-  activityNextBeforeHeight: number | null;
+  activityNextCursor: string | null;
 }>;
 
 export type WalletMarketContext = Readonly<{
@@ -433,6 +433,6 @@ export const decodeWalletMarketProjection = (
     activity: activity.events,
     activityKind: payload.activityKind,
     activityPage: payload.activityPage,
-    activityNextBeforeHeight: activity.nextBeforeHeight,
+    activityNextCursor: activity.nextCursor,
   };
 };

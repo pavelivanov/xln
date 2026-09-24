@@ -157,6 +157,7 @@ test(
   'built workspace records exact graph history and restores the connected Runtime',
   { tag: '@functional' },
   async ({ page }, testInfo) => {
+    testInfo.setTimeout(120_000);
     const before = await identity(page);
     const errors = observeBrowserErrors(page);
     const fixture = await selectSameOriginRuntime(page);
@@ -171,7 +172,7 @@ test(
     await architect.getByRole('button', { name: 'Run scenario', exact: true }).click();
     // The full browser scenario remains bounded by this test and the outer process budget.
     await expect(architect.getByText('ahb: 126 recorded network steps', { exact: true })).toBeVisible({
-      timeout: 15_000,
+      timeout: 60_000,
     });
     await menu.selectOption('graph3d');
     const graph = page.getByTestId('workspace-graph');

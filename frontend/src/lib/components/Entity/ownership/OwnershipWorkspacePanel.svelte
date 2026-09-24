@@ -9,7 +9,7 @@ import { isNumberedEntity, toEntityId } from "@xln/core/api/public/runtime-modul
 import type { EntityReplica } from "../../../../../packages/ui/src/workspace/ui-types";
 import { getXLN, submitEntityInputs } from "../../../../../bridges/runtime/xln-store";
 import { toasts } from "../../../../../packages/browser/src/workspace/toast-store";
-import { requireRuntimeEnv } from "../../../../../bridges/wallet/entity-panel-model";
+import { requireRuntimeEnv } from "../../../../../bridges/wallet/entity/entity-panel-model";
 import type { ExternalToken } from "../../../../../packages/ui/src/entity/assets/entity-asset-catalog";
 import OwnershipPanel from "./OwnershipPanel.svelte";
 import {

@@ -3,10 +3,10 @@ import { describe, expect, test } from 'bun:test';
 import {
   emptyEntityWorkspaceAccounts,
   projectEntityWorkspaceAccounts,
-} from '../../../../frontend/packages/runtime-client/src/entity/entity-workspace-accounts';
+} from '../../../../frontend/packages/runtime-client/src/entity/workspace/entity-workspace-accounts';
 import {
   projectEntityWorkspaceContext,
-} from '../../../../frontend/packages/runtime-client/src/entity/entity-workspace-context';
+} from '../../../../frontend/packages/runtime-client/src/entity/workspace/entity-workspace-context';
 import { formatEntityWorkspaceTimestamp } from '../../../../frontend/packages/ui/src/entity/settings/entity-workspace-display';
 
 const account = (

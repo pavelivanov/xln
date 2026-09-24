@@ -1,4 +1,4 @@
-import type { EntityWorkspaceConsensusEvidence } from '../../../../runtime-client/src/entity/entity-workspace-consensus-evidence';
+import type { EntityWorkspaceConsensusEvidence } from '../../../../runtime-client/src/entity/workspace/entity-workspace-consensus-evidence';
 import { formatAddress, formatEntityWorkspaceTimestamp } from '../settings/entity-workspace-display';
 import './entity-workspace-consensus-panel.css';
 

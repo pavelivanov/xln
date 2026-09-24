@@ -13,11 +13,11 @@ import { compareStableText } from "../../../../../packages/ui/src/stable-compare
   import { activeRuntimeId, runtimeOperations, runtimes, type Runtime } from "../../../../../bridges/runtime/runtime-store";
 import { runtimeControllerHandle } from "../../../../../bridges/runtime/runtime-controller-store";
 import { runtimeView } from "../../../../../bridges/runtime/runtime-view-store";
-import { runtimeGraphLiveFrameCache, watchRuntimeGraphFrameCache } from "../../../../../bridges/runtime/runtime-graph-frame-cache";
+import { runtimeGraphLiveFrameCache, watchRuntimeGraphFrameCache } from "../../../../../bridges/runtime/network/runtime-graph-frame-cache";
 import { runtimeGraphCanonicity, runtimeGraphControlOperations, runtimeGraphScope } from "../../../../../packages/browser/src/graph/runtime-graph-control-store";
 import { ImmersiveWalletSurface } from "$lib/network3d/ImmersiveWalletSurface";
 import { registerDebugSurface } from "../../../../../packages/browser/src/runtime/debug-surface";
-import { networkMachineRuntime } from "../../../../../bridges/runtime/network-machine-runtime-store";
+import { networkMachineRuntime } from "../../../../../bridges/runtime/network/network-machine-runtime-store";
 import { mergeRuntimeGraphProjections, requireActionableGraphNodeRuntimeId, type MergedRuntimeGraph, type RuntimeGraphCanonicity, type RuntimeGraphProjection } from "../../../../../packages/ui/src/graph/runtime-graph-projection";
 import { materializeRuntimeGraphReplicas } from "../../../../../packages/ui/src/graph/runtime-graph-render";
 import { connectedRuntimeGraphEntityIds, resolveRuntimeGraphLayout, type RuntimeGraphLayoutCache } from "../../../../../packages/ui/src/graph/runtime-graph-layout";
@@ -38,9 +38,9 @@ import {
   graphReserveValue,
   type GraphPaymentRoute,
   type GraphReplicaLike,
-} from "../../../../../packages/ui/src/graph/graph3d-helpers";
+} from "../../../../../packages/ui/src/graph/three/core/graph3d-helpers";
 import { buildBirdViewSettings, readBirdViewSettings, writeBirdViewSettings, type BirdViewSettings } from "../../../../../packages/browser/src/graph/graph3d-settings";
-import { createGraphRenderer, detachGraphObject3D, disposeGraphObject3D, getGraphThemeColors, type GraphRenderer } from "../../../../../packages/ui/src/graph/graph3d-renderer";
+import { createGraphRenderer, detachGraphObject3D, disposeGraphObject3D, getGraphThemeColors, type GraphRenderer } from "../../../../../packages/ui/src/graph/three/core/graph3d-renderer";
 import {
   buildGraphAccountVisuals,
   createBlockContainer,
@@ -49,15 +49,15 @@ import {
   deriveGraphEntry,
   getAccountTokenDelta,
   graphAccountMempoolCount,
-} from "../../../../../packages/ui/src/graph/graph3d-visuals";
-import type { GraphConnectionData, GraphEntityData, GraphEntityProfile, GraphFrameActivity, GraphJBlockHistoryEntry, GraphRendererMode, GraphRipple, GraphTransactionLike, GraphXLNRuntime } from "../../../../../packages/ui/src/graph/graph3d-types";
+} from "../../../../../packages/ui/src/graph/three/visuals/graph3d-visuals";
+import type { GraphConnectionData, GraphEntityData, GraphEntityProfile, GraphFrameActivity, GraphJBlockHistoryEntry, GraphRendererMode, GraphRipple, GraphTransactionLike, GraphXLNRuntime } from "../../../../../packages/ui/src/graph/three/core/graph3d-types";
 import { buildRuntimeGraphProjections } from "./graph3d-runtime-projections";
-import { collectGraphTokenIds, getGraphEntitySizeForToken } from "../../../../../packages/ui/src/graph/graph3d-actions";
+import { collectGraphTokenIds, getGraphEntitySizeForToken } from "../../../../../packages/ui/src/graph/three/interaction/graph3d-actions";
 import {
   bindGraphControlsLifecycle,
   bindGraphViewportLifecycle,
   type GraphLifecycleBinding,
-} from "../../../../../packages/ui/src/graph/graph3d-lifecycle";
+} from "../../../../../packages/ui/src/graph/three/core/graph3d-lifecycle";
 import {
   createGraph3dSceneInputView,
   graph3dSceneTransactionOf,
@@ -67,18 +67,18 @@ import {
   createGraphGrid,
   createGraphJMachine,
   startProportionalBroadcast,
-} from "../../../../../packages/ui/src/graph/graph3d-scene-primitives";
+} from "../../../../../packages/ui/src/graph/three/visuals/graph3d-scene-primitives";
 import {
   createBroadcastRippleMesh,
   createDirectionalLightningMesh,
-} from "../../../../../packages/ui/src/graph/graph3d-visual-effects";
+} from "../../../../../packages/ui/src/graph/three/visuals/graph3d-visual-effects";
 import {
   createEntityLabel,
   createGraphEntityNode,
   createMempoolIndicator,
   positionEntityLabel,
   positionMempoolIndicator,
-} from "../../../../../packages/ui/src/graph/graph3d-entity-visuals";
+} from "../../../../../packages/ui/src/graph/three/visuals/graph3d-entity-visuals";
 import {
   beginGraphEntityDrag,
   beginGraphGesture,
@@ -96,16 +96,16 @@ import {
   updateGraphSelectionHighlight,
   type GraphGestureOutcome,
   type GraphXrGrab,
-} from "../../../../../packages/ui/src/graph/graph3d-interaction";
+} from "../../../../../packages/ui/src/graph/three/interaction/graph3d-interaction";
 import {
   applyGraphCameraPose,
   applyGraphCameraTarget,
   fitGraphCameraToEntities,
-} from "../../../../../packages/ui/src/graph/graph3d-camera";
+} from "../../../../../packages/ui/src/graph/three/core/graph3d-camera";
 import {
   highlightGraphHoverTarget,
   resolveGraphHoverHit,
-} from "../../../../../packages/ui/src/graph/graph3d-hover";
+} from "../../../../../packages/ui/src/graph/three/interaction/graph3d-hover";
 let showMiniPanel = false;
 let miniPanelEntityId = "";
 let miniPanelEntityName = "";

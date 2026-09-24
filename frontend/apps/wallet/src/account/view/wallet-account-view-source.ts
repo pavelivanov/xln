@@ -29,7 +29,7 @@ export class WalletAccountViewSource {
   private readonly read = async () => {
     this.requireCurrent();
     const [bridge, frame] = await Promise.all([
-      import('../../../../../bridges/wallet/wallet-canonical-hub-discovery'),
+      import('../../../../../bridges/wallet/canonical/wallet-canonical-hub-discovery'),
       createWalletRuntimeQueryClient(this.adapter).readViewFrame({ entityId: this.entityId, booksLimit: 1, accountsLimit: 200,
         ...(this.counterpartyId ? { accountId: this.counterpartyId } : {}) }),
     ]);
@@ -47,7 +47,7 @@ export class WalletAccountViewSource {
     });
     this.release = this.observer.subscribe(() => { if (this.observer) this.patch(this.observer.getSnapshot()); });
     const lifetime = this.lifetime;
-    void import('../../../../../bridges/wallet/wallet-canonical-hub-discovery').then(bridge => {
+    void import('../../../../../bridges/wallet/canonical/wallet-canonical-hub-discovery').then(bridge => {
       if (!lifetime.signal.aborted) this.releasePresentation = bridge.subscribeCanonicalAccountView(() => { void this.refresh(); });
     }, cause => { if (!lifetime.signal.aborted) this.patch({ loading: false, error: walletRuntimeReadErrorMessage(cause), data: null }); });
   };

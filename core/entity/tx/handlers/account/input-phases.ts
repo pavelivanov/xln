@@ -31,6 +31,7 @@ import { countOp } from '../../../../support/performance/op-counters';
 import { MalformedEntityFrameInputError } from '../../processing/invariant-errors';
 import {
   applySuccessfulAccountInput,
+  capturePriorSwapCancelScopes,
   type CommittedAccountEffects,
 } from './committed-input';
 import { handleUnsafeAccountFrame } from './dispute-input';
@@ -64,6 +65,7 @@ export type AccountConsensusOutcome = {
 export type PreparedAccountConsensusRun = Readonly<{
   pendingBeforeTxs: string[];
   inputFrameTxs: string[];
+  priorSwapCancelScopeByOffer: ReadonlyMap<string, boolean>;
   securityContext: AccountInputSecurityContext;
 }>;
 
@@ -83,10 +85,12 @@ const rejectEmptyAccountInput = (context: AccountInputPhaseContext): never => {
 const finishAppliedAccountInput = async (
   context: AccountInputPhaseContext,
   result: Extract<Awaited<ReturnType<typeof applyAccountInput>>, { ok: true }>,
+  prepared: PreparedAccountConsensusRun,
 ): Promise<AccountConsensusOutcome> => {
   const { env, state, input, account, counterpartyId, createdAccount, effects, options } = context;
   const flushWork = await applySuccessfulAccountInput({
     env, state, input, account, counterpartyId, createdAccount, result, effects,
+    priorSwapCancelScopeByOffer: prepared.priorSwapCancelScopeByOffer,
     ...(options ? { options } : {}),
     checkpointProfile: context.checkpointProfile,
   });
@@ -171,8 +175,9 @@ const finishRejectedAccountInput = (
 export const finishAccountConsensusInput = async (
   context: AccountInputPhaseContext,
   result: Awaited<ReturnType<typeof applyAccountInput>>,
+  prepared: PreparedAccountConsensusRun,
 ): Promise<AccountConsensusOutcome> => {
-  if (result.ok) return finishAppliedAccountInput(context, result);
+  if (result.ok) return finishAppliedAccountInput(context, result, prepared);
   if (isAccountInputDispute(result)) return finishDisputedAccountInput(context, result);
   if (result.disposition === 'rejected') return finishRejectedAccountInput(context, result);
   return assertNeverAccountResult(result);
@@ -195,6 +200,15 @@ export const prepareAccountConsensusRun = (
 
   const pendingBeforeTxs = account.pendingFrame?.accountTxs.map(tx => tx.type) ?? [];
   const inputFrameTxs = incomingProposal?.frame.accountTxs.map(tx => tx.type) ?? [];
+  const priorSwapCancelScopeByOffer = capturePriorSwapCancelScopes(
+    account,
+    state,
+    context.counterpartyId,
+    [
+      ...(account.pendingFrame?.accountTxs ?? []),
+      ...(incomingProposal?.frame.accountTxs ?? []),
+    ],
+  );
   accountHandlerLog.debug('frame.process', {
     from: shortId(input.fromEntityId),
     pending: account.pendingFrame?.height ?? null,
@@ -207,6 +221,7 @@ export const prepareAccountConsensusRun = (
   return {
     pendingBeforeTxs,
     inputFrameTxs,
+    priorSwapCancelScopeByOffer,
     securityContext: {
       entityTimestamp: state.timestamp,
       finalizedJHeight: state.lastFinalizedJHeight ?? 0,

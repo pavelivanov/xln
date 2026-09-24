@@ -18,7 +18,7 @@
   import StackManager from '$lib/components/Settings/StackManager.svelte';
   import TabStylePicker from '$lib/components/Settings/TabStylePicker.svelte';
   import { TAB_STYLE_OPTIONS } from '../../../../packages/ui/src/ui-style-options';
-  import { settings as appSettings, settingsOperations } from '../../../../packages/browser/src/settings-store';
+  import { settings as appSettings, settingsOperations } from '../../../../packages/browser/src/preferences/settings-store';
   import { networkMachineConfig, networkMachineOperations } from '../../../../packages/browser/src/graph/network-machine-store';
   import type { NetworkMachineTimelineMode } from '../../../../packages/runtime-client/src/scenario/network-machine';
   import type { EnvSnapshot, RuntimeReplica } from '@xln/core/api/public/runtime-module';

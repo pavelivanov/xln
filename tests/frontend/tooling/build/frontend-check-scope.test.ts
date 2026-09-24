@@ -77,7 +77,7 @@ describe('scoped frontend checks', () => {
     expect(
       selectChangedSurfaces([
         'frontend/apps/wallet/src/main.tsx',
-        'frontend/packages/browser/src/display-preferences.ts',
+        'frontend/packages/browser/src/preferences/display-preferences.ts',
       ]),
     ).toEqual(['site', 'docs', 'wallet', 'ops']);
     expect(selectChangedSurfaces(['package.json'])).toEqual(['site', 'docs', 'wallet', 'ops']);

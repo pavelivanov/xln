@@ -18,7 +18,7 @@ const baseInput = {
   selectedTypes: [],
   search: '',
   mode: 'paged' as const,
-  beforeHeight: null,
+  cursor: null,
 };
 
 test('activity history formats raw amounts with exact token metadata', () => {
@@ -59,10 +59,10 @@ test('activity history expands bounded scan window for search and timeframe filt
   expect(buildActivityHistoryReadQuery({
     ...baseInput,
     search: ' payment ',
-    beforeHeight: 50,
+    cursor: 'cursor-50',
   })).toMatchObject({
     q: 'payment',
-    beforeHeight: 50,
+    cursor: 'cursor-50',
     scanLimit: FILTERED_ACTIVITY_SCAN_LIMIT,
   });
 

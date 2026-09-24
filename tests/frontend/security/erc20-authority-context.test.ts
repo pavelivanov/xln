@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 const source = readFileSync(
-  resolve(process.cwd(), 'frontend/src/lib/components/Entity/workspace/shell/EntityPanelTabs.svelte'),
+  resolve(process.cwd(), 'frontend/bridges/wallet/canonical/wallet-canonical-external-provider.ts'),
   'utf8',
 );
 
@@ -16,27 +16,23 @@ const section = (start: string, end: string): string => {
 };
 
 test('ERC20 approval pins signer authority before every await and verifies on the same adapter', () => {
-  const context = section('async function getMoveAllowanceContext', 'async function requestExternalGasFaucet');
-  expect(context.indexOf('captureSignerAuthorityContext(context)')).toBeLessThan(
-    context.indexOf('await getXLN()'),
-  );
-
-  const approval = section('async function approveMoveExternalAllowance', 'function getDerivedDeltaForAccount');
-  expect(approval).toContain('getSignerPrivateKeyForAuthority(authority)');
-  expect(approval).toContain('assertSignerAuthorityContextCurrent(authority, "move-erc20-allowance-before-send")');
-  expect(approval).toContain('jadapter.getErc20Allowance(token.address, owner, spender)');
+  const approval = section('export const approveCanonicalWalletExternalAsset', '};\n');
+  expect(approval).toContain('const context = await assertCurrent(request.binding);');
+  expect(approval).toContain('const privateKey = requirePrivateKey(context);');
+  expect(approval).toContain('await assertCurrent(request.binding);');
+  expect(approval).toContain('await context.adapter.approveErc20(');
+  expect(approval).toContain('await context.adapter.getErc20Allowance(');
   expect(approval).not.toContain('getActiveSignerPrivateKey()');
-  expect(approval).not.toContain('getCurrentLiveEntityReplica()');
-  expect(approval.indexOf('assertSignerAuthorityContextCurrent')).toBeLessThan(
-    approval.indexOf('await jadapter.approveErc20'),
+  expect(approval.indexOf('await assertCurrent(request.binding);')).toBeLessThan(
+    approval.indexOf('await context.adapter.approveErc20'),
   );
 });
 
 test('external transfer cannot pair a captured adapter with a later signer key', () => {
-  const transfer = section('async function sendExternalAsset', 'async function collateralToReserve');
-  expect(transfer).toContain('captureSignerAuthorityContext("send-external-asset")');
-  expect(transfer).toContain('getCurrentEntityJAdapter(xln, authority.env');
-  expect(transfer).toContain('getSignerPrivateKeyForAuthority(authority)');
-  expect(transfer).toContain('assertSignerAuthorityContextCurrent(authority, "send-external-asset-before-send")');
+  const transfer = section('export const transferCanonicalWalletExternalAsset', 'export const approveCanonicalWalletExternalAsset');
+  expect(transfer).toContain('const context = await assertCurrent(request.binding);');
+  expect(transfer).toContain('const privateKey = requirePrivateKey(context);');
+  expect(transfer).toContain('await assertCurrent(request.binding);');
+  expect(transfer).toContain('context.adapter.transferErc20(privateKey');
   expect(transfer).not.toContain('getActiveSignerPrivateKey()');
 });

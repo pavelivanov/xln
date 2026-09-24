@@ -83,6 +83,10 @@ export function WalletCrossMarketTicket({
         <p>No distinct-jurisdiction user and Hub route is committed to this Runtime.</p>
       ) : (
         <>
+          <p className="wallet-cross-safety" data-testid="cross-j-safety-banner" role="note">
+            Stay online for this cross-network swap. Cross-jurisdiction execution can require up to 65,535 steps,
+            and any unfilled remainder must be cancelled manually.
+          </p>
           <div className="wallet-cross-fields">
             <label>
               <span>Target route</span>

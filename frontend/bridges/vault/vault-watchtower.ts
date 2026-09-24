@@ -20,7 +20,7 @@ import {
   normalizeRuntimeId,
   type RecoveryTowerConfig,
   type Runtime,
-} from './vault-recovery';
+} from './recovery/vault-recovery';
 
 export type LastResortTowerAppointmentUpload = {
   tower: RecoveryTowerConfig;

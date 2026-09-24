@@ -38,7 +38,7 @@ describe('vault runtime creation lock', () => {
 
   test('createRuntime serializes concurrent creation for the same runtime id', () => {
     const source = read('frontend/bridges/vault/vault-store.ts');
-    const recoverySource = read('frontend/bridges/vault/vault-recovery.ts');
+    const recoverySource = read('frontend/bridges/vault/recovery/vault-recovery.ts');
     const functionStart = source.indexOf('async createRuntime(name: string, seed: string');
     expect(functionStart).toBeGreaterThan(0);
     const functionSource = source.slice(functionStart, source.indexOf('\n  // Select runtime', functionStart));
@@ -86,7 +86,7 @@ describe('vault runtime creation lock', () => {
     expect(functionSource).toContain('stopRuntimeLoop: (target, timeoutMs) => xln.stopRuntimeLoopAndWait(target, timeoutMs)');
     expect(functionSource).toContain('stopP2P: (target, timeoutMs) => xln.stopP2PAndWait(target, timeoutMs)');
     expect(functionSource).toContain('{ p2pShutdownTimeoutMs: RUNTIME_P2P_SHUTDOWN_TIMEOUT_MS }');
-    expect(read('frontend/bridges/vault/vault-recovery.ts'))
+    expect(read('frontend/bridges/vault/recovery/vault-recovery.ts'))
       .toContain('export const RUNTIME_P2P_SHUTDOWN_TIMEOUT_MS = 10_000;');
   });
 
@@ -106,7 +106,7 @@ describe('vault runtime creation lock', () => {
 
   test('page unload synchronously fences external ingress before navigation aborts requests', () => {
     const store = read('frontend/bridges/vault/vault-store.ts');
-    const layout = read('frontend/src/routes/app/+layout.svelte');
+    const layout = read('frontend/bridges/runtime/browser/browser-runtime-session.ts');
     const operationStart = store.indexOf('beginRuntimePageUnload(): void');
     const operationEnd = store.indexOf('\n  async suspendAllRuntimeActivity()', operationStart);
 
@@ -116,16 +116,10 @@ describe('vault runtime creation lock', () => {
     expect(operationSource).toContain('xln.stopJurisdictionWatchers(env);');
     expect(operationSource).toContain('xln.stopP2P(env);');
 
-    const mountStart = layout.indexOf('onMount(() => {');
-    const mountEnd = layout.indexOf('\n  });', mountStart);
-    const mountSource = layout.slice(mountStart, mountEnd);
-    const pageHideFence = mountSource.indexOf('vaultOperations.beginRuntimePageUnload();');
-    const lockInitialization = mountSource.indexOf('initializeActiveTabLock(');
-
-    expect(pageHideFence).toBeGreaterThan(0);
-    expect(lockInitialization).toBeGreaterThan(pageHideFence);
-    expect(mountSource).toContain("window.addEventListener('pagehide', handlePageHide);");
-    expect(mountSource).toContain("window.removeEventListener('pagehide', handlePageHide);");
+    expect(layout).toContain('const activeTabLock = createActiveTabLockController(');
+    expect(layout).toContain('acquireLock: handler => activeTabLock.initializeActiveTabLock(handler)');
+    expect(layout).toContain('if (!event.persisted) pageUnloadFence();');
+    expect(layout).toContain("window.addEventListener('pagehide', handlePageHide);");
   });
 
   test('runtime restore does not rewrite existing signer jurisdiction labels', () => {
@@ -164,14 +158,14 @@ describe('vault runtime creation lock', () => {
   test('locked runtimes cannot derive signer keys and render the vault gate', () => {
     const store = read('frontend/bridges/vault/vault-store.ts');
     const authority = read('frontend/bridges/vault/vault-authority-lifecycle.ts');
-    const panel = read('frontend/src/lib/view/UserModePanel.svelte');
+    const panel = read('frontend/apps/wallet/src/app-shell.tsx');
 
     expect(store).toContain('if (!runtime?.seed) return null;');
     expect(store).toContain('if (!runtime?.seed || signerIndex >= runtime.signers.length) return null;');
     expect(store).toContain('assertRuntimeAuthorityLease(runtime);');
     expect(authority).toContain('VAULT_UNLOCK_EXPIRED:');
     expect(store).toContain('await vaultOperations.lockExpiredRuntimeLeases();');
-    expect(panel).toContain('const activeVaultLocked = $derived(');
-    expect(panel).toContain('(!hasSigner || activeVaultLocked)');
+    expect(panel).toContain("runtime.state === 'local-standby' || runtime.state === 'local-error'");
+    expect(panel).toContain('<WalletRuntimeBoundary runtime={runtime} />');
   });
 });

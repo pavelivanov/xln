@@ -309,16 +309,14 @@ describe('production startup wiring', () => {
     const server = readFileSync(join(repoRoot, 'core/api/server/index.ts'), 'utf8');
     const packagedDaemon = readFileSync(join(repoRoot, 'packages/npm/xlnfinance/lib/process.js'), 'utf8');
     const formationPanel = readFileSync(
-      join(repoRoot, 'frontend/src/lib/components/Entity/onboarding/formation/FormationPanel.svelte'),
+      join(repoRoot, 'frontend/apps/wallet/src/onboarding/wallet-formation.tsx'),
       'utf8',
     );
     expect(server).toContain("process.env['XLN_LOCAL_SIMULATION'] === 'true'");
     expect(server).toContain('JADAPTER_MODE_REQUIRED:set_USE_ANVIL_or_XLN_LOCAL_SIMULATION');
     expect(server).toContain('JADAPTER_MODE_CONFLICT:USE_ANVIL_and_XLN_LOCAL_SIMULATION');
     expect(packagedDaemon).toContain("XLN_LOCAL_SIMULATION: 'true'");
-    expect(formationPanel).toContain(
-      'jurisdictions.filter(jurisdiction => !isTronChainId(Number(jurisdiction.chainId)))',
-    );
+    expect(formationPanel).toContain('view.projection.jurisdictions.filter(j => !isTronChainId(Number(j.chainId)))');
     expect(existsSync(join(repoRoot, 'scripts/start-prod-hub.sh'))).toBe(false);
   });
 
@@ -374,7 +372,7 @@ describe('production startup wiring', () => {
 
   test('production public discovery, recovery, and faucet routes are operational by default', () => {
     const runtimeCreation = readFileSync(
-      join(repoRoot, 'frontend/src/lib/components/Views/RuntimeCreation.svelte'),
+      join(repoRoot, 'frontend/bridges/vault/wallet-runtime-opening-adapter.ts'),
       'utf8',
     );
     const xlnStore = readFileSync(join(repoRoot, 'frontend/bridges/runtime/xln-store.ts'), 'utf8');
@@ -382,7 +380,7 @@ describe('production startup wiring', () => {
     const hubNode = readFileSync(join(repoRoot, 'core/orchestrator/hub-node.ts'), 'utf8');
     const vaultStore = readFileSync(join(repoRoot, 'frontend/bridges/vault/vault-store.ts'), 'utf8');
 
-    expect(runtimeCreation).toContain('buildRemoteRuntimeRecoveryPeerSources({ runtimeId: recoveryRuntimeId })');
+    expect(runtimeCreation).toContain('buildRemoteRuntimeRecoveryPeerSources({ runtimeId: expectedRuntimeId })');
     expect(runtimeCreation).not.toContain("url.searchParams.set('allowPartial', '1')");
     expect(xlnStore).toContain("importSource.searchParams.set('access', 'admin')");
     expect(xlnStore).not.toContain("importSource.searchParams.set('allowPartial', '1')");
@@ -441,7 +439,7 @@ describe('production startup wiring', () => {
 
   test('wallet entity configs commit the imported jurisdiction block time', () => {
     const vaultStore = readFileSync(join(repoRoot, 'frontend/bridges/vault/vault-store.ts'), 'utf8');
-    const vaultRecovery = readFileSync(join(repoRoot, 'frontend/bridges/vault/vault-recovery.ts'), 'utf8');
+    const vaultRecovery = readFileSync(join(repoRoot, 'frontend/bridges/vault/recovery/vault-recovery.ts'), 'utf8');
     const signerConfig = extractSourceBlock(
       vaultRecovery,
       'export const buildSignerEntityConfig = (',

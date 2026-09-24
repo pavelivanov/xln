@@ -19,7 +19,7 @@ import { requireSignerIdForEntity } from '../../../../../packages/runtime-client
 import { isMapLike, unwrapLiveRuntimeEnv } from '../../../../../packages/browser/src/runtime/live-runtime-env';
 import { prewarmCounterpartyProfiles } from '../../../../../packages/runtime-client/src/runtime/p2p-prefetch';
 import { requireTokenDecimals } from '../../../../../packages/runtime-client/src/token-metadata';
-import { buildEntityPanelView } from '../../../../../bridges/wallet/entity-panel-model';
+import { buildEntityPanelView } from '../../../../../bridges/wallet/entity/entity-panel-model';
 import { formatEntityId } from '../../../../../packages/ui/src/format';
 import {
   buildSwapPanelRuntimeView,

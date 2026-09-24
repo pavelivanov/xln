@@ -60,7 +60,7 @@ export interface ComponentState {
 export type { ThemeName } from '../theme-model';
 
 // ThemeColors interface is defined in utils/themes.ts (single source of truth)
-export type { ThemeColors } from '../../../browser/src/themes';
+export type { ThemeColors } from '../../../browser/src/preferences/themes';
 
 export type BarColorMode = 'rgy' | 'theme' | 'token';
 export type BarLayoutMode = 'center' | 'sides';

@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 
 import { opsPageMetadata, resolveOpsPage } from '../../../../frontend/apps/ops/src/ops-model';
-import { resolveEntityPanelDeepLinkFromLocation } from '../../../../frontend/packages/runtime-client/src/entity/entity-workspace-navigation';
+import { resolveEntityPanelDeepLinkFromLocation } from '../../../../frontend/packages/runtime-client/src/entity/workspace/entity-workspace-navigation';
 
 describe('React Entity workspace shell', () => {
   test('owns the isolated candidate route with explicit metadata', () => {

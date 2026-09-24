@@ -1,40 +1,39 @@
 import { describe, expect, test } from 'bun:test';
 import { readFileSync } from 'node:fs';
 
-describe('settings panel diagnostics', () => {
-  test('surfaces storage failures without raw console output', () => {
-    const source = readFileSync('frontend/src/lib/view/panels/SettingsPanel.svelte', 'utf8');
-    const shared = readFileSync('frontend/packages/runtime-client/src/panels/settings-panel-view.ts', 'utf8');
+describe('React settings panel diagnostics', () => {
+  test('surfaces preference write failures without raw console output', () => {
+    const panel = readFileSync('frontend/apps/ops/src/workspace/settings/ops-settings-panel.tsx', 'utf8');
 
-    expect(source).not.toContain('console.error');
-    expect(source).not.toContain('console.warn');
-    expect(source).toContain('data-testid="settings-storage-error"');
-    expect(source).toContain('formatSettingsPanelError as formatSettingsError');
-    expect(shared).toContain("Settings ${action} failed");
+    expect(panel).toContain("const [issue, setIssue] = useState('');");
+    expect(panel).toContain('catch (cause) { setIssue(cause instanceof Error ? cause.message : String(cause)); }');
+    expect(panel).toContain('<p role="alert">{issue || display.issue}</p>');
+    expect(panel).not.toContain('console.error');
+    expect(panel).not.toContain('console.warn');
   });
 
-  test('loads browser settings only from the mount path', () => {
-    const source = readFileSync('frontend/src/lib/view/panels/SettingsPanel.svelte', 'utf8');
-    // Call sites only — the `async function loadSettings()` declaration is excluded.
-    const loadCalls = source.match(/(?<!function )loadSettings\(\)/g) ?? [];
+  test('loads persisted view settings once at source construction', () => {
+    const preferences = readFileSync('frontend/apps/ops/src/workspace/graph/ops-graph-preferences.ts', 'utf8');
 
-    expect(loadCalls).toHaveLength(1);
-    expect(source).not.toContain('JSON.parse(stored).rendererMode');
+    expect(preferences).toContain('const savedView = storage?.getItem(VIEW_SETTINGS_STORAGE_KEY);');
+    expect(preferences).toContain('savedView ? parseViewSettings(savedView) : createDefaultViewSettings()');
+    expect(preferences.match(/getItem\(VIEW_SETTINGS_STORAGE_KEY\)/g)).toHaveLength(1);
   });
 
-  test('replays persisted settings to Graph3D so they survive a reload', () => {
-    const source = readFileSync('frontend/src/lib/view/panels/SettingsPanel.svelte', 'utf8');
+  test('persists updates through the same observable source consumed by Graph3D', () => {
+    const preferences = readFileSync('frontend/apps/ops/src/workspace/graph/ops-graph-preferences.ts', 'utf8');
 
-    expect(source).toContain('loadSettings().then(broadcastAllSettings)');
-    expect(source).toContain("panelBridge.emit('settings:update', { key, value })");
+    expect(preferences).toContain('storage?.setItem(VIEW_SETTINGS_STORAGE_KEY, serializeViewSettings(next));');
+    expect(preferences).toContain('opsGraphViewSettings.set(next);');
   });
 
-  test('keeps WebGPU opt-in because API presence does not prove adapter availability', () => {
-    const source = readFileSync('frontend/src/lib/view/panels/SettingsPanel.svelte', 'utf8');
+  test('keeps WebGPU explicit opt-in because API presence does not prove adapter availability', () => {
+    const panel = readFileSync('frontend/apps/ops/src/workspace/settings/ops-settings-panel.tsx', 'utf8');
     const shared = readFileSync('frontend/packages/runtime-client/src/panels/settings-panel-view.ts', 'utf8');
 
     expect(shared).toContain("rendererMode: 'webgl'");
-    expect(source).not.toContain('settings.rendererMode = \'webgpu\'');
-    expect(source).not.toContain('if (typeof navigator');
+    expect(panel).toContain('<option value="webgpu">WebGPU</option>');
+    expect(panel).not.toContain("rendererMode = 'webgpu'");
+    expect(panel).not.toContain('if (typeof navigator');
   });
 });

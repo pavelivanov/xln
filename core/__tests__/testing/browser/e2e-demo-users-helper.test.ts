@@ -79,12 +79,13 @@ describe('e2e demo user helper', () => {
   });
 
   test('Account swap history starts only from the explicit Closed-tab action', () => {
-    const panel = readFileSync(join(repoRoot, 'frontend/src/lib/components/Entity/swap/SwapPanel.svelte'), 'utf8');
-    const list = readFileSync(join(repoRoot, 'frontend/src/lib/components/Entity/swap/SwapOrderList.svelte'), 'utf8');
-    expect(panel).not.toContain('`${runtimeHeight}:${sourceEntityIdValue}:${activeOrderAccountId}`');
-    expect(panel).toContain('onSelectClosedHistory={requestClosedSwapHistory}');
-    expect(list).toContain('void onSelectClosedHistory();');
-    expect(list).toContain('onLoadOlderClosedHistory');
+    const view = readFileSync(join(repoRoot, 'frontend/apps/wallet/src/markets/wallet-market-activity-view.tsx'), 'utf8');
+    const source = readFileSync(join(repoRoot, 'frontend/apps/wallet/src/markets/wallet-market-source.ts'), 'utf8');
+    expect(view).toContain('disabled={projection.activityNextBeforeHeight === null}');
+    expect(view).toContain('onClick={() => source.selectOlderActivity()}');
+    expect(source).toContain('const activityPromise = client.readActivity({');
+    expect(source).toContain('beforeHeight: this.activityCursors[this.activityPage]');
+    expect(source).not.toContain('`${runtimeHeight}:${sourceEntityIdValue}:${activeOrderAccountId}`');
   });
 
   test('assists profile onboarding before waiting for runtime readiness', () => {

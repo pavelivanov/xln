@@ -1,8 +1,11 @@
 import type { EntityTx } from '../../../types/entity-tx';
 import { haltRuntimeFailure } from '../../../protocol/errors/failure-taxonomy';
+import { cloneIsolatedProtocolValue } from '../../../protocol/state/isolated-value-clone';
 import type { EntityOutput } from '../../types';
-import { cloneIsolatedEntityTxs } from '../../state/input-clone';
 import { getAccountOnlyEntityTx } from './envelope';
+
+const cloneOutputEntityTxs = (txs: readonly EntityTx[]): EntityTx[] =>
+  txs.map(tx => cloneIsolatedProtocolValue(tx, 'ENTITY_TX_CLONE'));
 
 const isNonMutatingWake = (output: EntityOutput): boolean =>
   Array.isArray(output.entityTxs) &&
@@ -62,7 +65,7 @@ export const materializeCommittedEntityOutputs = (
   if (requireRawAccountOutput(sourceEntityId, output, outputIndex)) {
     const entityTxs = output.entityTxs;
     if (!entityTxs) throw new Error(`ACCOUNT_OUTPUT_ENTITY_TXS_MISSING:index=${outputIndex}`);
-    return [{ ...output, entityId: output.entityId.trim().toLowerCase(), entityTxs: cloneIsolatedEntityTxs(entityTxs) }];
+    return [{ ...output, entityId: output.entityId.trim().toLowerCase(), entityTxs: cloneOutputEntityTxs(entityTxs) }];
   }
   if (!emitRuntimeOutputs) return [];
   const targetEntityId = output.entityId.trim().toLowerCase();
@@ -85,7 +88,7 @@ export const materializeCommittedEntityOutputs = (
         sourceEntityId: source,
         sourceSignerId: sourceSigner,
         targetEntityId,
-        entityTxs: cloneIsolatedEntityTxs(output.entityTxs),
+        entityTxs: cloneOutputEntityTxs(output.entityTxs),
       },
     }],
   }];

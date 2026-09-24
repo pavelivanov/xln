@@ -10,15 +10,15 @@ import {
 } from '../../../../frontend/apps/ops/src/entity-workspace/ops-entity-workspace-projection';
 import {
   emptyEntityWorkspaceActivity,
-} from '../../../../frontend/packages/runtime-client/src/entity/entity-workspace-activity';
+} from '../../../../frontend/packages/runtime-client/src/entity/workspace/entity-workspace-activity';
 import {
   emptyEntityWorkspaceAccounts,
   projectEntityWorkspaceAccounts,
-} from '../../../../frontend/packages/runtime-client/src/entity/entity-workspace-accounts';
+} from '../../../../frontend/packages/runtime-client/src/entity/workspace/entity-workspace-accounts';
 import {
   emptyEntityWorkspaceContext,
   projectEntityWorkspaceContext,
-} from '../../../../frontend/packages/runtime-client/src/entity/entity-workspace-context';
+} from '../../../../frontend/packages/runtime-client/src/entity/workspace/entity-workspace-context';
 import {
   emptyEntityWorkspaceHubPolicy,
   projectEntityWorkspaceHubPolicy,
@@ -26,11 +26,11 @@ import {
 import {
   emptyEntityWorkspaceConsensusEvidence,
   projectEntityWorkspaceConsensusEvidence,
-} from '../../../../frontend/packages/runtime-client/src/entity/entity-workspace-consensus-evidence';
+} from '../../../../frontend/packages/runtime-client/src/entity/workspace/entity-workspace-consensus-evidence';
 import {
   emptyEntityWorkspaceOwnership,
   projectEntityWorkspaceOwnership,
-} from '../../../../frontend/packages/runtime-client/src/entity/entity-workspace-ownership';
+} from '../../../../frontend/packages/runtime-client/src/entity/workspace/entity-workspace-ownership';
 import {
   emptyEntityWorkspaceProfile,
   projectEntityWorkspaceProfile,
@@ -38,8 +38,8 @@ import {
 import {
   emptyEntityWorkspaceReserves,
   projectEntityWorkspaceReserves,
-} from '../../../../frontend/packages/runtime-client/src/entity/entity-workspace-reserves';
-import { createEntityWorkspaceLiveState } from '../../../../frontend/packages/runtime-client/src/entity/entity-workspace-time-machine';
+} from '../../../../frontend/packages/runtime-client/src/entity/workspace/entity-workspace-reserves';
+import { createEntityWorkspaceLiveState } from '../../../../frontend/packages/runtime-client/src/entity/workspace/entity-workspace-time-machine';
 
 const REMOTE_SESSION = {
   mode: 'remote',
@@ -253,9 +253,9 @@ describe('React Entity workspace Runtime read boundary', () => {
       Bun.file('frontend/apps/ops/src/entity-workspace/ops-entity-workspace-source.ts').text(),
       Bun.file('frontend/apps/ops/src/entity-workspace/ops-entity-workspace-activity-controller.ts').text(),
     ]);
-    expect(source).toContain('this.activityController.select(this.snapshot.activity, beforeHeight)');
+    expect(source).toContain('this.activityController.select(this.snapshot.activity, cursor)');
     expect(controller).toContain("activity.status !== 'selected'");
-    expect(controller).toContain('beforeHeight !== activity.nextBeforeHeight');
+    expect(controller).toContain('cursor !== activity.nextCursor');
     expect(controller).toContain('this.dependencies.refreshHistory()');
     expect(controller).toContain('this.dependencies.refreshLive()');
   });

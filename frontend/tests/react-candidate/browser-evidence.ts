@@ -26,14 +26,25 @@ export const expectNoBrowserErrors = (errors: BrowserErrors): void => {
   expect(errors.consoleErrors).toEqual([]);
 };
 
-export const expectOnlyProxyFailures = (errors: BrowserErrors): void => {
+export const expectOnlyHttpFailures = (errors: BrowserErrors, status: number): void => {
   expect(errors.pageErrors).toEqual([]);
   expect(errors.consoleErrors.length).toBeGreaterThan(0);
-  for (const error of errors.consoleErrors) expect(error).toContain('status of 502');
+  for (const error of errors.consoleErrors) expect(error).toContain(`status of ${status}`);
 };
 
 export const expectPageContained = async (page: Page): Promise<void> => {
   await expect.poll(() => page.evaluate(() => document.body.scrollWidth <= window.innerWidth)).toBe(true);
+};
+
+const captureScreenshot = async (page: Page, path: string): Promise<Buffer> => {
+  try {
+    return await page.screenshot({ animations: 'disabled', fullPage: true, path });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    if (!message.includes('Page.captureScreenshot') || !message.includes('Unable to capture screenshot')) throw error;
+    await page.evaluate(() => new Promise<void>(resolve => requestAnimationFrame(() => resolve())));
+    return page.screenshot({ animations: 'disabled', fullPage: true, path });
+  }
 };
 
 export const screenshotEvidence = async (
@@ -42,7 +53,7 @@ export const screenshotEvidence = async (
   surfaceId: string,
 ): Promise<Buffer> => {
   const path = testInfo.outputPath(`${surfaceId}.png`);
-  const screenshot = await page.screenshot({ animations: 'disabled', fullPage: true, path });
+  const screenshot = await captureScreenshot(page, path);
   await testInfo.attach(`${surfaceId}-${testInfo.project.name}`, { contentType: 'image/png', path });
   return screenshot;
 };

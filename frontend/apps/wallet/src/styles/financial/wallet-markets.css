@@ -184,6 +184,7 @@
   color: #676e71;
   font-size: 0.7rem;
 }
+.wallet-cross-safety { padding: 0.75rem 0; color: #d5b77f !important; line-height: 1.55; border-top: 1px solid #4b402b; border-bottom: 1px solid #4b402b; }
 .wallet-cross-fields {
   display: grid;
   grid-template-columns: minmax(15rem, 1.25fr) repeat(2, minmax(12rem, 1fr));

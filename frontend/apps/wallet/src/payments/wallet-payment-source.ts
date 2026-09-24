@@ -1,4 +1,7 @@
-import type { RuntimeAdapter } from '../../../../../core/api/runtime-adapter/types';
+import type {
+  RuntimeAdapter,
+  RuntimeAdapterBatchPreflight,
+} from '../../../../../core/api/runtime-adapter/types';
 import type { EntityTx, RoutedEntityInput, RuntimeInput } from '@xln/core/api/public/runtime-module';
 import { runtimeHttpOriginFromWsUrl } from '../../../../packages/runtime-client/src/runtime/ws-url';
 import type {
@@ -14,8 +17,9 @@ import { normalizeEntityIdForRuntimeView } from '../../../../packages/runtime-cl
 import { requireWalletWorkspaceEntity, WalletWorkspaceSelection } from '../runtime/wallet-workspace-selection';
 import { requireWalletPaymentQuoteMatchesDraft, type WalletPaymentDraft } from './commands/wallet-payment-draft';
 import {
-  buildWalletBatchTx,
+  mergeWalletBatchPreflight,
   mergeWalletBatchRuntimeSubmission,
+  submitWalletBatchActionWithPreflight,
   type WalletBatchAction,
   type WalletBatchProjection,
 } from '../commands/wallet-batch-model';
@@ -47,6 +51,10 @@ import {
   type WalletSettlementApproval,
 } from './commands/wallet-settlement-approval-model';
 import { requireCurrentWalletSettlementExecution } from './commands/wallet-settlement-execution-model';
+import {
+  decodeWalletBatchPreflight,
+  formatWalletBatchReserveIssue,
+} from './commands/wallet-batch-preflight-model';
 import {
   createWalletRuntimeQueryClient,
   loadWalletRuntimeReadDependencies,
@@ -334,10 +342,25 @@ export class WalletPaymentSource {
     }
   };
 
+  readonly formatBatchReserveIssue = (issue: RuntimeAdapterBatchPreflight['draft']['issue']): string => {
+    if (!issue) return '';
+    return formatWalletBatchReserveIssue(
+      issue,
+      (tokenId, amount) => this.requireMath().formatTokenAmount(tokenId, amount),
+    );
+  };
+
   readonly submitBatch = async (action: WalletBatchAction, entityId: string, reviewed: WalletBatchProjection): Promise<void> => {
     const projection = this.requireProjection();
     if (projection.activeEntityId !== entityId) throw new Error('Batch Entity changed. Review the current Entity.');
-    await this.submitInput(buildWalletEntityTxInput(projection, buildWalletBatchTx(action, projection.batch, reviewed)));
+    await submitWalletBatchActionWithPreflight(
+      action,
+      projection.batch,
+      reviewed,
+      () => this.readBatchPreflight(projection),
+      this.formatBatchReserveIssue,
+      entityTx => this.submitInput(buildWalletEntityTxInput(projection, entityTx)),
+    );
   };
 
   readonly retryPendingCommand = async (): Promise<void> => {
@@ -430,19 +453,32 @@ export class WalletPaymentSource {
           await math.refreshTokenCatalog(this.workspaceApiBase(window.location.origin));
           projection = requireWalletWorkspaceEntity(decodeWalletPaymentProjection(frame, math), entityId);
         }
-        if (adapter.mode !== 'embedded') return projection;
-        const bridge = await import('../../../../bridges/wallet/wallet-canonical-hub-discovery');
-        const [workspaces, batchSubmission] = await Promise.all([
-          bridge.readCanonicalWalletSettlementWorkspaces(adapter, projection.activeEntityId, frame),
-          bridge.readCanonicalWalletBatchSubmission(adapter, projection.activeEntityId, frame),
+        const preflightProjection = this.loadBatchPreflight(projection);
+        const settlementBridge = await import('../../../../bridges/wallet/canonical/wallet-canonical-account-context');
+        const mayReadSettlementAuthority = adapter.mode === 'embedded' || adapter.authLevel === 'admin';
+        const [withPreflight, workspaces] = await Promise.all([
+          preflightProjection,
+          mayReadSettlementAuthority
+            ? settlementBridge.readCanonicalWalletSettlementWorkspaces(adapter, projection.activeEntityId, frame)
+            : Promise.resolve(new Map()),
         ]);
-        return {
-          ...projection,
-          batch: mergeWalletBatchRuntimeSubmission(projection.batch, batchSubmission),
-          accounts: projection.accounts.map((account) => ({
+        const withSettlements = {
+          ...withPreflight,
+          accounts: withPreflight.accounts.map((account) => ({
             ...account,
             settlement: workspaces.get(account.counterpartyId) ?? null,
           })),
+        };
+        if (adapter.mode !== 'embedded') return withSettlements;
+        const bridge = await import('../../../../bridges/wallet/canonical/wallet-canonical-hub-discovery');
+        const batchSubmission = await bridge.readCanonicalWalletBatchSubmission(
+          adapter,
+          projection.activeEntityId,
+          frame,
+        );
+        return {
+          ...withSettlements,
+          batch: mergeWalletBatchRuntimeSubmission(withSettlements.batch, batchSubmission),
         };
       },
       {
@@ -458,6 +494,44 @@ export class WalletPaymentSource {
       if (status === 'connected') void this.reconcilePending();
     }));
     this.syncObserver();
+  }
+
+  private async readBatchPreflight(
+    projection: WalletPaymentProjection,
+  ): Promise<RuntimeAdapterBatchPreflight> {
+    const adapter = this.requireAdapter();
+    const value = await adapter.read(
+      `entity/${projection.activeEntityId}/batch-preflight`,
+      { atHeight: projection.height },
+    );
+    return decodeWalletBatchPreflight(value, {
+      runtimeId: adapter.runtimeId,
+      height: projection.height,
+      entityId: projection.activeEntityId,
+    });
+  }
+
+  private async loadBatchPreflight(
+    projection: WalletPaymentProjection,
+  ): Promise<WalletPaymentProjection> {
+    try {
+      return {
+        ...projection,
+        batch: mergeWalletBatchPreflight(
+          projection.batch,
+          await this.readBatchPreflight(projection),
+        ),
+      };
+    } catch (error: unknown) {
+      return {
+        ...projection,
+        batch: mergeWalletBatchPreflight(
+          projection.batch,
+          null,
+          `Batch preflight unavailable: ${walletRuntimeReadErrorMessage(error)}`,
+        ),
+      };
+    }
   }
 
   private readonly syncObserver = (): void => {

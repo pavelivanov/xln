@@ -100,7 +100,7 @@ test('React Solvency reads the selected live or recorded source and preserves er
   const sharedView = readFileSync('frontend/packages/runtime-client/src/panels/solvency-panel-view.ts', 'utf8');
   const queries = readFileSync('frontend/apps/ops/src/workspace/session/ops-workspace-query.ts', 'utf8');
   const subscription = readFileSync('frontend/apps/ops/src/workspace/session/use-workspace-query.ts', 'utf8');
-  const selected = readFileSync('frontend/bridges/runtime/network-machine-runtime-store.ts', 'utf8');
+  const selected = readFileSync('frontend/bridges/runtime/network/network-machine-runtime-store.ts', 'utf8');
   const sources = readFileSync('frontend/packages/ui/src/graph/network-timeline-source.ts', 'utf8');
   const panels = readFileSync('frontend/apps/ops/src/workspace/session/ops-workspace-panels.ts', 'utf8');
   const architect = readFileSync('frontend/apps/ops/src/workspace/panels/ops-architect-panel.tsx', 'utf8');

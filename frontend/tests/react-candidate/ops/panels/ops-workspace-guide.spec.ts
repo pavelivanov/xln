@@ -82,8 +82,8 @@ test('guide context follows the exact selected Runtime frame and is released on 
 test('guide streams a real selected-frame answer and aborts on context change', { tag: '@functional' }, async ({ page }, testInfo) => {
   testInfo.setTimeout(180_000);
   // The scenario can render before the edge fixture serving the catalog is ready.
-    await readWalletRuntimeFixture(page);
-    const errors = observeBrowserErrors(page);
+  await readWalletRuntimeFixture(page);
+  const errors = observeBrowserErrors(page);
   await page.addInitScript(() => localStorage.setItem('xln-settings', JSON.stringify({ showXlnMascot: true })));
   await page.goto('/__app/ops/entity-workspace?scenario=ahb');
   const timeline = page.getByTestId('workspace-network-timeline');
@@ -114,10 +114,18 @@ test('guide streams a real selected-frame answer and aborts on context change', 
   await abortRequest;
   await expect(chat.getByRole('button', { name: 'Stop answer' })).toBeVisible();
   await expect(chat.locator('article.assistant').last()).not.toContainText('Thinking…', { timeout: 120_000 });
+  const fixturePort = Number(process.env['XLN_REACT_WALLET_FIXTURE_PORT'] || 19092);
+  const snapshotUrl = `http://127.0.0.1:${fixturePort}/assistant-upstream/snapshot`;
+  const beforeAbort = await (await page.request.get(snapshotUrl)).json() as { abortedStreams: number };
   await timeline.getByLabel('Network frame', { exact: true }).press('End');
   await expect(chat).not.toHaveAttribute('data-guide-context', context ?? '');
   await expect(chat.locator('.transcript article')).toHaveCount(0);
   await expect(chat.getByRole('button', { name: 'Stop answer' })).toHaveCount(0);
+  await expect.poll(async () => {
+    const response = await page.request.get(snapshotUrl);
+    expect(response.ok()).toBe(true);
+    return await response.json();
+  }).toMatchObject({ activeStreams: 0, abortedStreams: beforeAbort.abortedStreams + 1 });
   await expectPageContained(page);
   expectNoBrowserErrors(errors);
 });

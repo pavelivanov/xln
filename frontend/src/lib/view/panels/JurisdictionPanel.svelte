@@ -10,7 +10,7 @@
   import { panelBridge } from '../../../../packages/browser/src/workspace/panel-bridge';
   import type { BrowserVMTokenInfo, EntityReplica, RuntimeReplica, EnvSnapshot, JReplica } from '@xln/core/api/public/runtime-module';
   import { activeRuntime, allRuntimes } from '../../../../bridges/vault/vault-metadata-store';
-  import { settings } from '../../../../packages/browser/src/settings-store';
+  import { settings } from '../../../../packages/browser/src/preferences/settings-store';
   import { xlnFunctions, xlnInstance } from '../../../../bridges/runtime/xln-store';
   import { loadJurisdictionTokenRegistry } from '../../../../packages/ui/src/jurisdiction-token-registry';
   import {

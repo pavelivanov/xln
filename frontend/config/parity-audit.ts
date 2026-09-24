@@ -7,9 +7,7 @@ export type ParityGapKind = 'browser' | 'implementation' | 'owner' | 'owner-deci
 
 export const PARITY_GAP_IDS = [
   'ops-workspace-route',
-  'wallet-operation-parity',
   'candidate-verification',
-  'ops-health-detail-parity',
 ] as const;
 
 export type ParityGapId = (typeof PARITY_GAP_IDS)[number];
@@ -152,16 +150,16 @@ export const RETAINED_ROUTE_PARITY = [
     representativePath: '/app',
     sveltePage: 'frontend/src/routes/app/+page.svelte',
     intendedOwner: 'wallet',
-    implementation: 'partial',
-    browserEvidence: 'partial',
+    implementation: 'complete',
+    browserEvidence: 'covered',
     reactSource: 'frontend/apps/wallet/src/app-shell.tsx',
     focusedTests: [
       'tests/frontend/runtime/wallet/frontend-wallet-app-shell.test.ts',
-      'tests/frontend/tooling/frontend-wallet-flow-audit.test.ts',
+      'tests/frontend/tooling/audit/frontend-wallet-flow-audit.test.ts',
       'tests/frontend/payments/frontend-wallet-external-provider.test.ts',
     ],
     browserTests: [...walletBrowser, ...crossSurfaceBrowser],
-    gapIds: ['wallet-operation-parity', 'candidate-verification'],
+    gapIds: ['candidate-verification'],
   },
   {
     id: 'wallet-address',
@@ -208,16 +206,16 @@ export const RETAINED_ROUTE_PARITY = [
     representativePath: '/health',
     sveltePage: 'frontend/src/routes/health/+page.svelte',
     intendedOwner: 'ops',
-    implementation: 'partial',
-    browserEvidence: 'partial',
+    implementation: 'complete',
+    browserEvidence: 'covered',
     reactSource: 'frontend/apps/ops/src/health/ops-health.tsx',
-    focusedTests: ['tests/frontend/ops/frontend-ops-health.test.ts'],
+    focusedTests: ['tests/frontend/ops/health/frontend-ops-health.test.ts'],
     browserTests: [
       ...opsBrowser,
       'frontend/tests/react-candidate/ops/ops-health-events.spec.ts',
       'frontend/tests/react-candidate/ops/ops-health-topology.spec.ts',
     ],
-    gapIds: ['ops-health-detail-parity'],
+    gapIds: [],
   },
   {
     id: 'qa',
@@ -344,13 +342,13 @@ export const PARITY_GAPS = [
       'frontend/apps/ops/src/entity-workspace/ops-entity-workspace-activity-controller.ts',
       'frontend/apps/ops/src/entity-workspace/ops-entity-workspace-history.ts',
       'frontend/apps/ops/src/entity-workspace/ops-entity-workspace-history-controller.ts',
-      'frontend/packages/browser/src/display-preferences.ts',
-      'frontend/packages/runtime-client/src/entity/entity-workspace-activity.ts',
-      'frontend/packages/runtime-client/src/entity/entity-workspace-consensus-evidence.ts',
+      'frontend/packages/browser/src/preferences/display-preferences.ts',
+      'frontend/packages/runtime-client/src/entity/workspace/entity-workspace-activity.ts',
+      'frontend/packages/runtime-client/src/entity/workspace/entity-workspace-consensus-evidence.ts',
       'frontend/packages/runtime-client/src/entity/profile/entity-workspace-hub-policy.ts',
       'frontend/packages/runtime-client/src/entity/profile/entity-workspace-profile-update.ts',
-      'frontend/packages/runtime-client/src/entity/entity-workspace-settings-summary.ts',
-      'frontend/packages/runtime-client/src/entity/entity-workspace-time-machine.ts',
+      'frontend/packages/runtime-client/src/entity/workspace/entity-workspace-settings-summary.ts',
+      'frontend/packages/runtime-client/src/entity/workspace/entity-workspace-time-machine.ts',
       'frontend/packages/ui/src/entity/activity/entity-workspace-activity-panel.tsx',
       'frontend/packages/ui/src/entity/activity/entity-workspace-activity-row.tsx',
       'frontend/packages/ui/src/entity/activity/entity-workspace-activity-tone.ts',
@@ -364,56 +362,31 @@ export const PARITY_GAPS = [
       'R01/R02 and W08d2 are closed. R03 dual-destination BrainVault and late-completion development cases pass; retain final-byte acceptance in V05a/V05b, obtain G04b headset evidence, and resolve the protected wide embed fixture failure; preserve the public /embed boundary.',
   },
   {
-    id: 'wallet-operation-parity',
-    kind: 'implementation',
-    capabilityIds: ['wallet-finance', 'wallet-payments-and-markets', 'wallet-shell-and-identity'],
-    routeIds: ['wallet-app'],
-    evidenceSources: [
-      'plans/react-frontend-migration.md',
-      'frontend/apps/wallet/src/entity/wallet-entity-evidence.tsx',
-      'frontend/apps/wallet/src/manage/wallet-lending.tsx',
-    ],
-    nextSlice:
-      'Ownership, Hub opening, debt enforcement, dispute finalization and Stack Manager are implemented. Reconcile B1 Lending scope with the intentional production exclusion; close B2 lossless Activity, B3 remote settlement reads and B8 cross-j cancellation finality through separately authorized owners.',
-  },
-  {
     id: 'candidate-verification',
     kind: 'verification',
     capabilityIds: ['site-public-information', 'wallet-payments-and-markets', 'wallet-native-and-offline'],
     routeIds: ['wallet-app', 'releases'],
     evidenceSources: [
       'plans/react-frontend-migration.md',
-      'frontend/scripts/test-react-candidate.ts',
-      'frontend/scripts/test-artifact-candidate.ts',
+      'frontend/scripts/testing/test-react-candidate.ts',
+      'frontend/scripts/testing/test-artifact-candidate.ts',
     ],
     nextSlice:
       'B9 saved release envelopes are migrated and verified by the canonical decoder. Historical R05 built interactions pass; full unit/browser, final artifact/PWA/rollback, native launch, headset and root gates remain V04–V09/G04b. C02/C03 require explicit owner/release authority.',
-  },
-  {
-    id: 'ops-health-detail-parity',
-    kind: 'owner-decision',
-    capabilityIds: ['ops-health-and-qa'],
-    routeIds: ['health'],
-    evidenceSources: [
-      'docs/frontend/react-health-parity.md',
-      'frontend/apps/ops/src/health/topology/health-topology-model.ts',
-    ],
-    nextSlice:
-      'Bootstrap, Hub identities, timeline, READY and stale evidence have React owners. Authorize a detailed relay-client read or accept the current endpoint omission; finish enabled MM/custody and critical-event browser acceptance before declaring full Health parity.',
   },
 ] as const satisfies readonly ParityGap[];
 
 export const CAPABILITY_PARITY = [
   { capabilityId: 'site-public-information', gapIds: ['candidate-verification'] },
   { capabilityId: 'docs-reader', gapIds: [] },
-  { capabilityId: 'wallet-shell-and-identity', gapIds: ['wallet-operation-parity'] },
+  { capabilityId: 'wallet-shell-and-identity', gapIds: [] },
   { capabilityId: 'wallet-browser-lifecycle', gapIds: [] },
   { capabilityId: 'wallet-runtime-discovery', gapIds: [] },
   { capabilityId: 'wallet-recovery', gapIds: [] },
-  { capabilityId: 'wallet-finance', gapIds: ['wallet-operation-parity'] },
-  { capabilityId: 'wallet-payments-and-markets', gapIds: ['wallet-operation-parity', 'candidate-verification'] },
+  { capabilityId: 'wallet-finance', gapIds: [] },
+  { capabilityId: 'wallet-payments-and-markets', gapIds: ['candidate-verification'] },
   { capabilityId: 'wallet-native-and-offline', gapIds: ['candidate-verification'] },
-  { capabilityId: 'ops-health-and-qa', gapIds: ['ops-health-detail-parity'] },
+  { capabilityId: 'ops-health-and-qa', gapIds: [] },
   { capabilityId: 'ops-runs-scenarios-and-ai', gapIds: [] },
   { capabilityId: 'ops-workspace', gapIds: ['ops-workspace-route'] },
 ] as const;
@@ -423,7 +396,7 @@ export const CUTOVER_CHECKLIST = [
   {
     id: 'per-surface-browser-evidence',
     status: 'blocked-by-wp9',
-    evidence: 'frontend/scripts/test-react-candidate.ts',
+    evidence: 'frontend/scripts/testing/test-react-candidate.ts',
   },
   {
     id: 'immutable-candidate-release',

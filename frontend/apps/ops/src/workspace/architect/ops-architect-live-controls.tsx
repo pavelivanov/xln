@@ -2,7 +2,7 @@ import { useEffect, useState, useSyncExternalStore } from 'react';
 
 import { getXLN } from '../../../../../bridges/runtime/xln-runtime-loader';
 import { jmachineState } from '../../../../../packages/browser/src/jurisdiction/jmachine-store';
-import type { JMachineCreateDetail } from '../../../../../bridges/runtime/import-jmachine-runtime';
+import type { JMachineCreateDetail } from '../../../../../bridges/runtime/remote/import-jmachine-runtime';
 import { useWorkspaceEnvironment } from '../session/use-workspace-environment';
 import {
   createArchitectDemoGrid,

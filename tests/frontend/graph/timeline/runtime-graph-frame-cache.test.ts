@@ -6,7 +6,7 @@ import {
   refreshRuntimeGraphFrameCache,
   runtimeGraphLiveFrameCache,
   watchRuntimeGraphFrameCache,
-} from '../../../../frontend/bridges/runtime/runtime-graph-frame-cache';
+} from '../../../../frontend/bridges/runtime/network/runtime-graph-frame-cache';
 import type { Runtime } from '../../../../frontend/bridges/runtime/runtime-store';
 
 const remoteRuntime = (id: string): Runtime => ({
@@ -41,11 +41,13 @@ const readCache = (): Map<string, RuntimeAdapterGraphFrame> => {
 describe('RuntimeGraphFrameCache', () => {
   test('timeline disposal cannot disconnect the graph live-reader pool', () => {
     const source = readFileSync(
-      new URL('../../../../frontend/bridges/runtime/network-timeline-loader.ts', import.meta.url),
+      new URL('../../../../frontend/bridges/runtime/network/network-timeline-loader.ts', import.meta.url),
       'utf8',
     );
-    expect(source).toContain('const timelineRemoteReaders = new RemoteRuntimeReaderPool();');
-    expect(source).toContain('const graphRemoteReaders = new RemoteRuntimeReaderPool();');
+    expect(source).toContain('const timelineRemoteReaders = new RemoteRuntimeReaderPool(HISTORICAL_REMOTE_READ_TIMEOUT_MS);');
+    expect(source).toContain('const graphRemoteReaders = new RemoteRuntimeReaderPool(LIVE_REMOTE_READ_TIMEOUT_MS);');
+    expect(source).toContain('const HISTORICAL_REMOTE_READ_TIMEOUT_MS = 60_000;');
+    expect(source).toContain('requestTimeoutMs: this.requestTimeoutMs');
     expect(source).toContain('disconnectNetworkTimelineReaders = (): void => timelineRemoteReaders.disconnectAll()');
     expect(source).not.toContain('disconnectNetworkTimelineReaders = (): void => graphRemoteReaders.disconnectAll()');
     // Historical reads go through networkTimelineSourceFor, which must borrow the timeline

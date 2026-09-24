@@ -12,7 +12,7 @@ import {
   readEntityWorkspaceTimeMachineLink,
   requireEntityWorkspaceHistoryHeight,
   updateEntityWorkspaceLatestHeight,
-} from '../../../../frontend/packages/runtime-client/src/entity/entity-workspace-time-machine';
+} from '../../../../frontend/packages/runtime-client/src/entity/workspace/entity-workspace-time-machine';
 
 const historyFrame = (height: number, accountsPage = 0): RuntimeAdapterViewFrame => ({
   activeEntity: {
@@ -72,10 +72,10 @@ const activityPage = (
   returned: 0,
   limit: pageSize,
   scanLimit: timeframe ? 1_000 : 160,
-  nextBeforeHeight: null,
+  cursor: null,
+  nextCursor: null,
   filters: {
-    entityId: '0xaaaa', kind, query, types, beforeHeight: height, limit: pageSize,
-    scanLimit: timeframe ? 1_000 : 160,
+    entityId: '0xaaaa', kind, query, types,
     ...(timeframe ?? {}),
   },
   events: [],
@@ -171,20 +171,20 @@ describe('React Entity workspace Time Machine', () => {
       client: {
         readActivity: async () => ({
           ...activityPage(7), events: [activityEvent(7)], fromHeight: 5,
-          nextBeforeHeight: 4, returned: 1, scannedFrames: 3,
+          nextCursor: 'cursor-4', returned: 1, scannedFrames: 3,
         }),
         readHistoryFrameBatch: async () => historyBatch(historyFrame(7)),
       },
       entityId: '0xaaaa', latestHeight: 18, requestedHeight: 7, runtimeId: 'runtime-a',
     });
     const appended = await readOpsEntityWorkspaceHistory({
-      activity: { beforeHeight: 4, mode: 'infinite' },
+      activity: { cursor: 'cursor-4', mode: 'infinite' },
       accountsPage: 0,
       appendActivity: true,
       client: {
         readActivity: async () => ({
-          ...activityPage(4), events: [activityEvent(4)], fromHeight: 2,
-          nextBeforeHeight: 1, returned: 1, scannedFrames: 3,
+          ...activityPage(4), cursor: 'cursor-4', events: [activityEvent(4)], fromHeight: 2,
+          nextCursor: 'cursor-1', returned: 1, scannedFrames: 3,
         }),
         readHistoryFrameBatch: async () => historyBatch(historyFrame(7)),
       },
@@ -193,7 +193,7 @@ describe('React Entity workspace Time Machine', () => {
     });
     expect(appended.activity).toMatchObject({
       events: [{ id: 'runtime-a:7:0' }, { id: 'runtime-a:4:0' }],
-      fromHeight: 2, loadedPages: 2, requestedBeforeHeight: 4,
+      fromHeight: 2, loadedPages: 2, requestedCursor: 'cursor-4',
       scannedFrames: 6, toHeight: 7,
     });
   });

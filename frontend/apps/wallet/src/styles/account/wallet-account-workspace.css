@@ -29,7 +29,12 @@
 .wallet-account-workspace [role=status] { overflow-wrap: anywhere; }
 .wallet-account-workspace .wallet-tool-danger { color: #ffb5ac; border-color: #8e5048; }
 .wallet-account-command { padding: 18px 0; border-bottom: 1px solid #303930; }
-.wallet-lending-forms { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 36px; }
+.wallet-lending-policy { max-width: 720px; padding-block: 8px 28px; border-bottom: 1px solid #303930; }
+.wallet-lending-policy h2 { margin: 8px 0 12px; }
+.wallet-lending-status { margin: 24px 0 0; color: #e6b968 !important; font-size: 11px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
+.wallet-lending-policy dl { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; margin: 30px 0 0; }
+.wallet-lending-policy dt { color: #d9e0d8; font-size: 12px; font-weight: 650; }
+.wallet-lending-policy dd { margin: 8px 0 0; color: #8f9991; font-size: 12px; line-height: 1.55; }
 .wallet-tool-list, .wallet-history-list { list-style: none; margin: 0; padding: 0; }
 .wallet-tool-list li { display: grid; gap: 8px; padding: 20px 0; border-bottom: 1px solid #303930; overflow-wrap: anywhere; font-size: 13px; }
 .wallet-tool-list button { justify-self: start; }
@@ -44,5 +49,5 @@
 .wallet-move-route svg > path { stroke: #a5f07b; stroke-width: 1.5; fill: none; }.wallet-move-route marker path { fill: #a5f07b; }
 .wallet-move-allowance { border-top: 1px solid #303930; border-bottom: 1px solid #303930; padding: 20px 0; margin: 24px 0; }
 .wallet-tool-metrics dd { margin: 8px 0 20px; color: #a5ada7; font-size: 13px; }
-@media(max-width: 650px) { .wallet-account-workspace { padding: 28px 16px 112px; }.wallet-account-context { flex-wrap: wrap; }.wallet-account-context label { flex-basis: 100%; }.wallet-lending-forms { grid-template-columns: 1fr; }.wallet-history-list li { flex-direction: column; gap: 10px; }.wallet-history-list li > div:last-child { text-align: left; }.wallet-move-route { gap: 14%; }.wallet-tool-heading { flex-wrap: wrap; } }
+@media(max-width: 650px) { .wallet-account-workspace { padding: 28px 16px 112px; }.wallet-account-context { flex-wrap: wrap; }.wallet-account-context label { flex-basis: 100%; }.wallet-lending-policy dl { grid-template-columns: 1fr; gap: 18px; }.wallet-history-list li { flex-direction: column; gap: 10px; }.wallet-history-list li > div:last-child { text-align: left; }.wallet-move-route { gap: 14%; }.wallet-tool-heading { flex-wrap: wrap; } }
 @media(prefers-reduced-motion: reduce) { .wallet-account-workspace button { transition: none; } }

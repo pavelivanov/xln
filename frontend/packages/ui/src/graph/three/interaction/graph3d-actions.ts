@@ -1,0 +1,82 @@
+import type { GraphPaymentJob } from '../core/graph3d-types';
+import { graphReserveValue } from '../core/graph3d-helpers';
+import { parseTokenAmountInput } from '../../../entity/assets/token-amount-input';
+import type { GraphReplicaLike } from '../core/graph3d-helpers';
+
+export function parseGraphPaymentAmount(amount: string, decimals: number): bigint {
+  return parseTokenAmountInput(amount, decimals);
+}
+
+export function buildGraphPaymentInput(
+  job: GraphPaymentJob,
+  signerId: string,
+  route: string[],
+  decimals: number,
+  maxSenderDebit: bigint,
+) {
+  if (route.length < 2) throw new Error(`Invalid route: expected at least 2 entities, got ${route.length}`);
+  if (route[0] !== job.from || route[route.length - 1] !== job.to) {
+    throw new Error(`Route mismatch: expected ${job.from} → ${job.to}, got ${route[0]} → ${route[route.length - 1]}`);
+  }
+  return {
+    entityId: job.from,
+    signerId,
+    entityTxs: [
+      {
+        type: 'htlcPayment' as const,
+        data: {
+          targetEntityId: job.to,
+          tokenId: job.tokenId,
+          amount: parseGraphPaymentAmount(job.amount, decimals),
+          maxSenderDebit,
+          route,
+          deliveryMode: 'instant' as const,
+          description: `Bird view payment: ${job.amount}`,
+        },
+      },
+    ],
+  };
+}
+
+export async function loadGraphScenarioSteps<T>(filename: string, parse: (source: string) => T): Promise<T | null> {
+  const response = await fetch(`/worlds/${filename}`);
+  if (!response.ok) return null;
+  return parse(await response.text());
+}
+
+export function collectGraphTokenIds(replicas: Map<string, GraphReplicaLike>): number[] {
+  const tokenIds = new Set<number>([1]);
+  for (const replica of replicas.values()) {
+    const reserves = replica?.state?.reserves;
+    if (!(reserves instanceof Map)) continue;
+    for (const tokenIdValue of reserves.keys()) {
+      const tokenId = Number(tokenIdValue);
+      if (Number.isFinite(tokenId)) tokenIds.add(tokenId);
+    }
+  }
+  return [...tokenIds].sort((left, right) => left - right);
+}
+
+export function calculateGraphEntityRadius(reserveValueUsd: number): number {
+  if (reserveValueUsd <= 0) return 0.4;
+  const ratio = Math.max(1, reserveValueUsd / 500_000);
+  return Math.max(0.5, Math.min(0.5 * Math.pow(ratio, 0.6), 2.7));
+}
+
+export function getGraphEntitySizeForToken(options: {
+  replicas: Map<string, GraphReplicaLike>;
+  entityId: string;
+  tokenId: number;
+  tokenDecimals: number;
+  sizeMultiplier: number;
+}): number {
+  const displayScale = 1.6 * options.sizeMultiplier;
+  for (const [key, replica] of options.replicas) {
+    if ((key.split(':')[0] || key) !== options.entityId) continue;
+    if (!replica?.state?.reserves) return 0.4 * displayScale;
+    const reserve = graphReserveValue(replica.state.reserves, String(options.tokenId));
+    const reserveValueUsd = Number(reserve) / 10 ** options.tokenDecimals;
+    return calculateGraphEntityRadius(reserveValueUsd) * displayScale;
+  }
+  return 0.4 * displayScale;
+}

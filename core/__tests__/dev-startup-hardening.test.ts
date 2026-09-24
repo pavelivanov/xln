@@ -280,7 +280,7 @@ test('canonical dev data root supports a clean checkout without a db parent', as
   const requested = join(root, 'db', 'dev');
   const result = await run('bash', [
     '-c',
-    'source scripts/dev/process-owner.sh; canonical_dev_data_root "$1"',
+    'set -u; source scripts/dev/process-owner.sh; canonical_dev_data_root "$1"',
     'canonical-root-test',
     requested,
   ]);
@@ -478,15 +478,14 @@ test('dev cleanup stops a live wrapper whose full process identity matches', asy
   }
 });
 
-test('HTTPS and HTTP dev servers share canonical SvelteKit output with isolated Vite caches', () => {
-  const child = readFileSync(join(repoRoot, 'scripts/dev/run-dev-child.sh'), 'utf8');
-  expect(child).toContain('run_vite "$WEB_PORT" --logLevel warn');
-  expect(child).toContain('run_vite "$WEB_HTTP_PORT" --config vite.config.http.ts --logLevel warn');
-  expect(child).not.toContain('XLN_SVELTE_KIT_OUT_DIR');
-  expect(readFileSync(join(repoRoot, 'frontend/vite.config.ts'), 'utf8'))
-    .toContain("process.env['VITE_CACHE_DIR'] || 'node_modules/.vite'");
-  expect(readFileSync(join(repoRoot, 'frontend/vite.config.http.ts'), 'utf8'))
-    .toContain("process.env['VITE_HTTP_CACHE_DIR'] || 'node_modules/.vite-http'");
+test('React development uses one gateway with isolated per-surface Vite caches', () => {
+  const dev = readFileSync(join(repoRoot, 'frontend/scripts/dev.ts'), 'utf8');
+  const config = readFileSync(join(repoRoot, 'frontend/config/create-react-app-config.ts'), 'utf8');
+  expect(dev).toContain("label: 'same-origin-gateway'");
+  expect(dev).toContain("label: `vite-${getSurface(surfaceId).id}`");
+  expect(dev).toContain("XLN_REACT_DEV_GATEWAY: '1'");
+  expect(config).toContain("configuredRoot?.trim() || 'node_modules/.vite-react'");
+  expect(config).toContain('cacheDir: getReactViteCacheDirectory(surfaceId)');
 });
 
 test('storage health measures the configured RDB and JDB shard roots', async () => {

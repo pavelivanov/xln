@@ -26,7 +26,7 @@ describe('React wallet Brain Vault derivation boundary', () => {
   test('keeps derived secret material in a one-shot migration bridge session', () => {
     const onboarding = read('frontend/apps/wallet/src/identity/identity-onboarding.tsx');
     const embedded = read('frontend/apps/wallet/src/runtime/wallet-embedded-runtime.ts');
-    const bridge = read('frontend/bridges/wallet/wallet-canonical-vault-runtime.ts');
+    const bridge = read('frontend/bridges/wallet/canonical/wallet-canonical-vault-runtime.ts');
 
     expect(onboarding).toContain("setDraft(current => ({ ...current, passphrase: '', showPassphrase: false }))");
     expect(onboarding).toContain('await prepareWalletBrainVaultWithCanonicalVault(');
@@ -40,7 +40,7 @@ describe('React wallet Brain Vault derivation boundary', () => {
   });
 
   test('discovers recovery before authorizing fresh canonical opening', () => {
-    const bridge = read('frontend/bridges/wallet/wallet-canonical-vault-runtime.ts');
+    const bridge = read('frontend/bridges/wallet/canonical/wallet-canonical-vault-runtime.ts');
     const recovery = read('frontend/apps/wallet/src/identity/identity-recovery.tsx');
 
     expect(bridge.indexOf('await brainVaultDerivation.derive(input, onProgress)'))

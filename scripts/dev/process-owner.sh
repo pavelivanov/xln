@@ -60,7 +60,13 @@ canonical_dev_data_root() {
         echo "DEV_DATA_ROOT_INVALID:${requested}" >&2
         return 1
       }
-      missing_parts=("$leaf" "${missing_parts[@]}")
+      # macOS ships Bash 3.2, where expanding an empty array under `set -u`
+      # raises an unbound-variable error even after `local missing_parts=()`.
+      if [[ -n "${missing_parts[0]+set}" ]]; then
+        missing_parts=("$leaf" "${missing_parts[@]}")
+      else
+        missing_parts=("$leaf")
+      fi
       parent="$(dirname "$cursor")"
       [[ "$parent" != "$cursor" ]] || {
         echo "DEV_DATA_ROOT_INVALID:${requested}" >&2

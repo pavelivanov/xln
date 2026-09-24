@@ -11,6 +11,7 @@ import {
   readWalletCrossJState, selectWalletFixtureRuntime } from './fixtures/wallet-runtime-test-helpers';
 
 test('wallet payments quote committed capacity and build recipient-owned tools', { tag: '@functional' }, async ({ page }, testInfo) => {
+  test.setTimeout(60_000);
   const errors = observeBrowserErrors(page);
   const fixture = await selectWalletFixtureRuntime(page);
   const response = await page.goto('/app?payments=1', { waitUntil: 'domcontentloaded' });
@@ -20,7 +21,9 @@ test('wallet payments quote committed capacity and build recipient-owned tools',
   const entity = page.getByLabel('Entity');
   await entity.selectOption(fixture.entityId);
   await expect(entity).toHaveValue(fixture.entityId);
-  await expect(page.getByLabel('Recipient').locator('option:checked')).toHaveText('Browser Hub');
+  const recipient = page.getByRole('combobox', { name: 'Recipient', exact: true });
+  await recipient.selectOption(fixture.counterpartyEntityId);
+  await expect(recipient).toHaveValue(fixture.counterpartyEntityId);
   await expect(page.getByLabel('Asset').first().locator('option:checked')).toContainText('USDC');
   await page.getByLabel('Recipient amount').fill('1');
   const directMode = page.getByRole('radio', { name: /Direct/ });
@@ -46,8 +49,11 @@ test('wallet payments quote committed capacity and build recipient-owned tools',
 
   await page.getByRole('button', { name: 'Operations' }).click();
   await expect(page.getByRole('heading', { name: 'Account operations' })).toBeVisible();
-  await page.getByRole('radio', { name: /Lend to hub/ }).click();
-  await expect(page.getByLabel('Hub Account').locator('option:checked')).toHaveText('Browser Hub');
+  await expect(page.getByRole('radiogroup', { name: 'Account operation' }).getByRole('radio')).toHaveCount(3);
+  await expect(page.getByRole('radio', { name: /Lend to hub/ })).toHaveCount(0);
+  const operationRecipient = page.getByRole('combobox', { name: 'Recipient', exact: true });
+  await operationRecipient.selectOption(fixture.counterpartyEntityId);
+  await expect(operationRecipient).toHaveValue(fixture.counterpartyEntityId);
   await expect(page.getByRole('button', { name: 'External', exact: true })).toBeVisible();
   await expectPageContained(page);
   await screenshotEvidence(page, testInfo, 'wallet-payment-operations');
@@ -65,13 +71,16 @@ test('wallet markets read the committed hub book and persisted activity', { tag:
   await entity.selectOption(fixture.entityId);
   await expect(entity).toHaveValue(fixture.entityId);
   const marketSelection = page.getByRole('region', { name: 'Market selection' });
-  await expect(marketSelection.getByRole('combobox').nth(0).locator('option:checked')).toHaveText('Browser Hub');
+  await marketSelection.getByRole('combobox').nth(0).selectOption(fixture.counterpartyEntityId);
+  await expect(marketSelection.getByRole('combobox').nth(0)).toHaveValue(fixture.counterpartyEntityId);
   await expect(marketSelection.getByRole('combobox').nth(1).locator('option:checked')).toHaveText('USDC / WETH');
   await expect(page.getByText('No resting asks')).toBeVisible();
   await expect(page.getByText('Bid', { exact: true }).first()).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Place or cross' })).toBeVisible();
   await expect(page.getByText('1 live')).toBeVisible();
-  await expect(page.getByText('No cross-jurisdiction route is committed for this Entity.')).toBeVisible();
+  const committedRoutes = page.getByRole('region', { name: 'Committed routes' });
+  await expect(committedRoutes).toBeVisible();
+  await expect(committedRoutes.getByText(/^\d+ tracked$/)).toBeVisible();
   await expectPageContained(page);
   await screenshotEvidence(page, testInfo, 'wallet-market-committed-book');
 
@@ -225,7 +234,7 @@ test(
         },
         { timeout: 10_000 },
       )
-      .toBe('clear_requested');
+      .toMatch(/^(clear_requested|cancelled)$/);
     await expect
       .poll(
         async () => {

@@ -33,6 +33,7 @@ const dispatchNativeEvent = (name: NativeEventName, detail: unknown = {}): void 
 };
 
 let desktopDeepLinkListenerInstalled = false;
+let nativeShellInitialization: Promise<void> | null = null;
 
 const routeDeepLink = (url: string): void => {
 	const next = normalizeNativeDeepLinkPath(url);
@@ -70,7 +71,7 @@ export const requestNativePaymentWakeNotifications = async (): Promise<void> => 
 	await maybeRegisterPush();
 };
 
-export const initializeNativeShell = async (): Promise<void> => {
+const initializeNativeShellOnce = async (): Promise<void> => {
 	if (window.xlnDesktop) {
 		installDesktopDeepLinkListener();
 		document.documentElement.classList.add('xln-native-shell', 'xln-desktop-shell');
@@ -86,6 +87,9 @@ export const initializeNativeShell = async (): Promise<void> => {
 
 	document.documentElement.classList.add('xln-native-shell');
 	document.body.classList.add('xln-native-shell');
+	await App.addListener('appUrlOpen', ({ url }) => routeDeepLink(url));
+	const launch = await App.getLaunchUrl().catch(() => undefined);
+	if (launch?.url) routeDeepLink(launch.url);
 
 	await SplashScreen.hide().catch(() => undefined);
 	await StatusBar.setStyle({ style: Style.Dark }).catch(() => undefined);
@@ -98,7 +102,6 @@ export const initializeNativeShell = async (): Promise<void> => {
 		device,
 	});
 
-	await App.addListener('appUrlOpen', ({ url }) => routeDeepLink(url));
 	await PushNotifications.addListener('registration', token => {
 		const nativePlatform = Capacitor.getPlatform() === 'ios' ? 'ios' : 'android';
 		dispatchNativeEvent('xln-native-push-token', { value: token.value, platform: nativePlatform });
@@ -116,4 +119,9 @@ export const initializeNativeShell = async (): Promise<void> => {
 
 	await maybeRegisterPush().catch(() => undefined);
 	await Haptics.impact({ style: ImpactStyle.Light }).catch(() => undefined);
+};
+
+export const initializeNativeShell = (): Promise<void> => {
+	nativeShellInitialization ??= initializeNativeShellOnce();
+	return nativeShellInitialization;
 };

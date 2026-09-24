@@ -6,7 +6,7 @@ import {
   applyGraphCameraPose,
   applyGraphCameraTarget,
   fitGraphCameraToEntities,
-} from '../../../../frontend/packages/ui/src/graph/graph3d-camera';
+} from '../../../../frontend/packages/ui/src/graph/three/core/graph3d-camera';
 
 const createControls = () => {
   let updateCount = 0;
@@ -87,13 +87,13 @@ describe('Graph3D shared camera mechanics', () => {
     expect(controls.updates()).toBe(1);
   });
 
-  test('moves reusable camera mechanics out of the Svelte panel', () => {
-    const shared = readFileSync('frontend/packages/ui/src/graph/graph3d-camera.ts', 'utf8');
-    const panel = readFileSync('frontend/src/lib/view/panels/graph3d/Graph3DPanel.svelte', 'utf8');
+  test('keeps reusable camera mechanics outside the React scene owner', () => {
+    const shared = readFileSync('frontend/packages/ui/src/graph/three/core/graph3d-camera.ts', 'utf8');
+    const panel = readFileSync('frontend/apps/ops/src/workspace/graph/ops-graph-scene.ts', 'utf8');
 
     expect(shared).toContain('export function fitGraphCameraToEntities');
     expect(shared).toContain('export function applyGraphCameraPose');
-    expect(panel).toContain('packages/ui/src/graph/graph3d-camera');
+    expect(panel).toContain('packages/ui/src/graph/three/core/graph3d-camera');
     expect(panel).not.toContain('new THREE.Box3()');
     expect(panel).not.toContain('const horizontalTangent =');
   });

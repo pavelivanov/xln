@@ -2,28 +2,26 @@ import { describe, expect, test } from 'bun:test';
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { filterViteBuildCheckLine } from '../../../../frontend/scripts/vite-build-check';
-
 const repoRoot = process.cwd();
 
 describe('frontend check output', () => {
-  test('frontend check uses bun and filters npm preview hint only', () => {
+  test('frontend checks expose the React aggregate and filter the npm preview hint only', () => {
     const packageJson = JSON.parse(readFileSync(join(repoRoot, 'frontend/package.json'), 'utf8')) as {
       scripts: Record<string, string>;
     };
     const checkScript = packageJson.scripts['check'];
+    const reactCheckScript = packageJson.scripts['check:react'];
     const buildCheckScript = packageJson.scripts['check:build'];
-    const svelteConfig = readFileSync(join(repoRoot, 'frontend/svelte.config.js'), 'utf8');
-    const rootPageConfig = readFileSync(join(repoRoot, 'frontend/src/routes/+page.ts'), 'utf8');
+    const reactConfig = readFileSync(join(repoRoot, 'frontend/config/create-react-app-config.ts'), 'utf8');
     const copyStatic = readFileSync(join(repoRoot, 'frontend/copy-static-files.js'), 'utf8');
 
     expect(checkScript).toContain('bun copy-static-files.js');
-    expect(checkScript).toContain('check:svelte check:build');
+    expect(reactCheckScript).toBe('bun scripts/check.ts --all --level=local');
     expect(buildCheckScript).toBe('bun scripts/vite-build-check.ts');
     expect(checkScript).not.toContain('node copy-static-files.js');
     expect(checkScript).not.toContain('vite build');
-    expect(svelteConfig).toContain("fallback: 'index.html'");
-    expect(rootPageConfig).toContain('export const prerender = false;');
+    expect(reactConfig).toContain("appType: 'spa'");
+    expect(reactConfig).toContain("input: resolve(rootDirectory, 'index.html')");
     expect(copyStatic).toContain("process.env.XLN_STATIC_VERBOSE === '1'");
     expect(copyStatic).toContain("stdio: llmsVerbose ? 'inherit' : 'pipe'");
     expect(copyStatic).toContain('llms static context regenerated');
@@ -50,8 +48,12 @@ describe('frontend check output', () => {
     const fixtureFrontend = join(fixture, 'frontend');
     try {
       mkdirSync(join(fixtureFrontend, 'static', 'contracts'), { recursive: true });
+      mkdirSync(join(fixtureFrontend, 'scripts', 'docs'), { recursive: true });
       writeFileSync(join(fixtureFrontend, 'copy-static-files.js'), readFileSync(join(repoRoot, 'frontend/copy-static-files.js')));
-      writeFileSync(join(fixtureFrontend, 'docs-catalog.js'), readFileSync(join(repoRoot, 'frontend/scripts/docs/docs-catalog.js')));
+      writeFileSync(
+        join(fixtureFrontend, 'scripts', 'docs', 'docs-catalog.js'),
+        readFileSync(join(repoRoot, 'frontend/scripts/docs/docs-catalog.js')),
+      );
       for (const contract of [
         'Account',
         'Depository',
@@ -59,6 +61,7 @@ describe('frontend check output', () => {
         'EntityProvider',
         'HankoVerifier',
         'HashLadderRegistry',
+        'NftCustody',
         'DeltaTransformer',
         'ERC20Mock',
       ]) {
@@ -85,9 +88,10 @@ describe('frontend check output', () => {
     }
   });
 
-  test('vite check wrapper removes the npm preview banner without swallowing build output', () => {
-    expect(filterViteBuildCheckLine('Run npm run preview to preview your production build locally.')).toBeNull();
-    expect(filterViteBuildCheckLine('built in 15.48s')).toBe('built in 15.48s');
-    expect(filterViteBuildCheckLine('error: build failed')).toBe('error: build failed');
+  test('React command runner forwards build output and fails loud', () => {
+    const runner = readFileSync(join(repoRoot, 'frontend/scripts/shared/command-runner.ts'), 'utf8');
+    expect(runner).toContain("stdout: 'inherit'");
+    expect(runner).toContain("stderr: 'inherit'");
+    expect(runner).toContain('throw new Error(`FRONTEND_STEP_FAILED:${command.label}:${exitCode}`)');
   });
 });

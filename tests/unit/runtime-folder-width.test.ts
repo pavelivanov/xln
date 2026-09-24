@@ -94,6 +94,7 @@ describe('repository source folder-width invariant', () => {
     addTypeScriptFiles(join(root, 'node_modules'), 11);
     addTypeScriptFiles(join(root, 'build'), 11);
     addTypeScriptFiles(join(root, '.archive'), 11);
+    addTypeScriptFiles(join(root, 'output', 'playwright', 'retained-fixture'), 11);
     addTypeScriptFiles(join(root, 'reports'), 11);
     addTypeScriptFiles(join(root, 'reports-live'), 11);
     addTypeScriptFiles(join(root, 'src', 'build-tools'), 11);

@@ -1,5 +1,6 @@
 import { buildPendingBatchActionTxs } from '../../../../packages/runtime-client/src/payments/pending-batch-state';
 import { safeStringify } from '../../../../../core/protocol/serialization';
+import type { RuntimeAdapterBatchPreflight } from '../../../../../core/api/runtime-adapter/types';
 import type { JBatch } from '../../../../../core/jurisdiction/machine/batch';
 import type { RuntimePaymentEntityTx } from '../../../../packages/runtime-client/src/payments/payment-command-types';
 import { requireRuntimeBigInt, requireRuntimeEnum, requireRuntimeInteger, requireRuntimeRecord, requireRuntimeString } from '../runtime/wallet-runtime-decode';
@@ -42,7 +43,10 @@ export type WalletBatchProjection = Readonly<{
   failure: string;
   failureKind: 'none' | 'retryable' | 'terminal';
   failureAt: number | null;
+  compactReviewKey: string;
   reviewKey: string;
+  preflight: RuntimeAdapterBatchPreflight | null;
+  preflightError: string;
 }>;
 export type WalletBatchAction = 'broadcast' | 'rebroadcast' | 'clear';
 
@@ -77,7 +81,8 @@ const decodeOperations = (value: unknown, math: BatchMath): readonly WalletBatch
 export const decodeWalletBatch = (value: unknown, math: BatchMath): WalletBatchProjection => {
   if (value === undefined) return {
     draft: [], sent: [], sentHash: '', submission: null, status: 'empty', failure: '',
-    failureKind: 'none', failureAt: null, reviewKey: '',
+    failureKind: 'none', failureAt: null, compactReviewKey: '', reviewKey: '',
+    preflight: null, preflightError: '',
   };
   const state = requireRuntimeRecord(value, 'WALLET_BATCH_STATE');
   const sent = state['sentBatch'] === undefined ? null : requireRuntimeRecord(state['sentBatch'], 'WALLET_SENT_BATCH');
@@ -93,6 +98,7 @@ export const decodeWalletBatch = (value: unknown, math: BatchMath): WalletBatchP
     firstSubmittedAt: requireRuntimeInteger(sent['firstSubmittedAt'], 'WALLET_SENT_BATCH_FIRST_SUBMITTED'),
     lastSubmittedAt: requireRuntimeInteger(sent['lastSubmittedAt'], 'WALLET_SENT_BATCH_LAST_SUBMITTED'),
   } : null;
+  const compactReviewKey = safeStringify(value);
   return {
     draft: decodeOperations(state['batch'], math),
     sent: sent ? decodeOperations(sent['batch'], math) : [],
@@ -102,9 +108,32 @@ export const decodeWalletBatch = (value: unknown, math: BatchMath): WalletBatchP
     failure: decodedFailure ? requireRuntimeString(decodedFailure['message'], 'WALLET_BATCH_FAILURE_MESSAGE') : '',
     failureKind: terminalFailure !== undefined ? 'terminal' : retryableFailure !== undefined ? 'retryable' : 'none',
     failureAt: decodedFailure ? requireRuntimeInteger(decodedFailure['failedAt'], 'WALLET_BATCH_FAILURE_AT') : null,
-    reviewKey: safeStringify(value),
+    compactReviewKey,
+    reviewKey: compactReviewKey,
+    preflight: null,
+    preflightError: '',
   };
 };
+
+export const mergeWalletBatchPreflight = (
+  batch: WalletBatchProjection,
+  preflight: RuntimeAdapterBatchPreflight | null,
+  preflightError = '',
+): WalletBatchProjection => ({
+  ...batch,
+  preflight,
+  preflightError,
+  reviewKey: preflight ? safeStringify({
+    compactReviewKey: batch.compactReviewKey,
+    runtimeId: preflight.runtimeId,
+    height: preflight.height,
+    entityId: preflight.entityId,
+    draftIdentity: preflight.draft.identity,
+    sentIdentity: preflight.sent?.identity ?? null,
+    sentBatchHash: preflight.sent?.batchHash ?? null,
+    sentEntityNonce: preflight.sent?.entityNonce ?? null,
+  }) : batch.compactReviewKey,
+});
 
 export const mergeWalletBatchRuntimeSubmission = (
   batch: WalletBatchProjection,
@@ -133,16 +162,35 @@ export const buildWalletBatchTx = (
   current: WalletBatchProjection,
   reviewed: WalletBatchProjection,
 ): RuntimePaymentEntityTx => {
+  if (!current.preflight) throw new Error('Batch preflight is unavailable. Refresh before submitting.');
   if (current.reviewKey !== reviewed.reviewKey) throw new Error('Batch changed. Review the current operations before submitting.');
+  const draftCount = current.preflight.draft.counts.total;
+  const sent = current.preflight.sent;
   if (action === 'broadcast') {
-    if (current.sentHash || current.draft.length === 0) throw new Error('A nonempty draft and no in-flight batch are required.');
+    if (sent || draftCount === 0) throw new Error('A nonempty draft and no in-flight batch are required.');
     return buildPendingBatchActionTxs(action)[0];
   }
   if (action === 'rebroadcast') {
-    if (!current.sentHash) throw new Error('No in-flight batch to rebroadcast.');
+    if (!sent) throw new Error('No in-flight batch to rebroadcast.');
     if (current.failureKind === 'terminal') throw new Error('A terminally failed batch must be cleared before rebuilding.');
     return buildPendingBatchActionTxs(action)[0];
   }
-  if (!current.sentHash && current.draft.length === 0) throw new Error('No batch to clear.');
+  if (!sent && draftCount === 0) throw new Error('No batch to clear.');
   return buildPendingBatchActionTxs(action, 'manual-clear-from-ui')[0];
+};
+
+export const submitWalletBatchActionWithPreflight = async (
+  action: WalletBatchAction,
+  current: WalletBatchProjection,
+  reviewed: WalletBatchProjection,
+  readPreflight: () => Promise<RuntimeAdapterBatchPreflight>,
+  formatIssue: (issue: RuntimeAdapterBatchPreflight['draft']['issue']) => string,
+  submit: (entityTx: RuntimePaymentEntityTx) => Promise<void>,
+): Promise<void> => {
+  const preflight = await readPreflight();
+  const authoritative = mergeWalletBatchPreflight(current, preflight);
+  if (action === 'broadcast' && preflight.draft.issue) {
+    throw new Error(formatIssue(preflight.draft.issue));
+  }
+  await submit(buildWalletBatchTx(action, authoritative, reviewed));
 };

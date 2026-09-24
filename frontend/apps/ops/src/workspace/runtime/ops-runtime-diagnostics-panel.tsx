@@ -9,7 +9,7 @@ import {
   sortRuntimeDiagnosticsIncidents,
   filterActiveRuntimeDiagnosticsIncidents,
   visibleRuntimeDiagnosticsIncidents,
-} from '../../../../../packages/runtime-client/src/runtime/runtime-diagnostics-panel-view';
+} from '../../../../../packages/runtime-client/src/runtime/view/runtime-diagnostics-panel-view';
 import { opsEntityWorkspaceSource } from '../../entity-workspace/ops-entity-workspace-runtime';
 import { readOpsRuntimeDiagnostics } from '../session/ops-workspace-query';
 import { useWorkspaceQuery } from '../session/use-workspace-query';

@@ -2,7 +2,7 @@ import {
   requireExactKeys,
   requireUnknownRecord,
 } from '../../boundary';
-import type { EntityWorkspaceContext } from '../entity-workspace-context';
+import type { EntityWorkspaceContext } from '../workspace/entity-workspace-context';
 
 export type EntityWorkspaceHubStrategy = 'amount' | 'time' | 'fee';
 

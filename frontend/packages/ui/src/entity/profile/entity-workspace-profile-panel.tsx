@@ -1,12 +1,12 @@
-import type { EntityWorkspaceContext } from '../../../../runtime-client/src/entity/entity-workspace-context';
+import type { EntityWorkspaceContext } from '../../../../runtime-client/src/entity/workspace/entity-workspace-context';
 import type { EntityWorkspaceHubPolicy } from '../../../../runtime-client/src/entity/profile/entity-workspace-hub-policy';
 import type { EntityWorkspaceProfile } from '../../../../runtime-client/src/entity/profile/entity-workspace-profile';
-import type { EntityWorkspaceReserves } from '../../../../runtime-client/src/entity/entity-workspace-reserves';
+import type { EntityWorkspaceReserves } from '../../../../runtime-client/src/entity/workspace/entity-workspace-reserves';
 import {
   projectEntityWorkspaceSettingsSummary,
-} from '../../../../runtime-client/src/entity/entity-workspace-settings-summary';
+} from '../../../../runtime-client/src/entity/workspace/entity-workspace-settings-summary';
 import type { EntityWorkspaceProfileDraft } from '../../../../runtime-client/src/entity/profile/entity-workspace-profile-update';
-import type { EntityWorkspaceTimeMachineState } from '../../../../runtime-client/src/entity/entity-workspace-time-machine';
+import type { EntityWorkspaceTimeMachineState } from '../../../../runtime-client/src/entity/workspace/entity-workspace-time-machine';
 import { formatAddress } from '../settings/entity-workspace-display';
 import { EntityWorkspaceProfileEditor } from './entity-workspace-profile-editor';
 import './entity-workspace-profile-panel.css';

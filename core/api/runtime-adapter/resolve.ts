@@ -4,7 +4,17 @@ import type { AccountTx, Delta } from '../../types/account';
 import type { EntityReplica, EntityState, ExternalWalletState } from '../../entity/types';
 import type { RuntimeEntityMetricStats, RuntimeReplica } from '../../runtime/types';
 import { readRuntimeEntityMetricStats } from '../../runtime/observability/entity-metrics';
-import type { JBatch, JBatchState, SentJBatch } from '../../jurisdiction/machine/batch';
+import { keccak256 } from 'ethers';
+import {
+  batchOpCount,
+  createEmptyBatch,
+  encodeJBatch,
+  getOpenOutgoingDebtTotals,
+  simulateDraftBatchReserveAvailability,
+  type JBatch,
+  type JBatchState,
+  type SentJBatch,
+} from '../../jurisdiction/machine/batch';
 import {
   DEFAULT_ACCOUNT_MERKLE_RADIX,
   DEFAULT_EPOCH_MAX_BYTES,
@@ -29,6 +39,7 @@ import { RuntimeAdapterError } from './errors';
 import { encodeRuntimeAdapterMessage, runtimeAdapterMaxMessageBytes , detachRuntimeAdapterPayload } from './codec';
 import { XLN_PROTOCOL_VERSION } from '../../protocol/version';
 import { copyAccountStateDomain } from '../../protocol/state/account-input-clone';
+import { assertCanonicalSettlementWorkspace } from '../../account/tx/handlers/settlement/transition';
 import { buildRuntimeRecoveryBundle } from '../../storage/recovery/bundle';
 import {
   deriveRuntimeRecoveryLookupKey,
@@ -41,10 +52,13 @@ import type {
 import type { RuntimeActivityFilters } from '../../storage/views/activity-types';
 import type {
   RuntimeAdapterActivityPage,
+  RuntimeAdapterBatchOperationCounts,
+  RuntimeAdapterBatchPreflight,
   RuntimeAdapterEntitySummary,
   RuntimeAdapterFrameReceiptResponse,
   RuntimeAdapterPaymentRoutesResponse,
   RuntimeAdapterReadQuery,
+  RuntimeAdapterSettlementWorkspaceRead,
   RuntimeAdapterSolvencySummary,
   RuntimeAdapterSwapHistoryPage,
   RuntimeAdapterTimelineIndexPage,
@@ -82,6 +96,7 @@ export type RuntimeAdapterResolveContext = {
   readActivityPage?: (
     opts: RuntimeActivityFilters & {
       beforeHeight?: number | undefined;
+      cursor?: string | undefined;
       limit?: number | undefined;
       scanLimit?: number | undefined;
     },
@@ -476,6 +491,7 @@ const readActivityQuery = (
   query?: RuntimeAdapterReadQuery,
 ): RuntimeActivityFilters & {
   beforeHeight?: number | undefined;
+  cursor?: string | undefined;
   limit?: number | undefined;
   scanLimit?: number | undefined;
 } => {
@@ -495,6 +511,7 @@ const readActivityQuery = (
     fromTimestamp: readOptionalFiniteNumber(query?.fromTimestamp, 'fromTimestamp'),
     toTimestamp: readOptionalFiniteNumber(query?.toTimestamp, 'toTimestamp'),
     beforeHeight: readOptionalFiniteNumber(query?.beforeHeight, 'beforeHeight'),
+    cursor: query?.cursor,
     limit: readOptionalFiniteNumber(query?.limit, 'limit'),
     scanLimit: readOptionalFiniteNumber(query?.scanLimit, 'scanLimit'),
   };
@@ -1149,6 +1166,127 @@ const compactJBatchForView = (batch: JBatch | undefined): JBatch | undefined => 
         reveals: ['[redacted]', '[redacted]', '[redacted]', '[redacted]'],
       } as typeof op.witness,
     })),
+  };
+};
+
+const countBatchOperations = (batch: JBatch): RuntimeAdapterBatchOperationCounts => ({
+  total: batchOpCount(batch),
+  reserveToReserve: batch.reserveToReserve.length,
+  reserveToCollateral: batch.reserveToCollateral.length,
+  reserveToCollateralPairs: batch.reserveToCollateral.reduce((total, op) => total + op.pairs.length, 0),
+  collateralToReserve: batch.collateralToReserve.length,
+  settlements: batch.settlements.length,
+  settlementDiffs: batch.settlements.reduce((total, settlement) => total + settlement.diffs.length, 0),
+  disputeStarts: batch.disputeStarts.length,
+  counterDisputes: batch.counterDisputes.length,
+  disputeFinalizations: batch.disputeFinalizations.length,
+  externalTokenToReserve: batch.externalTokenToReserve.length,
+  reserveToExternalToken: batch.reserveToExternalToken.length,
+  revealSecrets: batch.revealSecrets.length,
+  hashLadderRegistrations: batch.hashLadderRegistrations.length,
+});
+
+const batchIdentity = (batch: JBatch): string => keccak256(encodeJBatch(batch));
+
+const projectBatchPreflight = (
+  ctx: RuntimeAdapterResolveContext,
+  replica: EntityReplica,
+): RuntimeAdapterBatchPreflight => {
+  const runtimeId = String(ctx.env.runtimeId || '').trim().toLowerCase();
+  if (!runtimeId) throw new RuntimeAdapterError('E_INTERNAL', 'runtime identity is unavailable');
+  const batchState = replica.state.jBatchState;
+  const draft = batchState?.batch ?? createEmptyBatch();
+  const openDebtByToken = getOpenOutgoingDebtTotals(replica.state.outDebtsByToken);
+  const issue = simulateDraftBatchReserveAvailability(
+    replica.state.entityId,
+    replica.state.reserves,
+    draft,
+    openDebtByToken,
+  ).issues[0] ?? null;
+  const sent = batchState?.sentBatch;
+  return {
+    ok: true,
+    runtimeId,
+    height: envHeight(ctx.env),
+    entityId: normalizeEntityId(replica.state.entityId),
+    status: batchState?.status ?? 'empty',
+    reserveTokenCount: replica.state.reserves.size,
+    openDebtTokenCount: openDebtByToken.size,
+    draft: { identity: batchIdentity(draft), counts: countBatchOperations(draft), issue },
+    sent: sent ? {
+      identity: batchIdentity(sent.batch),
+      batchHash: sent.batchHash,
+      entityNonce: sent.entityNonce,
+      counts: countBatchOperations(sent.batch),
+    } : null,
+  };
+};
+
+const MAX_SETTLEMENT_WORKSPACE_READ_ITEMS = 100;
+
+const projectSettlementWorkspaces = (
+  ctx: RuntimeAdapterResolveContext,
+  replica: EntityReplica,
+): RuntimeAdapterSettlementWorkspaceRead => {
+  const runtimeId = normalizeEntityId(String(ctx.env.runtimeId || ''));
+  const entityId = normalizeEntityId(replica.state.entityId);
+  const signerId = normalizeEntityId(replica.signerId);
+  if (!runtimeId || !entityId || !signerId) {
+    throw new RuntimeAdapterError('E_INTERNAL', 'settlement workspace authority is unavailable');
+  }
+
+  const workspaces = [...replica.state.accounts]
+    .filter(([, account]) => account.state.settlementWorkspace !== undefined)
+    .sort(([left], [right]) => compareAscii(left, right))
+    .map(([accountId, account]) => {
+      const counterpartyEntityId = normalizeEntityId(accountId);
+      const leftEntity = normalizeEntityId(account.state.leftEntity);
+      const rightEntity = normalizeEntityId(account.state.rightEntity);
+      const expectedLeft = compareAscii(entityId, counterpartyEntityId) < 0 ? entityId : counterpartyEntityId;
+      const expectedRight = expectedLeft === entityId ? counterpartyEntityId : entityId;
+      if (leftEntity !== expectedLeft || rightEntity !== expectedRight) {
+        throw new RuntimeAdapterError(
+          'E_INTERNAL',
+          `settlement workspace account authority mismatch: ${entityId}:${counterpartyEntityId}`,
+        );
+      }
+      const workspace = account.state.settlementWorkspace;
+      if (!workspace) throw new RuntimeAdapterError('E_INTERNAL', 'settlement workspace disappeared during projection');
+      const workspaceHash = assertCanonicalSettlementWorkspace(account.state, workspace);
+      const proposerEntityId = workspace.lastModifiedByLeft ? leftEntity : rightEntity;
+      const approverEntityId = workspace.lastModifiedByLeft ? rightEntity : leftEntity;
+      const executorEntityId = workspace.executorIsLeft ? leftEntity : rightEntity;
+      return {
+        counterpartyEntityId,
+        workspaceHash,
+        ops: workspace.ops,
+        lastModifiedByLeft: workspace.lastModifiedByLeft,
+        status: workspace.status,
+        memo: workspace.memo ?? '',
+        revision: workspace.revision,
+        executorIsLeft: workspace.executorIsLeft,
+        proposerEntityId,
+        approverEntityId,
+        executorEntityId,
+        leftHankoPresent: Boolean(workspace.leftHanko),
+        rightHankoPresent: Boolean(workspace.rightHanko),
+      };
+    });
+  if (workspaces.length > MAX_SETTLEMENT_WORKSPACE_READ_ITEMS) {
+    throw new RuntimeAdapterError(
+      'E_BAD_QUERY',
+      `settlement workspace read exceeds ${MAX_SETTLEMENT_WORKSPACE_READ_ITEMS} active accounts`,
+    );
+  }
+  return {
+    ok: true,
+    runtimeId,
+    height: envHeight(ctx.env),
+    entityId,
+    signerId,
+    returned: workspaces.length,
+    maxItems: MAX_SETTLEMENT_WORKSPACE_READ_ITEMS,
+    workspaces,
   };
 };
 
@@ -1955,6 +2093,28 @@ const resolveScopedRuntimeAdapterRead = async <T>(
   if (parts[0] === 'entity' && parts.length >= 2) {
     const entityId = parts[1];
     if (!entityId) throw new RuntimeAdapterError('E_BAD_PATH', 'entity id is required');
+
+    if (parts.length === 3 && parts[2] === 'batch-preflight') {
+      const requestedHeight = readAtHeight(query);
+      const height = envHeight(ctx.env);
+      if (requestedHeight !== null && requestedHeight !== height) {
+        throw new RuntimeAdapterError('E_BAD_QUERY', 'historical batch preflight reads are unavailable');
+      }
+      const replica = findReplica(ctx.env, entityId);
+      if (!replica) throw new RuntimeAdapterError('E_NOT_FOUND', `entity not found: ${normalizeEntityId(entityId)}`);
+      return projectBatchPreflight(ctx, replica) as T;
+    }
+
+    if (parts.length === 3 && parts[2] === 'settlement-workspaces') {
+      const requestedHeight = readAtHeight(query);
+      const height = envHeight(ctx.env);
+      if (requestedHeight !== null && requestedHeight !== height) {
+        throw new RuntimeAdapterError('E_BAD_QUERY', 'historical settlement workspace reads are unavailable');
+      }
+      const replica = findReplica(ctx.env, entityId);
+      if (!replica) throw new RuntimeAdapterError('E_NOT_FOUND', `entity not found: ${normalizeEntityId(entityId)}`);
+      return projectSettlementWorkspaces(ctx, replica) as T;
+    }
 
     if (parts.length === 3 && parts[2] === 'settlement-counters') {
       if (readAtHeight(query) !== null) {

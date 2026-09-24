@@ -1,4 +1,4 @@
-import type { GraphRenderer } from '../../../../../packages/ui/src/graph/graph3d-renderer';
+import type { GraphRenderer } from '../../../../../packages/ui/src/graph/three/core/graph3d-renderer';
 import { createGraph3dFpsOverlayView } from '../../../../../packages/runtime-client/src/graph/graph3d-viewport-view';
 
 export const createOpsGraphStats = (container: HTMLElement) => {

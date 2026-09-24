@@ -283,15 +283,12 @@ describe('React wallet payments', () => {
     expect(sends).toEqual([undefined]);
   });
 
-  test('bounds reserve, collateral, and lending operations before command submission', () => {
+  test('bounds admitted reserve and collateral operations before command submission', () => {
     const projection = decodeWalletPaymentProjection(frame(), math);
     const base = {
       targetEntityId: bob,
       tokenId: 1,
       amount: '25',
-      termId: '1d' as const,
-      interestBps: 125,
-      intentId: '',
     };
     expect(buildWalletOperationTx({ ...base, kind: 'r2r' }, projection, math)).toMatchObject({
       type: 'r2r', data: { toEntityId: bob, amount: 25_000_000n },
@@ -302,11 +299,6 @@ describe('React wallet payments', () => {
     expect(buildWalletOperationTx({ ...base, kind: 'c2r', amount: '20' }, projection, math)).toMatchObject({
       type: 'settle_propose',
       data: { counterpartyEntityId: bob, memo: 'settle-c2r', ops: [{ type: 'c2r', amount: 20_000_000n }] },
-    });
-    expect(buildWalletOperationTx({
-      ...base, kind: 'lend', intentId: 'lend-12345678',
-    }, projection, math)).toMatchObject({
-      type: 'lendingOffer', data: { hubEntityId: bob, termId: '1d', interestBps: 125 },
     });
     expect(() => buildWalletOperationTx({
       ...base, kind: 'r2r', amount: '501',
@@ -320,7 +312,6 @@ describe('React wallet payments', () => {
     const projection = decodeWalletPaymentProjection(frame(), math);
     const review = buildWalletSettlementReview({
       kind: 'c2r', targetEntityId: bob, tokenId: 1, amount: '20',
-      termId: '1d', interestBps: 0, intentId: '',
     }, projection, math);
     expect(review).toMatchObject({
       entityId: alice,
@@ -459,7 +450,7 @@ describe('React wallet payments', () => {
       const projection = decodeWalletPaymentProjection(payload, math);
       const draft = {
         kind: 'c2r' as const, targetEntityId: peer, tokenId: 1,
-        amount: formatUnits(limit + 1n, 6), termId: '1d' as const, interestBps: 0, intentId: '',
+        amount: formatUnits(limit + 1n, 6),
       };
       expect(() => buildWalletOperationTx(draft, projection, math)).toThrow('WALLET_OPERATION_COLLATERAL_EXCEEDED');
       if (limit > 0n) expect(buildWalletOperationTx({ ...draft, amount: formatUnits(limit, 6) }, projection, math))

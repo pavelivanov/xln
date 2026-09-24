@@ -101,13 +101,13 @@ describe('Graph3D entity mini-panel view model', () => {
     expect(() => graph3dEntityBigInt('not-an-amount')).toThrow();
   });
 
-  test('keeps stores and rendering in Svelte while delegating deterministic projection', () => {
-    const source = readFileSync('frontend/src/lib/view/components/EntityMiniPanel.svelte', 'utf8');
+  test('keeps React graph selection on projected data without duplicating financial math', () => {
+    const source = readFileSync('frontend/apps/ops/src/workspace/graph/ops-graph-panel.tsx', 'utf8');
 
-    expect(source).toContain("from '../../../../packages/runtime-client/src/graph/graph3d-entity-panel-view'");
-    expect(source).toContain('createGraph3dEntityPanelView({');
-    expect(source).toContain('$runtimeFrameEnv');
-    expect(source).toContain("dispatch('action'");
+    expect(source).toContain('mergeRuntimeGraphProjections');
+    expect(source).toContain('materializeRuntimeGraphReplicas(graph)');
+    expect(source).toContain("selection?.kind === 'entity'");
+    expect(source).toContain('openEntity(selected.entityId');
     expect(source).not.toContain('function getReserveValue');
     expect(source).not.toContain('function getDelta');
   });

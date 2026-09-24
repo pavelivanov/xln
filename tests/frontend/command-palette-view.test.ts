@@ -65,18 +65,17 @@ test('command palette view builds a remote RuntimeView projection search index',
 });
 
 test('CommandPalette consumes CommandPaletteView instead of owning runtime env reads', () => {
-  const palette = readFileSync('frontend/src/lib/components/shared/CommandPalette.svelte', 'utf8');
-  const view = readFileSync('frontend/src/lib/view/View.svelte', 'utf8');
+  const palette = readFileSync('frontend/apps/ops/src/workspace/ops-command-palette.tsx', 'utf8');
+  const query = readFileSync('frontend/apps/ops/src/workspace/session/ops-workspace-query.ts', 'utf8');
 
-  expect(palette).toContain('export let commandPaletteView: CommandPaletteView');
   expect(palette).toContain('buildCommandPaletteSuggestions');
+  expect(palette).toContain('readOpsGossipDirectory');
+  expect(palette).toContain('live.snapshot.data?.directory.profiles');
   expect(palette).not.toContain('xlnEnvironment');
   expect(palette).not.toContain('xlnFunctions');
   expect(palette).not.toContain('env.state.eReplicas');
   expect(palette).not.toContain('validatedProfiles');
-  expect(view).toContain('buildCommandPaletteView(viewEnv)');
-  expect(view).toContain('buildCommandPaletteViewFromRuntimeView');
-  expect(view).toContain('{commandPaletteView}');
+  expect(query).toContain('buildGossipDirectoryViewFromRuntimeEntities({ entities: frame.entities, runtimeId })');
 });
 
 

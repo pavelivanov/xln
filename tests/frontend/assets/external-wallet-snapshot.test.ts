@@ -89,22 +89,11 @@ describe('external wallet snapshot helpers', () => {
   });
 
   test('remote projection sessions read external wallet snapshots through API without live RuntimeReplica', () => {
-    const source = readFileSync('frontend/src/lib/components/Entity/workspace/shell/EntityPanelTabs.svelte', 'utf8');
-    const fetchStart = source.indexOf('async function fetchExternalTokens');
-    const fetchEnd = source.indexOf('const allowanceReads = moveAllowanceRouteEnabled', fetchStart);
-    expect(fetchStart).toBeGreaterThan(0);
-    expect(fetchEnd).toBeGreaterThan(fetchStart);
-    const fetchSource = source.slice(fetchStart, fetchEnd);
-    expect(fetchSource).not.toContain("$runtimeControllerHandle.mode === 'remote' && !envAtStart");
-    expect(fetchSource).not.toContain('!envAtStart) {');
-    expect(fetchSource).toContain('const xln = envAtStart ? await getXLN() : null;');
-    expect(fetchSource).toContain('getCurrentEntityJAdapter(xln, envAtStart, "fetch-external-tokens")');
-    expect(fetchSource).toContain('const tokenList = await getTokenList(jadapter, runtimeId, jurisdiction);');
-    expect(fetchSource).toContain(
-      'resolveExternalWalletSpender(jadapter, jurisdiction, panelView.jurisdictions ?? [])',
-    );
-    expect(source).toContain('const snapshot = await requestExternalWalletSnapshot(');
-    expect(source).toContain('if (!snapshot) {');
+    const reader = readFileSync('frontend/bridges/wallet/external-wallet-reader.ts', 'utf8');
+    expect(reader).toContain("body: JSON.stringify({ entityId, owner, tokenAddresses, allowances: allowanceReads })");
+    expect(reader).toContain('fetch(`${apiBase}/api/external-wallet/snapshot`');
+    expect(reader).toContain('signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS)');
+    expect(reader).not.toContain('RuntimeReplica');
   });
 
   test('local wallet reads never certify an incomplete jurisdiction block', () => {
@@ -119,24 +108,24 @@ describe('external wallet snapshot helpers', () => {
   });
 
   test('live wallet balances refresh through read-only snapshots without producing consensus input', () => {
-    const source = readFileSync('frontend/src/lib/components/Entity/workspace/shell/EntityPanelTabs.svelte', 'utf8');
+    const source = readFileSync('frontend/apps/wallet/src/onboarding/wallet-external-provider-source.ts', 'utf8');
+    const view = readFileSync('frontend/apps/wallet/src/payments/wallet-payment-external.tsx', 'utf8');
     const reader = readFileSync('frontend/bridges/wallet/external-wallet-reader.ts', 'utf8');
     expect(reader).toContain('signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS)');
-    expect(source).toContain('const externalWalletRefresh = window.setInterval(() => {');
-    expect(source).toMatch(/document\.visibilityState !== ["']visible["'] \|\| !activeIsLive/);
-    expect(source).toContain('void fetchExternalTokens(true);');
-    expect(source).toContain('window.clearInterval(externalWalletRefresh);');
+    expect(source).toContain('readonly refresh = async (): Promise<void>');
+    expect(view).toContain('onClick={() => void source.refresh()}');
+    expect(source).toContain('if (outcome.contextCurrent) await this.refresh();');
     expect(source).not.toContain("'external-wallet-snapshot-ui-local'");
   });
 
   test('external wallet snapshot transport failures are non-fatal persistent diagnostics', () => {
-    const source = readFileSync('frontend/src/lib/components/Entity/workspace/shell/EntityPanelTabs.svelte', 'utf8');
+    const source = readFileSync('frontend/apps/wallet/src/onboarding/wallet-external-provider-source.ts', 'utf8');
+    const view = readFileSync('frontend/apps/wallet/src/payments/wallet-payment-external-state.tsx', 'utf8');
     const reader = readFileSync('frontend/bridges/wallet/external-wallet-reader.ts', 'utf8');
     expect(reader).toContain('function isExternalWalletSnapshotTransportFailure(message: string): boolean');
-    expect(source).toMatch(
-      /logEntityPanelDiagnostic\(["']External token snapshot unavailable["'], \{ error: message \}\)/,
-    );
-    expect(source).toMatch(/logEntityPanelDiagnostic\(["']Failed to fetch external tokens["'], \{ error: message \}\)/);
+    expect(source).toContain("status: 'error'");
+    expect(source).toContain('message: error instanceof Error ? error.message : String(error)');
+    expect(view).toContain("snapshot.status === 'error' ? 'alert' : 'status'");
     expect(source).not.toContain('console.warn');
     expect(source).not.toContain('console.error');
     expect(source).not.toContain('console.info');

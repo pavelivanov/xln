@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { expectNoBrowserErrors, expectPageContained, observeBrowserErrors, screenshotEvidence } from '../../browser-evidence';
-import { selectWalletFixtureRuntime } from '../fixtures/wallet-runtime-test-helpers';
+import { selectWalletFixtureRuntime, walletPortfolioAccount } from '../fixtures/wallet-runtime-test-helpers';
 import { finishOpenedWalletSetup, restoreLocalWallet } from '../onboarding/wallet-onboarding-test-helpers';
 
 test('focused Account shows the exact remote credit perspective and returns to activity', { tag: '@functional' }, async ({ page }, testInfo) => {
@@ -10,7 +10,8 @@ test('focused Account shows the exact remote credit perspective and returns to a
   for (const entityId of [fixture.entityId, fixture.counterpartyEntityId]) {
     await page.getByLabel('Entity', { exact: true }).selectOption(entityId);
     await expect(page.getByLabel('Entity', { exact: true })).toHaveValue(entityId);
-    const account = page.locator('.wallet-portfolio-account').first();
+    const counterpartyId = entityId === fixture.entityId ? fixture.counterpartyEntityId : fixture.entityId;
+    const account = walletPortfolioAccount(page, counterpartyId);
     await expect(account).toBeVisible();
     const creditUs = await account.locator('dl > div').filter({ has: page.getByText('Peer granted us', { exact: true }) }).first().locator('dd').innerText();
     const creditPeer = await account.locator('dl > div').filter({ has: page.getByText('We granted peer', { exact: true }) }).first().locator('dd').innerText();
@@ -73,7 +74,7 @@ test('focused Account reads a real locally opened Account without starting anoth
   await hub.getByTestId('hub-connect-button').click();
   await expect(hub).toHaveAttribute('data-connection-state', 'open', { timeout: 30_000 });
   await page.getByRole('button', { name: '← Back to assets' }).click();
-  await page.locator('.wallet-portfolio-account').getByRole('button', { name: 'View Account' }).click();
+  await walletPortfolioAccount(page, fixture.recovery.hubDiscovery.hubEntityId).getByRole('button', { name: 'View Account' }).click();
   const panel = page.getByTestId('account-panel');
   await expect(panel).toHaveAttribute('data-counterparty-id', fixture.recovery.hubDiscovery.hubEntityId);
   await expect(panel.getByText('No active dispute.', { exact: true })).toBeVisible();

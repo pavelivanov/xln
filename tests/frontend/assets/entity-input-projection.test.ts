@@ -2,43 +2,30 @@ import { expect, test } from 'bun:test';
 import { existsSync, readFileSync } from 'node:fs';
 
 test('EntityInput consumes projected profiles instead of global runtime env', () => {
-  const entityInput = readFileSync('frontend/src/lib/components/shared/EntityInput.svelte', 'utf8');
-  const payment = readFileSync('frontend/src/lib/components/Entity/payments/PaymentPanel.svelte', 'utf8');
-  const move = readFileSync('frontend/src/lib/components/Entity/MoveWorkspace.svelte', 'utf8');
-  const settlement = readFileSync('frontend/src/lib/components/Entity/payments/SettlementPanel.svelte', 'utf8');
-  const accountOpen = readFileSync('frontend/src/lib/components/Entity/account/ui/AccountOpenPanel.svelte', 'utf8');
-  const accountWorkspace = readFileSync('frontend/src/lib/components/Entity/workspace/AccountWorkspaceView.svelte', 'utf8');
-  const assets = readFileSync('frontend/src/lib/components/Entity/assets/EntityAssetsTab.svelte', 'utf8');
-  const tabs = readFileSync('frontend/src/lib/components/Entity/workspace/shell/EntityPanelTabs.svelte', 'utf8');
+  const entityInput = readFileSync('frontend/apps/wallet/src/entity/wallet-entity-input.tsx', 'utf8');
+  const move = readFileSync('frontend/apps/wallet/src/move/wallet-move.tsx', 'utf8');
+  const accountOpen = readFileSync('frontend/apps/wallet/src/account/controls/wallet-account-open.tsx', 'utf8');
 
-  expect(entityInput).toContain('export let profiles: GossipProfile[] = []');
-  expect(entityInput).toContain('activeProfiles = Array.isArray(profiles) ? profiles : []');
+  expect(entityInput).toContain('profiles: readonly EntityInputProfile[]');
+  expect(entityInput).toContain('const names = new Map(profiles.map(');
+  expect(entityInput).toContain('parseEntityInput(value, { entities, profiles })');
   expect(entityInput).not.toContain('xlnEnvironment');
   expect(entityInput).not.toContain('$xlnEnvironment');
   expect(entityInput).not.toContain('getProfilesFromSource');
   expect(entityInput).not.toContain('getGossipProfile(');
   expect(entityInput).not.toContain('scheduleGossipProfileFetch');
 
-  expect(payment).toContain('profiles={runtimeProfiles}');
-  expect(move).toContain('export let profiles: GossipProfile[] = []');
-  expect(settlement).toContain('export let profiles: GossipProfile[] = []');
-  expect(settlement).toContain('export let env: RuntimeReplica | EnvSnapshot | null = null');
-  expect(settlement).toContain('if (historyOnly) return;');
-  expect(settlement).not.toContain('activeEnv?.gossip');
-  expect(settlement).not.toContain('getFrameReplicaMap');
-  expect(accountOpen).toContain('export let profiles: GossipProfile[] = []');
-  expect(accountWorkspace).toContain('profiles = Array.from(profileByEntityId.values())');
-  expect(assets).toContain('profiles = Array.from(profileByEntityId.values())');
-  expect(assets).not.toContain('EnvSnapshot');
-  expect(assets).not.toContain('export let activeEnv');
-  expect(tabs).toContain('profileByEntityId={panelView.profileByEntityId}');
+  expect(move).toContain('const profiles = [...context.names]');
+  expect(move).toContain('profiles={profiles}');
+  expect(accountOpen).toContain('profiles={snapshot.profiles}');
+  expect(`${move}\n${accountOpen}`).not.toContain('xlnEnvironment');
 });
 
 test('entity naming helpers are projection-only and do not perform hidden runtime fetches', () => {
   const entityNaming = readFileSync('frontend/packages/ui/src/identity/entity-naming.ts', 'utf8');
-  const entitySelect = readFileSync('frontend/src/lib/components/Entity/workspace/shell/EntitySelect.svelte', 'utf8');
-  const entityDropdown = readFileSync('frontend/src/lib/components/Entity/workspace/shell/EntityDropdown.svelte', 'utf8');
-  const accountDropdown = readFileSync('frontend/src/lib/components/Entity/account/ui/AccountDropdown.svelte', 'utf8');
+  const entitySelect = readFileSync('frontend/apps/wallet/src/entity/wallet-entity-input.tsx', 'utf8');
+  const entityDropdown = readFileSync('frontend/packages/ui/src/entity/entity-panel-options.ts', 'utf8');
+  const accountDropdown = readFileSync('frontend/apps/wallet/src/account/wallet-account-rail.tsx', 'utf8');
 
   for (const source of [entityNaming, entitySelect, entityDropdown, accountDropdown]) {
     expect(source).not.toContain('scheduleGossipProfileFetch');
@@ -52,7 +39,7 @@ test('entity naming helpers are projection-only and do not perform hidden runtim
 });
 
 test('entity factory auto-create uses injected runtime env and fails loud', () => {
-  const entityFactory = readFileSync('frontend/bridges/wallet/entity-factory.ts', 'utf8');
+  const entityFactory = readFileSync('frontend/bridges/wallet/entity/entity-factory.ts', 'utf8');
   const vaultStore = readFileSync('frontend/bridges/vault/vault-store.ts', 'utf8');
 
   expect(entityFactory).toContain('export async function autoCreateEntityForSigner');
@@ -75,8 +62,8 @@ test('entity factory auto-create uses injected runtime env and fails loud', () =
 });
 
 test('entity factory rechecks bootstrap ownership and dispatches only to its injected runtime', () => {
-  const source = readFileSync('frontend/bridges/wallet/entity-factory.ts', 'utf8');
-  const userMode = readFileSync('frontend/src/lib/view/UserModePanel.svelte', 'utf8');
+  const source = readFileSync('frontend/bridges/wallet/entity/entity-factory.ts', 'utf8');
+  const onboarding = readFileSync('frontend/apps/wallet/src/identity/identity-onboarding.tsx', 'utf8');
   const createStart = source.indexOf('export async function createEphemeralEntity(');
   const createEnd = source.indexOf('\nfunction findReplicaBySigner(', createStart);
   const createSource = source.slice(createStart, createEnd);
@@ -93,8 +80,8 @@ test('entity factory rechecks bootstrap ownership and dispatches only to its inj
   expect(recheckReplica).toBeGreaterThan(loadRuntime);
   expect(dispatch).toBeGreaterThan(recheckReplica);
   expect(createSource).not.toContain('submitRuntimeInput(runtimeInput)');
-  expect(userMode).not.toContain('createSelfEntity');
-  expect(userMode).not.toContain('ensureSelfEntities');
+  expect(onboarding).not.toContain('createSelfEntity');
+  expect(onboarding).not.toContain('ensureSelfEntities');
 });
 
 test('vault user token helpers use active RuntimeStore env and RuntimeInput command path', () => {

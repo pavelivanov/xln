@@ -1,5 +1,3 @@
-import { waitForWalletFixtureState } from '../fixtures/wallet-recovery-fixture';
-
 // Dedicated Entities keep the large Account list independent of the payment
 // fixture. Every relationship is opened through the real Runtime transition.
 export async function createAccountDropdownFixture(fixturePort: number) {
@@ -38,21 +36,26 @@ export async function createAccountDropdownFixture(fixturePort: number) {
       mode: 'proposer-based', jurisdiction, validators: [peer.signerId], threshold: 1n, shares: { [peer.signerId]: 1n },
     } },
   })), entityInputs: [] });
-  await commit({ runtimeTxs: [], entityInputs: participants.map(peer => ({
-    entityId: peer.entityId, signerId: peer.signerId, entityTxs: [{ type: 'profile-update', data: {
-      profile: { entityId: peer.entityId, name: peer.name, avatar: '', bio: '', website: '' },
-    } }],
-  })) });
   await commit({ runtimeTxs: [], entityInputs: [{ entityId: owner.entityId, signerId: owner.signerId,
     entityTxs: participants.slice(1).map(peer => ({ type: 'openAccount', data: {
       targetEntityId: peer.entityId,
       disputeConfig: defaultAccountDisputeConfigForParties(owner.entityId, false, peer.entityId, false),
     } })),
   }] });
-  await waitForWalletFixtureState('dropdown-accounts-open', () => participants.slice(1).every(peer => {
+  if (!await runtime.waitForRuntimeWorkDrained(env, 30_000)) {
+    throw new Error(`ACCOUNT_DROPDOWN_FIXTURE_DRAIN_TIMEOUT:height=${env.state.height}`);
+  }
+  const missingPeers = participants.slice(1).filter(peer => {
     const replica = [...env.state.eReplicas.values()].find(item => item.state.entityId === peer.entityId);
-    return Boolean(replica?.state.accounts.has(owner.entityId));
-  }));
+    return !replica?.state.accounts.has(owner.entityId);
+  });
+  if (missingPeers.length > 0) {
+    throw new Error(`ACCOUNT_DROPDOWN_FIXTURE_ACCOUNTS_MISSING:${missingPeers.map(peer => peer.entityId).join(',')}`);
+  }
+  // Every consumer of this large fixture is read-only. Keep the committed
+  // replica available to the adapter without an idle 27-Entity loop competing
+  // with later candidate Runtime reads.
+  await runtime.stopRuntimeLoopAndWait(env);
   return { env, runtimeId, entityId: owner.entityId, close: async () => {
     await runtime.stopRuntimeLoopAndWait(env);
     await runtime.closeRuntimeDb(env);

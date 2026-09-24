@@ -196,7 +196,7 @@
 .wallet-receive-preview > code { width: 100%; overflow-wrap: anywhere; color: #656c68; font-size: 0.62rem; line-height: 1.5; }
 .wallet-receive-qr-placeholder { display: grid; place-items: center; width: min(100%, 240px); aspect-ratio: 1; color: #656c68; border: 1px dashed #343936; font-size: 0.7rem; }
 
-.wallet-operation-picker { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); border: 1px solid var(--line); }
+.wallet-operation-picker { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border: 1px solid var(--line); }
 .wallet-operation-picker button { display: grid; gap: 0.3rem; min-width: 0; padding: 0.9rem; text-align: left; background: transparent; border: 0; border-right: 1px solid var(--line); }
 .wallet-operation-picker button:last-child { border-right: 0; }
 .wallet-operation-picker button.is-selected { background: #182019; }

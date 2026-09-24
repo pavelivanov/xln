@@ -18,14 +18,14 @@ import {
   parseRemoteRuntimeImportSourcePayload,
   type StoredRemoteRuntimeImportEntry,
 } from '../../../../frontend/packages/browser/src/runtime/session/remote-runtime-import';
-import { writeRemoteRuntimeImportSummary } from '../../../../frontend/bridges/runtime/remote-runtime-import-flow';
+import { writeRemoteRuntimeImportSummary } from '../../../../frontend/bridges/runtime/remote/remote-runtime-import-flow';
 import {
   buildRemoteRuntimeRecoveryPeerSources,
   buildRuntimeWsRecoveryPeerSource,
   buildRuntimeWsRecoveryPeerSources,
   selectPrimaryRemoteEntitySummary,
   selectPrimaryRemoteHubSummary,
-} from '../../../../frontend/bridges/runtime/remote-runtime-validation';
+} from '../../../../frontend/bridges/runtime/remote/remote-runtime-validation';
 
 const token = `xlnra1.full.${Date.now() + 60 * 60 * 1000}.aud.kid.jti.sig`;
 
@@ -623,17 +623,17 @@ describe('remote runtime import manager utilities', () => {
     expect(removeStoredRemoteRuntimeImport(h2.wsUrl)).toEqual([]);
   });
 
-  test('app boot hydrates remote runtime handles from the import source through validation', () => {
+  test('React runtime management hydrates imported handles through canonical validation', () => {
     const xlnStore = readFileSync('frontend/bridges/runtime/xln-store.ts', 'utf8');
-    const runtimeCreation = readFileSync('frontend/src/lib/components/Views/RuntimeCreation.svelte', 'utf8');
+    const onboarding = readFileSync('frontend/apps/wallet/src/identity/identity-onboarding.tsx', 'utf8');
+    const manager = readFileSync('frontend/apps/ops/src/workspace/runtime/ops-runtime-manager.tsx', 'utf8');
     const runtimeOpeningAdapter = readFileSync(
       'frontend/bridges/vault/wallet-runtime-opening-adapter.ts',
       'utf8',
     );
     const runtimeStore = readFileSync('frontend/bridges/runtime/runtime-store.ts', 'utf8');
     const vaultStore = readFileSync('frontend/bridges/vault/vault-store.ts', 'utf8');
-    const appLayout = readFileSync('frontend/src/routes/app/+layout.svelte', 'utf8');
-    const importFlow = readFileSync('frontend/bridges/runtime/remote-runtime-import-flow.ts', 'utf8');
+    const importFlow = readFileSync('frontend/bridges/runtime/remote/remote-runtime-import-flow.ts', 'utf8');
     const browserDerivation = readFileSync(
       'frontend/bridges/wallet/brainvault/wallet-brainvault-browser-derivation.ts',
       'utf8',
@@ -644,40 +644,24 @@ describe('remote runtime import manager utilities', () => {
     expect(xlnStore).toContain("importSource.searchParams.set('access', 'admin')");
     expect(xlnStore).not.toContain("importSource.searchParams.set('allowPartial', '1')");
     expect(xlnStore).toContain('runtimeOperations.hydrateRemoteRuntimeImportSource(importSource.toString(), { optional: true })');
-    expect(runtimeCreation).not.toContain('live-runtime-section');
-    expect(runtimeCreation).not.toContain('hydrateRemoteRuntimeImportSource');
-    expect(runtimeCreation).toContain('discover: ({ seed, runtimeId }) => discoverCanonicalWalletRuntimeRecovery(seed, runtimeId)');
+    expect(onboarding).not.toContain('hydrateRemoteRuntimeImportSource');
+    expect(onboarding).toContain('openWalletRuntimeWithCanonicalVault');
     expect(runtimeOpeningAdapter).toContain('await discoverRuntimeRecoveryCandidates(seed, {');
     expect(runtimeOpeningAdapter).toContain('peers: buildRemoteRuntimeRecoveryPeerSources({ runtimeId: expectedRuntimeId })');
-    expect(runtimeCreation).toContain('const outcome = await walletRecoveryDiscovery.run({');
-    expect(runtimeCreation).toContain('recoveryCheckedPeers = discovery.checkedPeers');
-    expect(runtimeCreation).toContain("import { errorLog } from '../../../../packages/browser/src/logging/error-log-store';");
-    expect(runtimeCreation).toContain("errorLog.log(message, 'Runtime Creation', details)");
-    expect(runtimeCreation).toContain("logRuntimeCreationDiagnostic('BrainVault derivation failed'");
-    expect(runtimeCreation).toContain("logRuntimeCreationDiagnostic('Mnemonic import failed'");
+    expect(onboarding).toContain('prepareWalletBrainVaultWithCanonicalVault');
+    expect(onboarding).toContain('restoreWalletRuntimeFromCanonicalRecovery');
     expect(browserDerivation).toContain('normalizeWalletBrainVaultWorkerError(error)');
     expect(browserDerivation).toContain('rejectRun(run, error)');
-    expect(runtimeCreation).not.toContain('console.warn');
-    expect(runtimeCreation).not.toContain('console.error');
-    expect(runtimeCreation).not.toContain('console.info');
+    expect(onboarding).not.toContain('console.warn');
+    expect(onboarding).not.toContain('console.error');
+    expect(onboarding).not.toContain('console.info');
     expect(vaultStore).toContain('runtimeOperations.hydrateRemoteRuntimeImports();');
     expect(runtimeStore).toContain('validateRemoteRuntimeEntry(entry, { index, importedAt })');
     expect(runtimeStore).toContain('readStoredRemoteRuntimeImports({ dropExpired: true, dropInvalid: true })');
-    expect(appLayout).toContain('async function importRemoteRuntimesIntoApp');
-    expect(appLayout).toContain('let runtimeImportLocationInFlight = false;');
-    expect(appLayout).toContain('async function processRuntimeImportLocationChange()');
-    expect(appLayout).toContain('await processRuntimeImportLocationChange();');
-    expect(appLayout).toContain('fetchRemoteRuntimeImportSource(source)');
-    expect(appLayout).toContain('parseRemoteRuntimeImportPayload(payload)');
-    expect(appLayout).toContain('persistActiveRemoteRuntimeImport(first)');
-    expect(appLayout).toContain('const hasExplicitRemoteRuntimeBootstrap = hasWalletRuntimeBootstrapInput({');
-    expect(appLayout).toContain('if (!hasExplicitRemoteRuntimeBootstrap && await ensureCurrentDeployVersion()) return;');
-    expect(appLayout.indexOf('const importPayload = readRemoteRuntimeImportPayloadFromHash()')).toBeLessThan(
-      appLayout.indexOf('if (!hasExplicitRemoteRuntimeBootstrap && await ensureCurrentDeployVersion()) return;'),
-    );
-    expect(appLayout).not.toContain('readRemoteRuntimeImportPayloadFromUrl');
-    expect(appLayout).not.toContain('readRemoteRuntimeImportSourceFromUrl');
-    expect(appLayout).not.toContain('redirectRemoteRuntimeImportToManager');
+    expect(manager).toContain('readStoredRemoteRuntimeImports()');
+    expect(manager).toContain('importRemoteRuntimeEntries(entries, { activateFirst: false');
+    expect(manager).toContain('await selectWorkspaceRuntime(first)');
+    expect(manager).toContain('setFailed(result.failed.map(item => item.entry))');
     expect(importFlow).toContain('export const importRemoteRuntimeEntries = async');
     expect(importFlow).toContain('runtimeOperations.upsertRemoteRuntimeImports(validated)');
     expect(importFlow).toContain('failedCount: failed.length');
@@ -693,23 +677,18 @@ describe('remote runtime import manager utilities', () => {
     expect(runtimeStore).not.toContain('/api/hubs');
   });
 
-  test('inactive app tabs preserve runtime import links until active-lock claim', () => {
-    const appLayout = readFileSync('frontend/src/routes/app/+layout.svelte', 'utf8');
-    const mountStart = appLayout.indexOf('onMount(() => {');
-    const mountSource = appLayout.slice(mountStart);
-    const inactiveCheck = mountSource.indexOf('if (isInactiveTabStandby())');
-    const importBootstrap = mountSource.indexOf('const bootstrapResult = await processRemoteRuntimeBootstrapFromLocation(remoteRequest)');
-    const claimStart = appLayout.indexOf('async function claimActiveTabLockInPlace');
-    const claimEnd = appLayout.indexOf('async function acceptRemoteRuntime', claimStart);
-    const claimSource = appLayout.slice(claimStart, claimEnd);
+  test('React runtime manager retains failed imports until a validated selection succeeds', () => {
+    const manager = readFileSync('frontend/apps/ops/src/workspace/runtime/ops-runtime-manager.tsx', 'utf8');
+    const selection = readFileSync('frontend/apps/ops/src/workspace/runtime/ops-runtime-selection.ts', 'utf8');
 
-    expect(mountStart).toBeGreaterThan(0);
-    expect(inactiveCheck).toBeGreaterThan(0);
-    expect(importBootstrap).toBeGreaterThan(inactiveCheck);
-    expect(claimSource).toContain('processLocationRemoteBootstrap: true');
-    expect(appLayout).toContain('async function processRemoteRuntimeBootstrapFromLocation(');
-    expect(appLayout).toContain('parsedRemoteRequest?: ReturnType<typeof readRemoteRuntimeRequestFromUrl>');
-    expect(appLayout).toContain('showInactiveTabStandby()');
+    expect(manager).toContain('setFailed(result.failed.map(item => item.entry))');
+    expect(manager).toContain('Retry failed ({failed.length})');
+    expect(manager).toContain('activateFirst: false');
+    expect(manager.indexOf('const first = result.validated[0]')).toBeLessThan(
+      manager.indexOf('await selectWorkspaceRuntime(first)'),
+    );
+    expect(selection).toContain('writeRemoteRuntimeAdapterSession');
+    expect(selection).toContain('await opsWorkspaceSession.select');
   });
 
   test('remote projection refresh keeps imported non-hub runtime identity instead of first hub', () => {

@@ -93,13 +93,13 @@ describe('browser wallet recovery choice', () => {
     })).toBe('create-fresh');
   });
 
-  test('keeps discovery behind the canonical adapter and decisions in the Svelte flow', () => {
+  test('keeps discovery behind the canonical adapter and decisions in the React flow', () => {
     const boundary = readFileSync(
       'frontend/packages/browser/src/recovery/wallet-recovery-choice.ts',
       'utf8',
     );
     const view = readFileSync(
-      'frontend/src/lib/components/Views/RuntimeCreation.svelte',
+      'frontend/bridges/wallet/canonical/wallet-canonical-vault-runtime.ts',
       'utf8',
     );
     const adapter = readFileSync(
@@ -111,14 +111,12 @@ describe('browser wallet recovery choice', () => {
     expect(boundary).not.toContain('@xln/brainvault');
     expect(boundary).not.toContain('vaultOperations');
     expect(view).toContain('summarizeWalletRecoveryCandidates(');
-    expect(view).toContain('resolveWalletRecoveryContinuation({');
-    expect(view).toContain('mergeWalletRecoveryCandidate(recoveryCandidates, candidate)');
-    expect(view).toContain('discover: ({ seed, runtimeId }) => discoverCanonicalWalletRuntimeRecovery(seed, runtimeId)');
+    expect(view).toContain('mergeWalletRecoveryCandidate(candidates, candidate)');
+    expect(view).toContain('const recoverySelection = new WalletRecoverySelectionSession<RuntimeRecoveryCandidate>()');
+    expect(view).toContain('const recoveryCandidate = consumeRecoveryCandidate(request, token, candidateId)');
     expect(adapter).toContain('await discoverRuntimeRecoveryCandidates(seed, {');
-    expect(view).toContain('const outcome = await walletRecoveryDiscovery.run({');
     expect(view).toContain('await parseRuntimeRecoveryCandidateFile(');
-    expect(view).toContain('await openLocalRuntime()');
-    expect(view).toContain('await createFreshRuntime()');
+    expect(view).toContain('await executeCanonicalWalletRuntimeOpening({');
     expect(view).not.toContain("recoveryCandidates.filter((candidate) => candidate.source === 'peer')");
   });
 });

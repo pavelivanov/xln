@@ -13,7 +13,7 @@ import {
   sumRuntimeIoReserves,
   toBigIntValue,
   valuesOf,
-} from '../../../../frontend/packages/runtime-client/src/runtime/runtime-io-panel-view';
+} from '../../../../frontend/packages/runtime-client/src/runtime/view/runtime-io-panel-view';
 
 const log = (level: 'trace' | 'debug' | 'info' | 'warn' | 'error', category: 'consensus' | 'account' | 'evm', message: string) =>
   ({ level, category, message }) as never;

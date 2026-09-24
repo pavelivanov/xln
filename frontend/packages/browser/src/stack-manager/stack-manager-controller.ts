@@ -10,7 +10,7 @@ import {
   type StackManagerStatusResponse,
   type StackPublicationRequest,
   type StackStablecoinKind,
-} from '../../../../bridges/runtime/stack-manager-client';
+} from '../../../../bridges/runtime/stack-manager/stack-manager-client';
 
 type Inspection = Readonly<{ response: StackManagerStatusResponse | null; issue: string; busy: boolean }>;
 const empty: Inspection = { response: null, issue: '', busy: false };

@@ -166,24 +166,21 @@ test('the shared payment builder binds the selected Entity and signer to the rev
   });
 });
 
-test('PaymentPanel consumes PaymentPanelView instead of owning full env reads', () => {
-  const panel = readFileSync('frontend/src/lib/components/Entity/payments/PaymentPanel.svelte', 'utf8');
-  const accountWorkspace = readFileSync('frontend/src/lib/components/Entity/workspace/AccountWorkspaceView.svelte', 'utf8');
-  const tabs = readFileSync('frontend/src/lib/components/Entity/workspace/shell/EntityPanelTabs.svelte', 'utf8');
+test('React payments consume the canonical payment projection instead of owning full env reads', () => {
+  const panel = readFileSync('frontend/apps/wallet/src/payments/wallet-payments.tsx', 'utf8');
+  const source = readFileSync('frontend/apps/wallet/src/payments/wallet-payment-source.ts', 'utf8');
+  const context = readFileSync('frontend/bridges/wallet/canonical/wallet-canonical-account-context.ts', 'utf8');
 
-  expect(panel).toContain('export let paymentView: PaymentPanelView');
-  expect(panel).toContain('export let actionRuntimeEnv: RuntimeReplica | null');
-  expect(panel).toContain('export let submitRuntimeInput');
-  expect(panel).toContain('await submitRuntimeInput(buildPaymentRuntimeInput({');
-  expect(panel).toContain('signerId: resolvedSignerId,');
-  expect(panel).toContain('function resolveProjectedSignerId');
-  expect(panel).toContain('function resolvePaymentSignerId(env: RuntimeReplica | null)');
-  expect(panel).toContain('const resolvedSignerId = resolvePaymentSignerId(currentEnv)');
-  expect(panel).toContain('paymentProjectionReady &&');
+  expect(source).toContain('projection: WalletPaymentProjection | null');
+  expect(source).toContain('decodeWalletPaymentProjection(frame, math)');
+  expect(source).toContain('await prepareWalletPaymentCommand(this.requireAdapter(), input)');
+  expect(source).toContain('await executeWalletPaymentCommand(this.requireAdapter(), command)');
+  expect(source).toContain('signerId: projection.signerId');
+  expect(panel).toContain('const projection = snapshot.projection');
+  expect(panel).toContain('projection.activeEntityId');
+  expect(panel).toContain('snapshot.status === \'loading\'');
   expect(panel).not.toContain("throw new Error('Environment not ready')");
-  expect(panel).not.toContain('currentEnv &&\n    activeIsLive');
   expect(panel).not.toContain('submitEntityInputs');
-  expect(panel).not.toContain('export let env');
   expect(panel).not.toContain('env.state.eReplicas');
   expect(panel).not.toContain('currentEnv?.gossip?.getProfiles');
   expect(panel).not.toContain('getXLN');
@@ -192,25 +189,17 @@ test('PaymentPanel consumes PaymentPanelView instead of owning full env reads', 
   expect(panel).not.toContain('ensureGossipProfiles');
   expect(panel).not.toContain('refreshGossip?.');
   expect(panel).not.toContain('/api/gossip/profile');
-  expect(panel).toContain('refreshPaymentRuntimeGossip');
-  expect(panel).toContain('sendRuntimeDebugEvent');
-  expect(panel).toContain('flashPaymentSubmitted(Math.round(performance.now() - t0))');
-  expect(panel).toContain('flashPaymentSubmitted(0)');
-  expect(panel).toContain('Payment submission pending');
-  expect(panel).toContain('Payment submitted.');
-  expect(panel).toContain('<span>Submitted');
+  expect(panel).toContain('void source.refresh()');
+  expect(panel).toContain('snapshot.command.message');
+  expect(source).toContain('Accepted after height ${result.height}. Do not submit a second command while observation is pending.');
+  expect(source).toContain('Committed at Runtime height ${result.height}.');
+  expect(panel).toContain('<strong>{snapshot.command.status}</strong>');
   expect(panel).not.toContain('Payment confirmed.');
   expect(panel).not.toContain('Payment complete');
   expect(panel).not.toContain('<span>Paid');
   expect(panel).not.toContain('buildNetworkAdjacency(env');
-  expect(accountWorkspace).toContain('export let paymentView: PaymentPanelView');
-  expect(accountWorkspace).toContain('{paymentView}');
-  expect(accountWorkspace).toContain('{submitRuntimeInput}');
-  expect(tabs).toContain('paymentView = displayProjectionFrame');
-  expect(tabs).toContain('frame: displayProjectionFrame');
-  expect(tabs).toContain('buildPaymentPanelViewFromRuntimeView');
-  expect(tabs).toContain('networkGraph: actionRuntimeEnv?.gossip?.getNetworkGraph?.() ?? null');
-  expect(tabs).toContain('{paymentView}');
+  expect(context).toContain('buildPaymentPanelViewFromRuntimeView({ entityId, frame })');
+  expect(context).toContain('networkGraph: env.gossip.getNetworkGraph()');
 
   const viewSource = readFileSync('frontend/bridges/wallet/payment-panel-view.ts', 'utf8');
   expect(viewSource).not.toContain('RuntimeReplica,');
@@ -219,13 +208,14 @@ test('PaymentPanel consumes PaymentPanelView instead of owning full env reads', 
   expect(viewSource).toContain('networkGraph?: PaymentRuntimeGraph | null');
 });
 
-test('PaymentPanel clears every delayed payment callback on destroy', () => {
-  const panel = readFileSync('frontend/src/lib/components/Entity/payments/PaymentPanel.svelte', 'utf8');
-  const destroyStart = panel.indexOf('onDestroy(() => {');
-  const destroyEnd = panel.indexOf('\n  });', destroyStart);
-  const destroy = panel.slice(destroyStart, destroyEnd);
-  expect(destroy).toContain('clearTimeout(paymentSubmissionTimer)');
-  expect(destroy).toContain('clearTimeout(autoRouteRetryTimer)');
+test('React payments invalidate pending reads and release Runtime ownership on destroy', () => {
+  const panel = readFileSync('frontend/apps/wallet/src/payments/wallet-payments.tsx', 'utf8');
+  const source = readFileSync('frontend/apps/wallet/src/payments/wallet-payment-source.ts', 'utf8');
+  expect(panel).toContain('return source.stop;');
+  expect(source).toContain('this.generation += 1;');
+  expect(source).toContain('this.quoteGeneration += 1;');
+  expect(source).toContain('this.releaseRuntime();');
+  expect(source).not.toContain('setTimeout(');
 });
 
 test('payment gossip refresh is owned by runtime store operation', () => {

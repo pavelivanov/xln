@@ -170,7 +170,7 @@ describe('isolated E2E runner resources', () => {
   test('runner build and browser helpers cannot substitute shared dev resources', () => {
     const runner = readFileSync('core/scripts/e2e/runners/run-e2e-parallel-isolated.ts', 'utf8');
     const runtimeImport = readFileSync('tests/utils/runtime/e2e-runtime-import.ts', 'utf8');
-    const viteConfig = readFileSync('frontend/vite.config.ts', 'utf8');
+    const reactConfig = readFileSync('frontend/config/create-react-app-config.ts', 'utf8');
 
     expect(runner).toContain('XLN_RUNTIME_BUNDLE_OUT: artifacts.runtimeBundlePath');
     expect(runner).toContain('XLN_SVELTE_BUILD_DIR: relative(frontendRoot, artifacts.frontendBuildDir)');
@@ -183,7 +183,8 @@ describe('isolated E2E runner resources', () => {
     expect(runner).toContain("XLN_VITE_FORCE_HTTP: '1'");
     expect(runner).toContain("PW_PROFILE: args.pwProject === 'brainvault' ? 'brainvault' : ''");
     expect(runner).toContain('Math.min(args.stackTimeoutMs, 30_000)');
-    expect(viteConfig).toContain("const FORCE_HTTP = process.env['XLN_VITE_FORCE_HTTP'] === '1'");
+    expect(reactConfig).toContain("process.env['XLN_REACT_DEV_GATEWAY'] === '1'");
+    expect(reactConfig).toContain("configuredRoot?.trim() || 'node_modules/.vite-react'");
     expect(runtimeImport).not.toContain("return 'http://127.0.0.1:8082'");
   });
 

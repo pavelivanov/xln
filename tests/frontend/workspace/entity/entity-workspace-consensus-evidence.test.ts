@@ -3,7 +3,7 @@ import { describe, expect, test } from 'bun:test';
 import {
   emptyEntityWorkspaceConsensusEvidence,
   projectEntityWorkspaceConsensusEvidence,
-} from '../../../../frontend/packages/runtime-client/src/entity/entity-workspace-consensus-evidence';
+} from '../../../../frontend/packages/runtime-client/src/entity/workspace/entity-workspace-consensus-evidence';
 
 const CONTEXT = {
   status: 'selected', runtimeId: 'runtime-a', height: 42, entityId: '0xaaaa',

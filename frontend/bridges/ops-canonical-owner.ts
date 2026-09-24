@@ -7,7 +7,7 @@ import { readStoreValue } from '../packages/runtime-client/src/observable-store'
 import type { VaultUnlockDurationMs } from '../packages/browser/src/vault/vault-protection';
 import { isVaultAuthorityLeaseExpired } from '../packages/browser/src/vault/vault-authority-lease';
 import { isRuntimeCommandJournalUnlocked } from '../packages/browser/src/commands/runtime-command-journal-keyring';
-import { browserRuntimeSession, installPagehideFence, setPageUnloadFence } from './runtime/browser-runtime-session';
+import { browserRuntimeSession, installPagehideFence, setPageUnloadFence } from './runtime/browser/browser-runtime-session';
 import { readRuntimeAdapterStorageSnapshot } from '../packages/browser/src/runtime/session/runtime-adapter-session';
 
 const requireSelected = (runtimeId: string): RuntimeAdapter => {
@@ -77,7 +77,7 @@ export const unlockCanonicalOpsLocalOwner = async (runtimeId: string, seed: stri
   assertLocalSelection();
   installPagehideFence();
   await browserRuntimeSession.start(async () => {
-    const { unlockCanonicalWalletRuntime } = await import('./wallet/wallet-canonical-vault-runtime');
+    const { unlockCanonicalWalletRuntime } = await import('./wallet/canonical/wallet-canonical-vault-runtime');
     assertLocalSelection();
     const resource = await unlockCanonicalWalletRuntime(runtimeId, seed, durationMs, setPageUnloadFence);
     try { assertLocalSelection(); return resource; }

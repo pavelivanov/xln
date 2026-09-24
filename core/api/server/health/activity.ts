@@ -35,6 +35,7 @@ export const handleRuntimeActivityRequest = async (
       types: parseCsv(url.searchParams.get('types')),
       query: String(url.searchParams.get('q') || '').trim(),
       beforeHeight: parseOptionalNumber(url.searchParams.get('beforeHeight')),
+      cursor: String(url.searchParams.get('cursor') || '').trim() || undefined,
       fromTimestamp: parseOptionalNumber(url.searchParams.get('fromTimestamp')),
       toTimestamp: parseOptionalNumber(url.searchParams.get('toTimestamp')),
       limit: parseOptionalNumber(url.searchParams.get('limit')),

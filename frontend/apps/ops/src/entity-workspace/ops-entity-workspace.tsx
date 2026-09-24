@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 
-import { resolveEntityPanelDeepLinkFromLocation } from '../../../../packages/runtime-client/src/entity/entity-workspace-navigation';
+import { resolveEntityPanelDeepLinkFromLocation } from '../../../../packages/runtime-client/src/entity/workspace/entity-workspace-navigation';
 import {
   buildEntityWorkspaceTimeMachineHash,
   readEntityWorkspaceTimeMachineLink,
-} from '../../../../packages/runtime-client/src/entity/entity-workspace-time-machine';
+} from '../../../../packages/runtime-client/src/entity/workspace/entity-workspace-time-machine';
 import { EntityWorkspaceShell } from '../../../../packages/ui/src/entity/entity-workspace-shell';
 import { EntityWorkspaceTimeMachine } from '../../../../packages/ui/src/entity/entity-workspace-time-machine';
 import { opsDisplayPreferencesSource } from '../ops-display-preferences';
@@ -142,7 +142,7 @@ export function OpsEntityWorkspaceView({ source = defaultSource, panelHash }: Re
         onRefresh={() => { void opsEntityWorkspaceSource.refresh(); }}
         onSaveProfile={opsEntityWorkspaceSource.saveProfile}
         onSelectAccountsPage={opsEntityWorkspaceSource.selectAccountsPage}
-        onSelectActivityBeforeHeight={opsEntityWorkspaceSource.selectActivityPage}
+        onSelectActivityCursor={opsEntityWorkspaceSource.selectActivityPage}
         onSelectActivityKind={opsEntityWorkspaceSource.selectActivityKind}
         onSelectActivityMode={opsEntityWorkspaceSource.selectActivityMode}
         onSelectActivityPageSize={opsEntityWorkspaceSource.selectActivityPageSize}

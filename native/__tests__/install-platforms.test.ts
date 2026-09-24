@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { INSTALL_CHANNELS } from '../../frontend/src/lib/install/platforms';
+import { INSTALL_CHANNELS } from '../../frontend/apps/site/src/site-model';
 
 describe('install channel manifest', () => {
 	test('covers every requested delivery surface with the local runtime first', () => {

@@ -3,12 +3,16 @@ import { expectNoBrowserErrors, expectPageContained, observeBrowserErrors, openW
 import { installImportedRuntime, readWalletRuntimeFixture } from '../../wallet/fixtures/wallet-runtime-test-helpers';
 import { installOpsOwnerMetadata, unlockOpsOwnerVisibly } from '../owner/ops-owner-test-helpers';
 
-const command = async (page: Page, text: string): Promise<void> => {
+const command = async (page: Page, text: string, expectedOption: string | RegExp): Promise<void> => {
   await page.getByRole('button', { name: 'Open command palette', exact: true }).click();
   const dialog = page.getByRole('dialog', { name: 'Workspace commands' });
-  await dialog.getByRole('combobox').fill(text);
-  await expect(dialog.getByRole('option').first()).toBeVisible();
-  await dialog.getByRole('combobox').press('Enter');
+  await expect(dialog).toBeVisible();
+  const input = dialog.getByRole('combobox');
+  await expect(input).toBeFocused();
+  await input.fill(text);
+  await expect(input).toHaveValue(text);
+  await expect(dialog.getByRole('option', { name: expectedOption })).toBeVisible();
+  await input.press('Enter');
 };
 
 test('palette opens editable payment, swap and Account drafts in the retained selected Wallet', { tag: '@functional' }, async ({ page }, testInfo) => {
@@ -25,7 +29,7 @@ test('palette opens editable payment, swap and Account drafts in the retained se
   const wallet = page.getByTestId('ops-wallet-panel');
   await wallet.getByLabel('Entity', { exact: true }).selectOption(fixture.entityId);
   await expect(wallet.getByRole('table', { name: 'Committed asset positions' })).toContainText('USDC');
-  await command(page, `pay 2.5 usdc to ${fixture.counterpartyEntityId}`);
+  await command(page, `pay 2.5 usdc to ${fixture.counterpartyEntityId}`, /^Pay 2\.5 USDC to /);
   await expect(page.getByRole('dialog', { name: 'Workspace commands' })).not.toBeVisible();
   await expect(wallet.getByLabel('Entity', { exact: true })).toHaveValue(fixture.entityId);
   await expect(wallet.getByRole('combobox', { name: 'Recipient', exact: true })).toHaveValue(fixture.counterpartyEntityId);
@@ -41,7 +45,13 @@ test('palette opens editable payment, swap and Account drafts in the retained se
   await amount.scrollIntoViewIfNeeded();
   await expect(amount).toBeInViewport();
   await screenshotEvidence(page, testInfo, 'ops-palette-payment-draft');
-  await command(page, 'swap 0.5 weth for usdc');
+  await command(page, 'swap 0.5 weth for usdc', /^Swap 0\.5 WETH → USDC/);
+  const marketSelection = wallet.getByRole('region', { name: 'Market selection' });
+  await marketSelection.getByRole('combobox').first().selectOption(fixture.counterpartyEntityId);
+  await expect(marketSelection.getByRole('combobox').first()).toHaveValue(fixture.counterpartyEntityId);
+  // Reissue after selecting the fixture's same-j Hub: an earlier registry case
+  // may add a different Hub without this committed pair ahead of it.
+  await command(page, 'swap 0.5 weth for usdc', /^Swap 0\.5 WETH → USDC/);
   const give = wallet.locator('.wallet-order-ticket label').filter({ hasText: /^Give/ });
   await expect(give.locator('input')).toHaveValue('0.5');
   await expect(give.locator('select option:checked')).toHaveText('WETH');
@@ -53,16 +63,16 @@ test('palette opens editable payment, swap and Account drafts in the retained se
   await wallet.getByRole('button', { name: 'Refresh', exact: true }).click();
   await expect(wallet.getByRole('button', { name: 'Refresh', exact: true })).toBeEnabled();
   await expect(give.locator('input')).toHaveValue('0.75');
-  await command(page, 'swap 0.25 weth for usdc');
+  await command(page, 'swap 0.25 weth for usdc', /^Swap 0\.25 WETH → USDC/);
   await expect(give.locator('input')).toHaveValue('0.25');
   await expect(give.locator('input')).toBeInViewport();
   await screenshotEvidence(page, testInfo, 'ops-palette-swap-draft');
-  await command(page, `open ${fixture.counterpartyEntityId}`);
+  await command(page, `open ${fixture.counterpartyEntityId}`, /^Open account with /);
   const direct = wallet.getByRole('form', { name: 'Open Account by ID' });
   await expect(direct.getByPlaceholder('Select or paste entity ID')).toHaveValue(fixture.counterpartyEntityId);
   await expect(direct.getByPlaceholder('Select or paste entity ID')).toBeInViewport();
   await screenshotEvidence(page, testInfo, 'ops-palette-account-draft');
-  await command(page, `pay 1 unavailabletoken to ${fixture.counterpartyEntityId}`);
+  await command(page, `pay 1 unavailabletoken to ${fixture.counterpartyEntityId}`, /^Pay 1 UNAVAILABLETOKEN to /);
   await expect(wallet.getByRole('alert')).toHaveText('Wallet token UNAVAILABLETOKEN is unavailable in the selected Entity.');
   await expect(wallet.getByRole('button', { name: 'Find route' })).toHaveCount(0);
   await expect(wallet.getByRole('alert')).toBeInViewport();

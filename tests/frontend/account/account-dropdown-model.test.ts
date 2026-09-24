@@ -1,5 +1,5 @@
 import { expect, test } from 'bun:test';
-import { buildAccountDropdownItems, showsAccountDropdown } from '../../../frontend/packages/ui/src/account/account-dropdown-model';
+import { buildAccountDropdownItems, showsAccountDropdown } from '../../../frontend/packages/ui/src/account/dropdown/account-dropdown-model';
 
 test('Account dropdown preserves map order, names and the retained five-Account threshold', () => {
   const accounts = new Map([

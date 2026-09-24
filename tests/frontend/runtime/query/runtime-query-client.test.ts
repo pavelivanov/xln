@@ -213,21 +213,21 @@ test('an ABA remote Entity refresh cannot publish after the newer selection revi
 });
 
 test('automatic root refresh preserves the pinned RuntimeView Entity', () => {
-  const source = readFileSync('frontend/src/lib/view/View.svelte', 'utf8');
+  const source = readFileSync('frontend/apps/wallet/src/payments/wallet-payment-source.ts', 'utf8');
 
-  expect(source).toContain('refreshSelectedRuntimeView()');
-  expect(source).not.toContain('refreshRuntimeView()');
+  expect(source).toContain('this.selectedEntityId = normalized');
+  expect(source).toContain('this.selection.selectEntity(this.requireAdapter().runtimeId, normalized)');
+  expect(source).toContain('void this.observer?.refresh()');
 });
 
 test('payment terminal observation follows the synchronous Entity selection', () => {
-  const viewSource = readFileSync('frontend/src/lib/view/View.svelte', 'utf8');
-  const userModeSource = readFileSync('frontend/src/lib/view/UserModePanel.svelte', 'utf8');
+  const source = readFileSync('frontend/apps/wallet/src/payments/wallet-payment-source.ts', 'utf8');
+  const selection = readFileSync('frontend/apps/wallet/src/runtime/wallet-workspace-selection.ts', 'utf8');
 
-  expect(viewSource).toContain('const entityId = String(get(runtimeViewActiveEntityId)');
-  expect(viewSource).toContain('runtimeViewActiveEntityId.subscribe(');
-  expect(viewSource).not.toContain('const entityId = String(get(runtimeView).activeEntityId');
-  expect(userModeSource).toContain('if ($runtimeViewActiveEntityId !== selectedEntityId)');
-  expect(userModeSource).toContain('setRuntimeViewActiveEntityId(selectedEntityId);');
+  expect(source).toContain('this.selection.observeEntity(this.requireAdapter().runtimeId, observed.data.activeEntityId');
+  expect(source).toContain('this.selectedEntityId !== this.snapshot.projection.activeEntityId');
+  expect(selection).toContain('readonly selectEntity = (runtimeId: string, entityId: string)');
+  expect(selection).toContain('this.publish({ ...emptySelection(runtimeId), entityId: normalized })');
 });
 
 test('runtime view height pushes cannot race the initial remote projection', () => {
@@ -285,8 +285,8 @@ test('persisted receipt probes reuse the live Runtime module singleton', () => {
 
 test('wallet UI and wallet-backed E2E helpers never import a second Runtime module', () => {
   const guardedFiles = [
-    'frontend/src/lib/view/panels/ArchitectPanel.svelte',
-    'frontend/src/lib/view/panels/graph3d/Graph3DPanel.svelte',
+    'frontend/apps/ops/src/workspace/panels/ops-architect-panel.tsx',
+    'frontend/apps/ops/src/workspace/graph/ops-graph-panel.tsx',
     'tests/e2e/product/e2e-debt-ledger.spec.ts',
     'tests/e2e/runtime/lifecycle/e2e-runtime-persistence.spec.ts',
   ];
@@ -300,20 +300,19 @@ test('wallet UI and wallet-backed E2E helpers never import a second Runtime modu
 });
 
 test('activity history panel reads activity through RuntimeQueryClient only', () => {
-  const panelSource = readFileSync('frontend/src/lib/components/Entity/payments/ActivityHistoryPanel.svelte', 'utf8');
+  const panelSource = readFileSync('frontend/apps/wallet/src/history/wallet-history.tsx', 'utf8');
   const querySource = readFileSync('frontend/packages/ui/src/account/activity/activity-history-query.ts', 'utf8');
-  const addressRouteSource = readFileSync('frontend/src/routes/address/[entityId]/+page.svelte', 'utf8');
+  const addressSource = readFileSync('frontend/apps/wallet/src/address/wallet-address-source.ts', 'utf8');
   const paymentSmokeSource = readFileSync('tests/e2e/payments/e2e-payment-smoke.spec.ts', 'utf8');
   const source = `${panelSource}\n${querySource}`;
   const activityE2EHelper = paymentSmokeSource.slice(
     paymentSmokeSource.indexOf('async function countRuntimeActivityEvents'),
     paymentSmokeSource.indexOf('test.describe'),
   );
-  expect(panelSource).toContain('runtimeQueryClient.readActivity');
-  expect(panelSource).toContain("from '../../../../../bridges/runtime/runtime-query-client'");
-  expect(addressRouteSource).toContain("$page.url.searchParams.get('runtimeId')");
-  expect(addressRouteSource).toContain("runtimeOperations.selectRuntime(targetRuntimeId)");
-  expect(addressRouteSource).toContain('Runtime ${targetRuntimeId} is not imported');
+  expect(panelSource).toContain("adapter.read('activity', query)");
+  expect(addressSource).toContain('client.readActivity({');
+  expect(addressSource).toContain('requestedRuntimeId');
+  expect(addressSource).toContain('WALLET_ADDRESS_RUNTIME_NOT_SELECTED');
   expect(paymentSmokeSource).toContain('__xln?.adapter?.query?.activity');
   expect(paymentSmokeSource).toContain("getByRole('button', { name: 'History', exact: true }).click()");
   expect(paymentSmokeSource).toContain('history panel adapter must expose off-chain payment history');
@@ -495,7 +494,7 @@ test('runtime controller exposes only typed debug projection queries', () => {
     'frontend/packages/runtime-client/src/runtime/query/runtime-query-client.ts',
     'utf8',
   );
-  const appTypes = readFileSync('frontend/src/app.d.ts', 'utf8');
+  const debugSurface = readFileSync('frontend/packages/browser/src/runtime/debug-surface.ts', 'utf8');
   const storeSource = readFileSync('frontend/bridges/runtime/xln-store.ts', 'utf8');
   const remoteE2ESource = [
     'tests/e2e/runtime/e2e-radapter-remote-part-1.spec.ts',
@@ -517,8 +516,9 @@ test('runtime controller exposes only typed debug projection queries', () => {
   expect(controllerSource).not.toContain('runtimeQueryRead');
   expect(controllerSource).not.toContain('read:');
   expect(controllerSource).not.toContain('send: runtimeAdapterSend');
-  expect(appTypes).not.toContain('__xlnRuntimeAdapter');
-  expect(appTypes).not.toContain('read: <T = unknown>');
+  expect(debugSurface).toContain('Record<string, unknown>');
+  expect(debugSurface).not.toContain('__xlnRuntimeAdapter');
+  expect(debugSurface).not.toContain('read: <T = unknown>');
   expect(storeSource).toContain('const observeRemoteRuntimeCommand = async');
   expect(storeSource).toContain('waitForRemoteRuntimeProjectionAtHeight(accepted.height + 1)');
   expect(storeSource).toContain('progress.observed(projectedHeight)');
@@ -601,22 +601,15 @@ test('remote runtime refresh reads typed RuntimeView projections without Runtime
 });
 
 test('runtime adapter health panel uses shared RuntimeView store instead of owning projection state', () => {
-  const source = readFileSync('frontend/src/lib/components/Health/RuntimeAdapterPanel.svelte', 'utf8');
+  const source = readFileSync('frontend/apps/ops/src/health/ops-health-events-source.ts', 'utf8');
 
-  expect(source).toContain("from '../../../../bridges/runtime/runtime-view-store'");
-  expect(source).toContain('runtimeControllerHandle');
-  expect(source).toContain('$runtimeControllerHandle.status');
-  expect(source).toContain('$runtimeControllerHandle.height');
-  expect(source).toContain('$runtimeControllerHandle.authLevel');
-  expect(source).toContain('refreshRuntimeView({');
-  expect(source).toContain('const head = $derived($runtimeView.head)');
-  expect(source).toContain('const viewFrame = $derived($runtimeView.frame)');
-  expect(source).toContain("authKey.trim() && $runtimeControllerHandle.authLevel === 'admin'");
-  expect(source).toContain('persistRuntimeAdapterSession(wsUrl, authKey.trim())');
-  expect(source).not.toContain('runtimeQueryClient.readHead');
-  expect(source).not.toContain('runtimeQueryClient.readViewFrame');
-  expect(source).not.toContain('let head = $state');
-  expect(source).not.toContain('let viewFrame = $state');
+  expect(source).toContain('openOpsEntityRuntimeReadSession(config)');
+  expect(source).toContain('createOpsWorkspaceQueryClient(adapter)');
+  expect(source).toContain('client.readActivity({ limit: 1000, scanLimit: 1000 })');
+  expect(source).toContain('client.readEntities({ limit: 1000 })');
+  expect(source).toContain('RuntimeQueryObserver');
+  expect(source).toContain('adapter.onChange');
+  expect(source).toContain('adapter.onStatus');
   expect(source).not.toContain('runtimeAdapterRead');
   expect(source).not.toContain('runtimeAdapterAuthLevel');
   expect(source).not.toContain('runtimeAdapterStatus');
@@ -624,15 +617,13 @@ test('runtime adapter health panel uses shared RuntimeView store instead of owni
 });
 
 test('radapter page redirects remote users into the canonical app workspace', () => {
-  const route = readFileSync('frontend/src/routes/radapter/+page.ts', 'utf8');
-  const panel = readFileSync('frontend/src/lib/components/Health/RuntimeAdapterPanel.svelte', 'utf8');
+  const manager = readFileSync('frontend/apps/ops/src/workspace/runtime/ops-runtime-manager.tsx', 'utf8');
+  const surfaces = readFileSync('packages/frontend-release/surfaces.ts', 'utf8');
 
-  expect(route).toContain("throw error(400, 'REMOTE_RUNTIME_QUERY_BOOTSTRAP_FORBIDDEN')");
-  expect(route).toContain("throw redirect(307, '/app')");
-  expect(route).not.toContain("searchParams.get('token'");
-  expect(panel).toContain('href="/app"');
-  expect(panel).not.toContain('Runtime Adapter Inspector');
-  expect(panel).not.toContain('autoConnect');
+  expect(manager).toContain('data-testid="remote-runtime-manager"');
+  expect(manager).toContain('Validate & attach');
+  expect(manager).not.toContain('autoConnect');
+  expect(surfaces).toContain("exact('/app')");
 });
 
 test('remote Time Machine scan reads historical frames through history-frame-batch only', () => {
@@ -657,71 +648,35 @@ test('remote Time Machine scan reads historical frames through history-frame-bat
 });
 
 test('address explorer routes read runtime projections instead of debug entity APIs', () => {
-  const directory = readFileSync('frontend/src/routes/address/+page.svelte', 'utf8');
-  const detail = readFileSync('frontend/src/routes/address/[entityId]/+page.svelte', 'utf8');
-  const runtimeConnection = readFileSync('frontend/src/lib/utils/runtime/runtimeConnection.ts', 'utf8');
-  const appLayout = readFileSync('frontend/src/routes/app/+layout.svelte', 'utf8');
+  const source = readFileSync('frontend/apps/wallet/src/address/wallet-address-source.ts', 'utf8');
+  const page = readFileSync('frontend/apps/wallet/src/address/wallet-address.tsx', 'utf8');
 
-  expect(directory).toContain('ensureProjectionRuntimeConnected');
-  expect(directory).toContain('runtimeQueryClient.readEntities');
-  expect(directory).toContain('runtimeAdapterHeight.subscribe');
-  expect(directory).not.toContain('/api/debug/entities');
-  expect(directory).not.toContain('fetch(');
-  expect(directory).not.toContain('setInterval');
-  expect(detail).toContain('ensureProjectionRuntimeConnected');
-  expect(detail).toContain("from '../../../../bridges/runtime/runtime-view-store'");
-  expect(detail).toContain("from '../../../../bridges/runtime/runtime-query-client'");
-  expect(detail).toContain('refreshRuntimeView({');
-  expect(detail).toContain('selectEntityRuntimeFromDirectory');
-  expect(detail).toContain('runtimeOperations.selectRuntime(targetRuntimeId)');
-  expect(detail).toContain('summaryRuntimeId(summary)');
-  expect(detail).toContain('canReadEntityRuntime(entity.runtimeId)');
-  expect(detail).toContain('entity-history-runtime-mismatch');
-  expect(detail).toContain('fetchSummaryExplorerEntity');
-  expect(detail).toContain('runtimeQueryClient.readEntities({ limit: 5000 })');
-  expect(detail).toContain('buildExplorerEntityFromSummary');
-  expect(detail).not.toContain('runtimeQueryClient.readViewFrame');
-  expect(detail).toContain('runtimeAdapterHeight.subscribe');
-  expect(detail).toContain('accountsLimit: 8');
-  expect(detail).toContain('booksLimit: 8');
-  expect(detail).not.toContain('vaultOperations.initialize');
-  expect(detail).not.toContain('/api/debug/entities');
-  expect(detail).not.toContain('fetch(');
-  expect(detail).not.toContain('setInterval');
-  expect(runtimeConnection).toContain('export async function ensureProjectionRuntimeConnected');
-  expect(runtimeConnection).toContain('readRemoteRuntimeRequestFromUrl');
-  expect(runtimeConnection).toContain('persistRemoteRuntimeRequest');
-  expect(runtimeConnection).toContain('stripRemoteRuntimeParamsFromHistory');
-  expect(runtimeConnection).toContain("from '../../../../bridges/vault/vault-store'");
-  expect(runtimeConnection).toContain('await vaultOperations.initialize()');
-  expect(runtimeConnection).toContain('const runtime = get(activeRuntime)');
-  expect(runtimeConnection).toContain('runtimeId: runtime.id');
-  expect(runtimeConnection).toContain('seed: runtime.seed');
-  expect(runtimeConnection).toContain('await initializeXLN()');
-  expect(runtimeConnection).toContain('getRuntimeControllerAdapter');
-  expect(appLayout).toContain("from '$lib/utils/runtime/runtimeConnection'");
-  expect(appLayout).not.toContain('function readRemoteRuntimeRequestFromUrl');
-  expect(appLayout).not.toContain('function persistRemoteRuntimeRequest');
-  expect(appLayout).not.toContain('function remoteAccessFromAuthKey');
+  expect(source).toContain('createWalletRuntimeQueryClient');
+  expect(source).toContain('client.readEntities({ limit: 5000 })');
+  expect(source).toContain('client.readViewFrame({ entityId, accountsLimit: 8, booksLimit: 8 })');
+  expect(source).toContain('client.readActivity({');
+  expect(source).toContain('WALLET_ADDRESS_RUNTIME_NOT_SELECTED');
+  expect(source).not.toContain('/api/debug/entities');
+  expect(source).not.toContain('fetch(');
+  expect(page).toContain('resolveWalletAddressRuntimeAffinity');
+  expect(page).toContain('writeRemoteRuntimeAdapterSession');
+  expect(page).toContain('data-testid="entity-history-runtime-mismatch"');
 });
 
 test('health admin reads active runtime projections instead of debug event/entity APIs', () => {
-  const source = readFileSync('frontend/src/routes/health/+page.svelte', 'utf8');
+  const source = readFileSync('frontend/apps/ops/src/health/ops-health-events-source.ts', 'utf8');
+  const page = readFileSync('frontend/apps/ops/src/health/ops-health.tsx', 'utf8');
 
-  expect(source).toContain('ensureProjectionRuntimeConnected');
-  expect(source).toContain('runtimeQueryClient.readActivity');
-  expect(source).toContain('runtimeQueryClient.readEntities');
+  expect(source).toContain('client.readActivity');
+  expect(source).toContain('client.readEntities');
   const eventProjection = readFileSync('frontend/packages/ui/src/health/runtime-events.ts', 'utf8');
-  expect(source).toContain("from '../../../packages/ui/src/health/runtime-events'");
+  expect(source).toContain("from '../../../../packages/ui/src/health/runtime-events'");
   expect(eventProjection).toContain('RuntimeActivityEvent');
   const entityProjection = readFileSync('frontend/packages/ui/src/health/runtime-projections.ts', 'utf8');
-  expect(source).toContain("from '../../../packages/ui/src/health/runtime-projections'");
+  expect(source).toContain("from '../../../../packages/ui/src/health/runtime-projections'");
   expect(entityProjection).toContain('RuntimeAdapterEntitySummary');
-  expect(source).toContain("fetch('/api/health')");
-  expect(source).toContain("import { errorLog } from '../../../packages/browser/src/logging/error-log-store';");
-  expect(source).toContain("errorLog.log(message, 'Health Admin', details)");
-  expect(source).toContain("'RPC health check failed after retries'");
-  expect(source).toContain("'Runtime projection health read failed'");
+  expect(page).toContain('opsHealthSource.refresh()');
+  expect(page).toContain('Runtime, relay, process, storage, and RPC evidence from live boundaries.');
   expect(source).not.toContain('console.error');
   expect(source).not.toContain('console.warn');
   expect(source).not.toContain('console.info');
@@ -735,7 +690,7 @@ test('health admin reads active runtime projections instead of debug event/entit
 });
 
 test('remote runtime validation uses typed query client reads with runtime-scoped cache', () => {
-  const source = readFileSync('frontend/bridges/runtime/remote-runtime-validation.ts', 'utf8');
+  const source = readFileSync('frontend/bridges/runtime/remote/remote-runtime-validation.ts', 'utf8');
 
   expect(source).toContain('new RuntimeQueryClient(() => adapter, runtimeId)');
   expect(source).toContain('queryClient.readHead()');

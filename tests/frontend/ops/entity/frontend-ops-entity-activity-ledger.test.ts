@@ -5,8 +5,8 @@ import {
   appendEntityWorkspaceActivityPage,
   buildEntityWorkspaceActivityQuery,
   projectEntityWorkspaceActivity,
-} from '../../../../frontend/packages/runtime-client/src/entity/entity-workspace-activity';
-import { projectEntityWorkspaceContext } from '../../../../frontend/packages/runtime-client/src/entity/entity-workspace-context';
+} from '../../../../frontend/packages/runtime-client/src/entity/workspace/entity-workspace-activity';
+import { projectEntityWorkspaceContext } from '../../../../frontend/packages/runtime-client/src/entity/workspace/entity-workspace-context';
 import {
   formatEntityWorkspaceLocalDateTime,
   formatEntityWorkspaceTimestamp,
@@ -39,8 +39,9 @@ const event = (overrides: Record<string, unknown> = {}) => ({
 
 const page = (overrides: Record<string, unknown> = {}) => ({
   ok: true, runtimeId: 'runtime-a', latestHeight: 50, fromHeight: 42, toHeight: 44,
-  scannedFrames: 3, returned: 2, limit: 8, scanLimit: 160, nextBeforeHeight: 41,
-  filters: { entityId: '0xaaaa', kind: 'all', beforeHeight: 44, limit: 8, scanLimit: 160 },
+  scannedFrames: 3, returned: 2, limit: 8, scanLimit: 160,
+  cursor: null, nextCursor: 'cursor-41',
+  filters: { entityId: '0xaaaa', kind: 'all' },
   events: [
     event({ id: 'runtime-a:44:1' }),
     event({ id: 'runtime-a:43:0', height: 43, timestamp: 1_700_000_043, direction: 'in' }),
@@ -98,48 +99,46 @@ describe('React Entity persisted activity ledger', () => {
     expect(buildEntityWorkspaceActivityQuery(context)).toEqual({
       beforeHeight: 44, entityId: '0xaaaa', kind: 'all', limit: 8, scanLimit: 160,
     });
-    expect(buildEntityWorkspaceActivityQuery(context, { beforeHeight: 13 })).toEqual({
-      beforeHeight: 13, entityId: '0xaaaa', kind: 'all', limit: 8, scanLimit: 160,
+    expect(buildEntityWorkspaceActivityQuery(context, { cursor: 'cursor-13' })).toEqual({
+      cursor: 'cursor-13', entityId: '0xaaaa', kind: 'all', limit: 8, scanLimit: 160,
     });
-    expect(buildEntityWorkspaceActivityQuery(context, { beforeHeight: 13, kind: 'offchain' })).toEqual({
-      beforeHeight: 13, entityId: '0xaaaa', kind: 'offchain', limit: 8, scanLimit: 160,
+    expect(buildEntityWorkspaceActivityQuery(context, { cursor: 'cursor-13', kind: 'offchain' })).toEqual({
+      cursor: 'cursor-13', entityId: '0xaaaa', kind: 'offchain', limit: 8, scanLimit: 160,
     });
     expect(buildEntityWorkspaceActivityQuery(context, {
-      beforeHeight: 13, kind: 'offchain', types: ['payment', 'swap'],
+      cursor: 'cursor-13', kind: 'offchain', types: ['payment', 'swap'],
     })).toEqual({
-      beforeHeight: 13, entityId: '0xaaaa', kind: 'offchain', limit: 8,
+      cursor: 'cursor-13', entityId: '0xaaaa', kind: 'offchain', limit: 8,
       scanLimit: 160, types: ['payment', 'swap'],
     });
-    expect(buildEntityWorkspaceActivityQuery(context, { beforeHeight: 13, search: ' Payment ' })).toEqual({
-      beforeHeight: 13, entityId: '0xaaaa', kind: 'all', limit: 8,
+    expect(buildEntityWorkspaceActivityQuery(context, { cursor: 'cursor-13', search: ' Payment ' })).toEqual({
+      cursor: 'cursor-13', entityId: '0xaaaa', kind: 'all', limit: 8,
       q: 'Payment', scanLimit: 160,
     });
-    expect(buildEntityWorkspaceActivityQuery(context, { beforeHeight: 13, pageSize: 40 })).toEqual({
-      beforeHeight: 13, entityId: '0xaaaa', kind: 'all', limit: 40, scanLimit: 160,
+    expect(buildEntityWorkspaceActivityQuery(context, { cursor: 'cursor-13', pageSize: 40 })).toEqual({
+      cursor: 'cursor-13', entityId: '0xaaaa', kind: 'all', limit: 40, scanLimit: 160,
     });
-    expect(() => buildEntityWorkspaceActivityQuery(context, { beforeHeight: 0 }))
-      .toThrow('ENTITY_WORKSPACE_ACTIVITY_BEFORE_HEIGHT_INVALID');
-    expect(() => buildEntityWorkspaceActivityQuery(context, { beforeHeight: 45 }))
-      .toThrow('ENTITY_WORKSPACE_ACTIVITY_BEFORE_HEIGHT_INVALID');
-    expect(() => buildEntityWorkspaceActivityQuery(context, { beforeHeight: 13, kind: 'system' as never }))
+    expect(() => buildEntityWorkspaceActivityQuery(context, { cursor: '  ' }))
+      .toThrow('ENTITY_WORKSPACE_ACTIVITY_CURSOR_INVALID');
+    expect(() => buildEntityWorkspaceActivityQuery(context, { cursor: 'cursor-13', kind: 'system' as never }))
       .toThrow('ENTITY_WORKSPACE_ACTIVITY_KIND_INVALID');
-    expect(() => buildEntityWorkspaceActivityQuery(context, { beforeHeight: 13, types: ['system' as never] }))
+    expect(() => buildEntityWorkspaceActivityQuery(context, { cursor: 'cursor-13', types: ['system' as never] }))
       .toThrow('ENTITY_WORKSPACE_ACTIVITY_TYPE_INVALID');
-    expect(() => buildEntityWorkspaceActivityQuery(context, { beforeHeight: 13, types: ['payment', 'payment'] }))
+    expect(() => buildEntityWorkspaceActivityQuery(context, { cursor: 'cursor-13', types: ['payment', 'payment'] }))
       .toThrow('ENTITY_WORKSPACE_ACTIVITY_TYPES_INVALID');
-    expect(() => buildEntityWorkspaceActivityQuery(context, { beforeHeight: 13, search: 7 as never }))
+    expect(() => buildEntityWorkspaceActivityQuery(context, { cursor: 'cursor-13', search: 7 as never }))
       .toThrow('ENTITY_WORKSPACE_ACTIVITY_QUERY_INVALID');
-    expect(() => buildEntityWorkspaceActivityQuery(context, { beforeHeight: 13, pageSize: 20 as never }))
+    expect(() => buildEntityWorkspaceActivityQuery(context, { cursor: 'cursor-13', pageSize: 20 as never }))
       .toThrow('ENTITY_WORKSPACE_ACTIVITY_PAGE_SIZE_INVALID');
   });
 
   test('preserves adapter event order and exact persisted evidence', () => {
     expect(projectEntityWorkspaceActivity({ context, page: page() })).toEqual({
-      status: 'selected', entityId: '0xaaaa', requestedBeforeHeight: 44,
+      status: 'selected', entityId: '0xaaaa', requestedCursor: null,
       fromTimestamp: null, isLatestPage: true, kind: 'all', loadedPages: 1,
       mode: 'paged', pageSize: 8,
       query: '', toTimestamp: null, types: [], latestHeight: 50,
-      fromHeight: 42, toHeight: 44, scannedFrames: 3, nextBeforeHeight: 41,
+      fromHeight: 42, toHeight: 44, scannedFrames: 3, nextCursor: 'cursor-41',
       events: [
         {
           amount: '1250000',
@@ -168,7 +167,7 @@ describe('React Entity persisted activity ledger', () => {
       availability: 'partial',
       availableFromHeight: 42,
       unavailableThroughHeight: 41,
-      nextBeforeHeight: null,
+      nextCursor: null,
     });
     const activity = projectEntityWorkspaceActivity({ context, page: terminal });
     expect(activity).toMatchObject({
@@ -177,7 +176,7 @@ describe('React Entity persisted activity ledger', () => {
       fromHeight: 42,
       toHeight: 44,
       scannedFrames: 3,
-      nextBeforeHeight: null,
+      nextCursor: null,
       events: [{ id: 'runtime-a:44:1' }, { id: 'runtime-a:43:0' }],
     });
     const controller = new OpsEntityWorkspaceActivityController({
@@ -189,28 +188,28 @@ describe('React Entity persisted activity ledger', () => {
         throw new Error('Unexpected live refresh');
       },
     });
-    expect(() => controller.select(activity, 41)).toThrow('OPS_ENTITY_ACTIVITY_PAGE_INVALID');
-    expect(controller.readBeforeHeight()).toBeNull();
+    expect(() => controller.select(activity, 'cursor-41')).toThrow('OPS_ENTITY_ACTIVITY_PAGE_INVALID');
+    expect(controller.readCursor()).toBeNull();
     expect(() => projectEntityWorkspaceActivity({ context, page: { ...terminal, runtimeId: 'runtime-b' } })).toThrow(
       'ENTITY_WORKSPACE_ACTIVITY_RUNTIME_MISMATCH',
     );
-    expect(() => projectEntityWorkspaceActivity({ context, page: page({ nextBeforeHeight: 40 }) })).toThrow(
+    expect(() => projectEntityWorkspaceActivity({ context, page: page({ cursor: 'unexpected' }) })).toThrow(
       'ENTITY_WORKSPACE_ACTIVITY_CURSOR_MISMATCH',
     );
-    expect(() => projectEntityWorkspaceActivity({ context, page: page({ nextBeforeHeight: 41.5 }) })).toThrow(
-      'ENTITY_WORKSPACE_ACTIVITY_CURSOR_INVALID',
+    expect(() => projectEntityWorkspaceActivity({ context, page: page({ nextCursor: 41.5 }) })).toThrow(
+      'ENTITY_WORKSPACE_ACTIVITY_NEXT_CURSOR_INVALID',
     );
   });
 
   test('projects an earlier bounded page without changing adapter order', () => {
     const earlier = page({
-      fromHeight: 10, toHeight: 13, scannedFrames: 4, nextBeforeHeight: 9,
-      filters: { entityId: '0xaaaa', kind: 'all', beforeHeight: 13, limit: 8, scanLimit: 160 },
+      cursor: 'cursor-13', fromHeight: 10, toHeight: 13, scannedFrames: 4, nextCursor: 'cursor-9',
+      filters: { entityId: '0xaaaa', kind: 'all' },
       events: [event({ id: 'runtime-a:13:1', height: 13 }), event({ id: 'runtime-a:12:0', height: 12 })],
     });
-    expect(projectEntityWorkspaceActivity({ beforeHeight: 13, context, page: earlier })).toMatchObject({
-      status: 'selected', requestedBeforeHeight: 13, isLatestPage: false,
-      fromHeight: 10, toHeight: 13, nextBeforeHeight: 9,
+    expect(projectEntityWorkspaceActivity({ cursor: 'cursor-13', context, page: earlier })).toMatchObject({
+      status: 'selected', requestedCursor: 'cursor-13', isLatestPage: false,
+      fromHeight: 10, toHeight: 13, nextCursor: 'cursor-9',
       events: [{ id: 'runtime-a:13:1' }, { id: 'runtime-a:12:0' }],
     });
   });
@@ -218,7 +217,7 @@ describe('React Entity persisted activity ledger', () => {
   test('appends only the exact next Infinite page in adapter order', () => {
     const latest = projectEntityWorkspaceActivity({ context, mode: 'infinite', page: page() });
     const older = projectEntityWorkspaceActivity({
-      beforeHeight: 41,
+      cursor: 'cursor-41',
       context,
       mode: 'infinite',
       page: page({
@@ -226,9 +225,10 @@ describe('React Entity persisted activity ledger', () => {
           event({ id: 'runtime-a:41:0', height: 41, timestamp: 1_700_000_041 }),
           event({ id: 'runtime-a:40:0', height: 40, timestamp: 1_700_000_040 }),
         ],
-        filters: { entityId: '0xaaaa', kind: 'all', beforeHeight: 41, limit: 8, scanLimit: 160 },
+        cursor: 'cursor-41',
+        filters: { entityId: '0xaaaa', kind: 'all' },
         fromHeight: 30,
-        nextBeforeHeight: 29,
+        nextCursor: 'cursor-29',
         scannedFrames: 12,
         toHeight: 41,
       }),
@@ -241,8 +241,8 @@ describe('React Entity persisted activity ledger', () => {
       fromHeight: 30,
       isLatestPage: false,
       loadedPages: 2,
-      nextBeforeHeight: 29,
-      requestedBeforeHeight: 41,
+      nextCursor: 'cursor-29',
+      requestedCursor: 'cursor-41',
       scannedFrames: 15,
       toHeight: 44,
     });
@@ -252,7 +252,7 @@ describe('React Entity persisted activity ledger', () => {
     )).toThrow('ENTITY_WORKSPACE_ACTIVITY_APPEND_CONTEXT_MISMATCH');
     expect(() => appendEntityWorkspaceActivityPage(latest, {
       ...older,
-      requestedBeforeHeight: 40,
+      requestedCursor: 'cursor-40',
     })).toThrow('ENTITY_WORKSPACE_ACTIVITY_APPEND_CURSOR_MISMATCH');
     expect(() => appendEntityWorkspaceActivityPage(latest, {
       ...older,
@@ -262,14 +262,14 @@ describe('React Entity persisted activity ledger', () => {
 
   test('projects only the exact requested adapter kind', () => {
     const offchain = page({
-      filters: { entityId: '0xaaaa', kind: 'offchain', beforeHeight: 44, limit: 8, scanLimit: 160 },
+      filters: { entityId: '0xaaaa', kind: 'offchain' },
     });
     expect(projectEntityWorkspaceActivity({ context, kind: 'offchain', page: offchain }))
       .toMatchObject({ kind: 'offchain', events: [{ kind: 'offchain' }, { kind: 'offchain' }] });
     expect(() => projectEntityWorkspaceActivity({ context, kind: 'onchain', page: offchain }))
       .toThrow('ENTITY_WORKSPACE_ACTIVITY_FILTER_KIND_MISMATCH');
     expect(() => projectEntityWorkspaceActivity({ context, kind: 'onchain', page: page({
-      filters: { entityId: '0xaaaa', kind: 'onchain', beforeHeight: 44, limit: 8, scanLimit: 160 },
+      filters: { entityId: '0xaaaa', kind: 'onchain' },
     }) })).toThrow('ENTITY_WORKSPACE_ACTIVITY_EVENT_KIND_MISMATCH');
   });
 
@@ -277,7 +277,6 @@ describe('React Entity persisted activity ledger', () => {
     const payments = page({
       filters: {
         entityId: '0xaaaa', kind: 'all', types: ['payment'],
-        beforeHeight: 44, limit: 8, scanLimit: 160,
       },
     });
     expect(projectEntityWorkspaceActivity({ context, page: payments, types: ['payment'] }))
@@ -287,7 +286,6 @@ describe('React Entity persisted activity ledger', () => {
     expect(() => projectEntityWorkspaceActivity({ context, page: page({
       filters: {
         entityId: '0xaaaa', kind: 'all', types: ['swap'],
-        beforeHeight: 44, limit: 8, scanLimit: 160,
       },
     }), types: ['swap'] })).toThrow('ENTITY_WORKSPACE_ACTIVITY_EVENT_TYPE_MISMATCH');
   });
@@ -296,7 +294,6 @@ describe('React Entity persisted activity ledger', () => {
     const searched = page({
       filters: {
         entityId: '0xaaaa', kind: 'all', query: '0xbbbb',
-        beforeHeight: 44, limit: 8, scanLimit: 160,
       },
     });
     expect(projectEntityWorkspaceActivity({ context, page: searched, search: ' 0xbbbb ' }))
@@ -309,7 +306,6 @@ describe('React Entity persisted activity ledger', () => {
     expect(() => projectEntityWorkspaceActivity({ context, page: page({
       filters: {
         entityId: '0xaaaa', kind: 'all', query: 'different',
-        beforeHeight: 44, limit: 8, scanLimit: 160,
       },
     }), search: 'different' })).toThrow('ENTITY_WORKSPACE_ACTIVITY_EVENT_QUERY_MISMATCH');
   });
@@ -331,7 +327,7 @@ describe('React Entity persisted activity ledger', () => {
       scanLimit: 1_000,
       filters: {
         entityId: '0xaaaa', fromTimestamp: 1_700_000_043, kind: 'all',
-        beforeHeight: 44, limit: 8, scanLimit: 1_000, toTimestamp: 1_700_000_044,
+        toTimestamp: 1_700_000_044,
       },
     });
     expect(projectEntityWorkspaceActivity({ context, page: filtered, ...timeframe })).toMatchObject({
@@ -344,7 +340,7 @@ describe('React Entity persisted activity ledger', () => {
       scanLimit: 1_000,
       filters: {
         entityId: '0xaaaa', fromTimestamp: 1_700_000_043, kind: 'all',
-        beforeHeight: 44, limit: 8, scanLimit: 1_000, toTimestamp: 1_700_000_044,
+        toTimestamp: 1_700_000_044,
       },
       events: [event({ timestamp: 1_700_000_042 }), event({ id: 'runtime-a:43:0', height: 43 })],
     }), ...timeframe })).toThrow('ENTITY_WORKSPACE_ACTIVITY_EVENT_TIMEFRAME_MISMATCH');
@@ -357,7 +353,7 @@ describe('React Entity persisted activity ledger', () => {
 
   test('rejects drift, malformed event facts, duplicates, and incoherent metadata', () => {
     expect(() => projectEntityWorkspaceActivity({ context, page: page({
-      filters: { entityId: '0xcccc', kind: 'all', beforeHeight: 44, limit: 8, scanLimit: 160 },
+      filters: { entityId: '0xcccc', kind: 'all' },
     }) })).toThrow('ENTITY_WORKSPACE_ACTIVITY_FILTER_ENTITY_MISMATCH');
     expect(() => projectEntityWorkspaceActivity({ context, page: page({
       events: [event({ height: 45 }), event({ id: 'runtime-a:43:0', height: 43 })],
@@ -397,13 +393,13 @@ describe('React Entity persisted activity ledger', () => {
       refreshLive: () => { liveRefreshes += 1; },
     });
     const latest = projectEntityWorkspaceActivity({ context, page: page() });
-    expect(() => controller.select(latest, 40)).toThrow('OPS_ENTITY_ACTIVITY_PAGE_INVALID:40');
-    controller.select(latest, 41);
-    expect(controller.readBeforeHeight()).toBe(41);
+    expect(() => controller.select(latest, 'cursor-40')).toThrow('OPS_ENTITY_ACTIVITY_PAGE_INVALID:cursor-40');
+    controller.select(latest, 'cursor-41');
+    expect(controller.readCursor()).toBe('cursor-41');
     expect({ historyRefreshes, liveRefreshes }).toEqual({ historyRefreshes: 0, liveRefreshes: 1 });
     controller.selectKind(latest, 'offchain');
-    expect({ beforeHeight: controller.readBeforeHeight(), kind: controller.readKind() })
-      .toEqual({ beforeHeight: null, kind: 'offchain' });
+    expect({ cursor: controller.readCursor(), kind: controller.readKind() })
+      .toEqual({ cursor: null, kind: 'offchain' });
     expect({ historyRefreshes, liveRefreshes }).toEqual({ historyRefreshes: 0, liveRefreshes: 2 });
     controller.selectKind(latest, 'offchain');
     expect({ historyRefreshes, liveRefreshes }).toEqual({ historyRefreshes: 0, liveRefreshes: 2 });
@@ -418,18 +414,18 @@ describe('React Entity persisted activity ledger', () => {
     expect({ historyRefreshes, liveRefreshes }).toEqual({ historyRefreshes: 0, liveRefreshes: 6 });
 
     const earlier = projectEntityWorkspaceActivity({
-      beforeHeight: 13,
+      cursor: 'cursor-13',
       context,
       kind: 'offchain',
       page: page({
-        fromHeight: 10, toHeight: 13, scannedFrames: 4, nextBeforeHeight: 9,
-        filters: { entityId: '0xaaaa', kind: 'offchain', beforeHeight: 13, limit: 8, scanLimit: 160 },
+        cursor: 'cursor-13', fromHeight: 10, toHeight: 13, scannedFrames: 4, nextCursor: 'cursor-9',
+        filters: { entityId: '0xaaaa', kind: 'offchain' },
         events: [event({ id: 'runtime-a:13:1', height: 13 }), event({ id: 'runtime-a:12:0', height: 12 })],
       }),
     });
     historyActive = true;
     controller.select(earlier, null);
-    expect(controller.readBeforeHeight()).toBeNull();
+    expect(controller.readCursor()).toBeNull();
     expect({ historyRefreshes, liveRefreshes }).toEqual({ historyRefreshes: 1, liveRefreshes: 6 });
     controller.selectKind(earlier, 'onchain');
     expect(controller.readKind()).toBe('onchain');
@@ -437,15 +433,15 @@ describe('React Entity persisted activity ledger', () => {
     controller.toggleType(earlier, 'error');
     expect(controller.readTypes()).toEqual(['swap', 'error']);
     expect({ historyRefreshes, liveRefreshes }).toEqual({ historyRefreshes: 3, liveRefreshes: 6 });
-    controller.select(earlier, 9);
-    expect(controller.readBeforeHeight()).toBe(9);
+    controller.select(earlier, 'cursor-9');
+    expect(controller.readCursor()).toBe('cursor-9');
     controller.clearFilters(earlier);
     expect({
-      beforeHeight: controller.readBeforeHeight(),
+      cursor: controller.readCursor(),
       kind: controller.readKind(),
       search: controller.readSearch(),
       types: controller.readTypes(),
-    }).toEqual({ beforeHeight: null, kind: 'onchain', search: '', types: [] });
+    }).toEqual({ cursor: null, kind: 'onchain', search: '', types: [] });
     expect({ historyRefreshes, liveRefreshes }).toEqual({ historyRefreshes: 5, liveRefreshes: 6 });
     controller.clearFilters(earlier);
     expect({ historyRefreshes, liveRefreshes }).toEqual({ historyRefreshes: 5, liveRefreshes: 6 });
@@ -454,7 +450,7 @@ describe('React Entity persisted activity ledger', () => {
     expect(controller.readSearch()).toBe('');
     expect(controller.readTypes()).toEqual([]);
     controller.reset();
-    expect(controller.readBeforeHeight()).toBeNull();
+    expect(controller.readCursor()).toBeNull();
     expect(controller.readKind()).toBe('all');
     expect(controller.readSearch()).toBe('');
     expect(controller.readTypes()).toEqual([]);
@@ -471,31 +467,31 @@ describe('React Entity persisted activity ledger', () => {
     });
     const latest = projectEntityWorkspaceActivity({ context, page: page() });
     const middle = projectEntityWorkspaceActivity({
-      beforeHeight: 41, context, page: page({
-        fromHeight: 30, toHeight: 41, scannedFrames: 12, nextBeforeHeight: 29,
-        filters: { entityId: '0xaaaa', kind: 'all', beforeHeight: 41, limit: 8, scanLimit: 160 },
+      cursor: 'cursor-41', context, page: page({
+        cursor: 'cursor-41', fromHeight: 30, toHeight: 41, scannedFrames: 12, nextCursor: 'cursor-29',
+        filters: { entityId: '0xaaaa', kind: 'all' },
         events: [event({ id: 'runtime-a:41:0', height: 41 })], returned: 1,
       }),
     });
     const oldest = projectEntityWorkspaceActivity({
-      beforeHeight: 29, context, page: page({
-        fromHeight: 20, toHeight: 29, scannedFrames: 10, nextBeforeHeight: 19,
-        filters: { entityId: '0xaaaa', kind: 'all', beforeHeight: 29, limit: 8, scanLimit: 160 },
+      cursor: 'cursor-29', context, page: page({
+        cursor: 'cursor-29', fromHeight: 20, toHeight: 29, scannedFrames: 10, nextCursor: 'cursor-19',
+        filters: { entityId: '0xaaaa', kind: 'all' },
         events: [event({ id: 'runtime-a:29:0', height: 29 })], returned: 1,
       }),
     });
 
-    controller.select(latest, 41);
-    controller.select(middle, 29);
-    expect(controller.readBeforeHeight()).toBe(29);
+    controller.select(latest, 'cursor-41');
+    controller.select(middle, 'cursor-29');
+    expect(controller.readCursor()).toBe('cursor-29');
     historyActive = true;
     controller.selectNewer(oldest);
-    expect(controller.readBeforeHeight()).toBe(41);
+    expect(controller.readCursor()).toBe('cursor-41');
     controller.selectNewer(middle);
-    expect(controller.readBeforeHeight()).toBeNull();
+    expect(controller.readCursor()).toBeNull();
     controller.selectNewer(latest);
-    expect({ beforeHeight: controller.readBeforeHeight(), historyRefreshes, liveRefreshes })
-      .toEqual({ beforeHeight: null, historyRefreshes: 2, liveRefreshes: 2 });
+    expect({ cursor: controller.readCursor(), historyRefreshes, liveRefreshes })
+      .toEqual({ cursor: null, historyRefreshes: 2, liveRefreshes: 2 });
   });
 
   test('owns the compact plus retained page sizes and resets only the certified cursor', () => {
@@ -508,10 +504,10 @@ describe('React Entity persisted activity ledger', () => {
       refreshLive: () => { liveRefreshes += 1; },
     });
     const latest = projectEntityWorkspaceActivity({ context, page: page() });
-    controller.select(latest, 41);
+    controller.select(latest, 'cursor-41');
     controller.selectPageSize(latest, 40);
-    expect({ beforeHeight: controller.readBeforeHeight(), pageSize: controller.readPageSize() })
-      .toEqual({ beforeHeight: null, pageSize: 40 });
+    expect({ cursor: controller.readCursor(), pageSize: controller.readPageSize() })
+      .toEqual({ cursor: null, pageSize: 40 });
     expect({ historyRefreshes, liveRefreshes }).toEqual({ historyRefreshes: 0, liveRefreshes: 2 });
     controller.selectPageSize(latest, 40);
     expect({ historyRefreshes, liveRefreshes }).toEqual({ historyRefreshes: 0, liveRefreshes: 2 });
@@ -579,28 +575,28 @@ describe('React Entity persisted activity ledger', () => {
     controller.loadMore(infinite);
     controller.loadMore(infinite);
     expect({
-      appendBeforeHeight: controller.readAppendBeforeHeight(),
-      beforeHeight: controller.readBeforeHeight(),
+      appendCursor: controller.readAppendCursor(),
+      cursor: controller.readCursor(),
       historyRefreshes,
       liveRefreshes,
-    }).toEqual({ appendBeforeHeight: 41, beforeHeight: 41, historyRefreshes: 0, liveRefreshes: 2 });
-    expect(() => controller.completeAppend(40))
+    }).toEqual({ appendCursor: 'cursor-41', cursor: 'cursor-41', historyRefreshes: 0, liveRefreshes: 2 });
+    expect(() => controller.completeAppend('cursor-40'))
       .toThrow('OPS_ENTITY_ACTIVITY_APPEND_COMPLETION_MISMATCH');
-    controller.completeAppend(41);
+    controller.completeAppend('cursor-41');
     expect({
-      appendBeforeHeight: controller.readAppendBeforeHeight(),
-      beforeHeight: controller.readBeforeHeight(),
-    }).toEqual({ appendBeforeHeight: null, beforeHeight: null });
+      appendCursor: controller.readAppendCursor(),
+      cursor: controller.readCursor(),
+    }).toEqual({ appendCursor: null, cursor: null });
     historyActive = true;
     controller.loadMore(infinite);
     expect({ historyRefreshes, liveRefreshes }).toEqual({ historyRefreshes: 1, liveRefreshes: 2 });
-    expect(() => controller.cancelAppend(40))
+    expect(() => controller.cancelAppend('cursor-40'))
       .toThrow('OPS_ENTITY_ACTIVITY_APPEND_CANCELLATION_MISMATCH');
-    controller.cancelAppend(41);
-    expect(controller.readAppendBeforeHeight()).toBeNull();
+    controller.cancelAppend('cursor-41');
+    expect(controller.readAppendCursor()).toBeNull();
     controller.loadMore(infinite);
     controller.selectKind(infinite, 'offchain');
-    expect(controller.readAppendBeforeHeight()).toBeNull();
+    expect(controller.readAppendCursor()).toBeNull();
     expect(() => controller.loadMore(paged)).toThrow('OPS_ENTITY_ACTIVITY_APPEND_MODE_REQUIRED');
   });
 
@@ -619,11 +615,11 @@ describe('React Entity persisted activity ledger', () => {
     controller.selectSearch(latest, 'ReserveUpdated');
     controller.reload(latest);
     expect({
-      beforeHeight: controller.readBeforeHeight(),
+      cursor: controller.readCursor(),
       kind: controller.readKind(),
       search: controller.readSearch(),
       types: controller.readTypes(),
-    }).toEqual({ beforeHeight: null, kind: 'onchain', search: 'ReserveUpdated', types: ['j_event'] });
+    }).toEqual({ cursor: null, kind: 'onchain', search: 'ReserveUpdated', types: ['j_event'] });
     expect({ historyRefreshes, liveRefreshes }).toEqual({ historyRefreshes: 0, liveRefreshes: 4 });
     historyActive = true;
     controller.reload(latest);

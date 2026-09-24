@@ -87,6 +87,9 @@ test('wallet canonical links select subviews and retain Entity through hash and 
   await page.getByLabel('Entity', { exact: true }).selectOption(fixture.entityId);
   await page.getByRole('button', { name: 'Market', exact: true }).click();
   await expect(page).toHaveURL(/#accounts\/swap$/);
+  const hub = page.getByRole('region', { name: 'Market selection' }).getByRole('combobox').first();
+  await hub.selectOption(fixture.counterpartyEntityId);
+  await expect(hub).toHaveValue(fixture.counterpartyEntityId);
   await expect(page.getByRole('heading', { name: 'Place or cross' })).toBeVisible();
   await page.goBack();
   await expect(page.getByRole('heading', { name: 'Activity', exact: true })).toBeVisible();
@@ -142,7 +145,7 @@ test('wallet submits only the refreshed payment quote and observes committed act
   await page.goto('/app#accounts/send', { waitUntil: 'domcontentloaded' });
   await expect(page.getByRole('heading', { name: 'Send a payment' })).toBeVisible({ timeout: 90_000 });
   await page.getByLabel('Entity', { exact: true }).selectOption(fixture.entityId);
-  await expect(page.getByRole('combobox', { name: 'Recipient', exact: true })).toHaveValue(fixture.counterpartyEntityId);
+  await page.getByRole('combobox', { name: 'Recipient', exact: true }).selectOption(fixture.counterpartyEntityId);
   const assetOption = page.getByRole('combobox', { name: 'Asset', exact: true }).locator('option:checked');
   const spendableBefore = await assetOption.textContent();
   await page.getByLabel('Recipient amount').fill('1');

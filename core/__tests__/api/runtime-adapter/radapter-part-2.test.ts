@@ -93,6 +93,7 @@ import type { AccountReplica, AccountTx, Delta } from '../../../types/account';
 import type { CrossJurisdictionSwapRoute } from '../../../types/cross-jurisdiction';
 import type { EntityReplica } from '../../../entity/types';
 import type { RuntimeReplica, RuntimeInput } from '../../../runtime/types';
+import type { RuntimeAdapterBatchPreflight } from '../../../api/runtime-adapter/types';
 
 import type { BookState } from '../../../orderbook';
 
@@ -939,6 +940,40 @@ test('runtime adapter websocket handler gates reads behind inspect auth', async 
   const read = decodeTestRuntimeAdapterMessage<{ ok: true; payload: { latestHeight: number } }>(messages.pop());
   expect(read.ok).toBe(true);
   expect(read.payload.latestHeight).toBe(7);
+
+  await handleRuntimeAdapterMessage(socket, {
+    v: XLN_PROTOCOL_VERSION,
+    id: 'read-settlement-inspect',
+    op: 'read',
+    path: `entity/${entityId}/settlement-workspaces`,
+  }, env, { enqueueRuntimeInput: () => {} });
+  const settlementDenied = decodeTestRuntimeAdapterMessage<{
+    ok: false;
+    error: { code: string; message: string };
+  }>(messages.pop());
+  expect(settlementDenied.error.code).toBe('E_UNAUTHORIZED');
+  expect(settlementDenied.error.message).toContain('admin auth required');
+
+  await handleRuntimeAdapterMessage(socket, {
+    v: XLN_PROTOCOL_VERSION,
+    id: 'auth-admin',
+    op: 'auth',
+    key: deriveRuntimeAdapterCapabilityToken('seed', 'full', Date.now() + 60_000),
+    challenge: adapterAuthChallenge,
+  }, env, { enqueueRuntimeInput: () => {} });
+  messages.pop();
+  env.runtimeId = 'runtime:test';
+  await handleRuntimeAdapterMessage(socket, {
+    v: XLN_PROTOCOL_VERSION,
+    id: 'read-settlement-admin',
+    op: 'read',
+    path: `entity/${entityId}/settlement-workspaces`,
+  }, env, { enqueueRuntimeInput: () => {} });
+  const settlementRead = decodeTestRuntimeAdapterMessage<{
+    ok: true;
+    payload: { entityId: string; returned: number };
+  }>(messages.pop());
+  expect(settlementRead).toMatchObject({ ok: true, payload: { entityId, returned: 0 } });
 });
 
 test('runtime adapter websocket handler rejects send under inspect auth', async () => {
@@ -2421,6 +2456,20 @@ test('remote adapter can inspect and control a hub over the rpc wire', async () 
     expect(view.activeEntity.summary.label).toBe('H1 Hub');
     expect(view.activeEntity.accounts.items).toHaveLength(1);
     expect(view.activeEntity.accounts.nextCursor).toBe(null);
+
+    const batchPreflight = await adapter.read<RuntimeAdapterBatchPreflight>(
+      `entity/${entityId}/batch-preflight`,
+      { atHeight: 7 },
+    );
+    expect(batchPreflight).toMatchObject({
+      ok: true,
+      runtimeId,
+      height: 7,
+      entityId,
+      status: 'empty',
+      draft: { counts: { total: 0 }, issue: null },
+      sent: null,
+    });
 
     const verification = await adapter.control<{
       ok: boolean;

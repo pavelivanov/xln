@@ -3,7 +3,7 @@ import {
   useStackManagerController,
   type StackManagerTarget,
 } from '../../../../packages/browser/src/stack-manager/stack-manager-controller';
-import type { StackStablecoinKind, StackPublicationRequest } from '../../../../bridges/runtime/stack-manager-client';
+import type { StackStablecoinKind, StackPublicationRequest } from '../../../../bridges/runtime/stack-manager/stack-manager-client';
 
 const normalizedKey = (value: string): string =>
   value

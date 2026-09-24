@@ -1,5 +1,6 @@
 import { getCertifiedBoardStackKey, getCertifiedBoardNodeStore, resolveObserverCertifiedBoardRecord } from '../../../../../core/jurisdiction/machine/board-registry';
 import { registrationEvidenceKey } from '../../../../../core/jurisdiction/machine/registration-evidence';
+import { drainJWatcherBacklog } from '../../../../../core/jurisdiction/adapter/operations/backlog-drain';
 import * as runtime from '../../../../../core/runtime';
 import type { JAdapter, RuntimeReplica, ConsensusConfig } from '../../../../../core/api/public/runtime-module';
 import { signAccountFrame } from '../../../../../core/account/crypto';
@@ -54,6 +55,10 @@ const registerOwnershipEntity = async (
     replica.state.entityId === entityId && replica.signerId.toLowerCase() === signerId.toLowerCase()
   ));
   await adapter.pollNow();
+  // A long-lived browser matrix can accumulate enough chain history that one poll only
+  // authenticates part of the new Entity's board evidence. Drain the captured head through
+  // Runtime before asserting instead of depending on background-loop timing.
+  await drainJWatcherBacklog(env, currentEnv => runtime.processRuntime(currentEnv));
   await waitForWalletFixtureState('Ownership observer certified board', () => {
     const replica = readReplica();
     return Boolean(replica && resolveObserverCertifiedBoardRecord(replica.state, getCertifiedBoardNodeStore(env), entityId)?.boardHash === boardHash);
@@ -70,13 +75,6 @@ export async function createWalletOwnershipFixtures(
   const released = await registerOwnershipEntity(
     env, adapter, config, commit, 'Browser Share Company', 'isolated-browser-ownership-fixture',
   );
-  const slots = ['mobile-390x844', 'laptop-1366x900', 'wide-1920x1080'] as const;
-  const unreleased: Awaited<ReturnType<typeof registerOwnershipEntity>>[] = [];
-  for (const slot of slots) {
-    unreleased.push(await registerOwnershipEntity(
-      env, adapter, config, commit, `Browser New Share Company ${slot}`, `isolated-browser-ownership-release-fixture:${slot}`,
-    ));
-  }
   await commit({ runtimeTxs: [], entityInputs: [{ entityId: released.entityId, signerId: released.signerId, entityTxs: [{ type: 'entityProviderReleaseControlShares',
     data: { recipientAddress: adapter.addresses.depository, controlAmount: 80n, dividendAmount: 40n, purpose: 'browser-ownership-evidence' } }] }] });
   await waitForWalletFixtureState('Ownership share release confirmation', () => (released.readReplica()?.state.entityProviderActionState?.confirmedNonce ?? 0n) > 0n);
@@ -91,11 +89,25 @@ export async function createWalletOwnershipFixtures(
   await waitForWalletFixtureState('Ownership committed share reserves', () => released.readReplica()?.state.reserves.get(controlTokenId) === 80n && released.readReplica()?.state.reserves.get(dividendTokenId) === 40n);
   return {
     released: { entityId: released.entityId, control: '80', dividend: '40' },
-    unreleased: Object.fromEntries(unreleased.map((entity, index) => [
-      slots[index],
-      { entityId: entity.entityId, control: '0', dividend: '0' },
-    ])),
   };
+}
+
+export async function createWalletOwnershipReleaseFixture(
+  env: RuntimeReplica,
+  adapter: JAdapter,
+  config: ConsensusConfig,
+  commit: (input: Parameters<typeof runtime.enqueueRuntimeInput>[1]) => Promise<void>,
+  slot: string,
+) {
+  const fixture = await registerOwnershipEntity(
+    env,
+    adapter,
+    config,
+    commit,
+    `Browser New Share Company ${slot}`,
+    `isolated-browser-ownership-release-fixture:${slot}`,
+  );
+  return { entityId: fixture.entityId, control: '0', dividend: '0' };
 }
 
 export async function createWalletOwnershipGovernanceFixture(

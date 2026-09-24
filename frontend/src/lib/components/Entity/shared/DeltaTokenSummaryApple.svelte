@@ -2,7 +2,7 @@
   import { createEventDispatcher } from 'svelte';
   import { buildDeltaAppleModel } from '../../../../../packages/ui/src/rcpan/delta-apple-model';
   import { iconForSymbol } from '../../../../../packages/ui/src/rcpan/delta-token-format';
-  import { settings } from '../../../../../packages/browser/src/settings-store';
+  import { settings } from '../../../../../packages/browser/src/preferences/settings-store';
   import type { DeltaParts } from '../../../../../packages/ui/src/rcpan/delta-types';
 
   export let symbol: string;

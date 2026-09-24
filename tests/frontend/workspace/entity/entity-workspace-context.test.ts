@@ -3,7 +3,7 @@ import { describe, expect, test } from 'bun:test';
 import {
   emptyEntityWorkspaceContext,
   projectEntityWorkspaceContext,
-} from '../../../../frontend/packages/runtime-client/src/entity/entity-workspace-context';
+} from '../../../../frontend/packages/runtime-client/src/entity/workspace/entity-workspace-context';
 
 const SELECTED_FRAME = {
   height: 42,
@@ -69,7 +69,7 @@ describe('Entity workspace context projection', () => {
 
   test('feeds both retained projection and React shell contracts from the shared boundary', async () => {
     const [retainedModel, reactShell, reactPage, reactSource, reactProjection] = await Promise.all([
-      Bun.file('frontend/bridges/wallet/entity-panel-model.ts').text(),
+      Bun.file('frontend/bridges/wallet/entity/entity-panel-model.ts').text(),
       Bun.file('frontend/packages/ui/src/entity/entity-workspace-shell.tsx').text(),
       Bun.file('frontend/apps/ops/src/entity-workspace/ops-entity-workspace.tsx').text(),
       Bun.file('frontend/apps/ops/src/entity-workspace/ops-entity-workspace-source.ts').text(),

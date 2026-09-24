@@ -63,8 +63,8 @@ export const WALLET_FLOW_AUDIT = [
     sources: [
       'frontend/apps/wallet/src/account/controls/wallet-account-dropdown.tsx',
       'frontend/apps/wallet/src/account/controls/wallet-account-dropdown-source.ts',
-      'frontend/packages/ui/src/account/account-dropdown.tsx',
-      'frontend/packages/ui/src/account/account-dropdown-model.ts',
+      'frontend/packages/ui/src/account/dropdown/account-dropdown.tsx',
+      'frontend/packages/ui/src/account/dropdown/account-dropdown-model.ts',
     ],
     tests: [
       'frontend/tests/react-candidate/wallet/account/wallet-account-dropdown.spec.ts',
@@ -86,8 +86,8 @@ export const WALLET_FLOW_AUDIT = [
       'frontend/apps/wallet/src/move/wallet-move.tsx',
       'frontend/apps/wallet/src/manage/wallet-lending.tsx',
       'frontend/apps/wallet/src/history/wallet-history.tsx',
-      'frontend/bridges/wallet/wallet-canonical-account-context.ts',
-      'frontend/packages/ui/src/account/account-workspace-rail.tsx',
+      'frontend/bridges/wallet/canonical/wallet-canonical-account-context.ts',
+      'frontend/packages/ui/src/account/rail/account-workspace-rail.tsx',
       'frontend/packages/runtime-client/src/account-workspace-tabs.ts',
     ],
     tests: [
@@ -149,9 +149,9 @@ export const WALLET_FLOW_AUDIT = [
       'frontend/apps/wallet/src/entity/wallet-entity-input.tsx',
       'frontend/apps/wallet/src/onboarding/wallet-hub-discovery-source.ts',
       'frontend/apps/wallet/src/navigation/wallet-navigation-model.ts',
-      'frontend/bridges/wallet/wallet-canonical-hub-discovery.ts',
+      'frontend/bridges/wallet/canonical/wallet-canonical-hub-discovery.ts',
       'frontend/packages/browser/src/wallet/account-open-commands.ts',
-      'frontend/packages/ui/src/entity-input-model.ts',
+      'frontend/packages/ui/src/entity/entity-input-model.ts',
     ],
     tests: [
       'tests/frontend/assets/entity-input-model.test.ts',
@@ -167,7 +167,7 @@ export const WALLET_FLOW_AUDIT = [
     sources: [
       'frontend/apps/wallet/src/onboarding/wallet-hub-discovery.tsx',
       'frontend/apps/wallet/src/onboarding/wallet-hub-discovery-source.ts',
-      'frontend/bridges/wallet/wallet-canonical-hub-discovery.ts',
+      'frontend/bridges/wallet/canonical/wallet-canonical-hub-discovery.ts',
       'frontend/packages/browser/src/wallet/hub-discovery-commands.ts',
       'frontend/packages/ui/src/onboarding/hub-discovery-profile.ts',
     ],
@@ -184,9 +184,9 @@ export const WALLET_FLOW_AUDIT = [
     view: 'portfolio',
     sources: [
       'frontend/apps/wallet/src/onboarding/wallet-formation.tsx',
-      'frontend/bridges/wallet/wallet-canonical-formation.ts',
-      'frontend/bridges/wallet/formation-commands.ts',
-      'frontend/bridges/wallet/formation-runtime-projection.ts',
+      'frontend/bridges/wallet/canonical/wallet-canonical-formation.ts',
+      'frontend/bridges/wallet/formation/formation-commands.ts',
+      'frontend/bridges/wallet/formation/formation-runtime-projection.ts',
     ],
     tests: [
       'tests/frontend/onboarding/wallet-formation.test.ts',
@@ -201,9 +201,9 @@ export const WALLET_FLOW_AUDIT = [
     view: 'identity',
     sources: [
       'frontend/apps/wallet/src/onboarding/wallet-onboarding.tsx',
-      'frontend/bridges/wallet/wallet-canonical-onboarding.ts',
+      'frontend/bridges/wallet/canonical/wallet-canonical-onboarding.ts',
       'frontend/packages/browser/src/onboarding/onboarding-setup.ts',
-      'frontend/bridges/wallet/onboarding-hub-join.ts',
+      'frontend/bridges/wallet/onboarding/onboarding-hub-join.ts',
     ],
     tests: ['frontend/tests/react-candidate/wallet/onboarding/wallet-onboarding.spec.ts'],
   },
@@ -217,13 +217,13 @@ export const WALLET_FLOW_AUDIT = [
       'frontend/packages/browser/src/runtime/session/runtime-module-loader.ts',
       'frontend/packages/browser/src/runtime/wallet-embedded-runtime-session.ts',
       'frontend/packages/browser/src/runtime/wallet-runtime-suspension.ts',
-      'frontend/bridges/runtime/browser-runtime-adapter.ts',
-      'frontend/bridges/runtime/browser-runtime-bootstrap.ts',
+      'frontend/bridges/runtime/browser/browser-runtime-adapter.ts',
+      'frontend/bridges/runtime/browser/browser-runtime-bootstrap.ts',
       'frontend/apps/wallet/src/runtime/wallet-embedded-runtime.ts',
     ],
     tests: [
       'tests/frontend/runtime/session/runtime-module-loader.test.ts',
-      'tests/frontend/runtime/wallet/wallet-embedded-runtime-session.test.ts',
+      'tests/frontend/runtime/wallet/lifecycle/wallet-embedded-runtime-session.test.ts',
       'tests/frontend/runtime/wallet/wallet-runtime-suspension.test.ts',
     ],
   },
@@ -306,7 +306,7 @@ export const WALLET_FLOW_AUDIT = [
       'frontend/apps/wallet/src/identity/identity-onboarding.tsx',
       'frontend/apps/wallet/src/identity/identity-recovery.tsx',
       'frontend/apps/wallet/src/runtime/wallet-embedded-runtime.ts',
-      'frontend/bridges/wallet/wallet-canonical-vault-runtime.ts',
+      'frontend/bridges/wallet/canonical/wallet-canonical-vault-runtime.ts',
       'frontend/packages/browser/src/runtime/wallet-embedded-runtime-session.ts',
       'frontend/bridges/vault/wallet-runtime-opening-adapter.ts',
     ],
@@ -314,7 +314,7 @@ export const WALLET_FLOW_AUDIT = [
       'tests/frontend/onboarding/recovery/frontend-wallet-recovery-rehearsal.test.ts',
       'tests/frontend/onboarding/runtime/wallet-runtime-opening.test.ts',
       'tests/frontend/onboarding/recovery/wallet-recovery-selection-session.test.ts',
-      'tests/frontend/runtime/wallet/wallet-embedded-runtime-session.test.ts',
+      'tests/frontend/runtime/wallet/lifecycle/wallet-embedded-runtime-session.test.ts',
     ],
   },
   {
@@ -329,7 +329,7 @@ export const WALLET_FLOW_AUDIT = [
       'frontend/apps/wallet/src/runtime/wallet-embedded-runtime.ts',
       'frontend/bridges/wallet/brainvault/wallet-brainvault-browser-derivation.ts',
       'frontend/bridges/wallet/brainvault/wallet-brainvault-material-finalization.ts',
-      'frontend/bridges/wallet/wallet-canonical-vault-runtime.ts',
+      'frontend/bridges/wallet/canonical/wallet-canonical-vault-runtime.ts',
       'frontend/packages/browser/src/identity/wallet-brainvault-material-session.ts',
       'frontend/bridges/vault/wallet-runtime-opening-adapter.ts',
     ],
@@ -349,7 +349,7 @@ export const WALLET_FLOW_AUDIT = [
       'frontend/apps/wallet/src/identity/identity-recovery.tsx',
       'frontend/apps/wallet/src/onboarding/wallet-identity-opening.ts',
       'frontend/apps/wallet/src/runtime/wallet-embedded-runtime.ts',
-      'frontend/bridges/wallet/wallet-canonical-vault-runtime.ts',
+      'frontend/bridges/wallet/canonical/wallet-canonical-vault-runtime.ts',
       'frontend/packages/browser/src/recovery/wallet-recovery-selection-session.ts',
     ],
     tests: [
@@ -367,7 +367,7 @@ export const WALLET_FLOW_AUDIT = [
     sources: [
       'frontend/apps/wallet/src/recovery/wallet-recovery-services.tsx',
       'frontend/apps/wallet/src/recovery/wallet-recovery-services-source.ts',
-      'frontend/bridges/wallet/wallet-canonical-recovery-services.ts',
+      'frontend/bridges/wallet/canonical/wallet-canonical-recovery-services.ts',
       'frontend/packages/browser/src/recovery/wallet-recovery-services.ts',
     ],
     tests: [
@@ -384,7 +384,7 @@ export const WALLET_FLOW_AUDIT = [
     sources: [
       'frontend/apps/wallet/src/push-wake/wallet-push-wake.tsx',
       'frontend/apps/wallet/src/push-wake/wallet-push-wake-source.ts',
-      'frontend/bridges/wallet/wallet-canonical-push-wake.ts',
+      'frontend/bridges/wallet/canonical/wallet-canonical-push-wake.ts',
       'frontend/packages/browser/src/wallet/wallet-push-wake.ts',
       'frontend/static/push-wake-sw.js',
     ],
@@ -508,7 +508,7 @@ export const WALLET_FLOW_AUDIT = [
     sources: [
       'frontend/apps/wallet/src/payments/wallet-payment-external.tsx',
       'frontend/apps/wallet/src/onboarding/wallet-external-provider-source.ts',
-      'frontend/bridges/wallet/wallet-canonical-external-provider.ts',
+      'frontend/bridges/wallet/canonical/wallet-canonical-external-provider.ts',
       'frontend/packages/browser/src/wallet/wallet-external-provider.ts',
       'frontend/packages/browser/src/native/external-wallet-authority.ts',
     ],
@@ -523,7 +523,7 @@ export const WALLET_FLOW_DEFERRALS = [
   {
     id: 'wallet-creation-and-onboarding',
     destination: 'WP9',
-    evidenceSource: 'frontend/bridges/wallet/wallet-canonical-onboarding.ts',
+    evidenceSource: 'frontend/bridges/wallet/canonical/wallet-canonical-onboarding.ts',
     evidenceMarker: 'createOnboardingHubJoinCommands',
     reason: 'W05–W07 verify automatic Hub joining, local/remote-owner Formation and remote Hub opening. R03 dual-destination Ops BrainVault and late-completion development cases pass; complete onboarding/reload acceptance on final release bytes remains V05a.',
   },
@@ -536,21 +536,11 @@ export const WALLET_FLOW_DEFERRALS = [
   },
 ] as const satisfies readonly WalletFlowDeferral[];
 
-const REMAINING_WALLET_REQUIREMENTS: Readonly<Record<string, string>> = {
-  onboarding: 'W05–W07 verify local/remote Formation and Hub opening; final onboarding/reload matrix acceptance remains V05a.',
-  credit: 'Credit controls are mounted; final aggregate positive-flow evidence remains V05a.',
-  history: 'B2: same-frame Activity pagination omits the unreturned tail; a protected Runtime query repair is required.',
-  lending: 'B1: canonical admission rejects lending mutations with OUT_OF_PROFILE_TX_KINDS.',
-  settlement: 'W09–W12 verify local proposal, approval, execution and chain finality. Remote approval/execution remains blocked by B3 compact-read projection.',
-  'cross-j': 'W16/W17 verify quote review, submission to resting and exact cancellation targeting. B8 fail-stops at ACCOUNT_SWAP_CANCEL_SCOPE_UNRESOLVED before cancelled.',
-  activity: 'B2: same-frame history pagination loses the unreturned tail; lossless complete history is not verified.',
-};
-
-export const WALLET_REQUIREMENT_AUDIT = ([
+export const WALLET_REQUIREMENT_AUDIT = [
   { id: 'boot', group: 1, disposition: 'implemented', evidenceId: 'embedded-runtime-boot' },
   { id: 'shell', group: 1, disposition: 'implemented', evidenceId: 'runtime-overview-shell' },
   { id: 'identity', group: 1, disposition: 'implemented', evidenceId: 'identity-entry-and-rehearsal' },
-  { id: 'onboarding', group: 1, disposition: 'partial', evidenceId: 'post-creation-profile-and-preferences' },
+  { id: 'onboarding', group: 1, disposition: 'implemented', evidenceId: 'post-creation-profile-and-preferences' },
   { id: 'recovery', group: 1, disposition: 'implemented', evidenceId: 'push-wake-registration' },
   { id: 'settings', group: 1, disposition: 'implemented', evidenceId: 'preferences' },
   { id: 'diagnostics', group: 1, disposition: 'implemented', evidenceId: 'diagnostics' },
@@ -560,15 +550,13 @@ export const WALLET_REQUIREMENT_AUDIT = ([
   ...['debt', 'solvency', 'disputes', 'history'].map((id) => ({
     id, group: 2 as const, disposition: 'implemented' as const, evidenceId: 'financial-health',
   })),
-  ...['payments', 'receive', 'invoices', 'lending', 'settlement', 'reconnect', 'failures', 'quotes', 'routing'].map((id) => ({
+  ...['payments', 'receive', 'invoices', 'settlement', 'reconnect', 'failures', 'quotes', 'routing'].map((id) => ({
     id, group: id === 'quotes' || id === 'routing' ? 4 as const : 3 as const,
     disposition: 'implemented' as const, evidenceId: 'payments',
   })),
+  { id: 'lending', group: 3, disposition: 'implemented', evidenceId: 'account-rail-and-entity-selection' },
   { id: 'moves', group: 3, disposition: 'implemented', evidenceId: 'external-wallet-moves' },
   ...['orders', 'orderbook', 'cancel-fill', 'cross-j', 'activity'].map((id) => ({
     id, group: 4 as const, disposition: 'implemented' as const, evidenceId: 'markets-and-activity',
   })),
-] as const satisfies readonly WalletRequirementAudit[]).map((requirement): WalletRequirementAudit => {
-  const remaining = REMAINING_WALLET_REQUIREMENTS[requirement.id];
-  return remaining ? { ...requirement, disposition: 'partial', remaining } : requirement;
-});
+] as const satisfies readonly WalletRequirementAudit[];

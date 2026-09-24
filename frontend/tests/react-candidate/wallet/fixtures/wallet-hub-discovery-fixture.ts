@@ -23,6 +23,12 @@ const fixtureSignerIndex = (slot: string): string => {
     'mobile-390x844-debt',
     'laptop-1366x900-debt',
     'wide-1920x1080-debt',
+    'mobile-390x844-ops-settlement',
+    'laptop-1366x900-ops-settlement',
+    'wide-1920x1080-ops-settlement',
+    'mobile-390x844-remote-settlement',
+    'laptop-1366x900-remote-settlement',
+    'wide-1920x1080-remote-settlement',
   ];
   const index = slots.indexOf(slot);
   if (index < 0) throw new Error(`HUB_DISCOVERY_FIXTURE_SLOT_INVALID:${slot}`);
@@ -100,7 +106,12 @@ export async function createWalletDisputeFixture(
   await waitForWalletFixtureState(`Dispute account ${slot}`, () => {
     const source = [...env.state.eReplicas.values()].find(candidate => candidate.state.entityId === sourceEntityId);
     const target = [...env.state.eReplicas.values()].find(candidate => candidate.state.entityId === hub.entityId);
-    return Boolean(source?.state.accounts.get(hub.entityId)) && Boolean(target?.state.accounts.get(sourceEntityId));
+    const sourceAccount = source?.state.accounts.get(hub.entityId);
+    const targetAccount = target?.state.accounts.get(sourceEntityId);
+    return Boolean(
+      sourceAccount && !sourceAccount.pendingFrame && sourceAccount.mempool.length === 0
+      && targetAccount && !targetAccount.pendingFrame && targetAccount.mempool.length === 0,
+    );
   });
   return { ...hub, height: env.state.height };
 }

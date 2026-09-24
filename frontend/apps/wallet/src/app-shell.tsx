@@ -3,7 +3,10 @@ import { lazy, Suspense, useEffect, useState, useSyncExternalStore, type MouseEv
 import { useWorkspaceTranslation } from '../../../bridges/workspace-localization-react';
 
 import { readRuntimeAdapterStorageSnapshot } from '../../../packages/browser/src/runtime/session/runtime-adapter-session';
-import { displayPreferencesSource } from '../../../packages/browser/src/display-preferences-source';
+import { resetBrowserRuntimeData } from '../../../packages/browser/src/runtime/session/browser-runtime-reset';
+import { publishBrowserHardResetRequest } from '../../../packages/browser/src/hard-reset-request';
+import { parseStorageSchemaMismatch } from '../../../packages/runtime-client/src/recovery/storage-schema-recovery';
+import { displayPreferencesSource } from '../../../packages/browser/src/preferences/display-preferences-source';
 import type { WalletAuthScheme } from '../../../packages/browser/src/runtime/wallet-runtime-preferences';
 import {
   resolveWalletRuntimeSummary,
@@ -26,6 +29,7 @@ import { walletPaymentTabHref } from './navigation/wallet-navigation-model';
 import { readWalletPreferences } from './settings/wallet-settings-model';
 import {
   getWalletEmbeddedRuntimeSnapshot,
+  recoverWalletStorageSchema,
   startWalletEmbeddedRuntime,
   subscribeWalletEmbeddedRuntime,
 } from './runtime/wallet-embedded-runtime';
@@ -107,6 +111,21 @@ function WalletOverview({
 
 function WalletRuntimeBoundary({ runtime }: Readonly<{ runtime: WalletRuntimeSummary }>) {
   const standby = runtime.state === 'local-standby';
+  const schemaMismatch = parseStorageSchemaMismatch(runtime.message);
+  const [busy, setBusy] = useState(false);
+  const [recoveryError, setRecoveryError] = useState('');
+  const recover = async (): Promise<void> => {
+    setBusy(true); setRecoveryError('');
+    try { await recoverWalletStorageSchema(); }
+    catch (error: unknown) { setRecoveryError(error instanceof Error ? error.message : String(error)); setBusy(false); }
+  };
+  const reset = async (): Promise<void> => {
+    if (!window.confirm('Delete local xln data after recovery failed?')) return;
+    setBusy(true); setRecoveryError('');
+    try {
+      await resetBrowserRuntimeData({ confirmed: true, reason: 'storage-schema-recovery' }, { beforeClear: publishBrowserHardResetRequest });
+    } catch (error: unknown) { setRecoveryError(error instanceof Error ? error.message : String(error)); setBusy(false); }
+  };
   return (
     <section className="wallet-shell-alert" aria-labelledby="wallet-local-runtime-title" role="alert">
       <p>{standby ? 'Inactive tab' : 'Runtime error'}</p>
@@ -114,6 +133,12 @@ function WalletRuntimeBoundary({ runtime }: Readonly<{ runtime: WalletRuntimeSum
         {standby ? 'Another tab owns the local Runtime.' : 'Local Runtime boot failed.'}
       </h1>
       <span>{runtime.message}</span>
+      {schemaMismatch ? <div className="wallet-shell-actions">
+        <p>Stored data uses schema {schemaMismatch.storedVersion}; this build requires {schemaMismatch.currentVersion}. Restore an authenticated backup before deleting local data.</p>
+        <button data-testid="storage-schema-recover" disabled={busy} onClick={() => { void recover(); }} type="button">Recover from configured backup</button>
+        <button data-testid="storage-schema-reset" disabled={busy} onClick={() => { void reset(); }} type="button">Delete local data</button>
+      </div> : null}
+      {recoveryError ? <span role="alert">{recoveryError}</span> : null}
     </section>
   );
 }

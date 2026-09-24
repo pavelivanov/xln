@@ -1,7 +1,7 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
   import { iconForSymbol, normalizeAmount, stripTrailingSymbol, formatUsdHint, formatHoldHint } from '../../../../../packages/ui/src/rcpan/delta-token-format';
-  import { settings } from '../../../../../packages/browser/src/settings-store';
+  import { settings } from '../../../../../packages/browser/src/preferences/settings-store';
   import DeltaCapacityBar from './DeltaCapacityBar.svelte';
   import DeltaTokenSummaryApple from './DeltaTokenSummaryApple.svelte';
   import type { DeltaParts, DeltaVisualScale } from '../../../../../packages/ui/src/rcpan/delta-types';

@@ -1,4 +1,4 @@
-import type { EntityWorkspaceActivityEvent } from '../../../../runtime-client/src/entity/entity-workspace-activity';
+import type { EntityWorkspaceActivityEvent } from '../../../../runtime-client/src/entity/workspace/entity-workspace-activity';
 
 export type EntityWorkspaceActivityTone =
   | 'chain'

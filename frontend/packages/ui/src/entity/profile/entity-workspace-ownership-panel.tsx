@@ -1,4 +1,4 @@
-import type { EntityWorkspaceOwnership } from '../../../../runtime-client/src/entity/entity-workspace-ownership';
+import type { EntityWorkspaceOwnership } from '../../../../runtime-client/src/entity/workspace/entity-workspace-ownership';
 import { formatAddress } from '../settings/entity-workspace-display';
 
 export function EntityWorkspaceOwnershipPanel({ ownership }: Readonly<{ ownership: EntityWorkspaceOwnership }>) {

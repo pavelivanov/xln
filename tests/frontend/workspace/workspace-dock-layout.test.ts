@@ -3,6 +3,7 @@ import type { SerializedDockview } from 'dockview';
 
 import {
   WORKSPACE_LAYOUT_VERSION,
+  openWorkspaceDockSession,
   parseWorkspaceLayoutEnvelope,
   serializeWorkspaceDockLayout,
 } from '../../../frontend/packages/runtime-client/src/workspace-dock-layout';
@@ -49,11 +50,44 @@ describe('workspace Dockview layout contract', () => {
       .toThrow('WORKSPACE_LAYOUT_TIMESTAMP_INVALID');
   });
 
-  test('shares the Dockview layout contract with the public React workspace', async () => {
-    const [reactSource, svelteSource] = await Promise.all([
-      Bun.file('frontend/packages/ui/src/workspace/workspace-dock.tsx').text(),
-      Bun.file('frontend/src/lib/view/DockRoot.svelte').text(),
-    ]);
+  test('persists maximized-group changes through the same debounced layout session', () => {
+    let maximizedGroupListener = (): void => {};
+    let scheduledSave = (): void => {};
+    const disposed: string[] = [];
+    const saved: string[] = [];
+    const session = openWorkspaceDockSession({
+      api: {
+        addPanel: () => {},
+        fromJSON: () => {},
+        getPanel: () => undefined,
+        onDidLayoutChange: () => ({ dispose: () => { disposed.push('layout'); } }),
+        onDidMaximizedGroupChange: (listener) => {
+          maximizedGroupListener = listener;
+          return { dispose: () => { disposed.push('maximized'); } };
+        },
+        toJSON: () => LAYOUT,
+      },
+      panels: [],
+      storage: {
+        getItem: () => null,
+        removeItem: () => {},
+        setItem: (_key, value) => { saved.push(value); },
+      },
+      onDiagnostic: () => {},
+      now: () => '2026-09-01T00:00:00.000Z',
+      schedule: (callback) => { scheduledSave = callback; return 1; },
+      cancel: () => {},
+    });
+
+    maximizedGroupListener();
+    scheduledSave();
+    expect(saved).toEqual([serializeWorkspaceDockLayout(LAYOUT, '2026-09-01T00:00:00.000Z')]);
+    session.dispose();
+    expect(disposed).toEqual(['layout', 'maximized']);
+  });
+
+  test('uses the Dockview layout contract in the public React workspace', async () => {
+    const reactSource = await Bun.file('frontend/packages/ui/src/workspace/workspace-dock.tsx').text();
 
     expect(reactSource).toContain('DockviewReact');
     expect(reactSource).toContain("import 'dockview/dist/styles/dockview.css'");
@@ -61,9 +95,6 @@ describe('workspace Dockview layout contract', () => {
     expect(reactSource).toContain('sessionRef.current?.dispose()');
     expect(reactSource).not.toContain('CandidateShell');
     expect(reactSource).not.toContain('placeholder');
-    expect(svelteSource).toContain('parseWorkspaceLayoutEnvelope(savedLayout).dockview');
-    expect(svelteSource).toContain('serializeWorkspaceDockLayout(dockview.toJSON()');
-    expect(svelteSource).toContain('layoutChangeDisposable.dispose()');
     expect(resolveOpsPage('/embed')).toEqual({ kind: 'workspace', pathname: '/embed' });
   });
 });

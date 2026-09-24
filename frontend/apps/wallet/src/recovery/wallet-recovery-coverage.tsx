@@ -27,6 +27,11 @@ export function WalletRecoveryCoverage({ view }: Readonly<{ view: WalletRecovery
           ))}
         </ul>
       ) : null}
+      {view.discoveryFailures.length > 0 ? (
+        <ul data-testid="runtime-recovery-check-failures" aria-label="Recovery discovery failures">
+          {view.discoveryFailures.map((failure) => <li key={failure}>{failure}</li>)}
+        </ul>
+      ) : null}
     </section>
   );
 }

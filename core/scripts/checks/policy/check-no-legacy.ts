@@ -65,6 +65,7 @@ const SKIP_PATH_FRAGMENTS = [
   '/dist/',
   '/build/',
   '/target/',
+  '/package-lock.json',
   '/forge-out/',
   '/build-tron/',
   '/jurisdictions/lib/',

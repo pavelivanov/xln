@@ -1,5 +1,5 @@
 import type * as THREE from 'three';
-import { applyGraphCameraPose, fitGraphCameraToEntities, type GraphCameraControls } from '../../../../../packages/ui/src/graph/graph3d-camera';
+import { applyGraphCameraPose, fitGraphCameraToEntities, type GraphCameraControls } from '../../../../../packages/ui/src/graph/three/core/graph3d-camera';
 import type { NetworkMachineCue } from '../../../../../packages/runtime-client/src/scenario/network-machine';
 import type { MergedRuntimeGraph } from '../../../../../packages/ui/src/graph/runtime-graph-projection';
 

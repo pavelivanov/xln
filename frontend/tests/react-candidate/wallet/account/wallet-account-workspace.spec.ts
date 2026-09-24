@@ -1,7 +1,8 @@
 import { expect, test, type Page } from '@playwright/test';
 import { expectNoBrowserErrors, expectPageContained, observeBrowserErrors, screenshotEvidence } from '../../browser-evidence';
 import {
-  createWalletDisputeFixture, readWalletAccountToolState as toolState, selectWalletFixtureRuntime } from '../fixtures/wallet-runtime-test-helpers';
+  createWalletDisputeFixture, readWalletAccountToolState as toolState, seedWalletOverfullActivity,
+  selectWalletFixtureRuntime, walletPortfolioAccount } from '../fixtures/wallet-runtime-test-helpers';
 import { finishOpenedWalletSetup, restoreLocalWallet } from '../onboarding/wallet-onboarding-test-helpers';
 
 test.use({ actionTimeout: 20000 });
@@ -17,7 +18,7 @@ test('Manage preserves focused Account and token context and commits credit and 
   const errors = observeBrowserErrors(page), fixture = await selectWalletFixtureRuntime(page);
   await page.goto('/app?portfolio=1');
   await page.getByLabel('Entity', { exact: true }).selectOption(fixture.entityId);
-  await page.locator('.wallet-portfolio-account').first().getByRole('button', { name: 'View Account' }).click();
+  await walletPortfolioAccount(page, fixture.counterpartyEntityId).getByRole('button', { name: 'View Account' }).click();
   await page.getByRole('button', { name: 'Manage', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Manage Account' })).toBeVisible();
   await expect(page.getByLabel('Account', { exact: true })).toHaveValue(fixture.counterpartyEntityId);
@@ -54,18 +55,18 @@ test('Manage preserves focused Account and token context and commits credit and 
   expectNoBrowserErrors(errors);
 });
 
-test('Lending renders real API state and preserves its own selection across Account tools', { tag: '@functional' }, async ({ page }, testInfo) => {
+test('Lending reports the production admission boundary without submission controls', { tag: '@functional' }, async ({ page }, testInfo) => {
   const errors = observeBrowserErrors(page), fixture = await selectWalletFixtureRuntime(page);
   await page.goto('/app#accounts/configure');
   await page.getByLabel('Entity', { exact: true }).selectOption(fixture.entityId);
   await openTool(page, 'lending');
-    await expect(page.getByLabel('Hub Account', { exact: true })).toHaveValue(fixture.counterpartyEntityId);
-  await page.getByLabel('Asset', { exact: true }).selectOption('2');
-  await expect(page.getByTestId('wallet-lending').getByText('Available', { exact: false })).toBeVisible();
-  await expectPageContained(page); await screenshotEvidence(page, testInfo, 'lending-state-and-forms');
+  const lending = page.getByTestId('wallet-lending');
+  await expect(lending.getByRole('heading', { name: 'Production lending is not enabled' })).toBeVisible();
+  await expect(lending.getByRole('status')).toContainText('outside the current production admission profile');
+  await expect(lending.locator('button, form, input, select')).toHaveCount(0);
+  await expectPageContained(page); await screenshotEvidence(page, testInfo, 'lending-unsupported-policy');
   await openTool(page, 'configure'); await openTool(page, 'lending');
-  await expect(page.getByLabel('Asset', { exact: true })).toHaveValue('2');
-  await expect(page.getByLabel('Hub Account', { exact: true })).toHaveValue(fixture.counterpartyEntityId);
+  await expect(page.getByTestId('wallet-lending-unsupported')).toBeVisible();
   expectNoBrowserErrors(errors);
 });
 
@@ -84,8 +85,12 @@ test('Account tools discard stale Entity reads during rapid selection reversal',
     await expect(entity).toHaveValue(fixture.entityId);
     await expect(page.getByText('Loading selected Entity…')).toHaveCount(0);
     await expect(page.getByText('Reading Account context…')).toHaveCount(0);
-    if (tab === 'configure') await expect(page.getByLabel('Account', { exact: true })).toHaveValue(fixture.counterpartyEntityId);
-    if (tab === 'lending') await expect(page.getByLabel('Hub Account', { exact: true })).toHaveValue(fixture.counterpartyEntityId);
+    if (tab === 'configure') {
+      const account = page.getByLabel('Account', { exact: true });
+      await account.selectOption(fixture.counterpartyEntityId);
+      await expect(account).toHaveValue(fixture.counterpartyEntityId);
+    }
+    if (tab === 'lending') await expect(page.getByTestId('wallet-lending-unsupported')).toBeVisible();
     await expect(page.getByRole('alert')).toHaveCount(0);
   }
   await expectPageContained(page); await screenshotEvidence(page, testInfo, 'account-tools-entity-reversal');
@@ -140,7 +145,7 @@ test('Manage runs and stops the retained local load controls and prepares a real
   await hub.getByTestId('hub-connect-button').click();
   await expect(hub).toHaveAttribute('data-connection-state', 'open', { timeout: 30000 });
   await page.getByRole('button', { name: '← Back to assets' }).click();
-  await page.locator('.wallet-portfolio-account').getByRole('button', { name: 'View Account' }).click();
+  await walletPortfolioAccount(page, fixture.recovery.hubDiscovery.hubEntityId).getByRole('button', { name: 'View Account' }).click();
   await page.getByRole('button', { name: 'Manage', exact: true }).click();
   await page.getByTestId('configure-tab-load-testing').click();
   await page.getByTestId('load-test-start').click();
@@ -254,6 +259,10 @@ test('Move selects routes with pointer and keyboard, queues a real draft and can
   await page.mouse.move(start.x + start.width / 2, start.y + start.height / 2); await page.mouse.down();
   await page.mouse.move(end.x + end.width / 2, end.y + end.height / 2, { steps: 8 }); await page.mouse.up();
   await expect(from).toHaveAttribute('aria-pressed', 'true'); await expect(to).toHaveAttribute('aria-pressed', 'true');
+  const counterparty = page.getByLabel('To Account', { exact: true });
+  await counterparty.fill(fixture.counterpartyEntityId);
+  await counterparty.press('Escape');
+  await expect(counterparty).toHaveValue(fixture.counterpartyEntityId);
   await page.getByLabel('Amount', { exact: true }).fill('1');
   await expect(page.getByRole('button', { name: 'Add to Batch', exact: true })).toBeEnabled();
   await page.getByRole('button', { name: 'Add to Batch', exact: true }).click();
@@ -270,7 +279,7 @@ test('Move selects routes with pointer and keyboard, queues a real draft and can
       .getByRole('button', { name: 'Clear exact batch' })
       .click();
   await expect(batch.getByText('No queued operations.')).toBeVisible();
-  const manual = `0x${'77'.repeat(32)}`, counterparty = page.getByLabel('To Account', { exact: true });
+  const manual = `0x${'77'.repeat(32)}`;
   page.once('dialog', dialog => dialog.dismiss()); await counterparty.fill(manual);
   await expect(counterparty).toHaveValue(fixture.counterpartyEntityId);
   page.once('dialog', dialog => dialog.accept()); await counterparty.fill(manual);
@@ -288,9 +297,24 @@ test('Move selects routes with pointer and keyboard, queues a real draft and can
 test('History reads real events through filters and modes with Entity context', { tag: '@functional' }, async ({ page }, testInfo) => {
   test.setTimeout(120000);
   const errors = observeBrowserErrors(page), fixture = await selectWalletFixtureRuntime(page);
+  const overfull = await seedWalletOverfullActivity(page, `wallet-${testInfo.project.name}`);
   await page.goto('/app#accounts/history');
   await page.getByLabel('Entity', { exact: true }).selectOption(fixture.entityId);
   await expect(page.getByTestId('entity-history-event').first()).toBeVisible();
+  await page.getByTestId('history-page-size').selectOption('40');
+  const eventRows = page.getByTestId('entity-history-event');
+  const readEventIds = () => eventRows.evaluateAll(rows =>
+    rows.map(row => row.getAttribute('data-event-id')).filter((id): id is string => Boolean(id)));
+  await expect.poll(async () => (await readEventIds()).filter(id => overfull.ids.includes(id)).length).toBe(40);
+  const firstPageIds = (await readEventIds()).filter(id => overfull.ids.includes(id));
+  await page.getByTestId('history-older-page').click();
+  await expect(page.locator('.wallet-tool-heading').last()).toContainText('Page 2');
+  await expect.poll(async () => (await readEventIds()).filter(id => overfull.ids.includes(id)))
+    .toEqual(overfull.ids.slice(40));
+  const secondPageIds = (await readEventIds()).filter(id => overfull.ids.includes(id));
+  expect([...firstPageIds, ...secondPageIds]).toEqual(overfull.ids);
+  expect(new Set([...firstPageIds, ...secondPageIds]).size).toBe(overfull.ids.length);
+  await page.getByTestId('history-newer-page').click();
   await page.getByTestId('history-type-account').click();
   await expect(page.getByTestId('entity-history-event').first()).toBeVisible();
   await expectPageContained(page); await screenshotEvidence(page, testInfo, 'history-account-filter');
@@ -323,37 +347,27 @@ test('History reads real events through filters and modes with Entity context', 
   await openTool(page, 'history');
   await expect(page.getByLabel('Entity', { exact: true })).toHaveValue(fixture.counterpartyEntityId);
   await expect(page.getByTestId('entity-history-event').first()).toBeVisible();
+  expect((await readEventIds()).filter(id => overfull.ids.includes(id))).toEqual([]);
   expectNoBrowserErrors(errors);
 });
 
-test('Lending commits a pool, loan and full repayment using the selected Hub and asset', { tag: '@functional' }, async ({ page }, testInfo) => {
-  test.setTimeout(120000);
+test('Lending cannot submit from either the Account workspace or payment operations', { tag: '@functional' }, async ({ page }, testInfo) => {
   const errors = observeBrowserErrors(page), fixture = await selectWalletFixtureRuntime(page);
+  const lendingRequests: string[] = [];
+  page.on('request', request => {
+    if (request.url().includes('/api/lending/') || /lending(?:Offer|Borrow|Repay)/.test(request.postData() || '')) {
+      lendingRequests.push(`${request.method()} ${request.url()}`);
+    }
+  });
   await page.goto('/app#accounts/lending');
   await page.getByLabel('Entity', { exact: true }).selectOption(fixture.entityId);
-  await expect(page.getByLabel('Hub Account', { exact: true })).toHaveValue(fixture.counterpartyEntityId);
-  await page.getByLabel('Asset', { exact: true }).selectOption('1');
   const lending = page.getByTestId('wallet-lending');
-  await expect(lending.getByText('No pool positions for this selection.')).toBeVisible();
-  await page.getByLabel('Lend amount', { exact: true }).fill('10');
-  await page.getByRole('form', { name: 'Lend', exact: true }).getByRole('button', { name: 'Lend', exact: true }).click();
-  try { await expect(lending.getByText('10.0 USDC available', { exact: false })).toBeVisible({ timeout: 20000 }); }
-  catch (cause) {
-    const port = Number(process.env['XLN_REACT_WALLET_FIXTURE_PORT'] || 19092);
-    const state = await page.request.get(`http://127.0.0.1:${port}/account-tool-state?dump=1`);
-    await testInfo.attach('lending-runtime-state', { contentType: 'application/json', body: await state.body() });
-    throw cause;
-  }
-  await page.getByLabel('Borrow amount', { exact: true }).fill('1');
-  await page.getByRole('form', { name: 'Borrow', exact: true }).getByRole('button', { name: 'Borrow', exact: true }).click();
-  const loan = page.getByTestId('lending-loan-row').filter({ hasText: 'active' });
-  await expect(loan.getByRole('button', { name: 'Repay remaining', exact: false })).toBeVisible({ timeout: 20000 });
-  await expectPageContained(page); await screenshotEvidence(page, testInfo, 'lending-active-loan');
-  await loan.getByRole('button', { name: 'Repay remaining', exact: false }).click();
-  await expect(page.getByTestId('lending-loan-row').filter({ hasText: 'repaid ·' })).toBeVisible({ timeout: 20000 });
-  await screenshotEvidence(page, testInfo, 'lending-repaid-loan');
-  await openTool(page, 'move'); await openTool(page, 'lending');
-  await expect(page.getByLabel('Hub Account', { exact: true })).toHaveValue(fixture.counterpartyEntityId);
-  await expect(page.getByLabel('Asset', { exact: true })).toHaveValue('1');
+  await expect(lending.locator('button, form, input, select')).toHaveCount(0);
+  await page.getByRole('link', { name: 'Payments', exact: true }).click();
+  await expect(page.getByRole('radio', { name: /Lend to hub/ })).toHaveCount(0);
+  await expect(page.getByRole('radio', { name: /Borrow from hub/ })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: /Submit (?:lending offer|borrow request)/ })).toHaveCount(0);
+  expect(lendingRequests).toEqual([]);
+  await screenshotEvidence(page, testInfo, 'lending-no-payment-operations');
   expectNoBrowserErrors(errors);
 });

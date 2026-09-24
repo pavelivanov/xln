@@ -92,6 +92,18 @@ export const createWalletDisputeFixture = async (page: Page, slot: string) => {
   return { entityId, name, height };
 };
 
+export const drainWalletJWatcher = async (page: Page): Promise<number> => {
+  const response = await page.request.post(walletFixtureUrl('/drain-j-watcher'));
+  expect(response.ok()).toBe(true);
+  const value: unknown = await response.json();
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    throw new Error('WALLET_J_WATCHER_DRAIN_INVALID');
+  }
+  const height = Number((value as Record<string, unknown>)['height']);
+  if (!Number.isSafeInteger(height) || height < 1) throw new Error('WALLET_J_WATCHER_DRAIN_INVALID');
+  return height;
+};
+
 export const fundWalletDebtReserve = async (page: Page, entityId: string, amount: bigint) => {
   const response = await page.request.post(
     walletFixtureUrl(`/debt-reserve-fixture?entityId=${encodeURIComponent(entityId)}&amount=${amount}`),
@@ -107,6 +119,65 @@ export const seedWalletDebtPayment = async (page: Page, entityId: string, counte
     ),
   );
   expect(response.ok()).toBe(true);
+};
+
+export const seedWalletBatchPreflightDebt = async (
+  page: Page,
+  entityId: string,
+  counterpartyId: string,
+  amount: bigint,
+) => {
+  const response = await page.request.post(
+    walletFixtureUrl(
+      `/batch-preflight-debt-fixture?entityId=${encodeURIComponent(entityId)}&counterpartyId=${encodeURIComponent(counterpartyId)}&amount=${amount}`,
+    ),
+  );
+  expect(response.ok()).toBe(true);
+};
+
+export const seedWalletOverfullActivity = async (page: Page, slot: string) => {
+  const response = await page.request.post(walletFixtureUrl(
+    `/activity-overfull-fixture?slot=${encodeURIComponent(slot)}`,
+  ));
+  expect(response.ok()).toBe(true);
+  const value = await response.json() as { ids?: unknown; height?: unknown };
+  if (!Array.isArray(value.ids) || value.ids.some(id => typeof id !== 'string')) {
+    throw new Error('WALLET_ACTIVITY_OVERFULL_FIXTURE_INVALID');
+  }
+  const height = Number(value.height);
+  if (!Number.isSafeInteger(height) || height < 1 || value.ids.length !== 45) {
+    throw new Error('WALLET_ACTIVITY_OVERFULL_FIXTURE_INVALID');
+  }
+  return { height, ids: value.ids as string[] };
+};
+
+export const seedWalletRemoteSettlement = async (
+  page: Page,
+  slot: string,
+  phase: 'propose' | 'update',
+) => {
+  const response = await page.request.post(walletFixtureUrl(
+    `/remote-settlement-fixture?slot=${encodeURIComponent(slot)}&phase=${phase}`,
+  ));
+  expect(response.ok()).toBe(true);
+  const value = await response.json() as Record<string, unknown>;
+  const result = {
+    height: Number(value['height']),
+    entityId: String(value['entityId'] || '').toLowerCase(),
+    counterpartyEntityId: String(value['counterpartyEntityId'] || '').toLowerCase(),
+    workspaceHash: String(value['workspaceHash'] || '').toLowerCase(),
+    revision: Number(value['revision']),
+    executorEntityId: String(value['executorEntityId'] || '').toLowerCase(),
+  };
+  if (!Number.isSafeInteger(result.height) || result.height < 1
+    || !/^0x[0-9a-f]{64}$/u.test(result.entityId)
+    || !/^0x[0-9a-f]{64}$/u.test(result.counterpartyEntityId)
+    || !/^0x[0-9a-f]{64}$/u.test(result.workspaceHash)
+    || !Number.isSafeInteger(result.revision) || result.revision < 1
+    || result.executorEntityId !== result.counterpartyEntityId) {
+    throw new Error('WALLET_REMOTE_SETTLEMENT_FIXTURE_INVALID');
+  }
+  return result;
 };
 
 export const readWalletDebtLedgerState = async (page: Page, entityId: string) => {
@@ -365,3 +436,8 @@ export const selectWalletFixtureRuntime = async (page: Page): Promise<WalletRunt
   await installImportedRuntime(page, fixture);
   return fixture;
 };
+
+export const walletPortfolioAccount = (page: Page, counterpartyId: string) =>
+  page.locator('.wallet-portfolio-account').filter({
+    has: page.locator(`code[title="${counterpartyId}"]`),
+  });

@@ -3,17 +3,13 @@ import type { RuntimePaymentEntityTx } from '../../../../../packages/runtime-cli
 import type { WalletPaymentMath, WalletPaymentProjection } from '../wallet-payment-model';
 import { normalizeEntityIdForRuntimeView } from '../../../../../packages/runtime-client/src/runtime/view/runtime-view-model';
 
-export type WalletOperationKind = 'r2r' | 'r2c' | 'c2r' | 'lend' | 'borrow';
-export type WalletLendingTerm = '1h' | '1d' | '1m';
+export type WalletOperationKind = 'r2r' | 'r2c' | 'c2r';
 
 export type WalletOperationDraft = Readonly<{
   kind: WalletOperationKind;
   targetEntityId: string;
   tokenId: number;
   amount: string;
-  termId: WalletLendingTerm;
-  interestBps: number;
-  intentId: string;
 }>;
 
 type WalletSettlementTx = Extract<RuntimePaymentEntityTx, { type: 'settle_propose' }>;
@@ -65,21 +61,6 @@ const requireAccount = (
   return account;
 };
 
-const requireRate = (value: number): number => {
-  if (!Number.isSafeInteger(value) || value < 0 || value > 10_000) {
-    throw new Error('WALLET_OPERATION_INTEREST_BPS_INVALID');
-  }
-  return value;
-};
-
-const requireIntentId = (value: string): string => {
-  const intentId = value.trim().toLowerCase();
-  if (!/^(?:lend|borrow)-[a-z0-9-]{8,72}$/.test(intentId)) {
-    throw new Error('WALLET_OPERATION_INTENT_ID_INVALID');
-  }
-  return intentId;
-};
-
 export const buildWalletOperationTx = (
   draft: WalletOperationDraft,
   projection: WalletPaymentProjection,
@@ -114,32 +95,7 @@ export const buildWalletOperationTx = (
       },
     };
   }
-  const rate = requireRate(draft.interestBps);
-  const intentId = requireIntentId(draft.intentId);
-  if (draft.kind === 'lend') {
-    return {
-      type: 'lendingOffer',
-      data: {
-        positionId: intentId,
-        hubEntityId: targetEntityId,
-        tokenId: draft.tokenId,
-        amount,
-        termId: draft.termId,
-        interestBps: rate,
-      },
-    };
-  }
-  return {
-    type: 'lendingBorrow',
-    data: {
-      requestId: intentId,
-      hubEntityId: targetEntityId,
-      tokenId: draft.tokenId,
-      amount,
-      termId: draft.termId,
-      maxInterestBps: rate,
-    },
-  };
+  throw new Error('WALLET_OPERATION_KIND_UNSUPPORTED');
 };
 
 export const buildWalletSettlementReview = (

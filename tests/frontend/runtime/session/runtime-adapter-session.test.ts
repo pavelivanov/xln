@@ -157,23 +157,23 @@ describe('browser Runtime adapter session', () => {
       .toBe(false);
   });
 
-  test('keeps canonical Svelte paths on one browser-session writer', () => {
-    const connection = readFileSync('frontend/src/lib/utils/runtime/runtimeConnection.ts', 'utf8');
-    const importFlow = readFileSync('frontend/bridges/runtime/remote-runtime-import-flow.ts', 'utf8');
+  test('keeps canonical React paths on one browser-session writer', () => {
+    const selection = readFileSync('frontend/apps/ops/src/workspace/runtime/ops-runtime-selection.ts', 'utf8');
+    const importFlow = readFileSync('frontend/bridges/runtime/remote/remote-runtime-import-flow.ts', 'utf8');
     const runtimeStore = readFileSync('frontend/bridges/runtime/runtime-store.ts', 'utf8');
     const xlnStore = readFileSync('frontend/bridges/runtime/xln-store.ts', 'utf8');
-    const appLayout = readFileSync('frontend/src/routes/app/+layout.svelte', 'utf8');
+    const appShell = readFileSync('frontend/apps/wallet/src/app-shell.tsx', 'utf8');
 
-    for (const source of [connection, importFlow, runtimeStore]) {
+    for (const source of [selection, importFlow, runtimeStore]) {
       expect(source).toContain('writeRemoteRuntimeAdapterSession');
       expect(source).not.toContain("localStorage.setItem('xln-runtime-adapter-mode', 'remote')");
     }
     expect(runtimeStore).toContain('writeEmbeddedRuntimeAdapterSession');
     expect(runtimeStore).toContain('readBrowserRuntimeAdapterStorageSnapshot');
     expect(runtimeStore).toContain('restoreBrowserRuntimeAdapterStorageSnapshot');
-    expect(appLayout).toContain('writeEmbeddedRuntimeAdapterSession');
-    expect(appLayout).toContain('isRemoteRuntimeAdapterPreferred');
-    expect(appLayout).not.toContain("localStorage.setItem('xln-runtime-adapter-mode', 'embedded')");
+    expect(selection).toContain('writeEmbeddedRuntimeAdapterSession(stores)');
+    expect(appShell).toContain('readRuntimeAdapterStorageSnapshot');
+    expect(appShell).not.toContain("localStorage.setItem('xln-runtime-adapter-mode', 'embedded')");
     expect(xlnStore).toContain('readRemoteRuntimeAdapterAuth');
     expect(xlnStore).toContain('writeRemoteRuntimeAdapterAuth');
     expect(xlnStore).not.toContain("sessionStorage.setItem('xln-runtime-adapter-key'");

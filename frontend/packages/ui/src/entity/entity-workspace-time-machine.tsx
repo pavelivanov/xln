@@ -1,6 +1,6 @@
 import { useEffect, useId, useState, type FormEvent } from 'react';
 
-import type { EntityWorkspaceTimeMachineState } from '../../../runtime-client/src/entity/entity-workspace-time-machine';
+import type { EntityWorkspaceTimeMachineState } from '../../../runtime-client/src/entity/workspace/entity-workspace-time-machine';
 import './entity-workspace-time-machine.css';
 
 const errorMessage = (error: unknown): string =>

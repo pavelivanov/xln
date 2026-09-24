@@ -1,4 +1,4 @@
-import type { EntityWorkspaceAccounts } from '../../../../runtime-client/src/entity/entity-workspace-accounts';
+import type { EntityWorkspaceAccounts } from '../../../../runtime-client/src/entity/workspace/entity-workspace-accounts';
 import { formatAddress, formatEntityWorkspaceTimestamp } from '../settings/entity-workspace-display';
 import './entity-workspace-accounts-panel.css';
 

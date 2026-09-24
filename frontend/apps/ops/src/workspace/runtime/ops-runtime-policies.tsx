@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import type { RuntimeAdapter } from '@xln/core/api/public/runtime-module';
-import { readBrowserRuntimeEnvironment } from '../../../../../bridges/runtime/browser-runtime-context';
+import { readBrowserRuntimeEnvironment } from '../../../../../bridges/runtime/browser/browser-runtime-context';
 import {
   buildStoragePolicy, readStoragePolicyFields, buildPerformancePolicy, readPerformancePolicyFields,
   type RuntimeStoragePolicy, type RuntimePerformancePolicy,
 } from '../../../../../packages/runtime-client/src/operator-policy-settings';
-import { assertNetworkMachineIsLive, networkMachineRuntime } from '../../../../../bridges/runtime/network-machine-runtime-store';
+import { assertNetworkMachineIsLive, networkMachineRuntime } from '../../../../../bridges/runtime/network/network-machine-runtime-store';
 import { opsEntityWorkspaceSource } from '../../entity-workspace/ops-entity-workspace-runtime';
 import { useWorkspaceEnvironment } from '../session/use-workspace-environment';
 

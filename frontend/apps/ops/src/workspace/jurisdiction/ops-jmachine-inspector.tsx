@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { safeStringify } from '@xln/core/protocol/serialization';
 import type { RuntimeAdapter } from '@xln/core/api/public/runtime-module';
-import { readBrowserRuntimeEnvironment } from '../../../../../bridges/runtime/browser-runtime-context';
+import { readBrowserRuntimeEnvironment } from '../../../../../bridges/runtime/browser/browser-runtime-context';
 import { useWorkspaceEnvironment } from '../session/use-workspace-environment';
 import { useWorkspaceTranslation } from '../../../../../bridges/workspace-localization-react';
 

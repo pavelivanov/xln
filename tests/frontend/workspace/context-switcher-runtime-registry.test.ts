@@ -1,127 +1,79 @@
 import { expect, test } from 'bun:test';
-import { existsSync, readFileSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 
-test('ContextSwitcher renders one compact runtime rail and one focused jurisdiction/entity pane', () => {
-  const source = readFileSync('frontend/src/lib/components/Entity/workspace/shell/ContextSwitcher.svelte', 'utf8');
+const manager = () => readFileSync(
+  'frontend/apps/ops/src/workspace/runtime/ops-runtime-manager.tsx',
+  'utf8',
+);
+const selection = () => readFileSync(
+  'frontend/apps/ops/src/workspace/runtime/ops-runtime-selection.ts',
+  'utf8',
+);
 
-  expect(source).toContain('focusedRuntimeId');
-  expect(source).toContain('data-testid="context-runtime-rail"');
-  expect(source).toContain('data-testid="context-runtime-focus"');
-  expect(source).toContain('Choose a runtime, then an entity');
-  expect(source).not.toContain('<div class="runtime-list">');
-  expect(existsSync('frontend/src/lib/components/Runtime/RuntimeDropdown.svelte')).toBe(false);
-  expect(existsSync('frontend/src/lib/components/Runtime/runtime-dropdown-view.ts')).toBe(false);
+test('React Ops renders one focused Runtime manager beside the Entity workspace', () => {
+  const source = manager();
+  const panels = readFileSync('frontend/apps/ops/src/workspace/session/ops-workspace-panels.ts', 'utf8');
+
+  expect(source).toContain('data-testid="remote-runtime-manager"');
+  expect(source).toContain('Selected: {adapter ?');
+  expect(source).toContain('<h3>Attached Runtimes</h3>');
+  expect(panels).toContain("{ id: 'entity-workspace', component: 'entity-panel'");
+  expect(panels).toContain("{ id: 'runtime-manager', component: 'runtime-manager'");
 });
 
-test('ContextSwitcher hydrates the shared remote runtime registry before showing rows', () => {
-  const source = readFileSync('frontend/src/lib/components/Entity/workspace/shell/ContextSwitcher.svelte', 'utf8');
+test('React Ops hydrates the shared remote Runtime registry before showing rows', () => {
+  const source = manager();
 
-  expect(source).toContain('onMount');
-  expect(source).toContain('runtimeOperations.hydrateRemoteRuntimeImports()');
-  expect(source).toContain("import { runtimeControllerHandle } from '../../../../../../bridges/runtime/runtime-controller-store'");
-  expect(source).toContain("from '../../../../../../bridges/runtime/runtime-view-store'");
-  expect(source).toContain('setRuntimeViewActiveEntityId');
-  expect(source).toContain('controllerRuntimeId = normalizeId($runtimeControllerHandle.runtimeId || $runtimeControllerHandle.id)');
-  expect(source.indexOf('normalizeId(group.runtimeId) === controllerRuntimeId'))
-    .toBeLessThan(source.indexOf('group.runtimeId === $activeStoreRuntimeId'));
-  expect(source).toContain('$runtimeEntries.values()');
-  expect(source).toContain('projectionSummariesForRuntime(');
-  expect(source).toContain('runtimeMenuGroups = buildRuntimeMenuGroups(runtimeGroups)');
-  expect(source).toContain('data-testid="context-runtime-group"');
-  expect(source).toContain('data-testid="context-runtime-label"');
-  expect(source).toContain('data-testid="context-runtime-source"');
-  expect(source).toContain("runtimeGroup.source === 'remote' ? 'Remote' : 'Browser'");
-  expect(source).toContain('`${normalizeId(entity.runtimeId)}:${normalizeId(entity.entityId)}`');
-  expect(source).toContain('data-testid="context-jurisdiction-group"');
-  expect(source).toContain('data-testid="context-jurisdiction-label"');
-  expect(source).toContain('data-testid="context-entity-row"');
-  expect(source).toContain('data-entity-label={normalizeId(entity.name)}');
-  expect(source).not.toContain('class="runtime-main"');
+  expect(source).toContain('useState(() => readStoredRemoteRuntimeImports())');
+  expect(source).toContain('imports.map(entry =>');
+  expect(source).toContain('<strong>{entry.label}</strong><code>{entry.runtimeId}</code>');
   expect(source).not.toContain('runtime.env');
   expect(source).not.toContain('eReplicas');
 });
 
-test('ContextSwitcher closes menu synchronously before remote runtime switch awaits', () => {
-  const source = readFileSync('frontend/src/lib/components/Entity/workspace/shell/ContextSwitcher.svelte', 'utf8');
-  const entityStart = source.indexOf('async function selectRuntimeEntity');
-  const addStart = source.indexOf('function handleAddRuntime', entityStart);
-  expect(entityStart).toBeGreaterThan(0);
-  expect(addStart).toBeGreaterThan(entityStart);
+test('React Ops rejects overlapping Runtime selection before an async switch', () => {
+  const source = selection();
+  const guard = source.indexOf("if (selecting) throw new Error('OPS_RUNTIME_SELECTION_IN_PROGRESS')");
+  const select = source.indexOf('await opsWorkspaceSession.select', guard);
 
-  const entitySource = source.slice(entityStart, addStart);
-  expect(entitySource.indexOf('open = false;')).toBeLessThan(entitySource.indexOf('await selectRemoteRuntime'));
+  expect(guard).toBeGreaterThan(0);
+  expect(select).toBeGreaterThan(guard);
+  expect(source).toContain('finally { selecting = false; }');
 });
 
-test('ContextSwitcher remote rows switch runtime and selected projected entity together', () => {
-  const source = readFileSync('frontend/src/lib/components/Entity/workspace/shell/ContextSwitcher.svelte', 'utf8');
-  const entityStart = source.indexOf('async function selectRuntimeEntity');
-  const addStart = source.indexOf('function handleAddRuntime', entityStart);
-  const entitySource = source.slice(entityStart, addStart);
+test('remote rows persist and select the exact validated Runtime entry', () => {
+  const source = `${manager()}\n${selection()}`;
 
-  expect(source).toContain('async function selectRemoteRuntime(runtimeId: string, entityId: string, requestId: number): Promise<boolean>');
-  expect(source).toContain('coordinateRuntimeSelection<T | null>');
-  expect(source).toContain('async function runLatestRuntimeSelection<T>');
-  expect(source).toContain('operation: (lease: RuntimeSelectionLease) => Promise<T>');
-  expect(source).toContain('if (requestId !== runtimeSelectionRequestId) return null;');
-  expect(source).toContain('runtimeOperations.selectRuntime(runtimeId, lease)');
-  expect(source).toContain('vaultOperations.selectRuntime(runtimeId, lease)');
-  expect(source).toContain('setRuntimeViewActiveEntityId(normalizedEntityId)');
-  expect(source).toContain('await refreshCurrentRuntimeProjection()');
-  expect(entitySource).toContain("if (group?.source === 'remote') {");
-  expect(entitySource).toContain("const selectedEntityId = entity.isPlaceholder ? '' : entity.entityId");
-  expect(entitySource).toContain('if (!await selectRemoteRuntime(runtimeId, selectedEntityId, requestId)) return;');
-  expect(entitySource).toContain("dispatch('entitySelect'");
-  expect(entitySource).toContain("entityId: selectedEntityId\n      });\n      return;");
-  expect(source).not.toContain('async function selectRuntimeSelf');
+  expect(source).toContain('await selectWorkspaceRuntime(entry)');
+  expect(source).toContain('writeRemoteRuntimeAdapterSession(stores, { wsUrl: entry.wsUrl, access: entry.access, authKey: entry.token });');
+  expect(source).toContain('await opsWorkspaceSession.select(readRuntimeAdapterStorageSnapshot(stores));');
+  expect(source).toContain("if (state.status === 'error') throw new Error(state.message)");
 });
 
-test('ContextSwitcher labels projection-only remote runtimes instead of saying no runtime selected', () => {
-  const source = readFileSync('frontend/src/lib/components/Entity/workspace/shell/ContextSwitcher.svelte', 'utf8');
+test('projection-only remote Runtimes retain their explicit registry identity', () => {
+  const source = manager();
 
-  expect(source).toContain("currentGroup.runtimeLabel, currentEntity?.jurisdiction || 'Unassigned'");
-  expect(source).toContain(": 'No runtime selected';");
+  expect(source).toContain('key={entry.runtimeId}');
+  expect(source).toContain('<strong>{entry.label}</strong><code>{entry.runtimeId}</code>');
+  expect(source).not.toContain('entities[0]');
+  expect(source).not.toContain('derivedEntities');
 });
 
-test('ContextSwitcher does not pick the first sorted projection entity as the remote runtime identity', () => {
-  const source = readFileSync('frontend/src/lib/components/Entity/workspace/shell/ContextSwitcher.svelte', 'utf8');
+test('Runtime controls keep embedded selection visible and gate remote attachment by validation', () => {
+  const source = manager();
 
-  expect(source).toContain('const selfEntity = resolveRemotePrimaryEntity(runtime, entities)');
-  expect(source).toContain('const ownedHubEntities = (runtime.hubEntities ?? []).filter');
-  expect(source).toContain('ownerRuntimeId === runtimeId');
-  expect(source).toContain('isPlaceholder: true');
-  expect(source).toContain("const selectedEntityId = entity.isPlaceholder ? '' : entity.entityId");
-  expect(source).toContain('remoteEntityNameMatchesRuntimeLabel');
-  expect(source).toContain('normalizeId(entity.entityId) !== normalizeId(selfEntity.entityId)');
-  expect(source).not.toContain('const selfEntity = entities[0] || null');
-  expect(source).not.toContain('derivedEntities: selfEntity ? entities.slice(1) : entities');
+  expect(source).toContain('Use browser Runtime');
+  expect(source).toContain("if (!token.trim().startsWith('xlnra1.'))");
+  expect(source).toContain('const result = await importRemoteRuntimeEntries(entries, { activateFirst: false');
+  expect(source).toContain('if (!first) throw new Error');
 });
 
-test('ContextSwitcher keeps local controls visible and gates runtime mutations by write capability', () => {
-  const source = readFileSync('frontend/src/lib/components/Entity/workspace/shell/ContextSwitcher.svelte', 'utf8');
+test('empty Entity state still leaves the Runtime manager accessible', () => {
+  const panels = readFileSync('frontend/apps/ops/src/workspace/session/ops-workspace-panels.ts', 'utf8');
+  const workspace = readFileSync('frontend/apps/ops/src/workspace/ops-workspace.tsx', 'utf8');
 
-  expect(source).toContain("runtimeMutationControlsEnabled = $runtimeControllerHandle.permissions === 'write'");
-  expect(source).toContain('{#if runtimeMutationControlsEnabled && allowAddEntity}');
-  expect(source).toContain('{#if runtimeMutationControlsEnabled && allowAddJurisdiction}');
-  expect(source).toContain('{#if allowAddRuntime}');
-  expect(source).toContain('<button class="reset-btn" on:click={handleReset}>Reset all data</button>');
-  expect(source).not.toContain("mutatingLocalControlsEnabled = $runtimeControllerHandle.mode !== 'remote'");
-});
-
-test('ContextSwitcher only adds projection entities owned by the matching runtime', () => {
-  const source = readFileSync('frontend/src/lib/components/Entity/workspace/shell/ContextSwitcher.svelte', 'utf8');
-
-  expect(source).toContain('const projectionRuntimeId = normalizeId(summary?.runtimeId)');
-  expect(source).toContain('if (projectionRuntimeId && projectionRuntimeId !== normalizeId(runtimeId)) continue;');
-});
-
-test('remote empty entity state still exposes the context runtime switcher', () => {
-  const emptyState = readFileSync('frontend/src/lib/components/Entity/workspace/shell/EntitySelectionEmptyState.svelte', 'utf8');
-  const tabs = readFileSync('frontend/src/lib/components/Entity/workspace/shell/EntityPanelTabs.svelte', 'utf8');
-
-  expect(emptyState).toContain('ContextSwitcher');
-  expect(emptyState).toContain('{#if userModeHeader && tab}');
-  expect(emptyState).toContain('on:entitySelect={handleEntitySelect}');
-  expect(tabs).toContain('<EntitySelectionEmptyState');
-  expect(tabs).toContain('{handleEntitySelect}');
-  expect(tabs).toContain('{handleHeaderAddRuntime}');
+  expect(panels).toContain("'runtime-manager': OpsRuntimeManager");
+  expect(panels).toContain("{ id: 'runtime-manager', component: 'runtime-manager'");
+  expect(workspace).toContain('panels.map(panel =>');
+  expect(workspace).toContain('openPanel(api, panel.id)');
 });

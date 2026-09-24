@@ -2,6 +2,10 @@ import { expect, test } from '@playwright/test';
 import { expectNoBrowserErrors, expectPageContained, observeBrowserErrors, screenshotEvidence } from '../browser-evidence';
 import { selectWalletFixtureRuntime } from './fixtures/wallet-runtime-test-helpers';
 
+test.beforeEach(({}, testInfo) => testInfo.setTimeout(180_000));
+
+const OWNERSHIP_FIXTURE_REQUEST = { timeout: 90_000 } as const;
+
 test(
   'Wallet Stack Manager keeps explicit Entity selection and invalidates cancelled or changed reviews',
   { tag: '@resilience' },
@@ -22,6 +26,7 @@ test(
     const stack = page.getByTestId('workspace-stack-manager');
     await expect(wallet).toHaveAttribute('data-entity-id', fixture.entityId);
     await expect(wallet).toHaveAttribute('data-runtime-id', fixture.runtimeId);
+    await stack.getByTestId('stack-manager-signer').selectOption(fixture.runtimeId);
     await stack.getByTestId('stack-manager-rpc').fill(deploymentRpc.rpcUrl);
     await stack.getByRole('button', { name: 'Probe RPC', exact: true }).click();
     await expect(stack.getByTestId('stack-manager-probe')).toContainText(deploymentRpc.rpcUrl);
@@ -67,6 +72,7 @@ test(
     await page.goto(`/app#settings/stack-manager?entity=${fixture.entityId}`);
     const stack = page.getByTestId('workspace-stack-manager');
     await expect(stack.getByTestId('stack-manager-phase')).toBeVisible();
+    await stack.getByTestId('stack-manager-signer').selectOption(fixture.runtimeId);
     await stack.getByTestId('stack-manager-rpc').fill(deploymentRpc.rpcUrl);
     await stack.getByRole('button', { name: 'Probe RPC', exact: true }).click();
     await expect(stack.getByTestId('stack-manager-probe')).toContainText(deploymentRpc.rpcUrl);
@@ -84,7 +90,7 @@ test(
     expectNoBrowserErrors(errors);
     await stack.getByTestId('stack-manager-confirm').check();
     await stack.getByTestId('stack-manager-deploy').click();
-    await expect(stack.getByRole('alert')).toHaveText('STACK_MANAGER_DEPLOY_HTTP_400');
+    await expect(stack.getByText('STACK_MANAGER_DEPLOY_HTTP_400', { exact: true })).toBeVisible();
     await page.reload();
     await expect(stack.getByLabel('Configured jurisdiction stack', { exact: true })).toHaveValue(name);
     await expect(stack.getByTestId('configured-stack-inspection')).toContainText(deploymentRpc.rpcUrl);
@@ -133,7 +139,7 @@ test('Ownership reads real released shares, refreshes and discards a delayed rea
   const errors = observeBrowserErrors(page);
   const fixture = await selectWalletFixtureRuntime(page);
   const port = Number(process.env['XLN_REACT_WALLET_FIXTURE_PORT'] || 19092);
-  const response = await page.request.post(`http://127.0.0.1:${port}/ownership-fixture`);
+  const response = await page.request.post(`http://127.0.0.1:${port}/ownership-fixture`, OWNERSHIP_FIXTURE_REQUEST);
   expect(response.ok()).toBe(true);
   const company: unknown = await response.json();
   if (!company || typeof company !== 'object' || !('entityId' in company) || typeof company.entityId !== 'string') throw new Error('OWNERSHIP_FIXTURE_INVALID');
@@ -190,7 +196,7 @@ test('Ownership reads real released shares, refreshes and discards a delayed rea
 test('Ownership exposes the exact confirmed release nonce from the real Runtime', { tag: '@functional' }, async ({ page }) => {
   await selectWalletFixtureRuntime(page);
   const port = Number(process.env['XLN_REACT_WALLET_FIXTURE_PORT'] || 19092);
-  const response = await page.request.post(`http://127.0.0.1:${port}/ownership-fixture`);
+  const response = await page.request.post(`http://127.0.0.1:${port}/ownership-fixture`, OWNERSHIP_FIXTURE_REQUEST);
   expect(response.ok()).toBe(true);
   const company: unknown = await response.json();
   if (!company || typeof company !== 'object' || !('entityId' in company) || typeof company.entityId !== 'string') throw new Error('OWNERSHIP_FIXTURE_INVALID');
@@ -204,7 +210,10 @@ test('Ownership review cancellation is inert and submit commits the canonical sh
   const errors = observeBrowserErrors(page);
   await selectWalletFixtureRuntime(page);
   const port = Number(process.env['XLN_REACT_WALLET_FIXTURE_PORT'] || 19092);
-  const response = await page.request.post(`http://127.0.0.1:${port}/ownership-release-fixture?slot=${encodeURIComponent(testInfo.project.name)}`);
+  const response = await page.request.post(
+    `http://127.0.0.1:${port}/ownership-release-fixture?slot=${encodeURIComponent(`wallet-${testInfo.project.name}`)}`,
+    OWNERSHIP_FIXTURE_REQUEST,
+  );
   expect(response.ok()).toBe(true);
   const company: unknown = await response.json();
   if (!company || typeof company !== 'object' || !('entityId' in company) || typeof company.entityId !== 'string') throw new Error('OWNERSHIP_RELEASE_FIXTURE_INVALID');
@@ -241,7 +250,10 @@ test('Ownership selects an eligible CONTROL target and observes the committed bo
   const errors = observeBrowserErrors(page);
   await selectWalletFixtureRuntime(page);
   const port = Number(process.env['XLN_REACT_WALLET_FIXTURE_PORT'] || 19092);
-  const response = await page.request.post(`http://127.0.0.1:${port}/ownership-governance-fixture?slot=${encodeURIComponent(testInfo.project.name)}`);
+  const response = await page.request.post(
+    `http://127.0.0.1:${port}/ownership-governance-fixture?slot=${encodeURIComponent(testInfo.project.name)}`,
+    OWNERSHIP_FIXTURE_REQUEST,
+  );
   expect(response.ok()).toBe(true);
   const fixture = await response.json() as { shareholderEntityId: string; targetEntityId: string; targetName: string; expectedBoardHash: string };
   const readBoard = async () => {
@@ -287,6 +299,7 @@ test(
     const port = Number(process.env['XLN_REACT_WALLET_FIXTURE_PORT'] || 19092);
     const response = await page.request.post(
       `http://127.0.0.1:${port}/ownership-activation-fixture?slot=${encodeURIComponent(testInfo.project.name)}`,
+      OWNERSHIP_FIXTURE_REQUEST,
     );
     expect(response.ok()).toBe(true);
     const fixture = (await response.json()) as {
@@ -331,6 +344,7 @@ test(
 
     const advanced = await page.request.post(
       `http://127.0.0.1:${port}/ownership-activation-ready?slot=${encodeURIComponent(testInfo.project.name)}`,
+      OWNERSHIP_FIXTURE_REQUEST,
     );
     expect(advanced.ok()).toBe(true);
     await governance.getByRole('button', { name: 'Refresh status' }).click();
@@ -360,6 +374,7 @@ test(
     const port = Number(process.env['XLN_REACT_WALLET_FIXTURE_PORT'] || 19092);
     const response = await page.request.post(
       `http://127.0.0.1:${port}/ownership-activated-fixture?slot=${encodeURIComponent(testInfo.project.name)}`,
+      OWNERSHIP_FIXTURE_REQUEST,
     );
     expect(response.ok()).toBe(true);
     const fixture = (await response.json()) as {

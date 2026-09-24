@@ -149,6 +149,7 @@
 
 .wallet-settings-profile-context label {
   display: grid;
+  min-width: 0;
   gap: 0.45rem;
 }
 
@@ -167,6 +168,11 @@
   color: inherit;
   background: var(--theme-background, #151718);
   border: 1px solid var(--line);
+}
+
+.wallet-settings-profile-context select {
+  width: 100%;
+  min-width: 0;
 }
 
 .wallet-settings-profile-context button {

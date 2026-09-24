@@ -1,6 +1,6 @@
 import { useEffect, useState, useSyncExternalStore } from 'react';
 import type { WalletPaymentSource } from '../payments/wallet-payment-source';
-import type { WalletControlActivationReview, WalletControlTakeoverReview, WalletControlTakeoverStatus, WalletControlTakeoverTarget } from '../../../../bridges/wallet/wallet-canonical-ownership-governance';
+import type { WalletControlActivationReview, WalletControlTakeoverReview, WalletControlTakeoverStatus, WalletControlTakeoverTarget } from '../../../../bridges/wallet/canonical/wallet-canonical-ownership-governance';
 
 const ZERO_HASH = `0x${'0'.repeat(64)}`;
 const compact = (value: string): string => value.length <= 18 ? value : `${value.slice(0, 10)}…${value.slice(-6)}`;
@@ -29,7 +29,7 @@ export function WalletOwnershipGovernance({ source, entityId, signerId, commands
     const adapter = source.workspaceRuntime().adapter;
     const refresh = async () => {
       try {
-        const governance = await import('../../../../bridges/wallet/wallet-canonical-ownership-governance');
+        const governance = await import('../../../../bridges/wallet/canonical/wallet-canonical-ownership-governance');
         const next = await governance.readWalletControlTakeoverTargets(adapter, entityId, signerId);
         if (!current) return;
         setTargets(next);
@@ -66,7 +66,7 @@ export function WalletOwnershipGovernance({ source, entityId, signerId, commands
     setBusy(true);
     setError('');
     try {
-      const governance = await import('../../../../bridges/wallet/wallet-canonical-ownership-governance');
+      const governance = await import('../../../../bridges/wallet/canonical/wallet-canonical-ownership-governance');
       setStatus(await governance.readWalletControlTakeoverStatus(
         source.workspaceRuntime().adapter, entityId, signerId, selected,
       ));
@@ -80,7 +80,7 @@ export function WalletOwnershipGovernance({ source, entityId, signerId, commands
     setBusy(true);
     setError('');
     try {
-      const governance = await import('../../../../bridges/wallet/wallet-canonical-ownership-governance');
+      const governance = await import('../../../../bridges/wallet/canonical/wallet-canonical-ownership-governance');
       const adapter = source.workspaceRuntime().adapter;
       const next = await governance.reviewWalletControlBoardProposal(adapter, entityId, signerId, targetId);
       setReview(next);
@@ -96,7 +96,7 @@ export function WalletOwnershipGovernance({ source, entityId, signerId, commands
     setBusy(true);
     setError('');
     try {
-      const governance = await import('../../../../bridges/wallet/wallet-canonical-ownership-governance');
+      const governance = await import('../../../../bridges/wallet/canonical/wallet-canonical-ownership-governance');
       const adapter = source.workspaceRuntime().adapter;
       await source.submitEntityInput(await governance.prepareWalletControlBoardProposal(
         adapter, entityId, signerId, review,
@@ -113,7 +113,7 @@ export function WalletOwnershipGovernance({ source, entityId, signerId, commands
     setBusy(true);
     setError('');
     try {
-      const governance = await import('../../../../bridges/wallet/wallet-canonical-ownership-governance');
+      const governance = await import('../../../../bridges/wallet/canonical/wallet-canonical-ownership-governance');
       setActivationReview(
         await governance.reviewWalletControlBoardActivation(
           source.workspaceRuntime().adapter,
@@ -133,7 +133,7 @@ export function WalletOwnershipGovernance({ source, entityId, signerId, commands
     setBusy(true);
     setError('');
     try {
-      const governance = await import('../../../../bridges/wallet/wallet-canonical-ownership-governance');
+      const governance = await import('../../../../bridges/wallet/canonical/wallet-canonical-ownership-governance');
       const adapter = source.workspaceRuntime().adapter;
       await source.submitEntityInputs(
         await governance.prepareWalletControlBoardActivation(adapter, entityId, signerId, activationReview),

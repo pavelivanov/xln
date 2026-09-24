@@ -8,7 +8,7 @@
   import {
     networkMachineRuntime,
     networkMachineRuntimeOperations,
-  } from '../../../../bridges/runtime/network-machine-runtime-store';
+  } from '../../../../bridges/runtime/network/network-machine-runtime-store';
   import type { NetworkMachineTimelineMode } from '../../../../packages/runtime-client/src/scenario/network-machine';
   import { captionForStep } from '../../../../packages/runtime-client/src/scenario/network-caption';
   import { xlnFunctions } from '../../../../bridges/runtime/xln-store';

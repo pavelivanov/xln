@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import { readdirSync, readFileSync } from 'node:fs';
 
+import { renderReleaseGatePlan } from '../../core/scripts/release/run-release-gate';
 import { XLN_RELEASE_PATHS } from '../../tools/release-snapshot/scope.ts';
 
 const isCrossJReleaseTest = (name: string): boolean => (
@@ -18,16 +19,10 @@ const collectCrossJReleaseTests = (directory: string): string[] => (
 
 describe('release gate ordering', () => {
   test('scopes diff cleanliness to the central XLN release paths', () => {
-    const result = Bun.spawnSync({
-      cmd: ['bun', 'core/scripts/release/run-release-gate.ts', '--quick', '--plan'],
-      cwd: process.cwd(),
-      stdout: 'pipe',
-      stderr: 'pipe',
-    });
+    const stdout = renderReleaseGatePlan('quick');
     const expected = `git diff --check -- ${XLN_RELEASE_PATHS.join(' ')}`;
 
-    expect(result.exitCode).toBe(0);
-    expect(result.stdout.toString()).toContain(expected);
+    expect(stdout).toContain(expected);
     expect(expected).not.toContain('brainvault');
   });
 
@@ -46,13 +41,7 @@ describe('release gate ordering', () => {
   });
 
   test('runs one full E2E only after every cheaper release check', () => {
-    const result = Bun.spawnSync({
-      cmd: ['bun', 'core/scripts/release/run-release-gate.ts', '--profile=release', '--plan'],
-      cwd: process.cwd(),
-      stdout: 'pipe',
-      stderr: 'pipe',
-    });
-    const stdout = result.stdout.toString();
+    const stdout = renderReleaseGatePlan('release');
     const commands = stdout
       .split('\n')
       .map((line) => line.trim())
@@ -61,20 +50,13 @@ describe('release gate ordering', () => {
       /^bun run test:e2e:(?:fast|core|full)$/.test(command),
     );
 
-    expect(result.exitCode).toBe(0);
     expect(browserE2eCommands).toEqual(['bun run test:e2e:full']);
     expect(commands.at(-1)).toBe('bun run test:e2e:full');
     expect(stdout).toContain('25. full E2E gate\n   bun run test:e2e:full\n   timeoutMs=3600000');
   });
 
   test('release runtime core includes the exact recursive cross-j family', () => {
-    const result = Bun.spawnSync({
-      cmd: ['bun', 'core/scripts/release/run-release-gate.ts', '--profile=release', '--plan'],
-      cwd: process.cwd(),
-      stdout: 'pipe',
-      stderr: 'pipe',
-    });
-    const runtimeCoreCommand = result.stdout.toString()
+    const runtimeCoreCommand = renderReleaseGatePlan('release')
       .split('\n')
       .map(line => line.trim())
       .find(line => line.startsWith('bun test core/__tests__'));
@@ -85,8 +67,7 @@ describe('release gate ordering', () => {
       .sort();
     const expectedFamily = collectCrossJReleaseTests('core/__tests__').sort();
 
-    expect(result.exitCode).toBe(0);
-    expect(expectedFamily).toHaveLength(25);
+    expect(expectedFamily).toHaveLength(27);
     expect(plannedFamily).toEqual(expectedFamily);
   });
 

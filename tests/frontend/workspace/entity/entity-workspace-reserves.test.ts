@@ -3,8 +3,8 @@ import { describe, expect, test } from 'bun:test';
 import {
   emptyEntityWorkspaceReserves,
   projectEntityWorkspaceReserves,
-} from '../../../../frontend/packages/runtime-client/src/entity/entity-workspace-reserves';
-import { projectEntityWorkspaceContext } from '../../../../frontend/packages/runtime-client/src/entity/entity-workspace-context';
+} from '../../../../frontend/packages/runtime-client/src/entity/workspace/entity-workspace-reserves';
+import { projectEntityWorkspaceContext } from '../../../../frontend/packages/runtime-client/src/entity/workspace/entity-workspace-context';
 
 const FRAME = {
   height: 42,

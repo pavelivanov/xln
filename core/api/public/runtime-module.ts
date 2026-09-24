@@ -126,6 +126,8 @@ import type {
 import type {
 	  RuntimeAdapterActivityPage,
 	  RuntimeAdapterEntitySummary,
+	  RuntimeAdapterSettlementWorkspace,
+	  RuntimeAdapterSettlementWorkspaceRead,
 	  RuntimeAdapterSolvencySummary,
 	  RuntimeAdapterSwapHistoryPage,
 	  RuntimeAdapterTimelineIndexPage,
@@ -147,6 +149,8 @@ export type {
 	  RuntimeAdapterViewFrame,
 	  RuntimeAdapterActivityPage,
 	  RuntimeAdapterEntitySummary,
+	  RuntimeAdapterSettlementWorkspace,
+	  RuntimeAdapterSettlementWorkspaceRead,
 	  RuntimeAdapterSolvencySummary,
 	  RuntimeAdapterSwapHistoryPage,
 	  RuntimeAdapterTimelineIndexPage,

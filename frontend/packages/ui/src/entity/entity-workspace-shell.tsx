@@ -2,26 +2,26 @@ import {
   ENTITY_WORKSPACE_SECTIONS,
   type SettingsSubview,
   type ViewTab,
-} from '../../../runtime-client/src/entity/entity-workspace-navigation';
-import type { EntityWorkspaceAccounts } from '../../../runtime-client/src/entity/entity-workspace-accounts';
+} from '../../../runtime-client/src/entity/workspace/entity-workspace-navigation';
+import type { EntityWorkspaceAccounts } from '../../../runtime-client/src/entity/workspace/entity-workspace-accounts';
 import type {
   EntityWorkspaceActivity,
   EntityWorkspaceActivityFilterType,
   EntityWorkspaceActivityKind,
   EntityWorkspaceActivityMode,
   EntityWorkspaceActivityPageSize,
-} from '../../../runtime-client/src/entity/entity-workspace-activity';
+} from '../../../runtime-client/src/entity/workspace/entity-workspace-activity';
 import type {
   EntityWorkspaceContext,
   EntityWorkspaceReadState,
-} from '../../../runtime-client/src/entity/entity-workspace-context';
-import type { EntityWorkspaceConsensusEvidence } from '../../../runtime-client/src/entity/entity-workspace-consensus-evidence';
+} from '../../../runtime-client/src/entity/workspace/entity-workspace-context';
+import type { EntityWorkspaceConsensusEvidence } from '../../../runtime-client/src/entity/workspace/entity-workspace-consensus-evidence';
 import type { EntityWorkspaceHubPolicy } from '../../../runtime-client/src/entity/profile/entity-workspace-hub-policy';
-import type { EntityWorkspaceOwnership } from '../../../runtime-client/src/entity/entity-workspace-ownership';
+import type { EntityWorkspaceOwnership } from '../../../runtime-client/src/entity/workspace/entity-workspace-ownership';
 import type { EntityWorkspaceProfile } from '../../../runtime-client/src/entity/profile/entity-workspace-profile';
 import type { EntityWorkspaceProfileDraft } from '../../../runtime-client/src/entity/profile/entity-workspace-profile-update';
-import type { EntityWorkspaceReserves } from '../../../runtime-client/src/entity/entity-workspace-reserves';
-import type { EntityWorkspaceTimeMachineState } from '../../../runtime-client/src/entity/entity-workspace-time-machine';
+import type { EntityWorkspaceReserves } from '../../../runtime-client/src/entity/workspace/entity-workspace-reserves';
+import type { EntityWorkspaceTimeMachineState } from '../../../runtime-client/src/entity/workspace/entity-workspace-time-machine';
 import type { ThemeName } from '../theme-model';
 import { EntityWorkspaceOwnershipPanel } from './profile/entity-workspace-ownership-panel';
 import { EntityWorkspaceActivityPanel } from './activity/entity-workspace-activity-panel';
@@ -146,7 +146,7 @@ type EntityWorkspaceStageWithOwnershipProps = EntityWorkspaceStageProps & Readon
   onRefreshActivity: () => void;
   onSelectTheme: (theme: ThemeName) => void;
   onSaveProfile: (draft: EntityWorkspaceProfileDraft) => Promise<void>;
-  onSelectActivityBeforeHeight: (beforeHeight: number | null) => void;
+  onSelectActivityCursor: (cursor: string | null) => void;
   onSelectActivityKind: (kind: EntityWorkspaceActivityKind) => void;
   onSelectActivityMode: (mode: EntityWorkspaceActivityMode) => void;
   onSelectNewerActivityPage: () => void;
@@ -175,13 +175,13 @@ const readFooterLabel = (
   return 'Unavailable — no remote Runtime selected';
 };
 
-function EntityWorkspaceStage({ activity, accounts, activeTab, consensus, context, displayIssue, displayPreferences, hubPolicy, onApplyActivityTimeframe, onClearActivityFilters, onLoadOlderActivity, onRefresh, onRefreshActivity, onSaveProfile, onSelectAccountsPage, onSelectActivityBeforeHeight, onSelectActivityKind, onSelectActivityMode, onSelectActivityPageSize, onSelectActivitySearch, onSelectNewerActivityPage, onSelectTheme, onToggleActivityType, onToggleTimeMachine, onToggleXlnGuide, ownership, profile, readState, reserves, settingsSubview, timeMachine }: EntityWorkspaceStageWithOwnershipProps) {
+function EntityWorkspaceStage({ activity, accounts, activeTab, consensus, context, displayIssue, displayPreferences, hubPolicy, onApplyActivityTimeframe, onClearActivityFilters, onLoadOlderActivity, onRefresh, onRefreshActivity, onSaveProfile, onSelectAccountsPage, onSelectActivityCursor, onSelectActivityKind, onSelectActivityMode, onSelectActivityPageSize, onSelectActivitySearch, onSelectNewerActivityPage, onSelectTheme, onToggleActivityType, onToggleTimeMachine, onToggleXlnGuide, ownership, profile, readState, reserves, settingsSubview, timeMachine }: EntityWorkspaceStageWithOwnershipProps) {
   const copy = SECTION_COPY[activeTab];
   const showsActivity = readState.status === 'ready' && context.status === 'selected' && activeTab === 'accounts';
   return (
     <section className="entity-workspace-stage" data-testid="entity-workspace-stage">
       {showsActivity
-        ? <EntityWorkspaceActivityPanel activity={activity} onApplyTimeframe={onApplyActivityTimeframe} onClearFilters={onClearActivityFilters} onLoadOlder={onLoadOlderActivity} onRefresh={onRefreshActivity} onSelectBeforeHeight={onSelectActivityBeforeHeight} onSelectKind={onSelectActivityKind} onSelectMode={onSelectActivityMode} onSelectNewerPage={onSelectNewerActivityPage} onSelectPageSize={onSelectActivityPageSize} onSelectSearch={onSelectActivitySearch} onToggleType={onToggleActivityType} />
+        ? <EntityWorkspaceActivityPanel activity={activity} onApplyTimeframe={onApplyActivityTimeframe} onClearFilters={onClearActivityFilters} onLoadOlder={onLoadOlderActivity} onRefresh={onRefreshActivity} onSelectCursor={onSelectActivityCursor} onSelectKind={onSelectActivityKind} onSelectMode={onSelectActivityMode} onSelectNewerPage={onSelectNewerActivityPage} onSelectPageSize={onSelectActivityPageSize} onSelectSearch={onSelectActivitySearch} onToggleType={onToggleActivityType} />
         : <header>
             <span>{copy.eyebrow}</span>
             <h2>{copy.title}</h2>
@@ -229,7 +229,7 @@ type EntityWorkspaceShellProps = Readonly<{
   onLoadOlderActivity: () => void;
   onRefresh: () => void;
   onRefreshActivity: () => void;
-  onSelectActivityBeforeHeight: (beforeHeight: number | null) => void;
+  onSelectActivityCursor: (cursor: string | null) => void;
   onSelectActivityKind: (kind: EntityWorkspaceActivityKind) => void;
   onSelectActivityMode: (mode: EntityWorkspaceActivityMode) => void;
   onSelectNewerActivityPage: () => void;
@@ -260,7 +260,7 @@ const readModeLabel = (
   return 'Read boundary';
 };
 
-export function EntityWorkspaceShell({ activity, accounts, activeTab, consensus, context, displayIssue, displayPreferences, hubPolicy, onApplyActivityTimeframe, onClearActivityFilters, onLoadOlderActivity, onRefresh, onRefreshActivity, onSaveProfile, onSelectAccountsPage, onSelectActivityBeforeHeight, onSelectActivityKind, onSelectActivityMode, onSelectActivityPageSize, onSelectActivitySearch, onSelectNewerActivityPage, onSelectTheme, onToggleActivityType, onToggleTimeMachine, onToggleXlnGuide, ownership, profile, readState, reserves, settingsSubview, timeMachine }: EntityWorkspaceShellProps) {
+export function EntityWorkspaceShell({ activity, accounts, activeTab, consensus, context, displayIssue, displayPreferences, hubPolicy, onApplyActivityTimeframe, onClearActivityFilters, onLoadOlderActivity, onRefresh, onRefreshActivity, onSaveProfile, onSelectAccountsPage, onSelectActivityCursor, onSelectActivityKind, onSelectActivityMode, onSelectActivityPageSize, onSelectActivitySearch, onSelectNewerActivityPage, onSelectTheme, onToggleActivityType, onToggleTimeMachine, onToggleXlnGuide, ownership, profile, readState, reserves, settingsSubview, timeMachine }: EntityWorkspaceShellProps) {
   return (
     <section
       className="entity-workspace"
@@ -312,7 +312,7 @@ export function EntityWorkspaceShell({ activity, accounts, activeTab, consensus,
         onRefreshActivity={onRefreshActivity}
         onSaveProfile={onSaveProfile}
         onSelectAccountsPage={onSelectAccountsPage}
-        onSelectActivityBeforeHeight={onSelectActivityBeforeHeight}
+        onSelectActivityCursor={onSelectActivityCursor}
         onSelectActivityKind={onSelectActivityKind}
         onSelectActivityMode={onSelectActivityMode}
         onSelectActivityPageSize={onSelectActivityPageSize}

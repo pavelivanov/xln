@@ -161,21 +161,22 @@ describe('browser wallet Runtime consent', () => {
     expect(harness.calls).toEqual(['select-embedded']);
   });
 
-  test('keeps concrete browser and UI effects in the Svelte shell', () => {
+  test('keeps concrete browser authority effects in React runtime boundaries', () => {
     const boundary = readFileSync(
       'frontend/packages/browser/src/runtime/wallet-runtime-consent.ts',
       'utf8',
     );
-    const layout = readFileSync('frontend/src/routes/app/+layout.svelte', 'utf8');
+    const shell = readFileSync('frontend/apps/wallet/src/app-shell.tsx', 'utf8');
+    const manager = readFileSync('frontend/apps/ops/src/workspace/runtime/ops-runtime-manager.tsx', 'utf8');
+    const selection = readFileSync('frontend/apps/ops/src/workspace/runtime/ops-runtime-selection.ts', 'utf8');
 
     expect(boundary).not.toContain('svelte');
     expect(boundary).not.toContain('../../../../core');
-    expect(layout).toContain('new WalletRuntimeConsentCoordinator({');
-    expect(layout).toContain('persistRemoteRequest: persistRemoteRuntimeRequest');
-    expect(layout).toContain('writeEmbeddedRuntimeAdapterSession({ durable: localStorage');
-    expect(layout).toContain('activateRuntimeChoice: activateAppAfterRuntimeChoice');
-    expect(layout).toContain('await walletRuntimeConsent.acceptRemote(');
-    expect(layout).toContain('await walletRuntimeConsent.useEmbedded()');
-    expect(layout).not.toContain('remoteAcceptKey(');
+    expect(shell).toContain("runtime.state === 'remote-blocked'");
+    expect(shell).toContain('Restore remote authority');
+    expect(manager).toContain("if (!token.trim().startsWith('xlnra1.'))");
+    expect(manager).toContain('importRemoteRuntimeEntries(entries, { activateFirst: false');
+    expect(selection).toContain('writeEmbeddedRuntimeAdapterSession(stores)');
+    expect(selection).toContain('writeRemoteRuntimeAdapterSession(stores');
   });
 });

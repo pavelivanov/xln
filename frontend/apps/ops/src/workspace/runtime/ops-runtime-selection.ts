@@ -1,6 +1,6 @@
 import { readRuntimeAdapterStorageSnapshot, writeEmbeddedRuntimeAdapterSession, writeRemoteRuntimeAdapterSession } from '../../../../../packages/browser/src/runtime/session/runtime-adapter-session';
 import type { StoredRemoteRuntimeImportEntry } from '../../../../../packages/browser/src/runtime/session/remote-runtime-import';
-import { networkMachineRuntimeOperations } from '../../../../../bridges/runtime/network-machine-runtime-store';
+import { networkMachineRuntimeOperations } from '../../../../../bridges/runtime/network/network-machine-runtime-store';
 import { opsEntityWorkspaceSource, opsWorkspaceSession } from '../../entity-workspace/ops-entity-workspace-runtime';
 import { pauseWorkspacePlayback } from '../session/ops-workspace-playback';
 

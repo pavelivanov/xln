@@ -6,8 +6,8 @@ import {
   serializeTimeMachinePreferenceUpdate,
   serializeThemePreferenceUpdate,
   serializeXlnGuidePreferenceUpdate,
-} from '../../../frontend/packages/browser/src/display-preferences';
-import { buildThemeCoreCssVariables } from '../../../frontend/packages/browser/src/theme-document';
+} from '../../../frontend/packages/browser/src/preferences/display-preferences';
+import { buildThemeCoreCssVariables } from '../../../frontend/packages/browser/src/preferences/theme-document';
 import {
   THEME_NAMES,
   getThemeCoreColors,
@@ -98,7 +98,7 @@ describe('React Entity workspace display preferences', () => {
   test('keeps one observable browser source across Wallet and docked Entity consumers', async () => {
     const [page, source, panel, wallet, opsFacade] = await Promise.all([
       Bun.file('frontend/apps/ops/src/entity-workspace/ops-entity-workspace.tsx').text(),
-      Bun.file('frontend/packages/browser/src/display-preferences-source.ts').text(),
+      Bun.file('frontend/packages/browser/src/preferences/display-preferences-source.ts').text(),
       Bun.file('frontend/packages/ui/src/entity/settings/entity-workspace-display-panel.tsx').text(),
       Bun.file('frontend/apps/wallet/src/settings/wallet-settings.tsx').text(),
       Bun.file('frontend/apps/ops/src/ops-display-preferences.ts').text(),

@@ -31,7 +31,7 @@ function AccountTool({ tab, source, projection, selection }: Readonly<{
     {tab === 'ownership' || tab === 'consensus' ? <WalletEntityEvidence context={context} tab={tab} source={source} /> : null}
     {tab === 'configure' ? <WalletManage context={context} source={source} selection={selection} /> : null}
     {tab === 'move' ? <WalletMove context={context} source={source} projection={projection} selection={selection} /> : null}
-    {tab === 'lending' ? <WalletLending context={context} source={source} selection={selection} /> : null}
+    {tab === 'lending' ? <WalletLending /> : null}
     {tab === 'history' ? <WalletHistory context={context} source={source} /> : null}
     {tab !== 'move' && tab !== 'ownership' && tab !== 'consensus' && (projection.batch.draft.length > 0 || projection.batch.sentHash) ? <WalletPaymentBatch projection={projection} snapshot={payment} source={source} /> : null}
   </>;

@@ -5,7 +5,7 @@ import * as THREE from '../../../../frontend/node_modules/three';
 
 import { createAccountBars } from '../../../../frontend/packages/ui/src/graph/account-bar-renderer';
 import { toDerivedAccountData } from '../../../../frontend/packages/ui/src/graph/derived-account';
-import { createGraphGrid } from '../../../../frontend/packages/ui/src/graph/graph3d-scene-primitives';
+import { createGraphGrid } from '../../../../frontend/packages/ui/src/graph/three/visuals/graph3d-scene-primitives';
 
 const endpoint = (id: string, x: number) => ({ id, position: new THREE.Vector3(x, 0, 0) });
 
@@ -82,8 +82,9 @@ describe('account bar parenting', () => {
   });
 
   test('graph content is built into graphWorld, so cleanup and VR transforms apply to it', () => {
-    const panel = readFileSync('frontend/src/lib/view/panels/graph3d/Graph3DPanel.svelte', 'utf8');
-    const visuals = readFileSync('frontend/packages/ui/src/graph/graph3d-visuals.ts', 'utf8');
+    const scene = readFileSync('frontend/apps/ops/src/workspace/graph/ops-graph-scene.ts', 'utf8');
+    const world = readFileSync('frontend/apps/ops/src/workspace/graph/ops-graph-world.ts', 'utf8');
+    const visuals = readFileSync('frontend/packages/ui/src/graph/three/visuals/graph3d-visuals.ts', 'utf8');
     const bars = readFileSync('frontend/packages/ui/src/graph/account-bar-renderer.ts', 'utf8');
 
     // The visual builders take no scene at all — everything lands in graphWorld.
@@ -91,13 +92,15 @@ describe('account bar parenting', () => {
       expect(source).not.toMatch(/\bscene\.\w+\(/); // no scene.add(...) / scene.remove(...)
       expect(source).not.toMatch(/\bscene\s*:/); // no `scene:` option or parameter
     }
-    expect(panel).toContain('function detachFromGraphWorld');
-    expect(panel).toContain('createAccountBarsForConnection');
+    expect(scene).toContain('world.remove(accountWorld)');
+    expect(scene).toContain('disposeGraphObject3D(accountWorld)');
+    expect(scene).toContain('world.add(accountWorld)');
+    expect(world).toContain('buildGraphConnection({ graphWorld: group');
 
     // `scene.add` in the panel is only ever the world group, lights and head-locked XR nodes.
-    const sceneAdds = panel.match(/scene\.add\(([^)]*)\)/g) ?? [];
+    const sceneAdds = scene.match(/scene\.add\(([^)]*)\)/g) ?? [];
     for (const call of sceneAdds) {
-      expect(call).toMatch(/graphWorld|Light|controller|mesh/);
+      expect(call).toMatch(/world|Light|light|controller|mesh/);
     }
   });
 
@@ -126,7 +129,7 @@ describe('account bar parenting', () => {
 
     for (const file of [
       'frontend/packages/ui/src/graph/account-bar-renderer.ts',
-      'frontend/packages/ui/src/graph/graph3d-visuals.ts',
+      'frontend/packages/ui/src/graph/three/visuals/graph3d-visuals.ts',
     ]) {
       expect(readFileSync(file, 'utf8')).not.toContain('inPeerCredit: Number(');
     }

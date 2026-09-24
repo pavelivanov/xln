@@ -35,13 +35,13 @@ import {
   parseNetworkMachineConfig,
   type NetworkMachineConfig,
 } from '../../../../frontend/packages/runtime-client/src/scenario/network-machine';
-import { readTimelineIndexPages } from '../../../../frontend/bridges/runtime/network-timeline-loader';
-import { assertNetworkMachineIsLive } from '../../../../frontend/bridges/runtime/network-machine-runtime-store';
+import { readTimelineIndexPages } from '../../../../frontend/bridges/runtime/network/network-timeline-loader';
+import { assertNetworkMachineIsLive } from '../../../../frontend/bridges/runtime/network/network-machine-runtime-store';
 import {
   beginGraphGesture,
   emptyGraphGestureState,
   endGraphGesture,
-} from '../../../../frontend/packages/ui/src/graph/graph3d-interaction';
+} from '../../../../frontend/packages/ui/src/graph/three/interaction/graph3d-interaction';
 import { immersiveWalletActionAt } from '../../../../frontend/packages/ui/src/graph/immersive/immersive-wallet-actions';
 
 const source = (runtimeId: string, height: number, timestamp: number): RuntimeGraphSource => ({
@@ -316,25 +316,26 @@ describe('RuntimeGraphProjection', () => {
     expect(merged.nodes[0]?.desynchronized).toBe(true);
   });
 
-  test('Graph3D projection declaration explicitly reads every graph source', () => {
+  test('React Graph3D projection explicitly reads live and selected network sources', () => {
     const source = readFileSync(
-      new URL('../../../../frontend/src/lib/view/panels/graph3d/Graph3DPanel.svelte', import.meta.url),
+      new URL('../../../../frontend/apps/ops/src/workspace/graph/ops-graph-panel.tsx', import.meta.url),
       'utf8',
     );
-    const declarationStart = source.indexOf('$: graphProjections = buildRuntimeGraphProjections({');
-    const declarationEnd = source.indexOf('\n});', declarationStart);
+    const declarationStart = source.indexOf('const graph = useMemo(() => {');
+    const declarationEnd = source.indexOf('\n  }, [network,', declarationStart);
     expect(declarationStart).toBeGreaterThan(0);
     expect(declarationEnd).toBeGreaterThan(declarationStart);
     const dependencyBlock = source.slice(declarationStart, declarationEnd);
 
     for (const dependency of [
-      '$runtimes',
-      '$activeRuntimeId',
-      '$runtimeControllerHandle.runtimeId',
-      '$runtimeGraphScope',
-      '$networkMachineRuntime',
-      '$runtimeGraphLiveFrameCache',
-      'currentEnv: env',
+      'network.selectedStep',
+      'environment.frame',
+      'adapter',
+      'network.frames.values()',
+      'live.snapshot.data',
+      'mergeRuntimeGraphProjections',
+      'projectRuntimeEnv',
+      'projectRuntimeGraphFrame',
     ]) {
       expect(dependencyBlock).toContain(dependency);
     }
@@ -461,7 +462,7 @@ describe('NetworkMachine', () => {
 
 describe('NetworkMachine runtime indexes', () => {
   test('browser runtimes read their index through the adapter, not from in-memory history', () => {
-    const loader = readFileSync('frontend/bridges/runtime/network-timeline-loader.ts', 'utf8');
+    const loader = readFileSync('frontend/bridges/runtime/network/network-timeline-loader.ts', 'utf8');
 
     // `env.history` is permanently empty (RECENT_RUNTIME_HISTORY_LIMIT = 0), so deriving a
     // browser timeline from it produced zero frames and a dead time machine.

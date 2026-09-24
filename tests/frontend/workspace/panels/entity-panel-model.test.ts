@@ -11,7 +11,7 @@ import {
   isSameJurisdictionEntity,
   isSameJurisdictionEntityInReplicas,
   jurisdictionKey,
-} from '../../../../frontend/bridges/wallet/entity-panel-model';
+} from '../../../../frontend/bridges/wallet/entity/entity-panel-model';
 import { buildAccountPageView, resolveAccountListEntityName } from '../../../../frontend/bridges/entity/accounts/account-list-view';
 
 describe('entity panel model helpers', () => {
@@ -248,52 +248,40 @@ describe('entity panel model helpers', () => {
     expect(accountPage.entries.map((entry) => entry.counterpartyId)).toEqual([hubOne, hubTwo]);
   });
 
-  test('entity panel tabs consumes EntityPanelView instead of rebuilding env projections inline', () => {
-    const source = readFileSync('frontend/src/lib/components/Entity/workspace/shell/EntityPanelTabs.svelte', 'utf8');
-    expect(source).toContain('displayEnv = activeIsLive ? (actionRuntimeEnv ?? activeEnv) : activeEnv');
-    expect(source).toContain('displayProjectionFrame = runtimeProjectionFrame');
-    expect(source).toContain('panelView = buildEntityPanelView(displayEnv, tab.entityId, tab.signerId, envRevision, displayProjectionFrame)');
-    expect(source).toContain('directoryPanelView = runtimeProjectionFrame');
-    expect(source).toContain('activeReplicas = panelView.replicas');
-    expect(source).toContain('panelProfiles = panelView.profiles');
-    expect(source).toContain('availableJurisdictions = panelView.jurisdictions');
-    expect(source).toContain('isSameJurisdictionEntityInReplicas(activeReplicas');
-    expect(source).not.toContain('getEnvReplicaMap(activeEnv');
-    expect(source).not.toContain('getGossipProfiles(activeEnv');
-    expect(source).not.toContain('env?.state.jReplicas');
+  test('React wallet consumes one decoded portfolio projection instead of rebuilding env projections inline', () => {
+    const source = readFileSync('frontend/apps/wallet/src/portfolio/wallet-portfolio-source.ts', 'utf8');
+    const view = readFileSync('frontend/apps/wallet/src/portfolio/wallet-portfolio.tsx', 'utf8');
+
+    expect(source).toContain('decodeWalletPortfolioProjection(await client.readViewFrame({');
+    expect(source).toContain('requireWalletWorkspaceEntity(');
+    expect(view).toContain('const projection = snapshot.projection;');
+    expect(view).toContain('<PortfolioContent');
+    expect(source).not.toContain('state.eReplicas');
     expect(source).not.toContain('function findReplicaForTab');
-    expect(source).not.toContain('getRuntimeId(activeEnv');
-    expect(source).not.toContain('getCurrentEntityJurisdictionName(activeEnv');
-    expect(source).not.toContain('isSameJurisdictionEntity(activeEnv');
   });
 
   test('move validation and execution consume the same reactive balance snapshot shown to the user', () => {
-    const source = readFileSync('frontend/src/lib/components/Entity/workspace/shell/EntityPanelTabs.svelte', 'utf8');
+    const source = readFileSync('frontend/apps/wallet/src/move/wallet-move.tsx', 'utf8');
 
-    expect(source).toContain('reserveToken: selectedMoveTransferToken');
-    expect(source).toContain('externalToken: selectedMoveExternalToken');
-    expect(source).toContain('sourceAvailableBalance: moveUiState.sourceAvailableBalance');
+    expect(source).toContain('const available =');
+    expect(source).toContain('sourceAvailableBalance: available');
+    expect(source).toContain('parsePositiveAssetAmount(amount, token, available)');
     expect(source).not.toContain('getCurrentMoveSourceAvailableBalance');
   });
 
   test('focused account display consumes projected entity names instead of full env', () => {
-    const accountPanel = readFileSync('frontend/src/lib/components/Entity/account/ui/AccountPanel.svelte', 'utf8');
-    const focusedView = readFileSync('frontend/src/lib/components/Entity/workspace/shell/EntityFocusedAccountView.svelte', 'utf8');
-    const tabs = readFileSync('frontend/src/lib/components/Entity/workspace/shell/EntityPanelTabs.svelte', 'utf8');
+    const model = readFileSync('frontend/apps/wallet/src/account/view/wallet-account-view-model.ts', 'utf8');
+    const focusedView = readFileSync('frontend/apps/wallet/src/account/view/wallet-account-view.tsx', 'utf8');
 
-    expect(accountPanel).toContain('export let entityNames: Map<string, string>');
-    expect(accountPanel).not.toContain('EnvSnapshot');
-    expect(accountPanel).not.toContain('export let env');
-    expect(accountPanel).not.toContain('resolveEntityName(');
-    expect(focusedView).toContain('export let entityNames: Map<string, string>');
+    expect(model).toContain('entityNames: ReadonlyMap<string, string>');
+    expect(focusedView).toContain('view?.counterpartyName || counterpartyId');
+    expect(focusedView).not.toContain('EnvSnapshot');
     expect(focusedView).not.toContain('activeEnv');
-    expect(tabs).toContain('entityNames={panelView.entityNames}');
   });
 
   test('account list display consumes projected height and entity names', () => {
-    const accountList = readFileSync('frontend/src/lib/components/Entity/account/ui/AccountList.svelte', 'utf8');
-    const accountWorkspace = readFileSync('frontend/src/lib/components/Entity/workspace/AccountWorkspaceView.svelte', 'utf8');
-    const tabs = readFileSync('frontend/src/lib/components/Entity/workspace/shell/EntityPanelTabs.svelte', 'utf8');
+    const accountList = readFileSync('frontend/apps/wallet/src/portfolio/wallet-portfolio.tsx', 'utf8');
+    const accountWorkspace = readFileSync('frontend/apps/wallet/src/account/wallet-account-workspace.tsx', 'utf8');
 
     expect(resolveAccountListEntityName('ALICE', 'alice', new Map(), 'You')).toBe('You');
     expect(resolveAccountListEntityName('BOB', 'alice', new Map([['bob', 'Hub B']]))).toBe('Hub B');
@@ -301,104 +289,43 @@ describe('entity panel model helpers', () => {
     expect(hasDevnetJurisdiction({
       state: { jReplicas: new Map([['local', { chainId: 31337 }]]) },
     } as any)).toBe(true);
-    expect(accountList).toContain('export let runtimeHeight: number');
-    expect(accountList).toContain('export let entityNames: Map<string, string>');
-    expect(accountList).toContain('export let profileByEntityId: Map<string, GossipProfile>');
-    expect(accountList).toContain('export let isDevnet');
+    expect(accountList).toContain('projection.accounts.map');
+    expect(accountList).toContain('account.counterpartyLabel');
+    expect(accountWorkspace).toContain('Committed height {projection.height}');
+    expect(accountWorkspace).toContain('projection.entities.map');
     expect(accountList).not.toContain('xlnEnvironment');
     expect(accountList).not.toContain('$xlnEnvironment');
     expect(accountList).not.toContain('getEntityDisplayName(');
-    const accountPreview = readFileSync('frontend/src/lib/components/Entity/account/ui/AccountPreview.svelte', 'utf8');
-    expect(accountPreview).toContain('export let counterpartyProfile: GossipProfile | null');
-    expect(accountPreview).toContain('export let counterpartyName: string');
-    expect(accountPreview).toContain('export let isDevnet');
-    expect(accountPreview).toContain('data-testid="account-counterparty-full-id"');
-    expect(accountPreview).toContain('{counterpartyId}</span>');
-    expect(accountPreview).not.toContain('xlnEnvironment');
-    expect(accountPreview).not.toContain('$xlnEnvironment');
-    expect(accountPreview).not.toContain('activeEnv');
-    expect(accountPreview).not.toContain('jReplicas');
-    expect(accountPreview).not.toContain('resolveEntityName(');
-    expect(accountWorkspace).toContain('export let runtimeHeight: number');
-    expect(accountWorkspace).toContain('export let entityNames: Map<string, string>');
-    expect(accountWorkspace).toContain('export let profileByEntityId: Map<string, GossipProfile>');
-    expect(tabs).toContain('runtimeHeight={panelView.height}');
-    expect(tabs).toContain('entityNames={panelView.entityNames}');
-    expect(tabs).toContain('profileByEntityId={panelView.profileByEntityId}');
-    expect(tabs).toContain('isDevnet={panelView.isDevnet}');
+    expect(accountList).not.toContain('xlnEnvironment');
+    expect(accountWorkspace).not.toContain('xlnEnvironment');
+    expect(accountWorkspace).not.toContain('jReplicas');
   });
 
   test('account selectors consume projected entity names without owning env', () => {
-    const entitySelect = readFileSync('frontend/src/lib/components/Entity/workspace/shell/EntitySelect.svelte', 'utf8');
-    const accountDropdown = readFileSync('frontend/src/lib/components/Entity/account/ui/AccountDropdown.svelte', 'utf8');
-    const creditForm = readFileSync('frontend/src/lib/components/Entity/account/ui/CreditForm.svelte', 'utf8');
-    const collateralForm = readFileSync('frontend/src/lib/components/Entity/account/ui/CollateralForm.svelte', 'utf8');
-    const lendingPanel = readFileSync('frontend/src/lib/components/Entity/payments/LendingPanel.svelte', 'utf8');
-    const configurePanel = readFileSync('frontend/src/lib/components/Entity/account/ui/AccountConfigurePanel.svelte', 'utf8');
-    const accountWorkspace = readFileSync('frontend/src/lib/components/Entity/workspace/AccountWorkspaceView.svelte', 'utf8');
+    const accountDropdown = readFileSync('frontend/apps/wallet/src/account/controls/wallet-account-dropdown.tsx', 'utf8');
+    const manage = readFileSync('frontend/apps/wallet/src/manage/wallet-manage.tsx', 'utf8');
+    const lending = readFileSync('frontend/apps/wallet/src/manage/wallet-lending.tsx', 'utf8');
+    const accountWorkspace = readFileSync('frontend/apps/wallet/src/account/wallet-account-workspace.tsx', 'utf8');
 
-    for (const source of [entitySelect, accountDropdown]) {
-      expect(source).toContain('export let entityNames: Map<string, string>');
-      expect(source).not.toContain('xlnEnvironment');
-      expect(source).not.toContain('$xlnEnvironment');
-      expect(source).not.toContain('resolveEntityName(');
-      expect(source).not.toContain('getGossipProfiles');
-      expect(source).not.toContain('envOverride');
-    }
-
-    expect(creditForm).toContain('export let entityNames: Map<string, string>');
-    expect(creditForm).toContain('export let actionRuntimeEnv: RuntimeReplica | null = null');
-    expect(creditForm).toContain('export let submitRuntimeInput');
-    expect(creditForm).not.toContain('export let env: RuntimeReplica');
-    expect(creditForm).not.toContain('import { submitEntityInputs');
-    expect(creditForm).toContain('<EntitySelect bind:value={selectedCounterparty} options={accountIds} {entityNames}');
-    expect(collateralForm).toContain('export let entityNames: Map<string, string>');
-    expect(collateralForm).toContain('export let actionRuntimeEnv: RuntimeReplica | null = null');
-    expect(collateralForm).toContain('export let submitRuntimeInput');
-    expect(collateralForm).toContain('export let accountOverride');
-    expect(collateralForm).not.toContain('export let env: RuntimeReplica');
-    expect(collateralForm).not.toContain('import { submitEntityInputs');
-    expect(collateralForm).toContain('<EntitySelect bind:value={selectedCounterparty} options={accountIds} {entityNames}');
-    expect(lendingPanel).toContain('export let entityNames: Map<string, string>');
-    expect(lendingPanel).toContain('<EntitySelect bind:value={selectedHubEntityId} options={normalizedAccounts} {entityNames}');
-    expect(configurePanel).toContain('export let entityNames: Map<string, string>');
-    expect(configurePanel).toContain('actionRuntimeEnv={liveRuntimeEnv}');
-    expect(configurePanel).toContain('remoteAdminReady');
-    expect(configurePanel).toContain("authLevel === 'admin'");
-    expect(configurePanel).toContain('{submitRuntimeInput}');
-    expect(accountWorkspace).toContain('<AccountDropdown');
-    expect(accountWorkspace).toContain('{entityNames}');
+    expect(accountDropdown).toContain('<AccountDropdown accounts={snapshot.data}');
+    expect(manage).toContain('context.names.get(id) || id');
+    expect(manage).toContain('source.submitAccountTxs(context.entityId');
+    expect(manage).toContain('disabled={busy || !context.commandsReady}');
+    expect(lending).toContain('Production lending is not enabled');
+    expect(lending).not.toContain('submitAccountTxs');
+    expect(accountWorkspace).toContain('<WalletManage context={context}');
+    expect(accountWorkspace).toContain('<WalletLending />');
   });
 
   test('entity header dropdown consumes the canonical panel projection', () => {
-    const dropdown = readFileSync('frontend/src/lib/components/Entity/workspace/shell/EntityDropdown.svelte', 'utf8');
-    const chrome = readFileSync('frontend/src/lib/components/Entity/workspace/EntityPanelChrome.svelte', 'utf8');
-    const contextSwitcher = readFileSync('frontend/src/lib/components/Entity/workspace/shell/ContextSwitcher.svelte', 'utf8');
-    const tabs = readFileSync('frontend/src/lib/components/Entity/workspace/shell/EntityPanelTabs.svelte', 'utf8');
+    const portfolio = readFileSync('frontend/apps/wallet/src/portfolio/wallet-portfolio.tsx', 'utf8');
+    const workspace = readFileSync('frontend/apps/wallet/src/account/wallet-account-workspace.tsx', 'utf8');
 
-    expect(dropdown).toContain('export let entityNames: Map<string, string>');
-    expect(dropdown).toContain('export let jurisdictions: Array<{ name?: string }>');
-    expect(dropdown).toContain('$: activeReplicas = replicasOverride');
-    expect(dropdown).not.toContain('xlnEnvironment');
-    expect(dropdown).not.toContain('$xlnEnvironment');
-    expect(dropdown).not.toContain('$replicas');
-    expect(dropdown).not.toContain('visibleReplicas');
-    expect(dropdown).not.toContain('envOverride');
-    expect(dropdown).not.toContain('resolveEntityName(');
-    expect(chrome).toContain('export let entityNames: Map<string, string>');
-    expect(chrome).toContain('export let jurisdictions: EntityPanelJurisdictionView[]');
-    expect(chrome).toContain('<EntityDropdown');
-    expect(chrome).toContain('{entityNames}');
-    expect(chrome).toContain('{jurisdictions}');
-    expect(chrome).not.toContain('activeEnv');
-    expect(contextSwitcher).toContain("import { refreshCurrentRuntimeProjection, xlnFunctions, xlnInstance } from '../../../../../../bridges/runtime/xln-store'");
-    expect(contextSwitcher).toContain("import { runtimeView, setRuntimeViewActiveEntityId } from '../../../../../../bridges/runtime/runtime-view-store'");
-    expect(contextSwitcher).toContain('await refreshCurrentRuntimeProjection()');
-    expect(contextSwitcher).toContain('projectionSummariesForRuntime(runtime.id');
-    expect(contextSwitcher).not.toContain('runtime.env');
-    expect(contextSwitcher).not.toContain('eReplicas');
-    expect(contextSwitcher).toContain('ariaLabel={currentTitle}');
-    expect(tabs).toContain('entityNames={panelView.entityNames}');
-    expect(tabs).toContain('jurisdictions={panelView.jurisdictions}');
+    expect(portfolio).toContain('projection.entities.map');
+    expect(portfolio).toContain('source.selectEntity(event.target.value)');
+    expect(workspace).toContain('source.selectEntity(nextEntityId)');
+    expect(workspace).toContain('projection.entities.map');
+    expect(`${portfolio}\n${workspace}`).not.toContain('xlnEnvironment');
+    expect(`${portfolio}\n${workspace}`).not.toContain('visibleReplicas');
   });
 });

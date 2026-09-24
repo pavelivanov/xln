@@ -6,7 +6,7 @@ import {
   buildSimpleRadialLayout,
   createGraphJMachine,
   startProportionalBroadcast,
-} from '../../../../frontend/packages/ui/src/graph/graph3d-scene-primitives';
+} from '../../../../frontend/packages/ui/src/graph/three/visuals/graph3d-scene-primitives';
 
 describe('Graph3D shared scene primitives', () => {
   test('lays out connected entities deterministically by degree and id', () => {
@@ -75,9 +75,9 @@ describe('Graph3D shared scene primitives', () => {
   });
 
   test('moves scene primitives out of the retained visual factory', () => {
-    const shared = readFileSync('frontend/packages/ui/src/graph/graph3d-scene-primitives.ts', 'utf8');
-    const retained = readFileSync('frontend/packages/ui/src/graph/graph3d-visuals.ts', 'utf8');
-    const panel = readFileSync('frontend/src/lib/view/panels/graph3d/Graph3DPanel.svelte', 'utf8');
+    const shared = readFileSync('frontend/packages/ui/src/graph/three/visuals/graph3d-scene-primitives.ts', 'utf8');
+    const retained = readFileSync('frontend/packages/ui/src/graph/three/visuals/graph3d-visuals.ts', 'utf8');
+    const panel = readFileSync('frontend/apps/ops/src/workspace/graph/ops-graph-world.ts', 'utf8');
 
     for (const symbol of [
       'createGraphGrid',
@@ -88,6 +88,6 @@ describe('Graph3D shared scene primitives', () => {
       expect(shared).toContain(`export function ${symbol}`);
       expect(retained).not.toContain(`export function ${symbol}`);
     }
-    expect(panel).toContain('packages/ui/src/graph/graph3d-scene-primitives');
+    expect(panel).toContain('packages/ui/src/graph/three/visuals/graph3d-scene-primitives');
   });
 });

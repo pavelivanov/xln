@@ -319,154 +319,76 @@ describe('swap panel helpers', () => {
     ]);
   });
 
-  test('SwapPanel submits the exact Runtime-owned command plan before cross intent', () => {
-    const source = Bun.file('frontend/src/lib/components/Entity/swap/SwapPanel.svelte');
+  test('React market source submits the exact Runtime-owned command plan before cross intent', () => {
+    const source = Bun.file('frontend/apps/wallet/src/markets/wallet-market-source.ts');
     return source.text().then(text => {
-      expect(text).toContain('activeXlnFunctions.planSwapCommand');
-      expect(text).toContain('if (commandPlan.targetSetupInput)');
-      expect(text).toContain('await submitRuntimeInput(commandPlan.targetSetupInput)');
-      expect(text).toContain('await submitActiveCrossJurisdictionIntent(commandPlan.crossJurisdictionIntent, {');
-      expect(text).toContain('waitForTargetReady: commandPlan.targetSetupInput !== null');
-      expect(text).not.toContain('activeXlnFunctions.deriveDelta');
+      expect(text).toContain('if (review.plan.targetSetupInput) await this.submitInput(review.plan.targetSetupInput);');
+      expect(text).toContain('await this.requireAdapter().submitCrossJurisdictionIntent(review.plan.crossJurisdictionIntent);');
+      expect(text.indexOf('review.plan.targetSetupInput')).toBeLessThan(text.indexOf('submitCrossJurisdictionIntent'));
+      expect(text).not.toContain('.deriveDelta');
       expect(text).not.toContain('10_000n * 10n ** decimals');
-      expect(text).not.toContain('crossCommandEnv');
-      expect(text).not.toContain('submitRuntimeInput(crossCommandEnv, runtimeInput)');
-      expect(text).not.toContain('await submitRuntimeInput(nextEnv, crossInputPlan.requestInput)');
       expect(text).not.toContain('buildCrossTargetSetupTxs');
     });
   });
 
-  test('SwapPanel reads through injected runtime projection instead of owning RuntimeReplica reads', async () => {
-    const [panel, workspace, tabs] = await Promise.all([
-      Bun.file('frontend/src/lib/components/Entity/swap/SwapPanel.svelte').text(),
-      Bun.file('frontend/src/lib/components/Entity/workspace/AccountWorkspaceView.svelte').text(),
-      Bun.file('frontend/src/lib/components/Entity/workspace/shell/EntityPanelTabs.svelte').text(),
+  test('React market reads through query projections instead of component-owned RuntimeReplica reads', async () => {
+    const [panel, source, model] = await Promise.all([
+      Bun.file('frontend/apps/wallet/src/markets/wallet-market-pane.tsx').text(),
+      Bun.file('frontend/apps/wallet/src/markets/wallet-market-source.ts').text(),
+      Bun.file('frontend/apps/wallet/src/markets/wallet-market-model.ts').text(),
     ]);
 
-    expect(panel).toContain('export let runtimeView: SwapPanelRuntimeView | null = null');
-    expect(panel).toContain('export let env: RuntimeReplica | null = null');
-    expect(panel).not.toContain('export let env: RuntimeReplica | EnvSnapshot');
-    expect(panel).toContain('swapRuntimeView = runtimeView ?? buildSwapPanelRuntimeView(activeFrame)');
-    expect(panel).toContain('readRuntimeEntityProjectionFrame(entityId)');
-    expect(panel).toContain("buildEntityPanelView(null, entityId, '', '', frame).replica");
-    expect(workspace).toContain('export let swapRuntimeView: SwapPanelRuntimeView | null = null');
-    expect(workspace).toContain('{#if activeEnv || swapRuntimeView}');
-    expect(workspace).toContain('runtimeView={swapRuntimeView}');
-    expect(workspace).toContain('{runtimeHeight}');
-    expect(tabs).toContain('swapRuntimeView = buildSwapPanelRuntimeView({');
-    expect(tabs).toContain('profiles: panelProfiles');
-    expect(tabs).toContain('networkProfiles: getGossipProfiles(actionRuntimeEnv)');
-    expect(tabs).toContain('entityNames: panelView.entityNames');
-    expect(tabs).toContain('swapActionReplicas = getRuntimeEnv(actionRuntimeEnv)?.state.eReplicas ?? activeReplicas');
-    expect(tabs).toContain('replicas: swapActionReplicas');
+    expect(panel).toContain('projection: WalletMarketProjection;');
+    expect(panel).not.toContain('RuntimeReplica');
+    expect(source).toContain('createWalletRuntimeQueryClient(adapter)');
+    expect(source).toContain('client.readViewFrame({');
+    expect(source).toContain('decodeWalletMarketProjection');
+    expect(model).toContain('decodeWalletMarketContext');
   });
 
-  test('SwapPanel remote swap actions submit through projection-backed command paths', async () => {
-    const panel = await Bun.file('frontend/src/lib/components/Entity/swap/SwapPanel.svelte').text();
-    const placeStart = panel.indexOf('async function placeSwapOffer()');
-    const cancelStart = panel.indexOf('async function cancelSwapOffer(');
-    const clearStart = panel.indexOf('async function requestCrossClear(');
-    const formatStart = panel.indexOf('function formatAmount(');
-    expect(placeStart).toBeGreaterThan(0);
-    expect(cancelStart).toBeGreaterThan(placeStart);
-    expect(clearStart).toBeGreaterThan(cancelStart);
-    expect(formatStart).toBeGreaterThan(clearStart);
-
-    const resolverSlice = panel.slice(
-      panel.indexOf('function resolveProjectedSignerId('),
-      panel.indexOf('function getTokenDecimals('),
-    );
-    const placeSlice = panel.slice(placeStart, cancelStart);
-    const cancelSlice = panel.slice(cancelStart, clearStart);
-    const clearSlice = panel.slice(clearStart, formatStart);
-
-    expect(resolverSlice).toContain('function resolveSwapLogicalClock(');
-    expect(resolverSlice).toContain('sourceReplica?.state?.timestamp ?? runtimeEnv?.state.timestamp');
-    expect(resolverSlice).toContain('sourceReplica?.state?.height ?? runtimeEnv?.state.height');
-    expect(resolverSlice).toContain('resolveProjectedSignerId(entityId)');
-    expect(resolverSlice).not.toContain("throw new Error('XLN environment not ready')");
-    expect(placeSlice).toContain('resolveSwapLogicalClock(committedSourceReplica)');
-    expect(placeSlice).toContain('readCommittedEntityReplica(sourceEntityId)');
-    expect(placeSlice).toContain('activeXlnFunctions.planSwapCommand({');
-    expect(placeSlice).toContain('await submitRuntimeInput(commandPlan.targetSetupInput)');
-    expect(placeSlice).toContain('await submitActiveCrossJurisdictionIntent(commandPlan.crossJurisdictionIntent, {');
-    expect(placeSlice).toContain('waitForTargetReady: commandPlan.targetSetupInput !== null');
-    expect(placeSlice).toContain('await prewarmCounterpartyProfiles(runtimeEnv, [targetRoute.targetHubEntityId])');
-    expect(placeSlice).not.toContain("throw new Error('XLN environment not ready')");
-    expect(placeSlice).not.toContain('env.timestamp');
-    expect(placeSlice).not.toContain('env.height');
-    expect(cancelSlice).toContain('await submitEntityInputs(');
-    expect(cancelSlice).toContain("type: 'proposeCancelSwap'");
-    expect(cancelSlice).not.toContain("throw new Error('XLN environment not ready')");
-    expect(clearSlice).toContain('await submitEntityInputs(');
-    expect(clearSlice).toContain("type: 'requestCrossJurisdictionClear'");
-    expect(clearSlice).not.toContain("throw new Error('XLN environment not ready')");
+  test('React market remote actions submit through projection-backed command paths', async () => {
+    const source = await Bun.file('frontend/apps/wallet/src/markets/wallet-market-source.ts').text();
+    expect(source).toContain('buildWalletMarketOrderInput(');
+    expect(source).toContain('buildWalletMarketCancelInput(this.requireProjection(), offerId)');
+    expect(source).toContain('buildWalletCrossMarketCancelInput(this.requireProjection(), orderId)');
+    expect(source).toContain('this.requireAdapter().submitCrossJurisdictionIntent');
+    expect(source).not.toContain("throw new Error('XLN environment not ready')");
   });
 
-  test('SwapPanel keeps amount state only in the parent and parses that source directly', async () => {
-    const [panel, ticket] = await Promise.all([
-      Bun.file('frontend/src/lib/components/Entity/swap/SwapPanel.svelte').text(),
-      Bun.file('frontend/src/lib/components/Entity/swap/SwapTicket.svelte').text(),
-    ]);
-
-    expect(panel).toContain('$: giveAmount = parseDecimalAmountToBigInt(orderAmountInput, giveTokenDecimals);');
-    expect(panel).toContain('function handleOrderAmountInput(value: string): void');
-    expect(panel).toContain('orderAmountInput = autoSelection.amountInput;');
-    expect(panel).toContain('function computeOrderAmountSelection(percent: number)');
-    expect(panel).toMatch(/orderbookSnapshot;\s+orderbookPairId;\s+activeBookHubId;/);
-    expect(panel).not.toContain('liveOrderAmountInput');
-    expect(panel).not.toContain('routedOrderAmountInput');
-    expect(panel).not.toContain('handleSwapPanelAmountSync');
-    expect(panel).not.toContain('orderAmountRevision');
-    expect(panel).not.toContain('orderAmountInputElement');
-    expect(ticket).toContain('value={orderAmountInput}');
-    expect(ticket).not.toContain('bind:value={orderAmountInput}');
+  test('React market ticket keeps amount state in the owning form and submits that exact state', async () => {
+    const panel = await Bun.file('frontend/apps/wallet/src/markets/wallet-market-pane.tsx').text();
+    expect(panel).toContain("const [giveAmount, setGiveAmount] = useState('');");
+    expect(panel).toContain("const [wantAmount, setWantAmount] = useState('');");
+    expect(panel).toContain('giveAmount,\n        wantAmount,');
+    expect(panel).toContain('value={giveAmount}');
+    expect(panel).toContain('value={wantAmount}');
   });
 
-  test('SwapTicket makes cross-network online and manual-close risk impossible to omit', async () => {
-    const ticket = await Bun.file('frontend/src/lib/components/Entity/swap/SwapTicket.svelte').text();
-    expect(ticket).toContain("{#if swapRouteMode === 'cross'}");
+  test('React cross-market ticket makes online and manual-close risk impossible to omit', async () => {
+    const ticket = await Bun.file('frontend/apps/wallet/src/markets/wallet-cross-market-ticket.tsx').text();
     expect(ticket).toContain('data-testid="cross-j-safety-banner"');
     expect(ticket).toContain('Stay online for this cross-network swap');
-    expect(ticket).toContain('cancel the remaining order manually');
+    expect(ticket).toContain('cancelled manually');
     expect(ticket).toContain('65,535 steps');
   });
 
-  test('SwapPanel preserves a pinned orderbook level when token sync is idempotent', () => {
-    const source = Bun.file('frontend/src/lib/components/Entity/swap/SwapPanel.svelte');
+  test('React market applies each command-palette draft only once', () => {
+    const source = Bun.file('frontend/apps/wallet/src/markets/wallet-market-pane.tsx');
     return source.text().then(text => {
-      const setTokensStart = text.indexOf('function setSwapTokens');
-      const nextFunctionStart = text.indexOf('function buildReverseCrossRouteSelection');
-      expect(setTokensStart).toBeGreaterThan(0);
-      expect(nextFunctionStart).toBeGreaterThan(setTokensStart);
-      const setTokensSource = text.slice(setTokensStart, nextFunctionStart);
-      expect(setTokensSource).toContain('const previousGiveTokenId = String(giveTokenId);');
-      expect(setTokensSource).toContain('const previousWantTokenId = String(wantTokenId);');
-      expect(setTokensSource).toContain(
-        'const tokensChanged = previousGiveTokenId !== nextGiveTokenId || previousWantTokenId !== nextWantTokenId;',
-      );
-      expect(setTokensSource).toContain('if (tokensChanged) selectedOrderLevel = null;');
-      expect(setTokensSource).not.toContain('wantTokenId = String(nextWantToken);\n    selectedOrderLevel = null;');
+      expect(text).toContain('const appliedDraft = useRef<number | null>(null);');
+      expect(text).toContain('appliedDraft.current === draft.id');
+      expect(text).toContain('appliedDraft.current = draft.id;');
     });
   });
 
-  test('aggregated orderbook clicks route through the first canonical source Hub', async () => {
-    const panel = await Bun.file('frontend/src/lib/components/Entity/swap/SwapPanel.svelte').text();
-    const start = panel.indexOf('function handleOrderbookLevelClick');
-    const end = panel.indexOf('function resolveSuggestedInitialPriceTicks', start);
-    const handler = panel.slice(start, end);
-
-    expect(handler).toContain('.sort(compareStableText)');
-    expect(handler).toContain('availableAccountIds.find((id) => hubAccountIds.includes(id))');
-    expect(handler).not.toContain(
-      'availableAccountIds.find((id) => hubAccountIds.includes(id)) || activeOrderAccountId',
-    );
+  test('cross-market routes retain canonical projected Hub ordering', async () => {
+    const model = await Bun.file('frontend/apps/wallet/src/markets/wallet-market-model.ts').text();
+    expect(model).toContain('targetHubs');
+    expect(model).toContain('left.hubLabel.localeCompare(right.hubLabel)');
   });
 
-  test('OrderbookPanel sends canonical sorted Hub subscriptions', async () => {
-    const panel = await Bun.file('frontend/src/lib/components/Trading/OrderbookPanel.svelte').text();
-    const start = panel.indexOf('function uniqueSourceHubIds');
-    const end = panel.indexOf('function sourceLabelFor', start);
-    expect(panel.slice(start, end)).toContain('Array.from(new Set(normalized)).sort()');
+  test('market projection sorts committed pairs deterministically', async () => {
+    const model = await Bun.file('frontend/apps/wallet/src/markets/wallet-market-model.ts').text();
+    expect(model).toContain("sort((left, right) => left.pairId.localeCompare(right.pairId))");
   });
 });

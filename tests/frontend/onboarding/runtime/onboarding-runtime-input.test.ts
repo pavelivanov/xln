@@ -187,65 +187,57 @@ test('onboarding creates every jurisdiction entity but only requires advertised 
   })).toThrow('ONBOARDING_HUB_CAPACITY_INSUFFICIENT:requested=1:found=0');
 });
 
-test('OnboardingPanel uses injected runtime projection and RuntimeInput helpers', () => {
-  const source = readFileSync('frontend/src/lib/components/Entity/onboarding/OnboardingPanel.svelte', 'utf8');
+test('React onboarding uses the canonical projection and RuntimeInput helpers', () => {
+  const source = readFileSync('frontend/bridges/wallet/canonical/wallet-canonical-onboarding.ts', 'utf8');
   const setup = readFileSync('frontend/packages/browser/src/onboarding/onboarding-setup.ts', 'utf8');
-  const joins = readFileSync('frontend/bridges/wallet/onboarding-hub-join.ts', 'utf8');
-  const parent = readFileSync('frontend/src/lib/view/UserModePanel.svelte', 'utf8');
-  const projection = readFileSync('frontend/bridges/wallet/onboarding-runtime-projection.ts', 'utf8');
+  const joins = readFileSync('frontend/bridges/wallet/onboarding/onboarding-hub-join.ts', 'utf8');
+  const parent = readFileSync('frontend/apps/wallet/src/onboarding/wallet-onboarding.tsx', 'utf8');
+  const projection = readFileSync('frontend/bridges/wallet/onboarding/onboarding-runtime-projection.ts', 'utf8');
 
-  expect(source).toContain('export let runtimeProjection: OnboardingRuntimeProjection');
-  expect(source).toContain('emptyOnboardingRuntimeProjection');
-  expect(source).toContain('finishOnboardingSetup(');
+  expect(source).toContain('buildOnboardingRuntimeProjection({');
+  expect(source).toContain('return finishOnboardingSetup(draft, {');
   expect(source).toContain('createOnboardingHubJoinCommands({');
-  expect(source).toContain('readProjection: () => runtimeProjection');
+  expect(source).toContain('readProjection: () => requireCurrent().projection');
   expect(setup).toContain('submitRuntimeInput(buildOnboardingProfileRuntimeInput');
   expect(joins).toContain('submitRuntimeInput(buildOnboardingHubOpenRuntimeInput');
   expect(joins).toContain('selectAdvertisedAutoJoinCandidates');
-  expect(source).not.toContain('export let runtimeEnv');
-  expect(source).not.toContain('liveEnvResolver');
-  expect(source).not.toContain('resolveOnboardingEnv');
-  expect(source).not.toContain('eReplicas');
   expect(source).not.toContain('submitRuntimeInput(env,');
-  expect(source).not.toContain('getEnv');
   expect(source).not.toContain('enqueueEntityInputs');
   expect(source).not.toContain("type: 'openAccount'");
   expect(source).not.toContain("type: 'profile-update'");
 
-  expect(parent).toContain('const onboardingRuntimeProjection = $derived.by');
-  expect(parent).toContain('buildOnboardingRuntimeProjection({');
-  expect(parent).toContain('runtimeProjection={onboardingRuntimeProjection}');
+  expect(parent).toContain('loadWalletOnboarding()');
+  expect(parent).toContain('canonical.subscribeCanonicalWalletOnboarding(runtimeId');
+  expect(parent).toContain('finishWalletOnboarding({');
   expect(projection).toContain('const accountCounterpartiesByEntityId: Record<string, string[]> = {};');
   expect(projection).toContain('const hubCandidates: OnboardingHubCandidate[] = [];');
   expect(projection).toContain("typeof isHub !== 'boolean'");
 });
 
-test('OnboardingPanel never hides hub discovery or default-policy failures', () => {
-  const source = readFileSync('frontend/src/lib/components/Entity/onboarding/OnboardingPanel.svelte', 'utf8');
-  const joins = readFileSync('frontend/bridges/wallet/onboarding-hub-join.ts', 'utf8');
+test('React onboarding never hides hub discovery or default-policy failures', () => {
+  const source = readFileSync('frontend/apps/wallet/src/onboarding/wallet-onboarding.tsx', 'utf8');
+  const joins = readFileSync('frontend/bridges/wallet/onboarding/onboarding-hub-join.ts', 'utf8');
   const inputSource = readFileSync('frontend/packages/ui/src/onboarding/onboarding-runtime-input.ts', 'utf8');
 
   expect(joins).toContain('ONBOARDING_HUB_DISCOVERY_FAILED');
   expect(inputSource).toContain('ONBOARDING_HUB_CAPACITY_INSUFFICIENT');
-  expect(source).toContain('policyDefaultsNotice');
-  expect(source).toContain('data-testid="onboarding-policy-defaults-notice"');
-  expect(source).not.toContain("catch {\n      // Keep local defaults if /api/jurisdictions isn't available yet.\n    }");
+  expect(source).toContain('setNotice(`Jurisdiction defaults unavailable; using built-in safe defaults.');
+  expect(source).toContain('{notice ? <p className="wallet-settings-error" role="status">{notice}</p> : null}');
+  expect(source).not.toContain('catch(() => {})');
 });
 
-test('FormationPanel uses injected runtime projection instead of xlnEnvironment', () => {
-  const source = readFileSync('frontend/src/lib/components/Entity/onboarding/formation/FormationPanel.svelte', 'utf8');
-  const parent = readFileSync('frontend/src/lib/view/UserModePanel.svelte', 'utf8');
+test('React formation uses the canonical Runtime projection instead of inline Runtime state', () => {
+  const source = readFileSync('frontend/apps/wallet/src/onboarding/wallet-formation.tsx', 'utf8');
+  const parent = readFileSync('frontend/bridges/wallet/canonical/wallet-canonical-formation.ts', 'utf8');
 
-  expect(source).toContain('export let runtimeProjection: FormationRuntimeProjection');
-  expect(source).toContain('emptyFormationRuntimeProjection');
-  expect(source).toContain('registerActiveNumberedEntities(');
-  expect(source).not.toContain('export let runtimeEnv');
-  expect(source).not.toContain('$: env = runtimeEnv');
+  expect(source).toContain('view.projection.jurisdictions');
+  expect(source).toContain('createWalletFormation(adapter,');
+  expect(parent).toContain('buildFormationRuntimeProjection(frame)');
+  expect(parent).toContain('registerActiveNumberedEntities(input, runtimeId)');
   expect(source).not.toContain('RuntimeReplica');
   expect(source).not.toContain('jReplicas');
   expect(source).not.toContain('eReplicas');
   expect(source).not.toContain('xlnEnvironment');
   expect(source).not.toContain('xlnFunctions');
-  expect(parent).toContain('const formationRuntimeProjection = $derived.by');
-  expect(parent).toContain('<FormationPanel runtimeProjection={formationRuntimeProjection}');
+  expect(parent).toContain('subscribeCanonicalWalletFormation');
 });

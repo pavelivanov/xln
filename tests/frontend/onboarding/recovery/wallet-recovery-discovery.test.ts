@@ -126,13 +126,13 @@ describe('browser wallet recovery discovery', () => {
     expect(await run).toEqual({ status: 'cancelled' });
   });
 
-  test('keeps discovery effects behind the canonical adapter and UI publication in Svelte', () => {
+  test('keeps discovery effects behind the canonical adapter and UI publication in React', () => {
     const boundary = readFileSync(
       'frontend/packages/browser/src/recovery/wallet-recovery-discovery.ts',
       'utf8',
     );
     const view = readFileSync(
-      'frontend/src/lib/components/Views/RuntimeCreation.svelte',
+      'frontend/bridges/wallet/canonical/wallet-canonical-vault-runtime.ts',
       'utf8',
     );
     const adapter = readFileSync(
@@ -143,15 +143,13 @@ describe('browser wallet recovery discovery', () => {
     expect(boundary).not.toContain('svelte');
     expect(boundary).not.toContain('discoverRuntimeRecoveryCandidates');
     expect(boundary).not.toContain('vaultOperations');
-    expect(view).toContain('new WalletRecoveryDiscoveryCoordinator<');
-    expect(view).toContain('discover: ({ seed, runtimeId }) => discoverCanonicalWalletRuntimeRecovery(seed, runtimeId)');
+    expect(view).toContain('const revision = recoverySelection.begin()');
+    expect(view).toContain('await discoverCanonicalWalletRuntimeRecovery(request.seed, request.runtimeId)');
     expect(adapter).toContain('await discoverRuntimeRecoveryCandidates(seed, {');
     expect(adapter).toContain('peers: buildRemoteRuntimeRecoveryPeerSources({ runtimeId: expectedRuntimeId })');
-    expect(view).toContain('const outcome = await walletRecoveryDiscovery.run({');
-    expect(view).toContain("outcome.status === 'cancelled'");
-    expect(view).toContain('recoveryErrors = [outcome.message]');
-    expect(view).toContain('recoveryCheckedPeers = discovery.checkedPeers');
-    expect(view.match(/walletRecoveryDiscovery\.invalidate\(\)/g)).toHaveLength(2);
+    expect(view).toContain('writeRuntimeRecoveryDiscoveryStatus({');
+    expect(view).toContain('checkedPeers: discovery.checkedPeers');
+    expect(view).toContain('const token = recoverySelection.commit(revision, discovery.runtimeId, discovery.candidates)');
     expect(view).not.toContain('recoveryRunToken');
   });
 });

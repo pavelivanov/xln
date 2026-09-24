@@ -9,7 +9,7 @@ import {
   deployStack,
   fetchStackManagerStatus,
   requireStackManagerProbe,
-} from '../../../frontend/bridges/runtime/stack-manager-client';
+} from '../../../frontend/bridges/runtime/stack-manager/stack-manager-client';
 import { createJurisdictionGossipAnnouncement } from '../../../core/jurisdiction/gossip/announcement';
 
 const ADDRESS = '0x1111111111111111111111111111111111111111';
@@ -182,17 +182,17 @@ describe('Stack Manager browser boundary', () => {
   });
 
   test('wires a dedicated tab and reuses the active Runtime authority without exposing it', () => {
-    const panel = readFileSync('frontend/src/lib/view/panels/SettingsPanel.svelte', 'utf8');
-    const component = readFileSync('frontend/src/lib/components/Settings/StackManager.svelte', 'utf8');
-    expect(panel).toContain('data-testid="settings-stack-manager-tab"');
-    expect(panel).toContain('<StackManager />');
-    expect(component).toContain('String(runtimeControllerConfig.authKey');
-    expect(component).toContain('runtimeHttpOriginFromWsUrl(runtimeControllerConfig.wsUrl)');
+    const panel = readFileSync('frontend/apps/ops/src/workspace/settings/ops-settings-panel.tsx', 'utf8');
+    const adapter = readFileSync('frontend/apps/ops/src/workspace/runtime/ops-stack-manager.tsx', 'utf8');
+    const component = readFileSync('frontend/packages/ui/src/stack-manager/stack-manager.tsx', 'utf8');
+    expect(panel).toContain("category === 'Stack Manager' ? <OpsStackManager />");
+    expect(adapter).toContain("const capability = config?.mode === 'remote' ? (config.authKey ?? '') : '';");
+    expect(adapter).toContain('runtimeHttpOriginFromWsUrl(config.wsUrl)');
     expect(component).not.toContain('stack-manager-capability');
     expect(component).not.toContain('Daemon admin capability');
     expect(component).toContain('data-testid="stack-manager-stablecoin"');
     expect(component).toContain('data-testid="stack-manager-confirmations"');
-    expect(component).toContain("fetchStackManagerStatus(apiOrigin, '', '', capability)");
+    expect(component).toContain('useStackManagerController(props)');
     expect(component).not.toContain('activeRuntime');
     expect(component).not.toContain('localStorage');
     expect(component).not.toContain('sessionStorage');

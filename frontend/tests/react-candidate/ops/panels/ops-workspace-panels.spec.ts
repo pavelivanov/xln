@@ -3,6 +3,7 @@ import { expect, test, type WebSocket } from '@playwright/test';
 
 import { expectNoBrowserErrors, expectPageContained, observeBrowserErrors, screenshotEvidence } from '../../browser-evidence';
 import { createIsolatedRecoveryTowerFixture, installImportedRuntime, readWalletRuntimeFixture } from '../../wallet/fixtures/wallet-runtime-test-helpers';
+import { WALLET_RECOVERY_FIXTURE_MNEMONIC } from '../../wallet/fixtures/wallet-fixture-identities';
 import { installOpsOwnerMetadata } from '../owner/ops-owner-test-helpers';
 
 const securityIncidentFixtureUrl = '/__app/ops/src/testing/ops-runtime-security-incident-fixture.ts';
@@ -36,12 +37,16 @@ test('Runtime Diagnostics refreshes real active/resolved incidents without copyi
     (window as typeof window & { __XLN_API_BASE_URL__?: string }).__XLN_API_BASE_URL__ = apiUrl;
   }, { towerUrl, apiUrl: new URL(fixture.wsUrl.replace('ws:', 'http:')).origin });
   await openWorkspaceStorageOrigin(page);
-  await installOpsOwnerMetadata(page, { ...fixture, entityId: fixture.recovery.entityId });
+  await installOpsOwnerMetadata(page, {
+    ...fixture,
+    runtimeId: fixture.recovery.runtimeId,
+    entityId: fixture.recovery.entityId,
+  });
   await page.evaluate(() => localStorage.setItem('xln-runtime-adapter-mode', 'embedded'));
   await page.goto('/__app/ops/entity-workspace');
   await page.getByRole('button', { name: 'Owner locked', exact: true }).click();
   const unlock = page.getByRole('form', { name: 'Unlock Runtime owner' });
-  await unlock.getByLabel('Owner wallet seed phrase').fill(fixture.walletSeed);
+  await unlock.getByLabel('Owner wallet seed phrase').fill(WALLET_RECOVERY_FIXTURE_MNEMONIC);
   await unlock.getByRole('button', { name: 'Unlock owner', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Owner unlocked', exact: true })).toBeVisible({ timeout: 60_000 });
   await page.getByRole('button', { name: 'Open Runtime Diagnostics panel', exact: true }).click();
@@ -146,10 +151,13 @@ test('docked directory and solvency read the selected real Runtime and reopen cl
   await expect(page.getByTestId('entity-workspace-shell')).toBeVisible();
   await page.getByRole('button', { name: 'Open Gossip panel' }).click();
   const directory = page.getByTestId('runtime-gossip-panel');
-  await expect(directory).toContainText('2 profiles · 1 hub');
+  const profiles = directory.locator('article');
+  await expect.poll(() => profiles.count()).toBeGreaterThanOrEqual(2);
+  const profileCount = await profiles.count();
+  await expect(directory.locator('header p')).toHaveText(`${profileCount} profiles · 1 hub`);
   const search = page.getByRole('searchbox', { name: 'Search gossip directory' });
   await search.fill(fixture.counterpartyEntityId);
-  await expect(directory.locator('article')).toHaveCount(1);
+  await expect(profiles).toHaveCount(1);
   await expect(directory.getByRole('link', { name: 'Address →' })).toHaveAttribute('href', `/address/${fixture.counterpartyEntityId}`);
   // The profile-command test can rename this Entity between viewport runs.
   // The exact Entity ID above, not its editable label, selects the copy target.
@@ -160,7 +168,7 @@ test('docked directory and solvency read the selected real Runtime and reopen cl
   await search.fill('no-such-profile');
   await expect(page.getByTestId('runtime-gossip-empty')).toBeVisible();
   await search.fill('');
-  await expect(directory.locator('article')).toHaveCount(2);
+  await expect(profiles).toHaveCount(profileCount);
   await expectPageContained(page);
   await screenshotEvidence(page, testInfo, 'ops-workspace-gossip');
 

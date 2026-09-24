@@ -1,6 +1,6 @@
 import { useEffect, useState, useSyncExternalStore } from 'react';
 import type { RuntimeAdapter } from '@xln/core/api/public/runtime-module';
-import { AccountDropdown } from '../../../../../packages/ui/src/account/account-dropdown';
+import { AccountDropdown } from '../../../../../packages/ui/src/account/dropdown/account-dropdown';
 import { WalletAccountDropdownSource } from './wallet-account-dropdown-source';
 
 export function WalletAccountDropdown({ adapter, entityId, onSelect }: Readonly<{

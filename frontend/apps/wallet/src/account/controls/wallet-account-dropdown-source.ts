@@ -1,5 +1,5 @@
 import type { RuntimeAdapter, RuntimeAdapterViewFrame } from '@xln/core/api/public/runtime-module';
-import type { AccountDropdownItem } from '../../../../../packages/ui/src/account/account-dropdown-model';
+import type { AccountDropdownItem } from '../../../../../packages/ui/src/account/dropdown/account-dropdown-model';
 import { RuntimeQueryObserver, type RuntimeQuerySnapshot } from '../../../../../packages/runtime-client/src/runtime/query/runtime-query-observer';
 import { createWalletRuntimeQueryClient } from '../../runtime/wallet-runtime-read-boundary';
 
@@ -44,7 +44,7 @@ export class WalletAccountDropdownSource {
       requireCurrent();
       frame = appendAccountDropdownPage(frame, next);
     }
-    const bridge = await import('../../../../../bridges/wallet/wallet-canonical-hub-discovery');
+    const bridge = await import('../../../../../bridges/wallet/canonical/wallet-canonical-hub-discovery');
     requireCurrent();
     const items = await bridge.readCanonicalAccountDropdown(this.adapter, this.entityId, frame);
     requireCurrent();

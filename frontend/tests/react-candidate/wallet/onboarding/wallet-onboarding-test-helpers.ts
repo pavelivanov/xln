@@ -1,5 +1,6 @@
 import { expect, type Page } from '@playwright/test';
 import { readWalletRuntimeFixture } from '../fixtures/wallet-runtime-test-helpers';
+import { WALLET_RECOVERY_FIXTURE_MNEMONIC } from '../fixtures/wallet-fixture-identities';
 
 export const finishOpenedWalletSetup = async (page: Page): Promise<void> => {
   const form = page.getByRole('form', { name: 'Configure account' });
@@ -9,8 +10,6 @@ export const finishOpenedWalletSetup = async (page: Page): Promise<void> => {
   await form.getByRole('button', { name: 'Start', exact: true }).click();
   await expect(page.getByRole('link', { name: 'Continue to assets' })).toBeVisible({ timeout: 30_000 });
 };
-
-const MNEMONIC = 'test test test test test test test test test test test junk';
 
 export async function restoreLocalWallet(page: Page, backup?: 'hub-discovery' | 'settlement') {
   const fixture = await readWalletRuntimeFixture(page);
@@ -33,10 +32,10 @@ export async function restoreLocalWallet(page: Page, backup?: 'hub-discovery' | 
   await page.goto('/app?setup=1', { waitUntil: 'domcontentloaded' });
   await expect(page.locator('.wallet-shell-runtime-state')).toHaveText('Local Runtime', { timeout: 90_000 });
   await page.getByRole('tab', { name: /Mnemonic/ }).click();
-  await page.getByRole('textbox', { name: /^Seed phrase/ }).fill(MNEMONIC);
+  await page.getByRole('textbox', { name: /^Seed phrase/ }).fill(WALLET_RECOVERY_FIXTURE_MNEMONIC);
   await page.getByRole('button', { name: 'Review identity inputs' }).click();
   await page.getByRole('button', { name: 'Verify recovery' }).click();
-  await page.getByRole('textbox', { name: /^Seed phrase/ }).fill(MNEMONIC);
+  await page.getByRole('textbox', { name: /^Seed phrase/ }).fill(WALLET_RECOVERY_FIXTURE_MNEMONIC);
   await page.getByRole('button', { name: 'Verify recovered wallet' }).click();
   if (backup) {
     const choosing = page.waitForEvent('filechooser');

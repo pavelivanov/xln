@@ -1,6 +1,7 @@
 import { getBytes, hexlify, type TransactionRequest } from 'ethers';
 
 import type { JAdapter } from '../../../../core/jurisdiction/adapter/types';
+import { computeCanonicalReceiptsRoot } from '../../../../core/jurisdiction/machine/receipt-codec';
 import type { BrowserVMState } from '../../../../core/runtime/types';
 export type BrowserVmRpcFixture = Readonly<{
   chainAdapter: JAdapter;
@@ -27,6 +28,7 @@ export const createBrowserVmRpcFixture = async (rpcPort: number): Promise<Browse
   }
   const { createJAdapter } = await import('../../../../core/jurisdiction/adapter/kernel/factory');
   const chainId = 31_337;
+  const emptyReceiptsRoot = await computeCanonicalReceiptsRoot([]);
   const chainAdapter = await createJAdapter({ mode: 'browservm', chainId });
   if (!chainAdapter.getBrowserVM()) throw new Error('WALLET_RECOVERY_FIXTURE_BROWSERVM_REQUIRED');
   const initialBrowserVmState = await chainAdapter.dumpState();
@@ -136,7 +138,8 @@ export const createBrowserVmRpcFixture = async (rpcPort: number): Promise<Browse
     if (method === 'eth_getBlockByNumber') {
       const blockNumber = blockHeight(params[0]);
       const blockReceipts = receiptsAt(blockNumber);
-      const receiptsRoot = receiptRoots.get(blockNumber);
+      const receiptsRoot = receiptRoots.get(blockNumber)
+        ?? (blockReceipts.length === 0 ? emptyReceiptsRoot : null);
       if (!receiptsRoot) throw new Error(`WALLET_RECOVERY_FIXTURE_RECEIPT_ROOT_MISSING:${blockNumber}`);
       const zeroHash = `0x${'0'.repeat(64)}`;
       return {

@@ -8,7 +8,7 @@ import { useWorkspaceEnvironment } from '../session/use-workspace-environment';
 import { loadWorkspaceScenario, pauseWorkspacePlayback, returnWorkspaceLive, workspaceNetwork } from '../session/ops-workspace-playback';
 import { OpsSolvencyPanel } from './ops-solvency-panel';
 import { OpsArchitectLiveControls } from '../architect/ops-architect-live-controls';
-import { networkMachineRuntimeOperations } from '../../../../../bridges/runtime/network-machine-runtime-store';
+import { networkMachineRuntimeOperations } from '../../../../../bridges/runtime/network/network-machine-runtime-store';
 import { useWorkspaceTranslation } from '../../../../../bridges/workspace-localization-react';
 
 export function OpsArchitectPanel() {

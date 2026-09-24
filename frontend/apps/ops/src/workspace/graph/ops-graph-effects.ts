@@ -5,10 +5,10 @@ import {
   createBroadcastRayMesh,
   createBroadcastRippleMesh,
   createDirectionalLightningMesh,
-} from '../../../../../packages/ui/src/graph/graph3d-visual-effects';
-import { disposeGraphObject3D } from '../../../../../packages/ui/src/graph/graph3d-renderer';
+} from '../../../../../packages/ui/src/graph/three/visuals/graph3d-visual-effects';
+import { disposeGraphObject3D } from '../../../../../packages/ui/src/graph/three/core/graph3d-renderer';
 import { graph3dSceneTransactionOf, type Graph3dSceneTransaction } from '../../../../../packages/runtime-client/src/graph/graph3d-scene-input';
-import type { GraphEntityVisualData } from '../../../../../packages/ui/src/graph/graph3d-entity-visuals';
+import type { GraphEntityVisualData } from '../../../../../packages/ui/src/graph/three/visuals/graph3d-entity-visuals';
 import type { ViewSettings } from '../../../../../packages/runtime-client/src/panels/settings-panel-view';
 import type { OpsGraphConnection } from './ops-graph-world';
 

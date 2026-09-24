@@ -21,13 +21,15 @@ describe('local runtime Entity selection', () => {
     })).toBe(expected);
   });
 
-  test('UserModePanel wires the exact selector and has no first-replica inference', () => {
-    const source = readFileSync('frontend/src/lib/view/UserModePanel.svelte', 'utf8');
-    expect(source).toContain('resolveActiveLocalReplica(currentFrame.state.eReplicas, activeSigner)');
-    expect(source).not.toContain('firstReplicaInFrame');
-    expect(source).toContain('setRuntimeViewActiveEntityId(selectedEntityId);');
-    expect(source).toContain('setRuntimeViewActiveEntityId(restoredEntityId);');
-    expect(source).toContain('setRuntimeViewActiveEntityId(entityId);');
-    expect(source).toContain('void refreshCurrentRuntimeProjection().catch(handleRuntimeProjectionRefreshError)');
+  test('React Wallet binds the projected Entity explicitly and has no first-replica inference', () => {
+    const source = readFileSync('frontend/apps/wallet/src/portfolio/wallet-portfolio-source.ts', 'utf8');
+    const selection = readFileSync('frontend/apps/wallet/src/runtime/wallet-workspace-selection.ts', 'utf8');
+
+    expect(source).toContain('this.selectedEntityId = this.selection.bindRuntime(this.adapter.runtimeId)');
+    expect(source).toContain('this.selection.selectEntity(this.requireAdapter().runtimeId, normalized)');
+    expect(source).toContain('requireWalletWorkspaceEntity(decodeWalletPortfolioProjection');
+    expect(selection).toContain('if (runtimeId !== this.snapshot.runtimeId) this.publish(emptySelection(runtimeId));');
+    expect(selection).toContain('const normalized = normalizeEntityIdForRuntimeView(entityId);');
+    expect(`${source}\n${selection}`).not.toContain('firstReplicaInFrame');
   });
 });

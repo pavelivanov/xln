@@ -33,19 +33,17 @@ describe('React wallet testnet pilot', () => {
     expect(() => createDemoWalletHref('   ')).toThrow('TESTNET_DEMO_LABEL_REQUIRED');
   });
 
-  test('shares disposable identities and the browser reset boundary with Svelte', () => {
+  test('uses shared disposable identities and the canonical browser reset boundary', () => {
     const reactSource = readFileSync(resolve(ROOT, 'frontend/apps/wallet/src/testnet/testnet-page.tsx'), 'utf8');
-    const svelteSource = readFileSync(resolve(ROOT, 'frontend/src/routes/testnet/+page.svelte'), 'utf8');
-    const resetSource = readFileSync(resolve(ROOT, 'frontend/src/lib/utils/control/resetEverything.ts'), 'utf8');
+    const resetSource = readFileSync(resolve(ROOT, 'frontend/packages/browser/src/runtime/session/browser-runtime-reset.ts'), 'utf8');
     expect(reactSource).toContain("from '../../../../packages/ui/src/demo-accounts'");
     expect(reactSource).toContain('resetBrowserRuntimeData');
     expect(reactSource).toContain('publishBrowserHardResetRequest');
     expect(reactSource).toContain('They create no wallet');
     expect(reactSource).not.toContain('Open disposable wallet');
-    expect(svelteSource).toContain('DEMO_ACCOUNTS');
-    expect(svelteSource).toContain("reason: 'testnet-tools'");
-    expect(resetSource).toContain('packages/browser/src/runtime/session/browser-runtime-reset');
-    expect(resetSource).toContain('publishBrowserHardResetRequest');
+    expect(reactSource).toContain("reason: 'testnet-tools'");
+    expect(resetSource).toContain('clearBrowserRuntimeData');
+    expect(resetSource).toContain('window.location.replace(pathname)');
   });
 
   test('tracks the wallet shell and identity capability as implemented', () => {

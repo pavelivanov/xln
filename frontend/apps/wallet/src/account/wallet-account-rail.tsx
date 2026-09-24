@@ -1,6 +1,6 @@
 import { useSyncExternalStore } from 'react';
 import { ACCOUNT_WORKSPACE_TABS, accountWorkspaceTabsForAccounts } from '../../../../packages/runtime-client/src/account-workspace-tabs';
-import { AccountWorkspaceRail } from '../../../../packages/ui/src/account/account-workspace-rail';
+import { AccountWorkspaceRail } from '../../../../packages/ui/src/account/rail/account-workspace-rail';
 import { useWalletNavigation } from '../navigation/wallet-navigation';
 import type { WalletAppRoute } from '../navigation/wallet-navigation-model';
 import type { WalletWorkspaceSelection } from '../runtime/wallet-workspace-selection';
