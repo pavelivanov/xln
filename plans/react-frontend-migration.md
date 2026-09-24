@@ -37,9 +37,11 @@ Viewport project names are `mobile-390x844`, `laptop-1366x900`, `wide-1920x1080`
 
 ## Strict queue
 
-All 18 tasks below are unfinished. Rows T01–T11 close implementation or concrete integration gaps; T12–T16 accept the resulting candidate; T17–T18 perform and verify canonical cutover. No production deployment task is hidden in this queue.
+The 18 tasks below cover implementation, candidate acceptance, canonical
+cutover, and final verification. No production deployment task is hidden in
+this queue.
 
-| ID  | Deliverable                                                                   | Initial state / prerequisite                                            | Receipt |
+| ID  | Deliverable                                                                   | Current state / prerequisite                                            | Receipt |
 | --- | ----------------------------------------------------------------------------- | ----------------------------------------------------------------------- | ------- |
 | T01 | Remove test/tooling dependence on the Svelte deletion set                     | DONE                                                                    | [receipt](../docs/frontend/react-frontend-t01-retirement-rehearsal.md) |
 | T02 | Finish enabled-service and critical Health acceptance; register topology spec | DONE                                                                    | [receipt](../docs/frontend/react-frontend-t02-health-acceptance.md) |
@@ -53,11 +55,11 @@ All 18 tasks below are unfinished. Rows T01–T11 close implementation or concre
 | T10 | Resolve the two intermittent Runtime fixture failures                         | DONE                                                                    | [receipt](../docs/frontend/react-frontend-t10-runtime-fixtures.md) |
 | T11 | Clear remaining root integration failures                                     | DONE                                                                    | [receipt](../docs/frontend/react-frontend-t11-root-integration.md) |
 | T12 | Freeze the accepted version/source and pass the complete web matrix           | DONE                                                                    | [receipt](../docs/frontend/react-frontend-t12-web-acceptance.md) |
-| T13 | Accept immutable artifact, preview and installed npm launcher                 | PARTIAL; exact final testnet write requires explicit authority          | [receipt](../docs/frontend/react-frontend-t13-consumer-acceptance.md) |
+| T13 | Accept immutable artifact, preview and installed npm launcher                 | DONE                                                                    | [receipt](../docs/frontend/react-frontend-t13-consumer-acceptance.md) |
 | T14 | Accept two-release PWA and isolated activation/rollback                       | DONE                                                                    | [receipt](../docs/frontend/react-frontend-t14-pwa-deployment-acceptance.md) |
-| T15 | Accept iOS, Android, desktop, extension and supported WebXR                   | PARTIAL; iOS/extension green, Android/desktop/XR unavailable             | [receipt](../docs/frontend/react-frontend-t15-readiness.md) |
-| T16 | Pass hosted build/distribution CI for those exact inputs                      | WAIT(T13,T15); local 10/10, authorized PR/CI required                   | [readiness](../docs/frontend/react-frontend-t16-hosted-readiness.md) |
-| T17 | Make React canonical and remove Svelte                                        | WAIT(T13,T15,T16); explicit C02 authority                               | [review](../docs/frontend/react-frontend-cutover-review.md) |
+| T15 | Accept owner-approved migration platforms; defer remaining release gates      | DONE                                                                    | [receipt](../docs/frontend/react-frontend-t15-readiness.md) |
+| T16 | Pass hosted build/distribution CI for those exact inputs                      | BLOCKED(hosted PR/CI authority); local 10/10                            | [readiness](../docs/frontend/react-frontend-t16-hosted-readiness.md) |
+| T17 | Make React canonical and remove Svelte                                        | WAIT(T16); explicit C02 authority                                       | [review](../docs/frontend/react-frontend-cutover-review.md) |
 | T18 | Certify the post-cutover source and release                                   | WAIT(T17)                                                               | —       |
 
 An external dependency is closed only by an accepted implementation/result or an explicit owner change to the requirement. A missing environment, disabled capability, skipped case or passing retry does not close it. Request the specific pending decision once while continuing READY work; do not create another planning phase.
@@ -203,25 +205,27 @@ Use T12's explicit release directory. Do not recreate `packages/frontend-release
 
 **Exit:** both lifecycle runners pass without changed release bytes. This is isolated verification, not production activation; deployed rollback bytes and edge/SSH/TLS belong to the later C03 release.
 
-### T15 — Close supported platform acceptance
+### T15 — Close migration platform acceptance
 
 Check device/toolchain access early while other tasks run; do not spend implementation turns retrying an unavailable host. Build from T13's exact verified release via `bun scripts/native/build-platforms.ts <target> --frontend-release <release-directory>`; respect signing/package checks. Sync/copy alone does not satisfy launch acceptance.
 
 - [x] **iOS:** actual copied-shell build/install/launch, deep link, background/resume/reload and persisted storage.
-- [ ] **Android:** the same on a configured SDK/emulator/device.
-- [ ] **Desktop:** actual package launch, routes/deep links/CSP, storage, close/reopen and cleanup.
 - [x] **Extension:** final packaged ZIP identity, action opens Wallet, preferences/reload/browser reopen at three viewports; use `frontend/config/playwright/playwright.packaged.config.ts` with explicit `PLAYWRIGHT_PACKAGED_DIRECTORY` and `PLAYWRIGHT_STAGING_DIRECTORY`.
-- [ ] **Supported WebXR:** headset enter/exit, controller select/drag/double-tap/scale, close/session teardown and restored desktop resources.
 
-Run `bun test native/__tests__/native-build-options.test.ts native/__tests__/wallet-candidate-staging.test.ts`; verify payload identity before and after platform tools. **Exit:** every checkbox has final-byte evidence or an explicit owner scope change. Missing hardware and desktop “XR unsupported” are not passes.
+Owner decision on 2026-09-25: Android, signed/notarized desktop, and headset
+WebXR are post-migration release gates. They are not T15/T16/T17/T18 blockers,
+are not claimed as passing, and retain their full launch/lifecycle requirements
+in the T15 receipt.
+
+Run `bun test native/__tests__/native-build-options.test.ts native/__tests__/wallet-candidate-staging.test.ts`; verify payload identity before and after platform tools. **Exit:** iOS and Chrome extension have final-byte evidence, and every deferred platform gate is explicitly retained without a false pass.
 
 ### T16 — Verify hosted distribution
 
 **Files:** `.github/workflows/{build-and-test,distribution-release}.yml`, `scripts/release/`, `scripts/native/`, `packages/npm/xlnfinance/`.
 
-1. Run hosted checks against the reviewed source/version through the authorized PR/CI workflow. Transfer one verified frontend release from producer to npm/macOS/extension/Android consumers; record identical release identity and installed-package corruption rejection before signing.
+1. Run hosted checks against the reviewed source/version through the authorized PR/CI workflow. Transfer one verified frontend release from the producer to npm and Chrome extension consumers; record identical release identity and installed-package corruption rejection. Existing Android and desktop artifact-integrity paths remain intact, but their launch/signing acceptance is deferred by the T15 owner decision.
 2. Resolve the actual release-gate expectation mismatch if still present; preserve the checks it represents. Run `bun test tests/release-integrity/release-gate-order.test.ts tests/frontend/tooling/build/frontend-distribution-consumers.test.ts` before the affected hosted rerun.
-3. Record hosted run URLs, source identity and artifact IDs in the cutover review. No static YAML-only or local-only acceptance.
+3. Record hosted run URLs, source identity and artifact IDs in the cutover review. No static YAML-only or local-only acceptance. Android launch, signed/notarized desktop launch, and headset WebXR are not T16 exit conditions.
 
 **Exit:** required hosted jobs pass on the accepted inputs. Publishing packages or production deployment still requires release authority and is not implied by this task.
 
@@ -238,8 +242,8 @@ After T01–T16, present the refreshed command/test patches, exact deletion list
 ### T18 — Certify the post-cutover result
 
 1. From T17's actual tree, run the now-default frontend `bun run check`, `bun run build`, root `bun run check` and `git diff --check`. Re-run the default 8080 dev lifecycle and explicit-release preview. Any failure belongs to its first failing owner; do not restore a silent legacy fallback.
-2. Assemble/verify the final release. Re-run the complete final-source browser registry; bind T13–T16 consumer/PWA/platform/hosted evidence to these bytes. If inputs changed, rerun affected acceptance; reuse evidence only with demonstrably identical relevant inputs and tested paths. Explicitly test changed default commands even if app bytes stayed identical.
-3. Put one final source/release acceptance record in `docs/frontend/react-frontend-cutover-review.md`. It must identify the canonical command results, absence of Svelte dependencies, every required browser/platform result, hosted run and root pass. No required BLOCKED/WAIT row remains.
+2. Assemble/verify the final release. Re-run the complete final-source browser registry; bind T13–T16 consumer/PWA/migration-platform/hosted evidence to these bytes. If inputs changed, rerun affected acceptance; reuse evidence only with demonstrably identical relevant inputs and tested paths. Explicitly test changed default commands even if app bytes stayed identical. Do not reintroduce Android, signed/notarized desktop, or headset WebXR as migration blockers; retain them as post-migration gates before a release claims those platforms.
+3. Put one final source/release acceptance record in `docs/frontend/react-frontend-cutover-review.md`. It must identify the canonical command results, absence of Svelte dependencies, every required browser and migration-platform result, the deferred platform gates, hosted run and root pass. No required BLOCKED/WAIT row remains.
 
 **Exit:** T01–T18 are DONE with valid evidence (or precisely recorded owner-approved requirement changes), React is canonical and Svelte is retired. Stop migration work. C03 production activation is separate.
 
