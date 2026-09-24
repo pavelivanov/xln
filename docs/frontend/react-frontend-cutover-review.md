@@ -43,9 +43,9 @@ three required viewports, and the unchanged integration candidate passed
 | T13 | DONE. Artifact browser 12/12; preview verifies 492 files; installed offline package dev lifecycle passes; installed testnet package restored the preserved owner, durably committed the authorized empty input at frame 4, restarted at exact head 4, rejected a non-durable frame-5 retry, and reverified the release. `xlnfinance-0.1.32.tgz` SHA-256 is `1df7596524e1ce7022513c0bbe4f1db1afa19656ee001ce81622c788732bc434`. | None. See [T13](react-frontend-t13-consumer-acceptance.md). |
 | T14 | Final release passes PWA update/rollback and isolated deployment activation/rollback. | None; T14 is DONE. See [T14](react-frontend-t14-pwa-deployment-acceptance.md). |
 | T15 | DONE for the owner-approved migration set: iOS lifecycle and the final Chrome extension pass. Extension ZIP SHA-256 is `3d6882c36296df07e555c49e2532da54331d5adffbee01673bd0836fc0e803b8`. | Android, signed/notarized desktop and headset WebXR remain explicit post-migration release gates and are not claimed as passing. See [T15](react-frontend-t15-readiness.md). |
-| T16 | Local release-order/distribution contracts pass 10/10 with 104 assertions. | An authorized hosted PR/CI run must record URLs and artifact identities. See [T16](react-frontend-t16-hosted-readiness.md). |
+| T16 | DONE. Hosted PR [#166](https://github.com/pavelivanov/xln/pull/166) at `53cf726788e737d0851a657d4eb5aaece17bf4fb` passed Frontend Build (1,544 tests / 252 files, including all four distribution-consumer cases), Contracts and Runtime Checks. The release-integrity phase passed 59 tests / 452 assertions including all six release-order cases. | The later broad E2E Runtime phase exposed two reproducible pre-existing protected-core failures and a Bun abort; recorded as unrelated under the frontend override. No publish or deployment occurred. See [T16](react-frontend-t16-hosted-readiness.md). |
 
-T17 therefore remains `WAIT(T16)`. No command or guard patch is
+T17 is now blocked only on explicit C02 authority. No command or guard patch is
 applied, no retirement path is removed, and no C02 or C03 authority is implied
 by this handoff.
 

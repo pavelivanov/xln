@@ -58,8 +58,8 @@ this queue.
 | T13 | Accept immutable artifact, preview and installed npm launcher                 | DONE                                                                    | [receipt](../docs/frontend/react-frontend-t13-consumer-acceptance.md) |
 | T14 | Accept two-release PWA and isolated activation/rollback                       | DONE                                                                    | [receipt](../docs/frontend/react-frontend-t14-pwa-deployment-acceptance.md) |
 | T15 | Accept owner-approved migration platforms; defer remaining release gates      | DONE                                                                    | [receipt](../docs/frontend/react-frontend-t15-readiness.md) |
-| T16 | Pass hosted build/distribution CI for those exact inputs                      | BLOCKED(hosted PR/CI authority); local 10/10                            | [readiness](../docs/frontend/react-frontend-t16-hosted-readiness.md) |
-| T17 | Make React canonical and remove Svelte                                        | WAIT(T16); explicit C02 authority                                       | [review](../docs/frontend/react-frontend-cutover-review.md) |
+| T16 | Pass hosted build/distribution CI for those exact inputs                      | DONE                                                                    | [receipt](../docs/frontend/react-frontend-t16-hosted-readiness.md) |
+| T17 | Make React canonical and remove Svelte                                        | BLOCKED(explicit C02 authority)                                         | [review](../docs/frontend/react-frontend-cutover-review.md) |
 | T18 | Certify the post-cutover source and release                                   | WAIT(T17)                                                               | —       |
 
 An external dependency is closed only by an accepted implementation/result or an explicit owner change to the requirement. A missing environment, disabled capability, skipped case or passing retry does not close it. Request the specific pending decision once while continuing READY work; do not create another planning phase.
