@@ -40,12 +40,12 @@ three required viewports, and the unchanged integration candidate passed
 
 | Task | Current evidence | Remaining boundary |
 | --- | --- | --- |
-| T13 | Artifact browser 12/12; preview verifies 492 files; installed offline package dev lifecycle and restart pass. `xlnfinance-0.1.32.tgz` SHA-256 is `1df7596524e1ce7022513c0bbe4f1db1afa19656ee001ce81622c788732bc434`. | The exact installed package still needs the explicitly authorized external testnet restore/write/restart lifecycle. See [T13](react-frontend-t13-consumer-acceptance.md). |
+| T13 | DONE. Artifact browser 12/12; preview verifies 492 files; installed offline package dev lifecycle passes; installed testnet package restored the preserved owner, durably committed the authorized empty input at frame 4, restarted at exact head 4, rejected a non-durable frame-5 retry, and reverified the release. `xlnfinance-0.1.32.tgz` SHA-256 is `1df7596524e1ce7022513c0bbe4f1db1afa19656ee001ce81622c788732bc434`. | None. See [T13](react-frontend-t13-consumer-acceptance.md). |
 | T14 | Final release passes PWA update/rollback and isolated deployment activation/rollback. | None; T14 is DONE. See [T14](react-frontend-t14-pwa-deployment-acceptance.md). |
-| T15 | iOS lifecycle and the final Chrome extension pass. Extension ZIP SHA-256 is `3d6882c36296df07e555c49e2532da54331d5adffbee01673bd0836fc0e803b8`. | Android, signed/notarized desktop and headset WebXR need their environments or explicit owner-approved scope changes. See [T15](react-frontend-t15-readiness.md). |
+| T15 | DONE for the owner-approved migration set: iOS lifecycle and the final Chrome extension pass. Extension ZIP SHA-256 is `3d6882c36296df07e555c49e2532da54331d5adffbee01673bd0836fc0e803b8`. | Android, signed/notarized desktop and headset WebXR remain explicit post-migration release gates and are not claimed as passing. See [T15](react-frontend-t15-readiness.md). |
 | T16 | Local release-order/distribution contracts pass 10/10 with 104 assertions. | An authorized hosted PR/CI run must record URLs and artifact identities. See [T16](react-frontend-t16-hosted-readiness.md). |
 
-T17 therefore remains `WAIT(T13,T15,T16)`. No command or guard patch is
+T17 therefore remains `WAIT(T16)`. No command or guard patch is
 applied, no retirement path is removed, and no C02 or C03 authority is implied
 by this handoff.
 
