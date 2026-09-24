@@ -86,7 +86,7 @@ test('quorum evidence supports filtering and selection without browser errors', 
 
 test('entity workspace tabs follow canonical hash routes', { tag: '@functional' }, async ({ page }, testInfo) => {
   const errors = observeBrowserErrors(page);
-  await page.goto('/__app/ops/entity-workspace#settings/network', { waitUntil: 'networkidle' });
+  await page.goto('/__app/ops/entity-workspace#settings/network', { waitUntil: 'domcontentloaded' });
   await expect(page.getByTestId('entity-workspace-shell')).toHaveAttribute('data-active-tab', 'settings');
   await expect(page.getByTestId('entity-workspace-tab-settings')).toHaveAttribute('aria-current', 'page');
   await expect(page.getByTestId('entity-workspace-stage').getByRole('heading')).toHaveText('Settings');

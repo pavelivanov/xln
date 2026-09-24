@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { RUNTIME_IO_ALL_CATEGORIES, RUNTIME_IO_ALL_LEVELS, RUNTIME_IO_DEFAULT_CATEGORIES, RUNTIME_IO_DEFAULT_LEVELS, filterRuntimeIoLogs, formatBigInt, mapToArray, runtimeIoLevelColors, sumRuntimeIoCollateral, sumRuntimeIoReserves, type LogCategory, type LogLevel } from '../../../../../packages/runtime-client/src/runtime/runtime-io-panel-view';
+import { RUNTIME_IO_ALL_CATEGORIES, RUNTIME_IO_ALL_LEVELS, RUNTIME_IO_DEFAULT_CATEGORIES, RUNTIME_IO_DEFAULT_LEVELS, filterRuntimeIoLogs, formatBigInt, mapToArray, runtimeIoLevelColors, sumRuntimeIoCollateral, sumRuntimeIoReserves, type LogCategory, type LogLevel } from '../../../../../packages/runtime-client/src/runtime/view/runtime-io-panel-view';
 import { useWorkspaceEnvironment } from '../session/use-workspace-environment';
 import { useWorkspaceTranslation } from '../../../../../bridges/workspace-localization-react';
 

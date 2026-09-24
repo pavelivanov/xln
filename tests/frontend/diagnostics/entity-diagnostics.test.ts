@@ -1,59 +1,22 @@
 import { expect, test } from 'bun:test';
 import { readFileSync } from 'node:fs';
 
-const diagnosticFiles = [
-  {
-    path: 'frontend/src/lib/components/Entity/payments/ActivityHistoryPanel.svelte',
-    importLine: "import { errorLog } from '../../../../../packages/browser/src/logging/error-log-store';",
-    logLine: "errorLog.log('Activity history projection read failed', 'Activity History'",
-  },
-  {
-    path: 'frontend/src/lib/components/Entity/account/ui/CollateralForm.svelte',
-    importLine: "import { errorLog } from '../../../../../../packages/browser/src/logging/error-log-store';",
-    logLine: "errorLog.log('Collateral request failed', 'Collateral Form'",
-  },
-  {
-    path: 'frontend/src/lib/components/Entity/account/ui/CreditForm.svelte',
-    importLine: "import { errorLog } from '../../../../../../packages/browser/src/logging/error-log-store';",
-    logLine: "errorLog.log('Credit action failed', 'Credit Form'",
-  },
-  {
-    path: 'frontend/src/lib/components/Entity/workspace/shell/EntitySettingsProjectionPanel.svelte',
-    importLine: "import { errorLog } from '../../../../../../packages/browser/src/logging/error-log-store';",
-    logLine: "errorLog.log('Entity profile update failed', 'Entity Settings'",
-  },
-  {
-    path: 'frontend/src/lib/components/Entity/onboarding/formation/FormationPanel.svelte',
-    importLine: "import { errorLog } from '../../../../../../packages/browser/src/logging/error-log-store';",
-    logLine: "errorLog.log('Entity creation failed', 'Formation Panel'",
-  },
-  {
-    path: 'frontend/src/lib/components/Entity/onboarding/HubDiscoveryPanel.svelte',
-    importLine: "import { errorLog } from '../../../../../packages/browser/src/logging/error-log-store';",
-    logLine: "errorLog.log('Hub connection failed', 'Hub Discovery'",
-  },
-  {
-    path: 'frontend/src/lib/components/Entity/payments/PaymentPanel.svelte',
-    importLine: "import { errorLog } from '../../../../../packages/browser/src/logging/error-log-store';",
-    logLine: "errorLog.log(message, 'Payment Panel'",
-  },
-  {
-    path: 'frontend/src/lib/components/Entity/payments/SettlementPanel.svelte',
-    importLine: "import { errorLog } from '../../../../../packages/browser/src/logging/error-log-store';",
-    logLine: "errorLog.log(message, 'Settlement Panel'",
-  },
-  {
-    path: 'frontend/src/lib/components/Entity/swap/SwapPanel.svelte',
-    importLine: "import { errorLog } from '../../../../../packages/browser/src/logging/error-log-store';",
-    logLine: "errorLog.log(message, 'Swap Panel'",
-  },
+const diagnosticSurfaces = [
+  'frontend/packages/ui/src/entity/entity-workspace-shell.tsx',
+  'frontend/packages/ui/src/entity/profile/entity-workspace-profile-editor.tsx',
+  'frontend/apps/wallet/src/manage/wallet-manage.tsx',
+  'frontend/apps/wallet/src/onboarding/wallet-formation.tsx',
+  'frontend/apps/wallet/src/onboarding/wallet-hub-discovery.tsx',
+  'frontend/apps/wallet/src/payments/wallet-payments.tsx',
+  'frontend/apps/wallet/src/payments/wallet-payment-operations.tsx',
+  'frontend/apps/wallet/src/payments/wallet-settlement-approvals.tsx',
+  'frontend/apps/wallet/src/markets/wallet-market-pane.tsx',
 ] as const;
 
-test('entity action surfaces persist diagnostics instead of raw console output', () => {
-  for (const file of diagnosticFiles) {
-    const source = readFileSync(file.path, 'utf8');
-    expect(source).toContain(file.importLine);
-    expect(source).toContain(file.logLine);
+test('React Entity action surfaces render diagnostic state instead of raw console output', () => {
+  for (const path of diagnosticSurfaces) {
+    const source = readFileSync(path, 'utf8');
+    expect(source).toMatch(/role=(?:"alert"|\{[^}\n]*'alert')/);
     expect(source).not.toContain('console.error');
     expect(source).not.toContain('console.warn');
     expect(source).not.toContain('console.info');
@@ -61,23 +24,26 @@ test('entity action surfaces persist diagnostics instead of raw console output',
   }
 });
 
-test('payment and settlement panels persist every critical action failure path', () => {
-  const paymentSource = readFileSync('frontend/src/lib/components/Entity/payments/PaymentPanel.svelte', 'utf8');
-  expect(paymentSource).toContain("'Payment runtime graph route lookup failed'");
-  expect(paymentSource).toContain("'Payment route finding failed'");
-  expect(paymentSource).toContain("'Payment submission failed'");
+test('payment and settlement sources retain every command failure in observable state', () => {
+  const paymentSource = readFileSync('frontend/apps/wallet/src/payments/wallet-payment-source.ts', 'utf8');
+  const payments = readFileSync('frontend/apps/wallet/src/payments/wallet-payments.tsx', 'utf8');
+  const operations = readFileSync('frontend/apps/wallet/src/payments/wallet-payment-operations.tsx', 'utf8');
+  const approvals = readFileSync('frontend/apps/wallet/src/payments/wallet-settlement-approvals.tsx', 'utf8');
 
-  const settlementSource = readFileSync('frontend/src/lib/components/Entity/payments/SettlementPanel.svelte', 'utf8');
-  expect(settlementSource).toContain("'Settlement batch clear failed'");
-  expect(settlementSource).toContain("'On-J batch broadcast failed'");
-  expect(settlementSource).toContain("'On-J batch rebroadcast failed'");
-  expect(settlementSource).toContain("'On-J transfer action failed'");
-  expect(settlementSource).toContain("'Settlement auto execute into draft failed'");
+  expect(paymentSource).toContain("status: 'error', message: walletRuntimeReadErrorMessage(error)");
+  expect(paymentSource).toContain("quote: { status: 'error', message: walletRuntimeReadErrorMessage(error), routes: [] }");
+  expect(paymentSource).toContain('this.settlementExecutionKeys.delete(executionKey);');
+  expect(payments).toContain('role="alert"');
+  expect(operations).toContain('setError(failure instanceof Error ? failure.message : String(failure))');
+  expect(approvals).toContain('setError(failure instanceof Error ? failure.message : String(failure))');
 });
 
-test('swap panel persists every critical action failure path', () => {
-  const swapSource = readFileSync('frontend/src/lib/components/Entity/swap/SwapPanel.svelte', 'utf8');
-  expect(swapSource).toContain("'Swap offer placement failed'");
-  expect(swapSource).toContain("'Swap cancel request failed'");
-  expect(swapSource).toContain("'Cross-j swap clear request failed'");
+test('market order placement and both cancel paths surface failures', () => {
+  const market = readFileSync('frontend/apps/wallet/src/markets/wallet-market-pane.tsx', 'utf8');
+
+  expect(market).toContain('await source.submitOrder({');
+  expect(market).toContain('await source.cancelOrder(offerId);');
+  expect(market).toContain('await source.cancelCrossOrder(orderId);');
+  expect(market.match(/setError\(cause instanceof Error \? cause\.message : String\(cause\)\)/g)).toHaveLength(4);
+  expect(market).toContain('{error ? <p className="wallet-market-error" role="alert">{error}</p> : null}');
 });

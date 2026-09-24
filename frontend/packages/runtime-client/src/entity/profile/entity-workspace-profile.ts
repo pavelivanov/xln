@@ -2,7 +2,7 @@ import {
   requireBoolean,
   requireUnknownRecord,
 } from '../../boundary';
-import type { EntityWorkspaceContext } from '../entity-workspace-context';
+import type { EntityWorkspaceContext } from '../workspace/entity-workspace-context';
 
 type EmptyEntityWorkspaceProfile = Readonly<{
   status: 'empty';

@@ -19,7 +19,7 @@ import {
   parseAssistantChatRequest,
   sanitizeAssistantCatalog,
 } from '../../core/api/server/assistant/input';
-import { normalizeImportedUiSettings } from '../../frontend/packages/browser/src/ui-style';
+import { normalizeImportedUiSettings } from '../../frontend/packages/browser/src/preferences/ui-style';
 
 const desktop = { width: 1440, height: 900 };
 const phone = { width: 393, height: 852, insetTop: 47, insetBottom: 34 };

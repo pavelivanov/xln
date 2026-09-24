@@ -4,7 +4,7 @@ import {
   type WalletRuntimeOpeningExecutionInput,
 } from '../../packages/browser/src/runtime/wallet-runtime-opening';
 import type { VaultUnlockDurationMs } from '../../packages/browser/src/vault/vault-protection';
-import { buildRemoteRuntimeRecoveryPeerSources } from '../runtime/remote-runtime-validation';
+import { buildRemoteRuntimeRecoveryPeerSources } from '../runtime/remote/remote-runtime-validation';
 import { vaultOperations } from './vault-store';
 import {
   discoverRuntimeRecoveryCandidates,
@@ -12,7 +12,7 @@ import {
   type Runtime,
   type RuntimeRecoveryCandidate,
   type RuntimeRecoveryDiscoveryResult,
-} from './vault-recovery';
+} from './recovery/vault-recovery';
 
 export type CanonicalWalletRuntimeOpeningInput = WalletRuntimeOpeningExecutionInput<
   RuntimeRecoveryCandidate,

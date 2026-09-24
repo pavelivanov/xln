@@ -167,19 +167,19 @@ describe('browser wallet deploy version', () => {
     await expect(storageFailure.check()).rejects.toThrow('STORAGE_FAILED');
   });
 
-  test('keeps concrete fetch, logging, and reset wiring in the Svelte shell', () => {
+  test('keeps concrete fetch and redacted failure wiring in the React wallet diagnostics', () => {
     const boundary = readFileSync(
       'frontend/packages/browser/src/wallet-deploy-version.ts',
       'utf8',
     );
-    const layout = readFileSync('frontend/src/routes/app/+layout.svelte', 'utf8');
+    const diagnostics = readFileSync('frontend/apps/wallet/src/diagnostics/wallet-diagnostics.tsx', 'utf8');
 
     expect(boundary).not.toContain('svelte');
     expect(boundary).not.toContain('../../../../core');
-    expect(layout).toContain('new WalletDeployVersionCoordinator({');
-    expect(layout).toContain('readCurrentPayload: fetchCurrentDeployVersionPayload');
-    expect(layout).toContain("reason: 'deploy-version-change-testnet'");
-    expect(layout).toContain('await requireWalletDeployVersion().refreshStoredVersion()');
+    expect(diagnostics).toContain('await fetchCurrentDeployVersion(request.signal)');
+    expect(diagnostics).toContain("cache: 'no-store'");
+    expect(diagnostics).toContain('unavailableWalletDeployVersionDiagnostic(stored.value, error)');
+    expect(diagnostics).toContain("role={state.release.status === 'unavailable' || state.release.status === 'changed' ? 'alert' : undefined}");
     expect(existsSync('frontend/src/lib/utils/deployVersionPolicy.ts')).toBe(false);
   });
 });

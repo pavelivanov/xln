@@ -70,6 +70,8 @@ const EXCLUDED_REPOSITORY_PATHS: ReadonlySet<string> = new Set([
   'jurisdictions/typechain-types',
   'packages/npm/xlnfinance/app',
   'packages/npm/xlnfinance/dist',
+  // Browser evidence, build logs and retained migration fixtures are generated outputs.
+  'output',
   'reports',
   'ui',
 ]);
@@ -87,7 +89,6 @@ export const FOLDER_WIDTH_DEBT: Readonly<Record<string, number>> = {
   'core/rscore/ts-worker': 13,
   'core/scripts/e2e/harness': 11,
   'core/scripts/operations/hlt': 12,
-  'frontend/src/lib/stores': 11,
   'jurisdictions/contracts': 16,
   'rscore/crates/entity-kernel/src': 12,
   'rscore/crates/entity-kernel/src/consensus': 11,

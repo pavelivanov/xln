@@ -98,16 +98,14 @@ describe('React docs pilot', () => {
     expect(requests.every(({ init }) => init.cache === 'no-store')).toBe(true);
   });
 
-  test('keeps Svelte and React on one catalog, link, and sanitizer model', () => {
+  test('keeps the React reader on the shared catalog, link, and sanitizer model', () => {
     const reactSource = readFileSync(resolve(ROOT, 'frontend/apps/docs/src/docs-app.tsx'), 'utf8');
     const readerSource = readFileSync(resolve(ROOT, 'frontend/apps/docs/src/docs-reader.tsx'), 'utf8');
-    const svelteSource = readFileSync(resolve(ROOT, 'frontend/src/lib/components/Views/DocsView.svelte'), 'utf8');
     const modelSource = readFileSync(resolve(ROOT, 'frontend/packages/ui/src/content/docs-page-model.ts'), 'utf8');
     expect(reactSource).toContain("from '../../../packages/ui/src/content/docs-page-model'");
     expect(reactSource).toContain('AbortController');
     expect(readerSource).toContain('dangerouslySetInnerHTML');
-    expect(svelteSource).toContain("from '$lib/docs/docs-page-model'");
-    expect(svelteSource).not.toContain('const decodeDocsManifest');
+    expect(reactSource).not.toContain('const decodeDocsManifest');
     expect(modelSource).toContain('sanitizeRenderedHtml');
   });
 });

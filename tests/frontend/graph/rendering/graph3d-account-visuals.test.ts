@@ -8,7 +8,7 @@ import {
   buildGraphAccountVisuals,
   createAccountMempoolBoxes,
   type GraphAccountBarRenderRequest,
-} from '../../../../frontend/packages/ui/src/graph/graph3d-account-visuals';
+} from '../../../../frontend/packages/ui/src/graph/three/visuals/graph3d-account-visuals';
 import { createAccountBars } from '../../../../frontend/packages/ui/src/graph/account-bar-renderer';
 
 const createDelta = (tokenId: number): Delta => ({
@@ -209,8 +209,8 @@ describe('Graph3D shared Account visuals', () => {
   });
 
   test('moves Account visual orchestration while keeping financial bar derivation canonical', () => {
-    const shared = readFileSync('frontend/packages/ui/src/graph/graph3d-account-visuals.ts', 'utf8');
-    const retained = readFileSync('frontend/packages/ui/src/graph/graph3d-visuals.ts', 'utf8');
+    const shared = readFileSync('frontend/packages/ui/src/graph/three/visuals/graph3d-account-visuals.ts', 'utf8');
+    const retained = readFileSync('frontend/packages/ui/src/graph/three/visuals/graph3d-visuals.ts', 'utf8');
     const canonicalBars = readFileSync('frontend/packages/ui/src/graph/account-bar-renderer.ts', 'utf8');
 
     expect(shared).toContain('export function buildGraphAccountVisuals');

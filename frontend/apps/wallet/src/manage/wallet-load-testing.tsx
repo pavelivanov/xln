@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import type { WalletAccountContext } from '../../../../bridges/wallet/wallet-canonical-account-context';
+import type { WalletAccountContext } from '../../../../bridges/wallet/canonical/wallet-canonical-account-context';
 import { createLoadTestingController } from '../../../../bridges/wallet/load-testing-controller';
 import { LoadTestScheduler, type LoadTestSchedulerSnapshot } from '../../../../packages/browser/src/testing/load-test-scheduler';
 import type { WalletPaymentSource } from '../payments/wallet-payment-source';

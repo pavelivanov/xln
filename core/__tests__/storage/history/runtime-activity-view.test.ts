@@ -158,7 +158,7 @@ describe('disposable Runtime activity view', () => {
         const full = await readPersistedRuntimeActivityPage(env, query);
         expect(updated.events).toEqual(full.events);
         expect(updated.fromHeight).toBe(full.fromHeight);
-        expect(updated.nextBeforeHeight).toBe(full.nextBeforeHeight);
+        expect(updated.nextCursor).toBe(full.nextCursor);
       }
       expect(initial.toHeight).toBe(2);
       expect(queries.map(query => query.scanLimit)).toEqual([3, 1, 1, 1, 1]);
@@ -361,6 +361,60 @@ describe('disposable Runtime activity view', () => {
 
     expect(await appendRuntimeActivityViewFrame(env, frame, [])).toBe('idempotent');
     expect((await readRuntimeActivityViewStatus(env))?.latestHeight).toBe(3);
+
+    await closeRuntimeDb(env);
+    await closeInfraDb(env);
+    cleanup(runtimeId);
+  });
+
+  test('pages every ordered event from one overfull frame without gaps or duplicates', async () => {
+    const { env, runtimeId } = await createStoredRuntime('activity-overfull-frame');
+    const entityId = `0x${'ab'.repeat(32)}`;
+    env.state.height = 2;
+    env.state.timestamp = 2_000;
+    await saveEnvToDB(env, {
+      runtimeTxs: [],
+      entityInputs: [{
+        entityId,
+        signerId: 'fixture-signer',
+        entityTxs: Array.from({ length: 23 }, (_, index) => ({
+          type: 'chatMessage' as const,
+          data: { message: `activity-${index}`, timestamp: 2_000 },
+        })),
+      }],
+    }, [], new Map());
+
+    const expectedIds = (await readPersistedRuntimeActivityPage(env, {
+      entityId,
+      limit: 500,
+      scanLimit: 100,
+    })).events.map(event => event.id);
+    const ids: string[] = [];
+    let cursor: string | undefined;
+    let pages = 0;
+    do {
+      const page = await readPersistedRuntimeActivityPage(env, {
+        entityId,
+        limit: 5,
+        scanLimit: 100,
+        ...(cursor ? { cursor } : {}),
+      });
+      expect(page.cursor).toBe(cursor ?? null);
+      ids.push(...page.events.map(event => event.id));
+      cursor = page.nextCursor ?? undefined;
+      pages += 1;
+    } while (cursor);
+
+    expect(pages).toBe(5);
+    expect(ids).toHaveLength(23);
+    expect(new Set(ids).size).toBe(23);
+    expect(ids).toEqual(expectedIds);
+    const first = await readPersistedRuntimeActivityPage(env, { entityId, limit: 5 });
+    await expect(readPersistedRuntimeActivityPage(env, {
+      entityId: `0x${'cd'.repeat(32)}`,
+      limit: 5,
+      cursor: first.nextCursor ?? '',
+    })).rejects.toThrow('RUNTIME_ACTIVITY_CURSOR_CONTEXT_MISMATCH');
 
     await closeRuntimeDb(env);
     await closeInfraDb(env);

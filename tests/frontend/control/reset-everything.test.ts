@@ -12,8 +12,8 @@ import {
   publishBrowserHardResetRequest,
 } from '../../../frontend/packages/browser/src/hard-reset-request';
 
-const appLayoutSource = readFileSync(
-  join(import.meta.dir, '../../../frontend/src/routes/app/+layout.svelte'),
+const publicRoutesSource = readFileSync(
+  join(import.meta.dir, '../../../packages/frontend-release/public-routes.ts'),
   'utf8',
 );
 
@@ -159,9 +159,9 @@ test('hard reset publishes the shared cross-tab protocol before storage is clear
   }
 });
 
-test('hash reset never enters SvelteKit navigation during root mount', () => {
-  expect(appLayoutSource).not.toContain("from '$app/navigation'");
-  expect(appLayoutSource).not.toContain("replaceState('/app'");
-  expect(appLayoutSource).toContain("await resetEverything({ confirmed: true, reason: 'hash-reset' })");
-  expect(appLayoutSource).toContain("window.location.replace('/app')");
+test('canonical reset route clears site data before returning to the React wallet', () => {
+  expect(publicRoutesSource).toContain("if (url.pathname === '/resetdb')");
+  expect(publicRoutesSource).toContain("'clear-site-data': '\"*\"'");
+  expect(publicRoutesSource).toContain("refresh: '0;url=/app'");
+  expect(publicRoutesSource).not.toContain("from '$app/navigation'");
 });

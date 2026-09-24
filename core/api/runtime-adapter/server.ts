@@ -107,6 +107,7 @@ export type RuntimeAdapterServerDeps = {
     env: RuntimeReplica,
     opts: RuntimeActivityFilters & {
       beforeHeight?: number | undefined;
+      cursor?: string | undefined;
       limit?: number | undefined;
       scanLimit?: number | undefined;
     },
@@ -727,6 +728,7 @@ const buildRuntimeAdapterReadContext = (
         readActivityPage: (
           opts: RuntimeActivityFilters & {
             beforeHeight?: number | undefined;
+            cursor?: string | undefined;
             limit?: number | undefined;
             scanLimit?: number | undefined;
           },
@@ -791,7 +793,11 @@ const handleRuntimeAdapterRead = async (
   deps: RuntimeAdapterServerDeps,
   diagnostic: RuntimeAdapterDiagnostic,
 ): Promise<void> => {
-  requireAuth(state, 'inspect');
+  const readPath = String(msg.path || '').trim().replace(/^\/+|\/+$/gu, '').split('/').filter(Boolean);
+  const exposesSettlementAuthority = readPath.length === 3
+    && readPath[0] === 'entity'
+    && readPath[2] === 'settlement-workspaces';
+  requireAuth(state, exposesSettlementAuthority ? 'admin' : 'inspect');
   requireBucket(state.readBucket, 'read');
   const startedAt = Date.now();
   const readDiagnostic = {

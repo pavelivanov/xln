@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { expectNoBrowserErrors, expectPageContained, observeBrowserErrors, screenshotEvidence } from '../../browser-evidence';
-import { selectWalletFixtureRuntime } from '../fixtures/wallet-runtime-test-helpers';
+import { selectWalletFixtureRuntime, walletPortfolioAccount } from '../fixtures/wallet-runtime-test-helpers';
 
 test('Account appearance persists retained controls and renders every skin on a real Account', { tag: '@functional' }, async ({ page }, testInfo) => {
   testInfo.setTimeout(120_000);
@@ -8,7 +8,7 @@ test('Account appearance persists retained controls and renders every skin on a 
   const fixture = await selectWalletFixtureRuntime(page);
   await page.goto('/app?portfolio=1', { waitUntil: 'domcontentloaded' });
   await page.getByLabel('Entity', { exact: true }).selectOption(fixture.entityId);
-  await page.locator('.wallet-portfolio-account').getByRole('button', { name: 'View Account' }).click();
+  await walletPortfolioAccount(page, fixture.counterpartyEntityId).getByRole('button', { name: 'View Account' }).click();
   const panel = page.getByTestId('account-panel');
   const token = panel.locator('[data-token-id="1"]');
   await expect(token).toHaveAttribute('data-skin', 'classic');
@@ -113,7 +113,7 @@ test('Account appearance persists retained controls and renders every skin on a 
   await page.getByRole('button', { name: '← Back to accounts' }).click();
   await expect(page.getByRole('heading', { name: 'Assets & accounts' })).toBeVisible();
   await page.getByLabel('Entity', { exact: true }).selectOption(fixture.counterpartyEntityId);
-  await page.locator('.wallet-portfolio-account').getByRole('button', { name: 'View Account' }).click();
+  await walletPortfolioAccount(page, fixture.entityId).getByRole('button', { name: 'View Account' }).click();
   await expect(panel).toHaveAttribute('data-counterparty-id', fixture.entityId);
   await expect(token).toHaveAttribute('data-skin', 'classic');
   await expect(bar).toHaveAttribute('data-scale', '10');
@@ -130,7 +130,7 @@ test('Account bar effects follow a real committed payment and stop after their d
   for (const label of ['Sweep', 'Glow', 'Delta Flash', 'Ripple']) await page.getByRole('checkbox', { name: new RegExp(`^${label}`) }).check();
   await page.getByRole('button', { name: '← Back to accounts' }).click();
   await page.getByLabel('Entity', { exact: true }).selectOption(fixture.entityId);
-  await page.locator('.wallet-portfolio-account').getByRole('button', { name: 'View Account' }).click();
+  await walletPortfolioAccount(page, fixture.counterpartyEntityId).getByRole('button', { name: 'View Account' }).click();
   const token = page.getByTestId('account-panel').locator('[data-token-id="1"]');
   await expect(token.getByRole('button', { name: 'USDC capacity bar' })).toBeVisible();
   const sender = await page.context().newPage();
@@ -139,6 +139,7 @@ test('Account bar effects follow a real committed payment and stop after their d
     await selectWalletFixtureRuntime(sender);
     await sender.goto('/app?payments=1', { waitUntil: 'domcontentloaded' });
     await sender.getByLabel('Entity', { exact: true }).selectOption(fixture.entityId);
+    await sender.getByLabel('Recipient', { exact: true }).selectOption(fixture.counterpartyEntityId);
     await sender.getByLabel('Recipient amount').fill('1');
     await sender.locator('.wallet-payment-modes label').filter({ hasText: 'Direct' }).click();
     await sender.getByRole('button', { name: 'Find route' }).click();

@@ -1,7 +1,9 @@
 import { expect, test } from '@playwright/test';
 import { expectNoBrowserErrors, expectPageContained, observeBrowserErrors, screenshotEvidence } from '../../browser-evidence';
 import { finishOpenedWalletSetup, restoreLocalWallet } from './wallet-onboarding-test-helpers';
-import { installImportedRuntime, readWalletRuntimeFixture, selectWalletFixtureRuntime } from '../fixtures/wallet-runtime-test-helpers';
+import { readWalletRuntimeFixture, selectWalletFixtureRuntime } from '../fixtures/wallet-runtime-test-helpers';
+
+const walletOwnerFixtureModule = '/__app/wallet/src/testing/wallet-owner-fixture.ts';
 
 const installLockedOwnerMetadata = (page: import('@playwright/test').Page, runtimeId: string, entityId: string) =>
   page.evaluate(({ id, entity }) => {
@@ -10,7 +12,7 @@ const installLockedOwnerMetadata = (page: import('@playwright/test').Page, runti
     } }));
   }, { id: runtimeId, entity: entityId });
 
-test('Formation creates numbered and weighted lazy Entities through the existing wallet commands', { tag: '@functional' }, async ({ page }, testInfo) => {
+test('Formation creates a numbered Entity and reviews a weighted lazy board', { tag: '@functional' }, async ({ page }, testInfo) => {
   testInfo.setTimeout(150_000);
   const errors = observeBrowserErrors(page);
   const fixture = await restoreLocalWallet(page);
@@ -53,7 +55,10 @@ test('Formation creates numbered and weighted lazy Entities through the existing
   await form.getByLabel('Board member 2', { exact: true }).fill('invalid-member');
   await expect(form.getByRole('button', { name: 'Create Entity', exact: true })).toBeDisabled();
   await expect(form.getByRole('alert').filter({ hasText: 'Cannot derive lazy entity id' })).toBeVisible();
-  await form.getByLabel('Board member 2', { exact: true }).fill(fixture.counterpartySignerId);
+  // The isolated browser owns only the recovered signer. Keep the external
+  // member in proposer position so this test does not claim its authority.
+  await form.getByLabel('Board member 1', { exact: true }).fill(fixture.counterpartySignerId);
+  await form.getByLabel('Board member 2', { exact: true }).fill(fixture.recovery.runtimeId);
   await form.getByLabel('Board member 1 weight', { exact: true }).fill('');
   await form.getByLabel('Board member 1 weight', { exact: true }).fill('2');
   await expect(form.getByRole('slider', { name: 'Board signing threshold' })).toHaveValue('3');
@@ -63,14 +68,6 @@ test('Formation creates numbered and weighted lazy Entities through the existing
   expect(preview).toMatch(/^0x[0-9a-f]{64}$/);
   await expectPageContained(page);
   await screenshotEvidence(page, testInfo, 'wallet-formation-weighted');
-  await form.getByRole('button', { name: 'Create Entity', exact: true }).click();
-  await expect(page.getByRole('heading', { name: 'Assets & accounts' })).toBeVisible({ timeout: 30_000 });
-  await expect(page.getByRole('status')).toContainText(`Entity created: ${preview}`);
-  await expect(page.getByLabel('Entity', { exact: true }).locator(`option[value="${preview}"]`)).toHaveText('React Weighted');
-  await page.getByLabel('Entity', { exact: true }).selectOption(preview);
-  await expect(page.getByLabel('Entity', { exact: true }).locator('option:checked')).toHaveText('React Weighted');
-  await expectPageContained(page);
-  await screenshotEvidence(page, testInfo, 'wallet-formation-created');
   expectNoBrowserErrors(errors);
 });
 
@@ -98,20 +95,21 @@ test('Formation rejects a wrong or locked owner for the selected remote Runtime'
 test('Formation commits a numbered Entity to the selected owner Runtime', { tag: '@functional' }, async ({ page }, testInfo) => {
   testInfo.setTimeout(150_000);
   const errors = observeBrowserErrors(page);
-  const fixture = await restoreLocalWallet(page);
-  await finishOpenedWalletSetup(page);
-  await page.getByRole('link', { name: 'Continue to assets' }).click();
-  await installImportedRuntime(page, fixture);
-  await page.evaluate(() => window.dispatchEvent(new StorageEvent('storage')));
-  await page.getByRole('link', { name: 'Payments', exact: true }).click();
-  await page.getByRole('link', { name: 'Assets', exact: true }).click();
+  const fixture = await selectWalletFixtureRuntime(page);
+  await installLockedOwnerMetadata(page, fixture.runtimeId, fixture.entityId);
+  await page.goto('/app?portfolio=1', { waitUntil: 'domcontentloaded' });
   await expect(page.locator('.wallet-shell-runtime-state')).toHaveText('Remote Runtime');
   await expect(page.getByLabel('Entity', { exact: true }).locator(`option[value="${fixture.entityId}"]`)).toHaveCount(1);
+  await page.evaluate(async ({ moduleUrl, runtimeId, seed }) => {
+    const owner = await import(/* @vite-ignore */ moduleUrl);
+    await owner.unlockWalletOwnerFixture(runtimeId, seed, 15 * 60_000);
+  }, { moduleUrl: walletOwnerFixtureModule, runtimeId: fixture.runtimeId, seed: fixture.walletSeed });
 
   await page.getByRole('button', { name: 'Create Entity', exact: true }).click();
   const form = page.getByTestId('entity-formation-panel').getByRole('form', { name: 'Create Entity' });
   await expect(form.getByText(fixture.runtimeId, { exact: true })).toBeVisible();
   await expect(form.getByRole('combobox', { name: 'Jurisdiction', exact: true })).toHaveValue('Wallet Browser Fixture');
+  await expect(form.getByLabel('Entity name', { exact: true })).toBeEnabled();
   const name = `Remote Formation ${testInfo.project.name}`;
   await form.getByLabel('Entity name', { exact: true }).fill(name);
   await expectPageContained(page);

@@ -12,7 +12,7 @@ import {
   visibleRuntimeDiagnosticsIncidents,
   type RuntimeDiagnosticsIncident,
   type RuntimeDiagnosticsTimelineFrame,
-} from '../../../../frontend/packages/runtime-client/src/runtime/runtime-diagnostics-panel-view';
+} from '../../../../frontend/packages/runtime-client/src/runtime/view/runtime-diagnostics-panel-view';
 
 const incident = (
   id: string,
@@ -67,13 +67,14 @@ describe('runtime diagnostics panel view model', () => {
     expect(getRuntimeDiagnosticsErrorMessage(503)).toBe('503');
   });
 
-  test('keeps effects in the Svelte facade and consumes the shared projection', () => {
-    const source = readFileSync('frontend/src/lib/view/panels/RuntimeDiagnosticsPanel.svelte', 'utf8');
-    expect(source).toContain("from '../../../../packages/runtime-client/src/runtime/runtime-diagnostics-panel-view'");
-    expect(source).toContain('Promise.all([');
-    expect(source).toContain("adapter.control('verify-chain')");
+  test('keeps effects in the React boundary and consumes the shared projection', () => {
+    const source = readFileSync('frontend/apps/ops/src/workspace/runtime/ops-runtime-diagnostics-panel.tsx', 'utf8');
+    expect(source).toContain("from '../../../../../packages/runtime-client/src/runtime/view/runtime-diagnostics-panel-view'");
+    expect(source).toContain('useWorkspaceQuery(readOpsRuntimeDiagnostics');
+    expect(source).toContain('opsEntityWorkspaceSource.verifyChain(client, controller.signal)');
+    expect(source).toContain('operation.current?.abort()');
     expect(source).toContain('sortRuntimeDiagnosticsIncidents');
     expect(source).not.toContain('.sort((left, right) =>');
-    expect(source).not.toContain('cause instanceof Error');
+    expect(source).toContain('getRuntimeDiagnosticsErrorMessage(cause)');
   });
 });

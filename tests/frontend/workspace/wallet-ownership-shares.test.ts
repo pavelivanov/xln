@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { projectWalletOwnership } from '../../../frontend/bridges/wallet/wallet-canonical-ownership';
+import { projectWalletOwnership } from '../../../frontend/bridges/wallet/canonical/wallet-canonical-ownership';
 import { ENTITY_DIVIDEND_TOKEN_FLAG } from '../../../frontend/packages/runtime-client/src/entity/ownership-flow';
 
 const entityId = `0x${'0'.repeat(63)}1`;

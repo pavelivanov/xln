@@ -21,6 +21,7 @@ export type WalletRecoveryServicesReadyView = Readonly<{
   blockedReason: string;
   coverage: readonly RecoveryCoverageItem[];
   towerStatuses: readonly RecoveryTowerStatusItem[];
+  discoveryFailures: readonly string[];
 }>;
 
 export type WalletRecoveryServicesView = WalletRecoveryServicesReadyView | Readonly<{
@@ -55,6 +56,7 @@ export const mergeWalletRecoveryServicesObservation = (
     ...current,
     coverage: observed.coverage,
     towerStatuses: observed.towerStatuses,
+    discoveryFailures: observed.discoveryFailures,
     writable: observed.writable,
     blockedReason: observed.blockedReason,
   };

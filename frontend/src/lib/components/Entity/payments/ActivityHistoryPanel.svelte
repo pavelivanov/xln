@@ -8,7 +8,7 @@
   import { errorLog } from '../../../../../packages/browser/src/logging/error-log-store';
   import { runtimeControllerHandle, runtimeAdapterHeight } from '../../../../../bridges/runtime/runtime-controller-store';
   import { runtimeQueryClient } from '../../../../../bridges/runtime/runtime-query-client';
-  import { settings } from '../../../../../packages/browser/src/settings-store';
+  import { settings } from '../../../../../packages/browser/src/preferences/settings-store';
   import { dedupeHistoryEvents as dedupe } from '../../../../../packages/ui/src/account/activity/activity-history-events';
   import { xlnFunctions } from '../../../../../bridges/runtime/xln-store';
   import {
@@ -60,10 +60,10 @@
   let loading = false;
   let error: string | null = null;
   let partialFailures: ActivityResponse['failures'] = [];
-  let nextBeforeHeight: number | null = null;
+  let nextCursor: string | null = null;
   let latestHeight = 0;
   let scannedFrames = 0;
-  let cursorStack: Array<number | null> = [null];
+  let cursorStack: Array<string | null> = [null];
   let cursorIndex = 0;
   let fromLocal = '';
   let toLocal = '';
@@ -81,7 +81,7 @@
     return Number.isFinite(ts) ? ts : undefined;
   }
 
-  function buildActivityQuery(beforeHeight: number | null): RuntimeAdapterReadQuery {
+  function buildActivityQuery(cursor: string | null): RuntimeAdapterReadQuery {
     return buildActivityHistoryReadQuery({
       entityId,
       kind,
@@ -89,7 +89,7 @@
       selectedTypes,
       search,
       mode,
-      beforeHeight,
+      cursor,
       fromTimestamp: localToTimestamp(fromLocal),
       toTimestamp: localToTimestamp(toLocal),
     });
@@ -108,9 +108,9 @@
     throw new Error(`History is connected to runtime ${active}; select runtime ${requested} to inspect this entity.`);
   }
 
-  async function readActivitySources(beforeHeight: number | null): Promise<ActivityResponse> {
+  async function readActivitySources(cursor: string | null): Promise<ActivityResponse> {
     assertRequestedRuntimeActive();
-    const query = buildActivityQuery(beforeHeight);
+    const query = buildActivityQuery(cursor);
     return normalizeActivityHistoryPage(await runtimeQueryClient.readActivity(query), query);
   }
 
@@ -118,11 +118,11 @@
     return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
-  async function readActivitySourcesWithRetry(beforeHeight: number | null): Promise<ActivityResponse> {
+  async function readActivitySourcesWithRetry(cursor: string | null): Promise<ActivityResponse> {
     let lastError: unknown;
     for (let attempt = 0; attempt <= ACTIVITY_READ_RETRY_DELAYS_MS.length; attempt += 1) {
       try {
-        return await readActivitySources(beforeHeight);
+        return await readActivitySources(cursor);
       } catch (err) {
         lastError = err;
         const canRetry = isTransientActivityReadError(err) && attempt < ACTIVITY_READ_RETRY_DELAYS_MS.length;
@@ -135,18 +135,18 @@
     throw lastError instanceof Error ? lastError : new Error(String(lastError || 'Failed to load activity history'));
   }
 
-  async function loadActivity(options: { append?: boolean; beforeHeight?: number | null } = {}): Promise<void> {
+  async function loadActivity(options: { append?: boolean; cursor?: string | null } = {}): Promise<void> {
     const currentEntity = normalizeActivityEntityId(entityId);
     if (!/^0x[0-9a-f]{64}$/.test(currentEntity)) return;
     const loadVersion = ++activityLoadVersion;
     loading = true;
     error = null;
     try {
-      const body = await readActivitySourcesWithRetry(options.beforeHeight ?? null);
+      const body = await readActivitySourcesWithRetry(options.cursor ?? null);
       if (loadVersion !== activityLoadVersion) return;
       latestHeight = Number(body.latestHeight || 0);
       scannedFrames = Number(body.scannedFrames || 0);
-      nextBeforeHeight = body.nextBeforeHeight ?? null;
+      nextCursor = body.nextCursor ?? null;
       partialFailures = Array.isArray(body.failures) ? body.failures : [];
       const nextEvents = Array.isArray(body.events) ? body.events : [];
       events = options.append ? dedupe([...events, ...nextEvents]) : dedupe(nextEvents);
@@ -187,22 +187,22 @@
   }
 
   function goOlderPage(): void {
-    if (nextBeforeHeight === null || loading) return;
-    const nextCursor = nextBeforeHeight;
-    if (cursorIndex === cursorStack.length - 1) cursorStack = [...cursorStack, nextCursor];
+    if (nextCursor === null || loading) return;
+    const olderCursor = nextCursor;
+    if (cursorIndex === cursorStack.length - 1) cursorStack = [...cursorStack, olderCursor];
     cursorIndex += 1;
-    void loadActivity({ beforeHeight: nextCursor });
+    void loadActivity({ cursor: olderCursor });
   }
 
   function goNewerPage(): void {
     if (cursorIndex <= 0 || loading) return;
     cursorIndex -= 1;
-    void loadActivity({ beforeHeight: cursorStack[cursorIndex] ?? null });
+    void loadActivity({ cursor: cursorStack[cursorIndex] ?? null });
   }
 
   function loadMore(): void {
-    if (nextBeforeHeight === null || loading) return;
-    void loadActivity({ append: true, beforeHeight: nextBeforeHeight });
+    if (nextCursor === null || loading) return;
+    void loadActivity({ append: true, cursor: nextCursor });
   }
 
   function setKind(next: ActivityKind): void {
@@ -284,7 +284,7 @@
       <p class="eyebrow">Entity history</p>
       <h2>Activity</h2>
     </div>
-    <button class="icon-button" type="button" onclick={() => loadActivity({ beforeHeight: cursorStack[cursorIndex] ?? null })} disabled={loading} title="Refresh history" data-testid="history-refresh">
+    <button class="icon-button" type="button" onclick={() => loadActivity({ cursor: cursorStack[cursorIndex] ?? null })} disabled={loading} title="Refresh history" data-testid="history-refresh">
       <RefreshCw size={17} />
     </button>
   </div>
@@ -430,16 +430,16 @@
         Newer
       </button>
       <span>Page {cursorIndex + 1}</span>
-      <button type="button" onclick={goOlderPage} disabled={nextBeforeHeight === null || loading} data-testid="history-older-page">
+      <button type="button" onclick={goOlderPage} disabled={nextCursor === null || loading} data-testid="history-older-page">
         Older
         <ChevronRight size={16} />
       </button>
     {:else}
-      <button type="button" onclick={loadMore} disabled={nextBeforeHeight === null || loading} data-testid="history-load-older">
+      <button type="button" onclick={loadMore} disabled={nextCursor === null || loading} data-testid="history-load-older">
         <ChevronsDown size={16} />
         {loading ? 'Loading' : 'Load older'}
       </button>
-      <span>{nextBeforeHeight === null ? 'End of retained history' : `Next before R#${nextBeforeHeight}`}</span>
+      <span>{nextCursor === null ? 'End of retained history' : 'Older activity available'}</span>
     {/if}
   </div>
 </section>

@@ -8,7 +8,7 @@ import type {
 } from '../../types/jurisdiction-events';
 import { cloneIsolatedProtocolValue } from '../../protocol/state/isolated-value-clone';
 
-export const cloneIsolatedEntityTxs = (txs: readonly EntityTx[]): EntityTx[] =>
+const cloneIsolatedEntityTxs = (txs: readonly EntityTx[]): EntityTx[] =>
   txs.map(tx => cloneIsolatedProtocolValue(tx, 'ENTITY_TX_CLONE'));
 
 const cloneJPrefixClaim = <T extends JPrefixClaim>(claim: T): T => ({

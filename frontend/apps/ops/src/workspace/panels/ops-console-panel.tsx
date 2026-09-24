@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { safeStringify } from '@xln/core/protocol/serialization';
 import { CONSOLE_MAX_LOGS, consoleCommandCompletions, consoleLevelColor, createConsoleCommands, evalConsoleCommand, filterConsoleLogs, formatConsoleLogText, projectConsoleFrameLogs, type ConsoleEntry, type ConsoleFilterLevel } from '../../../../../packages/runtime-client/src/panels/console-panel-view';
-import { networkMachineRuntimeOperations } from '../../../../../bridges/runtime/network-machine-runtime-store';
+import { networkMachineRuntimeOperations } from '../../../../../bridges/runtime/network/network-machine-runtime-store';
 import { getXLN } from '../../../../../bridges/runtime/xln-runtime-loader';
 import { loadWorkspaceScenario } from '../session/ops-workspace-playback';
 import { useWorkspaceEnvironment } from '../session/use-workspace-environment';

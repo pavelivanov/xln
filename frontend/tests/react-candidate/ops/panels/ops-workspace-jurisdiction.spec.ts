@@ -1,6 +1,7 @@
 import { expect, test } from '@playwright/test';
 import { expectNoBrowserErrors, expectPageContained, observeBrowserErrors, screenshotEvidence } from '../../browser-evidence';
 import { readWalletRuntimeFixture } from '../../wallet/fixtures/wallet-runtime-test-helpers';
+import { WALLET_RECOVERY_FIXTURE_MNEMONIC } from '../../wallet/fixtures/wallet-fixture-identities';
 import { installOpsOwnerMetadata } from '../owner/ops-owner-test-helpers';
 
 test('Jurisdiction preserves exact recorded observations across frame and Entity selection', { tag: '@functional' }, async ({ page }, testInfo) => {
@@ -57,12 +58,16 @@ test('Jurisdiction reads registry labels and fresh external balances/debts from 
     (window as typeof window & { __XLN_API_BASE_URL__?: string }).__XLN_API_BASE_URL__ = apiUrl;
   }, { towerUrl: fixture.recovery.towerUrl, apiUrl: new URL(fixture.wsUrl.replace('ws:', 'http:')).origin });
   await page.goto('/scenarios/catalog.json');
-  await installOpsOwnerMetadata(page, { ...fixture, entityId: fixture.recovery.entityId });
+  await installOpsOwnerMetadata(page, {
+    ...fixture,
+    runtimeId: fixture.recovery.runtimeId,
+    entityId: fixture.recovery.entityId,
+  });
   await page.evaluate(() => localStorage.setItem('xln-runtime-adapter-mode', 'embedded'));
   await page.goto('/__app/ops/entity-workspace');
   await page.getByRole('button', { name: 'Owner locked', exact: true }).click();
   const unlock = page.getByRole('form', { name: 'Unlock Runtime owner' });
-  await unlock.getByLabel('Owner wallet seed phrase').fill(fixture.walletSeed);
+  await unlock.getByLabel('Owner wallet seed phrase').fill(WALLET_RECOVERY_FIXTURE_MNEMONIC);
   await unlock.getByRole('button', { name: 'Unlock owner', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Owner unlocked', exact: true })).toBeVisible({ timeout: 60_000 });
   await page.getByRole('button', { name: 'Open Jurisdiction panel', exact: true }).click();

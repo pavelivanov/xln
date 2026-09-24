@@ -3,7 +3,7 @@ import {
   type ApiJurisdictionConfig,
   type JurisdictionsPayload,
   type Runtime,
-} from './vault-recovery';
+} from './recovery/vault-recovery';
 import type { RuntimeReplica } from '@xln/core/api/public/runtime-module';
 
 export const findRuntimeByIdCaseInsensitive = (

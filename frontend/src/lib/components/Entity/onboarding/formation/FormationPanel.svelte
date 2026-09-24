@@ -15,9 +15,9 @@
   import {
     emptyFormationRuntimeProjection,
     type FormationRuntimeProjection,
-  } from '../../../../../../bridges/wallet/formation-runtime-projection';
+  } from '../../../../../../bridges/wallet/formation/formation-runtime-projection';
 
-  import { createFormationEntity } from '../../../../../../bridges/wallet/formation-commands';
+  import { createFormationEntity } from '../../../../../../bridges/wallet/formation/formation-commands';
 
   export let onCreated: ((entityId: string) => void) | undefined = undefined;
   export let runtimeProjection: FormationRuntimeProjection = emptyFormationRuntimeProjection();

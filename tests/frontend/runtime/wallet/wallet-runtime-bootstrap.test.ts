@@ -144,21 +144,18 @@ describe('browser wallet Runtime bootstrap', () => {
     expect(harness.calls).not.toContain('strip');
   });
 
-  test('keeps concrete import and UI publication effects in the Svelte shell', () => {
+  test('keeps concrete import and selection effects in the React runtime manager', () => {
     const boundary = readFileSync(
       'frontend/packages/browser/src/runtime/wallet-runtime-bootstrap.ts',
       'utf8',
     );
-    const layout = readFileSync('frontend/src/routes/app/+layout.svelte', 'utf8');
+    const manager = readFileSync('frontend/apps/ops/src/workspace/runtime/ops-runtime-manager.tsx', 'utf8');
 
     expect(boundary).not.toContain('svelte');
     expect(boundary).not.toContain('../../../../core');
-    expect(layout).toContain('new WalletRuntimeBootstrapCoordinator({');
-    expect(layout).toContain('pairLocalRuntime: pairLocalRuntimeIntoApp');
-    expect(layout).toContain('importRemoteRuntimes: importRemoteRuntimesIntoApp');
-    expect(layout).toContain('publishPendingConsent: (request) => {');
-    expect(layout).toContain('await walletRuntimeBootstrap.process({');
-    expect(layout).toContain('await walletRuntimeBootstrap.process(bootstrapInput)');
-    expect(layout).toContain("result.status === 'pending-consent'");
+    expect(manager).toContain('parseRemoteRuntimeImportText');
+    expect(manager).toContain('importRemoteRuntimeEntries(entries, { activateFirst: false');
+    expect(manager).toContain('await selectWorkspaceRuntime(first)');
+    expect(manager).toContain("if (!first) throw new Error('REMOTE_RUNTIME_IMPORT_EMPTY')");
   });
 });

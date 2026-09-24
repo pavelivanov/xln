@@ -69,7 +69,7 @@ describe('wallet Runtime suspension boundary', () => {
 
   test('is the canonical suspension sequence for Svelte and React adapters', () => {
     const svelte = readFileSync('frontend/bridges/vault/vault-store.ts', 'utf8');
-    const react = readFileSync('frontend/bridges/runtime/browser-runtime-adapter.ts', 'utf8');
+    const react = readFileSync('frontend/bridges/runtime/browser/browser-runtime-adapter.ts', 'utf8');
     for (const source of [svelte, react]) expect(source).toContain('suspendWalletRuntimeActivity');
     expect(svelte).toContain('safeStringify(runtimeQuiesceWorkSummary(target))');
     expect(react).toContain('describeTarget: describeRuntime');

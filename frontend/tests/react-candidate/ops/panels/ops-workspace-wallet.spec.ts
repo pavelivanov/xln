@@ -2,10 +2,10 @@ import { openWorkspaceStorageOrigin } from '../../browser-evidence';
 import { expect, test, type Locator, type WebSocket } from '@playwright/test';
 import { expectNoBrowserErrors, expectPageContained, observeBrowserErrors, screenshotEvidence } from '../../browser-evidence';
 import {
-  createWalletCrossJFixture, installImportedRuntime,
+  createWalletCrossJFixture, createWalletDisputeFixture, installImportedRuntime,
   readWalletAccountToolState,
   readWalletCrossJState,
-  readWalletFixtureChainBalances, readWalletRuntimeFixture } from '../../wallet/fixtures/wallet-runtime-test-helpers';
+  readWalletRuntimeFixture } from '../../wallet/fixtures/wallet-runtime-test-helpers';
 
 const openTool = async (wallet: Locator, id: string): Promise<void> => {
   const mobile = wallet.getByTestId('account-workspace-mobile-toggle');
@@ -31,6 +31,8 @@ test('docked Wallet borrows one Runtime across Account, payment and market navig
   await openTool(wallet, 'send');
   await expect(wallet.getByRole('heading', { name: 'Payments' })).toBeVisible();
   await expect(wallet.getByLabel('Entity', { exact: true })).toHaveValue(fixture.entityId);
+  await wallet.getByLabel('Recipient', { exact: true }).selectOption(fixture.counterpartyEntityId);
+  await expect(wallet.getByLabel('Recipient', { exact: true })).toHaveValue(fixture.counterpartyEntityId);
   await wallet.getByLabel('Recipient amount').fill('1');
   await wallet.locator('.wallet-payment-modes label').filter({ hasText: 'Direct' }).click();
   await wallet.getByRole('button', { name: 'Find route' }).click();
@@ -61,7 +63,9 @@ test('docked Wallet borrows one Runtime across Account, payment and market navig
   await page.locator('.dv-tab').filter({ hasText: /^Wallet$/ }).locator('.dv-default-tab-action').click();
   await expect(wallet).toHaveCount(0);
   await page.getByRole('button', { name: 'Open Gossip panel' }).click();
-  await expect(page.getByTestId('runtime-gossip-panel')).toContainText('Browser Hub');
+  const directory = page.getByTestId('runtime-gossip-panel');
+  await expect(directory).toContainText(fixture.counterpartyEntityId);
+  await expect(directory.locator('header p')).toContainText('1 hub');
   expect(sockets[0]?.isClosed()).toBe(false);
   await page.getByRole('button', { name: 'Open Wallet panel' }).click();
   await expect(wallet.getByRole('table', { name: 'Committed asset positions' })).toBeVisible();
@@ -104,7 +108,7 @@ test(
     const fixture = await readWalletRuntimeFixture(page);
     const controlBase = fixture.wsUrl.replace(/^ws:/u, 'http:').replace(/\/rpc$/u, '');
     const companyResponse = await page.request.post(
-      `${controlBase}/ownership-release-fixture?slot=${encodeURIComponent(testInfo.project.name)}`,
+      `${controlBase}/ownership-release-fixture?slot=${encodeURIComponent(`ops-${testInfo.project.name}`)}`,
     );
     const companyBody = await companyResponse.text();
     expect(companyResponse.ok(), companyBody).toBe(true);
@@ -137,6 +141,10 @@ test(
     await shares.getByTestId('ownership-release-shares').click();
     await shares.getByTestId('ownership-release-submit').click();
     await expect(shares.getByTestId('ownership-control-reserve')).toHaveText('100000000000', { timeout: 30_000 });
+    const settlementHub = await createWalletDisputeFixture(
+      page,
+      `${testInfo.project.name}-ops-settlement`,
+    );
 
     await wallet.getByLabel('Entity', { exact: true }).selectOption(fixture.entityId);
     await wallet
@@ -147,54 +155,68 @@ test(
     await openTool(wallet, 'send');
     await wallet.getByRole('button', { name: 'Operations' }).click();
     await wallet.getByLabel('Entity', { exact: true }).selectOption(fixture.entityId);
-    const beforeFunding = await readWalletFixtureChainBalances(page);
+    const beforeFunding = await readWalletAccountToolState(page, fixture.entityId, settlementHub.entityId);
+    const fundingAmount = 50_000_000n;
     await wallet.getByRole('radio', { name: /Fund collateral/ }).click();
-    await wallet.getByRole('combobox', { name: 'Counterparty Account' }).selectOption(fixture.counterpartyEntityId);
+    await wallet.getByRole('combobox', { name: 'Counterparty Account' }).selectOption(settlementHub.entityId);
     await wallet.getByRole('textbox', { name: 'Amount', exact: true }).fill('50');
     await wallet.getByRole('button', { name: 'Queue collateral funding' }).click();
     const batch = wallet.getByRole('region', { name: 'Jurisdiction batch' });
     await expect(batch.getByRole('heading', { name: 'Draft · 1 operations' })).toBeVisible({ timeout: 30_000 });
     await batch.getByRole('button', { name: 'Broadcast draft' }).click();
     await expect
-      .poll(async () => readWalletFixtureChainBalances(page), { timeout: 45_000 })
+      .poll(async () => {
+        const state = await readWalletAccountToolState(page, fixture.entityId, settlementHub.entityId);
+        return {
+          reserve: String(state['reserve']),
+          collateral: String(state['collateral']),
+          chainReserve: String(state['chainReserve']),
+          chainCollateral: String(state['chainCollateral']),
+        };
+      }, { timeout: 45_000 })
       .toEqual({
-        reserve: beforeFunding.reserve - 50_000_000n,
-        collateral: beforeFunding.collateral + 50_000_000n,
-        chainReserve: beforeFunding.chainReserve - 50_000_000n,
-        chainCollateral: beforeFunding.chainCollateral + 50_000_000n,
+        reserve: (BigInt(String(beforeFunding['reserve'])) - fundingAmount).toString(),
+        collateral: (BigInt(String(beforeFunding['collateral'])) + fundingAmount).toString(),
+        chainReserve: (BigInt(String(beforeFunding['chainReserve'])) - fundingAmount).toString(),
+        chainCollateral: (BigInt(String(beforeFunding['chainCollateral'])) + fundingAmount).toString(),
       });
     await wallet.getByRole('button', { name: 'Refresh', exact: true }).click();
     await expect(batch.getByText('No queued operations.')).toBeVisible({ timeout: 30_000 });
     await wallet.getByRole('radio', { name: /Withdraw collateral/ }).click();
-    await wallet.getByRole('combobox', { name: 'Counterparty Account' }).selectOption(fixture.counterpartyEntityId);
+    await wallet.getByRole('combobox', { name: 'Counterparty Account' }).selectOption(settlementHub.entityId);
     await wallet.getByRole('textbox', { name: 'Amount', exact: true }).fill('2');
     await wallet.getByRole('button', { name: 'Review settlement' }).click();
     const settlementReview = wallet.getByRole('region', { name: 'Collateral → Reserve' });
     await expect(settlementReview).toContainText(fixture.entityId);
-    await expect(settlementReview).toContainText(fixture.counterpartyEntityId);
+    await expect(settlementReview).toContainText(settlementHub.entityId);
     await settlementReview.getByRole('button', { name: 'Submit settlement proposal' }).click();
     await expect
       .poll(
         async () =>
           String(
-            (await readWalletAccountToolState(page, fixture.entityId, fixture.counterpartyEntityId))['settlement'] ||
+            (await readWalletAccountToolState(page, fixture.entityId, settlementHub.entityId))['settlement'] ||
               '',
           ),
         { timeout: 30_000 },
       )
       .toContain('settle-c2r');
     await expect(wallet.locator('.wallet-payment-command')).toContainText('observed', { timeout: 30_000 });
+    await expect(batch.getByRole('heading', { name: 'Draft · 1 operations' })).toBeVisible();
+    await expect(batch.getByText('Withdraw collateral · 2.0 USDC', { exact: true })).toBeVisible();
     await wallet.getByRole('radio', { name: /Reserve transfer/ }).click();
     await wallet.getByRole('combobox', { name: 'Recipient', exact: true }).selectOption(fixture.counterpartyEntityId);
     await wallet.getByRole('textbox', { name: 'Amount', exact: true }).fill('1');
     await wallet.getByRole('button', { name: 'Queue reserve transfer' }).click();
-    await expect(batch.getByRole('heading', { name: 'Draft · 1 operations' })).toBeVisible({ timeout: 30_000 });
-    await expect(batch.locator('summary')).toContainText('1.0 USDC');
+    await expect(batch.getByRole('heading', { name: 'Draft · 2 operations' })).toBeVisible({ timeout: 30_000 });
+    await expect(batch.getByText('Reserve transfer · 1.0 USDC', { exact: true })).toBeVisible();
+    await expect(batch.getByText('Withdraw collateral · 2.0 USDC', { exact: true })).toBeVisible();
     await openTool(wallet, 'swap');
     await openTool(wallet, 'send');
     await wallet.getByRole('button', { name: 'Operations' }).click();
     await expect(wallet.getByLabel('Entity', { exact: true })).toHaveValue(fixture.entityId);
-    await expect(batch.locator('summary')).toContainText('1.0 USDC');
+    await expect(batch.getByRole('heading', { name: 'Draft · 2 operations' })).toBeVisible();
+    await expect(batch.getByText('Reserve transfer · 1.0 USDC', { exact: true })).toBeVisible();
+    await expect(batch.getByText('Withdraw collateral · 2.0 USDC', { exact: true })).toBeVisible();
     await batch.getByRole('button', { name: 'Review clear' }).click();
     await batch
       .getByRole('region', { name: 'Confirm clear batch' })

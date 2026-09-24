@@ -113,7 +113,7 @@ describe('browser wallet BrainVault worker resilience', () => {
       'utf8',
     );
     const view = readFileSync(
-      'frontend/src/lib/components/Views/RuntimeCreation.svelte',
+      'frontend/bridges/wallet/canonical/wallet-canonical-vault-runtime.ts',
       'utf8',
     );
 
@@ -127,6 +127,7 @@ describe('browser wallet BrainVault worker resilience', () => {
     expect(orchestration).toContain('resolveWalletBrainVaultWorkerInitRetry({');
     expect(orchestration).toContain('localStorage.setItem(BRAINVAULT_WORKER_CAP_STORAGE_KEY');
     expect(view).toContain('new WalletBrainVaultBrowserDerivation()');
+    expect(view).toContain('brainVaultDerivation.derive(input, onProgress)');
     expect(view).not.toContain('resolveWalletBrainVaultWorkerInitRetry({');
     expect(view).not.toContain('new Worker');
   });

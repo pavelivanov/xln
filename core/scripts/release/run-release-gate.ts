@@ -13,9 +13,9 @@ import {
 } from '../e2e/harness/test-artifact-cleanup';
 import { XLN_RELEASE_PATHS } from '../../../tools/release-snapshot/scope.ts';
 
-type GateProfile = 'quick' | 'ci' | 'release';
+export type GateProfile = 'quick' | 'ci' | 'release';
 
-type GateStep = {
+export type GateStep = {
   name: string;
   command: string;
   timeoutMs?: number;
@@ -215,21 +215,20 @@ async function runStep(step: GateStep): Promise<StepResult> {
   };
 }
 
-function printPlan(profile: GateProfile, steps: GateStep[]): void {
-  console.log('');
-  console.log('='.repeat(76));
-  console.log(`XLN release gate: ${profile}`);
-  console.log('='.repeat(76));
+export const renderReleaseGatePlan = (profile: GateProfile, steps = profileSteps[profile]): string => {
+  const lines = ['', '='.repeat(76), `XLN release gate: ${profile}`, '='.repeat(76)];
   if (profile !== 'quick') {
-    console.log(`Disk guard: minFreeBytes=${getMinDiskFreeBytes()}`);
+    lines.push(`Disk guard: minFreeBytes=${getMinDiskFreeBytes()}`);
   }
   steps.forEach((step, index) => {
-    console.log(`${index + 1}. ${step.name}`);
-    console.log(`   ${step.command}`);
-    console.log(`   timeoutMs=${step.timeoutMs ?? 0}`);
+    lines.push(`${index + 1}. ${step.name}`, `   ${step.command}`, `   timeoutMs=${step.timeoutMs ?? 0}`);
   });
-  console.log('='.repeat(76));
-  console.log('');
+  lines.push('='.repeat(76), '');
+  return `${lines.join('\n')}\n`;
+};
+
+function printPlan(profile: GateProfile, steps: GateStep[]): void {
+  process.stdout.write(renderReleaseGatePlan(profile, steps));
 }
 
 function printSummary(profile: GateProfile, results: StepResult[]): void {
@@ -271,7 +270,9 @@ async function main(): Promise<void> {
   printSummary(profile, results);
 }
 
-main().catch(error => {
-  console.error('Release gate runner failed:', error instanceof Error ? error.stack || error.message : String(error));
-  process.exit(1);
-});
+if (import.meta.main) {
+  main().catch(error => {
+    console.error('Release gate runner failed:', error instanceof Error ? error.stack || error.message : String(error));
+    process.exit(1);
+  });
+}

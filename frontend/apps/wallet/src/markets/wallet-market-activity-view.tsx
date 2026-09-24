@@ -37,7 +37,7 @@ export function WalletMarketActivityView({
       <footer>
         <button disabled={projection.activityPage === 0} onClick={() => source.selectNewerActivity()} type="button">Newer</button>
         <span>Page {projection.activityPage + 1}</span>
-        <button disabled={projection.activityNextBeforeHeight === null} onClick={() => source.selectOlderActivity()} type="button">Older</button>
+        <button disabled={projection.activityNextCursor === null} onClick={() => source.selectOlderActivity()} type="button">Older</button>
       </footer>
     </section>
   );

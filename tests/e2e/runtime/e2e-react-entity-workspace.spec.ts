@@ -12,7 +12,7 @@ import {
   RUNTIME_ADAPTER_MODE_KEY,
   RUNTIME_ADAPTER_WS_KEY,
 } from '../../../frontend/packages/browser/src/runtime/session/runtime-adapter-session';
-import { DISPLAY_PREFERENCES_STORAGE_KEY } from '../../../frontend/packages/browser/src/display-preferences';
+import { DISPLAY_PREFERENCES_STORAGE_KEY } from '../../../frontend/packages/browser/src/preferences/display-preferences';
 import { capturePageScreenshot } from '../../utils/e2e-screenshots';
 
 type RuntimeImportCapability = Readonly<{

@@ -66,6 +66,7 @@ const payload = () => ({
       core: {
         entityId: alice,
         signerId: `0x${'55'.repeat(20)}`,
+        timestamp: 1_800_000_000_000,
         config: { jurisdiction: { name: 'BrowserVM' } },
         reserves: new Map([[1, 50_000_000n]]),
         outDebtsByToken: new Map([[1, new Map([['debt-out', debt('out')]])]]),
@@ -101,7 +102,7 @@ const payload = () => ({
   activity: {
     ok: true,
     latestHeight: 12,
-    nextBeforeHeight: 8,
+    nextCursor: 'cursor-8',
     events: [{
       id: 'r12:runtime_input:0:directPayment',
       height: 12,
@@ -135,7 +136,7 @@ describe('React wallet financial health projection', () => {
       solvencyAccountViews: 4,
       accountsPageCount: 2,
       accountsTotal: 102,
-      historyNextBeforeHeight: 8,
+      historyNextCursor: 'cursor-8',
     });
     expect(projection.debtGroups.map((group) => [group.direction, group.outstandingLabel])).toEqual([
       ['out', '125.0 USDC'],
@@ -244,7 +245,7 @@ describe('React wallet financial health projection', () => {
     const view = readFileSync('frontend/apps/wallet/src/financial-health/wallet-financial-health.tsx', 'utf8');
     expect(source.indexOf('readSolvencySummary()')).toBeLessThan(source.indexOf('readViewFrame({'));
     expect(source).toContain('atHeight: height');
-    expect(source).toContain('beforeHeight: this.historyCursors[this.historyPage] ?? height + 1');
+    expect(source).toContain('...(cursor ? { cursor } : { beforeHeight: height })');
     expect(source).toContain('RuntimeQueryObserver');
     expect(source).toContain('this.observer?.destroy()');
     expect(source).toContain('this.releaseAdapter?.()');

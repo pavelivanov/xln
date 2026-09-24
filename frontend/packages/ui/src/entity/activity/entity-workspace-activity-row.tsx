@@ -1,4 +1,4 @@
-import type { EntityWorkspaceActivityEvent } from '../../../../runtime-client/src/entity/entity-workspace-activity';
+import type { EntityWorkspaceActivityEvent } from '../../../../runtime-client/src/entity/workspace/entity-workspace-activity';
 import { formatAddress, formatEntityWorkspaceTimestamp } from '../settings/entity-workspace-display';
 import { entityWorkspaceActivityTone } from './entity-workspace-activity-tone';
 

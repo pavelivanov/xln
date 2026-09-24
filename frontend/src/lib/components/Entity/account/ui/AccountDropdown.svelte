@@ -9,7 +9,7 @@ import type { EntityReadView } from '$lib/components/Entity/core/entity-panel-ty
   import { xlnFunctions, xlnInstance } from '../../../../../../bridges/runtime/xln-store';
   import Dropdown from '$lib/components/UI/Dropdown.svelte';
   import { entityAvatar } from '$lib/utils/identity/avatar';
-  import { buildAccountDropdownItems } from '../../../../../../packages/ui/src/account/account-dropdown-model';
+  import { buildAccountDropdownItems } from '../../../../../../packages/ui/src/account/dropdown/account-dropdown-model';
 
   export let replica: EntityReadView | null = null;
   export let selectedAccountId: string | null = null;

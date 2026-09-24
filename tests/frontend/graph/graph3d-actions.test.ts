@@ -6,7 +6,7 @@ import {
   collectGraphTokenIds,
   getGraphEntitySizeForToken,
   parseGraphPaymentAmount,
-} from '../../../frontend/packages/ui/src/graph/graph3d-actions';
+} from '../../../frontend/packages/ui/src/graph/three/interaction/graph3d-actions';
 
 describe('graph3d action helpers', () => {
   test('builds exact decimal payment amounts without floating-point math', () => {

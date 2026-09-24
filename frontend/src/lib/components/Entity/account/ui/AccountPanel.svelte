@@ -3,7 +3,7 @@ import type { AccountReadView, EntityReadView } from '$lib/components/Entity/cor
 
   import { createEventDispatcher, onMount, onDestroy } from 'svelte';
   import { p2pState, xlnFunctions } from '../../../../../../bridges/runtime/xln-store';
-  import { settings } from '../../../../../../packages/browser/src/settings-store';
+  import { settings } from '../../../../../../packages/browser/src/preferences/settings-store';
   import EntityIdentity from '../../../shared/EntityIdentity.svelte';
   import DeltaTokenSummary from '../../shared/DeltaTokenSummary.svelte';
   import AccountTokenDetails from '../../shared/AccountTokenDetails.svelte';

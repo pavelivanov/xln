@@ -21,7 +21,7 @@ import {
   installPagehideFence,
   setPageUnloadFence,
   startBrowserRuntime,
-} from '../../../../bridges/runtime/browser-runtime-session';
+} from '../../../../bridges/runtime/browser/browser-runtime-session';
 
 let discardCanonicalRecovery: ((token?: string) => void) | null = null;
 let discardCanonicalBrainVault: ((token?: string) => void) | null = null;
@@ -29,12 +29,19 @@ let recoveryFileImportRevision = 0;
 
 export const startWalletEmbeddedRuntime = startBrowserRuntime;
 
+export const recoverWalletStorageSchema = async (): Promise<number> => {
+  const { vaultOperations } = await import('../../../../bridges/vault/vault-store');
+  const recovered = await vaultOperations.recoverSchemaMismatchedRuntimesFromConfiguredBackups();
+  await session.start();
+  return recovered;
+};
+
 const openDiscoveredWalletRuntime = async (
   request: WalletCanonicalRuntimeOpeningRequest,
   discovery: WalletCanonicalRecoveryDiscoveryView,
   candidateId: string,
 ): Promise<WalletCanonicalRuntimeOpeningOutcome> => {
-  const canonical = await import('../../../../bridges/wallet/wallet-canonical-vault-runtime');
+  const canonical = await import('../../../../bridges/wallet/canonical/wallet-canonical-vault-runtime');
   try {
     const adapter = await session.replace(async () => {
       return canonical.openCanonicalWalletRuntime(
@@ -56,7 +63,7 @@ export const openWalletRuntimeWithCanonicalVault = async (
 ): Promise<WalletCanonicalRuntimeOpeningOutcome> => {
   installPagehideFence();
   await session.start();
-  const canonical = await import('../../../../bridges/wallet/wallet-canonical-vault-runtime');
+  const canonical = await import('../../../../bridges/wallet/canonical/wallet-canonical-vault-runtime');
   discardCanonicalRecovery = canonical.discardCanonicalWalletRuntimeRecovery;
   const discovery = await canonical.discoverCanonicalWalletRuntimeRecoveryView(request);
   if (discovery.candidates.length > 0) return { status: 'recovery-required', discovery };
@@ -91,7 +98,7 @@ export const importWalletRuntimeRecoveryFileWithCanonicalVault = async (
   installPagehideFence();
   await session.start();
   if (revision !== recoveryFileImportRevision) throw new Error('WALLET_RECOVERY_FILE_IMPORT_CANCELLED');
-  const canonical = await import('../../../../bridges/wallet/wallet-canonical-vault-runtime');
+  const canonical = await import('../../../../bridges/wallet/canonical/wallet-canonical-vault-runtime');
   if (revision !== recoveryFileImportRevision) throw new Error('WALLET_RECOVERY_FILE_IMPORT_CANCELLED');
   discardCanonicalRecovery = canonical.discardCanonicalWalletRuntimeRecovery;
   const current = discovery ?? await canonical.discoverCanonicalWalletRuntimeRecoveryView(request);
@@ -120,7 +127,7 @@ export const prepareWalletBrainVaultWithCanonicalVault = async (
 ): Promise<WalletBrainVaultPreparedView> => {
   installPagehideFence();
   await session.start();
-  const canonical = await import('../../../../bridges/wallet/wallet-canonical-vault-runtime');
+  const canonical = await import('../../../../bridges/wallet/canonical/wallet-canonical-vault-runtime');
   discardCanonicalBrainVault = canonical.discardCanonicalWalletBrainVault;
   return canonical.prepareCanonicalWalletBrainVault(input, onProgress);
 };
@@ -129,7 +136,7 @@ export const openPreparedWalletBrainVault = async (
   prepared: WalletBrainVaultPreparedView,
   candidateId: string,
 ): Promise<WalletCanonicalRuntimeOpeningOutcome> => {
-  const canonical = await import('../../../../bridges/wallet/wallet-canonical-vault-runtime');
+  const canonical = await import('../../../../bridges/wallet/canonical/wallet-canonical-vault-runtime');
   try {
     const adapter = await session.replace(() => canonical.openCanonicalWalletBrainVault(
       prepared.token,
@@ -150,7 +157,7 @@ export const importPreparedWalletBrainVaultRecoveryFile = async (
   discovery: WalletCanonicalRecoveryDiscoveryView,
   file: WalletCanonicalRecoveryFile,
 ): Promise<WalletCanonicalRecoveryFileImport> => {
-  const canonical = await import('../../../../bridges/wallet/wallet-canonical-vault-runtime');
+  const canonical = await import('../../../../bridges/wallet/canonical/wallet-canonical-vault-runtime');
   const candidate = await canonical.importCanonicalWalletBrainVaultRecoveryFile(
     prepared.token, prepared.runtimeId, discovery.token, file,
   );

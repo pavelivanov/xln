@@ -114,10 +114,10 @@ describe('runtime-client Runtime handle boundary', () => {
     expect(runtimeAdapterConfigId({ mode: 'embedded' })).toBe('embedded');
   });
 
-  test('keeps Svelte lifecycle ownership on a thin projection adapter', () => {
+  test('keeps React lifecycle ownership on a thin projection adapter', () => {
     const boundary = readFileSync('frontend/packages/runtime-client/src/runtime/runtime-handle.ts', 'utf8');
     const controller = readFileSync('frontend/bridges/runtime/runtime-controller-store.ts', 'utf8');
-    const connection = readFileSync('frontend/src/lib/utils/runtime/runtimeConnection.ts', 'utf8');
+    const view = readFileSync('frontend/bridges/runtime/runtime-view-store.ts', 'utf8');
 
     expect(controller).toContain('createRuntimeHandle');
     expect(controller).toContain('runtimeAdapterConfigsMatch');
@@ -126,7 +126,7 @@ describe('runtime-client Runtime handle boundary', () => {
     expect(controller).not.toContain('const adapterRuntimeId =');
     expect(controller).not.toContain("from '../../../../frontend/packages/runtime-client/src/runtime/ws-url'");
     expect(boundary).not.toContain("from '../../../../core");
-    expect(connection).toContain("from '../../../../packages/runtime-client/src/runtime/runtime-handle'");
-    expect(connection).not.toContain("type { RuntimeHandle } from '../../../../frontend/bridges/runtime/runtime-controller-store'");
+    expect(view).toContain('runtimeControllerHandle');
+    expect(view).not.toContain('type { RuntimeHandle }');
   });
 });

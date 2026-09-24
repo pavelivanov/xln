@@ -11,7 +11,7 @@ import {
   type EntityWorkspaceActivityMode,
   type EntityWorkspaceActivityPageSize,
   type EntityWorkspaceActivityQueryOptions,
-} from '../../../../packages/runtime-client/src/entity/entity-workspace-activity';
+} from '../../../../packages/runtime-client/src/entity/workspace/entity-workspace-activity';
 
 type ActivityControllerDependencies = Readonly<{
   isHistoryActive(): boolean;
@@ -20,10 +20,10 @@ type ActivityControllerDependencies = Readonly<{
 }>;
 
 export class OpsEntityWorkspaceActivityController {
-  private appendBeforeHeight: number | null = null;
-  private beforeHeight: number | null = null;
+  private appendCursor: string | null = null;
+  private cursor: string | null = null;
   private cursorIndex = 0;
-  private cursorStack: readonly (number | null)[] = [null];
+  private cursorStack: readonly (string | null)[] = [null];
   private fromTimestamp: number | null = null;
   private kind: EntityWorkspaceActivityKind = 'all';
   private mode: EntityWorkspaceActivityMode = 'paged';
@@ -34,8 +34,8 @@ export class OpsEntityWorkspaceActivityController {
 
   constructor(private readonly dependencies: ActivityControllerDependencies) {}
 
-  readonly readBeforeHeight = (): number | null => this.beforeHeight;
-  readonly readAppendBeforeHeight = (): number | null => this.appendBeforeHeight;
+  readonly readCursor = (): string | null => this.cursor;
+  readonly readAppendCursor = (): string | null => this.appendCursor;
   readonly readFromTimestamp = (): number | null => this.fromTimestamp;
   readonly readKind = (): EntityWorkspaceActivityKind => this.kind;
   readonly readMode = (): EntityWorkspaceActivityMode => this.mode;
@@ -45,7 +45,7 @@ export class OpsEntityWorkspaceActivityController {
   readonly readTypes = (): readonly EntityWorkspaceActivityFilterType[] => this.types;
 
   readonly readQueryOptions = (): EntityWorkspaceActivityQueryOptions => ({
-    ...(this.beforeHeight === null ? {} : { beforeHeight: this.beforeHeight }),
+    ...(this.cursor === null ? {} : { cursor: this.cursor }),
     fromTimestamp: this.fromTimestamp,
     kind: this.kind,
     mode: this.mode,
@@ -56,8 +56,8 @@ export class OpsEntityWorkspaceActivityController {
   });
 
   private readonly resetCursor = (): void => {
-    this.appendBeforeHeight = null;
-    this.beforeHeight = null;
+    this.appendCursor = null;
+    this.cursor = null;
     this.cursorIndex = 0;
     this.cursorStack = [null];
   };
@@ -91,27 +91,27 @@ export class OpsEntityWorkspaceActivityController {
 
   readonly select = (
     activity: EntityWorkspaceActivity,
-    beforeHeight: number | null,
+    cursor: string | null,
   ): void => {
     if (activity.status !== 'selected') {
       throw new Error('OPS_ENTITY_ACTIVITY_PAGE_CONTEXT_REQUIRED');
     }
-    if (beforeHeight !== null && beforeHeight !== activity.nextBeforeHeight) {
-      throw new Error(`OPS_ENTITY_ACTIVITY_PAGE_INVALID:${String(beforeHeight)}`);
+    if (cursor !== null && cursor !== activity.nextCursor) {
+      throw new Error(`OPS_ENTITY_ACTIVITY_PAGE_INVALID:${cursor}`);
     }
-    if (beforeHeight === null && activity.isLatestPage) return;
-    if (beforeHeight === null) {
+    if (cursor === null && activity.isLatestPage) return;
+    if (cursor === null) {
       this.resetCursor();
       this.refresh();
       return;
     }
-    if (beforeHeight === this.beforeHeight) return;
+    if (cursor === this.cursor) return;
     const nextIndex = this.cursorIndex + 1;
-    if (this.cursorStack[nextIndex] !== beforeHeight) {
-      this.cursorStack = [...this.cursorStack.slice(0, nextIndex), beforeHeight];
+    if (this.cursorStack[nextIndex] !== cursor) {
+      this.cursorStack = [...this.cursorStack.slice(0, nextIndex), cursor];
     }
     this.cursorIndex = nextIndex;
-    this.beforeHeight = beforeHeight;
+    this.cursor = cursor;
     this.refresh();
   };
 
@@ -121,7 +121,7 @@ export class OpsEntityWorkspaceActivityController {
     }
     if (this.cursorIndex === 0) return;
     this.cursorIndex -= 1;
-    this.beforeHeight = this.cursorStack[this.cursorIndex] ?? null;
+    this.cursor = this.cursorStack[this.cursorIndex] ?? null;
     this.refresh();
   };
 
@@ -132,26 +132,26 @@ export class OpsEntityWorkspaceActivityController {
     if (this.mode !== 'infinite' || activity.mode !== 'infinite') {
       throw new Error('OPS_ENTITY_ACTIVITY_APPEND_MODE_REQUIRED');
     }
-    if (activity.nextBeforeHeight === null || this.appendBeforeHeight !== null) return;
-    this.appendBeforeHeight = activity.nextBeforeHeight;
-    this.beforeHeight = activity.nextBeforeHeight;
+    if (activity.nextCursor === null || this.appendCursor !== null) return;
+    this.appendCursor = activity.nextCursor;
+    this.cursor = activity.nextCursor;
     this.refresh();
   };
 
-  readonly completeAppend = (beforeHeight: number): void => {
-    if (this.appendBeforeHeight !== beforeHeight) {
+  readonly completeAppend = (cursor: string): void => {
+    if (this.appendCursor !== cursor) {
       throw new Error('OPS_ENTITY_ACTIVITY_APPEND_COMPLETION_MISMATCH');
     }
-    this.appendBeforeHeight = null;
-    this.beforeHeight = null;
+    this.appendCursor = null;
+    this.cursor = null;
   };
 
-  readonly cancelAppend = (beforeHeight: number): void => {
-    if (this.appendBeforeHeight !== beforeHeight) {
+  readonly cancelAppend = (cursor: string): void => {
+    if (this.appendCursor !== cursor) {
       throw new Error('OPS_ENTITY_ACTIVITY_APPEND_CANCELLATION_MISMATCH');
     }
-    this.appendBeforeHeight = null;
-    this.beforeHeight = null;
+    this.appendCursor = null;
+    this.cursor = null;
   };
 
   readonly selectKind = (
@@ -248,7 +248,7 @@ export class OpsEntityWorkspaceActivityController {
       throw new Error('OPS_ENTITY_ACTIVITY_FILTER_CONTEXT_REQUIRED');
     }
     if (this.search.length === 0 && this.types.length === 0
-      && this.fromTimestamp === null && this.toTimestamp === null && this.beforeHeight === null) return;
+      && this.fromTimestamp === null && this.toTimestamp === null && this.cursor === null) return;
     this.fromTimestamp = null;
     this.search = '';
     this.toTimestamp = null;

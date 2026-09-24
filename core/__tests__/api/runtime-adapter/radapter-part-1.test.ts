@@ -9,6 +9,7 @@ import { createHmac } from 'crypto';
 import { computeAddress, hexlify, keccak256, recoverAddress, SigningKey, toUtf8Bytes } from 'ethers';
 
 import { createEmptyAccountJClaimAccumulator } from '../../../account/j-claims/j-claim-accumulator';
+import { createSettlementWorkspaceHash } from '../../../account/tx/handlers/settlement/transition';
 
 import {
   deriveRuntimeAdapterCapabilityToken,
@@ -24,7 +25,6 @@ import {
   runtimeAdapterMaxMessageBytes,
 } from '../../../api/runtime-adapter/codec';
 
-import { EmbeddedRuntimeAdapter } from '../../../api/runtime-adapter/embedded';
 
 import { RemoteRuntimeAdapter } from '../../../api/runtime-adapter/remote';
 
@@ -83,6 +83,10 @@ import type {
 
 import type { AccountTx, CrossJurisdictionSwapRoute, Delta, EntityReplica, RuntimeReplica, RuntimeInput } from '../../../runtime/types';
 
+import type {
+  RuntimeAdapterSettlementWorkspaceRead,
+} from '../../../api/runtime-adapter/types';
+
 import type { EntityProviderActionState } from '../../../types/entity-provider-actions';
 
 import type { BookState } from '../../../orderbook';
@@ -103,6 +107,8 @@ const counterpartyId = `0x${'bb'.repeat(32)}`;
 const hubRuntimeId = deriveSignerAddressSync('radapter-local-hub', '1').toLowerCase();
 
 const adapterAuthChallenge = `0x${'41'.repeat(32)}`;
+
+const runtimeId = `0x${'33'.repeat(32)}`;
 
 process.env['XLN_RADAPTER_AUTH_SEED'] = process.env['XLN_RADAPTER_AUTH_SEED'] || 'seed';
 
@@ -221,6 +227,7 @@ const makeEnv = (): RuntimeReplica =>
       ]),
     },
     runtimeSeed: 'seed',
+    runtimeId,
     infrastructure: {
       lifecyclePhase: 'running',
       loopActive: true,
@@ -1304,6 +1311,103 @@ test('runtime adapter view-frame exposes compact pending j-batch operations for 
   expect(disputeStarts[0]?.starterCounterArguments).toBe('[redacted]');
 });
 
+test('settlement workspace read exposes only the exact bounded authority projection', async () => {
+  const env = makeEnv();
+  const replica = Array.from(env.state.eReplicas.values())[0]!;
+  const account = replica.state.accounts.get(counterpartyId)!;
+  const workspace = {
+    workspaceHash: '',
+    ops: [{ type: 'forgive' as const, tokenId: 1 }],
+    compiledDiffs: [{ tokenId: 1, leftDiff: 1n, rightDiff: -1n, collateralDiff: 0n, ondeltaDiff: 0n }],
+    compiledForgiveTokenIds: [1],
+    settlementHash: `0x${'15'.repeat(32)}`,
+    lastModifiedByLeft: false,
+    status: 'awaiting_counterparty' as const,
+    memo: 'remote-peer-review',
+    revision: 3,
+    createdAt: 1,
+    lastUpdatedAt: 2,
+    executorIsLeft: false,
+    nonceAtSign: 4,
+    rightHanko: `0x${'16'.repeat(65)}`,
+    postSettlementDisputeProof: {
+      rightHanko: `0x${'17'.repeat(65)}`,
+      disputeHash: `0x${'18'.repeat(32)}`,
+      proofBodyHash: `0x${'19'.repeat(32)}`,
+      nonce: 5,
+      proposerIsLeft: false,
+    },
+  };
+  workspace.workspaceHash = createSettlementWorkspaceHash(account.state, workspace);
+  account.state.settlementWorkspace = workspace;
+
+  const read = await resolveRuntimeAdapterRead<RuntimeAdapterSettlementWorkspaceRead>(
+    { env },
+    `entity/${entityId}/settlement-workspaces`,
+    { atHeight: 7 },
+  );
+
+  expect(read).toMatchObject({
+    ok: true,
+    runtimeId,
+    height: 7,
+    entityId,
+    signerId: 'signer',
+    returned: 1,
+    maxItems: 100,
+    workspaces: [{
+      counterpartyEntityId: counterpartyId,
+      workspaceHash: workspace.workspaceHash,
+      ops: [{ type: 'forgive', tokenId: 1 }],
+      lastModifiedByLeft: false,
+      status: 'awaiting_counterparty',
+      memo: 'remote-peer-review',
+      revision: 3,
+      executorIsLeft: false,
+      proposerEntityId: counterpartyId,
+      approverEntityId: entityId,
+      executorEntityId: counterpartyId,
+      leftHankoPresent: false,
+      rightHankoPresent: true,
+    }],
+  });
+  const projected = read.workspaces[0]! as unknown as Record<string, unknown>;
+  for (const secret of [
+    'compiledDiffs', 'compiledForgiveTokenIds', 'settlementHash', 'nonceAtSign',
+    'leftHanko', 'rightHanko', 'postSettlementDisputeProof',
+  ]) expect(secret in projected).toBe(false);
+  await expect(resolveRuntimeAdapterRead(
+    { env },
+    `entity/${entityId}/settlement-workspaces`,
+    { atHeight: 6 },
+  )).rejects.toThrow('historical settlement workspace reads are unavailable');
+});
+
+test('settlement workspace read rejects a workspace outside the owning bilateral account', async () => {
+  const env = makeEnv();
+  const replica = Array.from(env.state.eReplicas.values())[0]!;
+  const account = replica.state.accounts.get(counterpartyId)!;
+  account.state.rightEntity = `0x${'cc'.repeat(32)}`;
+  const workspace = {
+    workspaceHash: '',
+    ops: [{ type: 'forgive' as const, tokenId: 1 }],
+    lastModifiedByLeft: false,
+    status: 'awaiting_counterparty' as const,
+    revision: 1,
+    createdAt: 1,
+    lastUpdatedAt: 1,
+    executorIsLeft: false,
+  };
+  workspace.workspaceHash = createSettlementWorkspaceHash(account.state, workspace);
+  account.state.settlementWorkspace = workspace;
+
+  await expect(resolveRuntimeAdapterRead(
+    { env },
+    `entity/${entityId}/settlement-workspaces`,
+    { atHeight: 7 },
+  )).rejects.toThrow('settlement workspace account authority mismatch');
+});
+
 test('runtime adapter view frame defaults to the live entity with real relationships', async () => {
   const env = makeEnv();
   const primary = Array.from(env.state.eReplicas.values())[0]!;
@@ -2030,7 +2134,8 @@ test('runtime adapter activity read uses typed projection context', async () => 
           returned: 1,
           limit: 40,
           scanLimit: 100,
-          nextBeforeHeight: 8,
+          cursor: null,
+          nextCursor: 'cursor-8',
           filters: opts,
           events: [
             {
@@ -2073,6 +2178,7 @@ test('runtime adapter activity read uses typed projection context', async () => 
       fromTimestamp: undefined,
       toTimestamp: undefined,
       beforeHeight: 12,
+      cursor: undefined,
       limit: 40,
       scanLimit: 100,
     },
@@ -2098,7 +2204,8 @@ test('runtime adapter activity read forwards bounded deep scan requests', async 
           returned: 0,
           limit: 80,
           scanLimit: 1000,
-          nextBeforeHeight: null,
+          cursor: null,
+          nextCursor: null,
           filters: opts,
           events: [],
         };
@@ -2109,6 +2216,7 @@ test('runtime adapter activity read forwards bounded deep scan requests', async 
       entityId,
       kind: 'offchain',
       types: ['payment'],
+      cursor: 'activity-cursor',
       limit: 80,
       scanLimit: 1000,
     },
@@ -2123,6 +2231,7 @@ test('runtime adapter activity read forwards bounded deep scan requests', async 
       fromTimestamp: undefined,
       toTimestamp: undefined,
       beforeHeight: undefined,
+      cursor: 'activity-cursor',
       limit: 80,
       scanLimit: 1000,
     },

@@ -101,12 +101,14 @@ describe('Graph3D scene input model', () => {
     expect(graph3dSceneTransactionOf({ data: 'invalid' })).toEqual({});
   });
 
-  test('keeps Three.js scene mutation in the Svelte facade', () => {
-    const source = readFileSync('frontend/src/lib/view/panels/graph3d/Graph3DPanel.svelte', 'utf8');
+  test('keeps Three.js scene mutation in the React Ops graph boundary', () => {
+    const world = readFileSync('frontend/apps/ops/src/workspace/graph/ops-graph-world.ts', 'utf8');
+    const effects = readFileSync('frontend/apps/ops/src/workspace/graph/ops-graph-effects.ts', 'utf8');
 
-    expect(source).toContain('createGraph3dSceneInputView(graphProjections, mergedRuntimeGraph)');
-    expect(source).toContain('graph3dSceneTransactionOf(tx)');
-    expect(source).toContain('graphWorld.add(jMachineGroup)');
+    expect(world).toContain('createGraph3dSceneInputView(graph.sources.map');
+    expect(effects).toContain('graph3dSceneTransactionOf(value)');
+    expect(world).toContain('world.add(machine)');
+    const source = `${world}\n${effects}`;
     expect(source).not.toContain('const graphTransactionOf =');
     expect(source).not.toContain('$: graphRuntimeOptions = [');
   });

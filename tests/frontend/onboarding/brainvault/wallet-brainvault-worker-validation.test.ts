@@ -151,7 +151,7 @@ describe('browser wallet BrainVault worker validation', () => {
       'utf8',
     );
     const view = readFileSync(
-      'frontend/src/lib/components/Views/RuntimeCreation.svelte',
+      'frontend/bridges/wallet/canonical/wallet-canonical-vault-runtime.ts',
       'utf8',
     );
 
@@ -165,6 +165,7 @@ describe('browser wallet BrainVault worker validation', () => {
     expect(orchestration).toContain('clearWatchdog(run, worker)');
     expect(orchestration).toContain('hexToBytes(completion.resultHex)');
     expect(view).toContain('new WalletBrainVaultBrowserDerivation()');
+    expect(view).toContain('brainVaultDerivation.derive(input, onProgress)');
     expect(view).not.toContain('decodeWalletBrainVaultWorkerMessage(');
     expect(view).not.toContain('worker.postMessage({');
   });

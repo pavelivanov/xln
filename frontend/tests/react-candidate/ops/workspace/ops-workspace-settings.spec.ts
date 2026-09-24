@@ -199,9 +199,10 @@ test('Stack Manager inspects the real daemon signer and exact RPC, rejects failu
   const settings = page.getByTestId('workspace-settings');
   await settings.getByRole('button', { name: 'Stack Manager', exact: true }).click();
   const stack = settings.getByTestId('workspace-stack-manager');
-  await expect(stack.getByTestId('stack-manager-phase')).toHaveText('Deployment phase: idle');
+  await expect(stack.getByTestId('stack-manager-phase')).toHaveText(/^Deployment phase: (?:idle|complete)$/);
+  await stack.getByTestId('stack-manager-signer').selectOption(fixture.runtimeId);
   const signer = await stack.getByTestId('stack-manager-signer').inputValue();
-  expect(signer).toMatch(/^0x[0-9a-f]{40}$/);
+  expect(signer).toBe(fixture.runtimeId);
   await stack.getByTestId('stack-manager-rpc').fill(fixture.recovery.rpcUrl);
   await stack.getByRole('button', { name: 'Probe RPC', exact: true }).click();
   await expect(stack.getByTestId('stack-manager-probe')).toContainText(fixture.recovery.rpcUrl);
@@ -244,6 +245,7 @@ test('Stack Manager deploys, verifies, registers, and shares one real isolated V
   await settings.getByRole('button', { name: 'Stack Manager', exact: true }).click();
   const stack = settings.getByTestId('workspace-stack-manager');
   await expect(stack.getByTestId('stack-manager-phase')).toBeVisible();
+  await stack.getByTestId('stack-manager-signer').selectOption(fixture.runtimeId);
   await stack.getByTestId('stack-manager-rpc').fill(deploymentRpc.rpcUrl);
   await stack.getByRole('button', { name: 'Probe RPC', exact: true }).click();
   await expect(stack.getByTestId('stack-manager-probe')).toContainText('Native balance (wei)');

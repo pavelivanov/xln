@@ -4,7 +4,7 @@ import {
   signReleaseEnvelope,
   verifyReleaseAttestation,
   type FoundationReleaseBoard,
-} from '../../frontend/src/lib/releases/release-signature.ts';
+} from '../../frontend/packages/ui/src/releases/release-signature.ts';
 import type { ReleaseSnapshot } from './types.ts';
 
 export type FoundationReleaseKeys = {

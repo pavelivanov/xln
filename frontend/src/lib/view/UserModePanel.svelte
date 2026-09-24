@@ -15,7 +15,7 @@
   import { vaultOperations } from '../../../bridges/vault/vault-store';
   import { activeRuntime as activeRuntimeStore } from '../../../bridges/vault/vault-metadata-store';
   import { errorLog } from '../../../packages/browser/src/logging/error-log-store';
-  import { settings } from '../../../packages/browser/src/settings-store';
+  import { settings } from '../../../packages/browser/src/preferences/settings-store';
   import {
     entityPositions,
     handleRuntimeProjectionRefreshError,
@@ -59,15 +59,15 @@
   import {
     importJMachineViaRuntime,
     type JMachineCreateDetail,
-  } from '../../../bridges/runtime/import-jmachine-runtime';
+  } from '../../../bridges/runtime/remote/import-jmachine-runtime';
   import TimeMachine from './core/TimeMachine.svelte';
   import {
     buildOnboardingRuntimeProjection,
-  } from '../../../bridges/wallet/onboarding-runtime-projection';
+  } from '../../../bridges/wallet/onboarding/onboarding-runtime-projection';
   import {
     buildFormationRuntimeProjection,
     type FormationRuntimeProjection,
-  } from '../../../bridges/wallet/formation-runtime-projection';
+  } from '../../../bridges/wallet/formation/formation-runtime-projection';
 
   type RuntimeFrame = RuntimeReplica | EnvSnapshot;
   type JurisdictionLike = { name: string };

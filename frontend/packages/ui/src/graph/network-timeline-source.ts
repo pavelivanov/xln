@@ -127,6 +127,11 @@ export const adapterNetworkTimelineSource = (
 ): NetworkTimelineSource => {
   const expected = normalizeId(runtimeId);
   if (!expected) throw new Error('NETWORK_TIMELINE_RUNTIME_ID_REQUIRED');
+  const readGraphFrame = (atHeight?: number) => adapter.read<RuntimeAdapterGraphFrame>('graph-frame', {
+    ...(atHeight === undefined ? {} : { atHeight }),
+    limit: GRAPH_FRAME_LIMIT,
+    accountsLimit: GRAPH_FRAME_LIMIT,
+  });
 
   return {
     kind: 'adapter',
@@ -157,11 +162,14 @@ export const adapterNetworkTimelineSource = (
 
     async readGraphFrame(height: number): Promise<RuntimeAdapterGraphFrame> {
       const target = requireHeight(height, 'NETWORK_TIMELINE_FRAME_HEIGHT_INVALID');
-      const frame = await adapter.read<RuntimeAdapterGraphFrame>('graph-frame', {
-        atHeight: target,
-        limit: GRAPH_FRAME_LIMIT,
-        accountsLimit: GRAPH_FRAME_LIMIT,
-      });
+      const head = await adapter.read<{ latestHeight?: number }>('head');
+      const targetIsLive = Math.floor(Number(head.latestHeight ?? 0)) === target;
+      let frame = await readGraphFrame(targetIsLive ? undefined : target);
+      // The Runtime may commit after the head probe. Fall back to exact replay
+      // rather than accepting a newer live frame for an older timeline step.
+      if (targetIsLive && Math.floor(Number(frame.height || 0)) !== target) {
+        frame = await readGraphFrame(target);
+      }
       const actual = normalizeId(frame.runtimeId);
       if (actual !== expected) throw new Error(`NETWORK_GRAPH_RUNTIME_ID_MISMATCH:${expected}:${actual}`);
       if (Math.floor(Number(frame.height || 0)) !== target) {
@@ -175,25 +183,24 @@ export const adapterNetworkTimelineSource = (
       const to = requireHeight(toHeight, 'NETWORK_ACTIVITY_TO_HEIGHT_INVALID');
       if (to < from) throw new Error(`NETWORK_ACTIVITY_RANGE_INVALID:${from}:${to}`);
       const collected = new Map<string, RuntimeActivityEvent>();
-      // The activity feed pages backwards from a height cursor, so walk down until the
-      // window is covered or the runtime runs out of frames.
-      let beforeHeight: number | undefined = to + 1;
+      // Runtime owns the opaque cursor because a page may resume inside one frame.
+      let cursor: string | null = null;
       while (true) {
-        const page = await adapter.read<RuntimeAdapterActivityPage>('activity', {
+        const page: RuntimeAdapterActivityPage = await adapter.read<RuntimeAdapterActivityPage>('activity', {
           limit: ACTIVITY_PAGE_SIZE,
           scanLimit: ACTIVITY_SCAN_LIMIT,
-          ...(beforeHeight === undefined ? {} : { beforeHeight }),
+          ...(cursor === null ? { beforeHeight: to } : { cursor }),
         });
         for (const event of page.events ?? []) {
           const height = Math.floor(Number(event.height || 0));
           if (height < from || height > to) continue;
           collected.set(String(event.id), event);
         }
-        if (page.nextBeforeHeight === null) break;
-        const next = Math.floor(Number(page.nextBeforeHeight));
-        if (!Number.isFinite(next) || next < 2 || (beforeHeight !== undefined && next >= beforeHeight)) break;
-        if (next <= from) break;
-        beforeHeight = next;
+        if (page.nextCursor === null || page.fromHeight < from) break;
+        if (!page.nextCursor || page.nextCursor === cursor) {
+          throw new Error(`NETWORK_ACTIVITY_CURSOR_INVALID:${expected}`);
+        }
+        cursor = page.nextCursor;
       }
       return Array.from(collected.values()).sort(compareActivity);
     },

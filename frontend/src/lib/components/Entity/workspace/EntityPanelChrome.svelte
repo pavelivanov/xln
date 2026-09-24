@@ -2,7 +2,7 @@
 import type { EntityReadView } from '$lib/components/Entity/core/entity-panel-types';
 
   import type { Tab } from '../../../../../packages/ui/src/workspace/ui-types';
-  import type { EntityPanelJurisdictionView } from '../../../../../bridges/wallet/entity-panel-model';
+  import type { EntityPanelJurisdictionView } from '../../../../../bridges/wallet/entity/entity-panel-model';
   import JurisdictionDropdown from '$lib/components/Jurisdiction/JurisdictionDropdown.svelte';
   import EntityDropdown from './shell/EntityDropdown.svelte';
 

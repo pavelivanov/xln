@@ -10,7 +10,7 @@ import type { EntityReadView } from '$lib/components/Entity/core/entity-panel-ty
   import CreditForm from './CreditForm.svelte';
   import LiveRequiredState from '../../workspace/shell/LiveRequiredState.svelte';
   import LoadTestingController from './load-testing/LoadTestingController.svelte';
-  import type { ConfigureWorkspaceTab } from '../../../../../../packages/runtime-client/src/entity/entity-workspace-navigation';
+  import type { ConfigureWorkspaceTab } from '../../../../../../packages/runtime-client/src/entity/workspace/entity-workspace-navigation';
   import type { PaymentPanelView } from '../../../../../../bridges/wallet/payment-panel-view';
   import type { SwapPanelRuntimeView } from '../../../../../../bridges/wallet/swap-panel-helpers';
 

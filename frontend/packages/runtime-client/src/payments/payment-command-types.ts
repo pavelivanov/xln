@@ -1,5 +1,4 @@
 export type RuntimePaymentDeliveryMode = 'direct' | 'trusted' | 'instant' | 'async';
-export type RuntimePaymentLendingTerm = '1h' | '1d' | '1m';
 
 export type RuntimePaymentEntityTx =
   | Readonly<{
@@ -68,28 +67,6 @@ export type RuntimePaymentEntityTx =
       type: 'settle_execute';
       data: Readonly<{
         counterpartyEntityId: string;
-      }>;
-    }>
-  | Readonly<{
-      type: 'lendingOffer';
-      data: Readonly<{
-        positionId: string;
-        hubEntityId: string;
-        tokenId: number;
-        amount: bigint;
-        termId: RuntimePaymentLendingTerm;
-        interestBps: number;
-      }>;
-    }>
-  | Readonly<{
-      type: 'lendingBorrow';
-      data: Readonly<{
-        requestId: string;
-        hubEntityId: string;
-        tokenId: number;
-        amount: bigint;
-        termId: RuntimePaymentLendingTerm;
-        maxInterestBps: number;
       }>;
     }>
   | Readonly<{

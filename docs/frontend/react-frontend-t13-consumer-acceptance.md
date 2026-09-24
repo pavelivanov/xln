@@ -1,0 +1,27 @@
+# React frontend T13 — release consumer acceptance
+
+Status: **PARTIAL — exact final testnet lifecycle requires explicit external-mutation authority**
+
+## Accepted release
+
+- Every current consumer check uses `frontend/.artifacts/releases/sha256-018216b4f3761819a817cd37aee49b875acca15698ab45e112abebe90621172b` directly.
+- Candidate verification passes with **492 files** after browser, preview, package, PWA and native consumer operations. No consumer rewrote the release directory or manifest.
+
+## Passing evidence
+
+- Immutable artifact browser: **12/12 pass in 2.8 min** across mobile, laptop and wide. The built release proves exact routes/assets/workers/storage plus real Ownership release, recovery-service enrollment and Graph/history interactions.
+- Preview consumer: **PASS** with **492 file hashes**, four route owners, HEAD/POST/404/redirect behavior, corrupt live bytes rejected, corrupt restart rejected, missing release rejected and clean shutdown on isolated port `48080`.
+- npm distribution: `xlnfinance-0.1.32.tgz` contains **508 archive entries**, is **50,220,136 bytes**, and has SHA-256 `1df7596524e1ce7022513c0bbe4f1db1afa19656ee001ce81622c788732bc434`.
+- Offline installed preflight: **8/8 cases pass** with no state created. Invalid pointers, a corrupt Wallet entry and a missing manifest fail before daemon contact; valid and restored package copies verify the same 492-file release. [Machine receipt](../../output/playwright/react-t13-consumers/npm-preflight.json).
+- Isolated Docker install: Bun `1.4.0` installed the final tarball under `--offline --ignore-scripts --frozen-lockfile` with networking disabled. Its installed pointer is the accepted `sha256-018216…` release. A path-keyed Bun cache entry from the prior tarball was quarantined before the exact final install; it is not accepted evidence.
+- Installed dev lifecycle: **PASS** with container networking disabled. The final package starts on container port `8080`, issues and consumes one local pairing token, rejects replay, authenticates the admin Runtime WebSocket, commits height `0 -> 1`, stops cleanly, reopens at height `1`, stops again, and leaves the preserved testnet owner unchanged. Candidate verification remains **492 files**. [Machine receipt](../../output/playwright/react-t13-consumers/npm-launcher-dev-container.json).
+- Focused release/preview/distribution contracts: **11/11 pass**, **93 assertions**.
+
+## Remaining boundary
+
+- The exact final installed package has not completed the persisted testnet restore/write/restart lifecycle. The requested run would contact `https://xln.finance/rpc`, restore the preserved external testnet owner, and submit one empty Runtime frame. Execution approval was denied until that destination and mutation are explicitly authorized.
+- A first final-package dev attempt intentionally preserved the earlier fixture and reproduced its stale writer-lock evidence from a pre-reaper container. The accepted run used a new dedicated dev-state root and proved its own clean restart; no stale lock was deleted or ignored.
+- The existing `npm-launcher-container.json` receipt names the earlier 491-file release and is historical only; it is not acceptance of the 492-file final package.
+- Host nginx on canonical host port `8080` was never interrupted. The pending lifecycle remains isolated inside Docker and will bind only the container's port `8080`.
+
+T13 can become `DONE` after that one exact final-package lifecycle passes and the release verifies again.

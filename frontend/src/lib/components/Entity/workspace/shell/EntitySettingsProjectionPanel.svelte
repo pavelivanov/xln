@@ -13,12 +13,12 @@
   import type { RuntimeReplica, HubRebalanceConfig } from '@xln/core/api/public/runtime-module';
   import { errorLog } from '../../../../../../packages/browser/src/logging/error-log-store';
   import { runtimeControllerHandle } from '../../../../../../bridges/runtime/runtime-controller-store';
-  import { settings, settingsOperations } from '../../../../../../packages/browser/src/settings-store';
+  import { settings, settingsOperations } from '../../../../../../packages/browser/src/preferences/settings-store';
   import {
     buildRuntimeRecoveryConfigForMode,
     type RecoveryTowerConfig,
     type RecoveryTowerSetupMode,
-  } from '../../../../../../bridges/vault/vault-recovery';
+  } from '../../../../../../bridges/vault/recovery/vault-recovery';
   import { activeRuntime } from '../../../../../../bridges/vault/vault-metadata-store';
   import { vaultOperations } from '../../../../../../bridges/vault/vault-store';
   import {
@@ -30,7 +30,7 @@
     normalizeTowerMode,
     resolveOfficialRecoveryTowerUrl,
     type RecoveryServiceMode,
-  } from '../../../../../../bridges/vault/recovery-settings';
+  } from '../../../../../../bridges/vault/recovery/recovery-settings';
   import {
     buildRecoveryTowerStatuses,
     buildRuntimeRecoveryCoverage,
@@ -39,16 +39,16 @@
     readRuntimeRecoveryDiscoveryStatus,
     type RuntimeRecoveryDiscoveryStatus,
   } from '../../../../../../packages/browser/src/recovery/recovery-discovery-status';
-  import { buildRemoteRuntimeRecoveryPeerSources } from '../../../../../../bridges/runtime/remote-runtime-validation';
+  import { buildRemoteRuntimeRecoveryPeerSources } from '../../../../../../bridges/runtime/remote/remote-runtime-validation';
   import AddJMachine from '$lib/components/Jurisdiction/AddJMachine.svelte';
-  import type { JMachineCreateDetail } from '../../../../../../bridges/runtime/import-jmachine-runtime';
+  import type { JMachineCreateDetail } from '../../../../../../bridges/runtime/remote/import-jmachine-runtime';
   import PushWakePanel from '$lib/components/Settings/PushWakePanel.svelte';
   import StackManager from '$lib/components/Settings/StackManager.svelte';
   import EntityConsensusSettingsPanel from './EntityConsensusSettingsPanel.svelte';
   import type { EntityConsensusSettingsView } from '../../../../../../bridges/entity/consensus/entity-consensus-settings';
-  import type { SettingsSubview } from '../../../../../../packages/runtime-client/src/entity/entity-workspace-navigation';
+  import type { SettingsSubview } from '../../../../../../packages/runtime-client/src/entity/workspace/entity-workspace-navigation';
   import type { ThemeName } from '../../../../../../packages/ui/src/workspace/ui-types';
-  import { getAvailableThemes } from '../../../../../../packages/browser/src/themes';
+  import { getAvailableThemes } from '../../../../../../packages/browser/src/preferences/themes';
 
   type ProfileView = {
     name?: string;

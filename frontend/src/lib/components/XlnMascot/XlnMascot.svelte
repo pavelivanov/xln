@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onDestroy, onMount } from 'svelte';
   import { page } from '$app/stores';
-  import { settings, settingsOperations } from '../../../../packages/browser/src/settings-store';
+  import { settings, settingsOperations } from '../../../../packages/browser/src/preferences/settings-store';
   import XlnMascotChat from './XlnMascotChat.svelte';
   import XlnMascotLogo from './XlnMascotLogo.svelte';
   import type { MascotPresence } from './mascot-types';

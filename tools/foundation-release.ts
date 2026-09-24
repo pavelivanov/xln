@@ -13,7 +13,7 @@ import {
   signReleaseEnvelope,
   verifyReleaseSnapshot,
   type FoundationReleaseBoard,
-} from '../frontend/src/lib/releases/release-signature.ts';
+} from '../frontend/packages/ui/src/releases/release-signature.ts';
 import { writeManifest } from './release-snapshot/render.ts';
 import type { FoundationReleaseKeys } from './release-snapshot/sign.ts';
 import type { ReleaseSnapshot } from './release-snapshot/types.ts';

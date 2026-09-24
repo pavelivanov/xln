@@ -70,18 +70,13 @@ describe('gossip panel view model', () => {
     expect(getGossipDirectoryDisplayName(directoryProfile({ name: '' }))).toBe(ALICE);
   });
 
-  test('keeps Runtime reads and lifecycle effects in Svelte while consuming the shared projection', () => {
-    const panel = readFileSync('frontend/src/lib/view/panels/GossipPanel.svelte', 'utf8');
-    const facade = readFileSync(
-      'frontend/src/lib/components/Entity/activity/gossip-directory-view.ts',
-      'utf8',
-    );
+  test('keeps Runtime reads and lifecycle effects in React while consuming the shared projection', () => {
+    const panel = readFileSync('frontend/apps/ops/src/workspace/panels/ops-gossip-panel.tsx', 'utf8');
 
-    expect(panel).toContain("from '../../../../packages/runtime-client/src/panels/gossip-panel-view'");
-    expect(panel).toContain('createRuntimeQueryStore');
-    expect(panel).toContain('frameStore.destroy()');
+    expect(panel).toContain("from '../../../../../packages/runtime-client/src/panels/gossip-panel-view'");
+    expect(panel).toContain('useWorkspaceQuery(readOpsGossipDirectory)');
+    expect(panel).toContain('return () => window.clearTimeout(timer)');
     expect(panel).toContain('filterGossipDirectoryProfiles');
     expect(panel).not.toContain('.filter((profile) =>');
-    expect(facade).toContain("from '../../../../../packages/runtime-client/src/panels/gossip-panel-view'");
   });
 });

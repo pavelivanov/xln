@@ -2,7 +2,7 @@ import { expect, test } from 'bun:test';
 import {
   decodePersistedRuntime,
   decodePersistedVaultState,
-} from '../../../frontend/bridges/vault/vault-persistence-decoder';
+} from '../../../frontend/bridges/vault/recovery/vault-persistence-decoder';
 
 const persistedRuntime = {
   id: '0x0000000000000000000000000000000000000001',

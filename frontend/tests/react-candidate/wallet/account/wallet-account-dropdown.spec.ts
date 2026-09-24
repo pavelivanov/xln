@@ -1,5 +1,9 @@
 import { expect, test } from '@playwright/test';
-import { installImportedRuntime, selectWalletFixtureRuntime } from '../fixtures/wallet-runtime-test-helpers';
+import {
+  installImportedRuntime,
+  selectWalletFixtureRuntime,
+  walletPortfolioAccount,
+} from '../fixtures/wallet-runtime-test-helpers';
 import { expectNoBrowserErrors, expectPageContained, observeBrowserErrors, screenshotEvidence } from '../../browser-evidence';
 
 test('Account dropdown lists every committed relationship and focuses an Account beyond the portfolio page', { tag: '@functional' }, async ({ page }, testInfo) => {
@@ -7,7 +11,8 @@ test('Account dropdown lists every committed relationship and focuses an Account
   const errors = observeBrowserErrors(page);
   const fixture = await selectWalletFixtureRuntime(page);
   await page.goto('/app?portfolio=1');
-  await expect(page.locator('.wallet-portfolio-account')).toHaveCount(1);
+  await page.getByLabel('Entity', { exact: true }).selectOption(fixture.entityId);
+  await expect(walletPortfolioAccount(page, fixture.counterpartyEntityId)).toHaveCount(1);
   const initialEntityId = await page.getByLabel('Entity', { exact: true }).inputValue();
   await expect(page.getByRole('button', { name: 'Select Account', exact: true })).toHaveCount(0);
   const port = Number(process.env['XLN_REACT_WALLET_FIXTURE_PORT'] || 19092);
@@ -63,16 +68,12 @@ test('Account dropdown lists every committed relationship and focuses an Account
   await expect(page.getByLabel('Account', { exact: true }).getByRole('option')).toHaveCount(26);
   await screenshotEvidence(page, testInfo, 'account-dropdown-manage-context');
   await page.evaluate(() => { window.location.hash = 'accounts/lending'; });
-  await expect(page.getByLabel('Hub Account', { exact: true }).getByRole('option')).toHaveCount(26);
-  await page.getByLabel('Hub Account', { exact: true }).selectOption(beyondPageId);
-  const lendingAssets = page.getByLabel('Asset', { exact: true });
-  await expect(lendingAssets.getByRole('option')).toHaveCount(3);
-  for (const tokenId of [1, 2, 3]) await expect(lendingAssets.locator(`option[value="${tokenId}"]`)).toHaveCount(1);
-  await expect(page.getByRole('form', { name: 'Lend', exact: true })).toBeVisible();
-  await expect(page.getByRole('form', { name: 'Borrow', exact: true })).toBeVisible();
-  await expect(page.getByTestId('wallet-lending')).toContainText('Available 0.0 USDC');
+  const lending = page.getByTestId('wallet-lending');
+  await expect(lending.getByRole('heading', { name: 'Production lending is not enabled' })).toBeVisible();
+  await expect(lending.getByRole('status')).toContainText('outside the current production admission profile');
+  await expect(lending.locator('button, form, input, select')).toHaveCount(0);
   await expectPageContained(page);
-  await screenshotEvidence(page, testInfo, 'account-dropdown-lending-empty-account');
+  await screenshotEvidence(page, testInfo, 'account-dropdown-lending-unsupported');
   await page.getByRole('link', { name: 'Assets', exact: true }).click();
   await trigger.click();
   await options.locator(`[data-account-id="${beyondPageId}"]`).click();

@@ -221,7 +221,7 @@ export function WalletHistorySection({
       <nav className="wallet-health-pagination" aria-label="Committed history pages">
         <button disabled={busy || projection.historyPage === 0} onClick={newer} type="button">Newer</button>
         <span>Page {projection.historyPage + 1}</span>
-        <button disabled={busy || projection.historyNextBeforeHeight === null} onClick={older} type="button">Older</button>
+        <button disabled={busy || projection.historyNextCursor === null} onClick={older} type="button">Older</button>
       </nav>
     </section>
   );

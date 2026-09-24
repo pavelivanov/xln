@@ -1,31 +1,31 @@
 import { expect, test } from 'bun:test';
 import { readFileSync } from 'node:fs';
 
-test('docs view reports load failures through visible state without raw console output', () => {
-  const source = readFileSync('frontend/src/lib/components/Views/DocsView.svelte', 'utf8');
+test('React docs app reports catalog and document failures through visible retry state', () => {
+  const app = readFileSync('frontend/apps/docs/src/docs-app.tsx', 'utf8');
+  const reader = readFileSync('frontend/apps/docs/src/docs-reader.tsx', 'utf8');
 
-  expect(source).toContain('function errorMessage(error: unknown): string');
-  expect(source).toContain('loadError = `Failed to load docs catalog: ${errorMessage(error)}`;');
-  expect(source).toContain('loadError = `Failed to load document: ${errorMessage(error)}`;');
-  expect(source).toContain('data-testid="docs-error"');
-  expect(source).not.toContain('console.error');
-  expect(source).not.toContain('console.warn');
+  expect(app).toContain('const errorMessage = (error: unknown): string');
+  expect(app).toContain('`Failed to load docs catalog: ${errorMessage(error)}`');
+  expect(app).toContain('`Failed to load document: ${errorMessage(error)}`');
+  expect(reader).toContain("data-testid={error ? 'docs-error' : 'docs-loading'}");
+  expect(reader).toContain("role={error ? 'alert' : 'status'}");
+  expect(reader).toContain('Retry request');
+  expect(`${app}\n${reader}`).not.toContain('console.error');
+  expect(`${app}\n${reader}`).not.toContain('console.warn');
 });
 
-test('docs view defaults to live docs with explicit archive opt-in and keeps responsive scroll local', () => {
-  const source = readFileSync('frontend/src/lib/components/Views/DocsView.svelte', 'utf8');
+test('React docs app defaults to live docs with explicit archive opt-in and local scrolling', () => {
+  const app = readFileSync('frontend/apps/docs/src/docs-app.tsx', 'utf8');
+  const navigation = readFileSync('frontend/apps/docs/src/docs-navigation.tsx', 'utf8');
   const model = readFileSync('frontend/packages/ui/src/content/docs-page-model.ts', 'utf8');
-  const reactStyles = readFileSync('frontend/apps/docs/src/styles/docs.css', 'utf8');
+  const styles = readFileSync('frontend/apps/docs/src/styles/docs.css', 'utf8');
 
-  expect(source).toContain('let showArchive = $state(false);');
-  expect(source).toContain('filterDocsSections(manifest, showArchive, searchQuery)');
-  expect(source).toContain('findManifestDocById(manifest, docId)');
+  expect(app).toContain('const [showArchive, setShowArchive] = useState(false);');
+  expect(app).toContain('filterDocsSections(manifest, showArchive, deferredSearchQuery)');
   expect(model).toContain("manifest.sections.filter((section) => showArchive || section.kind === 'live')");
-  expect(source).toContain('data-testid="archive-toggle"');
-  expect(source).toContain('onclick={() => (showArchive = true)}');
-  expect(source).toContain('height: calc(100dvh - 56px);');
-  expect(source).toContain('overscroll-behavior: contain;');
-  expect(source).toContain('overscroll-behavior-inline: contain;');
-  expect(reactStyles).toContain('overscroll-behavior: contain;');
-  expect(reactStyles).toContain('overscroll-behavior-inline: contain;');
+  expect(navigation).toContain('data-testid="archive-toggle"');
+  expect(navigation).toContain('onClick={() => onArchiveChange(true)}');
+  expect(styles).toContain('overscroll-behavior: contain;');
+  expect(styles).toContain('overscroll-behavior-inline: contain;');
 });

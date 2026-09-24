@@ -1,5 +1,5 @@
 import type { NavigationSelection } from './navigation-selection';
-import type { Runtime as VaultRuntime } from '../../../../bridges/vault/vault-recovery';
+import type { Runtime as VaultRuntime } from '../../../../bridges/vault/recovery/vault-recovery';
 
 export type NavigationItem = {
   id: string;

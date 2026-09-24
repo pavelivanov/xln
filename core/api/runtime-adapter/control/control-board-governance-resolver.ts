@@ -97,7 +97,13 @@ const captureTarget = async (
       candidate => candidate.entityId === normalize(request.targetEntityId),
     );
     if (!target) throw new Error(`CONTROL_TAKEOVER_TARGET_INELIGIBLE:${normalize(request.targetEntityId)}`);
-    const config = structuredClone(findReplica(env, target.entityId, request.signerId).state.config);
+    const config = findReplica(env, target.entityId, request.signerId).state.config;
+    const currentBoard: TakeoverBoard = {
+      mode: config.mode,
+      threshold: config.threshold,
+      validators: [...config.validators],
+      shares: { ...config.shares },
+    };
     const signerId = normalize(request.signerId);
     const board: TakeoverBoard = {
       mode: config.mode,
@@ -112,7 +118,7 @@ const captureTarget = async (
       },
       env,
     );
-    const runtimeBoardHash = normalize(hashBoard(encodeBoard(config, env)));
+    const runtimeBoardHash = normalize(hashBoard(encodeBoard(currentBoard, env)));
     return { target, board, encodedBoard, runtimeBoardHash, newBoardHash: normalize(hashBoard(encodedBoard)) };
   });
 

@@ -5,7 +5,7 @@ import {
 } from '../../packages/runtime-client/src/observable-store';
 import { isUnknownRecord, parseJsonUnknown, readJsonUnknown } from '../../packages/runtime-client/src/boundary';
 import { errorLog } from '../../packages/browser/src/logging/error-log-store';
-import { settings } from '../../packages/browser/src/settings-store';
+import { settings } from '../../packages/browser/src/preferences/settings-store';
 import { activeEnv, activeRuntimeId, registerRuntimeAdapterSwitcher, runtimes, runtimeOperations } from './runtime-store';
 import { vaultOperations } from '../vault/vault-store';
 import { xlnEnvironment, setXlnEnvironment } from './embedded-runtime-store';
@@ -56,7 +56,7 @@ import {
   setRuntimeViewActiveEntityId,
   type RuntimeViewSelection,
 } from './runtime-view-store';
-import { assertNetworkMachineIsLive, networkMachineRuntime } from './network-machine-runtime-store';
+import { assertNetworkMachineIsLive, networkMachineRuntime } from './network/network-machine-runtime-store';
 import { normalizeWsConnectUrl, normalizeWsUrl, sameWsEndpoint } from '../../packages/runtime-client/src/runtime/ws-url';
 import { createRuntimeViewEnv, unwrapLiveRuntimeEnv } from '../../packages/browser/src/runtime/live-runtime-env';
 import { registerDebugSurface } from '../../packages/browser/src/runtime/debug-surface';
@@ -125,7 +125,7 @@ const RESET_NOTICE_STORAGE_KEY = 'xln-reset-notice';
 const DEFAULT_REMOTE_ADAPTER_PATH = REMOTE_RUNTIME.DEFAULT_ADAPTER_PATH;
 export const REMOTE_VIEW_PAGE_SIZE = REMOTE_RUNTIME.VIEW_PAGE_SIZE;
 const REMOTE_PROJECTION_REFRESH_WARNING_COOLDOWN_MS = 7_500;
-const FRONTEND_REMOTE_REQUEST_TIMEOUT_MS = 5_000;
+const FRONTEND_REMOTE_REQUEST_TIMEOUT_MS = 30_000;
 const FRONTEND_REMOTE_RECONNECT_MAX_MS = 2_000;
 const REMOTE_RUNTIME_PROJECTION_WAIT_TIMEOUT_MS = 5_000;
 const REMOTE_RUNTIME_PROJECTION_WAIT_POLL_MS = 100;

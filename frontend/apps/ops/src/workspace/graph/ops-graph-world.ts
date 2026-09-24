@@ -1,16 +1,16 @@
 import * as THREE from 'three';
-import { createGraphEntityNode, type GraphEntityVisualData } from '../../../../../packages/ui/src/graph/graph3d-entity-visuals';
-import { buildGraphConnection } from '../../../../../packages/ui/src/graph/graph3d-visuals';
+import { createGraphEntityNode, type GraphEntityVisualData } from '../../../../../packages/ui/src/graph/three/visuals/graph3d-entity-visuals';
+import { buildGraphConnection } from '../../../../../packages/ui/src/graph/three/visuals/graph3d-visuals';
 import { materializeRuntimeGraphReplicas } from '../../../../../packages/ui/src/graph/runtime-graph-render';
 import type { MergedRuntimeGraph } from '../../../../../packages/ui/src/graph/runtime-graph-projection';
 import { resolveRuntimeGraphLayout, type RuntimeGraphLayoutCache } from '../../../../../packages/ui/src/graph/runtime-graph-layout';
 import { readGraphPositionOverrides } from '../../../../../packages/browser/src/graph/graph-position-overrides';
-import type { GraphConnectionData, GraphXLNRuntime } from '../../../../../packages/ui/src/graph/graph3d-types';
-import { getGraphEntitySizeForToken } from '../../../../../packages/ui/src/graph/graph3d-actions';
+import type { GraphConnectionData, GraphXLNRuntime } from '../../../../../packages/ui/src/graph/three/core/graph3d-types';
+import { getGraphEntitySizeForToken } from '../../../../../packages/ui/src/graph/three/interaction/graph3d-actions';
 import { requireTokenDecimals } from '../../../../../packages/runtime-client/src/token-metadata';
 import type { ViewSettings } from '../../../../../packages/runtime-client/src/panels/settings-panel-view';
 import { createGraph3dSceneInputView } from '../../../../../packages/runtime-client/src/graph/graph3d-scene-input';
-import { createGraphGrid, createGraphJMachine } from '../../../../../packages/ui/src/graph/graph3d-scene-primitives';
+import { createGraphGrid, createGraphJMachine } from '../../../../../packages/ui/src/graph/three/visuals/graph3d-scene-primitives';
 import type { NetworkMachineCue } from '../../../../../packages/runtime-client/src/scenario/network-machine';
 
 export type OpsGraphOptions = Readonly<{

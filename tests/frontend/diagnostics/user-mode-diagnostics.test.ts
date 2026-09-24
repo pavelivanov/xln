@@ -1,14 +1,16 @@
 import { expect, test } from 'bun:test';
 import { readFileSync } from 'node:fs';
 
-test('UserModePanel persists wallet-shell diagnostics instead of raw console output', () => {
-  const source = readFileSync('frontend/src/lib/view/UserModePanel.svelte', 'utf8');
+test('React wallet shell exposes Runtime and recovery diagnostics without raw console output', () => {
+  const shell = readFileSync('frontend/apps/wallet/src/app-shell.tsx', 'utf8');
+  const onboarding = readFileSync('frontend/apps/wallet/src/onboarding/wallet-onboarding.tsx', 'utf8');
 
-  expect(source).toContain("import { errorLog } from '../../../packages/browser/src/logging/error-log-store';");
-  expect(source).toContain("errorLog.log(message, 'User Mode', details)");
-  expect(source).toContain("logUserModeDiagnostic('Failed to add signer: no active vault'");
-  expect(source).toContain("logUserModeDiagnostic('J-Machine import failed'");
-  expect(source).not.toContain('console.error');
-  expect(source).not.toContain('console.warn');
-  expect(source).not.toContain('console.info');
+  expect(shell).toContain("const [recoveryError, setRecoveryError] = useState('');");
+  expect(shell).toContain('Local Runtime boot failed.');
+  expect(shell).toContain('data-testid="storage-schema-recover"');
+  expect(shell).toContain('{recoveryError ? <span role="alert">{recoveryError}</span> : null}');
+  expect(onboarding).toContain('role="alert"');
+  expect(`${shell}\n${onboarding}`).not.toContain('console.error');
+  expect(`${shell}\n${onboarding}`).not.toContain('console.warn');
+  expect(`${shell}\n${onboarding}`).not.toContain('console.info');
 });

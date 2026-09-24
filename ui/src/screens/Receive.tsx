@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import QRCode from 'qrcode';
-import { buildWalletPayHref, buildXlnInvoiceDeepLink, buildXlnInvoiceUri } from '$lib/utils/xlnInvoice';
+import { buildWalletPayHref, buildXlnInvoiceDeepLink, buildXlnInvoiceUri } from '../../../frontend/packages/runtime-client/src/payments/xln-invoice';
 import { Bar } from '../components/Bars';
 import { CopyId } from '../components/CopyId';
 import { Icon } from '../components/Icons';
@@ -13,7 +13,7 @@ import { usdOf } from '../runtime/financial/prices';
 import { useWallet } from '../runtime/views';
 
 /**
- * Same invoice contract as the SvelteKit ReceivePanel: the QR encodes the
+ * Same invoice contract as the canonical Wallet receive surface: the QR encodes the
  * canonical wallet link, the copy buttons hand out the bare invoice and the
  * xln:// deep link. One builder, imported, never re-implemented.
  */

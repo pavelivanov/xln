@@ -5,9 +5,8 @@ import { Wallet, hexlify } from 'ethers';
 
 import { createBrowserVmRpcFixture } from '../../fixtures/browser-vm-rpc-fixture';
 import { buildWalletFixtureHubTxs } from './wallet-runtime-fixture-topology';
+import { WALLET_RECOVERY_FIXTURE_MNEMONIC } from './wallet-fixture-identities';
 
-export const WALLET_RECOVERY_FIXTURE_MNEMONIC =
-  'test test test test test test test test test test test junk';
 export const WALLET_BRAINVAULT_FIXTURE_MNEMONIC =
   'milk click novel require across cousin good chair street mouse crash movie same daughter air quote total pride crop mention focus sick slice hole';
 
@@ -327,9 +326,13 @@ export const createWalletRecoveryFixture = async (
   const createIsolatedMnemonicTower = async (label: string): Promise<string> => {
     const safeLabel = label.toLowerCase().replace(/[^a-z0-9-]+/g, '-').replace(/^-+|-+$/g, '');
     if (!safeLabel) throw new Error('WALLET_RECOVERY_FIXTURE_TOWER_LABEL_INVALID');
+    const sequence = isolatedTowerSequence += 1;
     const isolated = watchtower.startStandaloneWatchtowerServer({
       host: '127.0.0.1', port: 0, towerId: `react-isolated-${safeLabel}`,
-      dbPath: join(towerRoot, `isolated-${isolatedTowerSequence += 1}-${safeLabel}.level`),
+      dbPath: join(towerRoot, `isolated-${sequence}-${safeLabel}.level`),
+      enablePushWake: true,
+      pushDbPath: join(towerRoot, `isolated-${sequence}-${safeLabel}-push.level`),
+      pushSweepIntervalMs: 24 * 60 * 60 * 1000,
       maxStoredBytesPerLookupKey: 4 * 1024 * 1024,
     });
     const isolatedUrl = `http://127.0.0.1:${isolated.server.port}`;

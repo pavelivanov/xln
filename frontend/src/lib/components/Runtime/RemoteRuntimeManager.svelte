@@ -6,7 +6,7 @@
     type RemoteRuntimeImportAccess,
     type RemoteRuntimeImportEntry,
   } from '../../../../packages/browser/src/runtime/session/remote-runtime-import';
-  import { importRemoteRuntimeEntries } from '../../../../bridges/runtime/remote-runtime-import-flow';
+  import { importRemoteRuntimeEntries } from '../../../../bridges/runtime/remote/remote-runtime-import-flow';
 
   type Row = RemoteRuntimeImportEntry & { index: number; status: string; detail: string };
   let mode: 'single' | 'bulk' = 'single';

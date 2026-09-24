@@ -53,7 +53,7 @@ describe('browser wallet Runtime preferences', () => {
       'utf8',
     );
     const view = readFileSync(
-      'frontend/src/lib/components/Views/RuntimeCreation.svelte',
+      'frontend/apps/wallet/src/settings/wallet-settings-model.ts',
       'utf8',
     );
     const browserDerivation = readFileSync(
@@ -63,12 +63,11 @@ describe('browser wallet Runtime preferences', () => {
 
     expect(boundary).not.toContain('localStorage');
     expect(boundary).not.toContain('svelte');
-    expect(view).toContain('resolveWalletUnlockDurationMs(');
     expect(view).toContain('parseWalletBrainVaultWorkerCap(');
     expect(browserDerivation).toContain('serializeWalletBrainVaultWorkerCap(run.workerCap)');
     expect(browserDerivation).toContain('localStorage.setItem(BRAINVAULT_WORKER_CAP_STORAGE_KEY');
-    expect(view).toContain('localStorage.getItem(WALLET_AUTH_SCHEME_STORAGE_KEY)');
-    expect(view).toContain('localStorage.setItem(WALLET_AUTH_SCHEME_STORAGE_KEY, next)');
+    expect(view).toContain('storage.getItem(WALLET_AUTH_SCHEME_STORAGE_KEY)');
+    expect(view).toContain('storage.setItem(WALLET_AUTH_SCHEME_STORAGE_KEY, authScheme)');
     expect(view).not.toContain('const AUTH_SCHEME_STORAGE_KEY');
     expect(view).not.toContain("unlockDurationChoice === 'forever'");
   });

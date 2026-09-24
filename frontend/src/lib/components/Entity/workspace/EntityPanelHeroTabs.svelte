@@ -4,7 +4,7 @@
   import type { FrontendXlnFunctions } from '../../../../../bridges/runtime/xln-store';
   import type { Tab } from '../../../../../packages/ui/src/workspace/ui-types';
   import ContextSwitcher from './shell/ContextSwitcher.svelte';
-  import type { ViewTab } from '../../../../../packages/runtime-client/src/entity/entity-workspace-navigation';
+  import type { ViewTab } from '../../../../../packages/runtime-client/src/entity/workspace/entity-workspace-navigation';
 
   type JurisdictionBadge = {
     className: string;

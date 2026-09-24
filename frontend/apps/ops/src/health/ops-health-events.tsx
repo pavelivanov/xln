@@ -9,7 +9,7 @@ import {
 } from '../../../../packages/ui/src/health/runtime-events';
 import { relayTimelineTone } from '../../../../packages/ui/src/health/relay-event-severity';
 import type { useOpsHealthEvents } from './use-ops-health-events';
-import '../styles/ops-health-events.css';
+import '../styles/health/ops-health-events.css';
 import { OpsHealthRuntimeProjections } from './ops-health-runtime-projections';
 
 function RuntimeEvent({ event }: Readonly<{ event: RuntimeProjectionEvent }>) {

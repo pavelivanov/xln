@@ -5,7 +5,7 @@ import type { AccountReadView } from '$lib/components/Entity/core/entity-panel-t
   import type { DerivedDelta } from '../../../../../../packages/ui/src/workspace/ui-types';
   import { createEventDispatcher, onDestroy, onMount } from 'svelte';
   import { xlnFunctions } from '../../../../../../bridges/runtime/xln-store';
-  import { settings } from '../../../../../../packages/browser/src/settings-store';
+  import { settings } from '../../../../../../packages/browser/src/preferences/settings-store';
   import { p2pState } from '../../../../../../bridges/runtime/xln-store';
   import EntityIdentity from '../../../shared/EntityIdentity.svelte';
   import DeltaTokenSummary from '../../shared/DeltaTokenSummary.svelte';

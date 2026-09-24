@@ -16,7 +16,7 @@ import type { SwapBookEntry } from '../../../entity/types';
 import {
   formatGraphEntityReserveBalances,
   formatGraphReserveBadge,
-} from '../../../../frontend/packages/ui/src/graph/graph3d-helpers';
+} from '../../../../frontend/packages/ui/src/graph/three/core/graph3d-helpers';
 
 describe('rendered token metadata is exact', () => {
   test('jurisdiction catalog decimals win for a custom token', () => {
@@ -94,14 +94,16 @@ describe('rendered token metadata is exact', () => {
   });
 
   test('production render code contains no silent eighteen-decimal substitution', async () => {
-    const glob = new Bun.Glob('frontend/src/lib/**/*.{ts,svelte}');
-    for await (const path of glob.scan({ cwd: process.cwd(), absolute: true })) {
-      const source = await Bun.file(path).text();
-      expect(source).not.toMatch(/\?\?\s*18\b/);
-      expect(source).not.toMatch(/decimals\s*\|\|\s*18\b/);
-      expect(source).not.toMatch(/decimals\s*:\s*number\s*=\s*18\b/);
-      expect(source).not.toMatch(/(?:const|let)\s+decimals\s*=\s*18\b/);
-      expect(source).not.toMatch(/Number\.isFinite\([^\n]*decimals[^\n]*\)\s*\?[^\n:]+:\s*18\b/);
+    for (const root of ['frontend/apps', 'frontend/bridges', 'frontend/packages']) {
+      const glob = new Bun.Glob(`${root}/**/*.{ts,tsx}`);
+      for await (const path of glob.scan({ cwd: process.cwd(), absolute: true })) {
+        const source = await Bun.file(path).text();
+        expect(source).not.toMatch(/\?\?\s*18\b/);
+        expect(source).not.toMatch(/decimals\s*\|\|\s*18\b/);
+        expect(source).not.toMatch(/decimals\s*:\s*number\s*=\s*18\b/);
+        expect(source).not.toMatch(/(?:const|let)\s+decimals\s*=\s*18\b/);
+        expect(source).not.toMatch(/Number\.isFinite\([^\n]*decimals[^\n]*\)\s*\?[^\n:]+:\s*18\b/);
+      }
     }
   });
 });

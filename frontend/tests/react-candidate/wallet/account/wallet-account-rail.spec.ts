@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { expectNoBrowserErrors, expectPageContained, observeBrowserErrors, screenshotEvidence } from '../../browser-evidence';
-import { selectWalletFixtureRuntime } from '../fixtures/wallet-runtime-test-helpers';
+import { selectWalletFixtureRuntime, walletPortfolioAccount } from '../fixtures/wallet-runtime-test-helpers';
 
 const selectRail = async (page: Page, id: string): Promise<void> => {
   const toggle = page.getByTestId('account-workspace-mobile-toggle');
@@ -11,6 +11,7 @@ const selectRail = async (page: Page, id: string): Promise<void> => {
 };
 
 test('Account rail keeps the nondefault Entity across wallet consumers and browser history', { tag: '@functional' }, async ({ page }, testInfo) => {
+  test.setTimeout(60_000);
   const errors = observeBrowserErrors(page);
   const fixture = await selectWalletFixtureRuntime(page);
   await page.goto('/app?portfolio=1', { waitUntil: 'domcontentloaded' });
@@ -40,7 +41,9 @@ test('Account rail keeps the nondefault Entity across wallet consumers and brows
   await expect(page).toHaveURL(/#accounts\/send$/);
   await expect(page.getByRole('heading', { name: 'Send a payment' })).toBeVisible();
   await expect(page.getByLabel('Entity', { exact: true })).toHaveValue(fixture.counterpartyEntityId);
-  await expect(page.getByRole('combobox', { name: 'Recipient', exact: true })).toHaveValue(fixture.entityId);
+  const recipient = page.getByRole('combobox', { name: 'Recipient', exact: true });
+  await recipient.selectOption(fixture.entityId);
+  await expect(recipient).toHaveValue(fixture.entityId);
   if (await toggle.isVisible()) {
     await expect(toggle).toBeFocused();
     await expect(page.locator('.account-rail-mobile')).not.toHaveAttribute('open', '');
@@ -72,7 +75,7 @@ test('Account rail keeps the nondefault Entity across wallet consumers and brows
   await expect(page.getByRole('form', { name: 'Open Account by ID' })).toBeVisible();
   await page.getByRole('button', { name: '← Back to assets' }).click();
   await expect(page.getByLabel('Entity', { exact: true })).toHaveValue(fixture.counterpartyEntityId);
-  await page.locator('.wallet-portfolio-account').first().getByRole('button', { name: 'View Account' }).click();
+  await walletPortfolioAccount(page, fixture.entityId).getByRole('button', { name: 'View Account' }).click();
   await expect(page.getByTestId('account-panel')).toHaveAttribute('data-counterparty-id', fixture.entityId);
   await expect(page.getByRole('navigation', { name: 'Account workspace', exact: true })).toHaveCount(0);
   await page.getByRole('button', { name: 'Appearance', exact: true }).click();
@@ -85,6 +88,7 @@ test('Account rail keeps the nondefault Entity across wallet consumers and brows
   await selectRail(page, 'receive');
   await expect(page.getByLabel('Entity', { exact: true })).toHaveValue(fixture.entityId);
   await selectRail(page, 'swap');
+  await page.getByRole('region', { name: 'Market selection' }).getByRole('combobox', { name: 'Hub' }).selectOption(fixture.counterpartyEntityId);
   await expect(page.getByRole('heading', { name: 'Place or cross' })).toBeVisible();
   await expect(page.getByLabel('Entity', { exact: true })).toHaveValue(fixture.entityId);
   expectNoBrowserErrors(errors);

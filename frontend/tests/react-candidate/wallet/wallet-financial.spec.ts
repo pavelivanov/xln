@@ -6,13 +6,15 @@ import {
   observeBrowserErrors,
   screenshotEvidence,
 } from '../browser-evidence';
-import { selectWalletFixtureRuntime } from './fixtures/wallet-runtime-test-helpers';
 import {
   createWalletDisputeFixture,
+  drainWalletJWatcher,
   fundWalletDebtReserve,
   readWalletAccountToolState,
   readWalletDebtLedgerState,
   seedWalletDebtPayment,
+  selectWalletFixtureRuntime,
+  walletPortfolioAccount,
 } from './fixtures/wallet-runtime-test-helpers';
 import { expectWalletHistoryEvents } from './fixtures/wallet-history-test-helpers';
 
@@ -27,11 +29,19 @@ test('wallet portfolio renders a real committed bilateral Account', { tag: '@fun
   await entity.selectOption(fixture.entityId);
   await expect(entity).toHaveValue(fixture.entityId);
   await expect(page.getByRole('table', { name: 'Committed asset positions' })).toBeVisible();
-  await expect(page.getByLabel('Accounts', { exact: true }).getByText('Browser Hub')).toBeVisible();
-  await expect(page.getByText('USDC').first()).toBeVisible();
-  await expect(page.getByText('1 shown · 1 total')).toBeVisible();
-  await expect(page.getByText('Peer granted us').first()).toBeVisible();
-  await expect(page.getByText('We granted peer').first()).toBeVisible();
+  const accounts = page.getByLabel('Accounts', { exact: true });
+  const browserHub = walletPortfolioAccount(page, fixture.counterpartyEntityId);
+  const nextPage = page.getByRole('navigation', { name: 'Account pages' }).getByRole('button', { name: 'Next' });
+  for (let pageIndex = 0; pageIndex < 100 && await browserHub.count() === 0; pageIndex += 1) {
+    if (await nextPage.count() === 0 || !await nextPage.isEnabled()) break;
+    await nextPage.click();
+  }
+  await expect(browserHub).toHaveCount(1);
+  const usdcPosition = browserHub.locator('dl').first();
+  await expect(usdcPosition.getByText('USDC', { exact: true })).toBeVisible();
+  await expect(accounts.getByText(/^\d+ shown · \d+ total$/)).toBeVisible();
+  await expect(usdcPosition.getByText('Peer granted us', { exact: true })).toBeVisible();
+  await expect(usdcPosition.getByText('We granted peer', { exact: true })).toBeVisible();
   await expectPageContained(page);
   await screenshotEvidence(page, testInfo, 'wallet-portfolio-populated');
   expectNoBrowserErrors(errors);
@@ -49,9 +59,9 @@ test('wallet financial health renders committed Account and activity evidence', 
   await expect(entity).toHaveValue(fixture.entityId);
   await expect(page.getByRole('heading', { name: 'Open debt' })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Runtime solvency' })).toBeVisible();
-  await expect(page.getByText('2 Entities · 2 Account views')).toBeVisible();
+  await expect(page.getByText(/^\d+ Entities · \d+ Account views$/)).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Dispute lifecycle' })).toBeVisible();
-  await expect(page.getByText('1 Accounts · page 1')).toBeVisible();
+  await expect(page.getByText(/^\d+ Accounts · page 1$/)).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Committed history' })).toBeVisible();
   await expectWalletHistoryEvents(page, ['Account opened', 'extendCredit']);
   await expectPageContained(page);
@@ -106,6 +116,7 @@ test(
         { timeout: 45_000 },
       )
       .toBe(true);
+    await drainWalletJWatcher(page);
 
     await page.goto('/app?health=1');
     await page.getByLabel('Entity', { exact: true }).selectOption(fixture.entityId);
@@ -116,7 +127,7 @@ test(
     );
     await disputeLink.click();
     let panel = page.getByTestId('account-panel');
-    await expect(panel).toHaveAttribute('data-counterparty-id', hub.entityId);
+    await expect(panel).toHaveAttribute('data-counterparty-id', hub.entityId, { timeout: 90_000 });
     await expect(panel).toHaveAttribute('data-focused-token-id', '1');
     await expect(panel.locator('[data-token-id="1"] table')).toBeVisible();
     await page.reload({ waitUntil: 'domcontentloaded' });

@@ -39,7 +39,7 @@ mkcert -install
 
 # Generate certs (from frontend/ directory)
 cd frontend
-./generate-certs.sh
+./scripts/tls/generate-certs.sh
 
 # Or manually:
 mkcert localhost 127.0.0.1 ::1

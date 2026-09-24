@@ -6,7 +6,7 @@ import {
 } from '../../../../frontend/packages/runtime-client/src/entity/profile/entity-workspace-profile';
 import {
   projectEntityWorkspaceContext,
-} from '../../../../frontend/packages/runtime-client/src/entity/entity-workspace-context';
+} from '../../../../frontend/packages/runtime-client/src/entity/workspace/entity-workspace-context';
 
 const profile = (overrides: Record<string, unknown> = {}) => ({
   name: '  Treasury Node  ',

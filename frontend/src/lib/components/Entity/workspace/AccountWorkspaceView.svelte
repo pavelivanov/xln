@@ -25,7 +25,7 @@ import type { EntityReadView } from '$lib/components/Entity/core/entity-panel-ty
   import type { SwapPanelRuntimeView } from '../../../../../bridges/wallet/swap-panel-helpers';
   import type { DisputedAccountView } from '../../../../../packages/ui/src/account/account-dispute-view';
   import type { EntityActivityAccountOption, EntityActivityRow } from '../activity/entity-activity';
-  import type { AccountWorkspaceTab, ConfigureWorkspaceTab } from '../../../../../packages/runtime-client/src/entity/entity-workspace-navigation';
+  import type { AccountWorkspaceTab, ConfigureWorkspaceTab } from '../../../../../packages/runtime-client/src/entity/workspace/entity-workspace-navigation';
   import {
     emptyHubDiscoveryProjection,
     type HubDiscoveryProjection,

@@ -14,7 +14,7 @@ import type { WalletSettingsSection } from '../navigation/wallet-navigation-mode
 import type { WalletWorkspaceSelection } from '../runtime/wallet-workspace-selection';
 import { EntityWorkspaceSettingsStage } from '../../../../packages/ui/src/entity/settings/entity-workspace-settings-stage';
 import { EntityWorkspaceDisplayPanel } from '../../../../packages/ui/src/entity/settings/entity-workspace-display-panel';
-import { displayPreferencesSource } from '../../../../packages/browser/src/display-preferences-source';
+import { displayPreferencesSource } from '../../../../packages/browser/src/preferences/display-preferences-source';
 import { WalletProfileSettings } from './wallet-profile-settings';
 import { WalletStackManager } from './wallet-stack-manager';
 import '../styles/wallet-settings.css';

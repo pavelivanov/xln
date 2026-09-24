@@ -1,6 +1,6 @@
 import { useEffect, useState, useSyncExternalStore } from 'react';
 
-import { createEntityWorkspaceLiveState } from '../../../../packages/runtime-client/src/entity/entity-workspace-time-machine';
+import { createEntityWorkspaceLiveState } from '../../../../packages/runtime-client/src/entity/workspace/entity-workspace-time-machine';
 import { EntityWorkspaceProfilePanel } from '../../../../packages/ui/src/entity/profile/entity-workspace-profile-panel';
 import { readRuntimeAdapterStorageSnapshot } from '../../../../packages/browser/src/runtime/session/runtime-adapter-session';
 import { navigateWallet } from '../navigation/wallet-navigation';

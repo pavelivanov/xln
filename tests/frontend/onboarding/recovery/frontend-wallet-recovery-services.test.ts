@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import { readFileSync } from 'node:fs';
 
-import { inferRecoveryTowerSetupMode } from '../../../../frontend/bridges/vault/recovery-settings';
+import { inferRecoveryTowerSetupMode } from '../../../../frontend/bridges/vault/recovery/recovery-settings';
 
 describe('React wallet recovery-service onboarding', () => {
   test('infers every canonical setup mode from persisted tower configuration', () => {
@@ -19,7 +19,7 @@ describe('React wallet recovery-service onboarding', () => {
   });
 
   test('keeps Runtime authority and persistence in the canonical bridge', () => {
-    const bridge = readFileSync('frontend/bridges/wallet/wallet-canonical-recovery-services.ts', 'utf8');
+    const bridge = readFileSync('frontend/bridges/wallet/canonical/wallet-canonical-recovery-services.ts', 'utf8');
     expect(bridge).toContain('RECOVERY_SERVICES_RUNTIME_CHANGED');
     expect(bridge).toContain('vaultOperations.assertRuntimeAuthority(runtime.id)');
     expect(bridge).toContain('vaultOperations.updateRuntimeRecovery(');
@@ -36,11 +36,13 @@ describe('React wallet recovery-service onboarding', () => {
     expect(source).not.toContain("from '../../../src/lib");
     expect(source).not.toContain('runtime.seed');
     expect(source).not.toContain('mnemonic');
-    expect(source).toContain("import('../../../../bridges/wallet/wallet-canonical-recovery-services')");
-    expect(source).toContain('role="alert">{visibleError}');
+    expect(source).toContain("import('../../../../bridges/wallet/canonical/wallet-canonical-recovery-services')");
+    expect(source).toContain('role="alert"');
+    expect(source).toContain('{visibleError}');
     expect(source).toContain('const visibleError = error || observationError');
     expect(source).toContain('Boolean(observationError)');
     expect(source).toContain('else unsubscribe();');
-    expect(source).toContain('active = false; stop();');
+    expect(source).toContain('active = false;');
+    expect(source).toContain('stop();');
   });
 });

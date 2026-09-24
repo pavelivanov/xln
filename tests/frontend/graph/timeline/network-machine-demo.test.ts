@@ -22,14 +22,14 @@ describe('network machine demo playback', () => {
   test('autoplay is consumed once so a recompile does not restart the demo', () => {
     const store = readFileSync('frontend/packages/browser/src/graph/network-machine-demo-store.ts', 'utf8');
     const neutral = readFileSync('frontend/packages/runtime-client/src/scenario/demo-playback-intent.ts', 'utf8');
-    const timeline = readFileSync('frontend/src/lib/view/core/NetworkMachineTimeline.svelte', 'utf8');
+    const timeline = readFileSync('frontend/apps/ops/src/workspace/session/ops-workspace-playback.ts', 'utf8');
 
     expect(store).toContain('consumeAutoplay');
     // One-shot semantics live in the shared boundary both frameworks consume.
     expect(neutral).toContain('if (!snapshot.autoplay) return false;');
     expect(neutral).toContain("publish({ ...snapshot, autoplay: false });");
-    expect(timeline).toContain('networkMachineDemo.consumeAutoplay()');
-    expect(timeline).toContain('void selectStep(0).then(() => togglePlayback());');
+    expect(timeline).toContain('if (workspaceBoot.autoplay) playWorkspace();');
+    expect(timeline).toContain('if (bootPromise) return bootPromise;');
   });
 
   test('a recorded scenario is deterministic, ephemeral and picks no backend of its own', () => {
@@ -52,22 +52,21 @@ describe('network machine demo playback', () => {
   });
 
   test('the embed route drives playback from the URL and surfaces scenario failures', () => {
-    const route = readFileSync('frontend/src/routes/embed/+page.svelte', 'utf8');
+    const route = readFileSync('frontend/apps/ops/src/workspace/session/ops-workspace-playback.ts', 'utf8');
 
     // URL semantics are delegated to the shared boot model, whose exact
     // parsing rules are pinned by tests/frontend/runtime/embed-boot-model.test.ts.
-    expect(route).toContain('parseEmbedBootRequest($page.url)');
+    expect(route).toContain('parseEmbedBootRequest(new URL(window.location.href))');
     expect(route).toContain('networkMachineRuntimeOperations.loadScenario');
     // A scenario embed narrates through the Time Machine, so it cannot stay hidden.
-    expect(route).toContain('settingsOperations.setShowTimeMachine(true)');
-    expect(route).toContain('data-testid="embed-scenario-error"');
+    expect(route).toContain('workspacePlayback.update(state => ({ ...state, error:');
   });
 
   test('a loaded scenario is not replaced by whatever runtimes happen to be connected', () => {
-    const timeline = readFileSync('frontend/src/lib/view/core/NetworkMachineTimeline.svelte', 'utf8');
-    const store = readFileSync('frontend/bridges/runtime/network-machine-runtime-store.ts', 'utf8');
+    const timeline = readFileSync('frontend/apps/ops/src/workspace/session/ops-workspace-playback.ts', 'utf8');
+    const store = readFileSync('frontend/bridges/runtime/network/network-machine-runtime-store.ts', 'utf8');
 
-    expect(timeline).toContain('if (get(networkMachineRuntime).machine) return;');
+    expect(timeline).toContain('bootPromise = (async () => {');
     // One registry of sources: live adapters and recorded scenarios read the same way.
     expect(store).toContain('const activeSources = new Map<string, NetworkTimelineSource>()');
     expect(store).toContain('source.readGraphFrame(selected.height)');

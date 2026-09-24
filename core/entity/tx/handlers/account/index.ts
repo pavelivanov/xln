@@ -276,7 +276,7 @@ const finishPreparedAccountInput = async (
 ): Promise<AccountHandlerResult> => {
   const { context, consensus: consensusRun } = prepared;
   completeAccountConsensusRun(context, consensusRun, result);
-  const consensus = await finishAccountConsensusInput(context, result);
+  const consensus = await finishAccountConsensusInput(context, result, consensusRun);
   if (consensus.terminalResult) return consensus.terminalResult;
 
   context.checkpointProfile('finalize');

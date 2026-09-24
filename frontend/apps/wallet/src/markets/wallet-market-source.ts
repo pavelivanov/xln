@@ -78,7 +78,7 @@ const contextOnlyProjection = (
     activity: activity.events,
     activityKind,
     activityPage,
-    activityNextBeforeHeight: activity.nextBeforeHeight,
+    activityNextCursor: activity.nextCursor,
   };
 };
 
@@ -98,7 +98,7 @@ export class WalletMarketSource {
   private selectedPairId = '';
   private activityKind: WalletMarketActivityKind = 'all';
   private activityPage = 0;
-  private activityCursors: Array<number | null> = [null];
+  private activityCursors: Array<string | null> = [null];
   private pendingCommand: WalletPreparedCommand | null = null;
   private commandBusy = false;
 
@@ -212,7 +212,7 @@ export class WalletMarketSource {
 
   readonly selectOlderActivity = (): void => {
     if (this.snapshot.status === 'loading') throw new Error('WALLET_MARKET_ACTIVITY_BUSY');
-    const next = this.snapshot.projection?.activityNextBeforeHeight ?? null;
+    const next = this.snapshot.projection?.activityNextCursor ?? null;
     if (next === null) throw new Error('WALLET_MARKET_ACTIVITY_OLDER_UNAVAILABLE');
     if (this.activityPage === this.activityCursors.length - 1) this.activityCursors.push(next);
     this.activityPage += 1;
@@ -347,12 +347,13 @@ export class WalletMarketSource {
       const selectedHubId = context.hubs.some((hub) => hub.entityId === this.selectedHubId)
         ? this.selectedHubId
         : context.hubs[0]?.entityId ?? '';
+      const activityCursor = this.activityCursors[this.activityPage] ?? null;
       const activityPromise = client.readActivity({
         entityId: activeEntityId,
         kind: this.activityKind,
         limit: 25,
         scanLimit: 250,
-        beforeHeight: this.activityCursors[this.activityPage] ?? context.payment.height + 1,
+        ...(activityCursor ? { cursor: activityCursor } : { beforeHeight: context.payment.height }),
       });
       if (!selectedHubId) {
         return contextOnlyProjection(activeFrame, await activityPromise, this.activityKind, this.activityPage, math);

@@ -5,28 +5,28 @@ import {
   projectEntityWorkspaceActivity,
   type EntityWorkspaceActivity,
   type EntityWorkspaceActivityQueryOptions,
-} from '../../../../packages/runtime-client/src/entity/entity-workspace-activity';
+} from '../../../../packages/runtime-client/src/entity/workspace/entity-workspace-activity';
 import {
   emptyEntityWorkspaceAccounts,
   projectEntityWorkspaceAccounts,
   type EntityWorkspaceAccounts,
-} from '../../../../packages/runtime-client/src/entity/entity-workspace-accounts';
+} from '../../../../packages/runtime-client/src/entity/workspace/entity-workspace-accounts';
 import {
   emptyEntityWorkspaceContext,
   projectEntityWorkspaceContext,
   type EntityWorkspaceContext,
   type EntityWorkspaceReadState,
-} from '../../../../packages/runtime-client/src/entity/entity-workspace-context';
+} from '../../../../packages/runtime-client/src/entity/workspace/entity-workspace-context';
 import {
   emptyEntityWorkspaceConsensusEvidence,
   projectEntityWorkspaceConsensusEvidence,
   type EntityWorkspaceConsensusEvidence,
-} from '../../../../packages/runtime-client/src/entity/entity-workspace-consensus-evidence';
+} from '../../../../packages/runtime-client/src/entity/workspace/entity-workspace-consensus-evidence';
 import {
   emptyEntityWorkspaceOwnership,
   projectEntityWorkspaceOwnership,
   type EntityWorkspaceOwnership,
-} from '../../../../packages/runtime-client/src/entity/entity-workspace-ownership';
+} from '../../../../packages/runtime-client/src/entity/workspace/entity-workspace-ownership';
 import {
   emptyEntityWorkspaceHubPolicy,
   projectEntityWorkspaceHubPolicy,
@@ -41,11 +41,11 @@ import {
   emptyEntityWorkspaceReserves,
   projectEntityWorkspaceReserves,
   type EntityWorkspaceReserves,
-} from '../../../../packages/runtime-client/src/entity/entity-workspace-reserves';
+} from '../../../../packages/runtime-client/src/entity/workspace/entity-workspace-reserves';
 import {
   createEntityWorkspaceLiveState,
   type EntityWorkspaceTimeMachineState,
-} from '../../../../packages/runtime-client/src/entity/entity-workspace-time-machine';
+} from '../../../../packages/runtime-client/src/entity/workspace/entity-workspace-time-machine';
 
 export type OpsEntityWorkspaceProjection = Readonly<{
   activity: EntityWorkspaceActivity;

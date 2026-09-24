@@ -1,6 +1,6 @@
 import type { RuntimeReplica, XLNModule } from '@xln/core/api/public/runtime-module';
 import { runtimeQuiesceWorkSummary } from '../../../../bridges/vault/vault-lifecycle-helpers';
-import { RUNTIME_P2P_SHUTDOWN_TIMEOUT_MS } from '../../../../bridges/vault/vault-recovery';
+import { RUNTIME_P2P_SHUTDOWN_TIMEOUT_MS } from '../../../../bridges/vault/recovery/vault-recovery';
 
 export async function closeRuntimeSession(env: RuntimeReplica, xln: XLNModule): Promise<void> {
   await suspendRuntimeActivity(env, xln);

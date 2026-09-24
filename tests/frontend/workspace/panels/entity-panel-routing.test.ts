@@ -7,7 +7,7 @@ import {
   canonicalizeEntityPanelRoute,
   resolveEntityPanelDeepLink,
   resolveEntityPanelDeepLinkFromLocation,
-} from '../../../../frontend/packages/runtime-client/src/entity/entity-workspace-navigation';
+} from '../../../../frontend/packages/runtime-client/src/entity/workspace/entity-workspace-navigation';
 
 describe('entity panel routing helpers', () => {
   test('accepts only canonical account workspace routes', () => {
@@ -109,12 +109,14 @@ describe('entity panel routing helpers', () => {
       { id: 'settings', label: 'Settings' },
     ]);
 
-    const shared = readFileSync('frontend/packages/runtime-client/src/entity/entity-workspace-navigation.ts', 'utf8');
-    const tabs = readFileSync('frontend/src/lib/components/Entity/workspace/shell/EntityPanelTabs.svelte', 'utf8');
+    const shared = readFileSync('frontend/packages/runtime-client/src/entity/workspace/entity-workspace-navigation.ts', 'utf8');
+    const tabs = readFileSync('frontend/packages/ui/src/entity/entity-workspace-shell.tsx', 'utf8');
+    const view = readFileSync('frontend/apps/ops/src/entity-workspace/ops-entity-workspace.tsx', 'utf8');
     expect(shared).not.toContain('frontend/src');
     expect(shared).not.toContain('$lib');
     expect(existsSync('frontend/src/lib/components/Entity/workspace/entity-panel-routing.ts')).toBe(false);
-    expect(tabs).toContain('packages/runtime-client/src/entity/entity-workspace-navigation');
-    expect(tabs).toContain('ENTITY_WORKSPACE_SECTIONS.map((section) => ({');
+    expect(tabs).toContain("from '../../../runtime-client/src/entity/workspace/entity-workspace-navigation'");
+    expect(tabs).toContain('ENTITY_WORKSPACE_SECTIONS.map((section, index) =>');
+    expect(view).toContain('resolveEntityPanelDeepLinkFromLocation');
   });
 });

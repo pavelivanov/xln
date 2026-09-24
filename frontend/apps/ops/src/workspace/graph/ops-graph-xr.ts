@@ -1,11 +1,11 @@
 import * as THREE from 'three';
-import { disposeGraphObject3D, type GraphRenderer } from '../../../../../packages/ui/src/graph/graph3d-renderer';
-import type { GraphEntityVisualData } from '../../../../../packages/ui/src/graph/graph3d-entity-visuals';
+import { disposeGraphObject3D, type GraphRenderer } from '../../../../../packages/ui/src/graph/three/core/graph3d-renderer';
+import type { GraphEntityVisualData } from '../../../../../packages/ui/src/graph/three/visuals/graph3d-entity-visuals';
 import {
   beginGraphGesture, beginGraphXrGrab, createGraphXrRaycaster, emptyGraphGestureState,
   endGraphGesture, endGraphXrGrab, findGraphEntityFromObject, moveGraphXrGrab,
   type GraphXrGrab,
-} from '../../../../../packages/ui/src/graph/graph3d-interaction';
+} from '../../../../../packages/ui/src/graph/three/interaction/graph3d-interaction';
 
 type XrState = Readonly<{ supported: boolean; active: boolean }>;
 type ControllerEvent = Readonly<{ target: THREE.Object3D; data: XRInputSource }>;

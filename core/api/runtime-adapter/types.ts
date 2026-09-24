@@ -2,6 +2,7 @@ import type { RuntimeActivityEvent, RuntimeActivityFilters } from '../../storage
 import type { PersistedAccountSwapHistoryPage } from '../../storage/queries/history';
 import type { CrossJurisdictionSwapRoute } from '../../types/cross-jurisdiction';
 import type { RuntimeInput } from '../../runtime/types';
+import type { SettlementOp } from '../../types/account';
 import type { XlnProtocolVersion } from '../../protocol/version';
 import type { SettlementEvidenceRequest } from './control/settlement-evidence';
 import type { ControlBoardGovernanceRequest } from './control/control-board-governance';
@@ -123,7 +124,8 @@ export type RuntimeAdapterActivityPage = {
   returned: number;
   limit: number;
   scanLimit: number;
-  nextBeforeHeight: number | null;
+  cursor: string | null;
+  nextCursor: string | null;
   filters: RuntimeActivityFilters;
   events: RuntimeActivityEvent[];
 };
@@ -153,6 +155,90 @@ export type RuntimeAdapterSolvencySummary = {
   }>;
   isValid: boolean | null;
 };
+
+export type RuntimeAdapterBatchOperationCounts = Readonly<{
+  total: number;
+  reserveToReserve: number;
+  reserveToCollateral: number;
+  reserveToCollateralPairs: number;
+  collateralToReserve: number;
+  settlements: number;
+  settlementDiffs: number;
+  disputeStarts: number;
+  counterDisputes: number;
+  disputeFinalizations: number;
+  externalTokenToReserve: number;
+  reserveToExternalToken: number;
+  revealSecrets: number;
+  hashLadderRegistrations: number;
+}>;
+
+type RuntimeAdapterBatchReserveIssue = Readonly<{
+  tokenId: number;
+  opType: 'reserveToReserve' | 'settlement' | 'reserveToCollateral' | 'reserveToExternalToken';
+  opIndex: number;
+  failureMode: 'batchRevert';
+  requiredAmount: bigint;
+  availableAfterDebt: bigint;
+  debtClaimPaid: bigint;
+  remainingDebtAfterSweep: bigint;
+  unrepaidDeficit: bigint;
+}>;
+
+export type RuntimeAdapterBatchPreflight = Readonly<{
+  ok: true;
+  runtimeId: string;
+  height: number;
+  entityId: string;
+  status: 'empty' | 'accumulating' | 'sent' | 'failed';
+  reserveTokenCount: number;
+  openDebtTokenCount: number;
+  draft: Readonly<{
+    identity: string;
+    counts: RuntimeAdapterBatchOperationCounts;
+    issue: RuntimeAdapterBatchReserveIssue | null;
+  }>;
+  sent: Readonly<{
+    identity: string;
+    batchHash: string;
+    entityNonce: number;
+    counts: RuntimeAdapterBatchOperationCounts;
+  }> | null;
+}>;
+
+/**
+ * Bounded public projection of one bilateral settlement workspace.
+ *
+ * Approval/execution only needs the canonical proposal body, role ownership,
+ * and whether each side has authorized it. Exact Hankos, compiled settlement
+ * material, nonces, and post-settlement dispute proofs remain inside Runtime.
+ */
+export type RuntimeAdapterSettlementWorkspace = Readonly<{
+  counterpartyEntityId: string;
+  workspaceHash: string;
+  ops: readonly SettlementOp[];
+  lastModifiedByLeft: boolean;
+  status: 'draft' | 'awaiting_counterparty' | 'ready_to_submit' | 'submitted';
+  memo: string;
+  revision: number;
+  executorIsLeft: boolean;
+  proposerEntityId: string;
+  approverEntityId: string;
+  executorEntityId: string;
+  leftHankoPresent: boolean;
+  rightHankoPresent: boolean;
+}>;
+
+export type RuntimeAdapterSettlementWorkspaceRead = Readonly<{
+  ok: true;
+  runtimeId: string;
+  height: number;
+  entityId: string;
+  signerId: string;
+  returned: number;
+  maxItems: number;
+  workspaces: readonly RuntimeAdapterSettlementWorkspace[];
+}>;
 
 type RuntimeAdapterTimelineFrame = {
   runtimeId: string;

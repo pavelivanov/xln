@@ -14,7 +14,7 @@ import {
   resetGraphObjectHighlight,
   setGraphPointerNdc,
   updateGraphSelectionHighlight,
-} from '../../../../frontend/packages/ui/src/graph/graph3d-interaction';
+} from '../../../../frontend/packages/ui/src/graph/three/interaction/graph3d-interaction';
 
 describe('Graph3D shared interaction boundary', () => {
   test('projects client coordinates into normalized device coordinates', () => {
@@ -164,9 +164,9 @@ describe('Graph3D shared interaction boundary', () => {
     expect(entity.isDragging).toBe(false);
   });
 
-  test('moves reusable hit mechanics out of the canonical Svelte panel', () => {
-    const shared = readFileSync('frontend/packages/ui/src/graph/graph3d-interaction.ts', 'utf8');
-    const panel = readFileSync('frontend/src/lib/view/panels/graph3d/Graph3DPanel.svelte', 'utf8');
+  test('keeps reusable hit mechanics outside the React scene owner', () => {
+    const shared = readFileSync('frontend/packages/ui/src/graph/three/interaction/graph3d-interaction.ts', 'utf8');
+    const panel = readFileSync('frontend/apps/ops/src/workspace/graph/ops-graph-scene.ts', 'utf8');
 
     expect(shared).toContain('export function setGraphPointerNdc');
     expect(shared).toContain('export function findGraphEntityFromObject');
@@ -180,7 +180,7 @@ describe('Graph3D shared interaction boundary', () => {
     expect(shared).toContain('export function moveGraphXrGrab');
     expect(shared).toContain('export function endGraphXrGrab');
     expect(shared).toContain('export function updateGraphSelectionHighlight');
-    expect(panel).toContain('packages/ui/src/graph/graph3d-interaction');
+    expect(panel).toContain('packages/ui/src/graph/three/interaction/graph3d-interaction');
     expect(panel).not.toContain('function entityFromObject');
     expect(panel).not.toContain('function resetHoveredObjectHighlight');
     expect(panel).not.toContain('function updateGraphSelectionVisual');
@@ -189,6 +189,6 @@ describe('Graph3D shared interaction boundary', () => {
     expect(panel).not.toContain('raycaster.ray.intersectPlane(dragPlane');
     expect(panel).not.toContain('const controllerWorldPosition =');
     expect(panel).not.toContain('distanceTo(grab.startPosition)');
-    expect(existsSync('frontend/src/lib/network3d/graphSelectionGesture.ts')).toBe(false);
+    expect(existsSync('frontend/apps/ops/src/workspace/graph/graph-selection-gesture.ts')).toBe(false);
   });
 });

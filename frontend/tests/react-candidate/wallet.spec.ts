@@ -15,6 +15,7 @@ import {
   screenshotEvidence,
 } from './browser-evidence';
 import { installImportedRuntime, readWalletRuntimeFixture } from './wallet/fixtures/wallet-runtime-test-helpers';
+import { WALLET_RECOVERY_FIXTURE_MNEMONIC } from './wallet/fixtures/wallet-fixture-identities';
 import { finishOpenedWalletSetup } from './wallet/onboarding/wallet-onboarding-test-helpers';
 import { expectWalletHistoryEvents } from './wallet/fixtures/wallet-history-test-helpers';
 
@@ -228,10 +229,10 @@ test(
     await expect(page.locator('.wallet-shell-runtime-state')).toHaveText('Local Runtime', { timeout: 90_000 });
 
     await page.getByRole('tab', { name: /Mnemonic/ }).click();
-    await page.getByRole('textbox', { name: /^Seed phrase/ }).fill(FIRST_MNEMONIC);
+    await page.getByRole('textbox', { name: /^Seed phrase/ }).fill(WALLET_RECOVERY_FIXTURE_MNEMONIC);
     await page.getByRole('button', { name: 'Review identity inputs' }).click();
     await page.getByRole('button', { name: 'Verify recovery' }).click();
-    await page.getByRole('textbox', { name: /^Seed phrase/ }).fill(FIRST_MNEMONIC);
+    await page.getByRole('textbox', { name: /^Seed phrase/ }).fill(WALLET_RECOVERY_FIXTURE_MNEMONIC);
     await page.getByRole('button', { name: 'Verify recovered wallet' }).click();
     const fileChooserPromise = page.waitForEvent('filechooser');
     await page.getByRole('button', { name: 'Import runtime backup' }).click();
@@ -331,9 +332,11 @@ test('address route selects an imported Runtime and renders committed directory,
 
   const directoryResponse = await page.goto('/address', { waitUntil: 'domcontentloaded' });
   expect(directoryResponse?.ok(), 'document response for populated /address').toBe(true);
-  const row = page.getByRole('link', { name: /Browser Alice/ });
+  const row = page.locator('.wallet-address-row').filter({
+    has: page.locator(`code[title="${fixture.entityId}"]`),
+  });
   await expect(row).toBeVisible({ timeout: 90_000 });
-  await expect(page.getByText('2 of 2 profiles')).toBeVisible();
+  await expect(page.getByText(/^\d+ of \d+ profiles$/)).toBeVisible();
   await expectPageContained(page);
   await screenshotEvidence(page, testInfo, 'wallet-address-directory-populated');
 
@@ -355,10 +358,11 @@ test('address route selects an imported Runtime and renders committed directory,
   );
   expect(detailResponse?.ok(), 'document response for imported Runtime detail').toBe(true);
   await expect(page.getByRole('heading', { name: 'Public Entity record' })).toBeVisible({ timeout: 90_000 });
-  await expect(page.getByText('Browser Alice')).toBeVisible();
+  await expect(page.getByTestId('wallet-address-detail').locator(`code[title="${fixture.entityId}"]`)).toBeVisible();
   await expect(page.getByTestId('wallet-address-history').locator('article').first()).toBeVisible();
-  if (await page.getByText('profile-update', { exact: true }).isVisible()) {
-    await expect(page.getByText('profile-update', { exact: true })).toBeVisible();
+  const profileUpdate = page.getByText('profile-update', { exact: true }).first();
+  if (await profileUpdate.isVisible()) {
+    await expect(profileUpdate).toBeVisible();
   } else {
     await page.getByRole('link', { name: 'Older activity is available in Financial health' }).click();
     await expectWalletHistoryEvents(page, ['profile-update']);

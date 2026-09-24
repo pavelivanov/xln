@@ -32,14 +32,12 @@ describe('React reviews pilot', () => {
     expect(() => getReviewText(REVIEW_MODELS[0], 1.5)).toThrow('REVIEW_PROMPT_INDEX_INVALID:1.5');
   });
 
-  test('keeps React and Svelte on the shared review content source', () => {
+  test('keeps React on the shared review content source', () => {
     const reactSource = readFileSync(resolve(ROOT, 'frontend/apps/site/src/reviews-page.tsx'), 'utf8');
-    const svelteSource = readFileSync(resolve(ROOT, 'frontend/src/routes/reviews/+page.svelte'), 'utf8');
 
     expect(reactSource).toContain("from '../../../packages/ui/src/content/reviews-model'");
     expect(reactSource).toContain('aria-live="polite"');
     expect(reactSource).not.toContain('fetch(');
-    expect(svelteSource).toContain("from '$lib/reviews/reviews-model'");
-    expect(svelteSource).not.toContain('const REVIEWS');
+    expect(reactSource).not.toContain('const REVIEWS');
   });
 });

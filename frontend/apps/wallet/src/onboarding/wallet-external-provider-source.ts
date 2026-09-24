@@ -33,7 +33,7 @@ const idleOperation = (): WalletExternalProviderOperationState => ({
 });
 
 const loadDependencies = async (): Promise<WalletExternalProviderDependencies> => {
-  const canonical = await import('../../../../bridges/wallet/wallet-canonical-external-provider');
+  const canonical = await import('../../../../bridges/wallet/canonical/wallet-canonical-external-provider');
   return {
     read: canonical.readCanonicalWalletExternalProvider,
     transfer: canonical.transferCanonicalWalletExternalAsset,

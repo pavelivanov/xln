@@ -82,17 +82,17 @@ describe('React ops quorum boundary and model', () => {
 });
 
 describe('React ops quorum ownership', () => {
-  test('owns the retained route with a lazy React page and shared Svelte decoder', async () => {
+  test('owns the retained route with a lazy React page and strict shared decoder', async () => {
     expect(resolveOpsPage('/qa/quorum')).toEqual({ kind: 'quorum', pathname: '/qa/quorum' });
     expect(opsPageMetadata(resolveOpsPage('/qa/quorum')).title).toBe('xln Quorum Intelligence');
-    const [app, svelteLoad, sveltePage] = await Promise.all([
+    const [app, source, page] = await Promise.all([
       Bun.file('frontend/apps/ops/src/ops-app.tsx').text(),
-      Bun.file('frontend/src/routes/qa/quorum/+page.ts').text(),
-      Bun.file('frontend/src/routes/qa/quorum/+page.svelte').text(),
+      Bun.file('frontend/apps/ops/src/quorum/ops-quorum-source.ts').text(),
+      Bun.file('frontend/apps/ops/src/quorum/ops-quorum.tsx').text(),
     ]);
     expect(app).toContain("import('./quorum/ops-quorum')");
-    expect(svelteLoad).toContain('decodeQuorumRegistry(registry)');
-    expect(svelteLoad).not.toContain('as QuorumRegistry');
-    expect(sveltePage).toContain('buildQuorumView');
+    expect(source).toContain('decodeQuorumRegistry(registry)');
+    expect(source).not.toContain('as QuorumRegistry');
+    expect(page).toContain('buildQuorumView');
   });
 });

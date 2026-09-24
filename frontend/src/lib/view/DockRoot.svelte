@@ -22,7 +22,7 @@
   import TimeMachine from './core/TimeMachine.svelte';
   import { panelBridge, type EntityOpenAction } from '../../../packages/browser/src/workspace/panel-bridge';
   import { errorLog } from '../../../packages/browser/src/logging/error-log-store';
-  import { settings } from '../../../packages/browser/src/settings-store';
+  import { settings } from '../../../packages/browser/src/preferences/settings-store';
   import { refreshRuntimeView } from '../../../bridges/runtime/runtime-view-store';
   import { runtimeControllerHandle } from '../../../bridges/runtime/runtime-controller-store';
   import { appStateOperations } from '$lib/stores/appStateStore';

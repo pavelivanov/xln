@@ -28,7 +28,7 @@ export type WalletMarketActivityEvent = Readonly<{
 
 export type WalletMarketActivityPage = Readonly<{
   events: readonly WalletMarketActivityEvent[];
-  nextBeforeHeight: number | null;
+  nextCursor: string | null;
 }>;
 
 const integerAmount = (value: unknown, label: string): string | undefined => {
@@ -78,11 +78,11 @@ export const decodeWalletMarketActivity = (
       } : {}),
     };
   });
-  const cursor = root['nextBeforeHeight'];
+  const cursor = root['nextCursor'];
   return {
     events,
-    nextBeforeHeight: cursor === null
+    nextCursor: cursor === null
       ? null
-      : requireRuntimeInteger(cursor, 'WALLET_MARKET_ACTIVITY_CURSOR', 1),
+      : requireRuntimeString(cursor, 'WALLET_MARKET_ACTIVITY_CURSOR'),
   };
 };

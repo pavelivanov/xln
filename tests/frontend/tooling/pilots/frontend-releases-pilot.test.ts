@@ -31,7 +31,12 @@ describe('React releases pilot', () => {
     expect(manifest.latest).toBe('0.1.31');
     expect(manifest.releases).toHaveLength(22);
     expect(Object.keys(latest.metrics).length).toBeGreaterThan(5);
-    expect(verifyReleaseManifestPolicy({ ...manifest, releases: [...manifest.releases] })).toBe(true);
+    expect(verifyReleaseManifestPolicy({ ...manifest, releases: [...manifest.releases] })).toBe(false);
+    expect(verifyReleaseManifestPolicy(
+      { ...manifest, releases: [...manifest.releases] },
+      undefined,
+      manifest.latest,
+    )).toBe(true);
     expect(verifyReleaseManifestEntry(latest)).toBe(true);
     expect(verifyReleaseManifestSnapshotBinding(latest, snapshot)).toBe(true);
   });
@@ -58,17 +63,15 @@ describe('React releases pilot', () => {
     expect(() => decodeReleaseSnapshot({ ...snapshot, injected: true })).toThrow('RELEASE_SNAPSHOT_EXTRA_FIELD');
   });
 
-  test('keeps both frontends on the shared verified and sanitized loaders', () => {
+  test('keeps React on the shared verified and sanitized loaders', () => {
     const reactSource = readFileSync(resolve(ROOT, 'frontend/apps/site/src/releases/releases-page.tsx'), 'utf8');
-    const svelteSource = readFileSync(resolve(ROOT, 'frontend/src/lib/components/Releases/ReleasesView.svelte'), 'utf8');
     const catalogSource = readFileSync(resolve(ROOT, 'frontend/packages/ui/src/releases/release-catalog.ts'), 'utf8');
 
     expect(reactSource).toContain('fetchVerifiedReleaseManifest');
     expect(reactSource).toContain('fetchReleaseDocument');
     expect(reactSource).toContain('dangerouslySetInnerHTML');
     expect(reactSource).not.toContain('marked.parse');
-    expect(svelteSource).toContain("from '$lib/releases/release-catalog'");
-    expect(svelteSource).not.toContain('function decodeManifest');
+    expect(reactSource).not.toContain('function decodeManifest');
     expect(catalogSource).toContain('sanitizeRenderedHtml');
     expect(catalogSource).toContain('verifyReleaseManifestSnapshotBinding');
   });

@@ -21,7 +21,7 @@ export const prepareVerifiedDeployment = async (deploymentRoot: string) => {
         })();
       }
       // Each request holds one verified selection even if activation overlaps it.
-      // Changed bytes still fail their per-file hash check; no checkout fallback.
+      // Changed bytes still fail their per-file hash check; checkout substitution is forbidden.
       return (await selected).serve(request);
     },
   };

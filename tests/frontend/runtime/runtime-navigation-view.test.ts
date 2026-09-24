@@ -127,19 +127,16 @@ test('remote runtime navigation does not inherit local vault signer selection', 
   expect(view.entityItems).toEqual([{ id: entityB, label: entityB, count: 0 }]);
 });
 
-test('HierarchicalNav consumes a projected navigation view instead of reading full runtime env', () => {
-  const source = readFileSync('frontend/src/lib/components/Navigation/HierarchicalNav.svelte', 'utf8');
+test('React runtime manager selects validated sessions without reading full runtime env', () => {
+  const source = readFileSync('frontend/apps/ops/src/workspace/runtime/ops-runtime-manager.tsx', 'utf8');
+  const selection = readFileSync('frontend/apps/ops/src/workspace/runtime/ops-runtime-selection.ts', 'utf8');
   const helper = readFileSync('frontend/packages/ui/src/navigation/runtime-navigation-view.ts', 'utf8');
-  expect(source).toContain('buildHierarchicalNavigationView');
-  expect(source).toContain('$runtimeView');
-  expect(source).toContain('navigationView.runtimeItems');
-  expect(source).toContain('runtimeOperations.selectRuntime(id)');
-  expect(source).toContain("import { errorLog } from '../../../../packages/browser/src/logging/error-log-store';");
-  expect(source).toContain("errorLog.log('Runtime switch failed', 'Navigation'");
-  expect(source).not.toContain('activeRuntimeId.set');
-  expect(source).not.toContain('console.error');
-  expect(source).not.toContain('console.warn');
-  expect(source).not.toContain('console.info');
+  expect(source).toContain('readStoredRemoteRuntimeImports()');
+  expect(source).toContain('importRemoteRuntimeEntries(entries, { activateFirst: false');
+  expect(source).toContain('await selectWorkspaceRuntime(first)');
+  expect(selection).toContain('writeRemoteRuntimeAdapterSession');
+  expect(selection).toContain('await opsWorkspaceSession.select(readRuntimeAdapterStorageSnapshot(stores))');
+  expect(selection).toContain("if (state.status === 'error') throw new Error(state.message)");
   expect(source).not.toContain('eReplicas');
   expect(source).not.toContain('jReplicas');
   expect(source).not.toContain('runtime.env');

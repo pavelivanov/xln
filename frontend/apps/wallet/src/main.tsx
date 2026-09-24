@@ -1,6 +1,7 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 
+import { initializeNativeShell } from '../../../packages/browser/src/native/capacitor';
 import { WalletApp } from './wallet-app';
 import { resolveWalletAppView } from './app-shell-model';
 import { resolveWalletPage, walletPageMetadata } from './wallet-model';
@@ -24,6 +25,8 @@ if (page.kind === 'app' && resolveWalletAppView(window.location.search, window.l
     module.startWalletScenarioPreviewRuntime(),
   );
 }
+
+void initializeNativeShell();
 
 createRoot(rootElement).render(
   <StrictMode>

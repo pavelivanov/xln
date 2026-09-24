@@ -6,7 +6,9 @@ import {
   buildWalletFixtureOrderTx,
   buildWalletFixtureProfileTx,
 } from './wallet-runtime-fixture-topology';
+import { assistantUpstreamUrl, createAssistantUpstreamFixture } from './assistant/assistant-upstream-fixture';
 import { createWalletRecoveryFixture, waitForWalletFixtureState } from './wallet-recovery-fixture';
+import { WALLET_RUNTIME_FIXTURE_MNEMONIC } from './wallet-fixture-identities';
 
 type FixtureSocketData = Readonly<{
   type: 'rpc';
@@ -22,7 +24,10 @@ if (!Number.isSafeInteger(port) || port < 1 || port > 65_535) {
 
 const databaseRoot = `/tmp/xln-react-wallet-address-${port}`;
 const jurisdictionsPath = `${databaseRoot}/jurisdictions.json`;
-const runtimeSeed = 'test test test test test test test test test test test junk';
+// Keep the long-lived remote fixture distinct from the mnemonic-recovery fixture.
+// Otherwise the recovered browser Runtime supersedes this fixture at the relay
+// and the remote Runtime correctly fail-stops with HALTED_REQUIRES_OPERATOR.
+const runtimeSeed = WALLET_RUNTIME_FIXTURE_MNEMONIC;
 const authSeed = `xln-react-wallet-address-auth:${port}:minimum-32-bytes`;
 process.env['XLN_DB_PATH'] = databaseRoot;
 process.env['XLN_JURISDICTIONS_PATH'] = jurisdictionsPath;
@@ -32,6 +37,8 @@ process.env['XLN_RADAPTER_CONTROL_BURST'] = '1000';
 process.env['XLN_RADAPTER_READ_BURST'] = '1000';
 process.env['XLN_RADAPTER_SEND_BURST'] = '100';
 process.env['XLN_RADAPTER_SEND_PER_SEC'] = '50';
+process.env['XLN_AI_SERVER_URL'] = assistantUpstreamUrl(port);
+process.env['XLN_ASSISTANT_ALLOWED_MODELS'] = 'qwen3-coder:latest';
 
 const runtime = await import('../../../../../core/runtime');
 const { createStackManagerController } = await import('../../../../../core/api/server/control/stack-manager');
@@ -48,9 +55,11 @@ const rpc = await import('../../../../../core/api/server/network/rpc-ws');
 const loopEnvironment = await import('../../../../../core/runtime/loop/loop-environment');
 const relay = await import('../../../../../core/network/relay/standalone-server');
 const { createAssistantProxyFromEnv } = await import('../../../../../core/api/server/assistant/proxy');
+const assistantUpstream = createAssistantUpstreamFixture();
 const assistantProxy = createAssistantProxyFromEnv();
 const scenario = await import('../../../../../core/scenarios/harness/boot');
 const { createJAdapter } = await import('../../../../../core/jurisdiction/adapter/kernel/factory');
+const { applyDebtCreated } = await import('../../../../../core/entity/tx/j-events-observations/debt');
 
 await rm(databaseRoot, { recursive: true, force: true });
 await mkdir(databaseRoot, { recursive: true });
@@ -226,11 +235,12 @@ await waitForWalletFixtureState('market-open-order', () => {
     .find((candidate) => candidate.state.entityId === counterpartyEntityId);
   return hub?.state.orderbookExt?.books.get('1/2')?.orders.size === 1;
 });
+const advertisedEntityIds = new Set([entityId, counterpartyEntityId]);
 const p2p = runtime.startP2P(env, {
   relayUrls: [],
   wsUrl: null,
   seedRuntimeIds: [],
-  advertiseEntityIds: [entityId, counterpartyEntityId],
+  advertiseEntityIds: [...advertisedEntityIds],
 });
 if (!p2p) throw new Error('WALLET_RUNTIME_FIXTURE_P2P_START_FAILED');
 await p2p.announceProfilesForEntitiesNow(
@@ -241,6 +251,11 @@ await p2p.announceProfilesForEntitiesNow(
 if (!await runtime.ensureGossipProfiles(env, [entityId, counterpartyEntityId])) {
   throw new Error('WALLET_RUNTIME_FIXTURE_PROFILES_UNAVAILABLE');
 }
+const publishFixtureProfiles = async (entityIds: readonly string[], reason: string): Promise<void> => {
+  for (const id of entityIds) advertisedEntityIds.add(id);
+  p2p.updateConfig({ advertiseEntityIds: [...advertisedEntityIds] });
+  await p2p.announceProfilesForEntitiesNow([...entityIds], reason, false);
+};
 const token = auth.deriveRuntimeAdapterCapabilityToken(
   authSeed,
   'full',
@@ -248,6 +263,9 @@ const token = auth.deriveRuntimeAdapterCapabilityToken(
   { audience: runtimeId, keyId: 'wallet-address-e2e', tokenId: 'wallet-address-e2e' },
 );
 const recoveryFixture = await createWalletRecoveryFixture(port);
+if (recoveryFixture.runtimeId === runtimeId) {
+  throw new Error(`WALLET_RUNTIME_FIXTURE_RECOVERY_ID_COLLISION:${runtimeId}`);
+}
 let healthFixture: Awaited<
   ReturnType<typeof import('../../fixtures/health-orchestrator-fixture').startHealthOrchestratorFixture>
 > | null = null;
@@ -304,6 +322,7 @@ const handleRpc = rpc.createServerRpcMessageHandler({
   deriveBrainVault: (targetEnv, input, options) => brainVaultOwner.deriveAndInstall(targetEnv, input, options),
 });
 let ownershipFixtures: ReturnType<typeof import('./wallet-ownership-fixture').createWalletOwnershipFixtures> | null = null;
+const ownershipReleaseFixtures = new Map<string, ReturnType<typeof import('./wallet-ownership-fixture').createWalletOwnershipReleaseFixture>>();
 const ownershipGovernanceFixtures = new Map<string, ReturnType<typeof import('./wallet-ownership-fixture').createWalletOwnershipGovernanceFixture>>();
 const ownershipActivationFixtures = new Map<string, ReturnType<typeof import('./wallet-ownership-fixture').createWalletOwnershipGovernanceFixture>>();
 const ownershipActivatedFixtures = new Map<string, ReturnType<typeof import('./wallet-ownership-fixture').createWalletOwnershipActivatedFixture>>();
@@ -345,6 +364,8 @@ server = Bun.serve<FixtureSocketData>({
     }
     const healthResponse = await healthFixture?.handle(request);
     if (healthResponse) return healthResponse;
+    const assistantUpstreamResponse = await assistantUpstream.handle(request, url.pathname);
+    if (assistantUpstreamResponse) return assistantUpstreamResponse;
     const assistantResponse = await assistantProxy.handle(request, url.pathname, '127.0.0.1');
     if (assistantResponse) return assistantResponse;
     const apiHeaders = { 'access-control-allow-origin': '*', 'access-control-allow-methods': 'GET, POST, OPTIONS', 'access-control-allow-headers': 'content-type, cache-control, pragma, authorization', 'content-type': 'application/json' };
@@ -372,6 +393,7 @@ server = Bun.serve<FixtureSocketData>({
         hubDiscoveryFixtures.set(slot, fixture);
       }
       const created = await fixture;
+      await publishFixtureProfiles([created.entityId], `wallet-hub-discovery:${slot}`);
       return Response.json(created, { headers: apiHeaders });
     }
     if (url.pathname === '/dispute-fixture' && request.method === 'POST') {
@@ -384,7 +406,12 @@ server = Bun.serve<FixtureSocketData>({
         disputeFixtures.set(slot, fixture);
       }
       const created = await fixture;
+      await publishFixtureProfiles([entityId, created.entityId], `wallet-dispute:${slot}`);
       return Response.json(created, { headers: apiHeaders });
+    }
+    if (url.pathname === '/drain-j-watcher' && request.method === 'POST') {
+      await drainJWatcherBacklog(env, currentEnv => runtime.processRuntime(currentEnv));
+      return Response.json({ height: env.state.height }, { headers: apiHeaders });
     }
     if (url.pathname === '/debt-payment-fixture' && request.method === 'POST') {
       const sourceEntityId = String(url.searchParams.get('entityId') || '').toLowerCase();
@@ -417,6 +444,155 @@ server = Bun.serve<FixtureSocketData>({
         ],
       });
       return Response.json({ height: env.state.height }, { headers: apiHeaders });
+    }
+    if (url.pathname === '/batch-preflight-debt-fixture' && request.method === 'POST') {
+      const debtor = String(url.searchParams.get('entityId') || '').toLowerCase();
+      const creditor = String(url.searchParams.get('counterpartyId') || '').toLowerCase();
+      const amount = BigInt(String(url.searchParams.get('amount') || '0'));
+      const debtorReplica = [...env.state.eReplicas.values()]
+        .find(candidate => candidate.state.entityId === debtor);
+      if (!debtorReplica || !debtorReplica.state.accounts.has(creditor) || amount <= 0n) {
+        return new Response('Batch preflight debt fixture invalid', { status: 400, headers: apiHeaders });
+      }
+      const currentDebts = [...(debtorReplica.state.outDebtsByToken?.get(1)?.values() ?? [])];
+      const debtIndex = currentDebts.reduce(
+        (highest, debt) => Math.max(highest, debt.currentDebtIndex),
+        -1,
+      ) + 1;
+      const event = {
+        type: 'DebtCreated' as const,
+        blockNumber: env.state.height + 1,
+        transactionHash: `0x${(env.state.height + 1).toString(16).padStart(64, '0')}`,
+        data: { debtor, creditor, tokenId: 1, amount: amount.toString(), debtIndex },
+      };
+      for (const replica of env.state.eReplicas.values()) applyDebtCreated(replica.state, event);
+      await commit({
+        runtimeTxs: [],
+        entityInputs: [{
+          entityId: debtor,
+          signerId: debtorReplica.signerId,
+          entityTxs: [{
+            type: 'chatMessage',
+            data: { message: 'batch-preflight-debt-fixture', timestamp: env.state.timestamp },
+          }],
+        }],
+      });
+      return Response.json({ height: env.state.height, debtIndex }, { headers: apiHeaders });
+    }
+    if (url.pathname === '/activity-overfull-fixture' && request.method === 'POST') {
+      const slot = String(url.searchParams.get('slot') || '').replace(/[^a-z0-9-]/giu, '-');
+      if (!slot) return new Response('Activity fixture slot required', { status: 400, headers: apiHeaders });
+      const beforeHeight = env.state.height;
+      await commit({
+        runtimeTxs: [],
+        entityInputs: [{
+          entityId,
+          signerId: runtimeId,
+          entityTxs: Array.from({ length: 45 }, (_, index) => ({
+            type: 'chatMessage' as const,
+            data: {
+              message: `activity-overfull-${slot}-${String(index).padStart(2, '0')}`,
+              timestamp: env.state.timestamp,
+            },
+          })),
+        }],
+      });
+      if (env.state.height !== beforeHeight + 1) throw new Error('ACTIVITY_OVERFULL_FIXTURE_HEIGHT_MISMATCH');
+      const activity = await runtime.readPersistedRuntimeActivityPage(env, {
+        beforeHeight: env.state.height,
+        entityId,
+        kind: 'all',
+        limit: 500,
+        scanLimit: 1,
+      });
+      const ids = activity.events
+        .filter(event => event.height === env.state.height && event.rawType === 'chatMessage')
+        .map(event => event.id);
+      if (ids.length !== 45) throw new Error(`ACTIVITY_OVERFULL_FIXTURE_COUNT:${ids.length}`);
+      return Response.json({ height: env.state.height, ids }, { headers: apiHeaders });
+    }
+    if (url.pathname === '/remote-settlement-fixture' && request.method === 'POST') {
+      const slot = String(url.searchParams.get('slot') || '').replace(/[^a-z0-9-]/giu, '-');
+      const phase = String(url.searchParams.get('phase') || 'propose');
+      if (!slot || (phase !== 'propose' && phase !== 'update')) {
+        return new Response('Remote settlement fixture invalid', { status: 400, headers: apiHeaders });
+      }
+      const settlementSlot = `${slot}-remote-settlement`;
+      let settlementFixture = disputeFixtures.get(settlementSlot);
+      if (!settlementFixture) {
+        settlementFixture = import('./wallet-hub-discovery-fixture').then(module =>
+          module.createWalletDisputeFixture(
+            env,
+            config,
+            commit,
+            runtimeSeed,
+            settlementSlot,
+            entityId,
+            runtimeId,
+          ),
+        );
+        disputeFixtures.set(settlementSlot, settlementFixture);
+      }
+      const counterparty = await settlementFixture;
+      await publishFixtureProfiles(
+        [entityId, counterparty.entityId],
+        `wallet-remote-settlement:${settlementSlot}`,
+      );
+      const proposer = [...env.state.eReplicas.values()]
+        .find(candidate => candidate.state.entityId === counterparty.entityId);
+      const workspace = proposer?.state.accounts.get(entityId)?.state.settlementWorkspace;
+      if (!proposer) throw new Error('REMOTE_SETTLEMENT_FIXTURE_PROPOSER_MISSING');
+      if (phase === 'propose' && workspace) {
+        return new Response('Remote settlement fixture already active', { status: 409, headers: apiHeaders });
+      }
+      if (phase === 'update' && (!workspace || workspace.status !== 'awaiting_counterparty')) {
+        return new Response('Remote settlement fixture update unavailable', { status: 409, headers: apiHeaders });
+      }
+      const expectedRevision = phase === 'propose' ? 1 : workspace!.revision + 1;
+      const entityTx = phase === 'propose'
+        ? {
+            type: 'settle_propose' as const,
+            data: {
+              counterpartyEntityId: entityId,
+              executorIsLeft: runtime.isLeftEntity(counterparty.entityId, entityId),
+              memo: `remote-peer-review-${slot}-1`,
+              ops: [{ type: 'forgive' as const, tokenId: 1 }],
+            },
+          }
+        : {
+            type: 'settle_update' as const,
+            data: {
+              counterpartyEntityId: entityId,
+              executorIsLeft: runtime.isLeftEntity(counterparty.entityId, entityId),
+              memo: `remote-peer-review-${slot}-${expectedRevision}`,
+              ops: [{ type: 'forgive' as const, tokenId: 1 }],
+            },
+          };
+      await commit({
+        runtimeTxs: [],
+        entityInputs: [{
+          entityId: counterparty.entityId,
+          signerId: counterparty.signerId,
+          entityTxs: [entityTx],
+        }],
+      });
+      await waitForWalletFixtureState(`Remote settlement ${phase} ${settlementSlot}`, () => {
+        const current = readAccount(entityId, counterparty.entityId)?.state.settlementWorkspace;
+        return current?.status === 'awaiting_counterparty'
+          && current.revision === expectedRevision;
+      });
+      const current = readAccount(entityId, counterparty.entityId)?.state.settlementWorkspace;
+      if (!current || current.status !== 'awaiting_counterparty') {
+        throw new Error('REMOTE_SETTLEMENT_FIXTURE_WORKSPACE_MISSING');
+      }
+      return Response.json({
+        height: env.state.height,
+        entityId,
+        counterpartyEntityId: counterparty.entityId,
+        workspaceHash: current.workspaceHash,
+        revision: current.revision,
+        executorEntityId: counterparty.entityId,
+      }, { headers: apiHeaders });
     }
     if (url.pathname === '/cross-j-fixture' && request.method === 'POST') {
       crossJFixture ??= import('./wallet-cross-j-fixture').then(module =>
@@ -504,11 +680,16 @@ server = Bun.serve<FixtureSocketData>({
       return Response.json((await ownershipFixtures).released, { headers: apiHeaders });
     }
     if (url.pathname === '/ownership-release-fixture' && request.method === 'POST') {
-      ownershipFixtures ??= import('./wallet-ownership-fixture').then(module => module.createWalletOwnershipFixtures(env, chainAdapter, config, commit));
       const slot = String(url.searchParams.get('slot') || '');
-      const fixture = (await ownershipFixtures).unreleased[slot];
-      if (!fixture) return new Response('Ownership fixture slot not found', { status: 404, headers: apiHeaders });
-      return Response.json(fixture, { headers: apiHeaders });
+      if (!slot) return new Response('Ownership fixture slot not found', { status: 404, headers: apiHeaders });
+      let fixture = ownershipReleaseFixtures.get(slot);
+      if (!fixture) {
+        fixture = import('./wallet-ownership-fixture').then(module => (
+          module.createWalletOwnershipReleaseFixture(env, chainAdapter, config, commit, slot)
+        ));
+        ownershipReleaseFixtures.set(slot, fixture);
+      }
+      return Response.json(await fixture, { headers: apiHeaders });
     }
     if (url.pathname === '/ownership-action-state' && request.method === 'GET') {
       const requestedEntityId = String(url.searchParams.get('entityId') || '').toLowerCase();

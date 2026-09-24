@@ -1,7 +1,7 @@
 import { readRuntimeAdapterStorageSnapshot } from '../../../../packages/browser/src/runtime/session/runtime-adapter-session';
 import { OpsWorkspaceSession } from '../workspace/session/ops-workspace-session';
 import { bootWorkspacePlayback, returnWorkspaceLive, selectWorkspaceStep, workspaceBoot, workspaceNetwork } from '../workspace/session/ops-workspace-playback';
-import { networkMachineRuntimeOperations } from '../../../../bridges/runtime/network-machine-runtime-store';
+import { networkMachineRuntimeOperations } from '../../../../bridges/runtime/network/network-machine-runtime-store';
 
 export const opsWorkspaceSession = new OpsWorkspaceSession(
   workspaceBoot.kind === 'plain'

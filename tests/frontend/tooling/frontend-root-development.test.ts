@@ -10,7 +10,7 @@ test('React root development replaces both public Vite listeners and retains rea
   expect(() => readDevFrontend('unknown')).toThrow('DEV_FRONTEND_INVALID');
 });
 
-test('a configured TLS listener requires a readable certificate and key without HTTP fallback', () => {
+test('a configured TLS listener requires a readable certificate and key without HTTP substitution', () => {
   expect(() => readDevelopmentGatewayTls('', '')).toThrow('DEVELOPMENT_GATEWAY_TLS_PAIR_REQUIRED');
   expect(() => readDevelopmentGatewayTls('/missing/xln-cert.pem', '')).toThrow('DEVELOPMENT_GATEWAY_TLS_PAIR_REQUIRED');
   expect(() => readDevelopmentGatewayTls('/missing/xln-cert.pem', '/missing/xln-key.pem')).toThrow('ENOENT');

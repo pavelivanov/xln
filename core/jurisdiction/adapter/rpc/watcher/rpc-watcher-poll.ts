@@ -243,6 +243,14 @@ export const runWatcherPoll = async (request: PollRequest): Promise<void> => {
     minimumLocalScan === null ? nextGlobalBlock : minimumLocalScan + 1,
   );
   if (await auditCanonicalStateWhenDue(request, currentBlock, fromBlock, safeToBlock)) return;
+  // Header reconciliation performs external I/O. Persistence quiesce may begin
+  // while that await is in flight, so re-check before the cursor or range can
+  // enter Runtime. The ingress queue must stay fail-stop for any later caller.
+  if (request.isCancelled()) return;
+  if (isIngressPaused(session.env)) {
+    pauseForQuiesce(request, { step: 'after-canonical-audit' });
+    return;
+  }
   if (waitForPendingHistory(request)) return;
   commitScannedWatcherCursor(session, services);
   if (fromBlock > safeToBlock) return;

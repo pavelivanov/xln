@@ -516,8 +516,11 @@ describe('production startup wiring', () => {
     const radapterRemote = ['tests/e2e/runtime/e2e-radapter-remote-part-1.spec.ts', 'tests/e2e/runtime/e2e-radapter-remote-part-2.spec.ts']
       .map(file => readFileSync(join(repoRoot, file), 'utf8'))
       .join('\n');
-    const appLayout = readFileSync(join(repoRoot, 'frontend/src/routes/app/+layout.svelte'), 'utf8');
-    const importFlow = readFileSync(join(repoRoot, 'frontend/bridges/runtime/remote-runtime-import-flow.ts'), 'utf8');
+    const runtimeManager = readFileSync(
+      join(repoRoot, 'frontend/apps/ops/src/workspace/runtime/ops-runtime-manager.tsx'),
+      'utf8',
+    );
+    const importFlow = readFileSync(join(repoRoot, 'frontend/bridges/runtime/remote/remote-runtime-import-flow.ts'), 'utf8');
     const orchestrator = readOrchestratorSource();
     const runtimeImportHttp = readFileSync(join(repoRoot, 'core/orchestrator/replica-import/runtime-import-http.ts'), 'utf8');
     const bootstrapTimeline = readFileSync(join(repoRoot, 'core/orchestrator/bootstrap/bootstrap-timeline-stages.ts'), 'utf8');
@@ -557,9 +560,10 @@ describe('production startup wiring', () => {
     );
 
     expect(existsSync(join(repoRoot, 'frontend/src/routes/radapter/manage/+page.svelte'))).toBe(false);
-    expect(appLayout).toContain('async function importRemoteRuntimesIntoApp');
-    expect(appLayout).toContain('fetchRemoteRuntimeImportSource(source)');
-    expect(appLayout).toContain('const result = await importRemoteRuntimeEntries(entries)');
+    expect(runtimeManager).toContain("import { importRemoteRuntimeEntries }");
+    expect(runtimeManager).toContain('const result = await importRemoteRuntimeEntries(entries, {');
+    expect(runtimeManager).toContain('await selectWorkspaceRuntime(first)');
+    expect(importFlow).toContain('export const fetchRemoteRuntimeImportSource = async (');
     expect(importFlow).toContain('await Promise.allSettled(workers)');
     expect(importFlow).toContain('writeRemoteRuntimeImportSummary(results, entries.length, importedAt)');
     expect(isolatedRunner).toContain("'--wallet-url',\n        `${webUrl}/app`,\n        '--allow-reset'");
@@ -1587,8 +1591,6 @@ describe('production startup wiring', () => {
       'core/runtime/swap-cmd/swap-command-plan.ts',
       'frontend/packages/ui/src/onboarding/onboarding-runtime-input.ts',
       'frontend/packages/ui/src/onboarding/hub-discovery-profile.ts',
-      'frontend/src/lib/components/Entity/swap-panel-core.ts',
-      'frontend/src/lib/view/panels/ArchitectPanel.svelte',
     ].map(file => readFileSync(join(repoRoot, file), 'utf8'));
     for (const source of sources) {
       expect(source).toContain('defaultAccountDisputeConfigForRoleEvidence');
@@ -1597,6 +1599,13 @@ describe('production startup wiring', () => {
     expect(sources.join('\n')).toContain("source: 'committed-profile'");
     expect(sources.join('\n')).toContain("source: 'verified-gossip-profile'");
     expect(sources.join('\n')).toContain("source: 'operator-config'");
+    const reactConsumers = [
+      'frontend/packages/browser/src/wallet/account-open-commands.ts',
+      'frontend/bridges/wallet/onboarding/onboarding-hub-join.ts',
+    ].map(file => readFileSync(join(repoRoot, file), 'utf8')).join('\n');
+    expect(reactConsumers).toContain('buildDirectOpenAccountRuntimeInput');
+    expect(reactConsumers).toContain('buildOnboardingHubOpenRuntimeInput');
+    expect(reactConsumers).not.toContain('defaultAccountDisputeConfigForParties');
   });
 
   test('custody hub discovery filters hubs by jurisdiction stack identity', async () => {
@@ -1652,11 +1661,14 @@ describe('production startup wiring', () => {
 
   test('orchestrator exposes the gossip profile bundle endpoint used by payments', () => {
     const debugApi = readFileSync(join(repoRoot, 'core/orchestrator/debug-api.ts'), 'utf8');
-    const paymentPanel = readFileSync(join(repoRoot, 'frontend/src/lib/components/Entity/payments/PaymentPanel.svelte'), 'utf8');
+    const paymentContext = readFileSync(
+      join(repoRoot, 'frontend/bridges/wallet/canonical/wallet-canonical-account-context.ts'),
+      'utf8',
+    );
     const xlnStore = readFileSync(join(repoRoot, 'frontend/bridges/runtime/xln-store.ts'), 'utf8');
 
-    expect(paymentPanel).not.toContain('/api/gossip/profile?entityId=');
-    expect(paymentPanel).toContain('refreshPaymentRuntimeGossip');
+    expect(paymentContext).not.toContain('/api/gossip/profile?entityId=');
+    expect(paymentContext).toContain('networkGraph: env.gossip.getNetworkGraph()');
     expect(xlnStore).toContain('/api/gossip/profile?entityId=');
     expect(xlnStore).toContain('export async function refreshPaymentRuntimeGossip');
     expect(debugApi).toContain("import { handleKnownProfileRequest } from '../api/server/network/gossip-profiles';");

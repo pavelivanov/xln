@@ -25,8 +25,13 @@ test('workspace locale updates controls, retained and new panels, and survives r
   await expect(page.locator('html')).toHaveAttribute('lang', 'ru');
   await expect(page.locator('.ops-pinned-tab')).toHaveText('📌 \u041e\u0441\u043d\u043e\u0432\u043d\u043e\u0439 \u043a\u043e\u0448\u0435\u043b\u0451\u043a');
   if (testInfo.project.name.startsWith('mobile')) {
+    const beforeExpandedSave = await page.evaluate(() => localStorage.getItem('xln-workspace-layout'));
     await page.getByRole('button', { name: '\u0412\u0441\u0435 \u043f\u0430\u043d\u0435\u043b\u0438', exact: true }).click();
     await expect.poll(() => page.locator('.dv-groupview').first().evaluate(element => element.getBoundingClientRect().width)).toBeGreaterThan(400);
+    // Dockview autosaves after a debounce. Establish the public owner's final
+    // layout before checking that the internal host leaves it untouched.
+    await expect.poll(() => page.evaluate(() => localStorage.getItem('xln-workspace-layout')))
+      .not.toBe(beforeExpandedSave);
   }
   await screenshotEvidence(page, testInfo, 'ops-locale-russian-restored');
   const saved = await page.evaluate(() => localStorage.getItem('xln-workspace-layout'));

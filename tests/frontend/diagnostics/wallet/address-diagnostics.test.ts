@@ -1,15 +1,17 @@
 import { expect, test } from 'bun:test';
 import { readFileSync } from 'node:fs';
 
-test('address projection pages persist diagnostics instead of raw console output', () => {
-  const directorySource = readFileSync('frontend/src/routes/address/+page.svelte', 'utf8');
-  const explorerSource = readFileSync('frontend/src/routes/address/[entityId]/+page.svelte', 'utf8');
-  const combined = `${directorySource}\n${explorerSource}`;
+test('React address pages expose Runtime and history read failures without raw console output', () => {
+  const source = readFileSync('frontend/apps/wallet/src/address/wallet-address-source.ts', 'utf8');
+  const view = readFileSync('frontend/apps/wallet/src/address/wallet-address.tsx', 'utf8');
+  const combined = `${source}\n${view}`;
 
-  expect(directorySource).toContain("import { errorLog } from '../../../packages/browser/src/logging/error-log-store';");
-  expect(directorySource).toContain("errorLog.log('Address directory projection read failed', 'Address Directory', err)");
-  expect(explorerSource).toContain("import { errorLog } from '../../../../packages/browser/src/logging/error-log-store';");
-  expect(explorerSource).toContain("errorLog.log('Entity explorer projection read failed', 'Entity Explorer'");
+  expect(source).toContain("return { status: 'error', message: snapshot.error, projection: null };");
+  expect(source).toContain('historyError: walletRuntimeReadErrorMessage(error)');
+  expect(source).toContain("this.publish({ status: 'error', message: walletRuntimeReadErrorMessage(error), projection: null });");
+  expect(view).toContain("role={error ? 'alert' : 'status'}");
+  expect(view).toContain('Activity history is unavailable: {projection.historyError}');
+  expect(view).toContain('role="alert"');
   expect(combined).not.toContain('console.error');
   expect(combined).not.toContain('console.warn');
   expect(combined).not.toContain('console.info');

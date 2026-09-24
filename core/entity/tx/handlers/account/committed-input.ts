@@ -19,6 +19,7 @@ import { addMessages } from '../../../frame-events';
 import { createStructuredLogger, shortId } from '../../../../support/logger';
 import { scheduleHook } from '../../../scheduler';
 import { getRebalanceAccountIds } from '../../../consensus/account/work-index';
+import { normalizeEntityRef } from '../../account-key';
 import { putEntityAccountCandidate } from '../../../state/persistent-account-map';
 import type { ApplyEntityTxOptions } from '../../apply';
 import { buildHubRebalancePolicyTx } from './lifecycle/admin';
@@ -86,6 +87,7 @@ type SuccessfulAccountInputContext = {
   counterpartyId: string;
   createdAccount: boolean;
   result: HandleAccountInputApplied;
+  priorSwapCancelScopeByOffer: ReadonlyMap<string, boolean>;
   effects: CommittedAccountEffects;
   options?: ApplyEntityTxOptions;
   checkpointProfile(label: string): void;
@@ -261,25 +263,69 @@ const consumeSameJurisdictionSwapOutput = (
   return true;
 };
 
+const parentCrossJurisdictionSwapOwnsOffer = (
+  state: Pick<EntityState, 'entityId' | 'crossJurisdictionSwaps'>,
+  counterpartyId: string,
+  offerId: string,
+): boolean => {
+  const route = state.crossJurisdictionSwaps?.get(offerId);
+  if (!route) return false;
+  const self = normalizeEntityRef(state.entityId);
+  const counterparty = normalizeEntityRef(counterpartyId);
+  const sourceUser = normalizeEntityRef(route.source.entityId);
+  const sourceHub = normalizeEntityRef(route.source.counterpartyEntityId);
+  return (self === sourceUser && counterparty === sourceHub) ||
+    (self === sourceHub && counterparty === sourceUser);
+};
+
 const finalSwapCancelScope = (
   account: AccountReplica,
+  state: Pick<EntityState, 'entityId' | 'crossJurisdictionSwaps'>,
+  counterpartyId: string,
   offerId: string,
 ): boolean => {
   const offer = account.state.swapOffers.get(offerId);
-  if (!offer) throw new Error(`ACCOUNT_SWAP_CANCEL_SCOPE_UNRESOLVED:${offerId}`);
-  return !offer.crossJurisdiction;
+  if (offer) return !offer.crossJurisdiction;
+  if (parentCrossJurisdictionSwapOwnsOffer(state, counterpartyId, offerId)) return false;
+  throw new Error(`ACCOUNT_SWAP_CANCEL_SCOPE_UNRESOLVED:${offerId}`);
 };
 
-const classifyCommittedSwapCancels = (
+export const capturePriorSwapCancelScopes = (
   account: AccountReplica,
+  state: Pick<EntityState, 'entityId' | 'crossJurisdictionSwaps'>,
+  counterpartyId: string,
   accountTxs: readonly AccountTx[],
+): ReadonlyMap<string, boolean> => {
+  const scopeByOffer = new Map<string, boolean>();
+  for (const tx of accountTxs) {
+    if (tx.type !== 'swap_cancel_request' || scopeByOffer.has(tx.data.offerId)) continue;
+    const offer = account.state.swapOffers.get(tx.data.offerId);
+    if (offer) {
+      scopeByOffer.set(tx.data.offerId, !offer.crossJurisdiction);
+      continue;
+    }
+    if (parentCrossJurisdictionSwapOwnsOffer(state, counterpartyId, tx.data.offerId)) {
+      scopeByOffer.set(tx.data.offerId, false);
+    }
+  }
+  return scopeByOffer;
+};
+
+export const classifyCommittedSwapCancels = (
+  account: AccountReplica,
+  state: Pick<EntityState, 'entityId' | 'crossJurisdictionSwaps'>,
+  counterpartyId: string,
+  accountTxs: readonly AccountTx[],
+  priorScopeByOffer: ReadonlyMap<string, boolean>,
 ): readonly (boolean | undefined)[] => {
   // `swap_cancel_request` deliberately carries only offerId. Never infer its
   // jurisdiction from whether a typed output happens to exist: a missing
-  // same-j output would then silently enter the cross-j projection path. Walk
-  // backward from committed state instead. A later resolver/ACK identifies an
-  // offer removed after the request; otherwise the still-live committed offer
-  // is the authority. If neither exists, the committed sequence is malformed.
+  // same-j output would then silently enter the cross-j projection path. A
+  // later transaction in the same commit is the first authority. Otherwise a
+  // lone request uses its captured pre-transition offer when local consensus
+  // exposed it. An authority result can reveal the committed transaction only
+  // after execution, so the live Account offer or exact parent cross-j route
+  // and bilateral pair are the final authorities. No evidence is malformed.
   const sameJurisdictionByIndex: Array<boolean | undefined> = Array(accountTxs.length);
   const futureScopeByOffer = new Map<string, boolean>();
   for (let index = accountTxs.length - 1; index >= 0; index -= 1) {
@@ -287,7 +333,8 @@ const classifyCommittedSwapCancels = (
     if (!tx) throw new Error(`ACCOUNT_COMMITTED_TX_INDEX_MISSING:${index}`);
     if (tx.type === 'swap_cancel_request') {
       sameJurisdictionByIndex[index] = futureScopeByOffer.get(tx.data.offerId) ??
-        finalSwapCancelScope(account, tx.data.offerId);
+        priorScopeByOffer.get(tx.data.offerId) ??
+        finalSwapCancelScope(account, state, counterpartyId, tx.data.offerId);
     } else if (tx.type === 'swap_resolve') {
       futureScopeByOffer.set(tx.data.offerId, true);
     } else if (tx.type === 'swap_offer') {
@@ -317,12 +364,28 @@ const applyCommittedFrameTransactions = async (
   context: SuccessfulAccountInputContext,
   swapCursor: SameJurisdictionSwapCursor,
 ): Promise<void> => {
-  const { env, state, input, account, counterpartyId, result, effects, options } = context;
+  const {
+    env,
+    state,
+    input,
+    account,
+    counterpartyId,
+    result,
+    priorSwapCancelScopeByOffer,
+    effects,
+    options,
+  } = context;
   const bookIntentSlot = options?.bookIntentSlot;
   const consumedPreparedHtlcBindings = new Set<string>();
   const committedAccountTxs = (result.committedFrames ?? [])
     .flatMap(({ frame }) => frame.accountTxs ?? []);
-  const sameJurisdictionCancels = classifyCommittedSwapCancels(account, committedAccountTxs);
+  const sameJurisdictionCancels = classifyCommittedSwapCancels(
+    account,
+    state,
+    counterpartyId,
+    committedAccountTxs,
+    priorSwapCancelScopeByOffer,
+  );
   let committedAccountTxIndex = 0;
   for (const { frame, proposerIsLeft, committedViaNewFrame } of result.committedFrames ?? []) {
     applyCommittedAccountFrameFollowups(

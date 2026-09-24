@@ -90,25 +90,25 @@ describe('Graph3D viewport presentation model', () => {
     });
   });
 
-  test('projects VR visibility/stats and keeps rendering in Svelte facades', () => {
+  test('projects VR visibility/stats through the React Ops graph owners', () => {
     expect(createGraph3dVrHudView(true, 12, 59.6)).toEqual({
       visible: true,
       entityCount: 12,
       fps: 60,
     });
-    const viewport = readFileSync('frontend/src/lib/view/components/Graph3DViewport.svelte', 'utf8');
-    const fps = readFileSync('frontend/src/lib/view/components/Graph3DFpsOverlay.svelte', 'utf8');
-    const vr = readFileSync('frontend/src/lib/view/components/VRControlsHUD.svelte', 'utf8');
+    const viewport = readFileSync('frontend/apps/ops/src/workspace/graph/ops-graph-panel.tsx', 'utf8');
+    const fps = readFileSync('frontend/apps/ops/src/workspace/graph/ops-graph-stats.ts', 'utf8');
+    const vr = readFileSync('frontend/apps/ops/src/workspace/graph/ops-graph-xr.ts', 'utf8');
     const projection = readFileSync('frontend/packages/ui/src/graph/runtime-graph-projection.ts', 'utf8');
     const controls = readFileSync('frontend/packages/browser/src/graph/runtime-graph-control-store.ts', 'utf8');
 
-    expect(viewport).toContain('createGraph3dViewportStatusView({');
+    expect(viewport).toContain('data-renderer-request={view.rendererMode}');
     expect(viewport).toContain('GRAPH3D_CANONICITY_OPTIONS');
     expect(viewport).not.toContain('new Date(timelineTimestamp).toISOString()');
-    expect(fps).toContain('createGraph3dFpsOverlayView(renderFps, frameTime, barsMode)');
+    expect(fps).toContain("createGraph3dFpsOverlayView(frames * 1000 / elapsed, elapsed / frames, 'close')");
     expect(fps).not.toContain('renderFps.toFixed(1)');
-    expect(vr).toContain('createGraph3dVrHudView(isVRActive, entityCount, currentFPS)');
-    expect(vr).not.toContain('Math.round(currentFPS)');
+    expect(vr).toContain("navigator.xr.isSessionSupported('immersive-vr')");
+    expect(vr).toContain('input.onState({ supported: true, active: true });');
     expect(projection).toContain('export type RuntimeGraphCanonicity = Graph3dViewportCanonicity');
     expect(controls).toContain('GRAPH3D_CANONICITY_OPTIONS.map(({ value }) => value)');
   });

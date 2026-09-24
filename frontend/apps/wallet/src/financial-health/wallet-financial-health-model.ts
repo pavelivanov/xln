@@ -73,6 +73,7 @@ export type WalletHistoryEvent = Readonly<{
 
 export type WalletFinancialHealthProjection = Readonly<{
   height: number;
+  timestamp: number;
   entities: readonly WalletPortfolioEntity[];
   activeEntityId: string;
   activeEntityLabel: string;
@@ -89,7 +90,7 @@ export type WalletFinancialHealthProjection = Readonly<{
   solvencyAssets: readonly WalletSolvencyAsset[];
   history: readonly WalletHistoryEvent[];
   historyPage: number;
-  historyNextBeforeHeight: number | null;
+  historyNextCursor: string | null;
 }>;
 
 export type WalletFinancialHealthPayload = Readonly<{
@@ -220,14 +221,14 @@ const decodeDisputes = (
 
 export type WalletActivityHistoryProjection = Readonly<{
   events: readonly WalletHistoryEvent[];
-  nextBeforeHeight: number | null;
+  nextCursor: string | null;
 }>;
 
 export const decodeWalletActivityHistory = (
   value: unknown,
   math: WalletPortfolioMath,
 ): WalletActivityHistoryProjection => {
-  if (value === null) return { events: [] as WalletHistoryEvent[], nextBeforeHeight: null };
+  if (value === null) return { events: [] as WalletHistoryEvent[], nextCursor: null };
   const root = requireRuntimeRecord(value, 'WALLET_HEALTH_ACTIVITY');
   if (root['ok'] !== true || !Array.isArray(root['events'])) throw new Error('WALLET_HEALTH_ACTIVITY_INVALID');
   const events = root['events'].map((value): WalletHistoryEvent => {
@@ -250,10 +251,10 @@ export const decodeWalletActivityHistory = (
       ...(amount ? { amountLabel: tokenId === undefined ? amount : math.formatTokenAmount(tokenId, BigInt(amount)) } : {}),
     };
   });
-  const next = root['nextBeforeHeight'];
+  const next = root['nextCursor'];
   return {
     events,
-    nextBeforeHeight: next === null ? null : requireRuntimeInteger(next, 'WALLET_HEALTH_ACTIVITY_CURSOR', 1),
+    nextCursor: next === null ? null : requireRuntimeString(next, 'WALLET_HEALTH_ACTIVITY_CURSOR'),
   };
 };
 
@@ -270,17 +271,18 @@ export const decodeWalletFinancialHealthProjection = (
   const activeEntityId = readWalletFrameActiveEntityId(frame);
   const history = decodeWalletActivityHistory(payload.activity, math);
   if (!activeEntityId && frame['activeEntity'] === null) return {
-    height, entities, activeEntityId: '', activeEntityLabel: '',
+    height, timestamp: 0, entities, activeEntityId: '', activeEntityLabel: '',
       signerId: '',
       jurisdictionName: '', debtGroups: [], disputes: [],
     accountsPage: 0, accountsPageCount: 0, accountsTotal: 0,
     solvencyStatus: solvency.status, solvencyEntityCount: solvency.entityCount,
     solvencyAccountViews: solvency.accountViews, solvencyAssets: solvency.assets,
-    history: history.events, historyPage: payload.historyPage, historyNextBeforeHeight: history.nextBeforeHeight,
+    history: history.events, historyPage: payload.historyPage, historyNextCursor: history.nextCursor,
   };
   const labels = new Map(entities.map((entity) => [entity.entityId, entity.label]));
   const active = requireRuntimeRecord(frame['activeEntity'], 'WALLET_HEALTH_ACTIVE_ENTITY');
   const core = requireRuntimeRecord(active['core'], 'WALLET_HEALTH_ACTIVE_CORE');
+  const timestamp = requireRuntimeInteger(core['timestamp'], 'WALLET_HEALTH_TIMESTAMP');
   if (normalizeRequiredRuntimeEntityId(core['entityId'], 'WALLET_HEALTH_CORE_ID') !== activeEntityId) {
     throw new Error('WALLET_HEALTH_ACTIVE_ID_MISMATCH');
   }
@@ -293,6 +295,7 @@ export const decodeWalletFinancialHealthProjection = (
   if (!Array.isArray(accounts['items'])) throw new Error('WALLET_HEALTH_ACCOUNT_ITEMS_INVALID');
   return {
     height,
+    timestamp,
     entities,
     activeEntityId,
     activeEntityLabel: labels.get(activeEntityId) ?? activeEntityId,
@@ -309,6 +312,6 @@ export const decodeWalletFinancialHealthProjection = (
     solvencyAssets: solvency.assets,
     history: history.events,
     historyPage: payload.historyPage,
-    historyNextBeforeHeight: history.nextBeforeHeight,
+    historyNextCursor: history.nextCursor,
   };
 };

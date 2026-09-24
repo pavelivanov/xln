@@ -5,7 +5,7 @@ const read = (path: string): string => readFileSync(path, 'utf8');
 
 describe('React wallet push-wake controls', () => {
   test('keeps raw device tokens and owner signing inside the canonical bridge', () => {
-    const bridge = read('frontend/bridges/wallet/wallet-canonical-push-wake.ts');
+    const bridge = read('frontend/bridges/wallet/canonical/wallet-canonical-push-wake.ts');
     expect(bridge).toContain('requestPushWakeDeviceToken()');
     expect(bridge).toContain("runtimes as runtimeRegistry");
     expect(bridge).toContain('PUSH_WAKE_RUNTIME_ENV_MISMATCH');
@@ -30,7 +30,7 @@ describe('React wallet push-wake controls', () => {
     expect(react).not.toContain('frontend/src/lib');
     expect(react).not.toContain("from '../../../src/lib");
     expect(react).not.toContain('requestPushWakeDeviceToken');
-    expect(react).toContain("import('../../../../bridges/wallet/wallet-canonical-push-wake')");
+    expect(react).toContain("import('../../../../bridges/wallet/canonical/wallet-canonical-push-wake')");
     expect(react).toContain('role="alert">{error}');
   });
 

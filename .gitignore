@@ -135,6 +135,7 @@ packages/npm/xlnfinance/app/
 packages/npm/xlnfinance/dist/
 packages/npm/xlnfinance/*.tgz
 frontend/static/runtime.js
+frontend/static/account-worker.js
 frontend/static/runtime-bundle.js
 frontend/public/runtime.js
 frontend/build/runtime.js

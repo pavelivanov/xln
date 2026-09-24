@@ -70,7 +70,8 @@ export const planReleaseHankoMigration = async (root: string): Promise<readonly 
     after = replaceHanko(after, requireAttestation(entry.attestation).hanko, attestation.hanko);
     releases.push(migratedEntry);
   }
-  if (!verifyReleaseManifestPolicy({ ...manifest, releases })) throw new Error('RELEASE_MIGRATION_POLICY_INVALID');
+  if (!verifyReleaseManifestPolicy({ ...manifest, releases }, undefined, manifest.latest))
+    throw new Error('RELEASE_MIGRATION_POLICY_INVALID');
   if (after !== before) changes.push({ path, before, after });
   return changes;
 };

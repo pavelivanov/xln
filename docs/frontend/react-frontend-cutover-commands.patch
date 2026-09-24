@@ -19,7 +19,7 @@
 -		"preview": "node scripts/prepare-preview-assets.js && vite preview",
 +		"preview": "bun scripts/preview.ts",
 @@ -18,4 +18 @@
--		"prepare": "svelte-kit sync || echo ''",
+-    "prepare": "svelte-kit sync || echo ''",
 -		"check": "bun run check:unsafe-types && bun copy-static-files.js && svelte-kit sync && bun ../tools/run-parallel-checks.ts check:svelte check:build",
 -		"check:svelte": "svelte-check --config ./svelte.config.js --tsconfig ./tsconfig.json --threshold error",
 -		"check:build": "bun scripts/vite-build-check.ts",
@@ -39,16 +39,14 @@
 -		"lucide-svelte": "^0.544.0",
 --- a/.github/workflows/build-and-test.yml
 +++ b/.github/workflows/build-and-test.yml
-@@ -140,12 +140,3 @@
- 
+@@ -141,4 +140,0 @@
 -      - name: Check and assemble React frontend
 -        run: |
 -          cd frontend
 -          bun scripts/check.ts --all --level=frontend
--
+@@ -146,5 +141,0 @@
 -      - name: Build frontend
 -        run: |
 -          cd frontend
 -          bun run build:static
- 
-   e2e-tests:
+-

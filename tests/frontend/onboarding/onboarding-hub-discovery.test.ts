@@ -7,7 +7,7 @@ import {
   type OnboardingTarget,
 } from '../../../frontend/packages/ui/src/onboarding/onboarding-hub-discovery';
 import { emptyOnboardingRuntimeProjection } from '../../../frontend/packages/ui/src/onboarding/onboarding-runtime-input';
-import { hasAnyOnboardingCounterpartyAccount, resolveOnboardingTargets } from '../../../frontend/bridges/wallet/onboarding-targets';
+import { hasAnyOnboardingCounterpartyAccount, resolveOnboardingTargets } from '../../../frontend/bridges/wallet/onboarding/onboarding-targets';
 
 const entityId = `0x${'11'.repeat(32)}`;
 const signerId = `0x${'22'.repeat(20)}`;

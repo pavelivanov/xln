@@ -18,8 +18,8 @@
   import { onMount } from 'svelte';
   import { page } from '$app/stores';
   import View from '$lib/view/View.svelte';
-  import { settingsOperations } from '../../../packages/browser/src/settings-store';
-  import { networkMachineRuntimeOperations } from '../../../bridges/runtime/network-machine-runtime-store';
+  import { settingsOperations } from '../../../packages/browser/src/preferences/settings-store';
+  import { networkMachineRuntimeOperations } from '../../../bridges/runtime/network/network-machine-runtime-store';
   import { networkMachineDemo } from '../../../packages/browser/src/graph/network-machine-demo-store';
   import { decodeNetworkTrailFromHash } from '../../../packages/ui/src/graph/network-timeline-source';
   import { embedBootErrorMessage, embedBootTitle, parseEmbedBootRequest } from '../../../packages/runtime-client/src/scenario/embed-boot-model';

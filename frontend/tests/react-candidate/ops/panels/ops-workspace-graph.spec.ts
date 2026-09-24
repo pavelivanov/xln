@@ -5,6 +5,7 @@ import { screenshotGraphEvidence } from '../../graph-evidence';
 import { installImportedRuntime, readWalletRuntimeFixture } from '../../wallet/fixtures/wallet-runtime-test-helpers';
 
 test('Graph3D shares the real Runtime and retains a replay timeline across close and reopen', { tag: '@functional' }, async ({ page }, testInfo) => {
+  testInfo.setTimeout(120_000);
   const errors = observeBrowserErrors(page);
   const fixture = await readWalletRuntimeFixture(page);
   await openWorkspaceStorageOrigin(page);
@@ -12,7 +13,10 @@ test('Graph3D shares the real Runtime and retains a replay timeline across close
   await page.goto('/__app/ops/entity-workspace');
   await page.getByRole('button', { name: 'Open Graph3D panel' }).click();
   const graph = page.getByTestId('workspace-graph');
-  await expect(graph).toHaveAttribute('data-node-count', '2');
+  const entityOptions = graph.getByLabel('Graph Entity').locator('option');
+  await expect.poll(async () => entityOptions.count()).toBeGreaterThanOrEqual(3);
+  const projectedEntityCount = (await entityOptions.count()) - 1;
+  await expect(graph).toHaveAttribute('data-node-count', String(projectedEntityCount));
   await expect(graph).not.toHaveAttribute('data-account-count', '0', { timeout: 20_000 });
   await expect(graph.locator('canvas')).toBeVisible();
   await graph.getByLabel('Graph Entity').selectOption(fixture.entityId);
@@ -28,7 +32,9 @@ test('Graph3D shares the real Runtime and retains a replay timeline across close
   const range = timeline.getByLabel('Network frame', { exact: true });
   await range.focus();
   await range.press('End');
-  await expect(graph).not.toHaveAttribute('data-account-count', '0', { timeout: 20_000 });
+  // End is the current Runtime head and must use the bounded live graph projection.
+  // Keep the assertion exact while allowing the async frame to reach the UI.
+  await expect(graph).not.toHaveAttribute('data-account-count', '0', { timeout: 45_000 });
   await graph.getByLabel('Graph Account', { exact: true }).selectOption({ index: 1 });
   await expect(graph.getByTestId('graph-account-selection')).toContainText('1 Runtime sources');
   const selectedFrameLabel = await timeline.locator('output').textContent();

@@ -34,6 +34,11 @@ export function WalletPaymentBatch({ projection, snapshot, source }: Readonly<{
     && clearReview.reviewKey === batch.reviewKey;
   const confirmedHash = confirmed?.entityId === projection.activeEntityId ? confirmed.batchHash : '';
   const notice = buildWalletBatchNotice(batch, confirmedHash);
+  const draftCount = batch.preflight?.draft.counts.total ?? batch.draft.length;
+  const sentCount = batch.preflight?.sent?.counts.total ?? batch.sent.length;
+  const preflightIssueText = batch.preflightError
+    || (batch.preflight?.draft.issue ? source.formatBatchReserveIssue(batch.preflight.draft.issue) : '');
+  const preflightReady = Boolean(batch.preflight) && !batch.preflightError;
 
   useEffect(() => {
     const previous = previousSubmission.current;
@@ -58,11 +63,11 @@ export function WalletPaymentBatch({ projection, snapshot, source }: Readonly<{
 
   const submit = createPendingBatchActionRunner({
     getState: () => ({
-      pendingBatchCount: batch.draft.length + batch.sent.length,
+      pendingBatchCount: draftCount + sentCount,
       pendingBatchSubmitting: busy || actionInFlight.current,
-      pendingBatchReserveIssueText: null,
-      canBroadcastPendingBatch: batch.draft.length > 0 && !batch.sentHash,
-      hasSentBatch: Boolean(batch.sentHash),
+      pendingBatchReserveIssueText: preflightIssueText || (!preflightReady ? 'Batch preflight is not ready.' : null),
+      canBroadcastPendingBatch: preflightReady && !preflightIssueText && draftCount > 0 && !batch.preflight?.sent,
+      hasSentBatch: preflightReady && Boolean(batch.preflight?.sent),
     }),
     setSubmitting: value => {
       actionInFlight.current = value;
@@ -89,8 +94,9 @@ export function WalletPaymentBatch({ projection, snapshot, source }: Readonly<{
     <section className="wallet-payments-pane wallet-batch" aria-labelledby="wallet-batch-title">
       <div className="wallet-payments-section-heading"><h2 id="wallet-batch-title">Jurisdiction batch</h2><span>{batch.status}</span></div>
       <p>Review queued operations before sending them to the chain. Broadcast commits every operation in the draft.</p>
-      <h3>Draft · {batch.draft.length} operations</h3>
+      <h3>Draft · {draftCount} operations</h3>
       {batch.draft.length > 0 ? <BatchOperations operations={batch.draft} /> : <p>No queued operations.</p>}
+      {draftCount > batch.draft.length ? <p>Showing {batch.draft.length} of {draftCount} operations from the compact Runtime view.</p> : null}
       {notice ? <aside className="wallet-batch-status" data-kind={notice.kind} aria-live="polite">
         <span>Chain submission</span><h3>{notice.title}</h3><p>{notice.detail}</p>
         <code>{notice.batchHash}</code>
@@ -100,9 +106,11 @@ export function WalletPaymentBatch({ projection, snapshot, source }: Readonly<{
         </details> : null}
       </aside> : null}
       {batch.sentHash ? <>
-        <h3>Sent · {batch.sent.length} operations</h3>
+        <h3>Sent · {sentCount} operations</h3>
         <BatchOperations operations={batch.sent} />
+        {sentCount > batch.sent.length ? <p>Showing {batch.sent.length} of {sentCount} sent operations from the compact Runtime view.</p> : null}
       </> : null}
+      {preflightIssueText ? <p role="alert" className="wallet-payment-error">{preflightIssueText}</p> : null}
       {error ? <p role="alert" className="wallet-payment-error">{error}</p> : null}
       {currentClearReview ? <section className="wallet-batch-clear-review" aria-label="Confirm clear batch">
         <div><strong>Clear this exact batch?</strong>
@@ -111,13 +119,13 @@ export function WalletPaymentBatch({ projection, snapshot, source }: Readonly<{
             : 'This removes every operation currently shown in the draft.'}</p></div>
         <div className="wallet-payment-actions">
           <button disabled={busy} onClick={() => setClearReview(null)} type="button">Keep batch</button>
-          <button disabled={busy} onClick={() => void submit('clear')} type="button">Clear exact batch</button>
+          <button disabled={busy || !preflightReady} onClick={() => void submit('clear')} type="button">Clear exact batch</button>
         </div>
       </section> : null}
       <div className="wallet-payment-actions">
-        <button className="is-primary" disabled={busy || batch.draft.length === 0 || Boolean(batch.sentHash)} onClick={() => void submit('broadcast')} type="button">Broadcast draft</button>
-        {batch.sentHash && batch.failureKind !== 'terminal' ? <button disabled={busy} onClick={() => void submit('rebroadcast')} type="button">Rebroadcast sent batch</button> : null}
-        {batch.draft.length > 0 || batch.sentHash ? <button disabled={busy || currentClearReview} onClick={() => setClearReview({ entityId: projection.activeEntityId, reviewKey: batch.reviewKey })} type="button">Review clear</button> : null}
+        <button className="is-primary" disabled={busy || !preflightReady || Boolean(preflightIssueText) || draftCount === 0 || Boolean(batch.preflight?.sent)} onClick={() => void submit('broadcast')} type="button">Broadcast draft</button>
+        {batch.sentHash && batch.failureKind !== 'terminal' ? <button disabled={busy || !preflightReady} onClick={() => void submit('rebroadcast')} type="button">Rebroadcast sent batch</button> : null}
+        {draftCount > 0 || batch.sentHash ? <button disabled={busy || !preflightReady || currentClearReview} onClick={() => setClearReview({ entityId: projection.activeEntityId, reviewKey: batch.reviewKey })} type="button">Review clear</button> : null}
       </div>
     </section>
   );

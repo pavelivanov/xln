@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
 import {
   ENTITY_SETTINGS_SECTIONS,
   type SettingsSubview,
-} from '../../../../runtime-client/src/entity/entity-workspace-navigation';
+} from '../../../../runtime-client/src/entity/workspace/entity-workspace-navigation';
 import './entity-workspace-settings-stage.css';
 
 type EntitySettingsSection = Readonly<{

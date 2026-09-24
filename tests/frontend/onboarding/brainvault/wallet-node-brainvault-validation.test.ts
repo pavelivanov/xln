@@ -120,24 +120,22 @@ describe('browser wallet node BrainVault validation', () => {
       'utf8',
     );
     const view = readFileSync(
-      'frontend/src/lib/components/Views/RuntimeCreation.svelte',
+      'frontend/apps/ops/src/workspace/panels/ops-remote-brainvault.tsx',
       'utf8',
     );
     const accessIndex = view.indexOf('const access = resolveWalletNodeBrainVaultAccess(adapter)');
-    const deriveIndex = view.indexOf('const result = await nodeAdapter.deriveBrainVault({');
+    const deriveIndex = view.indexOf('const receipt = await selected.deriveBrainVault({');
 
     expect(boundary).not.toContain('svelte');
     expect(boundary).not.toContain('AbortController');
     expect(boundary).not.toContain('deriveBrainVault(');
     expect(boundary).not.toContain('passphrase');
-    expect(view).toContain('const adapter = getRuntimeControllerAdapter()');
-    expect(view).toContain('const nodeAdapter = access.adapter');
-    expect(view).toContain('const abort = new AbortController()');
-    expect(view).toContain('name: run.name');
-    expect(view).toContain('passphrase: run.passphrase');
-    expect(view).toContain('const progressValidation = validateWalletNodeBrainVaultProgress(');
-    expect(view).toContain('nodeShardTimeMs = nextWalletNodeShardTimeMs(');
-    expect(view).toContain('assertWalletNodeBrainVaultResult(');
+    expect(view).toContain('const selected = access.adapter');
+    expect(view).toContain('const controller = new AbortController()');
+    expect(view).toContain('name, passphrase: secret, shardInput, workers');
+    expect(view).toContain('const validation = validateWalletNodeBrainVaultProgress(');
+    expect(view).toContain('if (!validation.valid) { setIssue(validation.message); controller.abort(); return; }');
+    expect(view).toContain('assertWalletNodeBrainVaultResult(receipt, BRAINVAULT_V1_SPEC_ID, expectedShards)');
     expect(accessIndex).toBeGreaterThan(-1);
     expect(deriveIndex).toBeGreaterThan(accessIndex);
   });

@@ -42,7 +42,7 @@ export type WalletAddressDetailProjection = Readonly<{
   height: number;
   entity: WalletAddressDetail;
   history: readonly WalletHistoryEvent[];
-  historyNextBeforeHeight: number | null;
+  historyNextCursor: string | null;
   historyError: string;
   historyRuntimeMismatch: string;
   projectionNotice: string;
@@ -87,7 +87,7 @@ const readHistory = async (
   entityId: string,
 ): Promise<Readonly<{
   history: readonly WalletHistoryEvent[];
-  historyNextBeforeHeight: number | null;
+  historyNextCursor: string | null;
   historyError: string;
 }>> => {
   const client = createWalletRuntimeQueryClient(dependencies.adapter);
@@ -101,13 +101,13 @@ const readHistory = async (
     const history = decodeWalletActivityHistory(activity, dependencies.math);
     return {
       history: history.events,
-      historyNextBeforeHeight: history.nextBeforeHeight,
+      historyNextCursor: history.nextCursor,
       historyError: '',
     };
   } catch (error: unknown) {
     return {
       history: [],
-      historyNextBeforeHeight: null,
+      historyNextCursor: null,
       historyError: walletRuntimeReadErrorMessage(error),
     };
   }
@@ -233,7 +233,7 @@ export class WalletAddressSource {
       return {
         kind: 'detail', runtimeId: context.runtimeId, height: context.height,
         entity: buildWalletAddressSummaryDetail(summary), history: [],
-        historyNextBeforeHeight: null, historyError: '', historyRuntimeMismatch: mismatch,
+        historyNextCursor: null, historyError: '', historyRuntimeMismatch: mismatch,
         projectionNotice: '',
       };
     }

@@ -20,7 +20,7 @@
     type StackManagerStatus,
     type StackPublicationRequest,
     type StackStablecoinKind,
-  } from '../../../../bridges/runtime/stack-manager-client';
+  } from '../../../../bridges/runtime/stack-manager/stack-manager-client';
   type SignerOption = Readonly<{ id: string; label: string }>;
   let rpcUrl = '';
   let networkName = '';

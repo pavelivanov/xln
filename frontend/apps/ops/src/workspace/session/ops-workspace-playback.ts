@@ -1,7 +1,7 @@
 import { parseEmbedBootRequest } from '../../../../../packages/runtime-client/src/scenario/embed-boot-model';
 import { clampDemoSpeed } from '../../../../../packages/runtime-client/src/scenario/demo-playback-intent';
 import { createObservableStore } from '../../../../../packages/runtime-client/src/observable-store';
-import { networkMachineRuntime, networkMachineRuntimeOperations } from '../../../../../bridges/runtime/network-machine-runtime-store';
+import { networkMachineRuntime, networkMachineRuntimeOperations } from '../../../../../bridges/runtime/network/network-machine-runtime-store';
 import { adapterNetworkTimelineSource, decodeNetworkTrailFromHash, encodeNetworkTrailForHash } from '../../../../../packages/ui/src/graph/network-timeline-source';
 import type { RuntimeAdapter } from '@xln/core/api/public/runtime-module';
 import { networkMachineOperations } from '../../../../../packages/browser/src/graph/network-machine-store';

@@ -126,5 +126,5 @@ export type ReleaseManifest = {
   latest: string;
   releases: ReleaseManifestEntry[];
 };
-import type { ReleaseAttestation } from '../../frontend/src/lib/releases/release-signature.ts';
+import type { ReleaseAttestation } from '../../frontend/packages/ui/src/releases/release-signature.ts';
 import type { FrozenCoreSnapshot } from '../frozen-core/types.ts';

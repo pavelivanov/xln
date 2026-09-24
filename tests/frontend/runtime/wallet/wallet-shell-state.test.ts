@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 import {
   resolveWalletShellPhase,
   type WalletShellSnapshot,
-} from '../../../../frontend/packages/browser/src/wallet-shell-state';
+} from '../../../../frontend/packages/browser/src/preferences/wallet-shell-state';
 
 const readySnapshot = (
   overrides: Partial<WalletShellSnapshot> = {},
@@ -92,22 +92,19 @@ describe('browser wallet shell state', () => {
     expect(resolveWalletShellPhase(readySnapshot())).toBe('ready');
   });
 
-  test('keeps the canonical Svelte shell on the shared phase boundary', () => {
+  test('keeps the canonical React shell on the shared Runtime summary boundary', () => {
     const boundary = readFileSync(
-      'frontend/packages/browser/src/wallet-shell-state.ts',
+      'frontend/packages/browser/src/preferences/wallet-shell-state.ts',
       'utf8',
     );
-    const layout = readFileSync('frontend/src/routes/app/+layout.svelte', 'utf8');
+    const shell = readFileSync('frontend/apps/wallet/src/app-shell.tsx', 'utf8');
 
     expect(boundary).not.toContain('svelte');
     expect(boundary).not.toContain('../../../../core');
-    expect(layout).toContain('resolveWalletShellPhase({');
-    expect(layout).toContain("walletShellPhase === 'remote-runtime-consent'");
-    expect(layout).toContain("walletShellPhase === 'inactive-tab'");
-    expect(layout).toContain("walletShellPhase === 'scenario-preview'");
-    expect(layout).toContain("walletShellPhase === 'lock-test-ready'");
-    expect(layout).toContain("walletShellPhase === 'locked-runtime'");
-    expect(layout).toContain("walletShellPhase === 'error'");
-    expect(layout).toContain("walletShellPhase === 'loading'");
+    expect(shell).toContain('resolveWalletRuntimeSummary(runtimeConfig');
+    expect(shell).toContain("runtime.state === 'local-standby'");
+    expect(shell).toContain("runtime.state === 'local-error'");
+    expect(shell).toContain("view === 'scenario-preview'");
+    expect(shell).toContain('<WalletRuntimeBoundary runtime={runtime} />');
   });
 });

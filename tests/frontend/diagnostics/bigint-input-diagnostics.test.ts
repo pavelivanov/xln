@@ -1,16 +1,15 @@
 import { expect, test } from 'bun:test';
 import { readFileSync } from 'node:fs';
 
-test('BigIntInput reports invalid amount state without raw console output', () => {
-  const source = readFileSync('frontend/src/lib/components/Common/BigIntInput.svelte', 'utf8');
+test('React wallet amount input exposes validation and submission failures without raw console output', () => {
+  const source = readFileSync('frontend/apps/wallet/src/move/wallet-move.tsx', 'utf8');
 
-  expect(source).toContain('let inputError: string | null = null;');
-  expect(source).toContain('function setInputValidity');
-  expect(source).toContain('target.setCustomValidity(error ||');
-  expect(source).toContain("aria-invalid={inputError ? 'true' : 'false'}");
-  expect(source).toContain('data-testid="bigint-input-error"');
-  expect(source).toContain('Use digits and one decimal point only');
-  expect(source).toContain('Invalid amount: ${errorMessage(error)}');
+  expect(source).toContain("let requestedAmount = 0n, amountError = '';");
+  expect(source).toContain('requestedAmount = parsePositiveAssetAmount(amount, token)');
+  expect(source).toContain('const validation =');
+  expect(source).toContain('{validation ? <p role="status">{validation}</p> : null}');
+  expect(source).toContain('disabled={Boolean(validation)}');
+  expect(source).toContain('{error ? <p role="alert">{error}</p> : null}');
   expect(source).not.toContain('console.warn');
   expect(source).not.toContain('console.error');
 });

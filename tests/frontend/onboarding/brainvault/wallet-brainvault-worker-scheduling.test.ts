@@ -124,11 +124,11 @@ describe('browser wallet BrainVault worker scheduling', () => {
       'utf8',
     );
     const view = readFileSync(
-      'frontend/src/lib/components/Views/RuntimeCreation.svelte',
+      'frontend/bridges/wallet/canonical/wallet-canonical-vault-runtime.ts',
       'utf8',
     );
     const reactRuntime = readFileSync(
-      'frontend/bridges/wallet/wallet-canonical-vault-runtime.ts',
+      'frontend/bridges/wallet/canonical/wallet-canonical-vault-runtime.ts',
       'utf8',
     );
 
@@ -142,7 +142,7 @@ describe('browser wallet BrainVault worker scheduling', () => {
     expect(orchestration).toContain('worker.postMessage({');
     expect(orchestration).toContain('passphrase: run.input.passphrase');
     expect(view).toContain('new WalletBrainVaultBrowserDerivation()');
-    expect(view).toContain('browserBrainVaultDerivation.derive(');
+    expect(view).toContain('brainVaultDerivation.derive(input, onProgress)');
     expect(view).not.toContain('worker.postMessage({');
     expect(reactRuntime).toContain('new WalletBrainVaultBrowserDerivation()');
     expect(reactRuntime).toContain('brainVaultDerivation.derive(input, onProgress)');

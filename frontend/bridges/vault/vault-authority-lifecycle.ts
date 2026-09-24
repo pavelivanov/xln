@@ -17,7 +17,7 @@ import {
   installVaultRuntimeCommandJournalKeys,
   normalizeRuntimeId,
   type Runtime,
-} from './vault-recovery';
+} from './recovery/vault-recovery';
 import { persistVaultStateOrThrow, runtimesState } from './vault-metadata-store';
 
 export const DEFAULT_VAULT_UNLOCK_DURATION_MS: VaultUnlockDurationMs = 600_000;

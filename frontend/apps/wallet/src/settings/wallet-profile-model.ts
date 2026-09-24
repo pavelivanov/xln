@@ -3,7 +3,7 @@ import type { RuntimeAdapterViewFrame } from '@xln/core/api/public/runtime-modul
 import {
   projectEntityWorkspaceContext,
   type EntityWorkspaceContext,
-} from '../../../../packages/runtime-client/src/entity/entity-workspace-context';
+} from '../../../../packages/runtime-client/src/entity/workspace/entity-workspace-context';
 import {
   projectEntityWorkspaceHubPolicy,
   type EntityWorkspaceHubPolicy,
@@ -15,7 +15,7 @@ import {
 import {
   projectEntityWorkspaceReserves,
   type EntityWorkspaceReserves,
-} from '../../../../packages/runtime-client/src/entity/entity-workspace-reserves';
+} from '../../../../packages/runtime-client/src/entity/workspace/entity-workspace-reserves';
 import {
   normalizeRequiredRuntimeEntityId,
   requireRuntimeRecord,

@@ -41,23 +41,23 @@ All 18 tasks below are unfinished. Rows T01–T11 close implementation or concre
 
 | ID  | Deliverable                                                                   | Initial state / prerequisite                                            | Receipt |
 | --- | ----------------------------------------------------------------------------- | ----------------------------------------------------------------------- | ------- |
-| T01 | Remove test/tooling dependence on the Svelte deletion set                     | READY                                                                   | —       |
-| T02 | Finish enabled-service and critical Health acceptance; register topology spec | READY                                                                   | —       |
-| T03 | Prove actual React root-dev lifecycle on 8080                                 | READY; listener ownership checked before launch                         | —       |
-| T04 | Wire authoritative batch reserve preflight into React                         | BLOCKED: complete Runtime read contract/authority                       | —       |
-| T05 | Finish lossless Activity paging                                               | BLOCKED: B2 storage/query owner                                         | —       |
-| T06 | Finish remote settlement approval and execution                               | BLOCKED: B3 authority-checked read                                      | —       |
-| T07 | Reconcile Lending UI with production admission policy                         | BLOCKED: B1 product decision                                            | —       |
-| T08 | Prove cross-j cancellation finality                                           | BLOCKED: B8 canonical Runtime fix/authority                             | —       |
-| T09 | Close relay-client detail parity                                              | BLOCKED: detailed read or explicit scope decision                       | —       |
-| T10 | Resolve the two intermittent Runtime fixture failures                         | BLOCKED: Runtime investigation authority                                | —       |
-| T11 | Clear remaining root integration failures                                     | READY for frontend-owned failures; protected failures go to their owner | —       |
-| T12 | Freeze the accepted version/source and pass the complete web matrix           | WAIT(T01–T11); release-version decision also required                   | —       |
-| T13 | Accept immutable artifact, preview and installed npm launcher                 | WAIT(T12)                                                               | —       |
-| T14 | Accept two-release PWA and isolated activation/rollback                       | WAIT(T13)                                                               | —       |
-| T15 | Accept iOS, Android, desktop, extension and supported WebXR                   | WAIT(T13); device/toolchain readiness can be checked now                | —       |
-| T16 | Pass hosted build/distribution CI for those exact inputs                      | WAIT(T12); closes after T13–T15                                         | —       |
-| T17 | Make React canonical and remove Svelte                                        | WAIT(T01–T16); explicit C02 authority                                   | —       |
+| T01 | Remove test/tooling dependence on the Svelte deletion set                     | DONE                                                                    | [receipt](../docs/frontend/react-frontend-t01-retirement-rehearsal.md) |
+| T02 | Finish enabled-service and critical Health acceptance; register topology spec | DONE                                                                    | [receipt](../docs/frontend/react-frontend-t02-health-acceptance.md) |
+| T03 | Prove actual React root-dev lifecycle on 8080                                 | DONE                                                                    | [receipt](../docs/frontend/react-frontend-t03-root-dev-lifecycle.md) |
+| T04 | Wire authoritative batch reserve preflight into React                         | DONE                                                                    | [receipt](../docs/frontend/react-frontend-t04-batch-preflight.md) |
+| T05 | Finish lossless Activity paging                                               | DONE                                                                    | [receipt](../docs/frontend/react-frontend-t05-activity-paging.md) |
+| T06 | Finish remote settlement approval and execution                               | DONE                                                                    | [receipt](../docs/frontend/react-frontend-t06-remote-settlement.md) |
+| T07 | Reconcile Lending UI with production admission policy                         | DONE                                                                    | [receipt](../docs/frontend/react-frontend-t07-lending-policy.md) |
+| T08 | Prove cross-j cancellation finality                                           | DONE                                                                    | [receipt](../docs/frontend/react-frontend-t08-cross-j-cancellation.md) |
+| T09 | Close relay-client detail parity                                              | DONE                                                                    | [receipt](../docs/frontend/react-frontend-t09-relay-detail-scope.md) |
+| T10 | Resolve the two intermittent Runtime fixture failures                         | DONE                                                                    | [receipt](../docs/frontend/react-frontend-t10-runtime-fixtures.md) |
+| T11 | Clear remaining root integration failures                                     | DONE                                                                    | [receipt](../docs/frontend/react-frontend-t11-root-integration.md) |
+| T12 | Freeze the accepted version/source and pass the complete web matrix           | DONE                                                                    | [receipt](../docs/frontend/react-frontend-t12-web-acceptance.md) |
+| T13 | Accept immutable artifact, preview and installed npm launcher                 | PARTIAL; exact final testnet write requires explicit authority          | [receipt](../docs/frontend/react-frontend-t13-consumer-acceptance.md) |
+| T14 | Accept two-release PWA and isolated activation/rollback                       | DONE                                                                    | [receipt](../docs/frontend/react-frontend-t14-pwa-deployment-acceptance.md) |
+| T15 | Accept iOS, Android, desktop, extension and supported WebXR                   | PARTIAL; iOS/extension green, Android/desktop/XR unavailable             | [receipt](../docs/frontend/react-frontend-t15-readiness.md) |
+| T16 | Pass hosted build/distribution CI for those exact inputs                      | WAIT(T13,T15); local 10/10, authorized PR/CI required                   | [readiness](../docs/frontend/react-frontend-t16-hosted-readiness.md) |
+| T17 | Make React canonical and remove Svelte                                        | WAIT(T13,T15,T16); explicit C02 authority                               | [review](../docs/frontend/react-frontend-cutover-review.md) |
 | T18 | Certify the post-cutover source and release                                   | WAIT(T17)                                                               | —       |
 
 An external dependency is closed only by an accepted implementation/result or an explicit owner change to the requirement. A missing environment, disabled capability, skipped case or passing retry does not close it. Request the specific pending decision once while continuing READY work; do not create another planning phase.
@@ -76,7 +76,7 @@ An external dependency is closed only by an accepted implementation/result or an
 
 ### T02 — Finish Health acceptance and include it in surface runs
 
-**Remaining boundary:** `frontend/tests/react-candidate/fixtures/health-orchestrator-fixture.ts` starts a real Orchestrator, but enabled MM/custody and critical browser evidence are absent. `ops/ops-health-topology.spec.ts` exists but is **missing from `CANDIDATE_BROWSER_TEST_FILES.ops`** in `frontend/scripts/test-react-candidate.ts`; `--all` discovers it, the Ops-only runner omits it.
+**Remaining boundary:** `frontend/tests/react-candidate/fixtures/health-orchestrator-fixture.ts` starts a real Orchestrator, but enabled MM/custody and critical browser evidence are absent. `ops/ops-health-topology.spec.ts` exists but is **missing from `CANDIDATE_BROWSER_TEST_FILES.ops`** in `frontend/scripts/testing/test-react-candidate.ts`; `--all` discovers it, the Ops-only runner omits it.
 
 1. Add the topology spec to the Ops registry and its existing scope/registry assertion. Extend the isolated fixture using real supported service configuration to exercise enabled MM/custody and a controlled real failure producing a critical signal. No fabricated health response, production custody action or disabled-service-as-success test.
 2. Prove enabled values, critical/degraded display, recovery, stale retention, refresh, selected-Runtime cleanup and expected failure errors. Modify `frontend/apps/ops/src/health/` only if these flows expose a missing behavior; do not rebuild bootstrap/Entity/event-flow panels.
@@ -119,7 +119,7 @@ An external dependency is closed only by an accepted implementation/result or an
 **Verified boundary:** `core/api/runtime-adapter/resolve.ts` removes `settlementWorkspace` from compact reads. The frontend cannot reconstruct an exact approval payload from that projection.
 
 1. Obtain a bounded, authority-checked read of the exact approval payload from the owning API; do not expose the whole transient workspace.
-2. Connect it to `frontend/bridges/wallet/wallet-canonical-account-context.ts` and the existing settlement decoders/actions. Preserve revision/hash, peer authority, designated executor, cancellation and duplicate guards.
+2. Connect it to `frontend/bridges/wallet/canonical/wallet-canonical-account-context.ts` and the existing settlement decoders/actions. Preserve revision/hash, peer authority, designated executor, cancellation and duplicate guards.
 3. Extend `wallet/wallet-settlement.spec.ts` with real remote peer approval → designated execution → chain finality, plus stale revision and non-executor rejection. Run `bun test tests/frontend/payments`, Wallet types and that spec at three viewports.
 
 **Exit:** real remote settlement finalizes; invalid authority/stale review submits nothing. Local-only settlement evidence is insufficient.
@@ -178,7 +178,7 @@ Previous receipts report folder-width failures and an intermittent TS Account wo
 
 1. Obtain the release version decision: `VERSION`/frontend/extension currently say **0.1.31**, root/npm **0.1.32**. Synchronize approved mirrors with existing tooling; preserve pre-signing mismatch rejection. Recheck current values first.
 2. Once T01–T11 close, capture the working source identity and run Frontend aggregate. Record the emitted verified release directory/ID; never select an inferred “latest” directory.
-3. **frontend cwd:** list cases with `bunx --no-install playwright test --config playwright.react.config.ts --list`, then run `bun scripts/test-react-candidate.ts --all` under the stand lock and approved budget, or bounded partitions of that exact registry. Include new T02/T04–T09 cases and cross-surface flows. No skipped/unaccounted case, historical pass substitution or aggregation across source changes.
+3. **frontend cwd:** list cases with `bunx --no-install playwright test --config playwright.react.config.ts --list`, then run `bun scripts/testing/test-react-candidate.ts --all` under the stand lock and approved budget, or bounded partitions of that exact registry. Include new T02/T04–T09 cases and cross-surface flows. No skipped/unaccounted case, historical pass substitution or aggregation across source changes.
 4. Run Root integration once on the unchanged accepted source. Update existing parity/capability/Wallet-flow metadata to match actual closure, and rerun their focused tests if edited.
 
 **Exit:** every registered final-source case passes at all three viewports, including previously blocked requirements; units/types/build/assembly/root gates pass. Record a complete case ledger and exact release ID. Further relevant source changes invalidate the affected evidence.
@@ -207,10 +207,10 @@ Use T12's explicit release directory. Do not recreate `packages/frontend-release
 
 Check device/toolchain access early while other tasks run; do not spend implementation turns retrying an unavailable host. Build from T13's exact verified release via `bun scripts/native/build-platforms.ts <target> --frontend-release <release-directory>`; respect signing/package checks. Sync/copy alone does not satisfy launch acceptance.
 
-- [ ] **iOS:** actual copied-shell build/install/launch, deep link, background/resume/reload and persisted storage.
+- [x] **iOS:** actual copied-shell build/install/launch, deep link, background/resume/reload and persisted storage.
 - [ ] **Android:** the same on a configured SDK/emulator/device.
 - [ ] **Desktop:** actual package launch, routes/deep links/CSP, storage, close/reopen and cleanup.
-- [ ] **Extension:** final packaged ZIP identity, action opens Wallet, preferences/reload/browser reopen at three viewports; use `frontend/playwright.packaged.config.ts` with explicit `PLAYWRIGHT_PACKAGED_DIRECTORY` and `PLAYWRIGHT_STAGING_DIRECTORY`.
+- [x] **Extension:** final packaged ZIP identity, action opens Wallet, preferences/reload/browser reopen at three viewports; use `frontend/config/playwright/playwright.packaged.config.ts` with explicit `PLAYWRIGHT_PACKAGED_DIRECTORY` and `PLAYWRIGHT_STAGING_DIRECTORY`.
 - [ ] **Supported WebXR:** headset enter/exit, controller select/drag/double-tap/scale, close/session teardown and restored desktop resources.
 
 Run `bun test native/__tests__/native-build-options.test.ts native/__tests__/wallet-candidate-staging.test.ts`; verify payload identity before and after platform tools. **Exit:** every checkbox has final-byte evidence or an explicit owner scope change. Missing hardware and desktop “XR unsupported” are not passes.

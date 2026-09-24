@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 
-import { projectEntityWorkspaceAccounts } from '../../../../frontend/packages/runtime-client/src/entity/entity-workspace-accounts';
-import { projectEntityWorkspaceContext } from '../../../../frontend/packages/runtime-client/src/entity/entity-workspace-context';
+import { projectEntityWorkspaceAccounts } from '../../../../frontend/packages/runtime-client/src/entity/workspace/entity-workspace-accounts';
+import { projectEntityWorkspaceContext } from '../../../../frontend/packages/runtime-client/src/entity/workspace/entity-workspace-context';
 
 const frame = {
   height: 44,

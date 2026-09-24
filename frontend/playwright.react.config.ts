@@ -2,8 +2,9 @@ import { defineConfig, devices } from '@playwright/test';
 
 import {
   CANDIDATE_BROWSER_READY_PATHS,
+  CANDIDATE_BROWSER_VIEWPORTS,
   parseCandidateBrowserSurface,
-} from './scripts/test-react-candidate';
+} from './scripts/testing/test-react-candidate';
 
 delete process.env['NO_COLOR'];
 
@@ -12,6 +13,10 @@ const gatewayPort = Number(process.env['PLAYWRIGHT_REACT_PORT'] ?? '19080');
 const portOffset = Number(process.env['PLAYWRIGHT_REACT_PORT_OFFSET'] ?? '12000');
 const baseURL = `http://${host}:${gatewayPort}`;
 const selectedSurface = parseCandidateBrowserSurface(process.env['PLAYWRIGHT_REACT_SURFACE']);
+const runScope = String(process.env['PLAYWRIGHT_REACT_RUN_SCOPE'] || '').trim();
+if (runScope && !CANDIDATE_BROWSER_VIEWPORTS.some(({ name }) => name === runScope)) {
+  throw new Error(`FRONTEND_BROWSER_RUN_SCOPE_INVALID:${runScope}`);
+}
 const runtimeFixtureEnabled = selectedSurface === null || selectedSurface === 'wallet' || selectedSurface === 'ops';
 const fixturePort = Number(process.env['XLN_REACT_WALLET_FIXTURE_PORT'] ?? gatewayPort + 12);
 if (!Number.isSafeInteger(fixturePort) || fixturePort < 1024 || fixturePort > 65531) {
@@ -20,20 +25,15 @@ if (!Number.isSafeInteger(fixturePort) || fixturePort < 1024 || fixturePort > 65
 // Playwright workers and the web-server child must resolve the same fixture.
 // An env override only inside webServer leaves helpers on the default port.
 if (runtimeFixtureEnabled) process.env['XLN_REACT_WALLET_FIXTURE_PORT'] = String(fixturePort);
-const evidenceScope = selectedSurface ?? 'candidate';
+const evidenceScope = `${selectedSurface ?? 'candidate'}${runScope ? `-${runScope}` : ''}`;
 const readinessPath = selectedSurface === null ? '/' : CANDIDATE_BROWSER_READY_PATHS[selectedSurface];
-
-const viewportProjects = [
-  { name: 'mobile-390x844', viewport: { width: 390, height: 844 } },
-  { name: 'laptop-1366x900', viewport: { width: 1366, height: 900 } },
-  { name: 'wide-1920x1080', viewport: { width: 1920, height: 1080 } },
-] as const;
 
 export default defineConfig({
   testDir: './tests/react-candidate',
   outputDir: `../output/playwright/react-${evidenceScope}/test-results`,
   fullyParallel: false,
   forbidOnly: Boolean(process.env['CI']),
+  expect: { timeout: 15_000 },
   retries: process.env['CI'] ? 1 : 0,
   workers: 1,
   reporter: [
@@ -45,7 +45,7 @@ export default defineConfig({
     screenshot: 'only-on-failure',
     trace: 'retain-on-failure',
   },
-  projects: viewportProjects.map(({ name, viewport }) => ({
+  projects: CANDIDATE_BROWSER_VIEWPORTS.map(({ name, viewport }) => ({
     name,
     use: {
       ...devices['Desktop Chrome'],

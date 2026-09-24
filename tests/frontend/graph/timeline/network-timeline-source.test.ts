@@ -70,23 +70,30 @@ const fakeAdapter = (options: { heights: number[]; events: ReturnType<typeof act
         nextBeforeHeight: hasMore && last !== undefined ? last : null,
       } as T;
     }
+    if (path === 'head') return { latestHeight: Math.max(...descending) } as T;
     if (path === 'graph-frame') {
-      const height = Number(query?.['atHeight']);
+      const height = Number(query?.['atHeight'] ?? Math.max(...descending));
       if (!descending.includes(height)) throw new Error(`no frame ${height}`);
       return frame(height) as T;
     }
     if (path === 'activity') {
-      const before = Number(query?.['beforeHeight'] ?? Math.max(...descending) + 1);
-      const window = options.events
-        .filter((event) => event.height < before)
-        .sort((left, right) => right.height - left.height)
-        .slice(0, pageSize);
-      const last = window[window.length - 1];
-      const hasMore = options.events.some((event) => last !== undefined && event.height < last.height);
+      const rawCursor = typeof query?.['cursor'] === 'string' ? query['cursor'] : null;
+      const [cursorTag, cursorBefore, cursorOffset] = rawCursor?.split(':') ?? [];
+      if (rawCursor && cursorTag !== 'activity') throw new Error('bad activity cursor');
+      const before = rawCursor ? Number(cursorBefore) : Number(query?.['beforeHeight']);
+      const offset = rawCursor ? Number(cursorOffset) : 0;
+      const eligible = options.events
+        .filter((event) => event.height <= before)
+        .sort((left, right) => right.height - left.height || left.id.localeCompare(right.id));
+      const window = eligible.slice(offset, offset + pageSize);
+      const nextOffset = offset + window.length;
+      const nextCursor = nextOffset < eligible.length ? `activity:${before}:${nextOffset}` : null;
       return {
         ok: true,
+        cursor: rawCursor,
         events: window,
-        nextBeforeHeight: hasMore && last !== undefined ? last.height : null,
+        fromHeight: window.reduce((height, event) => Math.min(height, event.height), before),
+        nextCursor,
       } as T;
     }
     throw new Error(`unexpected path ${path}`);
@@ -133,14 +140,40 @@ describe('network timeline source', () => {
 
   test('rejects a frame that does not match the requested runtime or height', async () => {
     const adapter = {
-      read: async () => ({ runtimeId: 'other', height: 3, entities: [] }),
+      read: async (path: string) => path === 'head'
+        ? { latestHeight: 3 }
+        : { runtimeId: 'other', height: 3, entities: [] },
     };
     await expect(adapterNetworkTimelineSource('h1', adapter as never).readGraphFrame(3))
       .rejects.toThrow('NETWORK_GRAPH_RUNTIME_ID_MISMATCH:h1:other');
 
-    const shifted = { read: async () => ({ runtimeId: 'h1', height: 9, entities: [] }) };
+    const shifted = { read: async (path: string) => path === 'head'
+      ? { latestHeight: 8 }
+      : { runtimeId: 'h1', height: 9, entities: [] } };
     await expect(adapterNetworkTimelineSource('h1', shifted as never).readGraphFrame(3))
       .rejects.toThrow('NETWORK_TIMELINE_FRAME_MISMATCH:h1:h3:h9');
+  });
+
+  test('reads the current timeline frame live and falls back if the Runtime advances', async () => {
+    const calls: ReadCall[] = [];
+    let liveHeight = 7;
+    const adapter = {
+      read: async (path: string, query?: Record<string, unknown>) => {
+        calls.push({ path, ...(query ? { query } : {}) });
+        if (path === 'head') return { latestHeight: 7 };
+        if (path !== 'graph-frame') throw new Error(`unexpected path ${path}`);
+        const height = Number(query?.['atHeight'] ?? liveHeight);
+        return frame(height);
+      },
+    };
+    const source = adapterNetworkTimelineSource('h1', adapter as never);
+
+    expect((await source.readGraphFrame(7)).height).toBe(7);
+    expect(calls.at(-1)?.query).not.toHaveProperty('atHeight');
+
+    liveHeight = 8;
+    expect((await source.readGraphFrame(7)).height).toBe(7);
+    expect(calls.slice(-2).map(call => call.query?.['atHeight'])).toEqual([undefined, 7]);
   });
 
   test('collects activity inside a height window and drops everything outside', async () => {
@@ -155,6 +188,19 @@ describe('network timeline source', () => {
     const collected = await source.readActivity(2, 3);
 
     expect(collected.map((event) => event.id)).toEqual(['b', 'c']);
+  });
+
+  test('consumes every event when one frame spans multiple opaque cursor pages', async () => {
+    const events = Array.from({ length: 5 }, (_, index) =>
+      activityEvent(3, `same-frame-${index}`, `Event ${index}`));
+    const source = adapterNetworkTimelineSource(
+      'h1',
+      fakeAdapter({ heights: [3], events, pageSize: 2 }),
+    );
+
+    expect((await source.readActivity(3, 3)).map(({ id }) => id)).toEqual([
+      'same-frame-0', 'same-frame-1', 'same-frame-2', 'same-frame-3', 'same-frame-4',
+    ]);
   });
 
   test('rejects an inverted activity window', async () => {

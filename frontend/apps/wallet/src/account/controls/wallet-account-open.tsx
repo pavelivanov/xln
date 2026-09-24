@@ -1,6 +1,6 @@
 import type { WalletOpenDraft } from '../../commands/wallet-command-draft';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
-import { parseEntityInput } from '../../../../../packages/ui/src/entity-input-model';
+import { parseEntityInput } from '../../../../../packages/ui/src/entity/entity-input-model';
 import { WalletEntityInput } from '../../entity/wallet-entity-input';
 import type { WalletHubDiscoverySnapshot, WalletHubDiscoverySource } from '../../onboarding/wallet-hub-discovery-source';
 import '../../styles/account/wallet-account-open.css';

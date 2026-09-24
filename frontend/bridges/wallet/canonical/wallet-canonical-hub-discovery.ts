@@ -1,0 +1,120 @@
+import { readStoreValue } from '../../../packages/runtime-client/src/observable-store';
+import type { RuntimeAdapter, RuntimeAdapterViewFrame } from '@xln/core/api/public/runtime-module';
+import { getXLN, xlnEnvironment, p2pState, resolveConfiguredApiBase } from '../../runtime/xln-store';
+import { runtimes } from '../../runtime/runtime-store';
+import { buildEntityPanelView, findReplicaForEntityTab, isSameJurisdictionEntityInReplicas } from '../entity/entity-panel-model';
+import { buildOpenAccountEntityOptions } from '../../../packages/ui/src/entity/entity-panel-options';
+import { unwrapLiveRuntimeEnv } from '../../../packages/browser/src/runtime/live-runtime-env';
+import { buildHubDiscoveryProjection, buildHubDiscoveryRemoteHubsFromRuntimes, getHubOpenAccountPermissionError } from '../../../packages/ui/src/onboarding/hub-discovery-profile';
+import type { WalletAccountOpenRead } from '../../../apps/wallet/src/account/controls/wallet-account-open-model';
+import type { WalletAccountView } from '../../../apps/wallet/src/account/view/wallet-account-view-model';
+import { buildAccountTokenDetails } from '../../../packages/ui/src/account/account-token-details';
+import { buildAccountActivityRows } from '../../../packages/ui/src/account/account-focused-view';
+import { buildDisputedAccountViews } from '../../../packages/ui/src/account/account-dispute-view';
+import { buildAccountDropdownItems } from '../../../packages/ui/src/account/dropdown/account-dropdown-model';
+import type { WalletBatchRuntimeSubmission } from '../../../apps/wallet/src/commands/wallet-batch-model';
+
+export const readCanonicalAccountDropdown = async (adapter: RuntimeAdapter, entityId: string, frame: RuntimeAdapterViewFrame) => {
+  const view = await readCanonicalAccountView(adapter, entityId, '', frame);
+  const xln = await getXLN();
+  return buildAccountDropdownItems(view.replica.state.accounts, view.entityNames, id => xln.generateEntityAvatar(id));
+};
+
+export const readCanonicalAccountView = async (adapter: RuntimeAdapter, entityId: string, counterpartyId: string, frame: RuntimeAdapterViewFrame): Promise<WalletAccountView> => {
+  const xln = await getXLN();
+  const local = readStoreValue(xlnEnvironment);
+  const bound = adapter.mode === 'embedded' && local?.runtimeId?.toLowerCase() === adapter.runtimeId.toLowerCase() ? local : null;
+  if (adapter.mode === 'embedded' && !bound) throw new Error('ACCOUNT_VIEW_LOCAL_RUNTIME_CHANGED');
+  const panel = buildEntityPanelView(bound, entityId, '', '', bound ? undefined : frame);
+  if (!panel.replica) throw new Error('ACCOUNT_VIEW_ENTITY_UNAVAILABLE');
+  const account = [...panel.replica.state.accounts].find(([id]) => id.toLowerCase() === counterpartyId.toLowerCase())?.[1] ?? null;
+  if (counterpartyId && !account) throw new Error('ACCOUNT_VIEW_ACCOUNT_UNAVAILABLE');
+  const transport = readStoreValue(p2pState);
+  return {
+    account, replica: panel.replica, entityId, counterpartyId,
+    counterpartyName: panel.entityNames.get(counterpartyId.toLowerCase()) || counterpartyId,
+    entityNames: panel.entityNames,
+    tokens: account ? buildAccountTokenDetails(account.state, entityId, xln) : [],
+    activity: account ? buildAccountActivityRows(account, entityId) : [],
+    disputed: buildDisputedAccountViews(panel.replica.state.accounts),
+    presentation: { entityNames: panel.entityNames, payments: panel.replica.state.paybook.entries, activeXlnFunctions: xln },
+    formatTokenAmount: xln.formatTokenAmount, apiBase: resolveConfiguredApiBase(window.location.origin),
+    // The retained faucet reads its Runtime id from the live action env.
+    // Remote UserModePanel supplies no live env; preserve that guard instead
+    // of adding a new remote faucet authority path during the UI port.
+    faucetRuntimeId: bound?.runtimeId || '',
+    commandsReady: adapter.commandReady,
+    sameJurisdiction: isSameJurisdictionEntityInReplicas(panel.replicas, panel.replica, entityId, entityId, counterpartyId),
+    relayStatus: transport.connected ? 'connected' : transport.reconnect ? 'reconnecting' : 'disconnected',
+  };
+};
+
+export const subscribeCanonicalAccountView = (listener: () => void): (() => void) => {
+  const releases = [p2pState.subscribe(listener)];
+  return () => { for (const release of releases) release(); };
+};
+
+export const readCanonicalWalletBatchSubmission = async (
+  adapter: RuntimeAdapter,
+  entityId: string,
+  frame: RuntimeAdapterViewFrame,
+): Promise<WalletBatchRuntimeSubmission | null> => {
+  const view = await readCanonicalAccountView(adapter, entityId, '', frame);
+  const submission = view.replica.jSubmitState;
+  const sent = view.replica.state.jBatchState?.sentBatch;
+  if (!submission || !sent
+    || submission.batchHash.toLowerCase() !== sent.batchHash.toLowerCase()
+    || submission.entityNonce !== sent.entityNonce) return null;
+  const terminal = submission.terminalFailure;
+  const failure = terminal ?? submission.lastFailure;
+  return {
+    batchHash: submission.batchHash.toLowerCase(),
+    entityNonce: submission.entityNonce,
+    submitAttempts: submission.submitAttempts,
+    lastSubmittedAt: submission.lastSubmittedAt,
+    txHash: submission.txHash?.toLowerCase() ?? '',
+    failure: failure?.message ?? '',
+    failureKind: terminal ? 'terminal' : submission.lastFailure ? 'retryable' : 'none',
+    failureAt: failure?.failedAt ?? null,
+  };
+};
+
+export const readCanonicalHubDiscovery = async (adapter: RuntimeAdapter, entityId: string, frame: RuntimeAdapterViewFrame, targetId = '', targetFrame?: RuntimeAdapterViewFrame): Promise<WalletAccountOpenRead> => {
+  const xln = await getXLN();
+  const localFrame = readStoreValue(xlnEnvironment);
+  const bound = adapter.mode === 'embedded' && localFrame?.runtimeId?.toLowerCase() === adapter.runtimeId.toLowerCase() ? localFrame : null;
+  if (adapter.mode === 'embedded' && !bound) throw new Error('HUB_DISCOVERY_LOCAL_RUNTIME_CHANGED');
+  const panel = buildEntityPanelView(bound, entityId, '', '', bound ? undefined : frame);
+  const replicas = panel.replicas ? new Map(panel.replicas) : null;
+  if (!bound && replicas && targetFrame) {
+    const targetPanel = buildEntityPanelView(null, targetId, '', '', targetFrame);
+    for (const [key, replica] of targetPanel.replicas || []) replicas.set(key, replica);
+  }
+  const runtimeByEntity = new Map(frame.entities.map(summary => [summary.entityId.toLowerCase(), summary.runtimeId || adapter.runtimeId]));
+  const profiles = bound ? panel.profiles : panel.profiles.map(profile => ({
+    ...profile, runtimeId: runtimeByEntity.get(profile.entityId.toLowerCase()) || adapter.runtimeId,
+  }));
+  const permissionError = getHubOpenAccountPermissionError({ adapterMode: adapter.mode, authLevel: adapter.authLevel });
+  const env = bound ? unwrapLiveRuntimeEnv(bound) ?? bound : null;
+  const canOpenAccounts = adapter.commandReady && permissionError === null;
+  const accountIds = [...(panel.replica?.state?.accounts.keys() || [])];
+  const projection = buildHubDiscoveryProjection({
+    runtimeId: adapter.runtimeId, entityId, replicas, profiles,
+    remoteHubs: buildHubDiscoveryRemoteHubsFromRuntimes(readStoreValue(runtimes).values()),
+    formatRawProfile: profile => xln.safeStringify(profile, 2), avatarForEntity: xln.generateEntityAvatar,
+  });
+  return {
+    entityId, env, canOpenAccounts, projection, disputed: buildDisputedAccountViews(panel.replica?.state.accounts),
+    permissionError: permissionError || adapter.commandReadyReason || '',
+    entities: buildOpenAccountEntityOptions({ replica: panel.replica, tabEntityId: entityId, accountIds, activeReplicas: replicas, profiles }),
+    profiles: profiles.map(profile => ({ entityId: profile.entityId, name: profile.name })),
+    direct: {
+      runtimeId: adapter.runtimeId, entityId, signerId: projection.sourceSignerId, env, canOpenAccounts,
+      permissionError: permissionError || adapter.commandReadyReason || '', activeIsLive: true,
+      sameJurisdiction: isSameJurisdictionEntityInReplicas(replicas, panel.replica, entityId, entityId, targetId),
+      hasAccount: accountIds.some(id => id.toLowerCase() === targetId),
+      sourceIsHub: panel.replica?.state?.profile?.isHub,
+      targetIsHub: findReplicaForEntityTab(replicas, targetId, '')?.state?.profile?.isHub,
+    },
+  };
+};

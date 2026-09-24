@@ -26,7 +26,7 @@ const frontendSourceFiles = (dir: string): string[] =>
     const path = join(dir, entry);
     const stat = statSync(path);
     if (stat.isDirectory()) return frontendSourceFiles(path);
-    return /\.(svelte|ts)$/.test(path) ? [path] : [];
+    return /\.(ts|tsx)$/.test(path) ? [path] : [];
   });
 
 const readStore = <T>(store: { subscribe: (run: (value: T) => void) => () => void }): T => {
@@ -677,79 +677,64 @@ test('public mutation exports no longer accept caller-owned RuntimeReplica', () 
 // survives is the server-side credit request itself, gated on the remote
 // controller handle.
 test('server-side credit requests validate the result without synthesizing ingress receipts', () => {
-  const source = readFileSync('frontend/src/lib/components/Entity/account/ui/CreditForm.svelte', 'utf8');
+  const source = readFileSync('frontend/apps/wallet/src/manage/wallet-manage-credit.ts', 'utf8');
 
   expect(source).not.toContain('recordRuntimeIngressReceipt');
-  expect(source).toContain('runtimeControllerHandle');
-  expect(source).toContain("fetch(`${apiBase}/api/credit/request`");
-  expect(source).toContain('!response.ok || result.success !== true');
+  expect(source).toContain("fetch(new URL('/api/credit/request', apiBase)");
+  expect(source).toContain("requireRuntimeRecord(raw, 'CREDIT_REQUEST_RESPONSE')");
+  expect(source).toContain("!response.ok || result['success'] !== true");
   expect(source).not.toContain('statusUrl');
 });
 
 test('credit and collateral configure forms submit RuntimeInput through shared command path', () => {
-  const creditSource = readFileSync('frontend/src/lib/components/Entity/account/ui/CreditForm.svelte', 'utf8');
-  const collateralSource = readFileSync('frontend/src/lib/components/Entity/account/ui/CollateralForm.svelte', 'utf8');
+  const manageSource = readFileSync('frontend/apps/wallet/src/manage/wallet-manage.tsx', 'utf8');
+  const paymentSource = readFileSync('frontend/apps/wallet/src/payments/wallet-payment-source.ts', 'utf8');
   const collateralPolicySource = readFileSync('frontend/packages/runtime-client/src/entity/collateral-request.ts', 'utf8');
-  const configureSource = readFileSync('frontend/src/lib/components/Entity/account/ui/AccountConfigurePanel.svelte', 'utf8');
-  const accountWorkspaceSource = readFileSync('frontend/src/lib/components/Entity/workspace/AccountWorkspaceView.svelte', 'utf8');
+  const accountWorkspaceSource = readFileSync('frontend/apps/wallet/src/account/wallet-account-workspace.tsx', 'utf8');
   const resolverSource = readFileSync('core/api/runtime-adapter/resolve.ts', 'utf8');
 
-  for (const source of [creditSource, collateralSource]) {
-    expect(source).toContain('export let submitRuntimeInput');
-    expect(source).toContain('await submitRuntimeInput({ runtimeTxs: [], entityInputs: [');
-    expect(source).toContain("handle.mode === 'remote' && handle.authLevel === 'admin'");
-    expect(source).not.toContain('submitEntityInputs([');
-    expect(source).not.toContain("../../../stores/xlnStore';\n  import { submitEntityInputs");
-  }
-
-  expect(configureSource).toContain('remoteAdminReady');
-  expect(configureSource).toContain('commandReady = activeIsLive && Boolean(liveRuntimeEnv || remoteAdminReady)');
-  expect(configureSource).toContain('{submitRuntimeInput}');
-  expect(accountWorkspaceSource).toContain('<AccountConfigurePanel');
-  expect(accountWorkspaceSource).toContain('{submitRuntimeInput}');
-  expect(collateralSource).toContain('resolveProjectedCounterpartyPolicy');
-  expect(collateralSource).toContain('resolveCollateralFeePolicy(account, ownerEntityId, tokenId)');
+  expect(manageSource).toContain("type: 'extendCredit'");
+  expect(manageSource).toContain('buildCollateralRequest(account, context.entityId');
+  expect(manageSource).toContain('resolveCollateralFeePolicy(account, context.entityId, tokenId)');
+  expect(manageSource).toContain('await source.submitAccountTxs(context.entityId, [tx])');
+  expect(paymentSource).toContain('if (!adapter.commandReady)');
+  expect(paymentSource).toContain('submitAccountTxs');
+  expect(accountWorkspaceSource).toContain('<WalletManage context={context} source={source}');
+  expect(accountWorkspaceSource).toContain('commandsReady: snapshot.data.commandsReady');
   expect(collateralPolicySource).toContain('account.state.rebalanceFeePolicies');
   expect(resolverSource).toContain('const rebalanceFeePolicies = compactMapHead(doc.state.rebalanceFeePolicies, 100)');
   expect(resolverSource).toContain('if (rebalanceFeePolicies) compact.state.rebalanceFeePolicies = rebalanceFeePolicies');
 });
 
 test('payment panel submits RuntimeInput through shared command path', () => {
-  const paymentSource = readFileSync('frontend/src/lib/components/Entity/payments/PaymentPanel.svelte', 'utf8');
-  const sharedPaymentCommandSource = readFileSync('frontend/packages/runtime-client/src/payments/payment-command.ts', 'utf8');
-  const accountWorkspaceSource = readFileSync('frontend/src/lib/components/Entity/workspace/AccountWorkspaceView.svelte', 'utf8');
+  const paymentSource = readFileSync('frontend/apps/wallet/src/payments/wallet-payment-source.ts', 'utf8');
+  const commandSource = readFileSync('frontend/apps/wallet/src/payments/commands/wallet-payment-command.ts', 'utf8');
+  const paymentView = readFileSync('frontend/apps/wallet/src/payments/wallet-payments.tsx', 'utf8');
 
-  expect(paymentSource).toContain('export let submitRuntimeInput');
-  expect(paymentSource).toContain('await submitRuntimeInput(buildPaymentRuntimeInput({');
-  expect(paymentSource).toContain("import { buildPaymentRuntimeInput } from '../../../../../packages/runtime-client/src/payments/payment-command'");
-  expect(sharedPaymentCommandSource).toContain('): RuntimePaymentInput => {');
-  expect(sharedPaymentCommandSource).toContain('runtimeTxs: [],');
-  expect(sharedPaymentCommandSource).toContain('entityInputs: [{');
-  expect(sharedPaymentCommandSource).toContain('jInputs: [],');
-  expect(paymentSource).toContain('pendingPaymentCommandId');
-  expect(paymentSource).toContain('Submission pending...');
-  expect(paymentSource).toContain("failure.kind === 'defer'");
-  expect(paymentSource).toContain('latestReceipt.receiptId !== priorRuntimeReceiptId');
-  expect(paymentSource).not.toContain('submitEntityInputs');
-  expect(accountWorkspaceSource).toContain('{submitRuntimeInput}');
+  expect(paymentSource).toContain('prepareWalletPaymentCommand(this.requireAdapter(), input)');
+  expect(paymentSource).toContain('executeWalletPaymentCommand(this.requireAdapter(), command)');
+  expect(paymentSource).toContain("status: 'pending'");
+  expect(paymentSource).toContain('retryPendingCommand');
+  expect(commandSource).toContain('adapter.send(command.input');
+  expect(commandSource).toContain('commandId: command.commandId');
+  expect(paymentView).toContain('Runtime command {shortCommandId(snapshot.command.commandId)}');
 });
 
-test('lending mutations use the signer runtime command path instead of unauthenticated server POSTs', () => {
-  const source = readFileSync('frontend/src/lib/components/Entity/payments/LendingPanel.svelte', 'utf8');
+test('lending stays visible as unsupported without a Runtime command path', () => {
+  const source = readFileSync('frontend/apps/wallet/src/manage/wallet-lending.tsx', 'utf8');
+  const operations = readFileSync('frontend/apps/wallet/src/payments/wallet-payment-operations.tsx', 'utf8');
+  const operationModel = readFileSync('frontend/apps/wallet/src/payments/commands/wallet-payment-operations-model.ts', 'utf8');
+  const commandTypes = readFileSync('frontend/packages/runtime-client/src/payments/payment-command-types.ts', 'utf8');
 
-  expect(source).toContain('export let submitRuntimeInput');
-  expect(source).toContain('await submitRuntimeInput({');
-  expect(source).toContain("type: 'lendingOffer'");
-  expect(source).toContain("type: 'lendingBorrow'");
-  expect(source).toContain("type: 'lendingRepay'");
-  expect(source).toContain('if (!isLive || !selectedHubEntityId || !normalizedEntityId)');
-  expect(source).toContain('$: lendingStateKey = isLive && selectedHubEntityId');
-  expect(source).toContain('disabled={!isLive || loading}');
-  expect(source).toContain('runtimeHttpOriginFromWsUrl');
-  expect(source).toContain('isRuntimeControllerConfigCurrent(operation.config)');
-  expect(source).toContain("loan.status === 'active'");
-  expect(source).toContain('loan.borrowerEntityId');
-  expect(source).not.toContain("postLending('/api/lending/");
+  expect(source).toContain('Production lending is not enabled');
+  expect(source).toContain('No lending form or submission control is exposed.');
+  expect(source).not.toContain('submitAccountTxs');
+  expect(source).not.toContain('/api/lending/state');
+  expect(operations).not.toContain('Submit lending');
+  expect(operationModel).not.toContain("type: 'lendingOffer'");
+  expect(operationModel).not.toContain("type: 'lendingBorrow'");
+  expect(commandTypes).not.toContain("type: 'lendingOffer'");
+  expect(commandTypes).not.toContain("type: 'lendingBorrow'");
   expect(source).not.toContain('recordRuntimeIngressReceipt');
 });
 
@@ -758,27 +743,24 @@ test('lending mutations use the signer runtime command path instead of unauthent
 // them, and `recordServerIngressReceipt` is gone from the panel. The surviving
 // invariant is the faucet readiness gate.
 test('server-side faucet results retain readiness guards without synthesizing ingress receipts', () => {
-  const panelSource = readFileSync('frontend/src/lib/components/Entity/workspace/shell/EntityPanelTabs.svelte', 'utf8');
   const faucetSource = readFileSync('frontend/packages/browser/src/wallet/account-faucet.ts', 'utf8');
-  const assetFaucetSource = readFileSync('frontend/src/lib/components/Entity/assets/AssetFaucetCard.svelte', 'utf8');
-  const assetsSource = readFileSync('frontend/src/lib/components/Entity/assets/EntityAssetsTab.svelte', 'utf8');
+  const accountSource = readFileSync('frontend/apps/wallet/src/account/view/wallet-account-view-source.ts', 'utf8');
+  const accountView = readFileSync('frontend/apps/wallet/src/account/view/wallet-account-summary.tsx', 'utf8');
 
   expect(faucetSource).not.toContain('receipt?: {');
   expect(faucetSource).toContain('decodeFaucetApiResult');
-  expect(panelSource).not.toContain('recordRuntimeIngressReceipt');
-  expect(panelSource).not.toContain('function recordServerIngressReceipt');
-  expect(panelSource).not.toContain('recordServerIngressReceipt(result);');
-  expect(panelSource).not.toContain('statusUrl: result.statusUrl ?? null');
-  expect(panelSource).toMatch(/notifyUserActionError\(["']asset-faucet["'], ["']Runtime is not ready for financial actions["']\)/);
-  expect(panelSource).toMatch(/notifyUserActionError\(["']offchain-faucet["'], ["']Runtime is not ready for financial actions["']\)/);
-  expect(assetFaucetSource).toContain('export let ready = false');
-  expect(assetFaucetSource.match(/disabled={!ready \\|\\| submitting}/g)).toHaveLength(3);
-  expect(assetsSource).toContain('ready={activeIsLive}');
+  expect(accountSource).toContain('requestAccountFaucet');
+  expect(accountSource).toContain('commandsReady: current.commandsReady');
+  expect(accountSource).not.toContain('recordRuntimeIngressReceipt');
+  expect(accountView).toContain('disabled={!commandsReady || busy}');
+  expect(accountView).toContain("'Runtime is not ready for financial actions'");
 });
 
 test('ui mutation surfaces do not use retired enqueue entrypoints', () => {
-  const files = frontendSourceFiles('frontend/src/lib')
-    .filter((file) => !file.startsWith('frontend/src/lib/stores/'));
+  const files = [
+    ...frontendSourceFiles('frontend/apps'),
+    ...frontendSourceFiles('frontend/bridges/wallet'),
+  ];
 
   for (const file of files) {
     const source = readFileSync(file, 'utf8');
@@ -793,75 +775,43 @@ test('ui mutation surfaces do not use retired enqueue entrypoints', () => {
 });
 
 test('entity workspace renders latest runtime command receipt status', () => {
-  const source = readFileSync('frontend/src/lib/components/Entity/workspace/EntityWorkspace.svelte', 'utf8');
+  const source = readFileSync('frontend/apps/wallet/src/account/wallet-account-workspace.tsx', 'utf8');
 
-  expect(source).toContain('runtimeCommandLatestReceipt');
-  expect(source).toContain('data-testid="runtime-command-receipt"');
-  expect(source).toContain('failureKind');
-  expect(source).toContain('isActionableRuntimeReceipt');
-  expect(source).not.toContain('$runtimeCommandLatestReceipt.committedAtHeight');
-  expect(source).not.toContain('$runtimeCommandLatestReceipt.acceptedAtHeight');
+  expect(source).toContain("snapshot.command.status !== 'idle'");
+  expect(source).toContain("role={snapshot.command.status === 'error' ? 'alert' : 'status'}");
+  expect(source).toContain('snapshot.command.message');
+  expect(source).toContain('snapshot.command.retryable');
+  expect(source).not.toContain('committedAtHeight');
+  expect(source).not.toContain('acceptedAtHeight');
   expect(source).not.toContain('upstreamReceiptId');
 });
 
 test('entity panel never promotes UI reads or transaction responses into J-prefix inputs', () => {
-  const source = readFileSync('frontend/src/lib/components/Entity/workspace/shell/EntityPanelTabs.svelte', 'utf8');
+  const source = readFileSync('frontend/apps/wallet/src/account/wallet-account-workspace.tsx', 'utf8');
   expect(source).not.toContain('async function applyCanonicalJEventsToActiveEnv');
   expect(source).not.toContain('buildJEventsRuntimeInput(env, events');
   expect(source).not.toContain('applyJEventsToEnv');
 });
 
 test('entity panel pure RuntimeInput mutations do not require embedded RuntimeReplica on remote', () => {
-  const source = readFileSync('frontend/src/lib/components/Entity/workspace/shell/EntityPanelTabs.svelte', 'utf8');
+  const source = readFileSync('frontend/apps/wallet/src/payments/wallet-payment-source.ts', 'utf8');
+  const manage = readFileSync('frontend/apps/wallet/src/manage/wallet-manage.tsx', 'utf8');
 
-  expect(source).not.toContain('requireRuntimeEnv(activeEnv');
-  expect(source).not.toContain("requireRuntimeEnv(actionRuntimeEnv, 'settings-profile-update')");
-  expect(source).not.toContain("requireRuntimeEnv(actionRuntimeEnv, 'reserve-to-external')");
-  expect(source).not.toContain("requireRuntimeEnv(actionRuntimeEnv, 'reserve-to-reserve')");
-  expect(source).not.toContain("requireRuntimeEnv(actionRuntimeEnv, 'quick-settle-approve')");
-  expect(source).not.toContain("requireRuntimeEnv(actionRuntimeEnv, 'asset-c2r-auto-execute')");
-  expect(source).not.toContain("requireRuntimeEnv(actionRuntimeEnv, 'collateral-to-reserve')");
-  expect(source).not.toContain("requireRuntimeEnv(actionRuntimeEnv, 'move-reserve-to-reserve-draft')");
-  expect(source).not.toContain("requireRuntimeEnv(actionRuntimeEnv, 'move-reserve-to-account-draft')");
-  expect(source).not.toContain("requireRuntimeEnv(actionRuntimeEnv, 'reserve-to-collateral')");
-  expect(source).not.toContain("requireRuntimeEnv(actionRuntimeEnv, 'dispute-start')");
-  expect(source).not.toContain("requireRuntimeEnv(actionRuntimeEnv, 'add-token-to-account')");
-  expect(source).not.toContain("throw new Error('Environment not ready')");
-  expect(source).toMatch(/requireRuntimeEnv\(actionRuntimeEnv, ["']settings-import-jmachine["']\)/);
-  expect(source).toContain('captureSignerAuthorityContext("send-external-asset")');
-  expect(source).not.toContain("requireRuntimeEnv(actionRuntimeEnv, 'move-reserve-to-external-draft')");
-  expect(source).not.toContain("requireRuntimeEnv(actionRuntimeEnv, 'move-external-to-reserve-draft')");
-  expect(source).not.toContain("requireRuntimeEnv(actionRuntimeEnv, 'debt-enforcement')");
-  for (const context of [
-    'reserve-to-external',
-    'move-reserve-to-external-draft',
-    'move-external-to-reserve-draft',
-    'debt-enforcement',
-    'reserve-to-collateral',
-    'add-token-to-account',
-  ]) {
-    expect(source).toMatch(new RegExp(`resolveEntitySigner\\(entityId, ["']${context}["']\\)`));
-  }
-  expect(source).toContain("getRuntimeId(actionRuntimeEnv)");
+  expect(source).not.toContain('requireRuntimeEnv');
+  expect(source).toContain('if (!adapter.commandReady)');
+  expect(source).toContain('submitAccountTxs');
+  expect(manage).toContain('await source.submitAccountTxs(context.entityId');
+  expect(manage).not.toContain('RuntimeReplica');
 });
 
 test('entity panel debt enforcement submits RuntimeInput instead of calling JAdapter directly', () => {
-  const source = readFileSync('frontend/src/lib/components/Entity/workspace/shell/EntityPanelTabs.svelte', 'utf8');
-  const enforceIndex = source.indexOf('async function enforceOutstandingDebt');
-  expect(enforceIndex).toBeGreaterThan(0);
-  const enforceSource = source.slice(enforceIndex, source.indexOf('async function addTokenToAccount', enforceIndex));
+  const source = readFileSync('frontend/apps/wallet/src/financial-health/wallet-financial-health-source.ts', 'utf8');
 
-  expect(existsSync('frontend/src/lib/components/Entity/debt-enforcement-command.ts')).toBe(false);
   expect(source).toContain('buildDebtEnforcementRuntimeInputFromProjection');
-  expect(source).toContain('@xln/core/runtime/tx/debt-enforcement-input');
-  expect(enforceSource).toContain('buildDebtEnforcementRuntimeInputFromProjection');
-  expect(enforceSource).toContain('jurisdictionName');
-  expect(enforceSource).toMatch(/timestamp: requirePanelRuntimeTimestamp\(["']debt-enforcement["']\)/);
-  expect(enforceSource).not.toContain('Date.now()');
-  expect(enforceSource).toContain('submitRuntimeInput(input)');
-  expect(enforceSource).not.toContain('requireRuntimeEnv(actionRuntimeEnv');
-  expect(enforceSource).not.toContain('getXLN()');
-  expect(enforceSource).not.toContain('xln.buildDebtEnforcementRuntimeInput');
-  expect(enforceSource).not.toContain('submitRuntimeInput(env, input)');
-  expect(enforceSource).not.toContain('submitDebtEnforcement');
+  expect(source).toContain("../../../../../core/runtime/tx/debt-enforcement-input");
+  expect(source).toContain('prepareWalletPaymentCommand(');
+  expect(source).toContain('executeWalletPaymentCommand(adapter, prepared)');
+  expect(source).not.toContain('JAdapter');
+  expect(source).toContain('timestamp: projection.timestamp');
+  expect(source).not.toContain('Date.now()');
 });

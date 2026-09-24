@@ -1,5 +1,5 @@
 import { useEffect, useSyncExternalStore } from 'react';
-import { settings, settingsOperations } from '../../../../../packages/browser/src/settings-store';
+import { settings, settingsOperations } from '../../../../../packages/browser/src/preferences/settings-store';
 
 // Consume the retained framework-neutral store and its existing persistence.
 // Reload before writes so another mounted preferences consumer's keys survive.

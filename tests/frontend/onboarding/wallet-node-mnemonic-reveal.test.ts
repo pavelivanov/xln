@@ -130,22 +130,22 @@ describe('browser wallet node mnemonic reveal', () => {
   });
 
   test('node wallet entry cannot request or retain remote recovery material and keeps local cleanup', () => {
-    const view = readFileSync('frontend/src/lib/components/Views/RuntimeCreation.svelte', 'utf8');
+    const view = readFileSync('frontend/apps/ops/src/workspace/panels/ops-remote-brainvault.tsx', 'utf8');
+    const localView = readFileSync('frontend/apps/wallet/src/identity/identity-onboarding.tsx', 'utf8');
     const browserDerivation = readFileSync(
       'frontend/bridges/wallet/brainvault/wallet-brainvault-browser-derivation.ts',
       'utf8',
     );
-    expect(view).toContain('Recovery material stays in the owner-only node state and is never delivered to this browser.');
+    expect(view).toContain('recovery words are never returned here.');
     expect(view).not.toContain('revealBrainVaultMnemonic');
     expect(view).not.toContain('revealedNodeMnemonic');
-    const cleanup = view.slice(view.indexOf('function clearDerivedWalletMaterial()'), view.indexOf('function closeWalletEntry()'));
-    expect(cleanup).toContain("mnemonic24 = ''");
-    expect(cleanup).toContain("mnemonic12 = ''");
-    expect(cleanup).toContain("devicePassphrase = ''");
-    expect(cleanup).toContain('browserBrainVaultDerivation.cancel()');
-    expect(cleanup).toContain("passphrase = ''");
-    expect(cleanup).toContain("mnemonicInput = ''");
+    expect(view).toContain("setPassphrase('');");
+    expect(view).toContain('run.current?.controller.abort();');
+    expect(localView).toContain("verifiedMnemonicRef.current = '';");
+    expect(localView).toContain('discardWalletBrainVault(brainVaultTokenRef.current);');
+    expect(localView).toContain("setDraft(current => ({ ...current, passphrase: '', showPassphrase: false }))");
+    expect(localView).toContain("setDraft((current) => ({ ...current, mnemonicInput: '' }))");
     expect(browserDerivation).toContain('wipeResults(run)');
-    expect(view.slice(view.indexOf('onDestroy(() =>'))).toContain('clearSensitiveWalletMaterial()');
+    expect(localView).toContain('useEffect(() => () => {');
   });
 });

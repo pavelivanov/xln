@@ -6,7 +6,7 @@ import {
   createFoundationReleaseBoard,
   signReleaseEnvelope,
   type ReleaseEnvelope,
-} from '../../../frontend/src/lib/releases/release-signature.ts';
+} from '../../../frontend/packages/ui/src/releases/release-signature.ts';
 
 const { ethers } = await hre.network.getOrCreate('hardhat');
 const PRIVATE_KEYS = [
@@ -17,7 +17,7 @@ const PRIVATE_KEYS = [
 
 describe('Foundation release Hanko parity', function () {
   // DISABLED (wave 2): HankoVerifier accepts only abi.encode(HankoBytes) with the
-  // 4th `bytes[] memberSignatures` field. frontend/src/lib/releases/release-signature.ts
+  // 4th `bytes[] memberSignatures` field. The shared release-signature owner
   // still encodes the retired 3-field envelope, which no longer decodes on chain.
   // Re-enable once that encoder appends `memberSignatures: []` (contract side is final).
   it('verifies the exact 2-of-3 release Hanko in EntityProvider.sol', async function () {

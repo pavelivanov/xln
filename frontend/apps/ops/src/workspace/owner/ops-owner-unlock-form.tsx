@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { opsEntityWorkspaceSource } from '../../entity-workspace/ops-entity-workspace-runtime';
 import { readCanonicalOpsOwnerUnlocked, lockCanonicalOpsOwner, subscribeCanonicalOpsOwner, unlockCanonicalOpsOwner, unlockCanonicalOpsLocalOwner, lockCanonicalOpsLocalOwner } from '../../../../../bridges/ops-canonical-owner';
-import { browserRuntimeSession } from '../../../../../bridges/runtime/browser-runtime-session';
+import { browserRuntimeSession } from '../../../../../bridges/runtime/browser/browser-runtime-session';
 import { selectWorkspaceRuntime } from '../runtime/ops-runtime-selection';
 import type { VaultUnlockDurationMs } from '../../../../../packages/browser/src/vault/vault-protection';
 

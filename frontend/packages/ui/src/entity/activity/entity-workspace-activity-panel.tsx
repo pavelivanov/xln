@@ -6,11 +6,11 @@ import type {
   EntityWorkspaceActivityKind,
   EntityWorkspaceActivityMode,
   EntityWorkspaceActivityPageSize,
-} from '../../../../runtime-client/src/entity/entity-workspace-activity';
+} from '../../../../runtime-client/src/entity/workspace/entity-workspace-activity';
 import {
   ENTITY_WORKSPACE_ACTIVITY_PAGE_SIZES,
   requireEntityWorkspaceActivityPageSize,
-} from '../../../../runtime-client/src/entity/entity-workspace-activity';
+} from '../../../../runtime-client/src/entity/workspace/entity-workspace-activity';
 import {
   formatEntityWorkspaceLocalDateTime,
   parseEntityWorkspaceLocalDateTime,
@@ -24,7 +24,7 @@ type EntityWorkspaceActivityPanelProps = Readonly<{
   onClearFilters: () => void;
   onLoadOlder: () => void;
   onRefresh: () => void;
-  onSelectBeforeHeight: (beforeHeight: number | null) => void;
+  onSelectCursor: (cursor: string | null) => void;
   onSelectKind: (kind: EntityWorkspaceActivityKind) => void;
   onSelectMode: (mode: EntityWorkspaceActivityMode) => void;
   onSelectNewerPage: () => void;
@@ -57,7 +57,7 @@ const ACTIVITY_TYPE_OPTIONS = [
   label: string;
 }>>;
 
-export function EntityWorkspaceActivityPanel({ activity, onApplyTimeframe, onClearFilters, onLoadOlder, onRefresh, onSelectBeforeHeight, onSelectKind, onSelectMode, onSelectNewerPage, onSelectPageSize, onSelectSearch, onToggleType }: EntityWorkspaceActivityPanelProps) {
+export function EntityWorkspaceActivityPanel({ activity, onApplyTimeframe, onClearFilters, onLoadOlder, onRefresh, onSelectCursor, onSelectKind, onSelectMode, onSelectNewerPage, onSelectPageSize, onSelectSearch, onToggleType }: EntityWorkspaceActivityPanelProps) {
   const selectedQuery = activity.status === 'selected' ? activity.query : '';
   const selectedEntityId = activity.status === 'selected' ? activity.entityId : '';
   const [draftQuery, setDraftQuery] = useState(selectedQuery);
@@ -228,7 +228,7 @@ export function EntityWorkspaceActivityPanel({ activity, onApplyTimeframe, onCle
               <button
                 data-testid="entity-activity-latest"
                 disabled={activity.isLatestPage}
-                onClick={() => onSelectBeforeHeight(null)}
+                onClick={() => onSelectCursor(null)}
                 type="button"
               >Latest</button>
               <button
@@ -242,16 +242,16 @@ export function EntityWorkspaceActivityPanel({ activity, onApplyTimeframe, onCle
         {activity.mode === 'infinite'
           ? <button
               data-testid="entity-activity-load-older"
-              disabled={activity.nextBeforeHeight === null}
+              disabled={activity.nextCursor === null}
               onClick={onLoadOlder}
               type="button"
-            >{activity.nextBeforeHeight === null ? 'Origin reached' : `Load older from h${activity.nextBeforeHeight}`}</button>
+            >{activity.nextCursor === null ? 'Origin reached' : 'Load older'}</button>
           : <button
               data-testid="entity-activity-earlier"
-              disabled={activity.nextBeforeHeight === null}
-              onClick={() => onSelectBeforeHeight(activity.nextBeforeHeight)}
+              disabled={activity.nextCursor === null}
+              onClick={() => onSelectCursor(activity.nextCursor)}
               type="button"
-            >{activity.nextBeforeHeight === null ? 'Origin reached' : `Earlier at h${activity.nextBeforeHeight}`}</button>}
+            >{activity.nextCursor === null ? 'Origin reached' : 'Earlier'}</button>}
       </footer>
     </section>
   );

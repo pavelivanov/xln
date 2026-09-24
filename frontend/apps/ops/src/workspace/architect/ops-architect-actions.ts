@@ -1,13 +1,13 @@
 import type { JReplica, RuntimeAdapter, RuntimeInput, RuntimeReplica, XLNModule } from '@xln/core/api/public/runtime-module';
 import { computeAddress, hexlify } from 'ethers';
 
-import { readBrowserRuntimeEnvironment } from '../../../../../bridges/runtime/browser-runtime-context';
+import { readBrowserRuntimeEnvironment } from '../../../../../bridges/runtime/browser/browser-runtime-context';
 import {
   buildJMachineImportRuntimeInput,
   buildPersistedJMachineConfig,
   normalizeJMachineCreateDetail,
   type JMachineCreateDetail,
-} from '../../../../../bridges/runtime/import-jmachine-runtime';
+} from '../../../../../bridges/runtime/remote/import-jmachine-runtime';
 import { jmachineOperations } from '../../../../../packages/browser/src/jurisdiction/jmachine-store';
 import {
   OPS_DEMO_ENTITY_COUNT,

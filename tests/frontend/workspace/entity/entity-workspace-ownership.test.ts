@@ -3,10 +3,10 @@ import { describe, expect, test } from 'bun:test';
 import {
   emptyEntityWorkspaceOwnership,
   projectEntityWorkspaceOwnership,
-} from '../../../../frontend/packages/runtime-client/src/entity/entity-workspace-ownership';
+} from '../../../../frontend/packages/runtime-client/src/entity/workspace/entity-workspace-ownership';
 import {
   projectEntityWorkspaceContext,
-} from '../../../../frontend/packages/runtime-client/src/entity/entity-workspace-context';
+} from '../../../../frontend/packages/runtime-client/src/entity/workspace/entity-workspace-context';
 
 const FRAME = {
   height: 42,

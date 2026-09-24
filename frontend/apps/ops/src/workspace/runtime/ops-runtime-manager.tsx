@@ -1,6 +1,6 @@
 import { useState, useSyncExternalStore } from 'react';
 import { describeRemoteRuntimeImportError, normalizeRemoteRuntimeWsUrl, parseRemoteRuntimeImportText, readStoredRemoteRuntimeImports, type RemoteRuntimeImportEntry } from '../../../../../packages/browser/src/runtime/session/remote-runtime-import';
-import { importRemoteRuntimeEntries } from '../../../../../bridges/runtime/remote-runtime-import-flow';
+import { importRemoteRuntimeEntries } from '../../../../../bridges/runtime/remote/remote-runtime-import-flow';
 import { opsEntityWorkspaceSource } from '../../entity-workspace/ops-entity-workspace-runtime';
 import { selectWorkspaceRuntime } from './ops-runtime-selection';
 import { useWorkspaceTranslation } from '../../../../../bridges/workspace-localization-react';

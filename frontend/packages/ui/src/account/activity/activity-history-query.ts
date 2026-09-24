@@ -13,7 +13,7 @@ export type ActivityHistoryQueryInput = {
   selectedTypes: string[];
   search: string;
   mode: 'paged' | 'infinite' | 'timeframe';
-  beforeHeight: number | null;
+  cursor: string | null;
   fromTimestamp?: number | undefined;
   toTimestamp?: number | undefined;
 };
@@ -63,7 +63,7 @@ export const buildActivityHistoryReadQuery = (input: ActivityHistoryQueryInput):
   if (input.selectedTypes.length > 0) query.types = input.selectedTypes;
   const trimmedSearch = input.search.trim();
   if (trimmedSearch) query.q = trimmedSearch;
-  if (input.beforeHeight !== null) query.beforeHeight = input.beforeHeight;
+  if (input.cursor !== null) query.cursor = input.cursor;
   if (input.mode === 'timeframe') {
     if (input.fromTimestamp !== undefined) query.fromTimestamp = input.fromTimestamp;
     if (input.toTimestamp !== undefined) query.toTimestamp = input.toTimestamp;
@@ -123,11 +123,8 @@ export const normalizeActivityHistoryPage = (
     returned: Math.max(0, finiteFloor(raw.returned, events.length)),
     limit: Math.max(1, finiteFloor(raw.limit, finiteFloor(query.limit, 100))),
     scanLimit: Math.max(1, finiteFloor(raw.scanLimit, finiteFloor(query.scanLimit, 100))),
-    nextBeforeHeight: raw.nextBeforeHeight === null
-      ? null
-      : Number.isFinite(raw.nextBeforeHeight)
-        ? Math.max(1, finiteFloor(raw.nextBeforeHeight, 1))
-        : null,
+    cursor: typeof raw.cursor === 'string' && raw.cursor ? raw.cursor : null,
+    nextCursor: typeof raw.nextCursor === 'string' && raw.nextCursor ? raw.nextCursor : null,
     filters: raw.filters ?? activityFiltersFromQuery(query),
     events,
     ...(raw.partial === true || failures.length > 0 ? { partial: true } : {}),

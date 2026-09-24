@@ -94,7 +94,7 @@ export class WalletHubDiscoverySource {
   private readonly readContext = async (targetId = ''): Promise<WalletAccountOpenRead> => {
     this.requireCurrent();
     const [bridge, frame] = await Promise.all([
-      import('../../../../bridges/wallet/wallet-canonical-hub-discovery'),
+      import('../../../../bridges/wallet/canonical/wallet-canonical-hub-discovery'),
       createWalletRuntimeQueryClient(this.adapter).readViewFrame({ entityId: this.entityId, accountsLimit: 200, booksLimit: 1,
         ...(isFullEntityId(targetId) ? { accountId: targetId } : {}),
       }),

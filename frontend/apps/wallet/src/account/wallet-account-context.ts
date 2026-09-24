@@ -1,5 +1,5 @@
 import { useEffect, useState, useSyncExternalStore } from 'react';
-import type { WalletAccountContext } from '../../../../bridges/wallet/wallet-canonical-account-context';
+import type { WalletAccountContext } from '../../../../bridges/wallet/canonical/wallet-canonical-account-context';
 import { RuntimeQueryObserver, type RuntimeQuerySnapshot } from '../../../../packages/runtime-client/src/runtime/query/runtime-query-observer';
 import { createWalletRuntimeQueryClient } from '../runtime/wallet-runtime-read-boundary';
 import type { WalletPaymentSource } from '../payments/wallet-payment-source';
@@ -29,7 +29,7 @@ class AccountContextSource {
         const next = await client.readViewFrame({ ...query, accountsCursor: cursor });
         frame = appendAccountDropdownPage(frame, next);
       }
-      const bridge = await import('../../../../bridges/wallet/wallet-canonical-account-context');
+      const bridge = await import('../../../../bridges/wallet/canonical/wallet-canonical-account-context');
       if (adapter.runtimeId !== runtimeId) throw new Error('ACCOUNT_CONTEXT_RUNTIME_CHANGED');
       return bridge.readCanonicalAccountContext(adapter, this.entityId, frame);
     };

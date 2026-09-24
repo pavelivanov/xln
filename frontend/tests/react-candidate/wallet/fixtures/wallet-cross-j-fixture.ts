@@ -8,12 +8,13 @@ import { createHubDirectRuntimeRoute } from '../../../../../core/orchestrator/hu
 
 import { buildWalletFixtureHubTxs, buildWalletFixtureProfileTx } from './wallet-runtime-fixture-topology';
 import { waitForWalletFixtureState } from './wallet-recovery-fixture';
+import { WALLET_CROSS_HUB_FIXTURE_MNEMONIC } from './wallet-fixture-identities';
 
 type Commit = (input: Parameters<typeof runtime.enqueueRuntimeInput>[1]) => Promise<void>;
 type P2P = NonNullable<ReturnType<typeof runtime.startP2P>>;
 type Jurisdiction = NonNullable<ConsensusConfig['jurisdiction']>;
 
-const hubSeed = 'abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about';
+const hubSeed = WALLET_CROSS_HUB_FIXTURE_MNEMONIC;
 
 const waitForProfiles = async (env: RuntimeReplica, entityIds: readonly string[]): Promise<void> => {
   const deadline = Date.now() + 20_000;
@@ -70,6 +71,9 @@ export async function createWalletCrossJFixture(
   hubEnv.quietRuntimeLogs = true;
   runtime.startRuntimeLoop(hubEnv);
   const sourceHubSignerId = String(hubEnv.runtimeId || '').toLowerCase();
+  if (sourceHubSignerId === String(env.runtimeId || '').toLowerCase()) {
+    throw new Error(`WALLET_CROSS_RUNTIME_ID_COLLISION:${sourceHubSignerId}`);
+  }
   const targetHubSignerId = deriveSignerAddressSync(hubSeed, '2').toLowerCase();
   const targetSignerId = deriveSignerAddressSync(seed, '700').toLowerCase();
   registerSignerKey(hubEnv, targetHubSignerId, deriveSignerKeySync(hubSeed, '2'));

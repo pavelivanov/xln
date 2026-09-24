@@ -1,6 +1,6 @@
 import { expect, test } from 'bun:test';
 import type { RuntimeAdapterViewFrame } from '../../../core/api/public/runtime-module';
-import { buildFormationRuntimeViewProjection } from '../../../frontend/bridges/wallet/formation-runtime-projection';
+import { buildFormationRuntimeViewProjection } from '../../../frontend/bridges/wallet/formation/formation-runtime-projection';
 
 const id = (byte: string) => `0x${byte.repeat(64)}`;
 const jurisdiction = {

@@ -4,7 +4,7 @@ import {
   type HealthMachine,
   type HealthPayload,
   type JurisdictionsPayload,
-} from './vault-recovery';
+} from './recovery/vault-recovery';
 
 const isJurisdictionsPayload = (value: unknown): value is JurisdictionsPayload =>
   isUnknownRecord(value) && isUnknownRecord(value['jurisdictions']) &&

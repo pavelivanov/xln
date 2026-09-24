@@ -1,4 +1,4 @@
-import type { RecoveryTowerConfig, Runtime } from '../vault/vault-recovery';
+import type { RecoveryTowerConfig, Runtime } from '../vault/recovery/vault-recovery';
 
 import type {
   RecoveryCoverageStatus,

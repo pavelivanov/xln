@@ -8,7 +8,7 @@ import {
   createMempoolIndicator,
   positionEntityLabel,
   positionMempoolIndicator,
-} from '../../../../frontend/packages/ui/src/graph/graph3d-entity-visuals';
+} from '../../../../frontend/packages/ui/src/graph/three/visuals/graph3d-entity-visuals';
 
 const withCanvasDocument = <T>(run: () => T): T => {
   const descriptor = Object.getOwnPropertyDescriptor(globalThis, 'document');
@@ -114,9 +114,9 @@ describe('Graph3D shared entity visuals', () => {
   }));
 
   test('moves entity construction out of the retained visual factory', () => {
-    const shared = readFileSync('frontend/packages/ui/src/graph/graph3d-entity-visuals.ts', 'utf8');
-    const retained = readFileSync('frontend/packages/ui/src/graph/graph3d-visuals.ts', 'utf8');
-    const panel = readFileSync('frontend/src/lib/view/panels/graph3d/Graph3DPanel.svelte', 'utf8');
+    const shared = readFileSync('frontend/packages/ui/src/graph/three/visuals/graph3d-entity-visuals.ts', 'utf8');
+    const retained = readFileSync('frontend/packages/ui/src/graph/three/visuals/graph3d-visuals.ts', 'utf8');
+    const panel = readFileSync('frontend/apps/ops/src/workspace/graph/ops-graph-world.ts', 'utf8');
 
     for (const symbol of [
       'positionEntityLabel',
@@ -128,6 +128,6 @@ describe('Graph3D shared entity visuals', () => {
       expect(shared).toContain(`export function ${symbol}`);
       expect(retained).not.toContain(`export function ${symbol}`);
     }
-    expect(panel).toContain('packages/ui/src/graph/graph3d-entity-visuals');
+    expect(panel).toContain('packages/ui/src/graph/three/visuals/graph3d-entity-visuals');
   });
 });

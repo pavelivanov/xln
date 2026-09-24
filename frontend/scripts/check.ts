@@ -30,7 +30,7 @@ export const createCheckCommands = (request: CheckRequest): readonly CommandSpec
               'test',
               'tests/frontend/tooling/frontend-route-ownership.test.ts',
               'tests/frontend/tooling/build/frontend-candidate-assembly.test.ts',
-              'tests/frontend/tooling/frontend-platform-inventory.test.ts',
+              'tests/frontend/tooling/audit/frontend-platform-inventory.test.ts',
               'tests/frontend/tooling/frontend-shared-boundaries.test.ts',
             ],
     });

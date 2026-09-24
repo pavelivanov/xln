@@ -34,7 +34,7 @@ import {
   xlnInstance,
 } from '../runtime/xln-store';
 
-import { settings } from '../../packages/browser/src/settings-store';
+import { settings } from '../../packages/browser/src/preferences/settings-store';
 
 import { toasts } from '../../packages/browser/src/workspace/toast-store';
 
@@ -124,7 +124,7 @@ import {
   type RuntimeRecoveryTowerFailureSummary,
   type RuntimeRecoveryTowerReceiptSummary,
   type Signer,
-} from './vault-recovery';
+} from './recovery/vault-recovery';
 import { buildDelayedLastResortAppointmentsForTower } from './vault-watchtower';
 import {
   activeSigner,
@@ -171,7 +171,7 @@ export type {
   RuntimeRecoveryTowerReceiptSummary,
   RuntimesState,
   Signer,
-} from './vault-recovery';
+} from './recovery/vault-recovery';
 
 export {
   buildRuntimeRecoveryConfigForMode,
@@ -184,7 +184,7 @@ export {
   shouldSkipRuntimeRecoveryUploadAtHeight,
   summarizeRuntimeRecoveryTowerFailure,
   summarizeRuntimeRecoveryTowerReceipt,
-} from './vault-recovery';
+} from './recovery/vault-recovery';
 
 export {
   activeRuntime,
@@ -2384,7 +2384,7 @@ export const vaultOperations = {
       xln.registerSignerKey(runtime.seed, address, privateKeyBytes);
 
       // Now create entity (key is registered, signing will work)
-      const { autoCreateEntityForSigner } = await import('../wallet/entity-factory');
+      const { autoCreateEntityForSigner } = await import('../wallet/entity/entity-factory');
       const runtimeEntry = get(runtimes).get(runtime.id);
       const runtimeEnv = runtimeEntry?.env ? (unwrapLiveRuntimeEnv(runtimeEntry.env) ?? runtimeEntry.env) : null;
       if (!runtimeEnv) {

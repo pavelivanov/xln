@@ -18,8 +18,8 @@ import {
   type EntityWorkspaceActivityMode,
   type EntityWorkspaceActivityPageSize,
   type EntityWorkspaceActivityQueryOptions,
-} from '../../../../packages/runtime-client/src/entity/entity-workspace-activity';
-import { createEntityWorkspaceLiveState } from '../../../../packages/runtime-client/src/entity/entity-workspace-time-machine';
+} from '../../../../packages/runtime-client/src/entity/workspace/entity-workspace-activity';
+import { createEntityWorkspaceLiveState } from '../../../../packages/runtime-client/src/entity/workspace/entity-workspace-time-machine';
 import type { EntityWorkspaceProfileDraft } from '../../../../packages/runtime-client/src/entity/profile/entity-workspace-profile-update';
 import { OpsEntityWorkspaceActivityController } from './ops-entity-workspace-activity-controller';
 import { OpsEntityWorkspaceHistoryController } from './ops-entity-workspace-history-controller';
@@ -82,7 +82,7 @@ export const openOpsEntityRuntimeReadSession = async (
   snapshot: RuntimeAdapterStorageSnapshot,
 ): Promise<RuntimeReadSession> => {
   if (snapshot.mode === 'embedded') {
-    const { startBrowserRuntime } = await import('../../../../bridges/runtime/browser-runtime-session');
+    const { startBrowserRuntime } = await import('../../../../bridges/runtime/browser/browser-runtime-session');
     return { adapter: await startBrowserRuntime(), release: () => {} };
   }
   const config = requireOpsEntityRemoteSession(snapshot);
@@ -141,10 +141,10 @@ export class OpsEntityWorkspaceSource {
   ) {
     this.snapshot = initialOpsEntityWorkspaceSnapshot(config);
     this.historyController = new OpsEntityWorkspaceHistoryController({
-      cancelActivityAppend: (beforeHeight) => this.activityController.cancelAppend(beforeHeight),
+      cancelActivityAppend: (cursor) => this.activityController.cancelAppend(cursor),
       publish: (snapshot) => this.publish(snapshot),
-      completeActivityAppend: (beforeHeight) => this.activityController.completeAppend(beforeHeight),
-      readActivityAppendBeforeHeight: () => this.activityController.readAppendBeforeHeight(),
+      completeActivityAppend: (cursor) => this.activityController.completeAppend(cursor),
+      readActivityAppendCursor: () => this.activityController.readAppendCursor(),
       readActivityOptions: () => this.activityController.readQueryOptions(),
       readAccountsPage: () => this.accountsPage,
       readAdapter: () => this.session?.adapter ?? null,
@@ -187,7 +187,7 @@ export class OpsEntityWorkspaceSource {
     const latestHeight = recording.history.reduce((height, frame) => Math.max(height, frame.state.height), Math.max(recording.height, this.session?.adapter.currentHeight ?? 0));
     const timeMachine = { mode: 'history' as const, latestHeight, selectedHeight: recording.height, loading: false, error: null };
     try {
-      const append = this.activityController.readAppendBeforeHeight();
+      const append = this.activityController.readAppendCursor();
       const options = this.activityController.readQueryOptions();
       let projection: OpsEntityWorkspaceProjection;
       if (recording.kind === 'adapter') {
@@ -304,8 +304,8 @@ export class OpsEntityWorkspaceSource {
     }
   };
 
-  readonly selectActivityPage = (beforeHeight: number | null): void => {
-    this.activityController.select(this.snapshot.activity, beforeHeight);
+  readonly selectActivityPage = (cursor: string | null): void => {
+    this.activityController.select(this.snapshot.activity, cursor);
   };
 
   readonly loadOlderActivity = (): void => {
@@ -394,14 +394,14 @@ export class OpsEntityWorkspaceSource {
           booksLimit: 1,
         });
         const activityOptions = this.activityController.readQueryOptions();
-        const appendBeforeHeight = this.activityController.readAppendBeforeHeight();
+        const appendCursor = this.activityController.readAppendCursor();
         return readEntityWorkspaceProjection(
           client,
           adapter.runtimeId,
           frame,
           activityOptions,
           this.snapshot.activity,
-          appendBeforeHeight !== null && activityOptions.beforeHeight === appendBeforeHeight,
+          appendCursor !== null && activityOptions.cursor === appendCursor,
         );
       },
       {
@@ -439,13 +439,13 @@ export class OpsEntityWorkspaceSource {
       observer.getSnapshot(),
       createEntityWorkspaceLiveState(adapter.currentHeight),
     );
-    const appendBeforeHeight = this.activityController.readAppendBeforeHeight();
-    if (next.readState.status === 'error' && appendBeforeHeight !== null) {
-      this.activityController.cancelAppend(appendBeforeHeight);
-    } else if (next.readState.status === 'ready' && next.activity.status === 'selected'
+    const appendCursor = this.activityController.readAppendCursor();
+    if (next.readState.status === 'error' && appendCursor !== null) {
+      this.activityController.cancelAppend(appendCursor);
+    } else if (appendCursor !== null && next.readState.status === 'ready' && next.activity.status === 'selected'
       && next.activity.mode === 'infinite' && next.activity.loadedPages > 1
-      && next.activity.requestedBeforeHeight === appendBeforeHeight) {
-      this.activityController.completeAppend(next.activity.requestedBeforeHeight);
+      && next.activity.requestedCursor === appendCursor) {
+      this.activityController.completeAppend(appendCursor);
     }
     if (next.readState.status === 'error' && adapter.status === 'error') {
       this.started = false;

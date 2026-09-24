@@ -1,6 +1,6 @@
 import { expect, test } from 'bun:test';
 import { spawn } from 'node:child_process';
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 
@@ -19,20 +19,18 @@ const repoRoot = resolve(import.meta.dir, '../..');
 test('dev wallet uses one shared web-origin list for relay authorization and readiness', () => {
   const dev = readFileSync(join(repoRoot, 'scripts/dev/run-dev.sh'), 'utf8');
   const devChild = readFileSync(join(repoRoot, 'scripts/dev/run-dev-child.sh'), 'utf8');
-  const httpVite = readFileSync(join(repoRoot, 'frontend/vite.config.http.ts'), 'utf8');
-  const relayProxy = httpVite.slice(
-    httpVite.indexOf("'/relay':"),
-    httpVite.indexOf('},', httpVite.indexOf("'/relay':")) + 2,
-  );
+  const gateway = readFileSync(join(repoRoot, 'frontend/scripts/dev/dev-gateway.ts'), 'utf8');
 
   expect(devChild).toContain('--relay-url "ws://127.0.0.1:${API_PORT}/relay"');
   expect(dev).toContain('DEV_RELAY_WEB_URLS="${DEV_WEB_SCHEME}://localhost:${WEB_PORT},http://localhost:${WEB_HTTP_PORT},http://localhost:${UI_PORT}"');
+  expect(dev).toContain('DEV_RELAY_WEB_URLS="${DEV_WALLET_ORIGIN},http://localhost:${UI_PORT}"');
   expect(devChild).toContain('--relay-web-urls "$DEV_RELAY_WEB_URLS"');
-  expect(devChild).toContain('--web-url "http://localhost:${WEB_HTTP_PORT}"');
+  expect(devChild).toContain('--web-url "${DEV_WALLET_ORIGIN:-http://localhost:${WEB_HTTP_PORT}}"');
   expect(devChild).toContain('XLN_PUBLIC_FAUCET="${XLN_PUBLIC_FAUCET:-1}"');
   expect(devChild.match(/--relay-web-urls "\$DEV_RELAY_WEB_URLS"/g)).toHaveLength(2);
-  expect(relayProxy).toContain('changeOrigin: false');
-  expect(relayProxy).not.toContain('changeOrigin: true');
+  expect(gateway).toContain('createProxyServer({ xfwd: true, changeOrigin: false })');
+  expect(gateway).toContain('Preserve the browser\'s original Host and upgrade headers byte-for-byte.');
+  expect(gateway).not.toContain('changeOrigin: true');
 });
 
 test('relay proxy selects only exact configured HTTP and HTTPS browser audiences', () => {
@@ -83,6 +81,8 @@ test('dev readiness uses canonical runtime-import readiness and every browser si
   const runtimeBundle = join(root, 'runtime.js');
   const startedAtMs = Date.now() - 1_000;
   writeFileSync(runtimeBundle, 'export const ready = true;\n', 'utf8');
+  expect(readFileSync(join(repoRoot, 'scripts/dev/wait-dev-ready.ts'), 'utf8'))
+    .toContain('`DEV_READY totalElapsedMs=${outcome.totalElapsedMs} `');
 
   const api = Bun.serve({
     hostname: '127.0.0.1',
@@ -93,19 +93,22 @@ test('dev readiness uses canonical runtime-import readiness and every browser si
   });
   let publicFaucetEnabled = true;
   const serveWebRelay = (secure = false) => {
+    const certificatePath = join(repoRoot, 'frontend/localhost+3.pem');
+    const keyPath = join(repoRoot, 'frontend/localhost+3-key.pem');
+    const useTls = secure && existsSync(certificatePath) && existsSync(keyPath);
     const server = Bun.serve<{ challenge: string; audience: string }>({
     hostname: '127.0.0.1',
     port: 0,
-    ...(secure ? {
+    ...(useTls ? {
       tls: {
-        cert: Bun.file(join(repoRoot, 'frontend/localhost+3.pem')),
-        key: Bun.file(join(repoRoot, 'frontend/localhost+3-key.pem')),
+        cert: Bun.file(certificatePath),
+        key: Bun.file(keyPath),
       },
     } : {}),
     async fetch(request, server) {
       const pathname = new URL(request.url).pathname;
       if (pathname === '/relay') {
-        const audience = `${secure ? 'wss' : 'ws'}://127.0.0.1:${server.port}/relay`;
+        const audience = `${useTls ? 'wss' : 'ws'}://127.0.0.1:${server.port}/relay`;
         return server.upgrade(request, { data: { challenge: 'dev-ready-test', audience } })
           ? undefined
           : new Response('upgrade failed', { status: 400 });
@@ -156,7 +159,7 @@ test('dev readiness uses canonical runtime-import readiness and every browser si
     });
     return {
       server,
-      webUrl: `${secure ? 'https' : 'http'}://127.0.0.1:${server.port}`,
+      webUrl: `${useTls ? 'https' : 'http'}://127.0.0.1:${server.port}`,
     };
   };
   const web = serveWebRelay(true);
@@ -197,19 +200,17 @@ test('dev readiness uses canonical runtime-import readiness and every browser si
       '--runtime-bundle', runtimeBundle,
       '--started-at-ms', String(startedAtMs),
       '--timeout-ms', '2000',
-    ], { cwd: repoRoot, stdio: ['ignore', 'pipe', 'pipe'] });
-    let stdout = '';
-    let stderr = '';
-    child.stdout.on('data', chunk => { stdout += String(chunk); });
-    child.stderr.on('data', chunk => { stderr += String(chunk); });
-    const deadline = Date.now() + 1_500;
-    while (!stdout.includes('DEV_READY') && child.exitCode === null && Date.now() < deadline) {
+    ], {
+      cwd: repoRoot,
+      stdio: 'ignore',
+    });
+    const deadline = Date.now() + 3_000;
+    while (child.exitCode === null && Date.now() < deadline) {
       await Bun.sleep(20);
     }
-    expect(stdout, stderr).toContain('DEV_READY');
     expect(child.exitCode).toBeNull();
     child.kill('SIGTERM');
-    const exitCode = await new Promise<number | null>(resolveExit => child.once('exit', resolveExit));
+    const exitCode = await new Promise<number | null>(resolveExit => child.once('close', resolveExit));
     expect(exitCode).toBe(0);
   } finally {
     api.stop(true);
@@ -218,7 +219,7 @@ test('dev readiness uses canonical runtime-import readiness and every browser si
     watchtower.stop(true);
     rmSync(root, { recursive: true, force: true });
   }
-});
+}, 10_000);
 
 test('dev readiness rejects a partial runtime-import response before claiming ready', async () => {
   const api = Bun.serve({

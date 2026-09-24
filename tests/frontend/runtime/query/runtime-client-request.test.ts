@@ -114,18 +114,17 @@ describe('runtime-client remote request boundary', () => {
       .toThrow('REMOTE_RUNTIME_ADMIN_CAPABILITY_REQUIRED');
   });
 
-  test('keeps Svelte on thin adapters instead of duplicate request logic', () => {
-    const connection = readFileSync('frontend/src/lib/utils/runtime/runtimeConnection.ts', 'utf8');
+  test('keeps React runtime management on shared request parsing instead of duplicate logic', () => {
+    const manager = readFileSync('frontend/apps/ops/src/workspace/runtime/ops-runtime-manager.tsx', 'utf8');
     const retainedWsUrl = readFileSync('frontend/packages/runtime-client/src/runtime/ws-url.ts', 'utf8');
     const requestBoundary = readFileSync(
       'frontend/packages/runtime-client/src/runtime/remote-runtime-request.ts',
       'utf8',
     );
 
-    expect(connection).toContain("from '../../../../packages/runtime-client/src/runtime/remote-runtime-request'");
-    expect(connection).toContain('decodeRemoteRuntimeRequest(');
-    expect(connection).toContain('removeRemoteRuntimeImportParams(window.location.href)');
-    expect(connection).not.toContain('const RUNTIME_PARAM_KEYS');
+    expect(manager).toContain('parseRemoteRuntimeImportText');
+    expect(manager).toContain('normalizeRemoteRuntimeWsUrl');
+    expect(manager).not.toContain('const RUNTIME_PARAM_KEYS');
     expect(retainedWsUrl).toContain('const normalizeLoopbackHost');
     expect(existsSync('frontend/src/lib/utils/runtime/wsUrl.ts')).toBe(false);
     expect(requestBoundary).toContain("from '../../../../../core/config/remote-runtime'");

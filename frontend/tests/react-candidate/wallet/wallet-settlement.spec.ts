@@ -1,6 +1,13 @@
 import { expect, test } from '@playwright/test';
 import { expectNoBrowserErrors, expectPageContained, observeBrowserErrors, screenshotEvidence } from '../browser-evidence';
-import { readWalletAccountToolState, readWalletFixtureChainBalances as balances, selectWalletFixtureRuntime } from './fixtures/wallet-runtime-test-helpers';
+import {
+  readWalletAccountToolState,
+  seedWalletBatchPreflightDebt,
+  readWalletDebtLedgerState,
+  readWalletFixtureChainBalances as balances,
+  seedWalletRemoteSettlement,
+  selectWalletFixtureRuntime,
+} from './fixtures/wallet-runtime-test-helpers';
 import { finishOpenedWalletSetup, restoreLocalWallet } from './onboarding/wallet-onboarding-test-helpers';
 
 test('wallet funds collateral through reviewed batch broadcast and real chain finality', { tag: '@functional' }, async ({ page }, testInfo) => {
@@ -69,6 +76,39 @@ test('wallet funds collateral through reviewed batch broadcast and real chain fi
   expectNoBrowserErrors(errors);
 });
 
+test('wallet preflight blocks a reviewed batch made unsafe by new committed debt', { tag: '@functional' }, async ({ page }, testInfo) => {
+  test.setTimeout(120_000);
+  const errors = observeBrowserErrors(page);
+  const fixture = await selectWalletFixtureRuntime(page);
+  const ledger = await readWalletDebtLedgerState(page, fixture.entityId);
+  const debt = ledger.debts.reduce((total, entry) => total + BigInt(entry.remainingAmount), 0n);
+  const queuedAmount = BigInt(ledger.reserve) - debt - 1_000_000n;
+  expect(queuedAmount).toBeGreaterThan(25_000_000n);
+
+  await page.goto('/app?payments=1&paymentTool=operations');
+  await expect(page.getByRole('heading', { name: 'Account operations' })).toBeVisible({ timeout: 90_000 });
+  await page.getByLabel('Entity', { exact: true }).selectOption(fixture.entityId);
+  await page.getByRole('combobox', { name: 'Recipient', exact: true }).selectOption(fixture.counterpartyEntityId);
+  await page.getByRole('textbox', { name: 'Amount', exact: true }).fill(String(queuedAmount / 1_000_000n));
+  await page.getByRole('button', { name: 'Queue reserve transfer' }).click();
+  const batch = page.getByRole('region', { name: 'Jurisdiction batch' });
+  await expect(batch.getByRole('heading', { name: 'Draft · 1 operations' })).toBeVisible({ timeout: 30_000 });
+  await expect(batch.getByRole('button', { name: 'Broadcast draft' })).toBeEnabled();
+
+  await seedWalletBatchPreflightDebt(page, fixture.entityId, fixture.counterpartyEntityId, 25_000_000n);
+  await expect(batch.getByRole('alert').filter({ hasText: 'Batch will revert: Reserve → Reserve' }))
+    .toBeVisible({ timeout: 30_000 });
+  await expect(batch.getByRole('button', { name: 'Broadcast draft' })).toBeDisabled();
+  await expectPageContained(page);
+  await screenshotEvidence(page, testInfo, 'wallet-batch-authoritative-preflight-blocked');
+
+  await batch.getByRole('button', { name: 'Review clear' }).click();
+  await batch.getByRole('region', { name: 'Confirm clear batch' })
+    .getByRole('button', { name: 'Clear exact batch' }).click();
+  await expect(batch.getByText('No queued operations.')).toBeVisible({ timeout: 30_000 });
+  expectNoBrowserErrors(errors);
+});
+
 test('wallet clears only after confirmation and leaves chain balances unchanged', { tag: '@functional' }, async ({ page }, testInfo) => {
   test.setTimeout(120_000);
   const errors = observeBrowserErrors(page);
@@ -96,6 +136,88 @@ test('wallet clears only after confirmation and leaves chain balances unchanged'
   expect(await balances(page)).toEqual(before);
   await expectPageContained(page);
   await screenshotEvidence(page, testInfo, 'wallet-batch-cleared');
+  expectNoBrowserErrors(errors);
+});
+
+test('wallet remotely approves the exact peer revision and only its designated executor finalizes it', { tag: '@functional' }, async ({ page }, testInfo) => {
+  test.setTimeout(150_000);
+  const errors = observeBrowserErrors(page);
+  const fixture = await selectWalletFixtureRuntime(page);
+  const slot = testInfo.project.name.replace(/[^a-z0-9-]/giu, '-');
+  const initial = await seedWalletRemoteSettlement(page, slot, 'propose');
+  expect(initial.entityId).toBe(fixture.entityId);
+  expect(initial.counterpartyEntityId).not.toBe(fixture.counterpartyEntityId);
+  expect(initial.executorEntityId).toBe(initial.counterpartyEntityId);
+
+  await page.goto('/app?payments=1&paymentTool=operations');
+  await expect(page.getByRole('heading', { name: 'Account operations' })).toBeVisible({ timeout: 90_000 });
+  await page.getByLabel('Entity', { exact: true }).selectOption(initial.entityId);
+  const proposals = page.getByRole('region', { name: 'Settlement proposals' });
+  const proposal = proposals.locator('.wallet-settlement-proposal').filter({
+    hasText: initial.counterpartyEntityId,
+  });
+  await expect(proposal).toContainText(initial.workspaceHash, { timeout: 30_000 });
+  await expect(proposal).toContainText('Revision 1');
+  await proposal.getByRole('button', { name: 'Review peer approval' }).click();
+  const firstReview = proposals.getByRole('region', { name: 'Approve revision 1' });
+  await expect(firstReview).toContainText(initial.workspaceHash);
+
+  const updated = await seedWalletRemoteSettlement(page, slot, 'update');
+  expect(updated.revision).toBe(2);
+  expect(updated.workspaceHash).not.toBe(initial.workspaceHash);
+  await expect(firstReview).not.toBeVisible({ timeout: 30_000 });
+  await expect(proposal).toContainText(updated.workspaceHash);
+  await expect(proposal).toContainText('Revision 2');
+  const staleState = String((await readWalletAccountToolState(
+    page,
+    initial.entityId,
+    initial.counterpartyEntityId,
+  ))['settlement']);
+  expect(staleState).toContain('awaiting_counterparty');
+  expect(staleState).toContain('"revision":2');
+
+  await proposal.getByRole('button', { name: 'Review peer approval' }).click();
+  const review = proposals.getByRole('region', { name: 'Approve revision 2' });
+  await expect(review).toContainText(updated.workspaceHash);
+  await expect(review).toContainText(`remote-peer-review-${slot}-2`);
+  await expectPageContained(page);
+  await screenshotEvidence(page, testInfo, 'wallet-remote-settlement-approval');
+  await review.getByRole('button', { name: 'Approve exact proposal' }).click();
+
+  await expect(proposal).toContainText('ready to submit', { timeout: 30_000 });
+  await expect(proposal.getByRole('button', { name: 'Awaiting designated executor' })).toBeDisabled();
+  const nonExecutorBatch = page.getByRole('region', { name: 'Jurisdiction batch' });
+  await expect(nonExecutorBatch.locator('summary').filter({ hasText: 'Bilateral settlement' })).toHaveCount(0);
+
+  await page.getByLabel('Entity', { exact: true }).selectOption(updated.executorEntityId);
+  const executorProposal = proposals.locator('.wallet-settlement-proposal').filter({ hasText: updated.entityId });
+  const batch = page.getByRole('region', { name: 'Jurisdiction batch' });
+  await expect(batch.getByRole('heading', { name: 'Draft · 1 operations' })).toBeVisible({ timeout: 30_000 });
+  await expect(executorProposal).toContainText('submitted');
+  await expect(batch.locator('summary')).toContainText('Bilateral settlement');
+  await expectPageContained(page);
+  await screenshotEvidence(page, testInfo, 'wallet-remote-settlement-executor');
+
+  const beforeFinality = await readWalletAccountToolState(
+    page,
+    updated.executorEntityId,
+    updated.entityId,
+  );
+  const nonceBeforeFinality = BigInt(String(
+    (beforeFinality['chainAccount'] as Record<string, unknown>)['nonce'],
+  ));
+  await batch.getByRole('button', { name: 'Broadcast draft' }).click();
+  await expect(batch.getByText('No queued operations.')).toBeVisible({ timeout: 45_000 });
+  await expect(executorProposal).toHaveCount(0, { timeout: 45_000 });
+  await expect.poll(async () => {
+    const current = await readWalletAccountToolState(page, updated.executorEntityId, updated.entityId);
+    const nonce = BigInt(String((current['chainAccount'] as Record<string, unknown>)['nonce']));
+    return nonce > nonceBeforeFinality && current['settlement'] === null;
+  }, { timeout: 45_000 }).toBe(true);
+  await page.getByLabel('Entity', { exact: true }).selectOption(updated.entityId);
+  await expect(proposal).toHaveCount(0);
+  await expectPageContained(page);
+  await screenshotEvidence(page, testInfo, 'wallet-remote-settlement-finality');
   expectNoBrowserErrors(errors);
 });
 

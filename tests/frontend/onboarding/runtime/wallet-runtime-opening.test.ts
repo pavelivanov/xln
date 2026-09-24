@@ -141,7 +141,7 @@ describe('browser wallet Runtime opening', () => {
     }
   });
 
-  test('shares recovery-authorized Runtime opening across canonical Svelte and React adapters', () => {
+  test('shares recovery-authorized Runtime opening across canonical React adapters', () => {
     const boundary = readFileSync(
       'frontend/packages/browser/src/runtime/wallet-runtime-opening.ts',
       'utf8',
@@ -151,11 +151,11 @@ describe('browser wallet Runtime opening', () => {
       'utf8',
     );
     const view = readFileSync(
-      'frontend/src/lib/components/Views/RuntimeCreation.svelte',
+      'frontend/apps/wallet/src/identity/identity-onboarding.tsx',
       'utf8',
     );
     const reactBridge = readFileSync(
-      'frontend/bridges/wallet/wallet-canonical-vault-runtime.ts',
+      'frontend/bridges/wallet/canonical/wallet-canonical-vault-runtime.ts',
       'utf8',
     );
     const reactRuntime = readFileSync(
@@ -163,7 +163,7 @@ describe('browser wallet Runtime opening', () => {
       'utf8',
     );
     const reactBootstrap = readFileSync(
-      'frontend/bridges/runtime/browser-runtime-bootstrap.ts',
+      'frontend/bridges/runtime/browser/browser-runtime-bootstrap.ts',
       'utf8',
     );
     const vaultMetadata = readFileSync('frontend/bridges/vault/vault-metadata-store.ts', 'utf8');
@@ -181,10 +181,10 @@ describe('browser wallet Runtime opening', () => {
     expect(adapter).toContain('vaultOperations.createRuntime(label, seed, options)');
     expect(adapter).toContain('discoverCanonicalWalletRuntimeRecovery');
     expect(adapter).toContain('buildRemoteRuntimeRecoveryPeerSources({ runtimeId: expectedRuntimeId })');
-    expect(view).toContain('discoverCanonicalWalletRuntimeRecovery(seed, runtimeId)');
-    expect(view).toContain('await executeCanonicalWalletRuntimeOpening({');
+    expect(view).toContain('await openWalletRuntimeWithCanonicalVault(request)');
+    expect(view).toContain('await restoreWalletRuntimeFromCanonicalRecovery(');
     expect(view).not.toContain('executeWalletRuntimeOpening({');
-    expect(view).toContain('clearSensitiveWalletMaterial();');
+    expect(view).toContain("verifiedMnemonicRef.current = '';");
     expect(view).not.toContain("openingPlan.action === 'unlock-local'");
     expect(reactBridge.indexOf('await discoverCanonicalWalletRuntimeRecovery('))
       .toBeLessThan(reactBridge.indexOf('await executeCanonicalWalletRuntimeOpening({'));
@@ -198,7 +198,7 @@ describe('browser wallet Runtime opening', () => {
     expect(reactRuntime.indexOf('if (discovery.candidates.length > 0)'))
       .toBeLessThan(reactRuntime.lastIndexOf("return openDiscoveredWalletRuntime(request, discovery, '');"));
     expect(reactBootstrap).toContain('hasPersistedWalletVault(localStorage)');
-    expect(reactBootstrap).toContain("await import('../wallet/wallet-canonical-vault-runtime')");
+    expect(reactBootstrap).toContain("await import('../../wallet/canonical/wallet-canonical-vault-runtime')");
     expect(vaultMetadata).toContain("import { WALLET_VAULT_STORAGE_KEY } from '../../packages/browser/src/wallet/wallet-vault-storage';");
     expect(vaultMetadata).not.toContain("const VAULT_STORAGE_KEY = 'xln-vaults'");
   });

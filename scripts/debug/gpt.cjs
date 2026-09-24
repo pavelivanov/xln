@@ -245,10 +245,10 @@ const CORE_FILES = {
   ],
   swapUi: [
     // Included in default llms.txt because swap UX bugs often come from UI/runtime mismatch
-    'src/lib/components/Entity/swap/SwapPanel.svelte', // Direct same-chain/cross-j swap form and manual route recommendations
-    'src/lib/components/Trading/OrderbookPanel.svelte', // Orderbook stream/render/click behavior
-    'src/lib/components/Entity/routed-swap-planner.ts', // Manual route candidate planner and hop quote estimates
-    'src/lib/components/Entity/payments/LendingPanel.svelte', // Hub lending UI: offer, borrow, repay
+    'apps/wallet/src/markets/wallet-market-pane.tsx', // Direct same-chain swap and orderbook surface
+    'apps/wallet/src/markets/wallet-cross-market-ticket.tsx', // Cross-j swap and explicit safety contract
+    'apps/wallet/src/markets/wallet-market-model.ts', // Market projection and route presentation model
+    'apps/wallet/src/manage/wallet-lending.tsx', // Hub lending UI: offer, borrow, repay
   ],
   tests: [
     // Behavior contracts: if code and prose disagree, these tests show intended user flow
@@ -270,12 +270,12 @@ const CORE_FILES = {
   ],
   frontend: [
     // Optional UI/UX architecture (use --frontend flag)
-    'src/lib/view/README.md',               // View system overview + layout model
-    'src/lib/view/View.svelte',             // Main View orchestrator (Dockview panels)
-    'src/lib/view/core/TimeMachine.svelte', // Time navigation control
-    'src/lib/view/panels/graph3d/Graph3DPanel.svelte', // 3D graph visualization
-    'src/lib/view/panels/ArchitectPanel.svelte', // Architect modes + workflows
-    'src/lib/view/panels/JurisdictionPanel.svelte', // On-chain state viewer
+    'apps/ops/src/workspace/ops-workspace.tsx', // Workspace overview + layout owner
+    'apps/ops/src/workspace/session/ops-workspace-panels.ts', // Canonical panel registry
+    'apps/ops/src/workspace/session/ops-workspace-timeline.tsx', // Time navigation control
+    'apps/ops/src/workspace/graph/ops-graph-panel.tsx', // 3D graph visualization
+    'apps/ops/src/workspace/panels/ops-architect-panel.tsx', // Architect modes + workflows
+    'apps/ops/src/workspace/jurisdiction/ops-jurisdiction-panel.tsx', // On-chain state viewer
     'packages/browser/src/workspace/panel-bridge.ts',    // Panel-to-panel messaging
     'packages/runtime-client/src/scenario/network-machine.ts',  // 3D graph scene orchestration
   ]
@@ -424,17 +424,17 @@ const CROSS_FILES = {
     'security/external-audit-brief.md',
   ],
   swapUi: [
-    'src/lib/components/Entity/swap/SwapPanel.svelte',
-    'src/lib/components/Entity/swap/SwapPanel.css',
-    'src/lib/components/Entity/swap/SwapOrderList.svelte',
-    'src/lib/components/Entity/routed-swap-planner.ts',
+    'apps/wallet/src/markets/wallet-market-pane.tsx',
+    'apps/wallet/src/styles/financial/wallet-markets.css',
+    'apps/wallet/src/markets/wallet-market-activity-view.tsx',
+    'apps/wallet/src/markets/wallet-market-model.ts',
     'packages/ui/src/market/format/swap-formatting.ts',
     'packages/ui/src/market/history/swap-order-history.ts',
     'packages/ui/src/entity/move/move-routes.ts',
-    'src/lib/components/Trading/OrderbookPanel.svelte',
+    'apps/wallet/src/markets/wallet-markets.tsx',
     'packages/browser/src/market/orderbook-relay-url.ts',
     'packages/browser/src/graph/route-preview-store.ts',
-    'src/lib/utils/identity/jurisdictionBadge.ts',
+    'packages/ui/src/jurisdiction-token-registry.ts',
   ],
   tests: [
     'core/__tests__/helpers/cross-j.ts',
@@ -740,7 +740,7 @@ const ORDERBOOK_FILES = {
     'testnet-flow-coverage.md',
   ],
   swapUi: [
-    'src/lib/components/Trading/OrderbookPanel.svelte',
+    'apps/wallet/src/markets/wallet-markets.tsx',
     'packages/browser/src/market/orderbook-relay-url.ts',
   ],
   tests: [
@@ -807,12 +807,12 @@ const SWAP_FILES = {
     'security/dispute-two-arguments-spec.md',
   ],
   swapUi: [
-    'src/lib/components/Entity/swap/SwapPanel.svelte',
-    'src/lib/components/Entity/swap/SwapOrderList.svelte',
-    'src/lib/components/Entity/routed-swap-planner.ts',
+    'apps/wallet/src/markets/wallet-market-pane.tsx',
+    'apps/wallet/src/markets/wallet-market-activity-view.tsx',
+    'apps/wallet/src/markets/wallet-market-model.ts',
     'packages/ui/src/market/format/swap-formatting.ts',
     'packages/ui/src/market/history/swap-order-history.ts',
-    'src/lib/components/Trading/OrderbookPanel.svelte',
+    'apps/wallet/src/markets/wallet-markets.tsx',
     'packages/browser/src/market/orderbook-relay-url.ts',
   ],
   tests: uniqueFiles([
@@ -1283,8 +1283,8 @@ When no direct same-chain or cross-j orderbook exists, the UI may show a manual
 same-chain and direct cross-j swaps are the executable surface for this release.
 
 Relevant files:
-- \`frontend/src/lib/components/Entity/routed-swap-planner.ts\`
-- \`frontend/src/lib/components/Entity/swap/SwapPanel.svelte\`
+- \`frontend/apps/wallet/src/markets/wallet-market-model.ts\`
+- \`frontend/apps/wallet/src/markets/wallet-market-pane.tsx\`
 - \`tests/e2e-cross-j-swap.spec.ts\`
 
 ### Hub lending
@@ -1299,7 +1299,7 @@ Read these together:
 - \`core/types/finance/lending.ts\`
 - \`core/entity/tx/handlers/payments/lending.ts\`
 - \`core/api/server/entities/lending.ts\`
-- \`frontend/src/lib/components/Entity/payments/LendingPanel.svelte\`
+- \`frontend/apps/wallet/src/manage/wallet-lending.tsx\`
 - \`core/__tests__/finance/state/lending.test.ts\`
 - \`tests/e2e/product/e2e-lending.spec.ts\`
 
@@ -1438,10 +1438,10 @@ xln/
     security/external-audit-brief.md    ${fileSizes['docs/security/external-audit-brief.md'] || '?'} lines - External audit brief
 
   frontend swap core/
-    src/lib/components/Entity/swap/SwapPanel.svelte ${fileSizes['frontend/src/lib/components/Entity/swap/SwapPanel.svelte'] || '?'} lines - Swap UI/state machine
-    src/lib/components/Trading/OrderbookPanel.svelte ${fileSizes['frontend/src/lib/components/Trading/OrderbookPanel.svelte'] || '?'} lines - Orderbook stream/render/clicks
-    src/lib/components/Entity/routed-swap-planner.ts ${fileSizes['frontend/src/lib/components/Entity/routed-swap-planner.ts'] || '?'} lines - Manual route recommendation planner
-    src/lib/components/Entity/payments/LendingPanel.svelte ${fileSizes['frontend/src/lib/components/Entity/payments/LendingPanel.svelte'] || '?'} lines - Lending offer/borrow/repay UI
+    apps/wallet/src/markets/wallet-market-pane.tsx ${fileSizes['frontend/apps/wallet/src/markets/wallet-market-pane.tsx'] || '?'} lines - Swap UI/state machine
+    apps/wallet/src/markets/wallet-markets.tsx ${fileSizes['frontend/apps/wallet/src/markets/wallet-markets.tsx'] || '?'} lines - Orderbook stream/render/clicks
+    apps/wallet/src/markets/wallet-market-model.ts ${fileSizes['frontend/apps/wallet/src/markets/wallet-market-model.ts'] || '?'} lines - Market projection and route presentation
+    apps/wallet/src/manage/wallet-lending.tsx ${fileSizes['frontend/apps/wallet/src/manage/wallet-lending.tsx'] || '?'} lines - Lending offer/borrow/repay UI
 
   behavior tests/
     tests/e2e/swap/e2e-swap.spec.ts              ${fileSizes['tests/e2e/swap/e2e-swap.spec.ts'] || '?'} lines - Same-chain swap UX contract
@@ -1451,12 +1451,12 @@ xln/
 
 ${includeFrontend ? `
   frontend/
-    src/lib/view/README.md              ${fileSizes['frontend/src/lib/view/README.md'] || '?'} lines - View system overview
-    src/lib/view/View.svelte            ${fileSizes['frontend/src/lib/view/View.svelte'] || '?'} lines - Main View orchestrator
-    src/lib/view/core/TimeMachine.svelte ${fileSizes['frontend/src/lib/view/core/TimeMachine.svelte'] || '?'} lines - Time control
-    src/lib/view/panels/graph3d/Graph3DPanel.svelte ${fileSizes['frontend/src/lib/view/panels/graph3d/Graph3DPanel.svelte'] || '?'} lines - 3D graph panel
-    src/lib/view/panels/ArchitectPanel.svelte ${fileSizes['frontend/src/lib/view/panels/ArchitectPanel.svelte'] || '?'} lines - Architect workflows
-    src/lib/view/panels/JurisdictionPanel.svelte ${fileSizes['frontend/src/lib/view/panels/JurisdictionPanel.svelte'] || '?'} lines - Jurisdiction viewer
+    apps/ops/src/workspace/ops-workspace.tsx ${fileSizes['frontend/apps/ops/src/workspace/ops-workspace.tsx'] || '?'} lines - Workspace overview
+    apps/ops/src/workspace/session/ops-workspace-panels.ts ${fileSizes['frontend/apps/ops/src/workspace/session/ops-workspace-panels.ts'] || '?'} lines - Canonical panel registry
+    apps/ops/src/workspace/session/ops-workspace-timeline.tsx ${fileSizes['frontend/apps/ops/src/workspace/session/ops-workspace-timeline.tsx'] || '?'} lines - Time control
+    apps/ops/src/workspace/graph/ops-graph-panel.tsx ${fileSizes['frontend/apps/ops/src/workspace/graph/ops-graph-panel.tsx'] || '?'} lines - 3D graph panel
+    apps/ops/src/workspace/panels/ops-architect-panel.tsx ${fileSizes['frontend/apps/ops/src/workspace/panels/ops-architect-panel.tsx'] || '?'} lines - Architect workflows
+    apps/ops/src/workspace/jurisdiction/ops-jurisdiction-panel.tsx ${fileSizes['frontend/apps/ops/src/workspace/jurisdiction/ops-jurisdiction-panel.tsx'] || '?'} lines - Jurisdiction viewer
     packages/browser/src/workspace/panel-bridge.ts   ${fileSizes['frontend/packages/browser/src/workspace/panel-bridge.ts'] || '?'} lines - Panel messaging
     packages/runtime-client/src/scenario/network-machine.ts ${fileSizes['frontend/packages/runtime-client/src/scenario/network-machine.ts'] || '?'} lines - 3D graph scene orchestration
 ` : ''}

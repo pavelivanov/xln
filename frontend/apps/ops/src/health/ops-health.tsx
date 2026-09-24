@@ -10,7 +10,7 @@ import {
 } from './ops-health-model';
 import { opsHealthSource } from './ops-health-runtime';
 import { OpsShell } from '../ops-shell';
-import '../styles/ops-health.css';
+import '../styles/health/ops-health.css';
 import { OpsHealthEventsPanel } from './ops-health-events';
 import { useOpsHealthEvents } from './use-ops-health-events';
 import { isCriticalEvent } from '../../../../packages/ui/src/health/runtime-events';

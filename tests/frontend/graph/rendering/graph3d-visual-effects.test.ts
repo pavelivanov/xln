@@ -7,7 +7,7 @@ import {
   createBroadcastRayMesh,
   createBroadcastRippleMesh,
   createDirectionalLightningMesh,
-} from '../../../../frontend/packages/ui/src/graph/graph3d-visual-effects';
+} from '../../../../frontend/packages/ui/src/graph/three/visuals/graph3d-visual-effects';
 
 const connection = () => ({
   line: new THREE.Line(
@@ -66,15 +66,15 @@ describe('Graph3D shared visual effects', () => {
   });
 
   test('moves live effects to shared UI and removes the unused random ripple', () => {
-    const shared = readFileSync('frontend/packages/ui/src/graph/graph3d-visual-effects.ts', 'utf8');
-    const retained = readFileSync('frontend/packages/ui/src/graph/graph3d-visuals.ts', 'utf8');
-    const panel = readFileSync('frontend/src/lib/view/panels/graph3d/Graph3DPanel.svelte', 'utf8');
+    const shared = readFileSync('frontend/packages/ui/src/graph/three/visuals/graph3d-visual-effects.ts', 'utf8');
+    const retained = readFileSync('frontend/packages/ui/src/graph/three/visuals/graph3d-visuals.ts', 'utf8');
+    const panel = readFileSync('frontend/apps/ops/src/workspace/graph/ops-graph-effects.ts', 'utf8');
 
     expect(shared).toContain('export function createDirectionalLightningMesh');
     expect(shared).toContain('export function createBroadcastRippleMesh');
     expect(retained).not.toContain('createDirectionalLightningMesh');
     expect(retained).not.toContain('createBroadcastRippleMesh');
     expect(retained).not.toContain('createGraphRippleMesh');
-    expect(panel).toContain('packages/ui/src/graph/graph3d-visual-effects');
+    expect(panel).toContain('packages/ui/src/graph/three/visuals/graph3d-visual-effects');
   });
 });

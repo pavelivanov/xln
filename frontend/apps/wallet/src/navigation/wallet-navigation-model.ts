@@ -2,7 +2,7 @@ import {
   canonicalizeEntityPanelRoute,
   getLocationHashRoute,
   getLocationParamValue,
-} from '../../../../packages/runtime-client/src/entity/entity-workspace-navigation';
+} from '../../../../packages/runtime-client/src/entity/workspace/entity-workspace-navigation';
 import type { WalletAppView } from '../app-shell-model';
 
 export type WalletPaymentTab = 'send' | 'receive' | 'operations' | 'external';
@@ -24,6 +24,9 @@ export const resolveWalletAppRoute = (search: string, hash = ''): WalletAppRoute
   if (params.get('locktest') === '1' && params.get('scenarioPreview') === '1') return { view: 'scenario-preview' };
   const rawRoute = getLocationHashRoute({ search, hash });
   const settingsEntityId = getLocationParamValue({ search, hash }, ['entity']) ?? '';
+  if (rawRoute === 'pay') {
+    return { view: 'payments', tab: 'send', invoice: '' };
+  }
   if (rawRoute?.startsWith('pay/')) {
     return { view: 'payments', tab: 'send', invoice: `https://xln.finance/app${hash}` };
   }

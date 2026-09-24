@@ -70,10 +70,12 @@ const pageWire = () => ({
 });
 
 describe('swap order history', () => {
-  test('SwapPanel reads history only through the paged Runtime adapter', () => {
-    const source = readFileSync('frontend/src/lib/components/Entity/swap/SwapPanel.svelte', 'utf8');
-    expect(source).toContain('readRuntimeSwapHistory');
-    expect(source).toContain('decodeSwapHistoryPage');
+  test('React market reads history only through the paged Runtime adapter', () => {
+    const source = readFileSync('frontend/apps/wallet/src/markets/wallet-market-source.ts', 'utf8');
+    expect(source).toContain('client.readActivity({');
+    expect(source).toContain('decodeWalletMarketActivity');
+    expect(source).toContain('const activityCursor = this.activityCursors[this.activityPage] ?? null');
+    expect(source).toContain('...(activityCursor ? { cursor: activityCursor } : { beforeHeight: context.payment.height })');
     expect(source).not.toContain('swapOrderHistory');
     expect(source).not.toContain('swapClosedOrders');
   });

@@ -327,9 +327,9 @@ describe('manual J-event ingress source binding', () => {
   }, 120_000);
 
   test('frontend HTTP responses cannot be promoted into local consensus events', () => {
-    const panelSource = readFileSync(join(
+    const faucetSource = readFileSync(join(
       process.cwd(),
-      'frontend/src/lib/components/Entity/workspace/shell/EntityPanelTabs.svelte',
+      'frontend/packages/browser/src/wallet/account-faucet-command.ts',
     ), 'utf8');
     const walletSource = readFileSync(join(
       process.cwd(),
@@ -339,8 +339,8 @@ describe('manual J-event ingress source binding', () => {
       'const response = await fetch(`${apiBase}/api/external-wallet/snapshot`',
     );
     const snapshotSubstituteEnd = walletSource.indexOf('const balanceByToken = new Map(', snapshotSubstituteStart);
-    const faucetStart = panelSource.indexOf('async function faucetReserves(');
-    const faucetEnd = panelSource.indexOf('async function faucetOffchain(', faucetStart);
+    const faucetStart = faucetSource.indexOf('export async function requestAccountFaucet(');
+    const faucetEnd = faucetSource.indexOf('} catch (error)', faucetStart);
     expect(snapshotSubstituteStart).toBeGreaterThan(0);
     expect(snapshotSubstituteEnd).toBeGreaterThan(snapshotSubstituteStart);
     expect(faucetStart).toBeGreaterThan(0);
@@ -348,10 +348,10 @@ describe('manual J-event ingress source binding', () => {
     expect(walletSource.slice(snapshotSubstituteStart, snapshotSubstituteEnd)).not.toContain(
       'applyCanonicalJEventsToActiveEnv',
     );
-    expect(panelSource.slice(faucetStart, faucetEnd)).not.toContain(
+    expect(faucetSource.slice(faucetStart, faucetEnd)).not.toContain(
       'applyCanonicalJEventsToActiveEnv(result.events',
     );
-    expect(panelSource).not.toContain('async function applyCanonicalJEventsToActiveEnv');
+    expect(faucetSource).not.toContain('async function applyCanonicalJEventsToActiveEnv');
     expect(walletSource).not.toContain('async function applyCanonicalJEventsToActiveEnv');
   });
 });

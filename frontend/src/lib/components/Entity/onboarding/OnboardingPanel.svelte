@@ -13,7 +13,7 @@
     parseRuntimeRecoveryCandidateFile,
     type RecoveryTowerConfig,
     type RecoveryTowerSetupMode,
-  } from '../../../../../bridges/vault/vault-recovery';
+  } from '../../../../../bridges/vault/recovery/vault-recovery';
   import { activeRuntime } from '../../../../../bridges/vault/vault-metadata-store';
   import { vaultOperations } from '../../../../../bridges/vault/vault-store';
   import { entityAvatar } from '../../../utils/identity/avatar';
@@ -35,7 +35,7 @@
     normalizeTowerMode,
     resolveOfficialRecoveryTowerUrl,
     type RecoveryServiceMode,
-  } from '../../../../../bridges/vault/recovery-settings';
+  } from '../../../../../bridges/vault/recovery/recovery-settings';
   import {
     clearRuntimeRecoveryDiscoveryStatus,
     formatRuntimeRecoveryDiscoveryFailure,
@@ -47,9 +47,9 @@
     type OnboardingRuntimeProjection,
   } from '../../../../../packages/ui/src/onboarding/onboarding-runtime-input';
   import type { OnboardingTarget } from '../../../../../packages/ui/src/onboarding/onboarding-hub-discovery';
-  import { createOnboardingHubJoinCommands } from '../../../../../bridges/wallet/onboarding-hub-join';
+  import { createOnboardingHubJoinCommands } from '../../../../../bridges/wallet/onboarding/onboarding-hub-join';
   import { finishOnboardingSetup, toUsdInt } from '../../../../../packages/browser/src/onboarding/onboarding-setup';
-  import { hasAnyOnboardingCounterpartyAccount, resolveOnboardingTargets } from '../../../../../bridges/wallet/onboarding-targets';
+  import { hasAnyOnboardingCounterpartyAccount, resolveOnboardingTargets } from '../../../../../bridges/wallet/onboarding/onboarding-targets';
 
   export let entityId: string = '';
   export let runtimeProjection: OnboardingRuntimeProjection = emptyOnboardingRuntimeProjection();

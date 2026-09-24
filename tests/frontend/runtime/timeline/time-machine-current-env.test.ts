@@ -271,150 +271,78 @@ describe('frontend time-machine current env contract', () => {
     expect(readStore(runtimeView).frame).toBeNull();
   });
 
-  test('TimeMachine publishes its selected frame through RuntimeView for browser and remote runtimes', () => {
-    const timeMachine = read('frontend/src/lib/view/core/TimeMachine.svelte');
-    const workspace = read('frontend/src/lib/components/Entity/workspace/EntityWorkspace.svelte');
-    const chrome = read('frontend/src/lib/components/Entity/workspace/EntityPanelChrome.svelte');
-    const xlnStore = read('frontend/bridges/runtime/xln-store.ts');
+  test('React workspace publishes one selected network frame to timeline, graph, and panels', () => {
+    const timeline = read('frontend/apps/ops/src/workspace/session/ops-workspace-timeline.tsx');
+    const environment = read('frontend/apps/ops/src/workspace/session/use-workspace-environment.ts');
+    const graph = read('frontend/apps/ops/src/workspace/graph/ops-graph-panel.tsx');
 
-    expect(timeMachine).toContain('setRuntimeViewAtHeight');
-    expect(timeMachine).toContain('selectedRuntimeViewHeight');
-    expect(timeMachine).toContain('`${$runtimeControllerHandle.id}|${$isLive');
-    expect(workspace).toContain('$runtimeView.atHeight');
-    expect(workspace).toContain('runtimeViewFrameMatchesAtHeight');
-    expect(xlnStore.match(/assertRuntimeViewIsLive\(get\(runtimeView\)\)/g)).toHaveLength(3);
-    expect(xlnStore.match(/assertNetworkMachineIsLive\(get\(networkMachineRuntime\)\)/g)).toHaveLength(3);
-    expect(chrome).not.toContain('Viewing historical state');
-    expect(chrome).not.toContain('history-warning');
+    expect(timeline).toContain('const step = network.selectedStep;');
+    expect(timeline).toContain('selectWorkspaceStep(Number(event.currentTarget.value))');
+    expect(environment).toContain('const selected = network.selectedStep;');
+    expect(environment).toContain('networkMachineRuntimeOperations.readSelectedSnapshot()');
+    expect(graph).toContain('network.selectedStep ? [...network.frames.values()]');
+    expect(graph).toContain('data-selected-step-index={network.selectedStepIndex}');
   });
 
-  test('merged graph scope does not replace wallet time travel controls', () => {
-    const source = read('frontend/src/lib/view/core/TimeMachine.svelte');
-    const dock = read('frontend/src/lib/view/DockRoot.svelte');
-    const wallet = read('frontend/src/lib/view/UserModePanel.svelte');
+  test('React graph and timeline share the same NetworkMachine selection', () => {
+    const workspace = read('frontend/apps/ops/src/workspace/ops-workspace.tsx');
+    const timeline = read('frontend/apps/ops/src/workspace/session/ops-workspace-timeline.tsx');
+    const graph = read('frontend/apps/ops/src/workspace/graph/ops-graph-panel.tsx');
 
-    // The NetworkMachine scrubber belongs to the dock. Keying it off the global app mode
-    // left the embedded workspace (dock rendered while mode is 'user') on the retired
-    // scrubber, which reads permanently empty in-memory history.
-    expect(source).toContain("{#if dockMode && $runtimeGraphScope === 'merged'}");
-    expect(dock).toContain('dockMode');
-    expect(wallet).not.toContain('dockMode\n');
-    expect(source).toContain('data-testid="time-machine-remote-scan"');
-    expect(source).toContain('data-testid="network-machine-mode-toggle"');
+    expect(workspace).toContain('<OpsWorkspaceTimeline />');
+    expect(timeline).toContain('workspaceNetwork');
+    expect(graph).toContain('workspaceNetwork');
+    expect(timeline).toContain('data-testid="workspace-network-timeline"');
+    expect(graph).toContain('data-testid="workspace-graph"');
   });
 
-  test('TimeMachine keeps -1 as the only live cursor sentinel', () => {
-    const source = read('frontend/src/lib/view/core/TimeMachine.svelte');
+  test('NetworkMachine keeps -1 as the only live cursor sentinel', () => {
+    const source = read('frontend/bridges/runtime/network/network-machine-runtime-store.ts');
 
-    expect(source).toContain('const LIVE_TIME_INDEX = -1;');
-    expect(source).toContain('$isLive && $timeIndex !== LIVE_TIME_INDEX');
-    expect(source).toContain('safeSet(timeIndex, LIVE_TIME_INDEX);');
-    expect(source).toContain('!$isLive && $timeIndex === LIVE_TIME_INDEX');
-    expect(source).not.toContain('safeSet(timeIndex, maxTimeIndex)');
-    expect(source).not.toContain('safeSet(timeIndex, $history.length - 1)');
-    expect(source).toContain('safeSet(timeIndex, 0);\n      safeSet(isLive, false);');
+    expect(source).toContain('selectedStepIndex: -1');
+    expect(source).toContain('selectedStep: null');
+    expect(source).toContain('selectedStepIndex: safeIndex');
+    expect(source).not.toContain('selectedStepIndex: machine.steps.length - 1');
   });
 
-  test('remote TimeMachine deeplinks use RuntimeController identity instead of environment inference', () => {
-    const source = read('frontend/src/lib/view/core/TimeMachine.svelte');
+  test('remote timeline loads and trail links use explicit Runtime identity', () => {
+    const source = read('frontend/apps/ops/src/workspace/session/ops-workspace-playback.ts');
 
-    expect(source).toContain("import { runtimeControllerHandle } from '../../../../bridges/runtime/runtime-controller-store';");
-    expect(source).toContain("from '../../../../bridges/runtime/runtime-history-store';");
-    expect(source).toContain('RuntimeAdapterViewFrame');
-    expect(source).toContain('selectedRuntimeHistoryFrame = findRuntimeHistoryFrame($runtimeHistoryFrames');
-    expect(source).toContain('remoteTargetOptions = buildRemoteTargetOptions($runtimeView.frame)');
-    expect(source).toContain('liveFrameSummary = summarizeFrame($runtimeView.frame');
-    expect(source).toContain('$runtimeControllerHandle.id');
-    expect(source).toContain('$runtimeControllerHandle.height');
-    expect(source).toContain('$runtimeControllerHandle.mode');
-    expect(source).toContain('$runtimeControllerHandle.endpoint');
-    expect(source).not.toContain('buildRemoteTargetOptions($env)');
-    expect(source).not.toContain('summarizeFrame($env');
-    expect(source).not.toContain('frameReplicas');
-    expect(source).not.toContain('replicaEntityId');
+    expect(source).toContain('adapterNetworkTimelineSource(adapter.runtimeId, adapter)');
+    expect(source).toContain('step.event.runtimeId === selected.event.runtimeId');
+    expect(source).toContain("const url = new URL('/embed', window.location.origin)");
     expect(source).not.toContain('appRuntimeAdapterMode');
     expect(source).not.toContain('appRuntimeAdapterEndpoint');
-    expect(source).not.toContain('$env?.runtimeId');
-    expect(source).not.toContain('$env.runtimeId');
-    expect(source).not.toContain('$env?.height');
-    expect(source).not.toContain('$env.height');
   });
 
-  test('time store uses -1 for live and never stores max index as live', () => {
-    const source = read('frontend/src/lib/stores/timeStore.ts');
+  test('live Runtime updates cannot replace an explicit historical selection', () => {
+    const source = read('frontend/apps/ops/src/workspace/session/use-workspace-environment.ts');
 
-    expect(source).not.toContain("import { activeEnv } from './runtimeStore';");
-    expect(source).not.toContain('activeEnv');
-    expect(source).not.toContain('visibleReplicas');
-    expect(source).not.toContain('visibleGossip');
-    expect(source).not.toContain('visibleEnvironment');
-    expect(source).not.toContain('eReplicas');
-    expect(source).not.toContain('jReplicas');
-    expect(source).not.toContain('xlnEnvironment');
-    expect(source).toContain('currentTimeIndex: -1');
-    expect(source).toContain('currentTimeIndex: current.isLive ? -1');
-    expect(source).toContain('currentTimeIndex: -1,');
-    expect(source).not.toContain('currentTimeIndex: current.isLive ? maxIndex');
-    expect(source).not.toContain('currentTimeIndex: maxIndex');
+    expect(source).toContain('const selected = network.selectedStep;');
+    expect(source).toContain('selected\n    ? networkMachineRuntimeOperations.readSelectedSnapshot()\n    : local.env');
+    expect(source).toContain('historical: selected !== null');
+    expect(source).toContain('refreshLocal: selected ? undefined : session?.refresh');
   });
 
-  test('View preserves explicit historical cursor while current env keeps updating', () => {
-    const source = read('frontend/src/lib/view/View.svelte');
+  test('demo actions block historical frames and graph remains projection-only', () => {
+    const architect = read('frontend/apps/ops/src/workspace/architect/ops-architect-live-controls.tsx');
+    const panel = read('frontend/apps/ops/src/workspace/panels/ops-architect-panel.tsx');
+    const graph = read('frontend/apps/ops/src/workspace/graph/ops-graph-panel.tsx');
 
-    expect(source).toContain('setLocalHistoryPreservingCursor');
-    expect(source).toContain("import { getEnv, getXLN, history as runtimeHistory, xlnEnvironment, xlnInstance } from '../../../bridges/runtime/xln-store';");
-    expect(source).not.toContain("import { runtimeViewFrameToEnv } from '$lib/utils/runtimeViewEnv';");
-    expect(source).toContain('unsubRuntimeEnv = xlnEnvironment.subscribe');
-    expect(source).not.toContain('unsubActiveRuntimeView = runtimeView.subscribe');
-    expect(source).not.toContain('runtimeViewFrameToEnv(');
-    expect(source).toContain('onRuntimeControllerStatus');
-    expect(source).toContain('refreshSelectedRuntimeView()');
-    expect(source).not.toContain('onRuntimeControllerChange');
-    expect(source).toContain('publishedRuntimeKey !== runtimeKey');
-    expect(source).toContain('if (get(localIsLive))');
-    expect(source).toContain('localTimeIndex.set(-1)');
-    expect(source).not.toContain("import { activeEnv } from '../../../bridges/runtime/runtime-store';");
-    expect(source).not.toContain('$xlnEnvironment');
-    expect(source).not.toContain('unsubActiveRuntimeEnv');
-    expect(source).not.toContain('localIsLive.set(true);\n        localTimeIndex.set(-1);\n        registerEnvChanges(nextEnv);');
-  });
-
-  test('demo actions block historical frames and retired graph actions stay absent', () => {
-    const architect = read('frontend/src/lib/view/panels/ArchitectPanel.svelte');
-    const architectView = read('frontend/packages/runtime-client/src/panels/architect-panel-view.ts');
-    const graph = read('frontend/src/lib/view/panels/graph3d/Graph3DPanel.svelte');
-    const dock = read('frontend/src/lib/view/DockRoot.svelte');
-
-    expect(architect).toContain('function publishCurrentEnv');
-    expect(architect).toContain('$: isLiveActionFrame = Boolean($runtimeFrameIsLive) && $runtimeFrameTimeIndex === -1;');
-    expect(architect).toContain('function requireLiveMode');
-    expect(architect).toContain('getArchitectLiveModeBlockMessage(action)');
-    expect(architectView).toContain('Switch to the current runtime state before acting.');
-    expect(architect).toContain('await ingressRuntimeInput');
-    expect(architect).not.toContain('XLN.enqueueRuntimeInput($runtimeFrameEnv, {');
-    expect(architect).not.toContain('runtimeFrameTimeIndex.set(($runtimeFrameEnv.history?.length || 1) - 1)');
-    expect(architect).not.toContain('runtimeFrameTimeIndex.set(Math.max(0, frames.length - 1))');
-    expect(architect).not.toContain('runtimeFrameIsLive.set(false)');
-
-    expect(graph).not.toContain('export let runtimeFrameIsLive: Writable<boolean>;');
-    expect(graph).not.toContain('function getLiveEnvForAction');
+    expect(architect).toContain('fieldset disabled={context.historical');
+    expect(architect).toContain('Switch to Live Runtime before creating, funding, or transferring.');
+    expect(panel).toContain('disabled={busy || network.loading || context.historical}');
     expect(graph).not.toContain('async function sendPayment()');
-    expect(graph).not.toContain('async function executeSinglePayment');
     expect(graph).not.toContain('async function executeScenario()');
-    expect(graph).toContain('if (timeIndex >= 0) {');
-    expect(graph).toContain('debug.warn(`⚠️ No entity data found at frame ${timeIndex} - clearing network`)');
-    expect(dock).toContain('runtimeFrameIsLive,');
+    expect(graph).toContain('projectRuntimeGraphFrame');
   });
 
-  test('ArchitectPanel resets demo state without reload-page substitute strings', () => {
-    const architect = read('frontend/src/lib/view/panels/ArchitectPanel.svelte');
+  test('React Architect resets its isolated demo without mutating the connected Runtime', () => {
+    const architect = read('frontend/apps/ops/src/workspace/panels/ops-architect-panel.tsx');
 
-    expect(architect).toContain('function clearDemoRuntimeState');
-    expect(architect).toContain('$runtimeFrameEnv.state.eReplicas.clear()');
-    expect(architect).toContain("publishCurrentEnv([])");
-    expect(architect).toContain("Demo reset complete - ready for new topology");
-    expect(architect).not.toContain("Existing economy cleared before topology rebuild");
-    expect(architect).not.toContain('Reset not implemented');
+    expect(architect).toContain('const resetDemo = (): void => {');
+    expect(architect).toContain('networkMachineRuntimeOperations.dispose();');
+    expect(architect).toContain('Isolated demo reset. The connected Runtime was not changed.');
     expect(architect).not.toContain('reload page to reset');
     expect(architect).not.toContain('reload page for now');
   });

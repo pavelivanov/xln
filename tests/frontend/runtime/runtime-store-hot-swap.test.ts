@@ -8,7 +8,7 @@ const collectFrontendSources = (dir: string): string[] => {
     const stat = statSync(path);
     if (stat.isDirectory()) {
       files.push(...collectFrontendSources(path));
-    } else if (/\.(ts|svelte)$/.test(path)) {
+    } else if (/\.(ts|tsx)$/.test(path)) {
       files.push(path);
     }
   }
@@ -31,7 +31,7 @@ test('runtime controller is the single adapter lifecycle owner', () => {
   const controllerSource = readFileSync('frontend/bridges/runtime/runtime-controller-store.ts', 'utf8');
   const handleSource = readFileSync('frontend/packages/runtime-client/src/runtime/runtime-handle.ts', 'utf8');
   const xlnStoreSource = readFileSync('frontend/bridges/runtime/xln-store.ts', 'utf8');
-  const contextSwitcherSource = readFileSync('frontend/src/lib/components/Entity/workspace/shell/ContextSwitcher.svelte', 'utf8');
+  const contextSwitcherSource = readFileSync('frontend/apps/ops/src/workspace/runtime/ops-runtime-selection.ts', 'utf8');
   const runtimeStoreSource = readFileSync('frontend/bridges/runtime/runtime-store.ts', 'utf8');
   const queryClientSource = readFileSync('frontend/bridges/runtime/runtime-query-client.ts', 'utf8');
 
@@ -62,9 +62,9 @@ test('runtime controller is the single adapter lifecycle owner', () => {
   expect(xlnStoreSource).not.toContain('appRuntimeAdapterMode.set');
   expect(xlnStoreSource).not.toContain('appRuntimeAdapterEndpoint.set');
   expect(controllerSource).not.toContain('runtimeAdapterAuthLevel');
-  expect(contextSwitcherSource).toContain("import { runtimeControllerHandle } from '../../../../../../bridges/runtime/runtime-controller-store'");
-  expect(contextSwitcherSource).toContain('$runtimeControllerHandle.runtimeId');
-  expect(contextSwitcherSource).toContain('$runtimeControllerHandle.permissions');
+  expect(contextSwitcherSource).toContain('await opsWorkspaceSession.select');
+  expect(contextSwitcherSource).toContain('writeRemoteRuntimeAdapterSession');
+  expect(contextSwitcherSource).toContain('readRuntimeAdapterStorageSnapshot');
   expect(contextSwitcherSource).not.toContain('appRuntimeAdapterMode');
   expect(contextSwitcherSource).not.toContain('appRuntimeAdapterStatus');
   expect(contextSwitcherSource).not.toContain('appRuntimeAdapterEndpoint');
@@ -206,19 +206,11 @@ test('remote adapter resolver restores active auth from the remote runtime regis
 });
 
 test('direct remote runtime URL reuses saved capability before showing paste prompt', () => {
-  const adapter = readFileSync('frontend/src/lib/utils/runtime/runtimeConnection.ts', 'utf8');
+  const manager = readFileSync('frontend/apps/ops/src/workspace/runtime/ops-runtime-manager.tsx', 'utf8');
   const boundary = readFileSync('frontend/packages/runtime-client/src/runtime/remote-runtime-request.ts', 'utf8');
-  const readStart = adapter.indexOf('export function readRemoteRuntimeRequestFromUrl');
-  const readEnd = adapter.indexOf('export function readRemoteRuntimeImportPayloadFromHash', readStart);
-  expect(readStart).toBeGreaterThan(0);
-  expect(readEnd).toBeGreaterThan(readStart);
-  const readSource = adapter.slice(readStart, readEnd);
-
-  expect(readSource).toContain('REMOTE_RUNTIME_QUERY_BOOTSTRAP_FORBIDDEN');
-  expect(readSource).toContain('window.location.hash');
-  expect(readSource).toContain('stripRemoteRuntimeParamsFromHistory()');
-  expect(readSource).toContain('decodeRemoteRuntimeRequest(');
-  expect(readSource).toContain('resolveStoredAuthKey: resolveStoredRemoteRuntimeAuthKey');
+  expect(manager).toContain('readStoredRemoteRuntimeImports()');
+  expect(manager).toContain('Admin capability token');
+  expect(manager).toContain('parseRemoteRuntimeImportText');
 
   const decodeStart = boundary.indexOf('export const decodeRemoteRuntimeRequest =');
   const decodeEnd = boundary.indexOf('export const runtimeImportPayloadFromParams', decodeStart);
@@ -245,9 +237,9 @@ test('remote projection never materializes fake RuntimeReplica snapshots', () =>
 });
 
 test('remote runtime bulk import validates with bounded parallelism', () => {
-  const source = readFileSync('frontend/bridges/runtime/remote-runtime-import-flow.ts', 'utf8');
-  const appLayoutSource = readFileSync('frontend/src/routes/app/+layout.svelte', 'utf8');
-  expect(existsSync('frontend/src/lib/components/Runtime/RemoteRuntimeManager.svelte')).toBe(true);
+  const source = readFileSync('frontend/bridges/runtime/remote/remote-runtime-import-flow.ts', 'utf8');
+  const manager = readFileSync('frontend/apps/ops/src/workspace/runtime/ops-runtime-manager.tsx', 'utf8');
+  expect(existsSync('frontend/apps/ops/src/workspace/runtime/ops-runtime-manager.tsx')).toBe(true);
   expect(existsSync('frontend/src/routes/radapter/manage/+page.svelte')).toBe(false);
   expect(source).toContain('const REMOTE_RUNTIME_IMPORT_CONCURRENCY = 4');
   expect(source).toContain('export const validateRemoteRuntimeImportEntries = async');
@@ -257,8 +249,8 @@ test('remote runtime bulk import validates with bounded parallelism', () => {
   expect(source).toContain('failedCount: failed.length');
   expect(source).toContain('checked: RemoteRuntimeImportSummaryCheckedRow[]');
   expect(source).toContain('summarizeFailedRemoteRuntimeEntry');
-  expect(appLayoutSource).toContain('importRemoteRuntimesIntoApp');
-  expect(appLayoutSource).toContain('const result = await importRemoteRuntimeEntries(entries)');
+  expect(manager).toContain('const result = await importRemoteRuntimeEntries(entries, { activateFirst: false');
+  expect(manager).toContain('setFailed(result.failed.map(item => item.entry))');
   expect(source).not.toContain('for (const [index, entry] of entries.entries())');
 });
 
@@ -353,20 +345,20 @@ test('remote runtime refresh ignores unchanged ticks and debounces projection re
   expect(scheduleSource).toContain('if (shouldRunAgain) scheduleRuntimeProjectionRefresh();');
 });
 
-test('frontend remote runtime operations use short fail-fast budgets', () => {
+test('frontend remote discovery stays fail-fast while an attached Runtime allows historical reads', () => {
   const xlnStoreSource = readFileSync('frontend/bridges/runtime/xln-store.ts', 'utf8');
-  const runtimeConnectionSource = readFileSync('frontend/src/lib/utils/runtime/runtimeConnection.ts', 'utf8');
-  const importValidationSource = readFileSync('frontend/bridges/runtime/remote-runtime-validation.ts', 'utf8');
+  const importValidationSource = readFileSync('frontend/bridges/runtime/remote/remote-runtime-validation.ts', 'utf8');
 
-  expect(xlnStoreSource).toContain('const FRONTEND_REMOTE_REQUEST_TIMEOUT_MS = 5_000');
+  // Graph-frame materialization may replay persisted state. The attached adapter is shared
+  // by every docked surface, so its budget must cover that read without opening a second socket.
+  expect(xlnStoreSource).toContain('const FRONTEND_REMOTE_REQUEST_TIMEOUT_MS = 30_000');
   expect(xlnStoreSource).toContain('const FRONTEND_REMOTE_RECONNECT_MAX_MS = 2_000');
   expect(xlnStoreSource).toContain('const REMOTE_RUNTIME_PROJECTION_WAIT_TIMEOUT_MS = 5_000');
   expect(xlnStoreSource).toContain('requestTimeoutMs: config.requestTimeoutMs ?? FRONTEND_REMOTE_REQUEST_TIMEOUT_MS');
   expect(xlnStoreSource).toContain('reconnectMaxMs: config.reconnectMaxMs ?? FRONTEND_REMOTE_RECONNECT_MAX_MS');
 
-  expect(runtimeConnectionSource).toContain('const PROJECTION_RUNTIME_CONNECT_TIMEOUT_MS = 6_000');
-  expect(runtimeConnectionSource).toContain('const PROJECTION_RUNTIME_REQUEST_TIMEOUT_MS = 5_000');
-  expect(runtimeConnectionSource).toContain('const PROJECTION_RUNTIME_RECONNECT_MAX_MS = 2_000');
+  expect(importValidationSource).toContain('options.openTimeoutMs ?? 5_000');
+  expect(importValidationSource).toContain('options.requestTimeoutMs ?? 5_000');
   expect(importValidationSource).toContain('requestTimeoutMs: 5_000');
 });
 
@@ -395,8 +387,7 @@ test('localhost debug env surfaces expose RuntimeView with matching live runtime
   const xlnStoreSource = readFileSync('frontend/bridges/runtime/xln-store.ts', 'utf8');
   const embeddedStoreSource = readFileSync('frontend/bridges/runtime/embedded-runtime-store.ts', 'utf8');
   const runtimeLoaderSource = readFileSync('frontend/bridges/runtime/xln-runtime-loader.ts', 'utf8');
-  const viewSource = readFileSync('frontend/src/lib/view/View.svelte', 'utf8');
-  const appTypes = readFileSync('frontend/src/app.d.ts', 'utf8');
+  const debugSurface = readFileSync('frontend/packages/browser/src/runtime/debug-surface.ts', 'utf8');
 
   expect(xlnStoreSource).toContain("import { xlnEnvironment, setXlnEnvironment } from './embedded-runtime-store';");
   expect(embeddedStoreSource).toContain('const viewEnv = createRuntimeViewEnv(runtimeEnv);');
@@ -405,65 +396,19 @@ test('localhost debug env surfaces expose RuntimeView with matching live runtime
   expect(xlnStoreSource).not.toContain('window.__xln_env =');
   expect(runtimeLoaderSource).toContain("registerDebugSurface('instance', () => XLN);");
   expect(runtimeLoaderSource).not.toContain('window.__xln_instance =');
-  expect(appTypes).not.toContain('__xln_env');
-  expect(appTypes).not.toContain('__xln_instance');
-  expect(appTypes).not.toContain('__xlnRuntimeAdapter');
-  expect(viewSource).toContain("import { errorLog } from '../../../packages/browser/src/logging/error-log-store';");
-  expect(viewSource).toContain("errorLog.log('RuntimeView projection failed', 'Runtime View', error)");
-  expect(viewSource).toContain("errorLog.log('Failed to initialize XLN view', 'Runtime View', err)");
-  expect(viewSource).toContain("import { getEnv, getXLN, history as runtimeHistory, xlnEnvironment, xlnInstance } from '../../../bridges/runtime/xln-store'");
-  expect(viewSource).toContain('unsubRuntimeEnv = xlnEnvironment.subscribe');
-  expect(viewSource).not.toContain('console.error');
-  expect(viewSource).not.toContain('console.warn');
-  expect(viewSource).not.toContain('console.info');
-  expect(viewSource).not.toContain("import { runtimeViewFrameToEnv } from '$lib/utils/runtimeViewEnv';");
-  expect(viewSource).not.toContain('runtimeViewFrameToEnv(');
-
-  const publishStart = viewSource.indexOf('const publishLocalEnv =');
-  const publishEnd = viewSource.indexOf('const forceLiveCursor =', publishStart);
-  expect(publishStart).toBeGreaterThan(0);
-  expect(publishEnd).toBeGreaterThan(publishStart);
-  const publishSource = viewSource.slice(publishStart, publishEnd);
-  expect(publishSource).toContain('const viewEnv = runtimeEnv ? createRuntimeViewEnv(runtimeEnv) : null;');
-  expect(publishSource).toContain('localEnvStore.set(viewEnv);');
-  expect(publishSource).toContain('buildCommandPaletteView(viewEnv)');
-  expect(publishSource).toContain('buildCommandPaletteViewFromRuntimeView(get(runtimeView).frame)');
-  expect(publishSource).not.toContain('buildCommandPaletteView(runtimeEnv)');
-  expect(publishSource).toContain('const activeEnv = getEnv();');
-  expect(publishSource).toContain('const liveRuntimeEnv = activeEnv ? (unwrapLiveRuntimeEnv(activeEnv) ?? activeEnv) : null;');
-  expect(publishSource).toContain('const selectedRuntimeId = normalizeRuntimeId(get(activeRuntimeId));');
-  expect(publishSource).toContain('const liveRuntimeMatchesSelection = Boolean(!selectedRuntimeId || (liveRuntimeId && liveRuntimeId === selectedRuntimeId));');
-  expect(publishSource).toContain('if (runtimeEnv && !runtimeEnvMatchesActiveSelection(runtimeEnv))');
-  expect(publishSource).toContain('liveRuntimeEnv?.infrastructure?.p2p');
-  expect(publishSource).toContain('liveRuntimeEnv?.infrastructure?.loopActive');
-  expect(publishSource).toContain('if (projectedRuntimeEnv && !projectedRuntimeMatchesSelection) return null;');
-  expect(publishSource).toContain('projectedRuntimeMatchesSelection ? projectedRuntimeEnv : null');
-  expect(viewSource).toContain('liveEnvResolver={resolveLocalDebugEnv}');
-
-  const debugGetterStart = viewSource.indexOf("registerDebugSurface('liveRuntimeSnapshot'");
-  const debugGetterEnd = viewSource.indexOf("registerDebugSurface('publishLiveRuntimeSnapshot'", debugGetterStart);
-  expect(debugGetterStart).toBeGreaterThan(0);
-  expect(debugGetterEnd).toBeGreaterThan(debugGetterStart);
-  const debugGetterSource = viewSource.slice(debugGetterStart, debugGetterEnd);
-  expect(debugGetterSource).toContain('const runtimeEnv = resolveLocalDebugEnv();');
-  expect(debugGetterSource).toContain('return runtimeEnv ? createDetachedRuntimeViewEnv(runtimeEnv) : null;');
-  expect(debugGetterSource).not.toContain('return get(localEnvStore);');
-  expect(viewSource).toContain("registerDebugSurface('publishLiveRuntimeSnapshot', () => publishLocalEnv");
-  expect(viewSource).not.toContain("Object.defineProperty(window, 'runtimeFrameEnv'");
-  expect(viewSource).not.toContain("Object.defineProperty(window, 'isolatedEnv'");
-  expect(viewSource).toContain('refreshSelectedRuntimeView,');
-  expect(viewSource).toContain('runtimeViewActiveEntityId,');
-  expect(viewSource).toContain("from '../../../bridges/runtime/runtime-view-store'");
-  expect(viewSource).toContain("from '../../../packages/browser/src/runtime/debug-surface'");
-  expect(viewSource).toContain("registerDebugSurface('view', () => get(runtimeView)");
+  expect(debugSurface).toContain("LOCAL_DEBUG_HOSTS = new Set(['localhost', '127.0.0.1', '::1'])");
+  expect(debugSurface).toContain("Object.defineProperty(target, '__xln'");
+  expect(debugSurface).not.toContain('__xln_env');
+  expect(debugSurface).not.toContain('__xln_instance');
+  expect(debugSurface).not.toContain('__xlnRuntimeAdapter');
 });
 
-test('view runtime frame stores expose the canonical live snapshot debug surface', () => {
-  const viewSource = readFileSync('frontend/src/lib/view/View.svelte', 'utf8');
-  expect(viewSource).toContain("registerDebugSurface('liveRuntimeSnapshot'");
-  expect(viewSource).toContain("registerDebugSurface('publishLiveRuntimeSnapshot'");
-  expect(viewSource).not.toContain('window.isolatedEnv');
-  expect(viewSource).not.toContain("Object.defineProperty(window, 'isolatedEnv'");
+test('embedded runtime store exposes only an ownership-safe detached debug snapshot', () => {
+  const source = readFileSync('frontend/bridges/runtime/embedded-runtime-store.ts', 'utf8');
+  expect(source).toContain("registerDebugSurface('env', () => localDebugEnv)");
+  expect(source).toContain('localDebugEnv = createDetachedRuntimeViewEnv(runtimeEnv)');
+  expect(source).not.toContain('window.isolatedEnv');
+  expect(source).not.toContain("Object.defineProperty(window, 'isolatedEnv'");
 });
 
 test('local runtime selection persists embedded mode without deleting saved remote registry', () => {
@@ -664,27 +609,20 @@ test('embedded env initialization publishes active runtime snapshot before app s
   expect(updateSlice).not.toContain('buildRemoteAdapterPlaceholderEnv');
 });
 
-test('app embedded boot restores vault runtimes before default browser runtime initialization', () => {
-  const source = readFileSync('frontend/src/routes/app/+layout.svelte', 'utf8');
-  const boundary = readFileSync('frontend/packages/browser/src/runtime/wallet-boot-lifecycle.ts', 'utf8');
-  const helperStart = source.indexOf('function shouldBootRemoteRuntime()');
-  const bootStart = source.indexOf('async function bootApp()');
-  const mountStart = source.indexOf('onMount(() => {', bootStart);
-  expect(helperStart).toBeGreaterThan(0);
-  expect(bootStart).toBeGreaterThan(helperStart);
-  expect(mountStart).toBeGreaterThan(bootStart);
+test('wallet embedded boot restores the canonical vault before default Runtime initialization', () => {
+  const source = readFileSync('frontend/bridges/runtime/browser/browser-runtime-bootstrap.ts', 'utf8');
+  const session = readFileSync('frontend/bridges/runtime/browser/browser-runtime-session.ts', 'utf8');
+  const persisted = source.indexOf('if (hasPersistedWalletVault(localStorage))');
+  const restore = source.indexOf('await canonical.restoreCanonicalWalletRuntime(setPageUnloadFence)');
+  const defaultBoot = source.indexOf('return bootEmbeddedRuntimeAdapter(await runtimeLoader.load(), setPageUnloadFence)');
 
-  const bootSource = source.slice(bootStart, mountStart);
-  expect(source.slice(helperStart, bootStart)).toContain('isRemoteRuntimeAdapterPreferred(localStorage)');
-  expect(bootSource).toContain('await runWalletBootLifecycle({');
-  expect(bootSource).toContain('isRemoteRuntimePreferred: shouldBootRemoteRuntime');
-  expect(bootSource).toContain('initializeVault: () => vaultOperations.initialize()');
-  expect(bootSource).toContain('initializeRuntime: () => initializeXLN()');
-  expect(bootSource).toContain('readRuntimeMode: () => $runtimeControllerHandle.mode');
-  expect(boundary.indexOf('await dependencies.initializeVault()')).toBeLessThan(
-    boundary.indexOf('await dependencies.initializeRuntime()'),
-  );
-  expect(boundary).toContain("if (!bootingRemoteRuntime && dependencies.readRuntimeMode() !== 'remote')");
+  expect(persisted).toBeGreaterThan(0);
+  expect(restore).toBeGreaterThan(persisted);
+  expect(defaultBoot).toBeGreaterThan(restore);
+  expect(source).toContain('if (restored) return restored;');
+  expect(session).toContain('createWalletEmbeddedRuntimeSession<RuntimeAdapter>({');
+  expect(session).toContain('boot: async () => {');
+  expect(session).toContain('return bootstrap.bootWalletEmbeddedRuntime(setPageUnloadFence);');
 });
 
 test('vault bootstrap commands submit explicit runtime env through command bus helper', () => {
@@ -701,76 +639,40 @@ test('vault bootstrap commands submit explicit runtime env through command bus h
   expect(enqueueSource).not.toContain('xln.startRuntimeLoop(runtimeEnv)');
 });
 
-test('app remote runtime prompt activates through hot boot instead of reload', () => {
-  const source = readFileSync('frontend/src/routes/app/+layout.svelte', 'utf8');
-  const acceptStart = source.indexOf('async function acceptRemoteRuntime');
-  const localStart = source.indexOf('async function useLocalBrowserRuntime');
-  const pageChangeStart = source.indexOf("async function changeRemotePage");
-  expect(acceptStart).toBeGreaterThan(0);
-  expect(localStart).toBeGreaterThan(acceptStart);
-  expect(pageChangeStart).toBeGreaterThan(localStart);
+test('React Ops runtime selection activates in place instead of reloading', () => {
+  const manager = readFileSync('frontend/apps/ops/src/workspace/runtime/ops-runtime-manager.tsx', 'utf8');
+  const selection = readFileSync('frontend/apps/ops/src/workspace/runtime/ops-runtime-selection.ts', 'utf8');
 
-  const acceptSlice = source.slice(acceptStart, localStart);
-  const localSlice = source.slice(localStart, pageChangeStart);
-  expect(acceptSlice).toContain('await walletRuntimeConsent.acceptRemote(');
-  expect(localSlice).toContain('await walletRuntimeConsent.useEmbedded()');
-  expect(source).toContain('activateRuntimeChoice: activateAppAfterRuntimeChoice');
-  expect(acceptSlice).not.toContain('window.location.reload');
-  expect(localSlice).not.toContain('window.location.reload');
-  expect(source).not.toContain('window.location.reload');
-  expect(source).not.toContain('inactive-tab-reload');
-  expect(source).toContain('async function claimActiveTabLockInPlace');
-  expect(source).toContain('data-testid="inactive-tab-acquire"');
-  expect(source).toContain('releaseActiveTabLock = adoptActiveTabLock');
-  expect(source).toContain('?? await initializeActiveTabLock');
+  expect(manager).toContain('await selectWorkspaceRuntime(first);');
+  expect(manager).toContain("void select('embedded')");
+  expect(selection).toContain('pauseWorkspacePlayback();');
+  expect(selection).toContain('networkMachineRuntimeOperations.dispose();');
+  expect(selection).toContain('await opsWorkspaceSession.select(readRuntimeAdapterStorageSnapshot(stores));');
+  expect(`${manager}\n${selection}`).not.toContain('window.location.reload');
 });
 
-test('embedded remote capability never bypasses explicit runtime consent', () => {
-  const appLayout = readFileSync('frontend/src/routes/app/+layout.svelte', 'utf8');
-  const runtimeBootstrap = readFileSync(
-    'frontend/packages/browser/src/runtime/wallet-runtime-bootstrap.ts',
-    'utf8',
-  );
-  const runtimeConnection = readFileSync('frontend/src/lib/utils/runtime/runtimeConnection.ts', 'utf8');
-  expect(appLayout).toContain('requiresRemoteConsent: remoteRuntimeRequiresConsent');
-  expect(runtimeBootstrap).toContain(
-    'if (this.#dependencies.requiresRemoteConsent(input.remoteRequest))',
-  );
-  expect(runtimeBootstrap).toContain(
-    'this.#dependencies.publishPendingConsent(input.remoteRequest)',
-  );
-  expect(runtimeConnection).toContain('export function remoteRuntimeRequiresConsent');
+test('React Ops remote capability validation completes before runtime activation', () => {
+  const manager = readFileSync('frontend/apps/ops/src/workspace/runtime/ops-runtime-manager.tsx', 'utf8');
+  const flow = readFileSync('frontend/bridges/runtime/remote/remote-runtime-import-flow.ts', 'utf8');
+  const validation = manager.indexOf('const result = await importRemoteRuntimeEntries(entries, { activateFirst: false');
+  const selection = manager.indexOf('await selectWorkspaceRuntime(first);', validation);
 
-  const projectionStart = runtimeConnection.indexOf('export async function ensureProjectionRuntimeConnected');
-  const projectionSource = runtimeConnection.slice(projectionStart);
-  expect(projectionSource).toContain('request && remoteRuntimeRequiresConsent(request)');
-  expect(projectionSource).toContain('REMOTE_RUNTIME_CONSENT_REQUIRED');
-  expect(projectionSource.indexOf('remoteRuntimeRequiresConsent(request)')).toBeLessThan(
-    projectionSource.indexOf('persistRemoteRuntimeRequest(request)'),
-  );
-  expect(projectionSource.indexOf('remoteRuntimeRequiresConsent(request)')).toBeLessThan(
-    projectionSource.indexOf('switchAppRuntimeAdapter(config)'),
-  );
+  expect(manager).toContain("if (!token.trim().startsWith('xlnra1.'))");
+  expect(validation).toBeGreaterThan(0);
+  expect(selection).toBeGreaterThan(validation);
+  expect(flow).toContain('const results = await validateRemoteRuntimeImportEntries(entries, {');
+  expect(flow).toContain('if (validated.length === 0)');
 });
 
 test('accepted remote runtime links persist into the shared runtime registry', () => {
-  const source = readFileSync('frontend/src/lib/utils/runtime/runtimeConnection.ts', 'utf8');
-  const persistStart = source.indexOf('export function persistRemoteRuntimeRequest');
-  const acceptStart = source.indexOf('export function hasAcceptedRemoteRuntime');
-  expect(persistStart).toBeGreaterThan(0);
-  expect(acceptStart).toBeGreaterThan(persistStart);
-  const persistSource = source.slice(persistStart, acceptStart);
+  const flow = readFileSync('frontend/bridges/runtime/remote/remote-runtime-import-flow.ts', 'utf8');
+  const selection = readFileSync('frontend/apps/ops/src/workspace/runtime/ops-runtime-selection.ts', 'utf8');
 
-  expect(persistSource).toContain(
-    'writeRemoteRuntimeAdapterSession({ durable: localStorage, session: sessionStorage }, {',
-  );
-  expect(persistSource).toContain('persistRemoteRuntimeImports([{');
-  expect(persistSource).toContain('runtimeId: readRemoteRuntimeTokenAudience(request.authKey) || remoteRuntimeIdForWsUrl(request.wsUrl)');
-  expect(persistSource).toContain("authLevel: 'admin'");
-  expect(persistSource).not.toContain("authLevel: access === 'admin' ? 'admin' : 'inspect'");
-  expect(persistSource).toContain('], { merge: true })');
-  expect(persistSource).toContain('markRemoteRuntimeRequestAccepted(sessionStorage, request)');
-  expect(persistSource).not.toContain("localStorage.setItem('xln-runtime-adapter-key'");
+  expect(flow).toContain('const persisted = runtimeOperations.upsertRemoteRuntimeImports(validated);');
+  expect(flow).toContain('writeRemoteRuntimeAdapterSession({ durable: localStorage, session: sessionStorage }, {');
+  expect(flow).toContain('authKey: entry.token');
+  expect(selection).toContain('writeRemoteRuntimeAdapterSession(stores, { wsUrl: entry.wsUrl, access: entry.access, authKey: entry.token });');
+  expect(`${flow}\n${selection}`).not.toContain("localStorage.setItem('xln-runtime-adapter-key'");
 });
 
 test('direct remote adapter config carries token audience runtime identity', () => {
@@ -786,48 +688,24 @@ test('direct remote adapter config carries token audience runtime identity', () 
 });
 
 test('remote app can page through full hub account and book projections', () => {
-  const layoutSource = readFileSync('frontend/src/routes/app/+layout.svelte', 'utf8');
-  const xlnStoreSource = readFileSync('frontend/bridges/runtime/xln-store.ts', 'utf8');
-  const runtimeViewSource = readFileSync('frontend/bridges/runtime/runtime-view-store.ts', 'utf8');
+  const source = readFileSync('frontend/apps/wallet/src/portfolio/wallet-portfolio-source.ts', 'utf8');
+  const view = readFileSync('frontend/apps/wallet/src/portfolio/wallet-portfolio.tsx', 'utf8');
   const runtimeViewModelSource = readFileSync(
     'frontend/packages/runtime-client/src/runtime/view/runtime-view-model.ts',
     'utf8',
   );
 
-  expect(layoutSource).toContain("import {");
-  expect(layoutSource).toContain("import { runtimeControllerHandle } from '../../../bridges/runtime/runtime-controller-store'");
-  expect(layoutSource).toContain('runtimeViewPageInfo,');
-  expect(layoutSource).toContain('runtimeViewPageNeedsNavigation,');
-  expect(layoutSource).toContain('setRuntimeViewPage,');
-  expect(layoutSource).toContain('$runtimeControllerHandle.mode');
-  expect(layoutSource).toContain('setRuntimeViewPage');
-  expect(layoutSource).toContain('async function changeRemotePage');
-  expect(layoutSource).toContain('setRuntimeViewPage(kind, pageIndex);');
-  expect(layoutSource).toContain('await refreshCurrentRuntimeProjection();');
-  expect(layoutSource).toContain('data-testid="remote-page-notice"');
-  expect(layoutSource).toContain('runtimeViewPageNeedsNavigation($runtimeViewPageInfo)');
-  expect(layoutSource).toContain("aria-label=\"Previous accounts page\"");
-  expect(layoutSource).toContain("aria-label=\"Next books page\"");
-  expect(layoutSource).not.toContain('>Prev</button>');
-  expect(layoutSource).not.toContain('>Next</button>');
-  expect(layoutSource).toContain('disabled={!$runtimeViewPageInfo.accountsHasMore}');
-  expect(layoutSource).toContain('onclick={() => changeRemotePage(\'accounts\', $runtimeViewPageInfo!.accountsPageIndex + 1)}');
-  expect(layoutSource).toContain('onclick={() => changeRemotePage(\'books\', $runtimeViewPageInfo!.booksPageIndex + 1)}');
-  expect(layoutSource).not.toContain('appRuntimeAdapterMode');
-  expect(layoutSource).not.toContain('appRuntimeAdapterPageInfo');
-  expect(layoutSource).not.toContain('setRuntimeAdapterPage');
-
-  expect(runtimeViewSource).toContain('export const setRuntimeViewPage');
-  expect(xlnStoreSource).not.toContain('export const setRuntimeViewPage');
-  expect(xlnStoreSource).not.toContain('appRuntimeAdapterPageInfo');
-  expect(xlnStoreSource).toContain('accountsPage,');
-  expect(xlnStoreSource).toContain('booksPage,');
+  expect(source).toContain('private accountsPage = 0;');
+  expect(source).toContain('readonly selectAccountsPage = (page: number): void => {');
+  expect(source).toContain('accountsLimit: 25, booksLimit: 1, accountsPage: this.accountsPage');
+  expect(view).toContain('selectPage={source.selectAccountsPage}');
+  expect(view).toContain('disabled={projection.accountsPage === 0}');
+  expect(view).toContain('disabled={projection.accountsPage + 1 >= projection.accountsPageCount}');
+  expect(view).toContain('Page {projection.accountsPage + 1} of {projection.accountsPageCount}');
   expect(runtimeViewModelSource).toContain('accountsPageIndex: number');
   expect(runtimeViewModelSource).toContain('accountsPageCount: number');
   expect(runtimeViewModelSource).toContain('accountsHasMore: boolean');
   expect(runtimeViewModelSource).toContain('export const runtimeViewPageNeedsNavigation');
-  expect(runtimeViewSource).toContain("from '../../packages/runtime-client/src/runtime/view/runtime-view-model'");
-  expect(runtimeViewSource).toContain('export const runtimeViewPageInfo');
 });
 
 test('retryable remote adapter refresh errors do not unmount the app shell', () => {
@@ -955,13 +833,12 @@ test('vault initialization preserves active shared runtime selection', () => {
   expect(initSource).not.toContain('this.syncRuntime(runtimeToSync ?? null);');
 });
 
-test('frontend surfaces do not bypass RuntimeController when switching active runtime', () => {
-  const navigationSource = readFileSync('frontend/src/lib/components/Navigation/HierarchicalNav.svelte', 'utf8');
-  expect(navigationSource).toContain('runtimeOperations.selectRuntime(id)');
-  expect(navigationSource).not.toContain('activeRuntimeId.set');
+test('React frontend surfaces do not bypass the explicit Runtime session owner', () => {
+  const selectionSource = readFileSync('frontend/apps/ops/src/workspace/runtime/ops-runtime-selection.ts', 'utf8');
+  expect(selectionSource).toContain('await opsWorkspaceSession.select');
+  expect(selectionSource).not.toContain('activeRuntimeId.set');
 
-  const bypasses = collectFrontendSources('frontend/src')
-    .filter((file) => file !== 'frontend/bridges/runtime/runtime-store.ts')
+  const bypasses = collectFrontendSources('frontend/apps')
     .filter((file) => /\bactiveRuntimeId\.set\(/.test(readFileSync(file, 'utf8')));
 
   expect(bypasses).toEqual([]);
@@ -970,10 +847,14 @@ test('frontend surfaces do not bypass RuntimeController when switching active ru
 test('active Runtime ownership uses Web Locks and releases only after quiesce', () => {
   const lockSource = readFileSync('frontend/packages/browser/src/active-tab-lock.ts', 'utf8');
   const browserSource = readFileSync('frontend/packages/browser/src/active-tab-lock-support.ts', 'utf8');
-  const layoutSource = readFileSync('frontend/src/routes/app/+layout.svelte', 'utf8');
+  const sessionSource = readFileSync('frontend/packages/browser/src/runtime/wallet-embedded-runtime-session.ts', 'utf8');
+  const browserSessionSource = readFileSync('frontend/bridges/runtime/browser/browser-runtime-session.ts', 'utf8');
   const loseStart = lockSource.indexOf('const loseWebLockTo');
   const loseEnd = lockSource.indexOf('const handleHardResetRequest', loseStart);
   const loseSource = lockSource.slice(loseStart, loseEnd);
+  const sessionLossStart = sessionSource.indexOf('const handleLockLoss =');
+  const sessionLossEnd = sessionSource.indexOf('const installResource =', sessionLossStart);
+  const sessionLossSource = sessionSource.slice(sessionLossStart, sessionLossEnd);
 
   expect(browserSource).toContain('navigator.locks.request(name, options, callback)');
   expect(lockSource).toContain("browser.requestLock(ACTIVE_TAB_WEB_LOCK_NAME, { mode: 'exclusive' }");
@@ -983,41 +864,29 @@ test('active Runtime ownership uses Web Locks and releases only after quiesce', 
   expect(loseSource.indexOf('releaseWebLock(state)')).toBeGreaterThan(
     loseSource.indexOf('await state.onLoseLockHandler?.()'),
   );
-  expect(layoutSource).toContain("logAppShellDiagnostic('Inactive tab activity suspension failed', err);\n      throw err;");
+  expect(browserSessionSource).toContain('acquireLock: handler => activeTabLock.initializeActiveTabLock(handler)');
+  expect(sessionLossSource.indexOf('await releaseResource()')).toBeLessThan(
+    sessionLossSource.indexOf('releaseLock = null'),
+  );
+  expect(sessionLossSource).toContain("status: 'standby'");
 });
 
 test('projection routes never evict or duplicate an active embedded Runtime', () => {
   const lockSource = readFileSync('frontend/packages/browser/src/active-tab-lock.ts', 'utf8');
-  const connectionSource = readFileSync('frontend/src/lib/utils/runtime/runtimeConnection.ts', 'utf8');
-  const ownershipStart = connectionSource.indexOf('const ensureProjectionEmbeddedRuntimeOwnership');
-  const bootstrapStart = connectionSource.indexOf("if (!hasStoredRemoteRuntimePreference())");
-  const bootstrapSource = connectionSource.slice(bootstrapStart);
+  const connectionSource = readFileSync('frontend/apps/wallet/src/runtime/wallet-runtime-read-boundary.ts', 'utf8');
+  const shellSource = readFileSync('frontend/apps/wallet/src/app-shell.tsx', 'utf8');
 
   expect(lockSource).toContain("{ mode: 'exclusive', ifAvailable: true }");
   expect(lockSource).toContain('if (!acquiredLock) attempted.reject(error);');
   expect(lockSource).toContain('await state.lossInFlight;');
   expect(lockSource).toContain('state.acquireInFlight = true;');
   expect(lockSource).toContain('state.activeChannel && !state.acquireInFlight && !state.releaseHeldLock && !state.ownsWebLock');
-  expect(connectionSource).toContain('const release = adoptActiveTabLock(suspendProjectionRuntime)');
-  expect(connectionSource).toContain('?? await tryInitializeActiveTabLock(suspendProjectionRuntime)');
-  expect(connectionSource).toContain('if (ownsActiveTabLock()) {');
-  expect(connectionSource).toContain('projectionRuntimeLockRelease = adoptActiveTabLock(suspendProjectionRuntime)');
-  expect(connectionSource).toContain('await suspendProjectionRuntime();');
-  expect(connectionSource).toContain('await waitForActiveTabLockLoss();');
-  expect(connectionSource).toContain("throw new Error('LOCAL_RUNTIME_ACTIVE_IN_ANOTHER_TAB')");
-  expect(ownershipStart).toBeGreaterThan(0);
-  expect(bootstrapSource.indexOf('await ensureProjectionEmbeddedRuntimeOwnership()')).toBeLessThan(
-    bootstrapSource.indexOf('await vaultOperations.initialize()'),
-  );
-  expect(bootstrapSource.indexOf('await ensureProjectionEmbeddedRuntimeOwnership()')).toBeLessThan(
-    bootstrapSource.indexOf('await switchAppRuntimeAdapter({'),
-  );
-  expect(connectionSource).toContain("if (currentAdapter?.mode === 'embedded')");
-  const layoutSource = readFileSync('frontend/src/routes/app/+layout.svelte', 'utf8');
-  const destroyStart = layoutSource.indexOf('return () => {\n      disposed = true;');
-  const destroySource = layoutSource.slice(destroyStart, destroyStart + 600);
-  expect(destroyStart).toBeGreaterThan(0);
-  expect(destroySource).not.toContain('releaseActiveTabLock?.()');
+  expect(connectionSource).toContain('return { adapter: await startWalletEmbeddedRuntime(), release: () => {} };');
+  expect(connectionSource).toContain('const adapter = new remote.RemoteRuntimeAdapter();');
+  expect(connectionSource).toContain('release: () => { adapter.disconnect(); }');
+  expect(shellSource).toContain('const initializeEmbeddedRuntimeOnce = (): void => {');
+  expect(shellSource).toContain('void startWalletEmbeddedRuntime()');
+  expect(shellSource).not.toContain('stopWalletEmbeddedRuntime');
   const fastGateSource = readFileSync('core/scripts/e2e/runners/run-e2e-fast.ts', 'utf8');
   expect(fastGateSource).toContain("title: 'projection route cannot evict an active embedded Runtime owner'");
 });

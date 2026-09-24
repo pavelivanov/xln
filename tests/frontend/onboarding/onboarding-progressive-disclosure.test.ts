@@ -1,15 +1,15 @@
 import { expect, test } from 'bun:test';
 import { readFileSync } from 'node:fs';
 
-const source = readFileSync('frontend/src/lib/components/Entity/onboarding/OnboardingPanel.svelte', 'utf8');
+const source = readFileSync('frontend/apps/wallet/src/onboarding/wallet-onboarding.tsx', 'utf8');
 
 test('onboarding keeps identity and default credit limits primary', () => {
-  const advancedStart = source.indexOf('<details class="setup-advanced">');
-  expect(source.indexOf('for="display-name"')).toBeLessThan(advancedStart);
-  expect(source.indexOf('<h3>Default limits</h3>')).toBeLessThan(advancedStart);
+  const advancedStart = source.indexOf('<details className="wallet-onboarding-advanced">');
+  expect(source.indexOf('<span>Display name</span>')).toBeLessThan(advancedStart);
+  expect(source.indexOf('id="wallet-onboarding-limits">Default limits</h3>')).toBeLessThan(advancedStart);
   expect(source.indexOf('Initial hub join')).toBeGreaterThan(advancedStart);
-  expect(source.indexOf('<h3>Jurisdictions</h3>')).toBeGreaterThan(advancedStart);
-  expect(source.indexOf('Encrypted backup and last-resort dispute protection')).toBeGreaterThan(advancedStart);
+  expect(source.indexOf('id="wallet-onboarding-jurisdictions">Jurisdictions</h3>')).toBeGreaterThan(advancedStart);
+  expect(source.indexOf('<WalletRecoveryServices runtimeState={runtimeState} onDraftChange={setRecovery}', advancedStart)).toBeGreaterThan(advancedStart);
 });
 
 test('Brain Vault onboarding does not expose or require mnemonic backup controls', () => {

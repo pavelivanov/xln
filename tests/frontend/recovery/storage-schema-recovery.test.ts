@@ -19,7 +19,8 @@ describe('storage schema recovery UX', () => {
 
   test('offers authenticated recovery before an explicit destructive reset', () => {
     const vault = readFileSync('frontend/bridges/vault/vault-store.ts', 'utf8');
-    const layout = readFileSync('frontend/src/routes/app/+layout.svelte', 'utf8');
+    const layout = readFileSync('frontend/apps/wallet/src/app-shell.tsx', 'utf8');
+    const runtime = readFileSync('frontend/apps/wallet/src/runtime/wallet-embedded-runtime.ts', 'utf8');
     const recoveryStart = vault.indexOf('async recoverSchemaMismatchedRuntimesFromConfiguredBackups()');
     const recoveryEnd = vault.indexOf('\n  syncRuntime(', recoveryStart);
     expect(recoveryStart).toBeGreaterThan(0);
@@ -30,8 +31,8 @@ describe('storage schema recovery UX', () => {
     expect(recoverySource).not.toContain('clearDB(');
     expect(recoverySource).not.toContain('resetRuntimePersistence(');
 
-    expect(layout).toContain('parseStorageSchemaMismatch($error)');
-    expect(layout).toContain('vaultOperations.recoverSchemaMismatchedRuntimesFromConfiguredBackups()');
+    expect(layout).toContain('parseStorageSchemaMismatch(runtime.message)');
+    expect(runtime).toContain('vaultOperations.recoverSchemaMismatchedRuntimesFromConfiguredBackups()');
     expect(layout).toContain('data-testid="storage-schema-recover"');
     expect(layout).toContain('data-testid="storage-schema-reset"');
   });

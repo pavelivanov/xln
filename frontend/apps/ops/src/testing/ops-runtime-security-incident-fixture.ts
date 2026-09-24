@@ -3,7 +3,7 @@ import {
   resolveRuntimeSecurityIncident,
 } from '@xln/core/runtime/observability/security-incidents';
 
-import { readBrowserRuntimeEnvironment } from '../../../../bridges/runtime/browser-runtime-context';
+import { readBrowserRuntimeEnvironment } from '../../../../bridges/runtime/browser/browser-runtime-context';
 import { opsEntityWorkspaceSource } from '../entity-workspace/ops-entity-workspace-runtime';
 
 type IncidentIdentity = Parameters<typeof recordRuntimeSecurityIncident>[1];

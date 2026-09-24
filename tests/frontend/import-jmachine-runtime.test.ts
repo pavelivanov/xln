@@ -4,7 +4,7 @@ import {
   buildJMachineImportRuntimeInput,
   buildPersistedJMachineConfig,
   normalizeJMachineCreateDetail,
-} from '../../frontend/bridges/runtime/import-jmachine-runtime';
+} from '../../frontend/bridges/runtime/remote/import-jmachine-runtime';
 import { deriveJMachineCreatedAt, normalizeJMachineConfig } from '../../frontend/packages/browser/src/jurisdiction/jmachine-store';
 
 const draft = {
@@ -63,22 +63,19 @@ test('JMachine config normalization does not depend on a wall-clock substitute',
   }));
 });
 
-test('Settings/UserMode JMachine import uses the shared runtime helper', () => {
-  const settings = readFileSync('frontend/src/lib/components/Entity/workspace/shell/EntitySettingsProjectionPanel.svelte', 'utf8');
-  const tabs = readFileSync('frontend/src/lib/components/Entity/workspace/shell/EntityPanelTabs.svelte', 'utf8');
-  const userMode = readFileSync('frontend/src/lib/view/UserModePanel.svelte', 'utf8');
-  const addJMachine = readFileSync('frontend/src/lib/components/Jurisdiction/AddJMachine.svelte', 'utf8');
+test('React Architect JMachine import uses the shared deterministic runtime helpers', () => {
+  const actions = readFileSync('frontend/apps/ops/src/workspace/architect/ops-architect-actions.ts', 'utf8');
+  const controls = readFileSync('frontend/apps/ops/src/workspace/architect/ops-architect-live-controls.tsx', 'utf8');
   const store = readFileSync('frontend/packages/browser/src/jurisdiction/jmachine-store.ts', 'utf8');
-  const helper = readFileSync('frontend/bridges/runtime/import-jmachine-runtime.ts', 'utf8');
+  const helper = readFileSync('frontend/bridges/runtime/remote/import-jmachine-runtime.ts', 'utf8');
 
-  expect(settings).toContain('onImportJMachine(event.detail)');
-  expect(tabs).toContain('await importJMachineViaRuntime(env, detail)');
-  expect(userMode).toContain('await importJMachineViaRuntime(env, event.detail)');
-  expect(userMode).toContain('data-testid="user-mode-jmachine-error"');
+  expect(actions).toContain('normalizeJMachineCreateDetail(detail)');
+  expect(actions).toContain('buildJMachineImportRuntimeInput(normalized)');
+  expect(actions).toContain('buildPersistedJMachineConfig(normalized, next)');
+  expect(controls).toContain('{issue ? <p role="alert">{issue}</p>');
   expect(helper).toContain('J_MACHINE_IMPORT_COMMIT_WAIT_MS = 3_000');
   expect(helper).toContain('while (!nextEnv.state.jReplicas?.get?.(normalized.name)');
   expect(helper).toContain('await sleep(J_MACHINE_IMPORT_COMMIT_POLL_MS)');
-  expect(userMode).not.toContain('[ensureSelfEntities] No J-machines');
-  expect(addJMachine).not.toContain('Date.now()');
+  expect(actions).not.toContain('Date.now()');
   expect(store).not.toContain('Date.now()');
 });

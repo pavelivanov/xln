@@ -64,17 +64,21 @@ describe('Architect panel view model', () => {
     expect(getNextArchitectEntityName('custom')).toBe('entity');
   });
 
-  test('keeps protocol, Runtime, JAdapter, timer, and panel effects in Svelte', () => {
-    const source = readFileSync('frontend/src/lib/view/panels/ArchitectPanel.svelte', 'utf8');
+  test('keeps protocol, Runtime, JAdapter, and lifecycle effects in the React architect boundary', () => {
+    const panel = readFileSync('frontend/apps/ops/src/workspace/panels/ops-architect-panel.tsx', 'utf8');
+    const controls = readFileSync('frontend/apps/ops/src/workspace/architect/ops-architect-live-controls.tsx', 'utf8');
+    const actions = readFileSync('frontend/apps/ops/src/workspace/architect/ops-architect-actions.ts', 'utf8');
     const shared = readFileSync('frontend/packages/runtime-client/src/panels/architect-panel-view.ts', 'utf8');
 
-    expect(source).toContain("from '../../../../packages/runtime-client/src/panels/architect-panel-view'");
-    expect(source).toContain('function openAccountData');
-    expect(source).toContain('defaultAccountDisputeConfigForRoleEvidence');
-    expect(source).toContain('await submitRuntimeInput');
-    expect(source).toContain('debugFundReservesBatch');
-    expect(source).toContain('setInterval');
-    expect(source).toContain("panelBridge.on('vr:payment'");
+    expect(panel).toContain('getArchitectScenarioScrollTop');
+    expect(panel).toContain('loadWorkspaceScenario(key)');
+    expect(panel).toContain('networkMachineRuntimeOperations.dispose()');
+    expect(controls).toContain('createArchitectJurisdiction(actionContext, detail)');
+    expect(controls).toContain('fundArchitectEntities(actionContext');
+    expect(controls).toContain('sendArchitectR2R(actionContext');
+    expect(actions).toContain('await adapter.send(input)');
+    expect(actions).toContain('debugFundReservesBatch');
+    expect(actions).toContain('setInterval');
     expect(shared).not.toContain('defaultAccountDisputeConfigForRoleEvidence');
     expect(shared).not.toContain('submitRuntimeInput');
     expect(shared).not.toContain("from '@xln/core/jurisdiction/adapter'");

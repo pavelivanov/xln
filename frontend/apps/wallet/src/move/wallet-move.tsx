@@ -1,7 +1,7 @@
 import { useEffect, useState, useSyncExternalStore } from 'react';
 import { MaxUint256, ZeroAddress } from 'ethers';
 import { getDraftBatchReserveDelta } from '@xln/core/jurisdiction/machine/batch';
-import type { WalletAccountContext } from '../../../../bridges/wallet/wallet-canonical-account-context';
+import type { WalletAccountContext } from '../../../../bridges/wallet/canonical/wallet-canonical-account-context';
 import { formatWalletExternalAmount } from '../../../../packages/browser/src/wallet/wallet-external-provider';
 import {
   getMovePrimaryActionLabel,
@@ -20,7 +20,7 @@ import {
 } from '../../../../packages/ui/src/entity/move/move-allowance';
 import { getMoveValidationErrorForContext } from '../../../../packages/ui/src/entity/move/move-validation';
 import { buildMoveHubEntityOptions } from '../../../../packages/ui/src/entity/entity-panel-options';
-import { parseEntityInput } from '../../../../packages/ui/src/entity-input-model';
+import { parseEntityInput } from '../../../../packages/ui/src/entity/entity-input-model';
 import { WalletEntityInput } from '../entity/wallet-entity-input';
 import { parsePositiveAssetAmount } from '../../../../packages/ui/src/entity/assets/entity-asset-values';
 import { WalletExternalProviderSource } from '../onboarding/wallet-external-provider-source';

@@ -23,7 +23,7 @@
   } from '../../../bridges/runtime/runtime-view-store';
   import { setLocalLauncherOnboarding } from '$lib/stores/localLauncherStore';
   import { errorLog } from '../../../packages/browser/src/logging/error-log-store';
-  import { settingsOperations } from '../../../packages/browser/src/settings-store';
+  import { settingsOperations } from '../../../packages/browser/src/preferences/settings-store';
   import { tabOperations } from '../../../packages/browser/src/workspace/tab-store';
   import { timeOperations } from '$lib/stores/timeStore';
   import { activeRuntime, vaultOperations } from '../../../bridges/vault/vault-store';
@@ -44,7 +44,7 @@
     fetchRemoteRuntimeImportSource,
     importRemoteRuntimeEntries,
     persistActiveRemoteRuntimeImport,
-  } from '../../../bridges/runtime/remote-runtime-import-flow';
+  } from '../../../bridges/runtime/remote/remote-runtime-import-flow';
   import {
     consumeLocalRuntimePairing,
     readLocalRuntimeLaunchRequest,
@@ -74,7 +74,7 @@
     hasWalletRuntimeBootstrapInput,
   } from '../../../packages/browser/src/runtime/wallet-runtime-bootstrap';
   import { WalletRuntimeConsentCoordinator } from '../../../packages/browser/src/runtime/wallet-runtime-consent';
-  import { resolveWalletShellPhase } from '../../../packages/browser/src/wallet-shell-state';
+  import { resolveWalletShellPhase } from '../../../packages/browser/src/preferences/wallet-shell-state';
 
   let { children } = $props();
 

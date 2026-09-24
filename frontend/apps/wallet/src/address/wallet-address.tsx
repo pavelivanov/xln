@@ -170,7 +170,7 @@ function History({ projection }: Readonly<{ projection: WalletAddressDetailProje
       {projection.history.length
         ? projection.history.map((event) => <HistoryEvent event={event} key={event.id} />)
         : <p className="wallet-address-empty">No committed activity for this Entity.</p>}
-      {projection.historyNextBeforeHeight === null ? null : (
+      {projection.historyNextCursor === null ? null : (
         <a href={walletBrowserHref('/app?health=1')}>Older activity is available in Financial health →</a>
       )}
     </section>

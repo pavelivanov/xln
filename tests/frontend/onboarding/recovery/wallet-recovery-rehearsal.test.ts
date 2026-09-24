@@ -92,31 +92,23 @@ describe('browser wallet recovery rehearsal', () => {
     expect(second).not.toBe(first);
   });
 
-  test('keeps sensitive cleanup and UI publication in the Svelte event flow', () => {
+  test('keeps sensitive cleanup and UI publication in the React event flow', () => {
     const boundary = readFileSync(
       'frontend/packages/browser/src/recovery/wallet-recovery-rehearsal.ts',
       'utf8',
     );
     const view = readFileSync(
-      'frontend/src/lib/components/Views/RuntimeCreation.svelte',
+      'frontend/apps/wallet/src/identity/identity-onboarding.tsx',
       'utf8',
     );
-    const acceptStart = view.indexOf('function acceptRecoveryRehearsal');
-    const cancelStart = view.indexOf('function cancelRecoveryRehearsal', acceptStart);
-    const nextFunction = view.indexOf('function selectPresetFactor', cancelStart);
-    const acceptSource = view.slice(acceptStart, cancelStart);
-    const cancelSource = view.slice(cancelStart, nextFunction);
 
     expect(boundary).not.toContain('svelte');
     expect(boundary).not.toContain('@xln/brainvault');
-    expect(view).not.toContain('function beginRecoveryRehearsal');
-    expect(acceptSource).toContain('evaluateWalletRecoveryRehearsal({');
-    expect(acceptSource).toContain("result.status === 'begin'");
-    expect(acceptSource).toContain("result.status === 'mismatch'");
-    expect(acceptSource).toContain('clearDerivedWalletMaterial()');
-    expect(acceptSource).toContain('derivationError = result.message');
-    expect(cancelSource.indexOf('clearSensitiveWalletMaterial()')).toBeLessThan(
-      cancelSource.indexOf('publishRecoveryRehearsalState(resetWalletRecoveryRehearsal())'),
-    );
+    expect(view).toContain('beginWalletMnemonicRecoveryRehearsal(derivedAddress)');
+    expect(view).toContain('evaluateWalletMnemonicRecoveryAttempt(rehearsal, address)');
+    expect(view).toContain('if (!attempt.matched) {');
+    expect(view).toContain('setSubmissionError(attempt.error)');
+    expect(view).toContain("setDraft((current) => ({ ...current, mnemonicInput: '' }))");
+    expect(view).toContain('setRehearsal(resetWalletRecoveryRehearsal())');
   });
 });
