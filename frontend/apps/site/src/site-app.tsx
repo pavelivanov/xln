@@ -15,10 +15,10 @@ function PendingRoute({ pathname }: Readonly<{ pathname: string }>) {
   return (
     <SiteShell activeRoute="pending">
       <main className="pending-route">
-        <p className="kicker">React site migration</p>
-        <h1>This route stays canonical for now.</h1>
-        <p><code>{pathname}</code> has not moved into the React site candidate yet. The Svelte production route is unchanged.</p>
-        <a className="text-link" href="/">Return to the pilot <Arrow /></a>
+        <p className="kicker">Canonical site route</p>
+        <h1>This route is unavailable.</h1>
+        <p><code>{pathname}</code> is not implemented by the canonical React site.</p>
+        <a className="text-link" href="/">Return home <Arrow /></a>
       </main>
       <SiteFooter />
     </SiteShell>

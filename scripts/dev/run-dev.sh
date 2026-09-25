@@ -55,10 +55,8 @@ if [[ "${XLN_VITE_FORCE_HTTP:-0}" != "1" ]]; then
     "$REPO_ROOT/192.168.1.23+2"; do
     if [[ -f "${cert_base}.pem" && -f "${cert_base}-key.pem" ]]; then
       DEV_WEB_SCHEME=https
-      if [[ "${XLN_DEV_FRONTEND:-svelte}" == "react" ]]; then
-        export XLN_REACT_GATEWAY_TLS_CERT="${cert_base}.pem"
-        export XLN_REACT_GATEWAY_TLS_KEY="${cert_base}-key.pem"
-      fi
+      export XLN_REACT_GATEWAY_TLS_CERT="${cert_base}.pem"
+      export XLN_REACT_GATEWAY_TLS_KEY="${cert_base}-key.pem"
       break
     fi
   done
@@ -69,11 +67,8 @@ case "${CUSTODY_HTTPS:-}" in
 esac
 DEV_RELAY_WEB_URLS="${DEV_WEB_SCHEME}://localhost:${WEB_PORT},http://localhost:${WEB_HTTP_PORT},http://localhost:${UI_PORT}"
 
-DEV_WALLET_ORIGIN="http://localhost:${WEB_HTTP_PORT}"
-if [[ "${XLN_DEV_FRONTEND:-svelte}" == "react" ]]; then
-  DEV_WALLET_ORIGIN="${DEV_WEB_SCHEME}://localhost:${WEB_PORT}"
-  DEV_RELAY_WEB_URLS="${DEV_WALLET_ORIGIN},http://localhost:${UI_PORT}"
-fi
+DEV_WALLET_ORIGIN="${DEV_WEB_SCHEME}://localhost:${WEB_PORT}"
+DEV_RELAY_WEB_URLS="${DEV_WALLET_ORIGIN},http://localhost:${UI_PORT}"
 export DEV_WALLET_ORIGIN
 
 export XLN_JURISDICTIONS_PATH="$XLN_RDB_ROOT/jurisdictions.json"

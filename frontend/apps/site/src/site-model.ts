@@ -92,8 +92,8 @@ export const getSiteMetadata = (page: SitePage): PageMetadata => {
     };
   }
   return {
-    title: 'xln — React migration candidate',
-    description: 'This public xln route remains on the canonical Svelte application during the React migration.',
+    title: 'Route unavailable | xln',
+    description: 'This public route is not implemented by the canonical xln site.',
   };
 };
 

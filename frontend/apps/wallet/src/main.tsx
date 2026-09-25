@@ -1,11 +1,14 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 
+import { installBrowserErrorTelemetry } from '../../../packages/browser/src/browser-error-telemetry';
 import { initializeNativeShell } from '../../../packages/browser/src/native/capacitor';
 import { WalletApp } from './wallet-app';
 import { resolveWalletAppView } from './app-shell-model';
 import { resolveWalletPage, walletPageMetadata } from './wallet-model';
 import { resolveWalletEntryPath } from './navigation/wallet-entry-location';
+
+installBrowserErrorTelemetry();
 
 const rootElement = document.getElementById('root');
 if (!rootElement) throw new Error('FRONTEND_REACT_ROOT_MISSING');

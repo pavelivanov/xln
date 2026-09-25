@@ -1,71 +1,16 @@
 # React frontend cutover review
 
-Originally reviewed **2026-09-16** against `main` at
-`c4ea8366a574c3197d87a8fe13e2b5d3f77c5e81` with working-diff SHA-256
-`f2e73f36faa574f84d60f7ed5266c427744ed817719dc963355908bac6b3a21b`
-and no untracked inputs. This review closes T01 preparation only. It does not
-authorize C02, apply either patch, remove a live Svelte file, or activate React
-in production.
+Status: **T17 DONE; T18 final certification in progress**
 
-Path refresh on 2026-09-24: the parity and capability tests moved below
-`tests/frontend/tooling/audit`, and the Wallet vault Runtime bridge moved below
-`frontend/bridges/wallet/canonical`. The guard patch now follows both moves. A
-fresh disposable copy applied both cutover patches with all 262 retirement
-paths absent; **34 focused cases / 1,042 assertions** pass. The live tree still
-contains every retirement target. C02 remains unauthorized.
+## Authority and boundary
 
-The expanded current-suite rehearsal reached **1,531 pass / 13 fail / 11,626
-assertions**. All 13 failures are Bun 1.4 `EBADF` errors from nested Bun, Bash,
-or OpenSSL spawning under `bun:test`; the generated-input failure reproduces in
-the unchanged live checkout, including with Bun's documented isolated
-`--parallel=1` worker mode; Bun's Node-compatible `child_process.spawn`
-delegates to the same failing primitive. This is retained environment evidence,
-not a green current full-suite claim and not C02 acceptance.
+The owner granted C02 authority on 2026-09-25 after accepting the reviewed
+retirement list and command/guard patches. The cutover applies only to the
+frontend and its smallest build, CI, native, development and release consumers.
+It does not authorize C03 production activation or changes to Runtime, Entity,
+Account, consensus, custody, contracts or persistence semantics.
 
-## Current T17 handoff
-
-The 2026-09-24 refresh started from the same Git HEAD,
-`c4ea8366a574c3197d87a8fe13e2b5d3f77c5e81`, with pre-review tracked-diff
-SHA-256 `c09c036e4ec920422d443608602c929f87ae6056367bcce254d95675a0614115`
-and **114** untracked paths whose sorted path-list SHA-256 is
-`7f16903c5f7632b203db5710bb6160fbe5524436c61c712465f08f17dc232573`.
-Those hashes identify the input to this documentation refresh; editing this
-receipt intentionally changes the live working-diff hash.
-
-The accepted version is **0.1.32**. The immutable frontend input is
-`frontend/.artifacts/releases/sha256-018216b4f3761819a817cd37aee49b875acca15698ab45e112abebe90621172b`
-with **492 files**. Its final web registry passed **444/444** cases across the
-three required viewports, and the unchanged integration candidate passed
-`bun run check`. Full evidence is in the [T12 receipt](react-frontend-t12-web-acceptance.md).
-
-| Task | Current evidence | Remaining boundary |
-| --- | --- | --- |
-| T13 | DONE. Artifact browser 12/12; preview verifies 492 files; installed offline package dev lifecycle passes; installed testnet package restored the preserved owner, durably committed the authorized empty input at frame 4, restarted at exact head 4, rejected a non-durable frame-5 retry, and reverified the release. `xlnfinance-0.1.32.tgz` SHA-256 is `1df7596524e1ce7022513c0bbe4f1db1afa19656ee001ce81622c788732bc434`. | None. See [T13](react-frontend-t13-consumer-acceptance.md). |
-| T14 | Final release passes PWA update/rollback and isolated deployment activation/rollback. | None; T14 is DONE. See [T14](react-frontend-t14-pwa-deployment-acceptance.md). |
-| T15 | DONE for the owner-approved migration set: iOS lifecycle and the final Chrome extension pass. Extension ZIP SHA-256 is `3d6882c36296df07e555c49e2532da54331d5adffbee01673bd0836fc0e803b8`. | Android, signed/notarized desktop and headset WebXR remain explicit post-migration release gates and are not claimed as passing. See [T15](react-frontend-t15-readiness.md). |
-| T16 | DONE. Hosted PR [#166](https://github.com/pavelivanov/xln/pull/166) at `53cf726788e737d0851a657d4eb5aaece17bf4fb` passed Frontend Build (1,544 tests / 252 files, including all four distribution-consumer cases), Contracts and Runtime Checks. The release-integrity phase passed 59 tests / 452 assertions including all six release-order cases. | The later broad E2E Runtime phase exposed two reproducible pre-existing protected-core failures and a Bun abort; recorded as unrelated under the frontend override. No publish or deployment occurred. See [T16](react-frontend-t16-hosted-readiness.md). |
-
-T17 is now blocked only on explicit C02 authority. No command or guard patch is
-applied, no retirement path is removed, and no C02 or C03 authority is implied
-by this handoff.
-
-## Retirement inputs
-
-- `react-frontend-retirement-files.txt` contains **262 existing paths**: all
-  **256** remaining files below `frontend/src` plus the four Svelte
-  configuration files and two obsolete Svelte preview/build wrappers. All 262
-  still exist in the live tree.
-- `react-frontend-retirement-guards.patch` stages the post-retirement form of
-  eight inventory, route, boundary, coverage, and root-command test owners.
-  It does not promote a parity claim or hide an open gap.
-- `react-frontend-cutover-commands.patch` stages the canonical React commands,
-  dependency retirement, and CI command removal in `frontend/package.json`
-  and `.github/workflows/build-and-test.yml`.
-- Static assets, workers, `frontend/static`, React apps/packages/bridges,
-  generated-input producers, deployment tools, and
-  `copy-static-files.js --docs-only` are outside the deletion list.
-
-Artifact SHA-256 values:
+The accepted retirement inputs were:
 
 | Artifact | SHA-256 |
 | --- | --- |
@@ -73,76 +18,88 @@ Artifact SHA-256 values:
 | `react-frontend-retirement-guards.patch` | `6253a841e060956bbfef857582ac3c2dcde3ee9b182b6568932b53dc2a1e6977` |
 | `react-frontend-cutover-commands.patch` | `473cb8035b587216d14edc0738bb644040ecc73de6a1db4d5ad38b205932bb34` |
 
-Both patches pass `git apply --check --unidiff-zero` in the live tree. The
-disposable rehearsal applied both patches and removed exactly the 262 listed
-paths; no file below `frontend/src` remained.
+## T17 canonical cutover
 
-## Semantic assertion mapping
+- Applied both reviewed patches and removed exactly **262 paths**: all **256**
+  files below `frontend/src`, four Svelte configuration files and two obsolete
+  Svelte preview/build wrappers.
+- Removed Svelte dependencies and their lockfile graph. Default frontend
+  `dev`, `build`, `build:static`, `preview` and `check` now select the React
+  four-surface toolchain; root development owns one public `localhost:8080`
+  gateway with no Svelte selector or fallback.
+- Retargeted regular CI, root development, production static serving, release
+  checks, native consumers, policy scans and the isolated E2E runner to one
+  verified React release. The E2E runner builds once, verifies and caches that
+  immutable release, then gives each shard a dedicated React edge proxy.
+- Preserved shared assets, browser/runtime-client/UI packages, workers,
+  generated-input owners and every translated semantic assertion. No executable
+  import or file read requires the retired tree.
 
-Every source-reading assertion translated during T01 retains its behavioral
-subject. The table groups files that moved together; it does not replace their
-individual test cases.
+The semantic migration remains the reviewed mapping: identity/recovery,
+payments/markets, Runtime session/query ownership, graph/timeline, workspace,
+diagnostics and route/inventory assertions now target their React app,
+`frontend/bridges`, `frontend/packages/browser`,
+`frontend/packages/runtime-client` or `frontend/packages/ui` owner.
 
-| Previous Svelte subject | Canonical React/shared subject | Preserved assertion families |
-| --- | --- | --- |
-| `RuntimeCreation.svelte`, wallet layout/page, address and testnet routes | `frontend/apps/wallet/src/identity/`, `runtime/`, `onboarding/`, `app-shell.tsx` and browser/runtime-client session boundaries | identity entry, progressive disclosure, deterministic creation input, consent, Runtime mode, remote import, wallet opening and shell state |
-| Recovery panels, discovery/rehearsal helpers, vault creation and BrainVault view code | `frontend/apps/wallet/src/identity/recovery/`, `frontend/bridges/wallet/`, `frontend/packages/browser/src/vault/` and worker validator | recovery choice/discovery, receipt and peer evidence, lock/finalization, worker scheduling/validation, secret handling and service ownership |
-| Payment panel, swap/order Svelte views and retained Entity financial surfaces | Wallet payment/market components plus `frontend/packages/ui/src/market/`, runtime-client command owners and canonical Account/Entity decoders | canonical payment modes, exact amounts/fees, order history, review invalidation, zero-submit rejection, token precision and retired-path rejection |
-| `runtimeConnection.ts`, Runtime navigation/store/IO views and Svelte boot code | runtime-adapter session, query client/observer, Wallet embedded/remote Runtime, navigation projection and command bus | transport authority, hot swap, bootstrap/consent, current Runtime selection, query cancellation, lifecycle cleanup and no detached Runtime mutation |
-| `Graph3DViewport.svelte`, graph panels, entity visuals and timeline facades | `frontend/packages/ui/src/graph/`, React Ops graph/workspace components and canonical projection owners | scene input, hit targets, camera/hover/lifecycle, visual parenting/effects, timeline projection and renderer cleanup |
-| `DockRoot.svelte`, Entity workspace/panel tabs, command palette and user-mode panels | React Wallet/Ops workspaces, shared navigation/selection and entity/account bridges | dock layout, panel routing/model/display, context switching, user-mode selection and command ownership |
-| Svelte diagnostics, settings, jurisdiction, gossip, architect and scenario panels | React Ops health/workspace/scenario components, Wallet diagnostics/settings and shared diagnostic projections | BigInt-safe diagnostics, panel evidence, jurisdiction/gossip/settings ownership, failure visibility and docs/landing diagnostics |
-| Svelte route enumeration in parity/capability/platform inventories | `packages/frontend-release/surfaces.ts`, React app entrypoints, generated-input owners and exact route rules | unique route ownership, representative-route coverage, gap/owner/behavior preservation and retained static/worker inputs |
-| Svelte `dev`, build, preview and check scripts | React development gateway, four-surface prepare/build/assemble/check and preview consumers | one gateway, isolated Vite caches, forwarded build failures, release verification and clean-checkout generated inputs |
-| Svelte sources catalogued by `scripts/debug/gpt.cjs` | React apps, packages, bridges and operational owners | strict documentation catalog completeness without a retired source dependency |
+## T18 local certification
 
-The final executable scan over `tests/frontend`, `core/__tests__`,
-`frontend/config`, and `frontend/scripts` found no import or file read into
-the 262-path deletion set. The only matching source-read text left in that
-scope is an intentional negative assertion that rejects imports from
-`frontend/src/lib`.
-
-## Disposable deletion rehearsal
-
-The validation copy contained the recorded HEAD, working diff, and empty
-untracked set. Its `.git` metadata pointed at the source repository only so
-Git-based tests could read the same identity. The copy then applied the two
-reviewed patches and removed exactly the retirement list.
-
-Pinned Bun **1.4.0** results:
+Pinned Bun is **1.4.0**.
 
 | Boundary | Result |
 | --- | --- |
-| Full frontend test suite | **1,537 pass / 0 fail / 11,697 assertions** |
-| Affected frontend-owned core checks | **42 pass / 0 fail** across the focused deletion/root-command cases |
-| All React types | exit **0** |
-| Frontend aggregate | exit **0**; units, checks, prepare, four builds and assembly |
-| Assembled release | `sha256-5b1836334f710f9582a33691cd4f31af9731d9da77fc8f32c4e5ec82cc101f51`, **478 files** |
-| Static import scan after deletion | **0** edges into the deletion set |
-| Live patch checks | both exit **0** with `--unidiff-zero` |
-| Live diff whitespace check | exit **0** |
+| All React types | PASS for Site, Docs, Wallet and Ops |
+| Default `bun run build` | PASS; all four Vite builds and release assembly |
+| Default root development | PASS; `DEV_READY` in **17.317 s**, all four routes rendered, `/api/health` and `/rpc` returned 200, zero console/page errors, and clean owned-process shutdown |
+| Explicit verified-release preview | PASS; Wallet rendered from the exact release with zero console/page errors and the identity endpoint matched all files |
+| Retirement/policy checks | PASS: no-legacy, FinTS compiler policy, unused surface, failure taxonomy, swap cancellation, market codec, root-development and production-static wiring |
+| Complete browser registry | PASS: **444/444 unique cases** across mobile, laptop and wide; mobile **148/148 in 10.3 min**, laptop **148/148 in 12.8 min**, and the unchanged wide ledger completed from **142 passing cases plus a 9/9 Wallet partition in 32.5 s** |
+| Default frontend `bun run check` | Environment boundary: **1,529 pass / 15 fail / 11,610 assertions**; all 15 failures are Bun 1.4 nested-process `EBADF` cases already passing through direct/focused execution or hosted CI |
+| Root `bun run check` | Environment boundary: short gates pass, then `check:src` stops at `/bin/bash: cargo: command not found`; the parallel frontend sibling reaches the same 15 local `EBADF` cases |
+| `git diff --check` | PASS |
 
-The general `e2e-runner-isolation.test.ts` file still cannot load because its
-pre-existing import `batchPlaywrightTargetsByFile` has no production export
-in `run-e2e-parallel-isolated.ts`. The T01 source-read was retargeted from the
-deleted Vite config to `create-react-app-config.ts`; the unrelated runner API
-gap is recorded for T11 and was not hidden, skipped, or converted to a warning.
+The final complete browser registry and hosted source result are recorded below
+after their post-cutover rerun. This
+receipt is necessarily written after assembly: the public Docs catalog includes
+repository Markdown, so embedding a release hash inside the release that hash
+names would be self-referential.
 
-## Browser evidence for the visible safety change
+## Migration-platform acceptance
 
-The real Wallet Runtime fixture produced a committed cross-jurisdiction route.
-The final page reported zero console errors and zero warnings. The safety note
-states that the wallet must stay online, execution can require up to 65,535
-steps, and an unfilled remainder requires manual cancellation. Inspected
-screenshots:
+T15 remains narrowed by the owner to iOS and Chrome extension. The final-byte
+post-cutover rerun covers both targets:
 
-- `output/playwright/t01-wallet-cross-safety-390x844.png`
-- `output/playwright/t01-wallet-cross-safety-1366x900.png`
-- `output/playwright/t01-wallet-cross-safety-1920x1080.png`
+- iOS: the copied Capacitor shell builds for iPhone 17 Pro / iOS 26.3; payment
+  and settings deep links work; Light persists through background/resume and a
+  full terminate/relaunch; the clean WebKit container has **30 files** and one
+  `xln-settings` record.
+- Chrome extension: the packaged action opens the exact Wallet and Light
+  persists through reload and a fresh browser context at mobile, laptop and
+  wide viewports (**3/3 pass in 7.7 s**). The 99-file ZIP is **3,895,832 bytes**
+  with SHA-256 `8257cd9cd5c4b54b0fce7640b80c7bca4c35c57dac242f452d880d6c01a4b8fb`.
 
-## Cutover boundary
+Android, signed/notarized desktop and headset WebXR remain explicit
+post-migration release gates. They are not claimed as passing and their build,
+launch, lifecycle, signing or hardware requirements are not weakened.
 
-The live repository still runs coexistence commands and still contains every
-retirement candidate. Apply the reviewed patches and delete the exact list only
-during T17, after T01–T16 are accepted and the owner explicitly grants C02.
-Production activation remains a separate C03 release operation.
+## Final source and release acceptance
+
+- Final verified release:
+  `sha256-77b6fcdb1c59cd481380acb4e9790969fd212b3131e4e43bb1221ce9e79347f9`
+  (**493 files**).
+- Immutable artifact browser: **12/12 pass in 1.2 min**. Explicit preview
+  reverified every file hash, four route owners, HTTP method/error behavior,
+  corrupt-live/restart rejection, missing-release rejection and clean shutdown.
+- npm package: **509 entries / 50,223,525 bytes**, SHA-256
+  `4d4754554829e65085e7b6b2a6fe685535f0dd5cf6b765493692fd00887daddb`;
+  its offline installed preflight and corruption suite passed **8/8** against
+  the exact 493-file release without creating state.
+- PWA update and rollback passed **1/1 in 11.0 s**; isolated deployment
+  activation/rejection/rollback passed **1/1 in 4.7 s**, both from the accepted
+  predecessor to the exact final release.
+- The complete **444/444** final-source browser ledger passed. During the
+  monolithic wide run Chromium emitted simultaneous `net::ERR_NETWORK_CHANGED`
+  failures after 142 passing cases; the affected full Wallet file then passed
+  **9/9** on the unchanged source, covering the interrupted case and all five
+  cases that had not run. The target dynamic module itself returned HTTP 200.
+- Hosted PR result remains pending. No publishing or production deployment is
+  part of this gate.

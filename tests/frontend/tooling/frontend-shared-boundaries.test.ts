@@ -62,13 +62,12 @@ describe('frontend shared browser and Runtime-client boundaries', () => {
     for (const module of modules) expect(inventory.has(module)).toBe(true);
   });
 
-  test('has live retained-Svelte and React consumers for both shared packages', async () => {
-    const consumers = await readSources(['frontend/src', 'frontend/apps']);
+  test('has live React consumers for both shared packages', async () => {
+    const consumers = await readSources(['frontend/apps']);
     for (const packageName of ['browser', 'runtime-client'] as const) {
       const marker = `packages/${packageName}/src`;
       const paths = [...consumers].filter(([, source]) => source.includes(marker)).map(([pathname]) => pathname);
 
-      expect(paths.some(pathname => pathname.startsWith('frontend/src/'))).toBe(true);
       expect(paths.some(pathname => pathname.startsWith('frontend/apps/'))).toBe(true);
     }
   });

@@ -681,7 +681,7 @@ const QA_TEST_CATALOG = [
     group: 'Frontend',
     label: 'Frontend Type + Build',
     command: 'cd frontend && bun run check',
-    description: 'Svelte diagnostics, type checking, static build, and assets.',
+    description: 'React type checking, unit tests, four-surface build, and release assembly.',
   },
   {
     id: 'release-gate',

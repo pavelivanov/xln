@@ -95,7 +95,6 @@ export const PLATFORM_INVENTORY = [
       'frontend/packages/browser/src/runtime/session/remote-runtime-import.ts',
     ],
     consumers: [
-      'frontend/src/lib/utils/runtime/runtimeConnection.ts',
       'frontend/apps/wallet/src/app-shell.tsx',
       'frontend/apps/wallet/src/address/wallet-address.tsx',
     ],
@@ -121,7 +120,7 @@ export const PLATFORM_INVENTORY = [
       'frontend/packages/browser/src/commands/runtime-command-journal-storage.ts',
       'frontend/bridges/vault/vault-store.ts',
     ],
-    consumers: ['frontend/src/routes/app/+layout.svelte'],
+    consumers: ['frontend/bridges/wallet/canonical/wallet-canonical-vault-runtime.ts', 'frontend/apps/wallet/src/runtime/wallet-embedded-runtime.ts'],
     evidence: [
       'tests/frontend/security/vault-protection.test.ts',
       'tests/frontend/recovery/storage-schema-recovery.test.ts',
@@ -202,7 +201,6 @@ export const PLATFORM_INVENTORY = [
       'frontend/packages/browser/src/hard-reset-request.ts',
     ],
     consumers: [
-      'frontend/src/lib/utils/control/resetEverything.ts',
       'frontend/apps/wallet/src/testnet/testnet-page.tsx',
     ],
     evidence: [
@@ -222,7 +220,6 @@ export const PLATFORM_INVENTORY = [
       'frontend/packages/browser/src/identity/wallet-brainvault-worker-resilience.ts',
     ],
     consumers: [
-      'frontend/src/lib/components/Views/RuntimeCreation.svelte',
       'frontend/apps/wallet/src/settings/wallet-settings-model.ts',
     ],
     evidence: [
@@ -244,7 +241,6 @@ export const PLATFORM_INVENTORY = [
       'frontend/bridges/wallet/canonical/wallet-canonical-push-wake.ts',
     ],
     consumers: [
-      'frontend/src/lib/components/Settings/PushWakePanel.svelte',
       'frontend/apps/wallet/src/push-wake/wallet-push-wake.tsx',
     ],
     evidence: [
@@ -400,7 +396,6 @@ export const PLATFORM_INVENTORY = [
       'frontend/apps/ops/src/quorum/ops-quorum-source.ts',
     ],
     consumers: [
-      'frontend/src/routes/qa/quorum/+page.svelte',
       'frontend/apps/ops/src/quorum/ops-quorum.tsx',
     ],
     evidence: [
@@ -442,7 +437,6 @@ export const PLATFORM_INVENTORY = [
       'frontend/packages/runtime-client/src/scenario/demo-playback-intent.ts',
     ],
     consumers: [
-      'frontend/src/routes/embed/+page.svelte',
       'frontend/packages/browser/src/graph/network-machine-demo-store.ts',
     ],
     evidence: [
@@ -471,21 +465,7 @@ export const PLATFORM_INVENTORY = [
       'frontend/packages/runtime-client/src/graph/graph3d-scene-input.ts',
     ],
     consumers: [
-      'frontend/src/lib/view/panels/ConsolePanel.svelte',
-      'frontend/src/lib/view/panels/RuntimeIOPanel.svelte',
-      'frontend/src/lib/view/panels/solvency/solvency-panel-view.ts',
-      'frontend/src/lib/view/panels/solvency/SolvencyPanel.svelte',
-      'frontend/src/lib/view/panels/RuntimeDiagnosticsPanel.svelte',
-      'frontend/src/lib/view/panels/GossipPanel.svelte',
-      'frontend/src/lib/components/Entity/activity/gossip-directory-view.ts',
       'frontend/bridges/runtime/runtime-history-store.ts',
-      'frontend/src/lib/view/panels/JurisdictionPanel.svelte',
-      'frontend/src/lib/view/panels/SettingsPanel.svelte',
-      'frontend/src/lib/view/panels/ArchitectPanel.svelte',
-      'frontend/src/lib/view/components/EntityMiniPanel.svelte',
-      'frontend/src/lib/view/components/Graph3DViewport.svelte',
-      'frontend/src/lib/view/components/Graph3DFpsOverlay.svelte',
-      'frontend/src/lib/view/components/VRControlsHUD.svelte',
       'frontend/packages/ui/src/graph/runtime-graph-projection.ts',
       'frontend/packages/browser/src/graph/runtime-graph-control-store.ts',
     ],
@@ -556,8 +536,6 @@ export const PLATFORM_INVENTORY = [
       'frontend/apps/ops/src/entity-workspace/ops-entity-workspace-runtime.ts',
     ],
     consumers: [
-      'frontend/src/lib/components/Entity/workspace/entity-panel-display.ts',
-      'frontend/src/lib/components/Entity/workspace/shell/EntityPanelTabs.svelte',
       'frontend/apps/ops/src/ops-app.tsx',
       'frontend/apps/ops/src/main.tsx',
       'frontend/apps/ops/src/ops-model.ts',
@@ -592,7 +570,6 @@ export const PLATFORM_INVENTORY = [
     sources: ['frontend/packages/runtime-client/src/workspace-dock-layout.ts'],
     consumers: [
       'frontend/packages/ui/src/workspace/workspace-dock.tsx',
-      'frontend/src/lib/view/DockRoot.svelte',
     ],
     evidence: ['tests/frontend/workspace/workspace-dock-layout.test.ts'],
   },
@@ -615,7 +592,6 @@ export const PLATFORM_INVENTORY = [
       'frontend/packages/browser/src/runtime/debug-surface.ts',
     ],
     consumers: [
-      'frontend/src/lib/view/panels/graph3d/Graph3DPanel.svelte',
       'frontend/packages/ui/src/graph/three/visuals/graph3d-visuals.ts',
     ],
     evidence: [
@@ -637,8 +613,6 @@ export const PLATFORM_INVENTORY = [
     status: 'owned-for-later-wp',
     interfaces: ['local-storage', 'registry'],
     sources: [
-      'frontend/src/lib/view/DockRoot.svelte',
-      'frontend/src/lib/components/shared/CommandPalette.svelte',
       'frontend/packages/ui/src/workspace/command-palette-view.ts',
       'frontend/packages/ui/src/workspace/command-palette-suggestions.ts',
       'frontend/apps/ops/src/workspace/ops-command-palette.tsx',
@@ -647,7 +621,7 @@ export const PLATFORM_INVENTORY = [
       'frontend/bridges/workspace-localization-react.ts',
       'frontend/apps/ops/src/workspace/ops-panel-title.ts',
     ],
-    consumers: ['frontend/src/lib/view/View.svelte', 'frontend/apps/ops/src/workspace/ops-workspace.tsx', 'frontend/apps/wallet/src/app-shell.tsx'],
+    consumers: ['frontend/apps/ops/src/workspace/ops-workspace.tsx', 'frontend/apps/wallet/src/app-shell.tsx'],
     evidence: [
       'tests/frontend/command-palette-view.test.ts',
       'tests/frontend/ops/frontend-workspace-localization.test.ts',

@@ -99,7 +99,7 @@ const RUNTIME_CORE_TESTS = [
 const RELEASE_PATHS = XLN_RELEASE_PATHS.join(' ');
 
 const quickSteps: GateStep[] = [
-  { name: 'frontend generated aliases', command: 'cd frontend && bunx svelte-kit sync', timeoutMs: 60_000 },
+  { name: 'frontend React types', command: 'cd frontend && bun scripts/check.ts --all --level=local', timeoutMs: 60_000 },
   // CI starts from a cold Rust target. The complete Rust build and test chain
   // exceeded five minutes on GitHub while every completed test stayed green;
   // the watchdog must cover cold toolchain latency, not terminate healthy work.

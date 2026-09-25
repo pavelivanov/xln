@@ -15,7 +15,7 @@ export const parseReleasePreviewOptions = (
 ) => {
   const directory = args[0];
   if (args.length !== 1 || !directory || directory.startsWith('-')) {
-    throw new Error('RELEASE_PREVIEW_USAGE: bun run preview:react <release-directory>');
+    throw new Error('RELEASE_PREVIEW_USAGE: bun run preview -- <release-directory>');
   }
   const target = edgeTarget(env['XLN_REACT_EDGE_TARGET'] ?? `http://127.0.0.1:${DEVELOPMENT_EDGE_PORT}`);
   return {

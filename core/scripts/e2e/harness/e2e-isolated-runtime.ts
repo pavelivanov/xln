@@ -51,10 +51,8 @@ export type E2EShardPaths = {
 
 export type E2EBuildArtifacts = {
   cacheRoot: string;
-  publicDir: string;
-  runtimeBundlePath: string;
-  svelteKitOutDir: string;
-  frontendBuildDir: string;
+  releaseDirectory: string;
+  previewServerPath: string;
 };
 
 export const deriveE2EShardPorts = (basePort: number, shard: number): E2EShardPorts => {
@@ -125,10 +123,11 @@ export const isE2EBuildInputPath = (file: string): boolean => {
     return !path.startsWith('core/__tests__/') && !path.startsWith('core/scripts/');
   }
   if (path.startsWith('frontend/')) {
-    return !['frontend/node_modules/', 'frontend/.svelte-kit/', 'frontend/build/', 'frontend/dist/'].some(prefix =>
+    return !['frontend/node_modules/', 'frontend/.artifacts/', 'frontend/dist/'].some(prefix =>
       path.startsWith(prefix),
     );
   }
+  if (path.startsWith('brainvault/') || path.startsWith('packages/')) return true;
   if (path.startsWith('jurisdictions/artifacts/')) return true;
   if (path.startsWith('docs/') || path.startsWith('scenarios/')) return true;
   return ['bun.lock', 'package.json', 'tsconfig.json', 'tsconfig.runtime.json', 'scripts/build-runtime.sh'].includes(

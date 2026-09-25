@@ -3,6 +3,27 @@ import { join } from 'node:path';
 
 let healthFixtureSequence = 0;
 
+const waitForHealthFixtureRpc = async (url: string): Promise<void> => {
+  const deadline = Date.now() + 10_000;
+  let lastFailure = 'not-ready';
+  while (Date.now() < deadline) {
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'eth_chainId', params: [] }),
+      });
+      const payload = await response.json() as { result?: unknown };
+      if (response.ok && payload.result === '0x7a69') return;
+      lastFailure = `status=${response.status}:result=${String(payload.result)}`;
+    } catch (error) {
+      lastFailure = error instanceof Error ? error.message : String(error);
+    }
+    await Bun.sleep(25);
+  }
+  throw new Error(`HEALTH_FIXTURE_RPC_READY_TIMEOUT:${lastFailure}`);
+};
+
 /** Real isolated Orchestrator and Anvil; health bodies are never fabricated. */
 export const startHealthOrchestratorFixture = async (basePort: number, root: string) => {
   const fixtureSequence = healthFixtureSequence++;
@@ -50,6 +71,15 @@ export const startHealthOrchestratorFixture = async (basePort: number, root: str
       });
     },
   });
+  try {
+    await waitForHealthFixtureRpc(`http://127.0.0.1:${rpcPort}`);
+  } catch (error) {
+    await rpcProxy.stop(true);
+    anvil.kill('SIGTERM');
+    await anvil.exited;
+    await log.close();
+    throw error;
+  }
   const orchestrator = Bun.spawn(
     [
       'bun',

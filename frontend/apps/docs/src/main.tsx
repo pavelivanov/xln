@@ -1,8 +1,11 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 
+import { installBrowserErrorTelemetry } from '../../../packages/browser/src/browser-error-telemetry';
 import { DocsApp } from './docs-app';
 import './styles/docs.css';
+
+installBrowserErrorTelemetry();
 
 const rootElement = document.getElementById('root');
 if (!rootElement) throw new Error('FRONTEND_REACT_ROOT_MISSING');

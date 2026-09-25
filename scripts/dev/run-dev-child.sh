@@ -120,24 +120,8 @@ run_anvil() {
   run_owned env TMPDIR="$chain_tmp_dir" ANVIL_TMPDIR="$chain_tmp_dir" "${args[@]}" > "${DEV_LOG_DIR}/anvil-${port}.log" 2>&1
 }
 
-run_vite() {
-  local port="$1"
-  shift
-  cd frontend
-  echo "VITE_STARTING port=${port} api=http://127.0.0.1:${API_PORT} logLevel=warn"
-  run_owned env \
-    VITE_DEV_PORT="$port" \
-    VITE_API_PROXY_TARGET="http://127.0.0.1:${API_PORT}" \
-    VITE_XLN_WATCHTOWER_URL="http://127.0.0.1:${WATCHTOWER_PORT}" \
-    ANVIL_RPC="http://localhost:${RPC_PORT}" \
-    ANVIL_RPC2="http://localhost:${RPC2_PORT}" \
-    RPC_ETHEREUM="http://localhost:${RPC_PORT}" \
-    RPC_TRON="http://localhost:${RPC2_PORT}" \
-    "$REPO_ROOT/frontend/node_modules/.bin/vite" dev "$@"
-}
-
-# React wallet (ui/). It serves the same live-rebuilt runtime bundle the
-# SvelteKit frontend uses, so core edits reach both shells at once.
+# The internal operator UI serves the same live-rebuilt Runtime bundle as the
+# canonical React frontend, so core edits reach both surfaces at once.
 run_ui() {
   cd ui
   echo "UI_STARTING port=${UI_PORT} runtimeBundleDir=${REPO_ROOT}/frontend/static logLevel=warn"
@@ -219,12 +203,6 @@ case "$role" in
     ;;
   runtime)
     run_owned ./scripts/dev/watch-runtime-build.sh
-    ;;
-  vite)
-    run_vite "$WEB_PORT" --logLevel warn
-    ;;
-  vite-http)
-    run_vite "$WEB_HTTP_PORT" --config vite.config.http.ts --logLevel warn
     ;;
   react)
     cd frontend

@@ -4,8 +4,10 @@ import { developmentFrontendRoles, readDevFrontend } from '../../../scripts/dev/
 import { readDevelopmentGatewayTls, resolveLiveRuntimeFilename } from '../../../frontend/scripts/dev/dev-gateway';
 
 test('React root development replaces both public Vite listeners and retains readiness/UI roles', () => {
-  expect(developmentFrontendRoles(readDevFrontend('react'))).toEqual(['react', 'ui', 'ready']);
-  expect(developmentFrontendRoles(readDevFrontend('svelte'))).toEqual(['vite', 'vite-http', 'ui', 'ready']);
+  expect(readDevFrontend()).toBe('react');
+  expect(readDevFrontend('react')).toBe('react');
+  expect(developmentFrontendRoles()).toEqual(['react', 'ui', 'ready']);
+  expect(() => readDevFrontend('svelte')).toThrow('DEV_FRONTEND_INVALID');
   expect(() => readDevFrontend('')).toThrow('DEV_FRONTEND_INVALID');
   expect(() => readDevFrontend('unknown')).toThrow('DEV_FRONTEND_INVALID');
 });

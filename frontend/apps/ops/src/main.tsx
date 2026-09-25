@@ -1,10 +1,13 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 
+import { installBrowserErrorTelemetry } from '../../../packages/browser/src/browser-error-telemetry';
 import { embedBootTitle, parseEmbedBootRequest } from '../../../packages/runtime-client/src/scenario/embed-boot-model';
 import { OpsApp } from './ops-app';
 import { startOpsHealthRuntime } from './health/ops-health-runtime';
 import { opsPageMetadata, resolveOpsPage } from './ops-model';
+
+installBrowserErrorTelemetry();
 
 const rootElement = document.getElementById('root');
 if (!rootElement) throw new Error('FRONTEND_REACT_ROOT_MISSING');

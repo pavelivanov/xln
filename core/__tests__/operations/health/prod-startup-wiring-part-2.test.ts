@@ -1097,9 +1097,9 @@ describe('production startup wiring', () => {
       "{ name: 'real WebSocket P2P relay', command: 'bun run test:p2p:relay', timeoutMs: 240_000 }",
     );
     expect(releaseGate).toContain(
-      "{ name: 'frontend generated aliases', command: 'cd frontend && bunx svelte-kit sync', timeoutMs: 60_000 }",
+      "{ name: 'frontend React types', command: 'cd frontend && bun scripts/check.ts --all --level=local', timeoutMs: 60_000 }",
     );
-    expect(releaseGate.indexOf("'frontend generated aliases'")).toBeLessThan(
+    expect(releaseGate.indexOf("'frontend React types'")).toBeLessThan(
       releaseGate.indexOf("'runtime core unit tests'"),
     );
     expect(releaseGate.indexOf("'bootstrap soundcheck'")).toBeLessThan(releaseGate.indexOf("'fast E2E gate'"));

@@ -1,38 +1,37 @@
-# sv
+# xln React frontend
 
-Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
+The canonical frontend is a four-surface React release: public site, Docs,
+Wallet, and Ops. The development gateway owns the public `localhost:8080`
+entry point and routes each pathname to its declared surface.
 
-## Creating a project
+## Development
 
-If you're seeing this, you've probably already done this step. Congrats!
-
-```sh
-# create a new project in the current directory
-npx sv create
-
-# create a new project in my-app
-npx sv create my-app
-```
-
-## Developing
-
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
+Install the pinned dependencies and start all four surfaces:
 
 ```sh
-npm run dev
-
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
+bun install --frozen-lockfile
+bun run dev
 ```
 
-## Building
+From the repository root, `bun run dev` starts the complete local stack and
+the same canonical React gateway.
 
-To create a production version of your app:
+## Verification and build
 
 ```sh
-npm run build
+bun run check
+bun run build
 ```
 
-You can preview the production build with `npm run preview`.
+`bun run check` typechecks, tests, prepares generated inputs, builds all four
+surfaces, and assembles one verified content-addressed release. `bun run build`
+performs the production preparation, build, and assembly steps without tests.
 
-> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
+Preview requires an explicit verified release directory and never selects a
+mutable build implicitly:
+
+```sh
+bun run preview -- .artifacts/releases/sha256-<release-id>
+```
+
+Production activation is a separate release-authority operation.

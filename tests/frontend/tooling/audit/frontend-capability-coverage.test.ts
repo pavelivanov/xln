@@ -101,9 +101,9 @@ describe('frontend capability inventory', () => {
     expect(CAPABILITIES.find(({ id }) => id === 'wallet-shell-and-identity')?.currentSources)
       .toContain('frontend/packages/browser/src/preferences/wallet-shell-state.ts');
     expect(CAPABILITIES.find(({ id }) => id === 'wallet-shell-and-identity')?.currentSources)
-      .toContain('frontend/src/lib/components/Views/RuntimeCreation.svelte');
+      .toContain('frontend/apps/wallet/src/identity/identity-onboarding.tsx');
     expect(CAPABILITIES.find(({ id }) => id === 'wallet-shell-and-identity')?.currentSources)
-      .toContain('frontend/src/routes/app/+layout.svelte');
+      .toContain('frontend/apps/wallet/src/app-shell.tsx');
     expect(CAPABILITIES.find(({ id }) => id === 'wallet-shell-and-identity')?.behavior)
       .toContain('deterministic browser BrainVault finalization decisions');
     expect(CAPABILITIES.find(({ id }) => id === 'wallet-shell-and-identity')?.behavior)
