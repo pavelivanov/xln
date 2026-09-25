@@ -6,14 +6,12 @@
       "core/**/*.ts",
       "jurisdictions/contracts/**/*.sol",
       "custody/**/*.ts",
-      "frontend/src/lib/components/Entity/**/*",
-      "frontend/src/lib/components/PaymentSpotlight.svelte",
-      "frontend/src/lib/components/Views/RuntimeCreation.svelte",
-      "frontend/packages/browser/src/graph/payment-terminal-monitor.ts",
-      "frontend/packages/browser/src/graph/payment-spotlight-store.ts",
-      "frontend/src/lib/view/View.svelte",
-      "frontend/bridges/runtime/xln-store.ts",
-      "frontend/packages/runtime-client/src/payments/xln-invoice.ts"
+      "frontend/apps/wallet/src/**/*",
+      "frontend/bridges/runtime/**/*",
+      "frontend/bridges/wallet/**/*",
+      "frontend/packages/browser/src/**/*",
+      "frontend/packages/runtime-client/src/**/*",
+      "frontend/packages/ui/src/**/*"
     ],
     "testGlobs": [
       "core/__tests__/**/*.ts",
@@ -26,14 +24,6 @@
       {
         "glob": "core/jurisdiction/adapter/browservm/*.ts",
         "reason": "BrowserVM is peripheral to the production remote-jurisdiction release path."
-      },
-      {
-        "glob": "frontend/src/lib/components/Graph3D/**/*",
-        "reason": "Graph3D is a peripheral visualization outside the wallet release face."
-      },
-      {
-        "glob": "frontend/src/lib/components/Dock/**/*",
-        "reason": "Dock and debug panels are outside the user-wallet acceptance path."
       }
     ]
   },
@@ -321,12 +311,12 @@
         "core/runtime/registration/**/*.ts",
         "core/protocol/payments/**/*.ts",
         "core/protocol/htlc/**/*.ts",
-        "frontend/src/lib/components/Entity/payments/PaymentPanel.svelte",
-        "frontend/src/lib/components/PaymentSpotlight.svelte",
+        "frontend/apps/wallet/src/app-shell.tsx",
+        "frontend/apps/wallet/src/payments/**/*",
+        "frontend/bridges/wallet/payment-*.ts",
         "frontend/packages/browser/src/graph/payment-spotlight-store.ts",
         "frontend/packages/browser/src/graph/payment-terminal-monitor.ts",
-        "frontend/src/lib/view/View.svelte",
-        "frontend/packages/runtime-client/src/payments/xln-invoice.ts"
+        "frontend/packages/runtime-client/src/payments/**/*"
       ],
       "testGlobs": [
         "core/__tests__/**/*payment*",
@@ -373,17 +363,17 @@
       "criticality": "high",
       "structuralDebt": 3,
       "sourceGlobs": [
-        "frontend/src/lib/components/Views/RuntimeCreation.svelte",
-        "frontend/src/lib/components/Entity/**/*",
-        "frontend/src/lib/components/PaymentSpotlight.svelte",
-        "frontend/packages/browser/src/graph/payment-spotlight-store.ts",
-        "frontend/packages/browser/src/graph/payment-terminal-monitor.ts",
-        "frontend/src/lib/view/View.svelte",
-        "frontend/bridges/runtime/xln-store.ts",
-        "frontend/packages/runtime-client/src/payments/xln-invoice.ts"
+        "frontend/apps/wallet/src/**/*",
+        "frontend/bridges/runtime/**/*",
+        "frontend/bridges/wallet/**/*",
+        "frontend/packages/browser/src/**/*",
+        "frontend/packages/runtime-client/src/**/*",
+        "frontend/packages/ui/src/**/*"
       ],
       "testGlobs": [
-        "frontend/tests/brainvault-*.spec.ts",
+        "tests/frontend/onboarding/brainvault/**/*",
+        "tests/frontend/onboarding/recovery/**/*",
+        "tests/frontend/runtime/wallet/lifecycle/**/*",
         "tests/e2e-payment.spec.ts",
         "tests/frontend/payments/payment-panel-view.test.ts",
         "tests/frontend/payments/payment-terminal-monitor.test.ts",
@@ -396,16 +386,7 @@
         "registration-payment",
         "markets"
       ],
-      "exclusions": [
-        {
-          "glob": "frontend/src/lib/components/Graph3D/**/*",
-          "reason": "Graph3D is a peripheral visualization and excluded from the wallet release face."
-        },
-        {
-          "glob": "frontend/src/lib/components/Dock/**/*",
-          "reason": "Dock/debug surfaces are not part of the user wallet acceptance path."
-        }
-      ]
+      "exclusions": []
     },
     {
       "id": "ops-observability",
@@ -965,12 +946,12 @@
         "core/runtime/registration/**/*.ts",
         "core/protocol/payments/**/*.ts",
         "core/protocol/htlc/**/*.ts",
-        "frontend/src/lib/components/Entity/payments/PaymentPanel.svelte",
-        "frontend/src/lib/components/PaymentSpotlight.svelte",
+        "frontend/apps/wallet/src/app-shell.tsx",
+        "frontend/apps/wallet/src/payments/**/*",
+        "frontend/bridges/wallet/payment-*.ts",
         "frontend/packages/browser/src/graph/payment-spotlight-store.ts",
         "frontend/packages/browser/src/graph/payment-terminal-monitor.ts",
-        "frontend/src/lib/view/View.svelte",
-        "frontend/packages/runtime-client/src/payments/xln-invoice.ts"
+        "frontend/packages/runtime-client/src/payments/**/*"
       ],
       "testGlobs": [
         "core/__tests__/**/*payment*",
@@ -1020,12 +1001,18 @@
         "independentVerification"
       ],
       "sourceGlobs": [
-        "frontend/src/lib/components/Views/RuntimeCreation.svelte",
-        "frontend/src/lib/components/Entity/**/*",
-        "frontend/bridges/runtime/xln-store.ts"
+        "frontend/apps/wallet/src/identity/**/*",
+        "frontend/apps/wallet/src/onboarding/**/*",
+        "frontend/bridges/wallet/brainvault/**/*",
+        "frontend/bridges/wallet/canonical/wallet-canonical-vault-runtime.ts",
+        "frontend/packages/browser/src/identity/**/*",
+        "frontend/packages/browser/src/recovery/**/*",
+        "frontend/packages/browser/src/runtime/**/*"
       ],
       "testGlobs": [
-        "frontend/tests/brainvault-*.spec.ts"
+        "tests/frontend/onboarding/brainvault/**/*",
+        "tests/frontend/onboarding/recovery/**/*",
+        "tests/frontend/runtime/wallet/lifecycle/**/*"
       ]
     },
     {
@@ -1042,17 +1029,14 @@
         "independentVerification"
       ],
       "sourceGlobs": [
-        "frontend/src/lib/components/Views/RuntimeCreation.svelte",
-        "frontend/src/lib/components/Entity/**/*",
-        "frontend/src/lib/components/PaymentSpotlight.svelte",
-        "frontend/packages/browser/src/graph/payment-spotlight-store.ts",
-        "frontend/packages/browser/src/graph/payment-terminal-monitor.ts",
-        "frontend/src/lib/view/View.svelte",
-        "frontend/bridges/runtime/xln-store.ts",
-        "frontend/packages/runtime-client/src/payments/xln-invoice.ts"
+        "frontend/apps/wallet/src/**/*",
+        "frontend/bridges/runtime/**/*",
+        "frontend/bridges/wallet/**/*",
+        "frontend/packages/browser/src/**/*",
+        "frontend/packages/runtime-client/src/**/*",
+        "frontend/packages/ui/src/**/*"
       ],
       "testGlobs": [
-        "frontend/tests/brainvault-*.spec.ts",
         "tests/e2e-payment.spec.ts",
         "tests/frontend/payments/payment-panel-view.test.ts",
         "tests/frontend/payments/payment-terminal-monitor.test.ts",
