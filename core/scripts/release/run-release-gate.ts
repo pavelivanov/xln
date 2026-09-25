@@ -99,7 +99,10 @@ const RUNTIME_CORE_TESTS = [
 const RELEASE_PATHS = XLN_RELEASE_PATHS.join(' ');
 
 const quickSteps: GateStep[] = [
-  { name: 'frontend React types', command: 'cd frontend && bun scripts/check.ts --all --level=local', timeoutMs: 60_000 },
+  // Cold hosted runners can reach the final Ops checker after one minute. Keep
+  // the watchdog aligned with the complete frontend check below so healthy
+  // typechecking is not terminated before it can publish FRONTEND_CHECK_OK.
+  { name: 'frontend React types', command: 'cd frontend && bun scripts/check.ts --all --level=local', timeoutMs: 180_000 },
   // CI starts from a cold Rust target. The complete Rust build and test chain
   // exceeded five minutes on GitHub while every completed test stayed green;
   // the watchdog must cover cold toolchain latency, not terminate healthy work.
