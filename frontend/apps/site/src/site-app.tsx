@@ -25,15 +25,15 @@ function PendingRoute({ pathname }: Readonly<{ pathname: string }>) {
   );
 }
 
-function ReleasesFallback() {
+function ReleasesPlaceholder() {
   return <SiteShell activeRoute="/releases"><main className="releases-page"><section className="release-state"><span>Loading release verifier</span><h1>Opening the<br />engineering ledger.</h1></section></main><SiteFooter /></SiteShell>;
 }
 
-function ReviewsFallback() {
+function ReviewsPlaceholder() {
   return <SiteShell activeRoute="/reviews"><main className="reviews-page"><section className="reviews-loading"><span>Loading model perspectives</span><h1>Opening the<br />review transcript.</h1></section></main><SiteFooter /></SiteShell>;
 }
 
-function MarketCapFallback() {
+function MarketCapPlaceholder() {
   return <SiteShell activeRoute="/market-cap"><main className="market-page"><section className="market-state"><div className="market-loader" /><strong>Opening verified relay markets</strong><span>Preparing the Entity valuation ledger.</span></section></main><SiteFooter /></SiteShell>;
 }
 
@@ -42,8 +42,8 @@ export function SiteApp({ page }: Readonly<{ page: SitePage }>) {
   if (page.kind === 'install') return <InstallPage />;
   if (page.kind === 'rcpan') return <RcpanPage />;
   if (page.kind === 'unicast') return <UnicastPage />;
-  if (page.kind === 'releases') return <Suspense fallback={<ReleasesFallback />}><ReleasesPage /></Suspense>;
-  if (page.kind === 'reviews') return <Suspense fallback={<ReviewsFallback />}><ReviewsPage /></Suspense>;
-  if (page.kind === 'market-cap') return <Suspense fallback={<MarketCapFallback />}><MarketCapPage /></Suspense>;
+  if (page.kind === 'releases') return <Suspense fallback={<ReleasesPlaceholder />}><ReleasesPage /></Suspense>;
+  if (page.kind === 'reviews') return <Suspense fallback={<ReviewsPlaceholder />}><ReviewsPage /></Suspense>;
+  if (page.kind === 'market-cap') return <Suspense fallback={<MarketCapPlaceholder />}><MarketCapPage /></Suspense>;
   return <PendingRoute pathname={page.pathname} />;
 }

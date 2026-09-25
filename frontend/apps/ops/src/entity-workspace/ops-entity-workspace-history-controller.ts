@@ -31,7 +31,7 @@ const errorMessage = (error: unknown): string =>
   error instanceof Error ? error.message : String(error || 'History read failed');
 
 export class OpsEntityWorkspaceHistoryController {
-  private fallbackSnapshot: OpsEntityWorkspaceSourceSnapshot | null = null;
+  private stableSnapshot: OpsEntityWorkspaceSourceSnapshot | null = null;
   private request = 0;
   private selectedHeight: number | null = null;
 
@@ -44,7 +44,7 @@ export class OpsEntityWorkspaceHistoryController {
   };
 
   readonly reset = (): void => {
-    this.fallbackSnapshot = null;
+    this.stableSnapshot = null;
     this.request += 1;
     this.selectedHeight = null;
   };
@@ -85,9 +85,9 @@ export class OpsEntityWorkspaceHistoryController {
       return true;
     }
     if (this.selectedHeight === null || !previous.timeMachine.loading) {
-      this.fallbackSnapshot = previous;
+      this.stableSnapshot = previous;
     }
-    const fallback = this.fallbackSnapshot ?? previous;
+    const stable = this.stableSnapshot ?? previous;
     const request = ++this.request;
     this.selectedHeight = requestedHeight;
     this.dependencies.publish({
@@ -116,7 +116,7 @@ export class OpsEntityWorkspaceHistoryController {
           selectedHeight: requestedHeight,
         }),
       };
-      this.fallbackSnapshot = next;
+      this.stableSnapshot = next;
       this.dependencies.publish(next);
       return true;
     } catch (error: unknown) {
@@ -124,13 +124,13 @@ export class OpsEntityWorkspaceHistoryController {
       if (appendCursor !== null) {
         this.dependencies.cancelActivityAppend(appendCursor);
       }
-      this.selectedHeight = fallback.timeMachine.mode === 'history'
-        ? fallback.timeMachine.selectedHeight
+      this.selectedHeight = stable.timeMachine.mode === 'history'
+        ? stable.timeMachine.selectedHeight
         : null;
       this.dependencies.publish({
-        ...fallback,
+        ...stable,
         timeMachine: {
-          ...updateEntityWorkspaceLatestHeight(fallback.timeMachine, adapter.currentHeight),
+          ...updateEntityWorkspaceLatestHeight(stable.timeMachine, adapter.currentHeight),
           error: errorMessage(error),
           loading: false,
         },

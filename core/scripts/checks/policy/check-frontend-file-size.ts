@@ -1,5 +1,6 @@
 import { promises } from 'fs';
 import path from 'path';
+import { FRONTEND_HANDWRITTEN_SOURCE_ROOTS } from '../../../../frontend/config/source-roots';
 import { compareStableText } from '../../../protocol/serialization';
 
 type FileSizeViolation = {
@@ -8,7 +9,7 @@ type FileSizeViolation = {
 };
 
 const ROOT = process.cwd();
-const SOURCE_ROOTS = ['core', 'frontend/src', 'tests', 'scripts', 'jurisdictions'];
+const SOURCE_ROOTS = ['core', ...FRONTEND_HANDWRITTEN_SOURCE_ROOTS, 'tests', 'scripts', 'jurisdictions'];
 const MAX_SOURCE_FILE_LINES = 3000;
 const CODE_FILE_RE = /\.(svelte|ts|tsx|js|cjs|mjs|css|sol|sh)$/;
 const GENERATED_PATH_PARTS = [

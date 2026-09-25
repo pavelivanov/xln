@@ -124,6 +124,32 @@ const isAiRole = (value: unknown): value is AiMessage['role'] =>
 const isStringArray = (value: unknown): value is string[] =>
   Array.isArray(value) && value.every(entry => typeof entry === 'string');
 
+export const decodeAiStreamContent = (value: unknown): string => {
+  if (!isUnknownRecord(value)) return '';
+  return typeof value['content'] === 'string' ? value['content'] : '';
+};
+
+export const decodeAiVisionDescription = (value: unknown): string | null => {
+  if (!isUnknownRecord(value)) return null;
+  return typeof value['content'] === 'string' ? value['content'] : null;
+};
+
+export const decodeAiToolExecutionResponse = (
+  value: unknown,
+): Readonly<{ result?: unknown; error?: unknown }> => {
+  const record = requireUnknownRecord(value, 'AI_TOOL_EXECUTION_RESPONSE_INVALID');
+  return {
+    ...(record['result'] === undefined ? {} : { result: record['result'] }),
+    ...(record['error'] === undefined ? {} : { error: record['error'] }),
+  };
+};
+
+export const decodeAiSuccess = (value: unknown, code: string): true => {
+  const record = requireUnknownRecord(value, code);
+  if (record['success'] !== true) throw new Error(code);
+  return true;
+};
+
 // The AI server reports inactive MLX slots as JSON null, not as an absent key.
 const nullableString = (value: unknown, code: string): string | null => {
   if (value === null || value === undefined) return null;

@@ -11,6 +11,7 @@
 
 import { promises } from 'fs';
 import path from 'path';
+import { FRONTEND_PRODUCT_SOURCE_ROOTS } from '../../../../frontend/config/source-roots';
 
 type Violation = {
   file: string;
@@ -23,7 +24,7 @@ const ROOT = process.cwd();
 const SCAN_ROOTS = [
   'tests',
   'core/scenarios',
-  'frontend/src/lib/components/Entity',
+  ...FRONTEND_PRODUCT_SOURCE_ROOTS,
   'core/account/tx/handlers/request-withdrawal.ts',
   'core/account/tx/handlers/settle-hold.ts',
 ];

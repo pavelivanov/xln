@@ -22,7 +22,7 @@ export function WalletApp({ page }: Readonly<{ page: WalletPage }>) {
       copy={{
         eyebrow: 'Financial surface',
         title: 'Wallet route unavailable.',
-        summary: `${page.pathname} is not implemented by the canonical React wallet. No legacy fallback is available.`,
+        summary: `${page.pathname} is not implemented by the canonical React wallet. No retired implementation is available.`,
       }}
       surfaceId="wallet"
     />

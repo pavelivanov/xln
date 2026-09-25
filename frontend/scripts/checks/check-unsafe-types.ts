@@ -1,6 +1,7 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import ts from 'typescript';
+import { FRONTEND_HANDWRITTEN_SOURCE_ROOTS } from '../../config/source-roots';
 
 type Finding = {
   file: string;
@@ -10,11 +11,9 @@ type Finding = {
 
 const frontendRoot = join(import.meta.dir, '../..');
 export const frontendScanRoots = (root: string): readonly string[] => [
-  join(root, 'apps'),
-  join(root, 'packages'),
-  join(root, 'bridges'),
-  join(root, 'config'),
-  join(root, 'scripts'),
+  ...FRONTEND_HANDWRITTEN_SOURCE_ROOTS.map(sourceRoot =>
+    join(root, sourceRoot.replace(/^frontend\//, '')),
+  ),
 ];
 
 const scanRoots = frontendScanRoots(frontendRoot);

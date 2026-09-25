@@ -79,9 +79,9 @@ function WalletOnboardingForm({ view, runtimeState, onComplete }: Readonly<{
     }
   };
 
-  const changeLimit = (key: 'softLimitUsd' | 'hardLimitUsd' | 'maxFeeUsd', value: number, fallback: number) => {
+  const changeLimit = (key: 'softLimitUsd' | 'hardLimitUsd' | 'maxFeeUsd', value: number, defaultValue: number) => {
     editedPolicy.current = true;
-    setDraft(current => ({ ...current, [key]: toUsdInt(value, fallback) }));
+    setDraft(current => ({ ...current, [key]: toUsdInt(value, defaultValue) }));
   };
 
   return <form className="wallet-onboarding" onSubmit={event => { void finish(event); }} aria-labelledby="wallet-onboarding-title">
@@ -119,10 +119,10 @@ function WalletOnboardingForm({ view, runtimeState, onComplete }: Readonly<{
   </form>;
 }
 
-export function WalletPostCreationSetup({ runtimeId, runtimeState, fallback }: Readonly<{
+export function WalletPostCreationSetup({ runtimeId, runtimeState, pendingContent }: Readonly<{
   runtimeId: string;
   runtimeState: WalletRuntimeSummary['state'];
-  fallback?: ReactNode;
+  pendingContent?: ReactNode;
 }>) {
   const navigateWallet = useWalletNavigation();
   const [view, setView] = useState<WalletOnboardingView | null>(null);
@@ -144,7 +144,7 @@ export function WalletPostCreationSetup({ runtimeId, runtimeState, fallback }: R
   if (error) return <p role="alert" className="wallet-settings-error">{error}</p>;
   if (!view || view.state === 'waiting') return <p role="status">{view?.reason || 'Loading account setup…'}</p>;
   if (view.state === 'ready' && !result) return <WalletOnboardingForm key={runtimeId} view={view} runtimeState={runtimeState} onComplete={setResult} />;
-  if (!result && fallback !== undefined) return fallback;
+  if (!result && pendingContent !== undefined) return pendingContent;
   return <>
     {result ? <p className="wallet-settings-status" role="status">Account configured for {result.displayName}. Joined {result.autoJoinedCount} hub accounts.</p> : null}
     <a className="identity-primary-action wallet-onboarding-continue" href={walletBrowserHref('/app?portfolio=1')} onClick={event => {
@@ -162,5 +162,5 @@ export function WalletExistingSetupGate({ runtimeId, runtimeState, children }: R
   children: ReactNode;
 }>) {
   if (!runtimeId || runtimeState !== 'local-ready' || !hasPersistedWalletVault(localStorage)) return children;
-  return <WalletPostCreationSetup key={runtimeId} runtimeId={runtimeId} runtimeState={runtimeState} fallback={children} />;
+  return <WalletPostCreationSetup key={runtimeId} runtimeId={runtimeId} runtimeState={runtimeState} pendingContent={children} />;
 }

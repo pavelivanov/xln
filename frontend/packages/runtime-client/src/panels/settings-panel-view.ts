@@ -84,10 +84,10 @@ const invalidSetting = (key: keyof ViewSettings): Error =>
 const optionalNumber = (
   record: Record<string, unknown>,
   key: keyof ViewSettings,
-  fallback: number,
+  defaultValue: number,
 ): number => {
   const value = record[key];
-  if (value === undefined) return fallback;
+  if (value === undefined) return defaultValue;
   if (typeof value !== 'number' || !Number.isFinite(value)) throw invalidSetting(key);
   return value;
 };
@@ -95,10 +95,10 @@ const optionalNumber = (
 const optionalBoolean = (
   record: Record<string, unknown>,
   key: keyof ViewSettings,
-  fallback: boolean,
+  defaultValue: boolean,
 ): boolean => {
   const value = record[key];
-  if (value === undefined) return fallback;
+  if (value === undefined) return defaultValue;
   if (typeof value !== 'boolean') throw invalidSetting(key);
   return value;
 };
@@ -107,10 +107,10 @@ const optionalChoice = <T extends string>(
   record: Record<string, unknown>,
   key: keyof ViewSettings,
   choices: readonly T[],
-  fallback: T,
+  defaultValue: T,
 ): T => {
   const value = record[key];
-  if (value === undefined) return fallback;
+  if (value === undefined) return defaultValue;
   const selected = choices.find((choice) => choice === value);
   if (!selected) throw invalidSetting(key);
   return selected;
@@ -119,10 +119,10 @@ const optionalChoice = <T extends string>(
 const optionalVector = (
   record: Record<string, unknown>,
   key: 'cameraTarget',
-  fallback: SettingsVector3,
+  defaultValue: SettingsVector3,
 ): SettingsVector3 => {
   const value = record[key];
-  if (value === undefined) return { ...fallback };
+  if (value === undefined) return { ...defaultValue };
   if (!isUnknownRecord(value)) throw invalidSetting(key);
   const { x, y, z } = value;
   if (![x, y, z].every((coordinate) => typeof coordinate === 'number' && Number.isFinite(coordinate))) {

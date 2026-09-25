@@ -52,7 +52,7 @@ export function OpsQaScenarioPlayer({ runId, shard }: Readonly<{ runId: string; 
       <div><button data-testid="qa-theater-toggle" onClick={() => setTheater(value => !value)} type="button">{theater ? 'Exit theater' : 'Theater'}</button><button data-testid="qa-fullscreen-button" onClick={() => void fullscreen()} type="button">Fullscreen</button></div>
     </header>
     <p>{qaScenarioDescription(shard)}</p>
-    {fullscreenError ? <p className="ops-qa-error">Fullscreen fallback: {fullscreenError}</p> : null}
+    {fullscreenError ? <p className="ops-qa-error">Fullscreen issue: {fullscreenError}</p> : null}
     <div className="ops-qa-player-layout">
       <div className="ops-qa-video-stage">
         {video?.url && videoUrl.blobUrl ? <video

@@ -25,16 +25,6 @@ const WalletMarkets = lazy(async () => ({ default: (await import('../../../../wa
 const WalletAccountWorkspace = lazy(async () => ({ default: (await import('../../../../wallet/src/account/wallet-account-workspace')).WalletAccountWorkspace }));
 const WalletFinancialHealth = lazy(async () => ({ default: (await import('../../../../wallet/src/financial-health/wallet-financial-health')).WalletFinancialHealth }));
 
-const adapterIds = new WeakMap<RuntimeAdapter, number>();
-let nextAdapterId = 0;
-const adapterKey = (adapter: RuntimeAdapter): number => {
-  const existing = adapterIds.get(adapter);
-  if (existing !== undefined) return existing;
-  const id = ++nextAdapterId;
-  adapterIds.set(adapter, id);
-  return id;
-};
-
 function LiveWallet({ adapter, navigation }: Readonly<{ adapter: RuntimeAdapter; navigation: WalletNavigation | undefined }>) {
   const { t } = useWorkspaceTranslation();
   const [selection] = useState(() => new WalletWorkspaceSelection());
@@ -114,7 +104,7 @@ export function OpsWalletPanel({ params }: IDockviewPanelProps<{ navigation?: Wa
   // The same recorded Entity source owns selection, paging and history reads.
   if (network.selectedStep) return <RecordedWallet />;
   if (!adapter) return <p className="workspace-read-state">Select a Runtime and unlock its owner to open the local Wallet.</p>;
-  return <LiveWallet adapter={adapter} navigation={params.navigation} key={adapterKey(adapter)} />;
+  return <LiveWallet adapter={adapter} navigation={params.navigation} key={adapter.runtimeId} />;
 }
 
 function RecordedWallet() {

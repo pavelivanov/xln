@@ -28,9 +28,9 @@ export const requireRuntimeInteger = (
 
 export const optionalRuntimeInteger = (
   value: unknown,
-  fallback: number,
+  defaultValue: number,
   label: string,
-): number => value === undefined ? fallback : requireRuntimeInteger(value, label);
+): number => value === undefined ? defaultValue : requireRuntimeInteger(value, label);
 
 export const requireRuntimeBigInt = (value: unknown, label: string): bigint => {
   if (typeof value !== 'bigint') throw new Error(`${label}_INVALID`);

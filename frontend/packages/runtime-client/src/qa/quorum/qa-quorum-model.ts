@@ -9,7 +9,7 @@ import type {
 } from './qa-quorum-types';
 
 const COLORS = ['#ffbf3f', '#52d7ff', '#a78bfa', '#4ade80', '#fb7185', '#f97316', '#e879f9', '#94a3b8'];
-const FALLBACK_COLOR = '#ffbf3f';
+const DEFAULT_COLOR = '#ffbf3f';
 const RANGE_DAYS = { '7d': 7, '30d': 30, all: 0 } as const satisfies Record<QuorumRange, number>;
 
 export const readQuorumRange = (value: string): QuorumRange => {
@@ -108,7 +108,7 @@ export const buildQuorumView = (
 export const quorumColorFor = (model: string): string => {
   let hash = 0;
   for (const character of model) hash = (hash * 31 + character.charCodeAt(0)) >>> 0;
-  return COLORS[hash % COLORS.length] ?? FALLBACK_COLOR;
+  return COLORS[hash % COLORS.length] ?? DEFAULT_COLOR;
 };
 
 export const quorumChartX = (entry: QuorumInteraction, view: QuorumView): number =>

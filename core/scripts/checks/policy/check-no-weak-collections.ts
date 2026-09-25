@@ -1,5 +1,6 @@
 import { promises } from 'fs';
 import path from 'path';
+import { FRONTEND_HANDWRITTEN_SOURCE_ROOTS } from '../../../../frontend/config/source-roots';
 
 type Violation = {
   file: string;
@@ -20,7 +21,7 @@ const SCAN_ROOTS = [
   'debates',
   'design',
   'e2e',
-  'frontend/src',
+  ...FRONTEND_HANDWRITTEN_SOURCE_ROOTS,
   'jurisdictions',
   'native',
   'ops',
