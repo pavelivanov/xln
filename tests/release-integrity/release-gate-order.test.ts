@@ -18,6 +18,16 @@ const collectCrossJReleaseTests = (directory: string): string[] => (
 );
 
 describe('release gate ordering', () => {
+  test('gives cold hosted React typechecks the full frontend watchdog', () => {
+    const stdout = renderReleaseGatePlan('ci');
+
+    expect(stdout).toContain(
+      '1. frontend React types\n' +
+      '   cd frontend && bun scripts/check.ts --all --level=local\n' +
+      '   timeoutMs=180000',
+    );
+  });
+
   test('scopes diff cleanliness to the central XLN release paths', () => {
     const stdout = renderReleaseGatePlan('quick');
     const expected = `git diff --check -- ${XLN_RELEASE_PATHS.join(' ')}`;
