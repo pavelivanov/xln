@@ -9,22 +9,20 @@ type Finding = {
 };
 
 const frontendRoot = join(import.meta.dir, '../..');
-const sourceRoot = join(frontendRoot, 'src');
-const scanRoots = [
-  sourceRoot,
-  join(frontendRoot, 'apps'),
-  join(frontendRoot, 'packages'),
-  join(frontendRoot, 'bridges'),
-  join(frontendRoot, 'config'),
-  join(frontendRoot, 'scripts'),
+export const frontendScanRoots = (root: string): readonly string[] => [
+  join(root, 'apps'),
+  join(root, 'packages'),
+  join(root, 'bridges'),
+  join(root, 'config'),
+  join(root, 'scripts'),
 ];
+
+const scanRoots = frontendScanRoots(frontendRoot);
 
 const sourceFiles = (directory: string): string[] =>
   readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
     const target = join(directory, entry.name);
-    if (entry.isDirectory()) {
-      return target === join(sourceRoot, 'routes', 'ai') ? [] : sourceFiles(target);
-    }
+    if (entry.isDirectory()) return sourceFiles(target);
     return entry.isFile() && (
       target.endsWith('.ts') || target.endsWith('.tsx') || target.endsWith('.svelte')
     ) ? [target] : [];
@@ -77,14 +75,18 @@ const inspectFile = (file: string): Finding[] => {
   ];
 };
 
-const scannedFiles = scanRoots.flatMap(sourceFiles).sort();
-const findings = scannedFiles.flatMap(inspectFile);
-if (findings.length > 0) {
-  console.error('Frontend unsafe TypeScript invariant failed:');
-  for (const finding of findings) {
-    console.error(`- ${finding.kind} ${finding.file}:${finding.line}`);
+const run = (): void => {
+  const scannedFiles = scanRoots.flatMap(sourceFiles).sort();
+  const findings = scannedFiles.flatMap(inspectFile);
+  if (findings.length > 0) {
+    console.error('Frontend unsafe TypeScript invariant failed:');
+    for (const finding of findings) {
+      console.error(`- ${finding.kind} ${finding.file}:${finding.line}`);
+    }
+    process.exit(1);
   }
-  process.exit(1);
-}
 
-console.log(`FRONTEND_UNSAFE_TYPES_OK files=${scannedFiles.length} findings=0`);
+  console.log(`FRONTEND_UNSAFE_TYPES_OK files=${scannedFiles.length} findings=0`);
+};
+
+if (import.meta.main) run();
