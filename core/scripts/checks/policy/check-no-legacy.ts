@@ -13,6 +13,7 @@
  */
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { FRONTEND_HANDWRITTEN_SOURCE_ROOTS } from '../../../../frontend/config/source-roots';
 
 type Allowance = {
   /** Exact repo-relative path. */
@@ -28,7 +29,7 @@ const SCAN_ROOTS = [
   'cli',
   'custody',
   'debates',
-  'frontend/src',
+  ...FRONTEND_HANDWRITTEN_SOURCE_ROOTS,
   'jurisdictions',
   'native',
   'ops',
@@ -121,6 +122,36 @@ const ALLOWLIST: readonly Allowance[] = [
     file: 'jurisdictions/scripts/verify/verify-public-stack.ts',
     match: 'https://sourcify.dev/server/v2/',
     reason: 'Sourcify owns and requires this external verification API route.',
+  },
+  {
+    file: 'frontend/apps/ops/src/ops-app.tsx',
+    match: '<Suspense fallback=',
+    reason: 'React Suspense requires this framework-owned loading-placeholder prop.',
+  },
+  {
+    file: 'frontend/apps/ops/src/workspace/panels/ops-wallet-panel.tsx',
+    match: '<Suspense fallback=',
+    reason: 'React Suspense requires this framework-owned loading-placeholder prop.',
+  },
+  {
+    file: 'frontend/apps/site/src/site-app.tsx',
+    match: '<Suspense fallback=',
+    reason: 'React Suspense requires this framework-owned loading-placeholder prop.',
+  },
+  {
+    file: 'frontend/apps/wallet/src/app-shell.tsx',
+    match: '<Suspense fallback=',
+    reason: 'React Suspense requires this framework-owned loading-placeholder prop.',
+  },
+  {
+    file: 'frontend/apps/wallet/src/payments/wallet-payments.tsx',
+    match: '<Suspense fallback=',
+    reason: 'React Suspense requires this framework-owned loading-placeholder prop.',
+  },
+  {
+    file: 'frontend/apps/wallet/src/portfolio/wallet-portfolio.tsx',
+    match: '<Suspense fallback=',
+    reason: 'React Suspense requires this framework-owned loading-placeholder prop.',
   },
 ];
 

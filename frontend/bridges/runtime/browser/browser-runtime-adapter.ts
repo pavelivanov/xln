@@ -88,7 +88,7 @@ export const bootEmbeddedRuntimeAdapter = async (
     mode: 'embedded',
     ...(env.runtimeId ? { runtimeId: env.runtimeId } : {}),
   });
-  registerBrowserRuntimeEnvironment(adapter, () => env);
+  const unregisterRuntimeEnvironment = registerBrowserRuntimeEnvironment(adapter, () => env);
   const fence = () => fenceEmbeddedRuntimePageUnload(xln, env);
   onPageUnloadFence(fence);
   return {
@@ -102,6 +102,7 @@ export const bootEmbeddedRuntimeAdapter = async (
       await suspendRuntime(xln, env);
       await xln.closeRuntimeDb(env);
       await xln.closeInfraDb(env);
+      unregisterRuntimeEnvironment();
       onPageUnloadFence(() => {});
     },
   };

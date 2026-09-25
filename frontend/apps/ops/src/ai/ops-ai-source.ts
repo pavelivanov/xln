@@ -25,7 +25,10 @@ import {
   decodeAiModelsPayload,
   decodeAiPinnedChats,
   decodeAiSystemStats,
+  decodeAiSuccess,
+  decodeAiToolExecutionResponse,
   decodeAiToolsPayload,
+  decodeAiVisionDescription,
   decodeAiVoiceConfig,
   decodeAiVoiceStatus,
 } from './ops-ai-decode';
@@ -157,9 +160,8 @@ const dependencies = (): OpsAiDependencies => ({
     formData.append('model', AI_VISION_MODEL);
     formData.append('prompt', AI_VISION_PROMPT);
     const response = await fetch(`${AI_SERVER_URL}/api/vision`, { method: 'POST', body: formData });
-    const payload = response.json() as Promise<{ content?: unknown }>;
-    const data = await payload.catch(() => null);
-    return typeof data?.content === 'string' ? data.content : null;
+    const data: unknown = await response.json().catch(() => null);
+    return decodeAiVisionDescription(data);
   },
   // Canonical tool execution: a rejected call becomes tool-result JSON, never
   // a thrown error — the agent loop continues with the failure as evidence.
@@ -170,7 +172,7 @@ const dependencies = (): OpsAiDependencies => ({
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ tool: call.function.name, args }),
       });
-      const data = await response.json() as { result?: unknown; error?: unknown };
+      const data = decodeAiToolExecutionResponse(await response.json());
       return JSON.stringify(data.error !== undefined && data.error !== null
         ? { error: data.error }
         : { result: data.result });
@@ -439,8 +441,7 @@ export const createOpsAiSource = (deps: OpsAiDependencies = dependencies()): Ops
       publish({ voiceConfig: config, voiceConfigNotice: 'idle' });
       try {
         await deps.post('/api/voice/config', JSON.stringify(config), payload => {
-          if (typeof payload === 'object' && payload !== null && (payload as { success?: unknown }).success === true) return true;
-          throw new Error('AI_VOICE_SAVE_INVALID');
+          return decodeAiSuccess(payload, 'AI_VOICE_SAVE_INVALID');
         });
         publish({ voiceConfigNotice: 'saved' });
       } catch {
@@ -451,8 +452,7 @@ export const createOpsAiSource = (deps: OpsAiDependencies = dependencies()): Ops
       publish({ mlxLoading: true });
       try {
         await deps.post('/api/models/load', JSON.stringify({ model: modelId }), payload => {
-          if (typeof payload === 'object' && payload !== null && (payload as { success?: unknown }).success === true) return true;
-          throw new Error('AI_MLX_LOAD_FAILED');
+          return decodeAiSuccess(payload, 'AI_MLX_LOAD_FAILED');
         });
         publish({ mlxActiveModel: modelId, mlxLoading: false });
         await fetchStats();
@@ -464,8 +464,7 @@ export const createOpsAiSource = (deps: OpsAiDependencies = dependencies()): Ops
     ejectMlxModel: async () => {
       try {
         await deps.post('/api/mlx/unload', '', payload => {
-          if (typeof payload === 'object' && payload !== null && (payload as { success?: unknown }).success === true) return true;
-          throw new Error('AI_MLX_UNLOAD_FAILED');
+          return decodeAiSuccess(payload, 'AI_MLX_UNLOAD_FAILED');
         });
         publish({ mlxActiveModel: null });
         await fetchStats();

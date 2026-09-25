@@ -57,15 +57,15 @@ const liveRuntimeEnv = (runtime: Runtime): RuntimeReplica | null => {
 };
 
 const entityJurisdiction = (env: RuntimeReplica, entityId: string, signerId: string): string => {
-  let fallback = '';
+  let candidateName = '';
   for (const replica of env.state.eReplicas.values()) {
     if (normalize(replica.entityId) !== entityId) continue;
     const name = normalize(replica.state.config.jurisdiction?.name);
     if (normalize(replica.signerId) === signerId && name) return name;
-    if (!fallback && name) fallback = name;
+    if (!candidateName && name) candidateName = name;
   }
-  if (!fallback) throw new Error(`EXTERNAL_WALLET_JURISDICTION_MISSING:${entityId}`);
-  return fallback;
+  if (!candidateName) throw new Error(`EXTERNAL_WALLET_JURISDICTION_MISSING:${entityId}`);
+  return candidateName;
 };
 
 const buildBinding = (

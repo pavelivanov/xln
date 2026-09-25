@@ -12,6 +12,7 @@ import {
   type AiSavedChat,
   type AiToolCall,
   type AiToolDefinition,
+  decodeAiStreamContent,
 } from './ops-ai-decode';
 
 export type AiChatRequest = Readonly<{
@@ -46,8 +47,7 @@ export const readAiStreamChunk = (chunk: string): string => {
     const data = line.slice(6);
     if (data === '[DONE]') continue;
     try {
-      const parsed = JSON.parse(data) as { content?: unknown };
-      if (typeof parsed.content === 'string') content += parsed.content;
+      content += decodeAiStreamContent(JSON.parse(data));
     } catch {
       // Malformed partial line between chunk boundaries: skip, as canonical.
     }
@@ -127,8 +127,8 @@ export const aiToolResultMessage = (name: string, result: string): string => `[T
 
 export const aiVisionMessage = (description: string): string => `[Vision] ${description}`;
 
-export const aiDefaultSelectedModel = (models: readonly AiModel[], fallback?: string): string => {
-  if (fallback && models.some(model => model.id === fallback)) return fallback;
+export const aiDefaultSelectedModel = (models: readonly AiModel[], preferredId?: string): string => {
+  if (preferredId && models.some(model => model.id === preferredId)) return preferredId;
   if (models.some(model => model.id === AI_DEFAULT_SELECTED_MODEL)) return AI_DEFAULT_SELECTED_MODEL;
   return models[0]?.id ?? AI_DEFAULT_SELECTED_MODEL;
 };

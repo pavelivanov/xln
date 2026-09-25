@@ -3,6 +3,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import ts from 'typescript';
+import { FRONTEND_PRODUCT_SOURCE_ROOTS } from '../../../../frontend/config/source-roots';
 
 const EXCLUDED_PATH = /\/(?:__tests__|qa|scenarios)\//;
 const VALIDATOR_PARAMETER = /(?:validate|validator|schema|decode|assert)/i;
@@ -140,7 +141,7 @@ const inputs = stdinMode
   ? [{ file: 'core/__decoder-authority-probe__.ts', text: await Bun.stdin.text() }]
   : [
       ...collectFiles('core', true),
-      ...collectFiles('frontend/src', false),
+      ...FRONTEND_PRODUCT_SOURCE_ROOTS.flatMap(directory => collectFiles(directory, false)),
       ...collectFiles('core/scripts/deployment', false),
     ].map(file => ({ file, text: fs.readFileSync(file, 'utf8') }));
 const errors = inputs.flatMap(input => inspectSource(input.file, input.text));

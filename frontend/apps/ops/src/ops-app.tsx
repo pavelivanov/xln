@@ -67,7 +67,7 @@ export function OpsApp({ page }: Readonly<{ page: OpsPage }>) {
       copy={{
         eyebrow: 'Operator surface',
         title: 'Ops route unavailable.',
-        summary: `${page.pathname} is not implemented by the canonical React operator surface. No legacy fallback is available.`,
+        summary: `${page.pathname} is not implemented by the canonical React operator surface. No retired implementation is available.`,
       }}
       surfaceId="ops"
     />

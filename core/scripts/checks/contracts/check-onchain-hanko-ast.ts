@@ -3,6 +3,7 @@
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { spawnSync } from 'node:child_process';
+import { FRONTEND_PRODUCT_SOURCE_ROOTS } from '../../../../frontend/config/source-roots';
 
 type AstNode = {
   nodeType?: string;
@@ -420,7 +421,7 @@ export const checkOnchainHankoAst = (): void => {
     'core/jurisdiction/adapter',
     'core/orchestrator',
     'scripts',
-    'frontend/src',
+    ...FRONTEND_PRODUCT_SOURCE_ROOTS,
   ].filter((directory) => existsSync(directory)).flatMap(recursiveFiles).filter((path) => (
     !path.startsWith('jurisdictions/ignition/deployments/') &&
     !path.startsWith('scripts/debug/') &&

@@ -4,10 +4,16 @@ import { snapshotRuntimeDiagnosticsIncidents, type RuntimeDiagnosticsIncident } 
 
 // Local inspection is a capability of the already-owned browser session. A
 // panel cannot resolve another Runtime by name or cause a new Runtime to boot.
-const readers = new WeakMap<RuntimeAdapter, () => RuntimeReplica | null>();
-export const registerBrowserRuntimeEnvironment = (adapter: RuntimeAdapter, read: () => RuntimeReplica | null): void => {
+const readers = new Map<RuntimeAdapter, () => RuntimeReplica | null>();
+export const registerBrowserRuntimeEnvironment = (
+  adapter: RuntimeAdapter,
+  read: () => RuntimeReplica | null,
+): (() => void) => {
   if (adapter.mode !== 'embedded') throw new Error('BROWSER_RUNTIME_CONTEXT_REQUIRES_EMBEDDED');
   readers.set(adapter, read);
+  return () => {
+    if (readers.get(adapter) === read) readers.delete(adapter);
+  };
 };
 export const readBrowserRuntimeEnvironment = (adapter: RuntimeAdapter): RuntimeReplica | null => {
   const read = readers.get(adapter);
@@ -35,7 +41,7 @@ type ViewSession = {
   unsubscribe: () => void;
   refresh: () => void;
 };
-const views = new WeakMap<RuntimeAdapter, ViewSession>();
+const views = new Map<RuntimeAdapter, ViewSession>();
 
 /** One detached post-commit projection per adapter, shared by all local panels. */
 export const openBrowserRuntimeView = (adapter: RuntimeAdapter) => {

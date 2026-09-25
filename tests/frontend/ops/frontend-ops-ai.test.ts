@@ -4,6 +4,9 @@ import { opsPageMetadata, resolveOpsPage } from '../../../frontend/apps/ops/src/
 import {
   decodeAiMessage,
   decodeAiModelsPayload,
+  decodeAiSuccess,
+  decodeAiToolExecutionResponse,
+  decodeAiVisionDescription,
   type AiMessage,
 } from '../../../frontend/apps/ops/src/ai/ops-ai-decode';
 import {
@@ -155,6 +158,12 @@ describe('React ops ai model', () => {
     expect(() => decodeAiMessage({ role: 'root', content: 'x' })).toThrow('AI_MESSAGE_ROLE_INVALID');
     const message: AiMessage = decodeAiMessage({ role: 'user', content: 'x', images: ['a'], timestamp: 't', model: 'm' });
     expect(message.images).toEqual(['a']);
+    expect(decodeAiVisionDescription({ content: 'camera evidence' })).toBe('camera evidence');
+    expect(decodeAiVisionDescription({ content: 7 })).toBe(null);
+    expect(decodeAiToolExecutionResponse({ result: { height: 9 } })).toEqual({ result: { height: 9 } });
+    expect(() => decodeAiToolExecutionResponse([])).toThrow('AI_TOOL_EXECUTION_RESPONSE_INVALID');
+    expect(decodeAiSuccess({ success: true }, 'AI_SUCCESS_INVALID')).toBe(true);
+    expect(() => decodeAiSuccess({ success: false }, 'AI_SUCCESS_INVALID')).toThrow('AI_SUCCESS_INVALID');
   });
 });
 

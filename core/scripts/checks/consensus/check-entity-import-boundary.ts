@@ -1,6 +1,7 @@
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import ts from 'typescript';
+import { FRONTEND_PRODUCT_SOURCE_ROOTS } from '../../../../frontend/config/source-roots';
 
 const root = process.cwd();
 const productionOnly = process.argv.includes('--production-only');
@@ -22,7 +23,7 @@ const files = (directory: string): string[] => readdirSync(directory).flatMap(na
 });
 
 const violations: string[] = [];
-const firstPartyRoots = ['core', 'frontend/src', 'ui/src', 'cli', 'native'];
+const firstPartyRoots = ['core', ...FRONTEND_PRODUCT_SOURCE_ROOTS, 'ui/src', 'cli', 'native'];
 for (const path of firstPartyRoots.flatMap(directory => files(join(root, directory)))) {
   if (productionOnly && relative(root, path).startsWith('core/__tests__/')) continue;
   const source = readFileSync(path, 'utf8');

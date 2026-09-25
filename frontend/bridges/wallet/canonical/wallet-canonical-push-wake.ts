@@ -43,10 +43,10 @@ const activeEntityId = (runtime: Runtime): string => {
   const activeSigner = runtime.signers[runtime.activeSignerIndex || 0];
   const selected = String(activeSigner?.entityId || '').trim().toLowerCase();
   if (/^0x[0-9a-f]{64}$/.test(selected)) return selected;
-  const fallback = runtime.signers
+  const firstSignerId = runtime.signers
     .map((signer) => String(signer.entityId || '').trim().toLowerCase())
     .find((entityId) => /^0x[0-9a-f]{64}$/.test(entityId));
-  return fallback || '';
+  return firstSignerId || '';
 };
 
 const activeTowers = (runtime: Runtime): RecoveryTowerConfig[] =>

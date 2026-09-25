@@ -92,7 +92,10 @@ const createCanonicalResource = (
   adapter: RuntimeAdapter,
   setPageUnloadFence: PageUnloadFenceSetter,
 ): WalletEmbeddedRuntimeResource<RuntimeAdapter> => {
-  registerBrowserRuntimeEnvironment(adapter, () => readStoreValue(runtimes).get(runtimeId)?.env ?? null);
+  const unregisterRuntimeEnvironment = registerBrowserRuntimeEnvironment(
+    adapter,
+    () => readStoreValue(runtimes).get(runtimeId)?.env ?? null,
+  );
   setPageUnloadFence(() => vaultOperations.beginRuntimePageUnload());
   return {
     adapter,
@@ -116,6 +119,7 @@ const createCanonicalResource = (
       if (failures.length > 0) {
         throw new AggregateError(failures, `CANONICAL_VAULT_RUNTIME_STOP_FAILED:${runtimeId}`);
       }
+      unregisterRuntimeEnvironment();
     },
   };
 };

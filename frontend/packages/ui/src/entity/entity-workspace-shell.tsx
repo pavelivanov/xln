@@ -329,7 +329,7 @@ export function EntityWorkspaceShell({ activity, accounts, activeTab, consensus,
         settingsSubview={settingsSubview}
         timeMachine={timeMachine}
       />
-      <p className="entity-workspace-footnote">No inferred state · no hidden fallback · canonical React surface</p>
+      <p className="entity-workspace-footnote">No inferred state · no hidden substitution · canonical React surface</p>
     </section>
   );
 }

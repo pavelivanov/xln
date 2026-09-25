@@ -150,7 +150,7 @@ export const buildWalletAddressSummaryDetail = (
 export const decodeWalletAddressDetail = (
   value: unknown,
   requestedEntityId: string,
-  fallback: WalletAddressEntity | null,
+  previousEntity: WalletAddressEntity | null,
   context: WalletAddressRuntimeContext,
 ): WalletAddressDetail | null => {
   const normalized = normalizeWalletAddressEntityId(requestedEntityId);
@@ -159,7 +159,9 @@ export const decodeWalletAddressDetail = (
   }
   const frame = requireRuntimeRecord(value, 'WALLET_ADDRESS_FRAME');
   const active = frame['activeEntity'];
-  if (active === null || active === undefined) return fallback ? buildWalletAddressSummaryDetail(fallback) : null;
+  if (active === null || active === undefined) {
+    return previousEntity ? buildWalletAddressSummaryDetail(previousEntity) : null;
+  }
   const activeEntity = requireRuntimeRecord(active, 'WALLET_ADDRESS_ACTIVE_ENTITY');
   const summary = decodeSummary(activeEntity['summary'], {
     ...context,
