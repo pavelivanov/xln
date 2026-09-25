@@ -21,8 +21,8 @@ export function WalletApp({ page }: Readonly<{ page: WalletPage }>) {
     <CandidateShell
       copy={{
         eyebrow: 'Financial surface',
-        title: 'Wallet, independently built.',
-        summary: `${page.pathname} remains on the canonical Svelte wallet while its React flow is migrated. Runtime projections stay unchanged.`,
+        title: 'Wallet route unavailable.',
+        summary: `${page.pathname} is not implemented by the canonical React wallet. No legacy fallback is available.`,
       }}
       surfaceId="wallet"
     />

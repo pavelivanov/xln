@@ -50,7 +50,6 @@ describe('React wallet WP6 flow audit', () => {
   test('keeps every deferred boundary loud in its owning source', () => {
     expect(WALLET_FLOW_DEFERRALS.map(({ id }) => id)).toEqual([
       'wallet-creation-and-onboarding',
-      'canonical-cutover',
     ]);
     for (const deferral of WALLET_FLOW_DEFERRALS) {
       expect(existsSync(deferral.evidenceSource)).toBe(true);

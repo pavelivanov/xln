@@ -286,7 +286,6 @@ type PreparedServerOptions = XlnServerOptions & {
 const DEFAULT_OPTIONS: XlnServerOptions = {
   port: 8080,
   host: '127.0.0.1',
-  staticDir: './frontend/build',
   serverId: 'xln-server',
 };
 const getDefaultLocalRelayUrl = (port?: number): string => `ws://localhost:${port ?? DEFAULT_OPTIONS.port}/relay`;
@@ -1663,7 +1662,7 @@ if (import.meta.main) {
   const options: Partial<XlnServerOptions> = {
     port: Number(readCliOption(args, '--port', '8080')),
     host: readCliOption(args, '--host', '127.0.0.1'),
-    staticDir: readCliOption(args, '--static-dir', './frontend/build'),
+    staticDir: readCliOption(args, '--static-dir'),
     frontendRelease: readCliOption(args, '--frontend-release'),
     serverId: readCliOption(args, '--server-id', 'xln-server'),
   };

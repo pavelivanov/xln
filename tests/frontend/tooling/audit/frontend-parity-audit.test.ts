@@ -1,6 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { existsSync, readdirSync } from 'node:fs';
-import { join } from 'node:path';
+import { existsSync } from 'node:fs';
 
 import { CAPABILITIES } from '../../../../frontend/config/capabilities';
 import {
@@ -8,28 +7,22 @@ import {
   CUTOVER_CHECKLIST,
   PARITY_GAP_IDS,
   PARITY_GAPS,
-  RETAINED_ROUTE_PARITY,
+  ROUTE_PARITY,
 } from '../../../../frontend/config/parity-audit';
-import { resolveRouteOwner } from '../../../../packages/frontend-release/surfaces';
+import { resolveRouteOwner, SURFACES } from '../../../../packages/frontend-release/surfaces';
 import { buildParityAuditReport } from '../../../../frontend/scripts/checks/parity-audit';
 
-const listSveltePages = (directory: string): string[] => readdirSync(directory, { withFileTypes: true })
-  .flatMap((entry) => entry.isDirectory()
-    ? listSveltePages(join(directory, entry.name))
-    : entry.name === '+page.svelte' ? [join(directory, entry.name)] : [])
-  .toSorted();
-
-describe('WP9 retained-route and capability parity audit', () => {
-  test('accounts for every retained Svelte page exactly once', () => {
-    const actual = listSveltePages('frontend/src/routes');
-    const audited = RETAINED_ROUTE_PARITY.map(({ sveltePage }) => sveltePage).toSorted();
+describe('frontend route and capability acceptance inventory', () => {
+  test('accounts for every canonical app route and keeps representative cases distinct', () => {
+    const actual = SURFACES.flatMap(surface => surface.routes.map(route => `${surface.id}:${route.pathname}`)).toSorted();
+    const audited = [...new Set(ROUTE_PARITY.map(route => `${route.intendedOwner}:${route.pathname.split('/:')[0]}`))].toSorted();
     expect(audited).toEqual(actual);
-    expect(new Set(audited).size).toBe(20);
+    expect(new Set(ROUTE_PARITY.map(route => route.id)).size).toBe(ROUTE_PARITY.length);
+    expect(new Set(ROUTE_PARITY.map(route => route.representativePath)).size).toBe(ROUTE_PARITY.length);
   });
 
   test('binds implemented routes to their intended owner, sources, and evidence', () => {
-    for (const route of RETAINED_ROUTE_PARITY) {
-      expect(existsSync(route.sveltePage)).toBe(true);
+    for (const route of ROUTE_PARITY) {
       if (route.implementation === 'missing') {
         expect(route.reactSource).toBeNull();
         expect(route.focusedTests).toEqual([]);
@@ -45,14 +38,14 @@ describe('WP9 retained-route and capability parity audit', () => {
   test('keeps browser claims and gap references exact', () => {
     const gapIds = new Set(PARITY_GAPS.map(({ id }) => id));
     expect(PARITY_GAPS.map(({ id }) => id)).toEqual(PARITY_GAP_IDS);
-    for (const route of RETAINED_ROUTE_PARITY) {
+    for (const route of ROUTE_PARITY) {
       expect(route.browserEvidence === 'missing' ? route.browserTests.length === 0 : route.browserTests.length > 0).toBe(true);
       for (const gapId of route.gapIds) expect(gapIds.has(gapId)).toBe(true);
     }
     for (const gap of PARITY_GAPS) {
       expect(gap.nextSlice.length).toBeGreaterThan(30);
       for (const routeId of gap.routeIds) {
-        expect(RETAINED_ROUTE_PARITY.some(({ id }) => id === routeId)).toBe(true);
+        expect(ROUTE_PARITY.some(({ id }) => id === routeId)).toBe(true);
       }
       for (const path of gap.evidenceSources) expect(existsSync(path)).toBe(true);
     }
@@ -68,8 +61,17 @@ describe('WP9 retained-route and capability parity audit', () => {
       }
     }
     expect(CUTOVER_CHECKLIST.filter(({ status }) => status === 'verified').map(({ id }) => id))
-      .toEqual(['immutable-candidate-release', 'whole-release-rollback']);
-    expect(CUTOVER_CHECKLIST.filter(({ status }) => status === 'owner-authorized-wp10')).toHaveLength(3);
+      .toEqual([
+        'retained-route-parity',
+        'per-surface-browser-evidence',
+        'immutable-candidate-release',
+        'whole-release-rollback',
+        'canonical-commands-and-routing',
+        'canonical-artifact-consumers',
+        'retired-source-dependencies-and-config',
+      ]);
+    expect(CUTOVER_CHECKLIST.filter(({ status }) => status !== 'verified'))
+      .toEqual([{ id: 'production-activation', status: 'release-operation-wp11', evidence: 'scripts/deployment/deploy-platform.sh' }]);
     for (const item of CUTOVER_CHECKLIST) expect(existsSync(item.evidence)).toBe(true);
   });
 

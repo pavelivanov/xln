@@ -2,21 +2,16 @@ import { readFileSync } from 'node:fs';
 import { expect, test } from 'bun:test';
 import { prepareFrontendHttpHandler } from '../../../orchestrator/server/frontend-http';
 
-test('mesh orchestrator serves the frontend static route before 404', () => {
+test('mesh orchestrator serves only a verified React deployment before 404', () => {
   const source = readFileSync('core/orchestrator/orchestrator.ts', 'utf8');
   const frontendHttp = readFileSync('core/orchestrator/server/frontend-http.ts', 'utf8');
-  const staticAssets = readFileSync('core/api/server/static-assets.ts', 'utf8');
-  const staticRoute = "serveStaticApp(request, pathname, './frontend/build')";
+  const verifiedRoute = 'deployedFrontend ? await deployedFrontend.serve(request) : null';
   const unhandled = 'Unhandled mesh-control route';
 
-  expect(frontendHttp).toContain("import { serveStaticApp } from '../../api/server/static-assets';");
+  expect(frontendHttp).not.toContain('serveStaticApp');
   expect(source).toContain("prepareFrontendHttpHandler(process.env['XLN_FRONTEND_DEPLOYMENT_ROOT'])");
-  expect(staticAssets).toContain("if (pathname === '/runtime.js')");
-  expect(staticAssets).toContain("{ error: 'RUNTIME_BUNDLE_MISSING' }");
-  expect(staticAssets).toContain('{ status: 503');
-  expect(staticAssets).toContain("staticPath === '/index.html' ? null : await serveStatic('/index.html', staticDir)");
-  expect(frontendHttp.indexOf(staticRoute)).toBeGreaterThan(0);
-  expect(frontendHttp.indexOf(unhandled)).toBeGreaterThan(frontendHttp.indexOf(staticRoute));
+  expect(frontendHttp.indexOf(verifiedRoute)).toBeGreaterThan(0);
+  expect(frontendHttp.indexOf(unhandled)).toBeGreaterThan(frontendHttp.indexOf(verifiedRoute));
   expect(source.indexOf('return await handleFrontendRequest(request, pathname, headers)')).toBeGreaterThan(
     source.indexOf("if (pathname.startsWith('/api/'))"),
   );

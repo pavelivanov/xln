@@ -2,7 +2,7 @@
  * Parallel Playwright runner with fully isolated local stacks per shard:
  * - dedicated anvil RPCs (/rpc + /rpc2)
  * - dedicated runtime server
- * - dedicated vite preview server (single frontend build shared by all shards)
+ * - dedicated verified-release server (single React release shared by all shards)
  *
  * Usage:
  *   bun core/scripts/e2e/runners/run-e2e-parallel-isolated.ts
@@ -18,18 +18,16 @@ import {
   cpSync,
   createWriteStream,
   existsSync,
-  lstatSync,
   mkdirSync,
   readFileSync,
   readdirSync,
   rmSync,
   statSync,
-  symlinkSync,
   unlinkSync,
   writeFileSync,
 } from 'node:fs';
 import { availableParallelism } from 'node:os';
-import { basename, dirname, join, relative, resolve } from 'node:path';
+import { dirname, join, relative, resolve } from 'node:path';
 import { finished } from 'node:stream/promises';
 import { scheduler } from 'node:timers/promises';
 import {
@@ -51,6 +49,7 @@ import type {
 import { assertMinDiskFree } from '../../../support/storage-monitor';
 import { compareStableText } from '../../../protocol/serialization';
 import { sanitizeChildProcessEnv } from '../../../api/server/child-process-env';
+import { assembleCandidateRelease } from '../../../../frontend/scripts/release/candidate-release';
 import {
   createIncrementalRuntimeFatalLogScanner,
   findRuntimeFatalLogLines,
@@ -1368,62 +1367,15 @@ export const runE2ECommand = async (
   };
 };
 
-export const materializeSvelteKitShardOutDir = (sourceOutDir: string, shardOutDir: string): void => {
-  const sourceManifest = join(sourceOutDir, 'output', 'server', 'manifest.js');
-  if (!existsSync(sourceManifest)) {
-    throw new Error(`E2E_SVELTE_KIT_OUTPUT_MISSING:${sourceManifest}`);
-  }
-
-  rmSync(shardOutDir, { recursive: true, force: true });
-  mkdirSync(shardOutDir, { recursive: true });
-
-  for (const entry of readdirSync(sourceOutDir, { withFileTypes: true })) {
-    const sourcePath = join(sourceOutDir, entry.name);
-    const shardPath = join(shardOutDir, entry.name);
-    const linkType = entry.isDirectory() ? 'dir' : 'file';
-    symlinkSync(sourcePath, shardPath, linkType);
-  }
-
-  const shardManifest = join(shardOutDir, 'output', 'server', 'manifest.js');
-  if (!existsSync(shardManifest)) {
-    throw new Error(`E2E_SVELTE_KIT_SHARD_LINK_FAILED:${shardManifest}`);
-  }
-};
-
-const prepareShardSvelteKitOutDir = (
-  sourceOutDir: string,
-  logsDir: string,
-  shard: number,
-  log: ReturnType<typeof createWriteStream>,
-): string => {
-  const frontendRoot = resolve(process.cwd(), 'frontend');
-  const sourceManifest = join(sourceOutDir, 'output', 'server', 'manifest.js');
-  if (!existsSync(sourceManifest)) {
-    throw new Error(`E2E_SVELTE_KIT_OUTPUT_MISSING:${sourceManifest}`);
-  }
-
-  const shardOutDir = join(deriveE2EShardPaths(logsDir, shard).root, 'svelte-kit');
-  materializeSvelteKitShardOutDir(sourceOutDir, shardOutDir);
-
-  const outDirForFrontend = relative(frontendRoot, shardOutDir);
-  const linkedEntries = readdirSync(shardOutDir, { withFileTypes: true })
-    .filter(entry => lstatSync(join(shardOutDir, entry.name)).isSymbolicLink())
-    .length;
-  log.write(`[runner] shard-local SvelteKit output: ${outDirForFrontend} (${linkedEntries} linked entries)\n`);
-  return outDirForFrontend;
-};
-
 const E2E_BUILD_CACHE_ROOT = resolve(process.cwd(), '.logs', 'e2e-build-cache');
-const E2E_BUILD_CACHE_MANIFEST_VERSION = 1;
+const E2E_BUILD_CACHE_MANIFEST_VERSION = 2;
 
 export const deriveE2EBuildArtifacts = (
   cacheRoot = E2E_BUILD_CACHE_ROOT,
 ): E2EBuildArtifacts => ({
   cacheRoot,
-  publicDir: join(cacheRoot, 'public'),
-  runtimeBundlePath: join(cacheRoot, 'public', 'runtime.js'),
-  svelteKitOutDir: join(cacheRoot, 'svelte-kit'),
-  frontendBuildDir: join(cacheRoot, 'frontend'),
+  releaseDirectory: join(cacheRoot, 'release'),
+  previewServerPath: join(cacheRoot, 'preview-server.mjs'),
 });
 
 type E2EBuildCacheManifest = {
@@ -1434,9 +1386,9 @@ type E2EBuildCacheManifest = {
 };
 
 const requiredE2EBuildArtifactPaths = (artifacts: E2EBuildArtifacts): string[] => [
-  artifacts.runtimeBundlePath,
-  join(artifacts.svelteKitOutDir, 'output', 'server', 'manifest.js'),
-  join(artifacts.frontendBuildDir, 'index.html'),
+  join(artifacts.releaseDirectory, 'release-manifest.json'),
+  join(artifacts.releaseDirectory, 'runtime.js'),
+  artifacts.previewServerPath,
 ];
 
 const assertRequiredE2EBuildArtifacts = (artifacts: E2EBuildArtifacts): void => {
@@ -1465,9 +1417,9 @@ export const computeE2EBuildArtifactHash = (artifacts: E2EBuildArtifacts): strin
       hash.update(String(data.length)).update('\0').update(data).update('\0');
     }
   };
-  hashDirectory('public', artifacts.publicDir);
-  hashDirectory('svelte-kit', artifacts.svelteKitOutDir);
-  hashDirectory('frontend', artifacts.frontendBuildDir);
+  hashDirectory('release', artifacts.releaseDirectory);
+  const previewServer = readFileSync(artifacts.previewServerPath);
+  hash.update('preview-server\0').update(String(previewServer.length)).update('\0').update(previewServer);
   return hash.digest('hex');
 };
 
@@ -1544,59 +1496,39 @@ const prepareIsolatedE2EBuild = async (
   rmSync(artifacts.cacheRoot, { recursive: true, force: true });
   mkdirSync(artifacts.cacheRoot, { recursive: true });
   const frontendRoot = resolve(process.cwd(), 'frontend');
-  symlinkSync(join(frontendRoot, 'node_modules'), join(artifacts.cacheRoot, 'node_modules'), 'dir');
-  cpSync(join(frontendRoot, 'static'), artifacts.publicDir, { recursive: true });
   const buildLogPath = join(logsDir, 'build-runtime.log');
   const buildLog = createWriteStream(buildLogPath, { flags: 'w' });
-  const canonicalSvelteKitOutDir = join(frontendRoot, '.svelte-kit');
   try {
-    const staticResult = await runE2ECommand('node', ['copy-static-files.js'], {
+    buildLog.write('=== isolated canonical React release ===\n');
+    const frontendBuildResult = await runE2ECommand('bun', ['run', 'build'], {
       cwd: frontendRoot,
-      env: sanitizeChildProcessEnv({
-        ...process.env,
-        XLN_STATIC_DIR: artifacts.publicDir,
-      }),
       log: buildLog,
       timeoutMs: 300000,
     });
-    const buildResult = await runE2ECommand('bash', ['-lc', './scripts/build-runtime.sh'], {
-      env: sanitizeChildProcessEnv({
-        ...process.env,
-        XLN_RUNTIME_BUNDLE_OUT: artifacts.runtimeBundlePath,
-      }),
-      log: buildLog,
-      timeoutMs: 300000,
-    });
-    buildLog.write('\n=== isolated frontend build ===\n');
-    const frontendBuildResult = await runE2ECommand(
-      'node',
-      [resolve(frontendRoot, 'node_modules', 'vite', 'bin', 'vite.js'), 'build'],
-      {
-        cwd: frontendRoot,
-        env: sanitizeChildProcessEnv({
-          ...process.env,
-          XLN_RUNTIME_BUNDLE_PATH: artifacts.runtimeBundlePath,
-          XLN_SVELTE_BUILD_DIR: relative(frontendRoot, artifacts.frontendBuildDir),
-          VITE_PUBLIC_DIR: relative(frontendRoot, artifacts.publicDir),
-          VITE_CACHE_DIR: relative(frontendRoot, join(artifacts.cacheRoot, 'vite-cache')),
-        }),
-        log: buildLog,
-        timeoutMs: 300000,
-      },
+    buildLog.write('\n=== verified-release preview server ===\n');
+    const previewServerBuildResult = await runE2ECommand(
+      'bun',
+      [
+        'build',
+        'scripts/release/preview-server.ts',
+        '--target=node',
+        '--outfile',
+        artifacts.previewServerPath,
+      ],
+      { cwd: frontendRoot, log: buildLog, timeoutMs: 300000 },
     );
     if (
-      !e2eCommandSucceeded(staticResult)
-      || !e2eCommandSucceeded(buildResult)
-      || !e2eCommandSucceeded(frontendBuildResult)
+      !e2eCommandSucceeded(frontendBuildResult)
+      || !e2eCommandSucceeded(previewServerBuildResult)
     ) {
       throw new Error(
-        `E2E_ISOLATED_PREBUILD_FAILED:static=${formatE2ECommandResult(staticResult)}:` +
-        `runtime=${formatE2ECommandResult(buildResult)}:` +
-        `frontend=${formatE2ECommandResult(frontendBuildResult)}:log=${buildLogPath}`,
+        `E2E_ISOLATED_PREBUILD_FAILED:frontend=${formatE2ECommandResult(frontendBuildResult)}:` +
+        `preview=${formatE2ECommandResult(previewServerBuildResult)}:log=${buildLogPath}`,
       );
     }
-    rmSync(artifacts.svelteKitOutDir, { recursive: true, force: true });
-    cpSync(canonicalSvelteKitOutDir, artifacts.svelteKitOutDir, { recursive: true });
+    const release = await assembleCandidateRelease(frontendRoot);
+    cpSync(release.releaseDirectory, artifacts.releaseDirectory, { recursive: true });
+    buildLog.write(`[runner] cached React release ${release.releaseId}\n`);
   } finally {
     buildLog.end();
     await finished(buildLog);
@@ -1885,7 +1817,7 @@ const runShard = async (
     // - rpc: anvil
     // - rpc2: secondary anvil for cross-j local simulation
     // - api: production core/api/server/index.ts on an isolated shard port
-    // - web: vite preview
+    // - web: verified React release server and relay/API proxy
     // - extra reserved ports kept for any local child APIs the server may spawn
     const preflightStart = Date.now();
     assertLocalTestPortsFree([
@@ -2085,25 +2017,12 @@ const runShard = async (
       log.write('[timing] apiHealthy=0ms (prewait-health=http; baseline waits inside tests that need it)\n');
     }
 
-    const shardViteCacheDir = join(shardPaths.root, 'vite-cache');
-    const shardSvelteKitOutDir = prepareShardSvelteKitOutDir(buildArtifacts.svelteKitOutDir, logsDir, shard, log);
     const viteStart = Date.now();
-    // Spawn Vite directly. `bun run preview` starts an extra child node
-    // process, so killing the Bun wrapper can leave `node .../vite preview`
-    // alive until the next global preflight cleanup.
+    // The server bundle is built once with the candidate and spawned directly,
+    // so teardown owns the process that holds the shard's ingress port.
     vite = spawn(
       'node',
-      [
-        resolve(frontendRoot, 'node_modules', 'vite', 'bin', 'vite.js'),
-        'preview',
-        '--mode',
-        `xln-e2e-${basename(logsDir)}-${shard}`,
-        '--host',
-        '0.0.0.0',
-        '--port',
-        String(webPort),
-        '--strictPort',
-      ],
+      [buildArtifacts.previewServerPath, buildArtifacts.releaseDirectory],
       {
         cwd: frontendRoot,
         stdio: ['ignore', 'pipe', 'pipe'],
@@ -2113,14 +2032,9 @@ const runShard = async (
           ANVIL_RPC2: rpc2Url,
           RPC_ETHEREUM: rpcUrl,
           RPC_TRON: rpc2Url,
-          VITE_DEV_PORT: String(webPort),
-          VITE_API_PROXY_TARGET: apiUrl,
-          XLN_VITE_FORCE_HTTP: '1',
-          VITE_CACHE_DIR: shardViteCacheDir,
-          XLN_SVELTE_KIT_OUT_DIR: shardSvelteKitOutDir,
-          XLN_SVELTE_BUILD_DIR: relative(frontendRoot, buildArtifacts.frontendBuildDir),
-          XLN_RUNTIME_BUNDLE_PATH: buildArtifacts.runtimeBundlePath,
-          VITE_PUBLIC_DIR: relative(frontendRoot, buildArtifacts.publicDir),
+          XLN_REACT_GATEWAY_PORT: String(webPort),
+          XLN_REACT_EDGE_TARGET: apiUrl,
+          XLN_REACT_EDGE_WEBSOCKET_TARGET: apiUrl,
         }),
       },
     );

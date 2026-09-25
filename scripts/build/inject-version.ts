@@ -24,7 +24,7 @@ const version = {
   githubUrl: `https://github.com/xlnfinance/xln/commit/${gitHash}`,
 };
 
-const outputPath = 'frontend/src/lib/generated/version.ts';
+const outputPath = 'frontend/.artifacts/generated/version.ts';
 mkdirSync(dirname(outputPath), { recursive: true });
 writeFileSync(
   outputPath,

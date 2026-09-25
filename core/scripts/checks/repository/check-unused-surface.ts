@@ -42,7 +42,7 @@ const EXTERNAL_RUNTIME_CONSUMERS: Readonly<Record<string, readonly ExternalRunti
     },
   }],
   'core/network/relay/market/wire.ts': [{
-    consumer: 'frontend/src/lib/components/Trading/OrderbookPanel.svelte',
+    consumer: 'ui/src/runtime/financial/orderbook.ts',
     specifier: '@xln/core/network/relay/market/wire',
   }],
   'core/network/relay/market/cap/market-cap-wire.ts': [{
@@ -58,13 +58,19 @@ const EXTERNAL_RUNTIME_CONSUMERS: Readonly<Record<string, readonly ExternalRunti
     },
   }],
   'core/qa/severity.ts': [{
-    consumer: 'frontend/src/routes/health/+page.svelte',
+    consumer: 'frontend/packages/runtime-client/src/qa/evidence/qa-cockpit-helpers.ts',
     specifier: '@xln/core/qa/severity',
   }],
-  'core/qa/hlt/hlt-dashboard-preview.ts': [{
-    consumer: 'frontend/src/routes/qa/hlt/+page.svelte',
-    specifier: '@xln/core/qa/hlt/hlt-dashboard-preview',
-  }],
+  'core/qa/hlt/hlt-dashboard-preview.ts': [
+    {
+      consumer: 'frontend/apps/ops/src/hlt/ops-hlt-model.ts',
+      specifier: '../../../../../core/qa/hlt/hlt-dashboard-preview',
+    },
+    {
+      consumer: 'frontend/apps/ops/src/hlt/ops-hlt-progress.tsx',
+      specifier: '../../../../../core/qa/hlt/hlt-dashboard-preview',
+    },
+  ],
   'core/qa/types.ts': [{
     consumer: 'frontend/packages/runtime-client/src/qa/evidence/qa-types.ts',
     specifier: '@xln/core/qa/types',

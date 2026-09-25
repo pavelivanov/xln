@@ -54,6 +54,7 @@ const auth = await import('../../../../../core/api/runtime-adapter/security/auth
 const rpc = await import('../../../../../core/api/server/network/rpc-ws');
 const loopEnvironment = await import('../../../../../core/runtime/loop/loop-environment');
 const relay = await import('../../../../../core/network/relay/standalone-server');
+const relayDebugHttp = await import('../../../../../core/network/relay/debug-http');
 const { createAssistantProxyFromEnv } = await import('../../../../../core/api/server/assistant/proxy');
 const assistantUpstream = createAssistantUpstreamFixture();
 const assistantProxy = createAssistantProxyFromEnv();
@@ -370,6 +371,15 @@ server = Bun.serve<FixtureSocketData>({
     if (assistantResponse) return assistantResponse;
     const apiHeaders = { 'access-control-allow-origin': '*', 'access-control-allow-methods': 'GET, POST, OPTIONS', 'access-control-allow-headers': 'content-type, cache-control, pragma, authorization', 'content-type': 'application/json' };
     if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: apiHeaders });
+    const relayDebugResponse = await relayDebugHttp.maybeHandleRelayDebugRequest({
+      request,
+      pathname: url.pathname,
+      url,
+      headers: apiHeaders,
+      store: relayServer.store,
+      operatorAuthorized: true,
+    });
+    if (relayDebugResponse) return relayDebugResponse;
     if (url.pathname === '/onboarding-hub-discovery-mode' && request.method === 'POST') {
       onboardingHubDiscoveryEnabled = url.searchParams.get('enabled') === '1';
       return Response.json({ enabled: onboardingHubDiscoveryEnabled }, { headers: apiHeaders });

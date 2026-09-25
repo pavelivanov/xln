@@ -476,13 +476,13 @@ describe('production startup wiring', () => {
 
     expect(generator).toContain("const outputDir = path.resolve(frontendDir, process.env.XLN_STATIC_DIR || 'static');");
     expect(generator).not.toContain("const outputDir = path.join(__dirname, '../../frontend/static/');");
-    expect(runner).toContain('cpSync(canonicalSvelteKitOutDir, artifacts.svelteKitOutDir, { recursive: true });');
+    expect(runner).toContain('cpSync(release.releaseDirectory, artifacts.releaseDirectory, { recursive: true });');
     const isolatedBuild = extractSourceBlock(
       runner,
       'const prepareIsolatedE2EBuild = async',
       'const forensicEndpoints = [',
     );
-    expect(isolatedBuild).not.toContain('XLN_SVELTE_KIT_OUT_DIR: relative(frontendRoot, artifacts.svelteKitOutDir)');
+    expect(isolatedBuild).not.toContain('XLN_SVELTE');
   });
 
   test('audit context exposes a deterministic comment-free Runtime profile with hashes', () => {

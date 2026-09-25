@@ -124,7 +124,7 @@ test('dev starts application services only after both exact Anvil chains are rea
   const child = readFileSync(join(repoRoot, 'scripts/dev/run-dev-child.sh'), 'utf8');
   const ownership = readFileSync(join(repoRoot, 'scripts/dev/process-owner.sh'), 'utf8');
   const supervisor = readFileSync(join(repoRoot, 'scripts/dev/supervise-dev.ts'), 'utf8');
-  expect(DEV_ROLES).toEqual(['anvil', 'anvil2', 'mesh', 'watchtower', 'runtime', 'vite', 'vite-http', 'ui', 'ready']);
+  expect(DEV_ROLES).toEqual(['anvil', 'anvil2', 'mesh', 'watchtower', 'runtime', 'react', 'ui', 'ready']);
   expect(runner).toContain('bun scripts/dev/supervise-dev.ts');
   expect(runner).not.toContain('concurrently');
   const firstReady = child.indexOf("--chain-id 31337");
@@ -133,7 +133,7 @@ test('dev starts application services only after both exact Anvil chains are rea
   const backendStart = supervisor.indexOf('for (const role of DEV_BACKEND_ROLES) spawnRole(role)');
   const backendBarrier = supervisor.indexOf('const backendBarrier = spawnRole(DEV_BACKEND_BARRIER_ROLE)');
   const frontendStart = supervisor.indexOf(
-    "for (const role of developmentFrontendRoles(options.frontend ?? 'svelte')) spawnRole(role)",
+    'for (const role of developmentFrontendRoles()) spawnRole(role)',
   );
   expect(firstReady).toBeGreaterThan(0);
   expect(secondReady).toBeGreaterThan(firstReady);

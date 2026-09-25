@@ -41,17 +41,12 @@ if [[ ! -x "$ROOT_DIR/frontend/node_modules/.bin/vite" ]]; then
   exit 1
 fi
 frontend_packages=(vite/package.json)
-react_ports=()
-if [[ "${XLN_DEV_FRONTEND:-svelte}" == "react" ]]; then
-  if ! command -v node >/dev/null 2>&1; then
-    echo "DEV_DEPENDENCIES_MISSING:node" >&2
-    exit 1
-  fi
-  frontend_packages+=(@vitejs/plugin-react/package.json react/package.json react-dom/package.json)
-  react_ports=(8083 8084 8085)
-else
-  frontend_packages+=(@sveltejs/kit/svelte-kit.js @sveltejs/vite-plugin-svelte/package.json svelte/package.json)
+if ! command -v node >/dev/null 2>&1; then
+  echo "DEV_DEPENDENCIES_MISSING:node" >&2
+  exit 1
 fi
+frontend_packages+=(@vitejs/plugin-react/package.json react/package.json react-dom/package.json)
+react_ports=(8083 8084 8085)
 for dependency in "${frontend_packages[@]}"; do
   if [[ ! -f "$ROOT_DIR/frontend/node_modules/$dependency" ]]; then
     echo "DEV_DEPENDENCIES_MISSING:frontend:$dependency; run: cd frontend && bun install --frozen-lockfile" >&2

@@ -66,8 +66,8 @@ export function OpsApp({ page }: Readonly<{ page: OpsPage }>) {
     <CandidateShell
       copy={{
         eyebrow: 'Operator surface',
-        title: 'Ops, independently built.',
-        summary: `${page.pathname} remains on the canonical Svelte operator surface while its React workflow is migrated.`,
+        title: 'Ops route unavailable.',
+        summary: `${page.pathname} is not implemented by the canonical React operator surface. No legacy fallback is available.`,
       }}
       surfaceId="ops"
     />

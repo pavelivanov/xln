@@ -1,8 +1,4 @@
-type BrowserErrorKind =
-  | 'console_error'
-  | 'window_error'
-  | 'unhandled_rejection'
-  | 'svelte_error';
+type BrowserErrorKind = 'console_error' | 'window_error' | 'unhandled_rejection';
 
 type BrowserErrorEvent = {
   kind: BrowserErrorKind;
@@ -25,10 +21,7 @@ type TelemetryState = {
 };
 
 type DebugWindow = Window & {
-  isolatedEnv?: {
-    runtimeId?: unknown;
-    activeEntityId?: unknown;
-  };
+  isolatedEnv?: { runtimeId?: unknown; activeEntityId?: unknown };
   __xlnBrowserTelemetry?: TelemetryState;
 };
 
@@ -59,7 +52,9 @@ const serializeValue = (value: unknown, depth = 0): string => {
     return String(value);
   }
   if (depth >= 2) return `[${Array.isArray(value) ? 'Array' : typeof value}]`;
-  if (Array.isArray(value)) return `[${value.slice(0, 20).map(item => serializeValue(item, depth + 1)).join(', ')}]`;
+  if (Array.isArray(value)) {
+    return `[${value.slice(0, 20).map(item => serializeValue(item, depth + 1)).join(', ')}]`;
+  }
   if (typeof value === 'object') {
     const entries = Object.entries(value as Record<string, unknown>)
       .slice(0, 30)
@@ -77,6 +72,11 @@ const currentIdentity = (): Pick<BrowserErrorEvent, 'runtimeId' | 'entityId'> =>
     ...(runtimeId ? { runtimeId } : {}),
     ...(entityId ? { entityId } : {}),
   };
+};
+
+const scheduleFlush = (): void => {
+  if (flushTimer !== null) return;
+  flushTimer = setTimeout(() => void flush(), FLUSH_DELAY_MS);
 };
 
 const flush = async (): Promise<void> => {
@@ -101,11 +101,6 @@ const flush = async (): Promise<void> => {
   } finally {
     if (queue.length > 0) scheduleFlush();
   }
-};
-
-const scheduleFlush = (): void => {
-  if (flushTimer !== null) return;
-  flushTimer = setTimeout(() => void flush(), FLUSH_DELAY_MS);
 };
 
 export const captureBrowserError = (
@@ -145,10 +140,10 @@ export const installBrowserErrorTelemetry = (): void => {
     originalError(...args);
     captureBrowserError('console_error', args[0], args.slice(1));
   };
-  window.addEventListener('error', (event) => {
+  window.addEventListener('error', event => {
     captureBrowserError('window_error', event.error ?? event.message);
   });
-  window.addEventListener('unhandledrejection', (event) => {
+  window.addEventListener('unhandledrejection', event => {
     captureBrowserError('unhandled_rejection', event.reason);
   });
 };

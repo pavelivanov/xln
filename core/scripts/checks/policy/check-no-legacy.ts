@@ -113,16 +113,6 @@ const FORBIDDEN = [
 
 const ALLOWLIST: readonly Allowance[] = [
   {
-    file: 'frontend/svelte.config.js',
-    match: "fallback: 'index.html'",
-    reason: 'Exact Svelte adapter-static option name for the SPA shell output.',
-  },
-  {
-    file: 'core/__tests__/development/frontend/frontend-check-output.test.ts',
-    match: "fallback: 'index.html'",
-    reason: 'Pins the exact required Svelte adapter-static option above.',
-  },
-  {
     file: 'core/jurisdiction/adapter/browservm/browservm-provider.ts',
     match: 'createLegacyTx',
     reason: 'Third-party @ethereumjs/tx export name for pre-EIP-2718 transactions.',

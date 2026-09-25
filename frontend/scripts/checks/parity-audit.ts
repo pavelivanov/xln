@@ -6,7 +6,7 @@ import {
   CAPABILITY_PARITY,
   CUTOVER_CHECKLIST,
   PARITY_GAPS,
-  RETAINED_ROUTE_PARITY,
+  ROUTE_PARITY,
 } from '../../config/parity-audit';
 
 const count = (values: readonly string[]): Record<string, number> => Object.fromEntries(
@@ -17,9 +17,9 @@ export const buildParityAuditReport = () => ({
   schemaVersion: 1,
   browserEvidenceMeaning: 'Registered test coverage, not a passing run. Exact candidate/run evidence and remaining failures are recorded in plans/react-frontend-migration.md.',
   routes: {
-    total: RETAINED_ROUTE_PARITY.length,
-    implementation: count(RETAINED_ROUTE_PARITY.map(({ implementation }) => implementation)),
-    browserEvidence: count(RETAINED_ROUTE_PARITY.map(({ browserEvidence }) => browserEvidence)),
+    total: ROUTE_PARITY.length,
+    implementation: count(ROUTE_PARITY.map(({ implementation }) => implementation)),
+    browserEvidence: count(ROUTE_PARITY.map(({ browserEvidence }) => browserEvidence)),
   },
   capabilities: {
     total: CAPABILITIES.length,

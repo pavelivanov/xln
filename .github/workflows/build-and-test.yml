@@ -138,15 +138,6 @@ jobs:
           cd frontend
           bun run check
 
-      - name: Check and assemble React frontend
-        run: |
-          cd frontend
-          bun scripts/check.ts --all --level=frontend
-
-      - name: Build frontend
-        run: |
-          cd frontend
-          bun run build:static
 
   e2e-tests:
     name: E2E Tests

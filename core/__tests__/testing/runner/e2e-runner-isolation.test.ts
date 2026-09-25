@@ -24,14 +24,12 @@ import {
 
 const createE2EBuildCacheFixture = (root: string, codeHash: string) => {
   const artifacts = deriveE2EBuildArtifacts(root);
-  mkdirSync(join(artifacts.publicDir), { recursive: true });
-  mkdirSync(join(artifacts.svelteKitOutDir, 'output/server'), { recursive: true });
-  mkdirSync(artifacts.frontendBuildDir, { recursive: true });
-  writeFileSync(artifacts.runtimeBundlePath, 'runtime-v1', 'utf8');
-  writeFileSync(join(artifacts.svelteKitOutDir, 'output/server/manifest.js'), 'manifest-v1', 'utf8');
-  writeFileSync(join(artifacts.frontendBuildDir, 'index.html'), '<main>v1</main>', 'utf8');
+  mkdirSync(artifacts.releaseDirectory, { recursive: true });
+  writeFileSync(join(artifacts.releaseDirectory, 'release-manifest.json'), '{"releaseId":"test"}\n', 'utf8');
+  writeFileSync(join(artifacts.releaseDirectory, 'runtime.js'), 'runtime-v1', 'utf8');
+  writeFileSync(artifacts.previewServerPath, 'preview-v1', 'utf8');
   writeFileSync(join(root, 'manifest.json'), JSON.stringify({
-    version: 1,
+    version: 2,
     buildInputHash: codeHash,
     artifactHash: computeE2EBuildArtifactHash(artifacts),
     createdAt: '2026-07-17T00:00:00.000Z',
@@ -171,15 +169,16 @@ describe('isolated E2E runner resources', () => {
     const runtimeImport = readFileSync('tests/utils/runtime/e2e-runtime-import.ts', 'utf8');
     const reactConfig = readFileSync('frontend/config/create-react-app-config.ts', 'utf8');
 
-    expect(runner).toContain('XLN_RUNTIME_BUNDLE_OUT: artifacts.runtimeBundlePath');
-    expect(runner).toContain('XLN_SVELTE_BUILD_DIR: relative(frontendRoot, artifacts.frontendBuildDir)');
+    expect(runner).toContain("runE2ECommand('bun', ['run', 'build']");
+    expect(runner).toContain('cpSync(release.releaseDirectory, artifacts.releaseDirectory, { recursive: true });');
     expect(runner).toContain('XLN_RDB_ROOT: shardPaths.rdbRoot');
     expect(runner).toContain('XLN_JDB_ROOT: shardPaths.jdbRoot');
     expect(runner).toContain('codeFingerprint.buildInputHash,');
     expect(runner).not.toContain('prepareIsolatedE2EBuild(logsDir, codeFingerprint.codeHash');
-    expect(runner).not.toContain("runE2ECommand('bun', ['run', 'build']");
+    expect(runner).toContain('XLN_REACT_EDGE_TARGET: apiUrl');
+    expect(runner).toContain('XLN_REACT_EDGE_WEBSOCKET_TARGET: apiUrl');
     expect(runner).toContain("const webUrl = `http://localhost:${webPort}`");
-    expect(runner).toContain("XLN_VITE_FORCE_HTTP: '1'");
+    expect(runner).toContain('XLN_REACT_GATEWAY_PORT: String(webPort)');
     expect(runner).toContain("PW_PROFILE: args.pwProject === 'brainvault' ? 'brainvault' : ''");
     expect(runner).toContain('Math.min(args.stackTimeoutMs, 30_000)');
     expect(reactConfig).toContain("process.env['XLN_REACT_DEV_GATEWAY'] === '1'");
@@ -309,7 +308,7 @@ describe('isolated E2E runner resources', () => {
       const artifacts = createE2EBuildCacheFixture(root, codeHash);
       expect(decideE2EBuildCache(artifacts, codeHash, false)).toEqual({ action: 'reuse' });
 
-      writeFileSync(artifacts.runtimeBundlePath, 'runtime-corrupt', 'utf8');
+      writeFileSync(join(artifacts.releaseDirectory, 'runtime.js'), 'runtime-corrupt', 'utf8');
       const decision = decideE2EBuildCache(artifacts, codeHash, false);
       expect(decision.action).toBe('rebuild');
       if (decision.action !== 'rebuild') throw new Error('EXPECTED_BUILD_CACHE_REBUILD');
@@ -335,6 +334,7 @@ describe('isolated E2E runner resources', () => {
       'core/__tests__/runner.test.ts',
       'core/runtime.ts',
       'frontend/src/app.ts',
+      'packages/frontend-release/verify.ts',
     ];
     try {
       for (const file of files) {
@@ -354,7 +354,11 @@ describe('isolated E2E runner resources', () => {
       expect(runtimeChanged).not.toBe(original);
 
       writeFileSync(resolve(root, files[3]!), 'frontend:changed');
-      expect(computeE2EBuildInputHash(files, root)).not.toBe(runtimeChanged);
+      const frontendChanged = computeE2EBuildInputHash(files, root);
+      expect(frontendChanged).not.toBe(runtimeChanged);
+
+      writeFileSync(resolve(root, files[4]!), 'release-verifier:changed');
+      expect(computeE2EBuildInputHash(files, root)).not.toBe(frontendChanged);
     } finally {
       rmSync(root, { recursive: true, force: true });
     }

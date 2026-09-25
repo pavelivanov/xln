@@ -43,7 +43,7 @@ type MarketSubscriptionData = {
   intervalMs?: number;
 };
 
-export type MarketWireResponse =
+type MarketWireResponse =
   | {
       type: 'ack';
       inReplyTo: string;

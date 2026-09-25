@@ -15,9 +15,9 @@ describe('frontend check output', () => {
     const reactConfig = readFileSync(join(repoRoot, 'frontend/config/create-react-app-config.ts'), 'utf8');
     const copyStatic = readFileSync(join(repoRoot, 'frontend/copy-static-files.js'), 'utf8');
 
-    expect(checkScript).toContain('bun copy-static-files.js');
+    expect(checkScript).toBe('bun scripts/check.ts --all --level=frontend');
     expect(reactCheckScript).toBe('bun scripts/check.ts --all --level=local');
-    expect(buildCheckScript).toBe('bun scripts/vite-build-check.ts');
+    expect(buildCheckScript).toBeUndefined();
     expect(checkScript).not.toContain('node copy-static-files.js');
     expect(checkScript).not.toContain('vite build');
     expect(reactConfig).toContain("appType: 'spa'");

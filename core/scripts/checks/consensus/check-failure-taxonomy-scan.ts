@@ -154,11 +154,7 @@ const fatalIncidentRoutes = [
     name: 'browser',
     steps: [
       [
-        'frontend/src/hooks.client.ts',
-        ['installBrowserErrorTelemetry();', "captureBrowserError('svelte_error', error);"],
-      ],
-      [
-        'frontend/src/lib/debug/browser-telemetry.ts',
+        'frontend/packages/browser/src/browser-error-telemetry.ts',
         [
           "captureBrowserError('console_error'",
           "captureBrowserError('window_error'",
@@ -166,6 +162,10 @@ const fatalIncidentRoutes = [
           "fetch('/api/debug/events/ingest'",
         ],
       ],
+      ['frontend/apps/site/src/main.tsx', ['installBrowserErrorTelemetry();']],
+      ['frontend/apps/docs/src/main.tsx', ['installBrowserErrorTelemetry();']],
+      ['frontend/apps/wallet/src/main.tsx', ['installBrowserErrorTelemetry();']],
+      ['frontend/apps/ops/src/main.tsx', ['installBrowserErrorTelemetry();']],
       ['core/network/relay/debug-http.ts', ["event: 'browser_error'", "source: 'browser'"]],
       ['core/orchestrator/orchestrator.ts', ['incidentSink: incident => debugIncidentJournal.record(incident)']],
     ],

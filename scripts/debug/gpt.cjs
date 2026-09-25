@@ -912,7 +912,8 @@ swaps executable and disputable.
    \`account/tx/handlers/swap/resolve/index.ts\`, then orderbook matching.
 4. Backstop: \`cross-j-salvage.ts\`, \`protocol/dispute/arguments.ts\`,
    \`entity/tx/handlers/dispute/index.ts\`, watchtower action, and dispute docs.
-5. Product proof: \`SwapPanel.svelte\`, \`OrderbookPanel.svelte\`, and
+5. Product proof: \`frontend/apps/wallet/src/markets/wallet-markets.tsx\`,
+   \`frontend/apps/wallet/src/payments/wallet-payments.tsx\`, and
    \`tests/e2e-cross-j-swap.spec.ts\`.
 
 ## Cross-J Flow

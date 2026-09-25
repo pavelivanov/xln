@@ -58,18 +58,23 @@ assertNotIncludes(
   frameApplicationPath,
 );
 
-const frontendPath = 'frontend/src/lib/components/Entity/swap/SwapPanel.svelte';
-const frontend = readText(frontendPath);
-assertIncludes(frontend, "type: 'proposeCancelSwap'", frontendPath);
-assertIncludes(frontend, 'activeXlnFunctions.planSwapCommand({', frontendPath);
-assertIncludes(frontend, 'await submitRuntimeInput(commandPlan.runtimeInput);', frontendPath);
-assertIncludes(frontend, 'await submitActiveCrossJurisdictionIntent(commandPlan.crossJurisdictionIntent, {', frontendPath);
-assertNotIncludes(frontend, 'waitForCrossTargetCapacity', frontendPath);
-assertNotIncludes(frontend, 'SWAP_CROSS_TARGET_SETUP_COMMIT_TIMEOUT', frontendPath);
-assertNotIncludes(frontend, "type: 'cancelSwap'", frontendPath);
-assertNotIncludes(frontend, "type: 'cancelSwapOffer'", frontendPath);
-assertNotIncludes(frontend, 'buildDeterministicSwapOfferId', frontendPath);
-assertNotIncludes(frontend, 'satisfies CrossJurisdictionSwapRoute', frontendPath);
+const frontendCommandPath = 'frontend/apps/wallet/src/markets/wallet-market-command.ts';
+const frontendCommand = readText(frontendCommandPath);
+assertIncludes(frontendCommand, "type: 'proposeCancelSwap'", frontendCommandPath);
+assertNotIncludes(frontendCommand, "type: 'cancelSwap'", frontendCommandPath);
+assertNotIncludes(frontendCommand, "type: 'cancelSwapOffer'", frontendCommandPath);
+
+const frontendCrossCommandPath = 'frontend/apps/wallet/src/markets/wallet-cross-market-command.ts';
+const frontendCrossCommand = readText(frontendCrossCommandPath);
+assertIncludes(frontendCrossCommand, 'marketMath.planSwapCommand({', frontendCrossCommandPath);
+assertNotIncludes(frontendCrossCommand, 'waitForCrossTargetCapacity', frontendCrossCommandPath);
+assertNotIncludes(frontendCrossCommand, 'SWAP_CROSS_TARGET_SETUP_COMMIT_TIMEOUT', frontendCrossCommandPath);
+assertNotIncludes(frontendCrossCommand, 'satisfies CrossJurisdictionSwapRoute', frontendCrossCommandPath);
+
+const frontendSourcePath = 'frontend/apps/wallet/src/markets/wallet-market-source.ts';
+const frontendSource = readText(frontendSourcePath);
+assertIncludes(frontendSource, 'if (review.plan.targetSetupInput) await this.submitInput(review.plan.targetSetupInput);', frontendSourcePath);
+assertIncludes(frontendSource, 'await this.requireAdapter().submitCrossJurisdictionIntent(review.plan.crossJurisdictionIntent);', frontendSourcePath);
 
 const commandPlanPath = 'core/runtime/swap-cmd/swap-command-plan.ts';
 const commandPlan = readText(commandPlanPath);

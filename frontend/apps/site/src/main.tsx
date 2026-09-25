@@ -1,6 +1,7 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 
+import { installBrowserErrorTelemetry } from '../../../packages/browser/src/browser-error-telemetry';
 import { SiteApp } from './site-app';
 import { getSiteMetadata, resolveSitePage } from './site-model';
 import './styles/site.css';
@@ -11,6 +12,8 @@ import './styles/unicast.css';
 import './styles/releases.css';
 import './styles/reviews.css';
 import './styles/market-cap.css';
+
+installBrowserErrorTelemetry();
 
 const getRootElement = (): HTMLElement => {
   const rootElement = document.getElementById('root');

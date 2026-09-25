@@ -527,13 +527,6 @@ export const WALLET_FLOW_DEFERRALS = [
     evidenceMarker: 'createOnboardingHubJoinCommands',
     reason: 'W05–W07 verify automatic Hub joining, local/remote-owner Formation and remote Hub opening. R03 dual-destination Ops BrainVault and late-completion development cases pass; complete onboarding/reload acceptance on final release bytes remains V05a.',
   },
-  {
-    id: 'canonical-cutover',
-    destination: 'WP10',
-    evidenceSource: 'frontend/apps/wallet/src/wallet-app.tsx',
-    evidenceMarker: 'canonical Svelte wallet',
-    reason: 'Production framework cutover remains an explicit owner-authorized operation.',
-  },
 ] as const satisfies readonly WalletFlowDeferral[];
 
 export const WALLET_REQUIREMENT_AUDIT = [
