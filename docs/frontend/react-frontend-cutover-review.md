@@ -1,6 +1,6 @@
 # React frontend cutover review
 
-Status: **T17 DONE; T18 final certification in progress**
+Status: **T17 DONE; T18 DONE**
 
 ## Authority and boundary
 
@@ -101,5 +101,26 @@ launch, lifecycle, signing or hardware requirements are not weakened.
   failures after 142 passing cases; the affected full Wallet file then passed
   **9/9** on the unchanged source, covering the interrupted case and all five
   cases that had not run. The target dynamic module itself returned HTTP 200.
-- Hosted PR result remains pending. No publishing or production deployment is
-  part of this gate.
+- Final post-cutover source:
+  `66a5832312462d3152565374f6357c4969fb9052`.
+- Hosted [build-and-test 36148825115](https://github.com/pavelivanov/xln/actions/runs/36148825115)
+  passed [Contracts 108116630162](https://github.com/pavelivanov/xln/actions/runs/36148825115/job/108116630162),
+  [Frontend Build 108116630115](https://github.com/pavelivanov/xln/actions/runs/36148825115/job/108116630115)
+  and [Runtime Checks 108116629886](https://github.com/pavelivanov/xln/actions/runs/36148825115/job/108116629886).
+  The [E2E job 108120392357](https://github.com/pavelivanov/xln/actions/runs/36148825115/job/108120392357)
+  passed the final React typecheck (**80.3s**), all source checks (**503.1s**)
+  and release-integrity tests (**27.3s**) before reaching the two unchanged,
+  protected-core `storage-frame-journal-retention`
+  `entity_certification_invalid` failures and subsequent Bun 1.4.0 abort
+  already recorded during T16. Under the frontend migration override, that
+  unrelated existing Runtime boundary is evidence, not a migration blocker.
+- The hosted cold-runner regression that killed a healthy final Ops typecheck
+  at 60 seconds is fixed with a 180-second watchdog and a rendered-plan test.
+  The final release bytes are unchanged because the fix touches only release
+  orchestration and its regression test.
+- No publishing or production deployment is part of this gate.
+
+T01–T18 are complete. React is the canonical frontend, the Svelte application
+is retired, and Android, signed/notarized desktop and headset WebXR remain
+post-migration release gates. C03 production activation remains separate and
+requires explicit release authority.

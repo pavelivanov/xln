@@ -60,7 +60,7 @@ this queue.
 | T15 | Accept owner-approved migration platforms; defer remaining release gates      | DONE                                                                    | [receipt](../docs/frontend/react-frontend-t15-readiness.md) |
 | T16 | Pass hosted build/distribution CI for those exact inputs                      | DONE                                                                    | [receipt](../docs/frontend/react-frontend-t16-hosted-readiness.md) |
 | T17 | Make React canonical and remove Svelte                                        | DONE                                                                    | [review](../docs/frontend/react-frontend-cutover-review.md) |
-| T18 | Certify the post-cutover source and release                                   | ACTIVE(final browser/consumer and hosted gates)                         | [review](../docs/frontend/react-frontend-cutover-review.md) |
+| T18 | Certify the post-cutover source and release                                   | DONE                                                                    | [review](../docs/frontend/react-frontend-cutover-review.md) |
 
 An external dependency is closed only by an accepted implementation/result or an explicit owner change to the requirement. A missing environment, disabled capability, skipped case or passing retry does not close it. Request the specific pending decision once while continuing READY work; do not create another planning phase.
 

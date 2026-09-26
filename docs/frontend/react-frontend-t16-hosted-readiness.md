@@ -68,3 +68,30 @@ set crosses protected Runtime, jurisdiction, storage and contract boundaries.
 It remains untouched and is not a merge candidate without a separately owned
 integration decision. This does not change the accepted fork PR source or the
 hosted checks above.
+
+## Post-cutover hosted confirmation
+
+The final post-cutover source is
+`66a5832312462d3152565374f6357c4969fb9052`. Hosted
+[build-and-test 36148825115](https://github.com/pavelivanov/xln/actions/runs/36148825115)
+recorded the following results against that exact SHA:
+
+- [Contracts 108116630162](https://github.com/pavelivanov/xln/actions/runs/36148825115/job/108116630162)
+  passed in **1m05s**;
+- [Frontend Build 108116630115](https://github.com/pavelivanov/xln/actions/runs/36148825115/job/108116630115)
+  passed in **2m36s**;
+- [Runtime Checks 108116629886](https://github.com/pavelivanov/xln/actions/runs/36148825115/job/108116629886)
+  passed in **10m02s**;
+- [E2E Tests 108120392357](https://github.com/pavelivanov/xln/actions/runs/36148825115/job/108120392357)
+  passed frontend React types in **80.3s**, source checks in **503.1s** and
+  release-integrity tests in **27.3s**. Its subsequent protected Runtime unit
+  phase reproduced the same two pre-existing
+  `storage-frame-journal-retention` `entity_certification_invalid` failures
+  already recorded above, followed by the same Bun 1.4.0 abort.
+
+The prior 60-second React-type watchdog was raised to 180 seconds after hosted
+evidence showed the cold runner had reached its final Ops typecheck before
+being terminated. The rendered CI plan has a regression assertion for that
+budget. The overall workflow remains red only at the recorded unrelated
+protected-core boundary; all migration-owned hosted checks pass. No package
+was published and no production deployment occurred.
