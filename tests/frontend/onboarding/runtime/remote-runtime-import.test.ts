@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { beforeEach, describe, expect, test } from 'bun:test';
-import { safeStringify } from '../../../core/protocol/serialization';
+import { safeStringify } from '../../../../core/protocol/serialization';
 
 import {
   MAX_REMOTE_RUNTIME_IMPORTS,

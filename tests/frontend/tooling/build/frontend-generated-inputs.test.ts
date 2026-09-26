@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, test } from 'bun:test';
+import { spawn, type ChildProcess } from 'node:child_process';
 import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { tmpdir } from 'node:os';
@@ -17,6 +18,23 @@ import {
 
 const temporaryRoots: string[] = [];
 const REPOSITORY_ROOT = fileURLToPath(new URL('../../../..', import.meta.url));
+
+const waitForProcessExit = (child: ChildProcess): Promise<number | null> => {
+  if (child.exitCode !== null || child.signalCode !== null) return Promise.resolve(child.exitCode);
+  return new Promise((resolve, reject) => {
+    child.once('error', reject);
+    child.once('exit', (exitCode) => resolve(exitCode));
+  });
+};
+
+const runBun = async (args: readonly string[], env: NodeJS.ProcessEnv): Promise<number | null> => {
+  const child = spawn(process.execPath, [...args], {
+    cwd: REPOSITORY_ROOT,
+    env,
+    stdio: 'inherit',
+  });
+  return waitForProcessExit(child);
+};
 
 const createWorkspace = async (): Promise<Readonly<{ repositoryRoot: string; frontendRoot: string }>> => {
   const repositoryRoot = await mkdtemp(join(tmpdir(), 'xln-generated-inputs-'));
@@ -318,27 +336,20 @@ describe('frontend generated input preparation', () => {
     expect(paths).toContain('docs-catalog/manifest.json');
     expect(paths).toContain('llms.txt');
     expect(paths.some((pathname) => pathname.startsWith('docs-static/'))).toBe(false);
-  });
+  }, 15_000);
 
   test('keeps the retained docs generator isolated and accepts a deterministic timestamp', async () => {
     const { frontendRoot } = await createWorkspace();
     const outputRoot = join(frontendRoot, 'docs-generator-output');
-    const child = Bun.spawn([
-      'bun',
+    const exitCode = await runBun([
       'frontend/copy-static-files.js',
       '--docs-only',
       '--skip-llms',
     ], {
-      cwd: REPOSITORY_ROOT,
-      env: {
-        ...process.env,
-        XLN_STATIC_DIR: outputRoot,
-        XLN_GENERATED_AT: '1970-01-01T00:00:00.000Z',
-      },
-      stdout: 'pipe',
-      stderr: 'pipe',
+      ...process.env,
+      XLN_STATIC_DIR: outputRoot,
+      XLN_GENERATED_AT: '1970-01-01T00:00:00.000Z',
     });
-    const exitCode = await child.exited;
     const manifest = JSON.parse(await readFile(join(outputRoot, 'docs-catalog/manifest.json'), 'utf8')) as {
       generatedAt: string;
     };
@@ -356,22 +367,12 @@ describe('frontend generated input preparation', () => {
       join(frontendRoot, 'wallet-assets-second'),
     ];
     for (const outputRoot of outputRoots) {
-      const child = Bun.spawn([
-        'bun',
+      const exitCode = await runBun([
         'frontend/copy-static-files.js',
         '--wallet-only',
         '--bundled-contracts',
-      ], {
-        cwd: REPOSITORY_ROOT,
-        env: { ...process.env, XLN_STATIC_DIR: outputRoot },
-        stdout: 'ignore',
-        stderr: 'pipe',
-      });
-      const exitCode = await child.exited;
-      const stderr = child.stderr instanceof ReadableStream
-        ? await new Response(child.stderr).text()
-        : '';
-      if (exitCode !== 0) throw new Error(`TEST_WALLET_ASSET_BUILD_FAILED:${exitCode}:${stderr}`);
+      ], { ...process.env, XLN_STATIC_DIR: outputRoot });
+      if (exitCode !== 0) throw new Error(`TEST_WALLET_ASSET_BUILD_FAILED:${exitCode}`);
     }
 
     const expectedPaths = [

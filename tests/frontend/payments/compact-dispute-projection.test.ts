@@ -6,7 +6,7 @@ import { createEmptyAccountJClaimAccumulator } from '../../../core/account/j-cla
 import {
   buildEntityPanelView,
   findReplicaForEntityTab,
-} from '../../../frontend/bridges/wallet/entity-panel-model';
+} from '../../../frontend/bridges/wallet/entity/entity-panel-model';
 import { buildPaymentPanelViewFromRuntimeView } from '../../../frontend/bridges/wallet/payment-panel-view';
 import { buildAccountSpendableByToken } from '../../../frontend/packages/ui/src/entity/assets/entity-asset-values';
 import type { ExternalToken } from '../../../frontend/packages/ui/src/entity/assets/entity-asset-catalog';

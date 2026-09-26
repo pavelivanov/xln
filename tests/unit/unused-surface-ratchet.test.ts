@@ -54,8 +54,8 @@ describe('unused surface ratchet', () => {
       '@xln/core/protocol/identity',
     )).toBe('core/protocol/identity.ts');
     expect(resolveProofTarget(
-      'frontend/src/routes/rpc/+server.ts',
-      '../rpc-proxy-safety',
-    )).toBe('frontend/src/routes/rpc-proxy-safety.ts');
+      'core/api/server/rpc/proxy.ts',
+      './proxy-safety',
+    )).toBe('core/api/server/rpc/proxy-safety.ts');
   });
 });

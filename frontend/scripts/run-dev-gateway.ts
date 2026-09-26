@@ -3,7 +3,7 @@ import { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const FRONTEND_ROOT = fileURLToPath(new URL('..', import.meta.url));
-const GATEWAY_OUTPUT = fileURLToPath(new URL('../.artifacts/tooling/dev-gateway.mjs', import.meta.url));
+const GATEWAY_OUTPUT = fileURLToPath(new URL('../.artifacts/tooling/dev-gateway.cjs', import.meta.url));
 
 const runCommand = async (argv: readonly string[]): Promise<void> => {
   const child = Bun.spawn([...argv], {
@@ -31,6 +31,7 @@ const run = async (): Promise<void> => {
     'build',
     'scripts/dev/dev-gateway.ts',
     '--target=node',
+    '--format=cjs',
     '--outfile',
     GATEWAY_OUTPUT,
   ]);

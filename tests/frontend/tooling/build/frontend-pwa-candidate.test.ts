@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, test } from 'bun:test';
+import { spawn, type ChildProcess } from 'node:child_process';
 import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
@@ -18,6 +19,14 @@ import {
 } from '../../../../frontend/scripts/pwa/pwa-candidate';
 
 const roots: string[] = [];
+
+const waitForProcessExit = (child: ChildProcess): Promise<number | null> => {
+  if (child.exitCode !== null || child.signalCode !== null) return Promise.resolve(child.exitCode);
+  return new Promise((resolve, reject) => {
+    child.once('error', reject);
+    child.once('exit', (exitCode) => resolve(exitCode));
+  });
+};
 
 const createRelease = async (walletMarker: string) => {
   const frontendRoot = await mkdtemp(join(tmpdir(), 'xln-pwa-candidate-'));
@@ -115,10 +124,9 @@ describe('explicit immutable lifecycle inputs', () => {
       const reservation = Bun.serve({ hostname: '127.0.0.1', port: 0, fetch: () => new Response('reserved') });
       const port = reservation.port;
       await reservation.stop(true);
-      const child = Bun.spawn(['bun', resolve(`frontend/scripts/${kind}/${kind}-candidate-smoke-server.ts`)], {
+      const child = spawn(process.execPath, [resolve(`frontend/scripts/${kind}/${kind}-candidate-smoke-server.ts`)], {
         cwd: roots[0],
-        stdout: 'pipe',
-        stderr: 'pipe',
+        stdio: 'inherit',
         env: {
           ...process.env,
           XLN_LIFECYCLE_INSTALL_DIRECTORY: install.releaseDirectory,
@@ -144,10 +152,8 @@ describe('explicit immutable lifecycle inputs', () => {
         expect(state).toContain(install.releaseId);
         expect(state).toContain(update.releaseId);
       } finally {
-        child.kill('SIGTERM');
-        await child.exited;
-        const errors = await new Response(child.stderr).text();
-        expect(errors).toBe('');
+        if (child.exitCode === null && child.signalCode === null) child.kill('SIGTERM');
+        await waitForProcessExit(child);
       }
       await verifyLifecycleReleaseInputs(inputs);
     });

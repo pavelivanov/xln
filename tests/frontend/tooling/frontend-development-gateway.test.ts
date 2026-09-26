@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, test } from 'bun:test';
+import { spawn, type ChildProcess } from 'node:child_process';
 import { createServer, type Server } from 'node:http';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -32,8 +33,7 @@ import { getGatewayExitFailure } from '../../../frontend/scripts/run-dev-gateway
 
 const servers: Server[] = [];
 const websocketServers: Array<ReturnType<typeof Bun.serve>> = [];
-const gatewayProcesses: Array<ReturnType<typeof Bun.spawn>> = [];
-let nextTestPort = 26_000 + (process.pid % 10_000);
+const gatewayProcesses: ChildProcess[] = [];
 
 const listenOn = async (server: Server, port: number): Promise<void> => new Promise((resolve, reject) => {
   const onError = (error: Error): void => reject(error);
@@ -44,24 +44,26 @@ const listenOn = async (server: Server, port: number): Promise<void> => new Prom
   });
 });
 
-const listen = async (server: Server): Promise<number> => {
-  for (let attempt = 0; attempt < 100; attempt += 1) {
-    const port = nextTestPort;
-    nextTestPort += 1;
-    try {
-      await listenOn(server, port);
-      servers.push(server);
-      return port;
-    } catch (error: unknown) {
-      if (!(error instanceof Error) || !('code' in error) || error.code !== 'EADDRINUSE') throw error;
-    }
-  }
-  throw new Error('TEST_SERVER_PORTS_EXHAUSTED');
-};
-
 const close = async (server: Server): Promise<void> => new Promise((resolve, reject) => {
   server.close((error?: Error) => error === undefined ? resolve() : reject(error));
 });
+
+const listen = async (server: Server): Promise<number> => {
+  await listenOn(server, 0);
+  const address = server.address();
+  if (address === null || typeof address === 'string') throw new Error('TEST_SERVER_PORT_MISSING');
+  servers.push(server);
+  return address.port;
+};
+
+const reservePort = async (): Promise<number> => {
+  const server = createServer();
+  await listenOn(server, 0);
+  const address = server.address();
+  if (address === null || typeof address === 'string') throw new Error('TEST_SERVER_PORT_MISSING');
+  await close(server);
+  return address.port;
+};
 
 const createTarget = async (owner: GatewayProxyOwner): Promise<string> => {
   const server = createServer((request, response) => {
@@ -81,54 +83,74 @@ const createTargets = async (): Promise<Readonly<Record<GatewayProxyOwner, strin
 });
 
 const createWebSocketTarget = (onUpgrade: () => void): string => {
-  for (let attempt = 0; attempt < 100; attempt += 1) {
-    const port = nextTestPort;
-    nextTestPort += 1;
-    try {
-      const server = Bun.serve({
-        hostname: '127.0.0.1',
-        port,
-        fetch(request, bunServer) {
-          onUpgrade();
-          if (bunServer.upgrade(request)) return undefined;
-          return new Response('TEST_WEBSOCKET_UPGRADE_FAILED', { status: 400 });
-        },
-        websocket: {
-          message() {},
-        },
-      });
-      websocketServers.push(server);
-      return `http://127.0.0.1:${port}`;
-    } catch (error: unknown) {
-      if (!(error instanceof Error) || !('code' in error) || error.code !== 'EADDRINUSE') throw error;
-    }
-  }
-  throw new Error('TEST_WEBSOCKET_PORTS_EXHAUSTED');
+  const server = Bun.serve({
+    hostname: '127.0.0.1',
+    port: 0,
+    fetch(request, bunServer) {
+      onUpgrade();
+      if (bunServer.upgrade(request)) return undefined;
+      return new Response('TEST_WEBSOCKET_UPGRADE_FAILED', { status: 400 });
+    },
+    websocket: {
+      message() {},
+    },
+  });
+  websocketServers.push(server);
+  return `http://127.0.0.1:${server.port}`;
 };
 
-const waitForGateway = async (process: ReturnType<typeof Bun.spawn>): Promise<void> => {
-  if (!(process.stdout instanceof ReadableStream)) throw new Error('TEST_GATEWAY_STDOUT_MISSING');
-  const reader = process.stdout.getReader();
-  const decoder = new TextDecoder();
-  let output = '';
-  const timeout = setTimeout(() => reader.cancel('TEST_GATEWAY_READY_TIMEOUT'), 5_000);
-  try {
-    while (true) {
-      const chunk = await reader.read();
-      if (chunk.done) throw new Error(`TEST_GATEWAY_EXITED_BEFORE_READY:${output}`);
-      output += decoder.decode(chunk.value, { stream: true });
-      if (output.includes('FRONTEND_GATEWAY_READY')) return;
-    }
-  } finally {
-    clearTimeout(timeout);
-    reader.releaseLock();
+const spawnGateway = (
+  argv: readonly string[],
+  cwd: string,
+  env: Record<string, string | undefined>,
+): ChildProcess => {
+  const [executable, ...args] = argv;
+  if (executable === undefined) throw new Error('TEST_GATEWAY_COMMAND_EMPTY');
+  const child = spawn(executable === 'bun' ? process.execPath : executable, args, {
+    cwd,
+    env,
+    stdio: 'inherit',
+  });
+  gatewayProcesses.push(child);
+  return child;
+};
+
+const waitForProcessExit = (process: ChildProcess): Promise<number | null> => {
+  if (process.exitCode !== null || process.signalCode !== null) return Promise.resolve(process.exitCode);
+  return new Promise((resolve, reject) => {
+    process.once('error', reject);
+    process.once('exit', (exitCode) => resolve(exitCode));
+  });
+};
+
+const canConnect = (port: number): Promise<boolean> => new Promise((resolve) => {
+  const socket = createConnection({ host: '127.0.0.1', port });
+  socket.once('connect', () => {
+    socket.destroy();
+    resolve(true);
+  });
+  socket.once('error', () => {
+    socket.destroy();
+    resolve(false);
+  });
+});
+
+const waitForGateway = async (process: ChildProcess, port: number): Promise<void> => {
+  const deadline = Date.now() + 5_000;
+  while (Date.now() < deadline && process.exitCode === null && process.signalCode === null) {
+    if (await canConnect(port)) return;
+    await Bun.sleep(20);
   }
+  if (process.exitCode !== null || process.signalCode !== null) {
+    throw new Error(`TEST_GATEWAY_EXITED_BEFORE_READY:${process.exitCode}:${process.signalCode}`);
+  }
+  throw new Error('TEST_GATEWAY_READY_TIMEOUT');
 };
 
 afterEach(async () => {
   for (const process of gatewayProcesses.splice(0).reverse()) {
-    process.kill('SIGTERM');
-    await process.exited;
+    if (process.exitCode === null && process.signalCode === null) process.kill('SIGTERM');
+    await waitForProcessExit(process);
   }
   for (const server of websocketServers.splice(0).reverse()) await server.stop(true);
   for (const server of servers.splice(0).reverse()) await close(server);
@@ -225,11 +247,11 @@ describe('React development gateway', () => {
       docs: websocketTarget,
     };
 
-    const port = nextTestPort;
-    nextTestPort += 1;
-    const gateway = Bun.spawn(['bun', 'scripts/run-dev-gateway.ts'], {
-      cwd: 'frontend',
-      env: {
+    const port = await reservePort();
+    const gateway = spawnGateway(
+      ['bun', 'scripts/run-dev-gateway.ts'],
+      'frontend',
+      {
         ...process.env,
         XLN_REACT_GATEWAY_PORT: String(port),
         XLN_REACT_EDGE_TARGET: targets.edge,
@@ -239,11 +261,8 @@ describe('React development gateway', () => {
         XLN_REACT_WALLET_TARGET: targets.wallet,
         XLN_REACT_OPS_TARGET: targets.ops,
       },
-      stdout: 'pipe',
-      stderr: 'pipe',
-    });
-    gatewayProcesses.push(gateway);
-    await waitForGateway(gateway);
+    );
+    await waitForGateway(gateway, port);
     expect(await (await fetch(`http://127.0.0.1:${port}/api/assistant/models`)).text()).toBe('edge:/api/assistant/models');
     const response = await new Promise<string>((resolve, reject) => {
       const socket = createConnection({ host: '127.0.0.1', port });
@@ -279,9 +298,9 @@ describe('React development gateway', () => {
     const cert = join(directory, 'cert.pem');
     let socket: WebSocket | undefined;
     try {
-      const certificate = Bun.spawn(
+      const certificate = spawn(
+        'openssl',
         [
-          'openssl',
           'req',
           '-x509',
           '-newkey',
@@ -296,15 +315,16 @@ describe('React development gateway', () => {
           '-subj',
           '/CN=localhost',
         ],
-        { stdout: 'ignore', stderr: 'pipe' },
+        { stdio: 'inherit' },
       );
-      expect(await certificate.exited).toBe(0);
+      expect(await waitForProcessExit(certificate)).toBe(0);
       const targets = await createTargets();
       const websocketTarget = createWebSocketTarget(() => {});
-      const port = nextTestPort++;
-      const gateway = Bun.spawn(['bun', 'frontend/scripts/run-dev-gateway.ts'], {
-        cwd: process.cwd(),
-        env: {
+      const port = await reservePort();
+      const gateway = spawnGateway(
+        ['bun', 'frontend/scripts/run-dev-gateway.ts'],
+        process.cwd(),
+        {
           ...process.env,
           XLN_REACT_GATEWAY_PORT: String(port),
           XLN_REACT_GATEWAY_TLS_CERT: cert,
@@ -312,11 +332,8 @@ describe('React development gateway', () => {
           XLN_REACT_SITE_TARGET: targets.site,
           XLN_REACT_DOCS_TARGET: websocketTarget,
         },
-        stdout: 'pipe',
-        stderr: 'pipe',
-      });
-      gatewayProcesses.push(gateway);
-      await waitForGateway(gateway);
+      );
+      await waitForGateway(gateway, port);
       const response = await fetch(`https://127.0.0.1:${port}/`, { tls: { rejectUnauthorized: false } });
       expect(await response.text()).toBe('site:/__app/site/');
       socket = new WebSocket(`wss://127.0.0.1:${port}/__hmr/docs`, { tls: { rejectUnauthorized: false } });
@@ -328,7 +345,7 @@ describe('React development gateway', () => {
         socket!.onclose = () => resolve();
       });
       gateway.kill('SIGTERM');
-      expect(await gateway.exited).toBe(0);
+      expect(await waitForProcessExit(gateway)).toBe(0);
       await closed;
     } finally {
       socket?.close();

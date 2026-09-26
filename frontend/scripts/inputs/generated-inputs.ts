@@ -9,6 +9,7 @@ import {
   rm,
   writeFile,
 } from 'node:fs/promises';
+import { spawn, type ChildProcess } from 'node:child_process';
 import { dirname, join, relative } from 'node:path';
 
 import { safeStringify } from '../../../core/protocol/serialization';
@@ -38,6 +39,12 @@ export {
   type PreparedGeneratedInputManifest,
   type ValidatedGeneratedInput,
 } from './generated-input-manifest';
+
+const waitForCommandExit = (child: ChildProcess): Promise<number> =>
+  new Promise((resolve, reject) => {
+    child.once('error', reject);
+    child.once('close', (exitCode) => resolve(exitCode ?? -1));
+  });
 
 const walkSourceFiles = async (current: string): Promise<readonly string[]> => {
   const stats = await lstat(current);
@@ -112,15 +119,6 @@ const materializeCopies = async (
   }
 };
 
-const readCommandOutput = async (pathname: string): Promise<string> => {
-  try {
-    return await readFile(pathname, 'utf8');
-  } catch (error: unknown) {
-    if (error instanceof Error && 'code' in error && error.code === 'ENOENT') return '';
-    throw error;
-  }
-};
-
 const runGeneratedCommand = async (
   repositoryRoot: string,
   payloadRoot: string,
@@ -130,31 +128,20 @@ const runGeneratedCommand = async (
   const { outputPath } = definition.producer;
   if (outputPath !== undefined) assertGeneratedInputRelativePath(outputPath, 'OUTPUT_PATH');
   const commandOutput = outputPath === undefined ? payloadRoot : join(payloadRoot, outputPath);
-  const outputRoot = await mkdtemp(join(dirname(payloadRoot), '.command-output-'));
-  const stdoutPath = join(outputRoot, 'stdout');
-  const stderrPath = join(outputRoot, 'stderr');
-  try {
-    const child = Bun.spawn([...definition.producer.argv], {
-      cwd: repositoryRoot,
-      env: {
-        ...process.env,
-        ...definition.producer.environment,
-        [definition.producer.outputEnvironment]: commandOutput,
-      },
-      stdout: Bun.file(stdoutPath),
-      stderr: Bun.file(stderrPath),
-    });
-    const exitCode = await child.exited;
-    if (exitCode !== 0) {
-      const [stdout, stderr] = await Promise.all([
-        readCommandOutput(stdoutPath),
-        readCommandOutput(stderrPath),
-      ]);
-      const detail = `${stdout}\n${stderr}`.trim().slice(-4_000);
-      throw new Error(`GENERATED_INPUT_COMMAND_FAILED:${definition.id}:${exitCode}:${detail}`);
-    }
-  } finally {
-    await rm(outputRoot, { recursive: true, force: true });
+  const [executable, ...args] = definition.producer.argv;
+  if (executable === undefined) throw new Error(`GENERATED_INPUT_COMMAND_EMPTY:${definition.id}`);
+  const child = spawn(executable === 'bun' ? process.execPath : executable, args, {
+    cwd: repositoryRoot,
+    env: {
+      ...process.env,
+      ...definition.producer.environment,
+      [definition.producer.outputEnvironment]: commandOutput,
+    },
+    stdio: 'inherit',
+  });
+  const exitCode = await waitForCommandExit(child);
+  if (exitCode !== 0) {
+    throw new Error(`GENERATED_INPUT_COMMAND_FAILED:${definition.id}:${exitCode}`);
   }
 };
 
