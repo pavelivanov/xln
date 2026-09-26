@@ -50,6 +50,7 @@ export const finalizeWalletBrainVaultMaterial = async (
       mnemonic24,
       mnemonic12,
       devicePassphrase: bytesToHex(deviceKey),
+      localPassword: input.passphrase,
     };
   } finally {
     master?.fill(0);

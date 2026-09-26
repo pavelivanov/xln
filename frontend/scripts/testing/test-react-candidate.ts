@@ -16,6 +16,7 @@ export const CANDIDATE_BROWSER_TEST_FILES = {
     'tests/react-candidate/wallet/onboarding/wallet-onboarding.spec.ts',
     'tests/react-candidate/wallet/onboarding/wallet-formation.spec.ts',
     'tests/react-candidate/wallet/onboarding/wallet-hub-discovery.spec.ts',
+    'tests/react-candidate/wallet/security/wallet-local-password.spec.ts',
     'tests/react-candidate/wallet/account/wallet-account-open.spec.ts',
     'tests/react-candidate/wallet/account/wallet-account-view.spec.ts',
     'tests/react-candidate/wallet/account/wallet-account-appearance.spec.ts',

@@ -119,6 +119,23 @@
   border-radius: 0.45rem;
 }
 
+.wallet-preference-row > button {
+  min-height: 2.35rem;
+  padding: 0.55rem 0.85rem;
+  color: var(--theme-background, #101210);
+  font: inherit;
+  font-size: 0.8rem;
+  cursor: pointer;
+  background: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: 0.45rem;
+}
+
+.wallet-preference-row > button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
 .wallet-settings-boundary,
 .wallet-settings-status,
 .wallet-settings-error {

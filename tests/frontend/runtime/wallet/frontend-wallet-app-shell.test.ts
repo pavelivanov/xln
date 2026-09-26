@@ -136,6 +136,10 @@ describe('React wallet app shell', () => {
     expect(source).toContain('readRuntimeAdapterStorageSnapshot');
     expect(source).toContain('useSyncExternalStore');
     expect(source).toContain('startWalletEmbeddedRuntime');
+    expect(source).toContain('readCanonicalWalletLocalPasswordGate');
+    expect(source).toContain("localPasswordGate.state !== 'unlocked'");
+    expect(source).toContain("view !== 'scenario-preview' && !localPasswordBlocked");
+    expect(source).toContain('<WalletLocalPassword');
     expect(source).toContain("runtime.state === 'local-standby' || runtime.state === 'local-error'");
     expect(source).toContain('<WalletRuntimeBoundary runtime={runtime} />');
     expect(source).toContain('window.addEventListener');

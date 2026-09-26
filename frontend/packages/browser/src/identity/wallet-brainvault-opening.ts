@@ -34,4 +34,5 @@ export type WalletBrainVaultDerivedMaterial = Readonly<{
   mnemonic24: string;
   mnemonic12: string;
   devicePassphrase: string;
+  localPassword: string;
 }>;

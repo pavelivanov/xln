@@ -16,7 +16,10 @@ import {
 } from './browser-evidence';
 import { installImportedRuntime, readWalletRuntimeFixture } from './wallet/fixtures/wallet-runtime-test-helpers';
 import { WALLET_RECOVERY_FIXTURE_MNEMONIC } from './wallet/fixtures/wallet-fixture-identities';
-import { finishOpenedWalletSetup } from './wallet/onboarding/wallet-onboarding-test-helpers';
+import {
+  enrollLocalPassword,
+  finishOpenedWalletSetup,
+} from './wallet/onboarding/wallet-onboarding-test-helpers';
 import { expectWalletHistoryEvents } from './wallet/fixtures/wallet-history-test-helpers';
 
 const FIRST_MNEMONIC = 'test test test test test test test test test test test junk';
@@ -244,6 +247,7 @@ test(
     });
     await expect(page.getByRole('heading', { name: 'Choose a backup' })).toBeVisible({ timeout: 90_000 });
     await page.getByRole('button', { name: 'Restore selected backup' }).click();
+    await enrollLocalPassword(page);
     await expect(page.getByRole('heading', { name: 'Wallet opened' })).toBeVisible({ timeout: 90_000 });
     await finishOpenedWalletSetup(page);
 

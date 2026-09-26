@@ -191,7 +191,11 @@ describe('browser wallet Runtime opening', () => {
     expect(reactBridge).toContain('recoverySelection.commit(revision, discovery.runtimeId, discovery.candidates)');
     expect(reactBridge).toContain('recoverySelection.consume(token, runtimeId, candidateId)');
     expect(reactBridge).toContain('writeRuntimeRecoveryDiscoveryStatus({');
-    expect(reactRuntime).toContain('await session.replace(async () => {');
+    expect(reactRuntime).toContain('const openCanonicalResource = (');
+    expect(reactRuntime).toContain("session.getSnapshot().status === 'ready'");
+    expect(reactRuntime).toContain('? session.replace(boot)');
+    expect(reactRuntime).toContain(': session.start(boot)');
+    expect(reactRuntime).toContain('await openCanonicalResource(async () => {');
     expect(reactRuntime).toContain("status: 'recovery-required', discovery");
     expect(reactRuntime.indexOf('const discovery = await canonical.discoverCanonicalWalletRuntimeRecoveryView(request)'))
       .toBeLessThan(reactRuntime.indexOf('if (discovery.candidates.length > 0)'));

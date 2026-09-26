@@ -19,17 +19,20 @@ import { WalletProfileSettings } from './wallet-profile-settings';
 import { WalletStackManager } from './wallet-stack-manager';
 import '../styles/wallet-settings.css';
 import { useWorkspaceTranslation } from '../../../../bridges/workspace-localization-react';
+import { lockCanonicalWalletLocalPassword } from '../../../../bridges/wallet/canonical/wallet-canonical-local-password';
 
 const WORKER_CAPS = [1, 2, 3, 4, 5, 6, 7, 8] as const;
 export function WalletSettings({
   entityId,
   onAuthSchemeChange,
+  runtimeId,
   runtimeState,
   section,
   workspaceSelection,
 }: Readonly<{
   entityId: string;
   onAuthSchemeChange: (scheme: WalletAuthScheme) => void;
+  runtimeId: string;
   runtimeState: WalletRuntimeSummary['state'];
   section: WalletSettingsSection;
   workspaceSelection: WalletWorkspaceSelection;
@@ -83,6 +86,16 @@ export function WalletSettings({
         : `BrainVault concurrency capped at ${choice} worker${choice === 1 ? '' : 's'}.`);
     } catch (failure: unknown) {
       setError(walletPreferenceStorageErrorMessage(failure));
+    }
+  };
+
+  const lockWallet = async (): Promise<void> => {
+    setStatus('');
+    setError('');
+    try {
+      await lockCanonicalWalletLocalPassword(runtimeId);
+    } catch (failure: unknown) {
+      setError(failure instanceof Error ? failure.message : String(failure));
     }
   };
 
@@ -145,6 +158,15 @@ export function WalletSettings({
                   {WORKER_CAPS.map((cap) => <option key={cap} value={cap}>{cap} worker{cap === 1 ? '' : 's'}</option>)}
                 </select>
               </label>
+              <div className="wallet-preference-row">
+                <span>
+                  <strong>Local authority</strong>
+                  <small>Clear decrypted wallet material and require the local password again.</small>
+                </span>
+                <button disabled={!runtimeId} onClick={() => { void lockWallet(); }} type="button">
+                  Lock wallet
+                </button>
+              </div>
             </div>
 
             <p className="wallet-settings-boundary">

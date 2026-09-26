@@ -2,6 +2,15 @@ import { expect, type Page } from '@playwright/test';
 import { readWalletRuntimeFixture } from '../fixtures/wallet-runtime-test-helpers';
 import { WALLET_RECOVERY_FIXTURE_MNEMONIC } from '../fixtures/wallet-fixture-identities';
 
+export const REACT_WALLET_LOCAL_PASSWORD = 'react-local-password';
+
+export const enrollLocalPassword = async (page: Page): Promise<void> => {
+  await expect(page.getByRole('heading', { name: 'Set a local password' })).toBeVisible();
+  await page.getByLabel('Password', { exact: true }).fill(REACT_WALLET_LOCAL_PASSWORD);
+  await page.getByLabel('Confirm password').fill(REACT_WALLET_LOCAL_PASSWORD);
+  await page.getByRole('button', { name: 'Save and open' }).click();
+};
+
 export const finishOpenedWalletSetup = async (page: Page): Promise<void> => {
   const form = page.getByRole('form', { name: 'Configure account' });
   await expect(form).toBeVisible();
@@ -47,9 +56,13 @@ export async function restoreLocalWallet(page: Page, backup?: 'hub-discovery' | 
     await (await choosing).setFiles({ name: fileName, mimeType: 'application/json', buffer: Buffer.from(contents) });
     await expect(page.getByRole('radio').filter({ hasText: fileName }))
       .toHaveAttribute('aria-checked', 'true', { timeout: 30_000 });
-  } else await page.getByRole('button', { name: 'Check recovery and open wallet' }).click();
+  } else {
+    await page.getByRole('button', { name: 'Check recovery and open wallet' }).click();
+    await enrollLocalPassword(page);
+  }
   await expect(page.getByRole('heading', { name: 'Choose a backup' })).toBeVisible({ timeout: 90_000 });
   await page.getByRole('button', { name: 'Restore selected backup' }).click();
+  if (backup) await enrollLocalPassword(page);
   await expect(page.getByRole('heading', { name: 'Wallet opened' })).toBeVisible({ timeout: 90_000 });
   return fixture;
 }

@@ -11,7 +11,10 @@ import {
   readWalletRuntimeFixture,
 } from './wallet-runtime-test-helpers';
 import { WALLET_RECOVERY_FIXTURE_MNEMONIC } from './wallet-fixture-identities';
-import { finishOpenedWalletSetup } from '../onboarding/wallet-onboarding-test-helpers';
+import {
+  enrollLocalPassword,
+  finishOpenedWalletSetup,
+} from '../onboarding/wallet-onboarding-test-helpers';
 
 export async function runWalletRecoveryServicesFlow(page: Page, testInfo: TestInfo): Promise<void> {
   testInfo.setTimeout(180_000);
@@ -89,6 +92,7 @@ export async function runWalletRecoveryServicesFlow(page: Page, testInfo: TestIn
   );
   expect(storage).not.toContain(WALLET_RECOVERY_FIXTURE_MNEMONIC);
   await page.getByRole('button', { name: 'Restore selected backup' }).click();
+  await enrollLocalPassword(page);
   await expect(page.getByRole('heading', { name: 'Wallet opened' })).toBeVisible({ timeout: 90_000 });
   await finishOpenedWalletSetup(page);
   await expect(page.getByText(`Active Runtime ${fixture.recovery.runtimeId}.`, { exact: false })).toBeVisible();

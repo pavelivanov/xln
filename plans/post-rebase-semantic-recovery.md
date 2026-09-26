@@ -132,9 +132,9 @@ Run from repository root unless a different cwd is shown.
 | R01 | Repair retained `ui` imports and make its typecheck a root gate | P0 | — | VERIFIED |
 | R02 | Restore the canonical iOS headless-runtime package contract | P0 | R01 | VERIFIED |
 | R03 | Restore RPC-only scenario and jurisdiction selection | P1 | — | VERIFIED |
-| R04 | Restore React local-password enrollment, unlock, and lock | P0 | — | READY |
+| R04 | Restore React local-password enrollment, unlock, and lock | P0 | — | VERIFIED |
 | R05 | Resolve paired-daemon custody semantics | P1 | — | READY |
-| R06 | Finish Svelte retirement and harden the retirement gate | P1 | R04 | WAIT |
+| R06 | Finish Svelte retirement and harden the retirement gate | P1 | R04 | READY |
 | R07 | Characterize post-rebase generated-input failure diagnostics | P2 | — | READY |
 | R08 | Re-certify one exact source and release | P0 | R01–R06; R07 disposition | WAIT |
 | R09 | Produce the publication-readiness handoff | P0 | R08 | WAIT |
@@ -367,6 +367,20 @@ Steps:
 - Run the new React password spec at all three viewports → enrollment, reload,
   wrong password, unlock, lock, and recovery pass; no seed/password appears in
   console or saved plaintext.
+
+**Implementation evidence (2026-09-27, source `d45e22e8a` plus working diff, Bun `1.4.0`):**
+
+- Focused password, vault-protection, lock, identity-opening, BrainVault-session,
+  and app-shell tests → 69 pass, 0 fail, 270 assertions.
+- `cd frontend && bun scripts/check.ts --surface=wallet --level=local` → exit 0;
+  unsafe-type, React tooling, and React wallet gates pass.
+- The stand-locked React password flow at 390×844, 1366×900, and 1920×1080
+  → 3 pass, 0 fail in 44.7s on one unchanged source; enrollment, locked reload,
+  wrong-password rejection, unlock, explicit lock, recovery entry, viewport
+  containment, screenshots, and console/page-error assertions pass.
+- Browser storage assertions cover both `localStorage` and `sessionStorage` and
+  contain neither the recovery mnemonic nor the plaintext local password after
+  enrollment or lock.
 
 **STOP if:** the BrainVault secret is unavailable through an existing bounded
 session at enrollment time. Report the token/material lifecycle; do not add a

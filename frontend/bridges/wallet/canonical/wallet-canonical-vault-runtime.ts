@@ -264,6 +264,8 @@ export const openCanonicalWalletBrainVault = async (
   setPageUnloadFence: PageUnloadFenceSetter,
 ): Promise<WalletEmbeddedRuntimeResource<RuntimeAdapter>> => {
   const material = brainVaultMaterials.consume(token, runtimeId);
+  const { enrollFreshCanonicalWalletLocalPassword } = await import('./wallet-canonical-local-password');
+  await enrollFreshCanonicalWalletLocalPassword(runtimeId, material.mnemonic24, material.localPassword);
   const request = brainVaultOpeningRequest(material);
   return openCanonicalWalletRuntime(request, recoveryToken, candidateId, setPageUnloadFence);
 };

@@ -24,6 +24,8 @@ import { WalletWorkspaceSelection } from './runtime/wallet-workspace-selection';
 import { WalletAccountRail } from './account/wallet-account-rail';
 import { WalletAccountWorkspace } from './account/wallet-account-workspace';
 import { WalletSettings } from './settings/wallet-settings';
+import { WalletLocalPassword } from './security/wallet-local-password';
+import { readCanonicalWalletLocalPasswordGate } from '../../../bridges/wallet/canonical/wallet-canonical-local-password';
 import { navigateWallet, useWalletRoute } from './navigation/wallet-navigation';
 import { walletPaymentTabHref } from './navigation/wallet-navigation-model';
 import { readWalletPreferences } from './settings/wallet-settings-model';
@@ -148,6 +150,7 @@ export function WalletAppShell() {
   useEffect(() => { document.documentElement.lang = locale; }, [locale]);
   const [workspaceSelection] = useState(() => new WalletWorkspaceSelection());
   const [, setEnvironmentRevision] = useState(0);
+  const [passwordRecovery, setPasswordRecovery] = useState(false);
   const embedded = useSyncExternalStore(
     subscribeWalletEmbeddedRuntime,
     getWalletEmbeddedRuntimeSnapshot,
@@ -166,10 +169,15 @@ export function WalletAppShell() {
   const usesIdentityAppearance = view === 'identity' || view === 'settings';
   const runtimeConfig = readRuntimeConfig();
   const runtime = resolveWalletRuntimeSummary(runtimeConfig, navigator.onLine, embedded);
+  const localPasswordGate = readCanonicalWalletLocalPasswordGate(
+    runtimeConfig.mode === 'remote' ? 'remote' : 'embedded',
+    embedded,
+  );
+  const localPasswordBlocked = localPasswordGate !== null && localPasswordGate.state !== 'unlocked';
   const runtimeSelectionKey = [runtimeConfig.mode, runtimeConfig.wsUrl, runtimeConfig.access, runtimeConfig.sessionKey].join('\u0000');
 
   useEffect(() => {
-    if (view !== 'scenario-preview') initializeEmbeddedRuntimeOnce();
+    if (view !== 'scenario-preview' && !localPasswordBlocked) initializeEmbeddedRuntimeOnce();
     const refreshRuntime = () => setEnvironmentRevision(revision => revision + 1);
     window.addEventListener('storage', refreshRuntime);
     window.addEventListener('online', refreshRuntime);
@@ -179,13 +187,34 @@ export function WalletAppShell() {
       window.removeEventListener('online', refreshRuntime);
       window.removeEventListener('offline', refreshRuntime);
     };
-  }, [view]);
+  }, [localPasswordBlocked, view]);
 
   const navigate: WalletNavigate = (event, href) => {
     if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
     event.preventDefault();
     navigateWallet(href);
   };
+
+  if (localPasswordBlocked) {
+    if (!passwordRecovery) {
+      return <WalletLocalPassword
+        onComplete={() => setEnvironmentRevision(revision => revision + 1)}
+        onRecover={() => setPasswordRecovery(true)}
+        view={localPasswordGate}
+      />;
+    }
+    return <main className="wallet-shell">
+      <div className="wallet-shell-canvas">
+        <div className="wallet-shell-workspace">
+          <IdentityOnboarding
+            onRuntimeOpened={() => setPasswordRecovery(false)}
+            runtimeId=""
+            runtimeState="local-loading"
+          />
+        </div>
+      </div>
+    </main>;
+  }
 
   return (
     <main className={`wallet-shell${usesIdentityAppearance && authScheme === 'light' ? ' is-auth-light' : ''}`} data-display-theme={display.preferences.theme}>
@@ -229,7 +258,7 @@ export function WalletAppShell() {
               {view === 'health' ? <WalletFinancialHealth workspaceSelection={workspaceSelection} /> : null}
               {route.view === 'payments' ? <WalletPayments workspaceSelection={workspaceSelection} tab={route.tab} invoice={route.invoice} onTabChange={(tab) => navigateWallet(walletPaymentTabHref(tab))} /> : null}
               {route.view === 'markets' ? <WalletMarkets workspaceSelection={workspaceSelection} tab={route.tab} onTabChange={(tab) => navigateWallet(`/app#accounts/${tab === 'market' ? 'swap' : 'activity'}`)} /> : null}
-              {route.view === 'settings' ? <WalletSettings entityId={route.entityId} key={runtimeSelectionKey} section={route.section} onAuthSchemeChange={setAuthScheme} runtimeState={runtime.state} workspaceSelection={workspaceSelection} /> : null}
+              {route.view === 'settings' ? <WalletSettings entityId={route.entityId} key={runtimeSelectionKey} section={route.section} onAuthSchemeChange={setAuthScheme} runtimeId={embedded.runtimeId} runtimeState={runtime.state} workspaceSelection={workspaceSelection} /> : null}
               {view === 'diagnostics' ? <WalletDiagnostics runtime={runtime} /> : null}
               {view === 'scenario-preview' ? <Suspense fallback={<p>Loading scenario preview…</p>}><WalletScenarioPreview /></Suspense> : null}
               {view === 'overview' ? <WalletOverview navigate={navigate} runtime={runtime} /> : null}

@@ -27,6 +27,7 @@ describe('React wallet Brain Vault derivation boundary', () => {
     const onboarding = read('frontend/apps/wallet/src/identity/identity-onboarding.tsx');
     const embedded = read('frontend/apps/wallet/src/runtime/wallet-embedded-runtime.ts');
     const bridge = read('frontend/bridges/wallet/canonical/wallet-canonical-vault-runtime.ts');
+    const material = read('frontend/packages/browser/src/identity/wallet-brainvault-opening.ts');
 
     expect(onboarding).toContain("setDraft(current => ({ ...current, passphrase: '', showPassphrase: false }))");
     expect(onboarding).toContain('await prepareWalletBrainVaultWithCanonicalVault(');
@@ -35,6 +36,12 @@ describe('React wallet Brain Vault derivation boundary', () => {
     expect(embedded).toContain('canonical.prepareCanonicalWalletBrainVault(input, onProgress)');
     expect(bridge).toContain('new WalletBrainVaultMaterialSession<WalletBrainVaultDerivedMaterial>()');
     expect(bridge).toContain('brainVaultMaterials.consume(token, runtimeId)');
+    expect(bridge).toContain('material.localPassword');
+    expect(material).toContain('localPassword: string;');
+    expect(material.indexOf('localPassword: string;'))
+      .toBeGreaterThan(material.indexOf('export type WalletBrainVaultDerivedMaterial'));
+    expect(material.indexOf('localPassword: string;'))
+      .toBeGreaterThan(material.indexOf('export type WalletBrainVaultPreparedView'));
     expect(bridge.indexOf('brainVaultMaterials.consume(token, runtimeId)'))
       .toBeLessThan(bridge.indexOf('openCanonicalWalletRuntime(request, recoveryToken'));
   });

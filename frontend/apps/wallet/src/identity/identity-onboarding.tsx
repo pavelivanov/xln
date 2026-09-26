@@ -20,6 +20,11 @@ import { IdentityRecoveryVerified, IdentityReview } from './identity-recovery';
 import { IdentityBrainVaultProgress } from './identity-brainvault-progress';
 import { IdentityEntryForm } from './identity-entry-form';
 import { WalletExistingSetupGate } from '../onboarding/wallet-onboarding';
+import { WalletLocalPassword } from '../security/wallet-local-password';
+import {
+  enrollFreshCanonicalWalletLocalPassword,
+  hasCanonicalWalletLocalPassword,
+} from '../../../../bridges/wallet/canonical/wallet-canonical-local-password';
 import { createMnemonicWalletOpeningRequest, importWalletIdentityRecoveryFile } from '../onboarding/wallet-identity-opening';
 import { resetWalletRecoveryRehearsal, type WalletRecoveryRehearsalState } from '../../../../packages/browser/src/recovery/wallet-recovery-rehearsal';
 import {
@@ -45,6 +50,7 @@ export function IdentityOnboarding({
   const [derivedAddress, setDerivedAddress] = useState('');
   const [deriving, setDeriving] = useState(false);
   const [recoveryVerified, setRecoveryVerified] = useState(false);
+  const [passwordEnrollment, setPasswordEnrollment] = useState(false);
   const [openingRuntime, setOpeningRuntime] = useState(false);
   const [openingError, setOpeningError] = useState('');
   const [openedRuntimeId, setOpenedRuntimeId] = useState('');
@@ -73,6 +79,7 @@ export function IdentityOnboarding({
     setDerivedAddress('');
     setReviewing(false);
     setRecoveryVerified(false);
+    setPasswordEnrollment(false);
     verifiedMnemonicRef.current = '';
     discardWalletRuntimeRecovery(recoveryTokenRef.current);
     recoveryTokenRef.current = '';
@@ -156,6 +163,7 @@ export function IdentityOnboarding({
     setSubmitted(false);
     setReviewing(false);
     setRecoveryVerified(false);
+    setPasswordEnrollment(false);
     setOpeningRuntime(false);
     setOpeningError('');
     setOpenedRuntimeId('');
@@ -213,10 +221,14 @@ export function IdentityOnboarding({
     setSelectedRecoveryCandidateId(outcome.candidateId);
   };
 
-  const openVerifiedIdentity = async (): Promise<void> => {
+  const openVerifiedIdentity = async (localPassword?: string): Promise<void> => {
     const seed = verifiedMnemonicRef.current;
     if (!brainVaultPrepared && (!seed || !derivedAddress)) {
       throw new Error('WALLET_VERIFIED_IDENTITY_REQUIRED');
+    }
+    if (!brainVaultPrepared && !localPassword && !hasCanonicalWalletLocalPassword(derivedAddress)) {
+      setPasswordEnrollment(true);
+      return;
     }
     setOpeningRuntime(true);
     setOpeningError('');
@@ -225,6 +237,9 @@ export function IdentityOnboarding({
       if (brainVaultPrepared) {
         outcome = await openPreparedWalletBrainVault(brainVaultPrepared, selectedRecoveryCandidateId);
       } else {
+        if (localPassword) {
+          await enrollFreshCanonicalWalletLocalPassword(derivedAddress, seed, localPassword);
+        }
         const request = createMnemonicWalletOpeningRequest(derivedAddress, seed);
         outcome = recoveryDiscovery
           ? await restoreWalletRuntimeFromCanonicalRecovery(
@@ -233,6 +248,7 @@ export function IdentityOnboarding({
           : await openWalletRuntimeWithCanonicalVault(request);
       }
       if (outcome.status === 'recovery-required') {
+        setPasswordEnrollment(false);
         recoveryTokenRef.current = outcome.discovery.token;
         setRecoveryDiscovery(outcome.discovery);
         setSelectedRecoveryCandidateId(outcome.discovery.candidates[0]?.id || '');
@@ -244,6 +260,7 @@ export function IdentityOnboarding({
       setRecoveryDiscovery(null);
       setSelectedRecoveryCandidateId('');
       setOpenedRuntimeId(outcome.runtimeId);
+      setPasswordEnrollment(false);
       await onRuntimeOpened?.(outcome.runtimeId);
     } catch (error: unknown) {
       verifiedMnemonicRef.current = '';
@@ -254,11 +271,20 @@ export function IdentityOnboarding({
       setRecoveryDiscovery(null);
       setSelectedRecoveryCandidateId('');
       setBrainVaultPrepared(null);
+      setPasswordEnrollment(false);
       setOpeningError(walletRuntimeOpeningErrorMessage(error));
     } finally {
       setOpeningRuntime(false);
     }
   };
+
+  if (passwordEnrollment) {
+    return <WalletLocalPassword
+      onEnroll={openVerifiedIdentity}
+      onRecover={resetIdentity}
+      view={{ state: 'new-password', runtimeId: derivedAddress, label: draft.name || 'Wallet' }}
+    />;
+  }
 
   if (recoveryVerified) {
     return <IdentityRecoveryVerified
