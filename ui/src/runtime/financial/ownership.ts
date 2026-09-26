@@ -11,7 +11,7 @@ import {
 	projectEntityShareTokens,
 	type ControlTakeoverBoard,
 	type EntityShareTokenProjection,
-} from '@xln/frontend/lib/components/Entity/ownership/ownership-flow';
+} from '../../../../frontend/packages/runtime-client/src/entity/ownership-flow';
 import { getEmbeddedEnv, requireAdapter } from '../adapter';
 import { getXLN, peekXLN } from '../xln-loader';
 import { hostedJAdapter } from './move';

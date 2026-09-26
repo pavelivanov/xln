@@ -8,7 +8,7 @@ import {
 	type PaymentTerminalEvent,
 	type PaymentTerminalReadRequest,
 	type PaymentTerminalReceiptPage,
-} from '@xln/frontend/lib/stores/network/paymentTerminalMonitor';
+} from '../../../../frontend/packages/browser/src/graph/payment-terminal-monitor';
 import { getAdapter } from '../adapter';
 import { useApp } from '../store';
 

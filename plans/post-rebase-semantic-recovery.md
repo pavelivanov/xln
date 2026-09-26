@@ -129,7 +129,7 @@ Run from repository root unless a different cwd is shown.
 
 | ID | Task | Priority | Depends on | Status |
 | --- | --- | --- | --- | --- |
-| R01 | Repair retained `ui` imports and make its typecheck a root gate | P0 | — | READY |
+| R01 | Repair retained `ui` imports and make its typecheck a root gate | P0 | — | VERIFIED |
 | R02 | Restore the canonical iOS headless-runtime package contract | P0 | R01 | WAIT |
 | R03 | Restore RPC-only scenario and jurisdiction selection | P1 | — | READY |
 | R04 | Restore React local-password enrollment, unlock, and lock | P0 | — | READY |
@@ -192,6 +192,13 @@ Steps:
 - `bun test ui/src/native ui/src/runtime` → all discovered tests pass.
 - `rg -n "frontend/src/lib|@xln/frontend/lib" ui` → no source imports.
 - Run the focused root-script/source-boundary test → pass.
+
+**Implementation evidence (2026-09-26, source `0f0388fe4` plus working diff, Bun `1.4.0`):**
+
+- `bun run check:ui` → exit 0, no TypeScript diagnostics.
+- `bun test ui/src/native ui/src/runtime` → 61 pass, 0 fail.
+- `bun test tests/frontend/tooling/ui-source-boundaries.test.ts` → 2 pass, 0 fail.
+- Forbidden-import `rg` → no matches; `git diff --check` → exit 0.
 
 **STOP if:** a canonical replacement lacks behavior required by `ui`; report
 the missing symbol and both call contracts rather than copying the old module.

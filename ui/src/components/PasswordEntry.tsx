@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { savePasswordVault, unlockPasswordVault } from '../../../frontend/src/lib/security/passwordVault';
+import { savePasswordVault, unlockPasswordVault } from '../../../frontend/packages/browser/src/vault/passwordVault';
 
 type Props = { status?: string | null; id: string; name: string; seed?: string; onOpen: (seed: string) => Promise<void>; onBack: () => void };
 export function PasswordEntry({ status, id, name, seed, onOpen, onBack }: Props) {

@@ -8,7 +8,7 @@ import {
 	buildReserveToExternalEoaTx,
 	buildReserveToReserveTx,
 	type MovePostSettleOp,
-} from '@xln/frontend/lib/components/Entity/account/entity-action-txs';
+} from '../../../../frontend/packages/runtime-client/src/entity/account-action-txs';
 import {
 	MOVE_ENDPOINT_LABEL,
 	MOVE_ENDPOINTS,
@@ -21,7 +21,7 @@ import {
 	moveNeedsReserveRecipient,
 	routeRequiresExplicitExternalAllowance,
 	type MoveEndpoint,
-} from '@xln/frontend/lib/components/Entity/move-routes';
+} from '../../../../frontend/packages/ui/src/entity/move/move-routes';
 import { getEmbeddedEnv } from '../adapter';
 import { sendEntityTxs } from '../tx';
 import { getXLN } from '../xln-loader';

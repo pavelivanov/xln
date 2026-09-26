@@ -1,9 +1,9 @@
 import { Wallet } from 'ethers';
 import workerAsset from '../../../frontend/static/push-wake-sw.js?url&no-inline';
-import { requestWebPushToken } from '@xln/frontend/lib/utils/recovery/pushWakeWeb';
-import { buildPushWakeRegistrationPayload, buildPushWakeRegistrationRequest, buildPushWakeUnregisterPayload, buildPushWakeUnregisterRequest, buildWatchtowerPushRequestUrl, resolvePushWakeTarget } from '@xln/frontend/lib/utils/recovery/pushWakeRegistration';
-import { readPushWakeRegistrationRecords, removePushWakeRegistrationRecord, upsertPushWakeRegistrationRecord } from '@xln/frontend/lib/utils/recovery/pushWakeRecords';
-import type { PushWakeRegistrationRecord } from '@xln/frontend/lib/utils/recovery/pushWakeTypes';
+import { requestWebPushToken } from '../../../frontend/bridges/vault/push-wake/push-wake-web';
+import { buildPushWakeRegistrationPayload, buildPushWakeRegistrationRequest, buildPushWakeUnregisterPayload, buildPushWakeUnregisterRequest, buildWatchtowerPushRequestUrl, resolvePushWakeTarget } from '../../../frontend/bridges/vault/push-wake/push-wake-registration';
+import { readPushWakeRegistrationRecords, removePushWakeRegistrationRecord, upsertPushWakeRegistrationRecord } from '../../../frontend/bridges/vault/push-wake/push-wake-records';
+import type { PushWakeRegistrationRecord } from '../../../frontend/bridges/vault/push-wake/push-wake-types';
 import { getEmbeddedEnv } from './adapter';
 import { derivePrivateKey, runtimeIdForSeed } from './keys';
 import { towerHealth } from './recovery';

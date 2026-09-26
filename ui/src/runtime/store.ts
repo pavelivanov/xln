@@ -1,5 +1,5 @@
 import { niceUsdPerPx } from './bar-scale';
-import { removePasswordVault } from '../../../frontend/src/lib/security/passwordVault';
+import { removePasswordVault } from '../../../frontend/packages/browser/src/vault/passwordVault';
 import { create } from 'zustand';
 import type { RuntimeAdapterStatus } from '@xln/core/api/public/runtime-module';
 import type { ExternalWalletRow } from './financial/external';

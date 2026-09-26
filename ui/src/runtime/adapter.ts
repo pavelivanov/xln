@@ -1,4 +1,4 @@
-import { closeRuntimeSession } from '../../../frontend/src/lib/security/runtimeSession';
+import { closeRuntimeSession } from '../../../frontend/packages/browser/src/vault/runtimeSession';
 import type {
 	RuntimeAdapter,
 	RuntimeAdapterConfig,

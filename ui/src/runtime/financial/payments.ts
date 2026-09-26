@@ -1,7 +1,7 @@
 import type { PaymentDeliveryMode } from '@xln/core/api/public/runtime-module';
 import type { RuntimeAdapterPaymentRoutesResponse, RuntimeAdapterSendResult } from '@xln/core/api/runtime-adapter/types';
-import { buildPaymentRuntimeInput } from '@xln/frontend/lib/components/Entity/payments/runtime/payment-command';
-import type { PaymentRouteQuote } from '@xln/frontend/lib/components/Entity/payments/runtime/payment-route-quote';
+import { buildPaymentRuntimeInput } from '../../../../frontend/packages/runtime-client/src/payments/payment-command';
+import type { PaymentRouteQuote } from '../../../../frontend/bridges/wallet/payment-route-quote';
 import { requireAdapter } from '../adapter';
 
 export type { PaymentRouteQuote };

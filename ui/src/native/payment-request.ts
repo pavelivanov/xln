@@ -1,4 +1,4 @@
-import { parseXlnInvoice } from '@xln/frontend/lib/utils/xlnInvoice';
+import { parseXlnInvoice } from '../../../frontend/packages/runtime-client/src/payments/xln-invoice';
 import { parseAmount } from '../runtime/format';
 import { nativeAmountText } from './amount';
 import { getJurisdictionStackId } from '@xln/core/jurisdiction/machine/jurisdiction-stack';

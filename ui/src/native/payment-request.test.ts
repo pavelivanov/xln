@@ -1,5 +1,5 @@
 import { expect, test } from 'bun:test';
-import { buildWalletPayHref, buildXlnInvoiceDeepLink } from '@xln/frontend/lib/utils/xlnInvoice';
+import { buildWalletPayHref, buildXlnInvoiceDeepLink } from '../../../frontend/packages/runtime-client/src/payments/xln-invoice';
 import { nativePaymentRequest, nativeInvoiceJurisdictionKeys } from './payment-request';
 
 const target = `0x${'ab'.repeat(32)}`;

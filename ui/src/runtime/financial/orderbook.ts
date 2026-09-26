@@ -3,7 +3,7 @@ import type { StorageEntityCoreDoc } from '@xln/core/storage/types';
 import type { AccountState } from '@xln/core/api/public/runtime-module';
 import { decodeMarketWireResponse, encodeMarketWireMessage } from '@xln/core/network/relay/market/wire';
 import { normalizeMarketPairId } from '@xln/core/network/relay/market/identifiers';
-import { resolveOrderbookRelayWsUrl, type BrowserLocationLike } from '@xln/frontend/lib/components/Trading/orderbook-relay-url';
+import { resolveOrderbookRelayWsUrl, type BrowserLocationLike } from '../../../../frontend/packages/browser/src/market/orderbook-relay-url';
 import { getAdapter } from '../adapter';
 import { useAdapterRead } from '../hooks';
 import { useApp } from '../store';

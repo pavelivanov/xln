@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { PasswordEntry } from '../components/PasswordEntry';
-import { hasPasswordVault, savePasswordVault } from '../../../frontend/src/lib/security/passwordVault';
+import { hasPasswordVault, savePasswordVault } from '../../../frontend/packages/browser/src/vault/passwordVault';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Icon } from '../components/Icons';
 import { Logo } from '../components/Logo';

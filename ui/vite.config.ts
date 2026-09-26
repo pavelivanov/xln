@@ -99,10 +99,6 @@ export default defineConfig(({ mode }) => ({
 			'@': fileURLToPath(new URL('./src', import.meta.url)),
 			// Types come from ../core source; runtime values load from /runtime.js at runtime.
 			'@xln/core': fileURLToPath(new URL('../core', import.meta.url)),
-			// Framework-free wallet logic shared with the SvelteKit frontend: invoices,
-			// route quoting, payment commands, swap math. One implementation, two shells.
-			'@xln/frontend': fileURLToPath(new URL('../frontend/src', import.meta.url)),
-			$lib: fileURLToPath(new URL('../frontend/src/lib', import.meta.url)),
 		},
 	},
 	build: {
