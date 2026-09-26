@@ -1,5 +1,5 @@
 import { expect, test } from 'bun:test';
-import { waitForObservedRemoteCommand } from '../../../../frontend/bridges/runtime/remote-command-observation';
+import { waitForObservedRemoteCommand } from '../../../../frontend/bridges/runtime/remote/remote-command-observation';
 import { readFileSync } from 'node:fs';
 import { runtimeAdapterHeight } from '../../../../frontend/bridges/runtime/runtime-controller-store';
 import {

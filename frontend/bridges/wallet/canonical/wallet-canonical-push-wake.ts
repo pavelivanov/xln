@@ -18,14 +18,14 @@ import {
   buildPushWakeUnregisterRequest,
   buildWatchtowerPushRequestUrl,
   resolvePushWakeTarget,
-} from '../../vault/push-wake-registration';
+} from '../../vault/push-wake/push-wake-registration';
 import {
   readPushWakeRegistrationRecords,
   removePushWakeRegistrationRecord,
   upsertPushWakeRegistrationRecord,
-} from '../../vault/push-wake-records';
-import { requestPushWakeDeviceToken } from '../../vault/push-wake-device';
-import type { PushWakeRegistrationRecord } from '../../vault/push-wake-types';
+} from '../../vault/push-wake/push-wake-records';
+import { requestPushWakeDeviceToken } from '../../vault/push-wake/push-wake-device';
+import type { PushWakeRegistrationRecord } from '../../vault/push-wake/push-wake-types';
 import {
   normalizeRecoveryDraft,
   normalizeTowerMode,

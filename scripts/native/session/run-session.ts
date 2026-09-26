@@ -1,13 +1,13 @@
 import { mkdtempSync, realpathSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
-import { safeStringify } from '../../core/protocol/serialization';
-import { readStandLockHolder, standLockCapacity, standLockRoot } from '../../tools/stand-lock';
-import { acquireDevSingleton, runDevCommands } from '../dev/run-dev';
-import { buildWalletPayHref } from '../../frontend/src/lib/utils/xlnInvoice';
+import { safeStringify } from '../../../core/protocol/serialization';
+import { readStandLockHolder, standLockCapacity, standLockRoot } from '../../../tools/stand-lock';
+import { acquireDevSingleton, runDevCommands } from '../../dev/run-dev';
+import { buildWalletPayHref } from '../../../frontend/packages/runtime-client/src/payments/xln-invoice';
 import { runIosUiSession } from './ios-ui-session';
 
-const root = resolve(import.meta.dir, '../..');
+const root = resolve(import.meta.dir, '../../..');
 const token = process.env.XLN_STAND_LOCK_TOKEN;
 const ownsStand = Array.from({ length: standLockCapacity() }, (_, slot) =>
   readStandLockHolder(standLockRoot(), slot)).some(holder => holder && holder.token === token);
@@ -19,13 +19,13 @@ if (!iosUi && !/^(?:[a-z-]+\/)?[a-z-]+\.js$/.test(scenarioName)) throw new Error
 const pauseMs = Number(process.argv[3] ?? '0');
 if (!Number.isSafeInteger(pauseMs) || pauseMs < 0 || pauseMs > 10_000)
   throw new Error('NATIVE_SESSION_PEER_PAUSE_INVALID');
-const source = iosUi ? '' : await Bun.file(join(import.meta.dir, 'tests', scenarioName)).text();
+const source = iosUi ? '' : await Bun.file(join(import.meta.dir, '..', 'tests', scenarioName)).text();
 const data = mkdtempSync(join(tmpdir(), 'xln-native-session-'));
 console.log('ISOLATED_DATA', data);
 
 if (!iosUi) {
   const build = Bun.spawn([
-    'xcrun', '--sdk', 'macosx', 'swiftc', join(import.meta.dir, 'tests/quote-session.swift'),
+    'xcrun', '--sdk', 'macosx', 'swiftc', join(import.meta.dir, '..', 'tests/quote-session.swift'),
     join(root, 'frontend/ios/App/App/runtime/NativeSockets.swift'), '-o', join(data, 'probe'),
   ], { cwd: root, stdout: 'inherit', stderr: 'inherit' });
   if (await build.exited !== 0) throw new Error('NATIVE_SESSION_PROBE_BUILD_FAILED');

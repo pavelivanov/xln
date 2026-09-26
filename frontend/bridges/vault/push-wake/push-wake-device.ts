@@ -24,7 +24,7 @@ const normalizeBridgeToken = (
 };
 
 const waitForNativePushToken = async (timeoutMs: number): Promise<PushWakeDeviceToken> => {
-  const { requestNativePaymentWakeNotifications } = await import('../../packages/browser/src/native/capacitor');
+  const { requestNativePaymentWakeNotifications } = await import('../../../packages/browser/src/native/capacitor');
   return new Promise((resolve, reject) => {
     if (typeof window === 'undefined') {
       reject(new Error('PUSH_NATIVE_WINDOW_UNAVAILABLE'));

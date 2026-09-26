@@ -1,4 +1,4 @@
-import { isUnknownRecord as isRecord } from '../../packages/runtime-client/src/boundary';
+import { isUnknownRecord as isRecord } from '../../../packages/runtime-client/src/boundary';
 import { buildPushRegistrationMessage, buildPushUnregisterMessage, hashPushToken } from '@xln/core/watchtower/push/registration';
 import type { PushRegistrationRequestV1, PushUnregisterRequestV1 } from '@xln/core/watchtower/push/types';
 import type { PushWakeTarget, PushWakeDeviceToken } from './push-wake-types';

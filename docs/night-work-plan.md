@@ -707,7 +707,7 @@ for live Entity consensus and the existing indexed queued/pending Account work.
 The same delayed-peer payment/lock/reopen succeeds with exactly 99 USDC, one
 finalized payment and healthy hubs. The source-built canonical native probe
 independently passes with lock returning after 1,892 ms. The reusable command is
-`bun run stand:run --reason native-delayed-lock --timeout-ms 180000 -- bun scripts/native/run-session.ts immediate-payment-lock.js 1500`.
+`bun run stand:run --reason native-delayed-lock --timeout-ms 180000 -- bun scripts/native/session/run-session.ts immediate-payment-lock.js 1500`.
 The normal run omits `1500`. Focused/related tests pass 43/43 with 181 assertions.
 Evidence: `docs/evidence/native-quote-session-20260918/delayed-lock-result.json`.
 This uses real WebKit/Swift sockets and local Anvil; neither forced process

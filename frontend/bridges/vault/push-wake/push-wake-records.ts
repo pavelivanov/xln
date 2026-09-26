@@ -1,4 +1,4 @@
-import { isUnknownRecord as isRecord, parseJsonUnknown } from '../../packages/runtime-client/src/boundary';
+import { isUnknownRecord as isRecord, parseJsonUnknown } from '../../../packages/runtime-client/src/boundary';
 import type { PushWakeRegistrationRecord } from './push-wake-types';
 import { normalizeRuntimeId, normalizeEntityId, normalizeTowerUrl, normalizeTokenHash, normalizePlatform, normalizeChainId, normalizeAddress, normalizeHttpUrl } from './push-wake-boundary';
 const PUSH_WAKE_RECORDS_KEY = 'xln-push-wake-registrations-v1';

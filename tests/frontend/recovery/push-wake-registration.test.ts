@@ -8,13 +8,13 @@ import {
   buildPushWakeUnregisterRequest,
   buildWatchtowerPushRequestUrl,
   resolvePushWakeTarget,
-} from '../../../frontend/bridges/vault/push-wake-registration';
+} from '../../../frontend/bridges/vault/push-wake/push-wake-registration';
 import {
   readPushWakeRegistrationRecords,
   removePushWakeRegistrationRecord,
   upsertPushWakeRegistrationRecord,
-} from '../../../frontend/bridges/vault/push-wake-records';
-import type { PushWakeDeviceToken } from '../../../frontend/bridges/vault/push-wake-types';
+} from '../../../frontend/bridges/vault/push-wake/push-wake-records';
+import type { PushWakeDeviceToken } from '../../../frontend/bridges/vault/push-wake/push-wake-types';
 import {
   hashPushToken,
   verifyPushRegistration,

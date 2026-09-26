@@ -1,8 +1,8 @@
 import { cpSync, existsSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
-import { nativeRecoveryUrl } from '../../ui/src/native/recovery-address';
+import { nativeRecoveryUrl } from '../../../ui/src/native/recovery-address';
 
-const root = path.resolve(import.meta.dir, '../..');
+const root = path.resolve(import.meta.dir, '../../..');
 const ui = path.join(root, 'ui');
 const artifact = path.join(ui, 'native-dist');
 const resources = path.join(root, 'frontend/ios/App/App/public');

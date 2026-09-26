@@ -36,7 +36,7 @@ import {
   signRuntimeAdapterOwnerBinding,
 } from '../../packages/browser/src/commands/runtime-command-journal-keyring';
 import { findPersistedRuntimeInputHeight } from '@xln/core/runtime/mempool/input-completion';
-import { waitForObservedRemoteCommand } from './remote-command-observation';
+import { waitForObservedRemoteCommand } from './remote/remote-command-observation';
 import {
   REMOTE_HISTORY_SCAN_CACHE_LIMIT,
   ensureRuntimeHistoryContext,

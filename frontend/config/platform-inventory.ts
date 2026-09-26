@@ -238,7 +238,7 @@ export const PLATFORM_INVENTORY = [
     interfaces: ['asset', 'local-storage', 'service-worker'],
     sources: [
       'frontend/static/push-wake-sw.js',
-      'frontend/bridges/vault/push-wake-registration.ts',
+      'frontend/bridges/vault/push-wake/push-wake-registration.ts',
       'frontend/packages/browser/src/wallet/wallet-push-wake.ts',
       'frontend/bridges/wallet/canonical/wallet-canonical-push-wake.ts',
     ],

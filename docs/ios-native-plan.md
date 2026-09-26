@@ -420,7 +420,7 @@ Account root: `0xe369ccc1cea0481dbcd9592eeaffa022c5802d7a116b1c988e5defee9581bc0
 публичный локальный вход остаётся localhost:8080. Порт API не является новым UI entry point.
 
 ```sh
-XLN_UI_STACK_ORIGIN=http://127.0.0.1:8082 bun scripts/native/build-ios-runtime.ts
+XLN_UI_STACK_ORIGIN=http://127.0.0.1:8082 bun scripts/native/session/build-ios-runtime.ts
 xcodebuild -project frontend/ios/App/App.xcodeproj -scheme App \
   -configuration Debug -destination 'platform=iOS Simulator,name=iPhone 17 Pro' \
   -derivedDataPath /tmp/xln-ios-derived CODE_SIGN_IDENTITY=- CODE_SIGNING_ALLOWED=YES build
