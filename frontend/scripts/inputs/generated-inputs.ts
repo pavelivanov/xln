@@ -112,8 +112,14 @@ const materializeCopies = async (
   }
 };
 
-const streamText = async (stream: ReadableStream<Uint8Array> | number | null | undefined): Promise<string> =>
-  stream instanceof ReadableStream ? new Response(stream).text() : '';
+const readCommandOutput = async (pathname: string): Promise<string> => {
+  try {
+    return await readFile(pathname, 'utf8');
+  } catch (error: unknown) {
+    if (error instanceof Error && 'code' in error && error.code === 'ENOENT') return '';
+    throw error;
+  }
+};
 
 const runGeneratedCommand = async (
   repositoryRoot: string,
@@ -124,24 +130,31 @@ const runGeneratedCommand = async (
   const { outputPath } = definition.producer;
   if (outputPath !== undefined) assertGeneratedInputRelativePath(outputPath, 'OUTPUT_PATH');
   const commandOutput = outputPath === undefined ? payloadRoot : join(payloadRoot, outputPath);
-  const child = Bun.spawn([...definition.producer.argv], {
-    cwd: repositoryRoot,
-    env: {
-      ...process.env,
-      ...definition.producer.environment,
-      [definition.producer.outputEnvironment]: commandOutput,
-    },
-    stdout: 'pipe',
-    stderr: 'pipe',
-  });
-  const [exitCode, stdout, stderr] = await Promise.all([
-    child.exited,
-    streamText(child.stdout),
-    streamText(child.stderr),
-  ]);
-  if (exitCode !== 0) {
-    const detail = `${stdout}\n${stderr}`.trim().slice(-4_000);
-    throw new Error(`GENERATED_INPUT_COMMAND_FAILED:${definition.id}:${exitCode}:${detail}`);
+  const outputRoot = await mkdtemp(join(dirname(payloadRoot), '.command-output-'));
+  const stdoutPath = join(outputRoot, 'stdout');
+  const stderrPath = join(outputRoot, 'stderr');
+  try {
+    const child = Bun.spawn([...definition.producer.argv], {
+      cwd: repositoryRoot,
+      env: {
+        ...process.env,
+        ...definition.producer.environment,
+        [definition.producer.outputEnvironment]: commandOutput,
+      },
+      stdout: Bun.file(stdoutPath),
+      stderr: Bun.file(stderrPath),
+    });
+    const exitCode = await child.exited;
+    if (exitCode !== 0) {
+      const [stdout, stderr] = await Promise.all([
+        readCommandOutput(stdoutPath),
+        readCommandOutput(stderrPath),
+      ]);
+      const detail = `${stdout}\n${stderr}`.trim().slice(-4_000);
+      throw new Error(`GENERATED_INPUT_COMMAND_FAILED:${definition.id}:${exitCode}:${detail}`);
+    }
+  } finally {
+    await rm(outputRoot, { recursive: true, force: true });
   }
 };
 

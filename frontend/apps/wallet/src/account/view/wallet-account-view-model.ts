@@ -1,12 +1,12 @@
-import type { AccountReplica, EntityReplica } from '@xln/core/api/public/runtime-module';
+import type { AccountReadView, EntityReadView } from '../../../../../packages/runtime-client/src/entity/entity-panel-types';
 import type { AccountActivityRow } from '../../../../../packages/ui/src/account/account-focused-view';
 import type { AccountActivityPresentationInput } from '../../../../../packages/ui/src/account/activity/account-activity-presentation';
 import type { AccountTokenDetailRow } from '../../../../../packages/ui/src/account/account-token-details';
 import type { DisputedAccountView } from '../../../../../packages/ui/src/account/account-dispute-view';
 
 export type WalletAccountView = Readonly<{
-  account: AccountReplica | null;
-  replica: EntityReplica;
+  account: AccountReadView | null;
+  replica: EntityReadView;
   entityId: string;
   counterpartyId: string;
   counterpartyName: string;

@@ -9,18 +9,18 @@ import { requestWalletCredit } from './wallet-manage-credit';
 import { buildConfigureTokenOptions } from '../../../../packages/ui/src/entity/entity-panel-options';
 import { compareStableText } from '../../../../packages/ui/src/stable-compare';
 import { formatWalletExternalAmount } from '../../../../packages/browser/src/wallet/wallet-external-provider';
-import type { AccountReplica } from '@xln/core/api/public/runtime-module';
+import type { AccountReadView } from '../../../../packages/runtime-client/src/entity/entity-panel-types';
 
 const tabs = [['extend-credit', 'Extend Credit'], ['request-credit', 'Request Credit'], ['collateral', 'Request Collateral'], ['token', 'Add Token'], ['load-testing', 'Load Testing'], ['dispute', 'Dispute']] as const;
 type ManageTab = typeof tabs[number][0];
 type DisputeLifecycle = Pick<
-  NonNullable<AccountReplica['activeDispute']>,
+  NonNullable<AccountReadView['activeDispute']>,
   'startedByLeft' | 'disputeTimeout' | 'initialNonce' | 'observedOnChain' | 'finalizeQueued'
 >;
 
-const readDisputeLifecycle = (account: AccountReplica): DisputeLifecycle | null =>
+const readDisputeLifecycle = (account: AccountReadView): DisputeLifecycle | null =>
   account.activeDispute ??
-  (account as AccountReplica & { disputeLifecycle?: DisputeLifecycle }).disputeLifecycle ??
+  (account as AccountReadView & { disputeLifecycle?: DisputeLifecycle }).disputeLifecycle ??
   null;
 
 export function WalletManage({ context, source, selection }: Readonly<{ context: WalletAccountContext; source: WalletPaymentSource; selection: WalletWorkspaceSelection }>) {

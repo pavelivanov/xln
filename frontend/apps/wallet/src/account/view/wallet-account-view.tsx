@@ -1,5 +1,6 @@
 import { useEffect, useState, useSyncExternalStore } from 'react';
-import type { AccountReplica, RuntimeAdapter } from '@xln/core/api/public/runtime-module';
+import type { RuntimeAdapter } from '@xln/core/api/public/runtime-module';
+import type { AccountReadView } from '../../../../../packages/runtime-client/src/entity/entity-panel-types';
 import { buildAccountDisputeView } from '../../../../../packages/ui/src/account/account-focused-view';
 import { WalletAccountViewSource } from './wallet-account-view-source';
 import type { WalletAccountView } from './wallet-account-view-model';
@@ -9,7 +10,7 @@ import { useWalletNavigation } from '../../navigation/wallet-navigation';
 import { WalletAccountActivity } from './wallet-account-activity';
 import '../../styles/account/wallet-account-view.css';
 
-function AccountDispute({ account, view, onWorkspace }: Readonly<{ account: AccountReplica; view: WalletAccountView; onWorkspace: () => void }>) {
+function AccountDispute({ account, view, onWorkspace }: Readonly<{ account: AccountReadView; view: WalletAccountView; onWorkspace: () => void }>) {
   const [now, setNow] = useState(Date.now);
   const dispute = buildAccountDisputeView(account, view.replica, view.counterpartyId, now);
   const needsClock = dispute.hasObservedDisputeDeadline || dispute.pendingSecretAckInfo !== null;
