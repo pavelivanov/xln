@@ -1,5 +1,13 @@
 # Finish the React frontend migration
 
+> **Post-rebase audit gate (2026-09-26):** The final T15/T17/T18 evidence below
+> is not sufficient for current HEAD `134e0154c`. Execute
+> [post-rebase semantic recovery](post-rebase-semantic-recovery.md) first. That
+> plan reopens iOS packaging, local password/lock, RPC-only jurisdiction,
+> retained `ui`, daemon custody, retirement, and exact-source certification.
+> Do not use the historical DONE rows as force-push or release evidence until
+> recovery task R08 passes on one unchanged source.
+
 Remaining work only. Assessed **2026-09-16** on `main` at `cc11c96158c9f413869424d9c74d022cbe0311ec`, including the existing tracked and untracked changes. This file replaces the previous execution queue. Historical receipts belong in [evidence history](../docs/frontend/react-frontend-migration-evidence-history.md), not in this queue.
 
 **Finish line:** React is the default for development, builds, checks, preview and distribution; required behavior and platform acceptance pass against the final source/release; Svelte-only source/config/dependencies are removed; `bun run check` passes. Production activation (C03) is a separate release operation and is not part of this finish line.
