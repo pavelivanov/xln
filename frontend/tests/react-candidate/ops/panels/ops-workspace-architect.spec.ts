@@ -83,7 +83,7 @@ test('Architect records into shared playback and returns to the unchanged connec
   expectNoBrowserErrors(errors);
 });
 
-test('Architect creates an exact BrowserVM stack, 3x3 topology, reserves, and R2R without replacing the local Runtime', { tag: '@functional' }, async ({ page }, testInfo) => {
+test('Architect creates an exact RPC stack, 3x3 topology, reserves, and R2R without replacing the local Runtime', { tag: '@functional' }, async ({ page }, testInfo) => {
   testInfo.setTimeout(180_000);
   const errors = observeBrowserErrors(page);
   const fixture = await readWalletRuntimeFixture(page);
@@ -141,11 +141,19 @@ test('Architect creates an exact BrowserVM stack, 3x3 topology, reserves, and R2
   const runtimeId = await page.getByTestId('ops-owner-unlock').getAttribute('data-runtime-id');
   await page.getByRole('button', { name: 'Open Architect panel', exact: true }).click();
   const architect = page.getByTestId('workspace-architect');
-  const name = `Architect ${testInfo.project.name}`;
+  const name = `Architect RPC ${testInfo.project.name}`;
+  const rpcManifest = importedStack.result.manifest;
+  await expect(architect.getByLabel('Jurisdiction import mode', { exact: true })).toHaveCount(0);
+  await expect(architect.getByText('BrowserVM', { exact: true })).toHaveCount(0);
   await architect.getByLabel('Jurisdiction name', { exact: true }).fill(name);
-  await architect.getByLabel('Jurisdiction chain ID', { exact: true }).fill('31338');
+  await architect.getByLabel('Jurisdiction chain ID', { exact: true }).fill(String(rpcManifest.chainId));
+  await architect.getByLabel('Jurisdiction RPC URL', { exact: true }).fill(deploymentRpc.rpcUrl);
+  await architect.getByLabel('EntityProvider deployment block', { exact: true }).fill(String(rpcManifest.entityProviderDeploymentBlock));
+  for (const field of ['depository', 'entityProvider', 'account', 'deltaTransformer'] as const) {
+    await architect.getByLabel(`Jurisdiction ${field}`, { exact: true }).fill(rpcManifest.contracts[field]);
+  }
   await architect.getByRole('button', { name: 'Create jurisdiction', exact: true }).click();
-  await expect(architect.getByText(new RegExp(`${name} committed on chain 31338`))).toBeVisible({ timeout: 60_000 });
+  await expect(architect.getByText(new RegExp(`${name} committed on chain ${rpcManifest.chainId}`))).toBeVisible({ timeout: 60_000 });
   await expect(architect.getByLabel('Architect selected stack', { exact: true })).toHaveValue(name);
   await architect.getByRole('button', { name: 'Create 3×3 hub', exact: true }).click();
   await expect(architect.getByText('Created 9 demo Entities.', { exact: true })).toBeVisible({ timeout: 30_000 });
@@ -165,7 +173,7 @@ test('Architect creates an exact BrowserVM stack, 3x3 topology, reserves, and R2
   const jurisdiction = page.getByTestId('workspace-jurisdiction');
   await expect(jurisdiction.getByLabel('Jurisdiction', { exact: true })).toHaveValue(name);
   await expect(jurisdiction.getByLabel('Jurisdiction token', { exact: true })).toHaveValue('1');
-  await expect(jurisdiction.getByLabel('Jurisdiction token', { exact: true })).toContainText('USDC · #1');
+  await expect(jurisdiction.getByLabel('Jurisdiction token', { exact: true })).toContainText('USDT · #1');
   await expect(jurisdiction.getByRole('table', { name: 'Fresh external balances' }).locator('tbody tr')).toHaveCount(9);
   await expect(jurisdiction.getByRole('table', { name: 'Fresh external balances' }).locator('tbody tr').first()).toContainText('0');
   await page.getByRole('button', { name: 'Open J-Machine Inspector panel', exact: true }).click();
@@ -186,19 +194,6 @@ test('Architect creates an exact BrowserVM stack, 3x3 topology, reserves, and R2
   expect(new URL(source.rpcs[0]!).origin).toBe(new URL(fixture.recovery.rpcUrl).origin);
   expect(source.entityProviderDeploymentBlock).toBeGreaterThan(0);
   await page.getByRole('button', { name: 'Open Architect panel', exact: true }).click();
-  const rpcName = `Architect RPC ${testInfo.project.name}`;
-  const rpcManifest = importedStack.result.manifest;
-  await architect.getByLabel('Jurisdiction import mode', { exact: true }).selectOption('rpc');
-  await architect.getByLabel('Jurisdiction name', { exact: true }).fill(rpcName);
-  await architect.getByLabel('Jurisdiction chain ID', { exact: true }).fill(String(rpcManifest.chainId));
-  await architect.getByLabel('Jurisdiction RPC URL', { exact: true }).fill(deploymentRpc.rpcUrl);
-  await architect.getByLabel('EntityProvider deployment block', { exact: true }).fill(String(rpcManifest.entityProviderDeploymentBlock));
-  for (const field of ['depository', 'entityProvider', 'account', 'deltaTransformer'] as const) {
-    await architect.getByLabel(`Jurisdiction ${field}`, { exact: true }).fill(rpcManifest.contracts[field]);
-  }
-  await architect.getByRole('button', { name: 'Create jurisdiction', exact: true }).click();
-  await expect(architect.getByText(new RegExp(`${rpcName} committed on chain ${rpcManifest.chainId}`))).toBeVisible({ timeout: 60_000 });
-  await expect(architect.getByLabel('Architect selected stack', { exact: true })).toHaveValue(rpcName);
   await expect(architect.getByRole('button', { name: 'Reset isolated demo', exact: true })).toBeDisabled();
   expect(
       await architect.evaluate(panel => panel.scrollWidth - panel.clientWidth),
@@ -209,11 +204,7 @@ test('Architect creates an exact BrowserVM stack, 3x3 topology, reserves, and R2
   await settings.getByRole('button', { name: 'Stack Manager', exact: true }).click();
   const configuredStack = settings.getByLabel('Configured jurisdiction stack', { exact: true });
   await expect(configuredStack.locator('option').filter({ hasText: name })).toHaveCount(1);
-  await expect(configuredStack.locator('option').filter({ hasText: rpcName })).toHaveCount(1);
   await configuredStack.selectOption(name);
-  await expect(settings.getByTestId('configured-stack-inspection')).toContainText('BrowserVM');
-  await expect(settings.getByTestId('configured-stack-inspection')).toContainText('31338');
-  await configuredStack.selectOption(rpcName);
   await expect(settings.getByTestId('configured-stack-inspection')).toContainText(deploymentRpc.rpcUrl);
   await expect(settings.getByTestId('configured-stack-inspection')).toContainText(String(rpcManifest.entityProviderDeploymentBlock));
   expect(await page.getByTestId('ops-owner-unlock').getAttribute('data-runtime-id')).toBe(runtimeId);

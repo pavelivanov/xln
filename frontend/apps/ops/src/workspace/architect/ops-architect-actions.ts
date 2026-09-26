@@ -83,6 +83,7 @@ export const createArchitectJurisdiction = async (
   detail: JMachineCreateDetail,
 ): Promise<JReplica> => {
   const env = liveEnv(context);
+  if (detail.mode !== 'rpc') throw new Error('A jurisdiction must name a real chain over RPC.');
   const normalized = normalizeJMachineCreateDetail(detail);
   if (env.state.jReplicas.has(normalized.name)) throw new Error(`ARCHITECT_JURISDICTION_EXISTS:${normalized.name}`);
   const next = await submit(context, buildJMachineImportRuntimeInput(normalized),
@@ -148,7 +149,6 @@ export const fundArchitectEntities = async (
   amount: bigint,
 ): Promise<readonly bigint[]> => {
   const selected = selectedLiveStack(context, machineName);
-  if (selected.adapter.mode !== 'browservm') throw new Error('ARCHITECT_FUNDING_REQUIRES_BROWSERVM');
   await selected.adapter.debugFundReservesBatch(entityIds.map(entityId => ({ entityId, tokenId, amount })));
   const balances = await Promise.all(entityIds.map(entityId => selected.adapter.getReserves(entityId, tokenId)));
   if (balances.some(balance => balance < amount)) throw new Error('ARCHITECT_FUNDING_NOT_OBSERVED');

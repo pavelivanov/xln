@@ -43,7 +43,7 @@ export const readStackManagerRpcFixture = async (page: Page) => {
   const value = await response.json() as { rpcUrl?: unknown; chainId?: unknown };
   const rpcUrl = String(value.rpcUrl || '');
   const chainId = Number(value.chainId);
-  if (!/^http:\/\/127\.0\.0\.1:\d+$/.test(rpcUrl) || chainId !== 31_339) {
+  if (!/^http:\/\/127\.0\.0\.1:\d+$/.test(rpcUrl) || chainId !== 31_338) {
     throw new Error('STACK_MANAGER_RPC_FIXTURE_INVALID');
   }
   return { rpcUrl, chainId };

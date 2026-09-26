@@ -22,7 +22,6 @@ export function OpsArchitectLiveControls() {
   const configured = useSyncExternalStore(jmachineState.subscribe, jmachineState.get);
   const machines = context.frame ? [...context.frame.state.jReplicas.values()] : [];
   const [machineName, setMachineName] = useState('');
-  const [mode, setMode] = useState<'browservm' | 'rpc'>('browservm');
   const [name, setName] = useState('Ops Testnet');
   const [rpcUrl, setRpcUrl] = useState('http://127.0.0.1:8545');
   const [chainId, setChainId] = useState('31337');
@@ -60,16 +59,14 @@ export function OpsArchitectLiveControls() {
   };
   const create = async (): Promise<string> => {
     const detail: JMachineCreateDetail = {
-      name, mode, chainId: Number(chainId), ticker: mode === 'browservm' ? 'USDC' : 'ETH',
-      rpcs: mode === 'rpc' ? [rpcUrl] : [], blockTimeMs: 1_000,
-      ...(mode === 'rpc' ? {
-        entityProviderDeploymentBlock: Number(deploymentBlock),
-        contracts: Object.fromEntries(addressFields.flatMap(key => contracts[key] ? [[key, contracts[key]]] : [])),
-      } : {}),
+      name, mode: 'rpc', chainId: Number(chainId), ticker: 'ETH',
+      rpcs: [rpcUrl], blockTimeMs: 1_000,
+      entityProviderDeploymentBlock: Number(deploymentBlock),
+      contracts: Object.fromEntries(addressFields.flatMap(key => contracts[key] ? [[key, contracts[key]]] : [])),
     };
     const machine = await createArchitectJurisdiction(actionContext, detail);
     setMachineName(machine.name);
-    return `${machine.name} committed on chain ${machine.chainId} with deployment block ${machine.entityProviderDeploymentBlock ?? 'local BrowserVM'}.`;
+    return `${machine.name} committed on chain ${machine.chainId} with deployment block ${machine.entityProviderDeploymentBlock}.`;
   };
   return <section className="ops-architect-controls" aria-label="Live economy controls">
     <header><h3>Live economy controls</h3><span>{context.historical ? 'Recorded · read only' : 'Current Runtime'}</span></header>
@@ -78,10 +75,9 @@ export function OpsArchitectLiveControls() {
     <fieldset disabled={context.historical || Boolean(busy) || context.adapter?.mode !== 'embedded'}>
       <legend>{t('workspace.jurisdiction')} stack</legend>
       <label>Selected stack<select aria-label="Architect selected stack" value={selectedName} onChange={event => { const next = event.currentTarget.value; setMachineName(next); try { selectArchitectJurisdiction(actionContext, next); setIssue(''); } catch (cause) { setIssue(cause instanceof Error ? cause.message : String(cause)); } }}>{machines.map(machine => <option key={machine.name}>{machine.name}</option>)}</select></label>
-      <label>Import mode<select aria-label="Jurisdiction import mode" value={mode} onChange={event => setMode(event.currentTarget.value as 'browservm' | 'rpc')}><option value="browservm">BrowserVM</option><option value="rpc">Existing RPC</option></select></label>
       <label>Name<input aria-label="Jurisdiction name" value={name} onChange={event => setName(event.currentTarget.value)} /></label>
       <label>Chain ID<input aria-label="Jurisdiction chain ID" inputMode="numeric" value={chainId} onChange={event => setChainId(event.currentTarget.value)} /></label>
-      {mode === 'rpc' ? <><label>RPC URL<input aria-label="Jurisdiction RPC URL" value={rpcUrl} onChange={event => setRpcUrl(event.currentTarget.value)} /></label><label>EntityProvider deployment block<input aria-label="EntityProvider deployment block" inputMode="numeric" value={deploymentBlock} onChange={event => setDeploymentBlock(event.currentTarget.value)} /></label>{addressFields.map(key => <label key={key}>{key}<input aria-label={`Jurisdiction ${key}`} value={contracts[key]} onChange={event => { const value = event.currentTarget.value; setContracts(current => ({ ...current, [key]: value })); }} /></label>)}</> : null}
+      <label>RPC URL<input aria-label="Jurisdiction RPC URL" value={rpcUrl} onChange={event => setRpcUrl(event.currentTarget.value)} /></label><label>EntityProvider deployment block<input aria-label="EntityProvider deployment block" inputMode="numeric" value={deploymentBlock} onChange={event => setDeploymentBlock(event.currentTarget.value)} /></label>{addressFields.map(key => <label key={key}>{key}<input aria-label={`Jurisdiction ${key}`} value={contracts[key]} onChange={event => { const value = event.currentTarget.value; setContracts(current => ({ ...current, [key]: value })); }} /></label>)}
       <button type="button" onClick={() => { void run('create', create); }}>{busy === 'create' ? 'Creating…' : 'Create jurisdiction'}</button>
     </fieldset>
     <fieldset disabled={context.historical || Boolean(busy) || !selectedName || context.adapter?.mode !== 'embedded'}>

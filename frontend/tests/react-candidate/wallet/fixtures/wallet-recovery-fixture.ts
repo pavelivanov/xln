@@ -137,7 +137,10 @@ export const createWalletRecoveryFixture = async (
       entityInputs: [],
     });
     await runtime.processRuntime(env);
+    const tipFrame = await runtime.readPersistedFrameJournal(env, env.state.height);
+    if (!tipFrame) throw new Error('WALLET_RECOVERY_FIXTURE_TIP_FRAME_MISSING');
     const bundle = runtime.buildRuntimeRecoveryBundle(env, {
+      frames: [tipFrame],
       signers: [{
         index: 0,
         derivationIndex: 0,
@@ -180,7 +183,9 @@ export const createWalletRecoveryFixture = async (
   await waitForWalletFixtureState('hub-profile-committed', () => [...mnemonic.env.state.eReplicas.values()]
     .some(replica => replica.entityId === hub.entityId && replica.state.profile.isHub === true));
   await runtime.stopRuntimeLoopAndWait(mnemonic.env);
-  const hubBundle = runtime.buildRuntimeRecoveryBundle(mnemonic.env, { signers: [{
+  const hubTipFrame = await runtime.readPersistedFrameJournal(mnemonic.env, mnemonic.env.state.height);
+  if (!hubTipFrame) throw new Error('WALLET_RECOVERY_FIXTURE_HUB_TIP_FRAME_MISSING');
+  const hubBundle = runtime.buildRuntimeRecoveryBundle(mnemonic.env, { frames: [hubTipFrame], signers: [{
     index: 0, derivationIndex: 0, address: mnemonic.runtimeId, name: 'Signer 1',
     entityId: mnemonic.entityId, jurisdiction: 'React Recovery mnemonic',
   }] });
@@ -237,7 +242,9 @@ export const createWalletRecoveryFixture = async (
     .find(replica => replica.entityId === mnemonic.entityId)
     ?.state.accounts.get(hub.entityId)?.state.settlementWorkspace;
   if (!settlementWorkspace) throw new Error('WALLET_SETTLEMENT_FIXTURE_WORKSPACE_MISSING');
-  const settlementBundle = runtime.buildRuntimeRecoveryBundle(mnemonic.env, { signers: [
+  const settlementTipFrame = await runtime.readPersistedFrameJournal(mnemonic.env, mnemonic.env.state.height);
+  if (!settlementTipFrame) throw new Error('WALLET_SETTLEMENT_FIXTURE_TIP_FRAME_MISSING');
+  const settlementBundle = runtime.buildRuntimeRecoveryBundle(mnemonic.env, { frames: [settlementTipFrame], signers: [
     {
       index: 0, derivationIndex: 0, address: mnemonic.runtimeId, name: 'Signer 1',
       entityId: mnemonic.entityId, jurisdiction: 'React Recovery mnemonic',
@@ -365,14 +372,19 @@ export const createWalletRecoveryFixture = async (
     rpcUrl,
     // Serve deployment evidence from the real restored fixture, including the
     // same block timing that was committed by importJ. No synthetic addresses.
-    readJurisdictionsJson: () => serialization.safeStringify({ version: '1', jurisdictions: Object.fromEntries(
-      [...mnemonic.env.state.jReplicas].map(([name, machine]) => [name, {
-        name, primary: true, status: 'active', chainId: machine.chainId,
-        rpc: rpcUrl, blockTimeMs: machine.blockTimeMs,
-        entityProviderDeploymentBlock: machine.entityProviderDeploymentBlock,
-        contracts: machine.contracts,
-      }]),
-    ) }),
+    readJurisdictionsJson: () => serialization.safeStringify({
+      version: '1',
+      lastUpdated: new Date(0).toISOString(),
+      jurisdictions: Object.fromEntries(
+        [...mnemonic.env.state.jReplicas].map(([name, machine]) => [name, {
+          name, primary: true, status: 'active', chainId: machine.chainId,
+          rpc: rpcUrl, blockTimeMs: machine.blockTimeMs, explorer: '', currency: 'ETH',
+          entityProviderDeploymentBlock: machine.entityProviderDeploymentBlock,
+          contracts: machine.contracts,
+        }]),
+      ),
+      defaults: { timeout: 30_000, retryAttempts: 3, gasLimit: 1_000_000 },
+    }),
     readHubsJson: () => serialization.safeStringify({
       ok: true,
       count: 1,

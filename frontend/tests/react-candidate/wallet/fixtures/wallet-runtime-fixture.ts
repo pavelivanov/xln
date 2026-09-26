@@ -291,7 +291,7 @@ const startDeploymentRpc = async (): Promise<string> => {
   if (!deploymentRpc) {
     deploymentRpc = Bun.spawn([
       'anvil', '--silent', '--host', '127.0.0.1', '--port', String(deploymentRpcPort),
-      '--chain-id', '31339', '--block-gas-limit', '300000000', '--code-size-limit', '65536',
+      '--chain-id', '31338', '--block-gas-limit', '300000000', '--code-size-limit', '65536',
     ], { stdout: 'ignore', stderr: 'ignore' });
   }
   for (let attempt = 0; attempt < 100; attempt += 1) {
@@ -301,7 +301,7 @@ const startDeploymentRpc = async (): Promise<string> => {
         method: 'POST', headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'eth_chainId', params: [] }),
       });
-      if (response.ok && (await response.json() as { result?: string }).result === '0x7a6b') return deploymentRpcUrl;
+      if (response.ok && (await response.json() as { result?: string }).result === '0x7a6a') return deploymentRpcUrl;
     } catch {
       // The child has not bound its socket yet.
     }
@@ -798,7 +798,7 @@ server = Bun.serve<FixtureSocketData>({
       return stackManager.deploy(request, env);
     }
     if (url.pathname === '/stack-manager-fixture') {
-      return Response.json({ rpcUrl: await startDeploymentRpc(), chainId: 31_339 }, { headers: apiHeaders });
+      return Response.json({ rpcUrl: await startDeploymentRpc(), chainId: 31_338 }, { headers: apiHeaders });
     }
     if (url.pathname === '/isolated-recovery-tower-fixture') {
       const label = String(url.searchParams.get('label') || '');
@@ -871,6 +871,13 @@ server = Bun.serve<FixtureSocketData>({
       data: { type: 'rpc', fixture: 'dropdown', clientIp: '127.0.0.1', audience: String(dropdownRuntime.runtimeId) },
     })) {
       return;
+    }
+    if (url.pathname === '/rpc' && request.method === 'POST') {
+      return fetch(await startDeploymentRpc(), {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: await request.text(),
+      });
     }
     if (url.pathname === '/rpc' && bunServer.upgrade(request, {
       data: { type: 'rpc', fixture: 'wallet', clientIp: '127.0.0.1', audience: runtimeId },

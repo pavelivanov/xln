@@ -1,6 +1,7 @@
 import { expect, test } from 'bun:test';
 
 import { developmentFrontendRoles, readDevFrontend } from '../../../scripts/dev/supervise-dev';
+import { createReactAppConfig } from '../../../frontend/config/create-react-app-config';
 import { readDevelopmentGatewayTls, resolveLiveRuntimeFilename } from '../../../frontend/scripts/dev/dev-gateway';
 
 test('React root development replaces both public Vite listeners and retains readiness/UI roles', () => {
@@ -25,4 +26,9 @@ test('live Runtime reads stay limited to the two generated bundles and their app
   expect(resolveLiveRuntimeFilename('/__app/site/runtime.js')).toBeUndefined();
   expect(resolveLiveRuntimeFilename('/__app/wallet/%2e%2e/secrets')).toBeUndefined();
   expect(resolveLiveRuntimeFilename('/contracts/Account.json')).toBeUndefined();
+});
+
+test('React browser apps provide Level with a real EventEmitter implementation', () => {
+  expect(createReactAppConfig({ surfaceId: 'ops', rootDirectory: '/tmp/xln-ops' }).resolve)
+    .toMatchObject({ alias: { events: 'eventemitter3' } });
 });

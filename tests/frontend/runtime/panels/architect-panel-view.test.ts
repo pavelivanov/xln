@@ -74,10 +74,15 @@ describe('Architect panel view model', () => {
     expect(panel).toContain('loadWorkspaceScenario(key)');
     expect(panel).toContain('networkMachineRuntimeOperations.dispose()');
     expect(controls).toContain('createArchitectJurisdiction(actionContext, detail)');
+    expect(controls).not.toContain('option value="browservm"');
+    expect(controls).not.toContain("useState<'browservm' | 'rpc'>");
     expect(controls).toContain('fundArchitectEntities(actionContext');
     expect(controls).toContain('sendArchitectR2R(actionContext');
+    expect(actions).toContain("if (detail.mode !== 'rpc')");
+    expect(actions).toContain('A jurisdiction must name a real chain over RPC.');
     expect(actions).toContain('await adapter.send(input)');
     expect(actions).toContain('debugFundReservesBatch');
+    expect(actions).not.toContain('ARCHITECT_FUNDING_REQUIRES_BROWSERVM');
     expect(actions).toContain('setInterval');
     expect(shared).not.toContain('defaultAccountDisputeConfigForRoleEvidence');
     expect(shared).not.toContain('submitRuntimeInput');

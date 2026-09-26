@@ -168,6 +168,7 @@ test('runs reports an unavailable QA upstream without swallowing the failure', {
 
 test('scenarios execute within the isolated ops surface', { tag: '@functional' }, async ({ page }, testInfo) => {
   test.setTimeout(120_000);
+  await readWalletRuntimeFixture(page);
   const errors = observeBrowserErrors(page);
   const rpcRequests: string[] = [];
   page.on('request', request => { if (new URL(request.url()).pathname === '/rpc') rpcRequests.push(request.method()); });
@@ -185,6 +186,7 @@ test('scenarios execute within the isolated ops surface', { tag: '@functional' }
   await expect(page.getByTestId('scenario-node').first()).toBeVisible();
   await expectPageContained(page);
   await screenshotEvidence(page, testInfo, 'ops-scenarios-isolated');
-  expect(rpcRequests).toEqual([]);
+  expect(rpcRequests.length).toBeGreaterThan(0);
+  expect(new Set(rpcRequests)).toEqual(new Set(['POST']));
   expectNoBrowserErrors(errors);
 });

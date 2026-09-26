@@ -28,7 +28,6 @@ export const formatScenarioError = (error: unknown): string =>
 
 export const prepareScenarioPreviewEnv = (env: RuntimeReplica): RuntimeReplica => {
   env.scenarioMode = true;
-  env.scenarioJAdapterMode = 'browservm';
   env.quietRuntimeLogs = true;
   env.scenarioLogLevel = 'error';
   env.state.timestamp = env.state.timestamp || 1;

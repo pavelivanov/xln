@@ -131,7 +131,7 @@ Run from repository root unless a different cwd is shown.
 | --- | --- | --- | --- | --- |
 | R01 | Repair retained `ui` imports and make its typecheck a root gate | P0 | — | VERIFIED |
 | R02 | Restore the canonical iOS headless-runtime package contract | P0 | R01 | VERIFIED |
-| R03 | Restore RPC-only scenario and jurisdiction selection | P1 | — | READY |
+| R03 | Restore RPC-only scenario and jurisdiction selection | P1 | — | VERIFIED |
 | R04 | Restore React local-password enrollment, unlock, and lock | P0 | — | READY |
 | R05 | Resolve paired-daemon custody semantics | P1 | — | READY |
 | R06 | Finish Svelte retirement and harden the retirement gate | P1 | R04 | WAIT |
@@ -302,6 +302,13 @@ Steps:
 - `rg -n "scenarioJAdapterMode = 'browservm'|option value=\"browservm\"" frontend/apps frontend/packages/runtime-client` → no matches.
 - Run `ops-workspace-architect.spec.ts` at all three viewports → RPC creation
   passes, BrowserVM is unavailable, no unexpected console/page errors.
+
+**Implementation evidence (2026-09-26, source `8d6c22330e` plus working diff, Bun `1.4.0`):**
+
+- Focused scenario, Architect, diagnostics, QA, import, and tooling tests → 24 pass, 0 fail, 116 assertions.
+- Forbidden-selector `rg` → no matches.
+- Scenario RPC-proxy browser flow at 1366×900 → 1 pass in 15.8s with nonzero POST traffic to `/rpc`.
+- Architect exact-RPC flow at 390×844, 1366×900, and 1920×1080 → 1 pass at each viewport in 28.0s, 27.8s, and 29.1s; screenshot and console/page-error assertions pass.
 
 **STOP if:** a retained test requires BrowserVM for production acceptance;
 identify whether it is a defensive adapter test or an actual selector before

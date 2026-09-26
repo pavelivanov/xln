@@ -71,6 +71,9 @@ export const createReactAppConfig = ({ surfaceId, rootDirectory, aliases = {} }:
     resolve: {
       alias: {
         '@xln/core': resolve(REPOSITORY_ROOT, 'core'),
+        // Level's browser implementation extends EventEmitter. Vite otherwise
+        // replaces Node's `events` builtin with an empty external module.
+        events: 'eventemitter3',
         ...aliases,
       },
     },

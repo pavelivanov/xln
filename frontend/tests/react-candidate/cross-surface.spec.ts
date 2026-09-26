@@ -6,9 +6,11 @@ import {
   observeBrowserErrors,
   screenshotEvidence,
 } from './browser-evidence';
+import { readWalletRuntimeFixture } from './wallet/fixtures/wallet-runtime-test-helpers';
 
 test('hub-collapse executes and reconstructs the wallet preview', { tag: '@resilience' }, async ({ page }, testInfo) => {
   test.setTimeout(120_000);
+  await readWalletRuntimeFixture(page);
   const errors = observeBrowserErrors(page);
   const rpcRequests: string[] = [];
   page.on('request', request => { if (new URL(request.url()).pathname === '/rpc') rpcRequests.push(request.method()); });
@@ -40,6 +42,7 @@ test('hub-collapse executes and reconstructs the wallet preview', { tag: '@resil
   await expect(page.getByRole('heading', { name: 'Hub collapse' })).toBeVisible();
   await screenshotEvidence(page, testInfo, 'wallet-scenario-preview');
   await expectPageContained(page);
-  expect(rpcRequests).toEqual([]);
+  expect(rpcRequests.length).toBeGreaterThan(0);
+  expect(new Set(rpcRequests)).toEqual(new Set(['POST']));
   expectNoBrowserErrors(errors);
 });
