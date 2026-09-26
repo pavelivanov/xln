@@ -1,5 +1,4 @@
 import { afterEach, expect, test } from 'bun:test';
-import { spawnSync } from 'node:child_process';
 import { mkdtempSync, mkdirSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -109,10 +108,21 @@ test('job decoder rejects unsafe paths, unbounded work and guessed defaults', ()
 
 test('packet comes from the exact commit even while main files change', () => {
   const root = temp();
+  const commandOutput = temp();
+  let commandIndex = 0;
   const git = (args: string[]): string => {
-    const output = spawnSync('git', args, { cwd: root, encoding: 'utf8', timeout: 2000 });
-    if (output.status !== 0) throw new Error(output.stderr);
-    return output.stdout.trim();
+    const index = commandIndex++;
+    const stdoutPath = join(commandOutput, `${index}.stdout`);
+    const stderrPath = join(commandOutput, `${index}.stderr`);
+    const output = Bun.spawnSync({
+      cmd: ['git', ...args],
+      cwd: root,
+      timeout: 2000,
+      stdout: Bun.file(stdoutPath),
+      stderr: Bun.file(stderrPath),
+    });
+    if (output.exitCode !== 0) throw new Error(readFileSync(stderrPath, 'utf8'));
+    return readFileSync(stdoutPath, 'utf8').trim();
   };
   git(['init', '--initial-branch=main']);
   writeFileSync(join(root, 'source.txt'), 'source');

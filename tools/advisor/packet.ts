@@ -1,5 +1,7 @@
 import { createHash } from 'node:crypto';
-import { spawnSync } from 'node:child_process';
+import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import type { Job } from './types';
 import { fail } from './values';
 
@@ -7,9 +9,28 @@ export const digest = (value: string | Uint8Array): string =>
   `sha256:${createHash('sha256').update(value).digest('hex')}`;
 
 const git = (root: string, args: readonly string[]): Buffer => {
-  const result = spawnSync('git', [...args], { cwd: root, timeout: 5000, maxBuffer: 300_000 });
-  if (result.status !== 0) return fail(`GIT_SNAPSHOT_READ_FAILED:${args[0]}`);
-  return result.stdout;
+  const outputDirectory = mkdtempSync(join(tmpdir(), 'xln-advisor-git-'));
+  const stdoutPath = join(outputDirectory, 'stdout');
+  const stderrPath = join(outputDirectory, 'stderr');
+  try {
+    const result = Bun.spawnSync({
+      cmd: ['git', ...args],
+      cwd: root,
+      timeout: 5000,
+      stdout: Bun.file(stdoutPath),
+      stderr: Bun.file(stderrPath),
+    });
+    const stderr = readFileSync(stderrPath);
+    if (result.exitCode !== 0) {
+      const detail = stderr.toString().trim().slice(0, 300);
+      return fail(`GIT_SNAPSHOT_READ_FAILED:${args[0]}:${detail || `exit-${result.exitCode}`}`);
+    }
+    const stdout = readFileSync(stdoutPath);
+    if (stdout.byteLength > 300_000) return fail(`GIT_SNAPSHOT_READ_FAILED:${args[0]}:output-limit`);
+    return stdout;
+  } finally {
+    rmSync(outputDirectory, { recursive: true, force: true });
+  }
 };
 
 /** Read immutable Git blobs; a concurrently edited main checkout cannot alter this packet. */
@@ -20,9 +41,16 @@ export const buildPacket = (root: string, job: Job): Readonly<{ prompt: string; 
   if (resolved !== job.sourceSha) return fail('SOURCE_SHA_MISMATCH');
   let bytes = 0;
   const evidence = job.evidence.map(entry => {
+    const size = Number(
+      git(root, ['cat-file', '-s', `${job.sourceSha}:${entry.path}`])
+        .toString()
+        .trim(),
+    );
+    if (!Number.isSafeInteger(size) || size < 0) return fail(`EVIDENCE_SIZE_INVALID:${entry.path}`);
+    bytes += size;
+    if (bytes > 240_000) return fail('PACKET_SIZE_OR_BINARY_REJECTED');
     const content = git(root, ['show', `${job.sourceSha}:${entry.path}`]);
-    bytes += content.byteLength;
-    if (bytes > 240_000 || content.includes(0)) return fail('PACKET_SIZE_OR_BINARY_REJECTED');
+    if (content.byteLength !== size || content.includes(0)) return fail('PACKET_SIZE_OR_BINARY_REJECTED');
     if (digest(content) !== entry.sha256) return fail(`EVIDENCE_HASH_MISMATCH:${entry.path}`);
     return { ...entry, content: new TextDecoder('utf-8', { fatal: true }).decode(content) };
   });
