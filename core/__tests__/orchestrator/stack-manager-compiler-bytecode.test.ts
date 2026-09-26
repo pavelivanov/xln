@@ -5,28 +5,47 @@ import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 import { readCompilerBytecodeEvidence } from '../../jurisdiction/adapter/stack-manager/compiler-bytecode';
+import { safeStringify } from '../../protocol/serialization';
 
 describe('Stack Manager compiler bytecode evidence', () => {
   test('resolves Hardhat 3 split build-info source names', async () => {
     const directory = await mkdtemp(join(tmpdir(), 'xln-stack-build-info-'));
     try {
-      await writeFile(join(directory, 'build.json'), JSON.stringify({
-        _format: 'hh3-sol-build-info-1',
-        id: 'build',
-        userSourceNameMap: { 'contracts/Account.sol': 'project/contracts/Account.sol' },
-      }));
-      await writeFile(join(directory, 'build.output.json'), JSON.stringify({
-        _format: 'hh3-sol-build-info-output-1',
-        id: 'build',
-        output: {
-        contracts: { 'project/contracts/Account.sol': { Account: { evm: { deployedBytecode: {
-          immutableReferences: { 42: [{ start: 3, length: 32 }] },
-        } } } } },
-        sources: { 'project/contracts/Account.sol': { ast: {
-          nodes: [{ id: 42, mutability: 'immutable', name: 'depository' }],
-        } } },
-        },
-      }));
+      await writeFile(
+        join(directory, 'build.json'),
+        safeStringify({
+          _format: 'hh3-sol-build-info-1',
+          id: 'build',
+          userSourceNameMap: { 'contracts/Account.sol': 'project/contracts/Account.sol' },
+        }),
+      );
+      await writeFile(
+        join(directory, 'build.output.json'),
+        safeStringify({
+          _format: 'hh3-sol-build-info-output-1',
+          id: 'build',
+          output: {
+            contracts: {
+              'project/contracts/Account.sol': {
+                Account: {
+                  evm: {
+                    deployedBytecode: {
+                      immutableReferences: { 42: [{ start: 3, length: 32 }] },
+                    },
+                  },
+                },
+              },
+            },
+            sources: {
+              'project/contracts/Account.sol': {
+                ast: {
+                  nodes: [{ id: 42, mutability: 'immutable', name: 'depository' }],
+                },
+              },
+            },
+          },
+        }),
+      );
       const evidence = await readCompilerBytecodeEvidence(
         new URL('./', pathToFileURL(join(directory, 'placeholder'))),
         'contracts/Account.sol',
