@@ -2139,6 +2139,27 @@ const projectSolvencySummary = (
   };
 };
 
+const resolveRuntimeAdapterResourceRead = async <T>(
+  ctx: RuntimeAdapterResolveContext,
+  parts: string[],
+): Promise<T> => {
+  if (parts[0] === 'frame' && parts.length === 2) {
+    if (!ctx.readFrame) throw new RuntimeAdapterError('E_BAD_QUERY', 'frame reads are unavailable for this adapter');
+    const height = parts[1] === 'latest' ? envHeight(ctx.env) : Number(parts[1]);
+    if (!Number.isFinite(height) || height < 1) throw new RuntimeAdapterError('E_BAD_PATH', 'frame height must be a positive integer or latest');
+    const frame = await ctx.readFrame(Math.floor(height));
+    if (!frame) throw new RuntimeAdapterError('E_NOT_FOUND', `frame not found: ${Math.floor(height)}`);
+    return compactFrameRecordForRemote(frame) as T;
+  }
+
+  if (parts.length === 1 && parts[0] === 'checkpoints') {
+    const heights = ctx.listCheckpoints ? await ctx.listCheckpoints() : [];
+    return heights.map((height) => ({ height, timestamp: null })) as T;
+  }
+
+  throw new RuntimeAdapterError('E_BAD_PATH', `unsupported adapter path: ${parts.join('/')}`);
+};
+
 const resolveScopedRuntimeAdapterRead = async <T>(
   ctx: RuntimeAdapterResolveContext,
   parts: string[],
@@ -2279,21 +2300,7 @@ const resolveScopedRuntimeAdapterRead = async <T>(
     }
   }
 
-  if (parts[0] === 'frame' && parts.length === 2) {
-    if (!ctx.readFrame) throw new RuntimeAdapterError('E_BAD_QUERY', 'frame reads are unavailable for this adapter');
-    const height = parts[1] === 'latest' ? envHeight(ctx.env) : Number(parts[1]);
-    if (!Number.isFinite(height) || height < 1) throw new RuntimeAdapterError('E_BAD_PATH', 'frame height must be a positive integer or latest');
-    const frame = await ctx.readFrame(Math.floor(height));
-    if (!frame) throw new RuntimeAdapterError('E_NOT_FOUND', `frame not found: ${Math.floor(height)}`);
-    return compactFrameRecordForRemote(frame) as T;
-  }
-
-  if (parts.length === 1 && parts[0] === 'checkpoints') {
-    const heights = ctx.listCheckpoints ? await ctx.listCheckpoints() : [];
-    return heights.map((height) => ({ height, timestamp: null })) as T;
-  }
-
-  throw new RuntimeAdapterError('E_BAD_PATH', `unsupported adapter path: ${parts.join('/')}`);
+  return resolveRuntimeAdapterResourceRead<T>(ctx, parts);
 };
 
 const resolveRuntimeAdapterReadFromCommittedState = async <T = unknown>(

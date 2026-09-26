@@ -108,7 +108,7 @@ const hubRuntimeId = deriveSignerAddressSync('radapter-local-hub', '1').toLowerC
 
 const adapterAuthChallenge = `0x${'41'.repeat(32)}`;
 
-const runtimeId = `0x${'33'.repeat(32)}`;
+const runtimeId = deriveSignerAddressSync('seed', '1').toLowerCase();
 
 process.env['XLN_RADAPTER_AUTH_SEED'] = process.env['XLN_RADAPTER_AUTH_SEED'] || 'seed';
 
@@ -500,6 +500,7 @@ test('runtime adapter resolver reads live head and entity paths', async () => {
   expect(entities).toEqual([
     {
       entityId,
+      runtimeId,
       signerId: 'signer',
       label: 'Adapter Test',
       height: 7,
@@ -1225,7 +1226,7 @@ test('runtime adapter entity summaries preserve gossip jurisdiction for live hub
 
   const hub = entities.find(entry => entry.entityId === entityId);
   expect(hub?.label).toBe('H1');
-  expect(hub?.runtimeId).toBe(makeHubProfile(entityId, 'H1').runtimeId);
+  expect(hub?.runtimeId).toBe(runtimeId);
   expect(hub?.isHub).toBe(true);
   expect(hub?.jurisdiction?.name).toBe('Testnet');
   expect(hub?.jurisdiction?.chainId).toBe(31337);
@@ -1637,7 +1638,7 @@ test('runtime adapter timeline-index returns a bounded compact timestamp page', 
 
   expect(page.entries).toEqual([
     {
-      runtimeId: 'embedded',
+      runtimeId,
       height: 5,
       timestamp: 5_000,
       stateHash: 'state-5',
@@ -1645,7 +1646,7 @@ test('runtime adapter timeline-index returns a bounded compact timestamp page', 
       graphChanged: false,
     },
     {
-      runtimeId: 'embedded',
+      runtimeId,
       height: 6,
       timestamp: 6_000,
       stateHash: 'state-6',
@@ -1653,7 +1654,7 @@ test('runtime adapter timeline-index returns a bounded compact timestamp page', 
       graphChanged: false,
     },
     {
-      runtimeId: 'embedded',
+      runtimeId,
       height: 7,
       timestamp: 7_000,
       stateHash: 'state-7',
