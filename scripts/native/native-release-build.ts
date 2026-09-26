@@ -15,6 +15,7 @@ import {
   verifyCapacitorGeneratedConfig,
 } from './capacitor-shell-candidate-manifest';
 import { verifyPackagedShellCandidateDirectory } from './packaged-shell-candidate-manifest';
+import type { IosHeadlessRuntimeArtifact } from './session/build-ios-runtime';
 
 export type NativeReleaseBuild = Readonly<{
   releaseDirectory: string;
@@ -64,13 +65,31 @@ export const requireNativeWorkspace = (build: NativeReleaseBuild, kind: 'capacit
   return directory;
 };
 
-export const verifyNativeReleaseBuildInputs = async (build: NativeReleaseBuild): Promise<void> => {
+const verifyIosWebRoot = async (
+  build: NativeReleaseBuild,
+  webRoot: string,
+  artifact?: IosHeadlessRuntimeArtifact,
+): Promise<void> => {
+  if (!artifact) return verifyCopiedWebRoot(build.stagingDirectory, webRoot);
+  if (artifact.sourceReleaseId !== build.releaseId) throw new Error('IOS_RUNTIME_SOURCE_RELEASE_MISMATCH');
+  if (resolve(artifact.path) !== resolve(webRoot)) throw new Error('IOS_RUNTIME_OUTPUT_PATH_MISMATCH');
+  const stagedFiles = await snapshotRegularTree(webRoot);
+  if (safeStringify(stagedFiles) !== safeStringify(artifact.files)) {
+    throw new Error('IOS_RUNTIME_OUTPUT_CHANGED');
+  }
+};
+
+export const verifyNativeReleaseBuildInputs = async (
+  build: NativeReleaseBuild,
+  iosHeadlessRuntime?: IosHeadlessRuntimeArtifact,
+): Promise<void> => {
   const release = await verifyCandidateReleaseDirectory(build.releaseDirectory);
   if (release.releaseId !== build.releaseId) throw new Error('NATIVE_BUILD_RELEASE_CHANGED');
   await verifyNativeWalletCandidateDirectory(build.stagingDirectory, build.releaseId);
   if (build.capacitor) {
     await verifyCapacitorShellCandidateDirectory(build.capacitor.sourceDirectory, build.stagingDirectory);
-    await verifyCopiedWebRoot(build.stagingDirectory, join(build.capacitor.buildDirectory, 'ios/App/App/public'));
+    const iosWebRoot = join(build.capacitor.buildDirectory, 'ios/App/App/public');
+    await verifyIosWebRoot(build, iosWebRoot, iosHeadlessRuntime);
     await verifyCopiedWebRoot(
       build.stagingDirectory,
       join(build.capacitor.buildDirectory, 'android/app/src/main/assets/public'),

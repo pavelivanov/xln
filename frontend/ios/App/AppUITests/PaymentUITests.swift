@@ -230,6 +230,11 @@ final class PaymentUITests: XCTestCase {
     func testDefaultBrainvault() throws {
         try createWallet()
         capture("default-brainvault-ready")
+        XCUIDevice.shared.press(.home)
+        app.activate()
+        XCTAssertTrue(app.buttons["brainvault-open"].waitForExistence(timeout: 10))
+        XCTAssertFalse(app.staticTexts["wallet-balance"].exists)
+        capture("default-brainvault-background-locked")
     }
     private func createWallet() throws {
         tap(app.buttons["brainvault-create"])

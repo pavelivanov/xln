@@ -99,6 +99,10 @@ export default defineConfig(({ mode }) => ({
 			'@': fileURLToPath(new URL('./src', import.meta.url)),
 			// Types come from ../core source; runtime values load from /runtime.js at runtime.
 			'@xln/core': fileURLToPath(new URL('../core', import.meta.url)),
+			// Vite externalizes Node's `events` builtin in browser builds. Level's browser
+			// implementation still extends EventEmitter, so bind it to a browser-native
+			// implementation instead of the empty external module.
+			events: 'eventemitter3',
 		},
 	},
 	build: {

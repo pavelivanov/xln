@@ -7,6 +7,7 @@ import {
   type NativeReleaseBuild,
 } from './native-release-build';
 import { verifyCandidateReleaseDirectory } from '../../packages/frontend-release/verify';
+import { buildIosRuntime, type IosHeadlessRuntimeArtifact } from './session/build-ios-runtime';
 
 import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
@@ -21,6 +22,9 @@ type NativeArtifact = {
 	kind: string;
 	status: ArtifactStatus;
 	path?: string;
+	artifactId?: `sha256-${string}`;
+	sourceReleaseId?: `sha256-${string}`;
+	network?: Readonly<{ apiBase: string; recoveryUrl: string }>;
 	releaseTrust?: 'signed' | 'signed-notarized';
 	proofPath?: string;
 };
@@ -705,11 +709,32 @@ async function main(): Promise<void> {
       path: path.join(build.stagingDirectory, 'runtime.js'),
     },
   ];
+  let iosHeadlessRuntime: IosHeadlessRuntimeArtifact | undefined;
 
   for (const target of targets) {
     if (target === 'ios' || target === 'android') {
       artifacts.push(syncCapacitorPlatform(target, build));
-      await verifyNativeReleaseBuildInputs(build);
+      await verifyNativeReleaseBuildInputs(build, iosHeadlessRuntime);
+      if (target === 'ios') {
+        const workspace = requireNativeWorkspace(build, 'capacitor');
+        const resourcesDirectory = path.join(workspace, 'ios/App/App/public');
+        iosHeadlessRuntime = await buildIosRuntime({
+          resourcesDirectory,
+          capacitorConfigPath: path.join(workspace, 'ios/App/App/capacitor.config.json'),
+          capacitorPackagePath: path.join(workspace, 'ios/App/CapApp-SPM/Package.swift'),
+          sourceReleaseId: build.releaseId,
+        });
+        artifacts.push({
+          target: 'ios',
+          kind: iosHeadlessRuntime.kind,
+          status: 'built',
+          path: iosHeadlessRuntime.path,
+          artifactId: iosHeadlessRuntime.artifactId,
+          sourceReleaseId: build.releaseId,
+          network: iosHeadlessRuntime.network,
+        });
+        await verifyNativeReleaseBuildInputs(build, iosHeadlessRuntime);
+      }
       if (flags.has('--package')) artifacts.push(packageCapacitorPlatform(target, build));
       if (flags.has('--open'))
         run(path.join(FRONTEND, 'node_modules/.bin/cap'), ['open', target], requireNativeWorkspace(build, 'capacitor'));
@@ -720,7 +745,7 @@ async function main(): Promise<void> {
     }
   }
 
-  await verifyNativeReleaseBuildInputs(build);
+  await verifyNativeReleaseBuildInputs(build, iosHeadlessRuntime);
   writeArtifactManifest(targets, flags, artifacts, build);
   console.log(`\nxln native pipeline complete: ${targets.join(', ')}`);
 }

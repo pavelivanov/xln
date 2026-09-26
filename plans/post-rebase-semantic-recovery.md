@@ -130,7 +130,7 @@ Run from repository root unless a different cwd is shown.
 | ID | Task | Priority | Depends on | Status |
 | --- | --- | --- | --- | --- |
 | R01 | Repair retained `ui` imports and make its typecheck a root gate | P0 | — | VERIFIED |
-| R02 | Restore the canonical iOS headless-runtime package contract | P0 | R01 | WAIT |
+| R02 | Restore the canonical iOS headless-runtime package contract | P0 | R01 | VERIFIED |
 | R03 | Restore RPC-only scenario and jurisdiction selection | P1 | — | READY |
 | R04 | Restore React local-password enrollment, unlock, and lock | P0 | — | READY |
 | R05 | Resolve paired-daemon custody semantics | P1 | — | READY |
@@ -220,7 +220,7 @@ unchanged.
 
 Steps:
 
-1. Add `native/__tests__/ios-headless-runtime-staging.test.ts`. Its fixture must
+1. Add `native/__tests__/ios/ios-headless-runtime-staging.test.ts`. Its fixture must
    prove the final iOS `public/` contains `index.html` with `#runtime`,
    `runtime.js`, `account-worker.js`, and validated `native-network.json`; it
    must reject the generic `#root` wallet as an iOS headless host.
@@ -244,6 +244,28 @@ Steps:
 - Under the stand lock on macOS, run the existing iOS UI session against that
   build, e.g. `bun scripts/native/session/run-session.ts ios-ui-default` → exit 0,
   no `XLN_NATIVE_HOST_CONFIGURATION_*` or `window.xlnNative` error.
+
+**Implementation evidence (2026-09-26, source `489dff857` plus working diff, Bun `1.4.0`):**
+
+- `bun test native/__tests__/native-build-options.test.ts native/__tests__/wallet-candidate-staging.test.ts native/__tests__/ios/ios-headless-runtime-staging.test.ts` → 15 pass, 0 fail.
+- Canonical local-network iOS build → exit 0; source release `sha256-f69d8899…`, derived artifact
+  `sha256-49d11d8f…`, final `public/` contains `#runtime`, `runtime.js`, `account-worker.js`, validated
+  `native-network.json`, and a browser `EventEmitter` implementation required by `abstract-level`.
+- The first locked UI run exposed the actual production divergence: WebKit rejected the headless bundle with
+  `TypeError: The superclass is not a constructor` because Vite externalized Node `events` as `{}`. The canonical
+  browser build now resolves that import to the pinned `eventemitter3` implementation.
+- Exact derived workspace `xcodebuild ... build-for-testing` → exit 0. The stand-locked `ios-ui-default` session
+  against those products → 1 pass, 0 fail; BrainVault reached ready in `24.98s`, background/resume returned to the
+  locked screen, post-run health was `systemOk=true` with zero failures, and the stand shut down cleanly.
+- The broader custody-payment UI test reached the funded wallet but stopped at its pre-existing accessibility audit
+  (`Dynamic Type font sizes are partially unsupported`) before payment/background assertions. R02 lifecycle coverage
+  is now isolated in the passing default test instead of weakening that audit.
+- Existing `capacitor-shell-candidate.test.ts` cannot spawn its Capacitor child under Bun test on this host
+  (`posix_spawn ... EBADF`, 0/3); the same production Capacitor command succeeds in the canonical iOS build.
+- Restored the already-installed Homebrew Rustup proxies on `PATH` (repository-pinned Cargo/rustc `1.94.1`). Final
+  `bun run check` → exit 0: all three long-gate groups passed, including 1,565 frontend tests, 40 Rust test executables
+  plus parity, 15 Solidity invariants, frozen-core, dead-code, folder-width, `check:ui`, and the production frontend
+  builds.
 
 **STOP if:** satisfying SwiftUI requires replacing the generic cross-platform
 release for Android/desktop/extension, or if artifact provenance cannot express
