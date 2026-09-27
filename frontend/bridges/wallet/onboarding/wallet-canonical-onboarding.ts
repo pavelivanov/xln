@@ -222,7 +222,7 @@ export const finishCanonicalWalletOnboarding = async (
       requireCurrent(); const queued = await joins.queueAutoHubJoins(count, targets); requireCurrent(); return queued;
     },
   });
-  return result;
+  return { ...result, custodyOwner: current.custodyOwner };
 };
 
 export const synchronizeCanonicalWalletOnboardingCompletion = (runtimeId: string): void => {

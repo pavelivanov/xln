@@ -44,4 +44,5 @@ export type WalletOnboardingRequest = Readonly<{
 export type WalletOnboardingResult = Readonly<{
   displayName: string;
   autoJoinedCount: number;
+  custodyOwner: WalletCustodyOwner;
 }>;

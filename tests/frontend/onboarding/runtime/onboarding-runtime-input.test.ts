@@ -212,6 +212,9 @@ test('React onboarding uses the canonical projection and RuntimeInput helpers', 
   expect(source).toContain('subscribeOnboardingCompletion(publish)');
   expect(state).toContain('window.dispatchEvent(new Event(ONBOARDING_COMPLETE_EVENT))');
   expect(parent).toContain('finishWalletOnboarding({');
+  expect(source).toContain('return { ...result, custodyOwner: current.custodyOwner };');
+  expect(parent).toContain("result?.custodyOwner === 'daemon'");
+  expect(parent).toContain('{daemonCustody ? null : <WalletRecoveryServices runtimeState={runtimeState} />}');
   expect(projection).toContain('const accountCounterpartiesByEntityId: Record<string, string[]> = {};');
   expect(projection).toContain('const hubCandidates: OnboardingHubCandidate[] = [];');
   expect(projection).toContain("typeof isHub !== 'boolean'");

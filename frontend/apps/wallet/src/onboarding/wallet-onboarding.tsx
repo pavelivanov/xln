@@ -150,15 +150,17 @@ export function WalletPostCreationSetup({ runtimeId, runtimeState, pendingConten
   if (!view || view.state === 'waiting') return <p role="status">{view?.reason || 'Loading account setup…'}</p>;
   if (view.state === 'ready' && !result) return <WalletOnboardingForm key={runtimeId} view={view} runtimeState={runtimeState} onComplete={setResult} />;
   if (!result && pendingContent !== undefined) return pendingContent;
+  const daemonCustody = result?.custodyOwner === 'daemon'
+    || (view.state === 'ready' && view.custodyOwner === 'daemon');
   return <>
     {result ? <p className="wallet-settings-status" role="status">Account configured for {result.displayName}. Joined {result.autoJoinedCount} hub accounts.</p> : null}
     <a className="identity-primary-action wallet-onboarding-continue" href={walletBrowserHref('/app?portfolio=1')} onClick={event => {
       if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
       event.preventDefault();
-      if (view?.state === 'ready' && view.custodyOwner === 'daemon') clearWalletLocalLauncherOnboarding();
+      if (daemonCustody) clearWalletLocalLauncherOnboarding();
       navigateWallet('/app?portfolio=1');
     }}>Continue to assets</a>
-    {view?.state === 'ready' && view.custodyOwner === 'daemon' ? null : <WalletRecoveryServices runtimeState={runtimeState} />}
+    {daemonCustody ? null : <WalletRecoveryServices runtimeState={runtimeState} />}
   </>;
 }
 
