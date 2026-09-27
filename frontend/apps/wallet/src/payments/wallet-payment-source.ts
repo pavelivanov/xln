@@ -395,11 +395,11 @@ export class WalletPaymentSource {
       if (result.status === 'observed') {
         this.pendingCommand = null;
         this.clearQuote();
+        await this.observer?.refresh();
         this.patch({ command: {
           status: 'observed', message: `Committed at Runtime height ${result.height}.`,
           commandId: shortId, durable: command.durable, retryable: false,
         } });
-        await this.observer?.refresh();
         return;
       }
       if (command.mode === 'embedded') {

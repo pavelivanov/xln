@@ -218,6 +218,18 @@ test('React payments invalidate pending reads and release Runtime ownership on d
   expect(source).not.toContain('setTimeout(');
 });
 
+test('React payments keep Entity selection locked until an observed command refresh completes', () => {
+  const source = readFileSync('frontend/apps/wallet/src/payments/wallet-payment-source.ts', 'utf8');
+  const observedStart = source.indexOf("if (result.status === 'observed')");
+  const observedEnd = source.indexOf("if (command.mode === 'embedded')", observedStart);
+  const observedBranch = source.slice(observedStart, observedEnd);
+
+  expect(observedStart).toBeGreaterThanOrEqual(0);
+  expect(observedEnd).toBeGreaterThan(observedStart);
+  expect(observedBranch.indexOf('await this.observer?.refresh()'))
+    .toBeLessThan(observedBranch.indexOf("status: 'observed'"));
+});
+
 test('payment gossip refresh is owned by runtime store operation', () => {
   const source = readFileSync('frontend/bridges/runtime/xln-store.ts', 'utf8');
 
