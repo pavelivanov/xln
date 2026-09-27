@@ -182,6 +182,7 @@ describe('browser wallet Runtime opening', () => {
     expect(adapter).toContain('discoverCanonicalWalletRuntimeRecovery');
     expect(adapter).toContain('buildRemoteRuntimeRecoveryPeerSources({ runtimeId: expectedRuntimeId })');
     expect(view).toContain('await openWalletRuntimeWithCanonicalVault(request)');
+    expect(view).toContain('await discoverWalletRuntimeRecoveryWithCanonicalVault(request)');
     expect(view).toContain('await restoreWalletRuntimeFromCanonicalRecovery(');
     expect(view).not.toContain('executeWalletRuntimeOpening({');
     expect(view).toContain("verifiedMnemonicRef.current = '';");
@@ -192,12 +193,14 @@ describe('browser wallet Runtime opening', () => {
     expect(reactBridge).toContain('recoverySelection.consume(token, runtimeId, candidateId)');
     expect(reactBridge).toContain('writeRuntimeRecoveryDiscoveryStatus({');
     expect(reactRuntime).toContain('const openCanonicalResource = (');
+    expect(reactRuntime).toContain('export const discoverWalletRuntimeRecoveryWithCanonicalVault = async');
     expect(reactRuntime).toContain("session.getSnapshot().status === 'ready'");
     expect(reactRuntime).toContain('? session.replace(boot)');
     expect(reactRuntime).toContain(': session.start(boot)');
     expect(reactRuntime).toContain('await openCanonicalResource(async () => {');
     expect(reactRuntime).toContain("status: 'recovery-required', discovery");
-    expect(reactRuntime.indexOf('const discovery = await canonical.discoverCanonicalWalletRuntimeRecoveryView(request)'))
+    expect(reactRuntime).toContain('return canonical.discoverCanonicalWalletRuntimeRecoveryView(request)');
+    expect(reactRuntime.indexOf('const discovery = await discoverWalletRuntimeRecoveryWithCanonicalVault(request)'))
       .toBeLessThan(reactRuntime.indexOf('if (discovery.candidates.length > 0)'));
     expect(reactRuntime.indexOf('if (discovery.candidates.length > 0)'))
       .toBeLessThan(reactRuntime.lastIndexOf("return openDiscoveredWalletRuntime(request, discovery, '');"));

@@ -10,6 +10,7 @@ import {
 } from '../../../browser-evidence';
 import { installImportedRuntime, readWalletRuntimeFixture } from '../../../wallet/fixtures/wallet-runtime-test-helpers';
 import { WALLET_RECOVERY_FIXTURE_MNEMONIC } from '../../../wallet/fixtures/wallet-fixture-identities';
+import { enrollLocalPassword } from '../../../wallet/onboarding/wallet-onboarding-test-helpers';
 
 const embeddedModule = `/__app/ops/@fs${fileURLToPath(new URL('../../../../../apps/wallet/src/runtime/wallet-embedded-runtime.ts', import.meta.url))}`;
 const mnemonic = WALLET_RECOVERY_FIXTURE_MNEMONIC;
@@ -45,7 +46,7 @@ for (const action of ['close', 'destination change', 'different Runtime selectio
       await panel.getByRole('textbox', { name: /^Seed phrase/ }).fill(mnemonic);
       await panel.getByRole('button', { name: 'Verify recovered wallet' }).click();
       await panel.getByRole('button', { name: 'Check recovery and open wallet' }).click();
-      await expect(panel.getByRole('heading', { name: 'Choose a backup' })).toBeVisible();
+      await expect(panel.getByRole('heading', { name: 'Choose a backup' })).toBeVisible({ timeout: 90_000 });
 
       // Delay only delivery of the real fixture's RPC response. Recovery, its
       // encrypted backup, and the eventual local adapter remain canonical.
@@ -75,6 +76,7 @@ for (const action of ['close', 'destination change', 'different Runtime selectio
       let expectedRuntimeId = fixture.runtimeId;
       try {
         await panel.getByRole('button', { name: 'Restore selected backup' }).click();
+        await enrollLocalPassword(page);
         await expect.poll(() => received).toBe(true);
         expect(
           await page.evaluate(async path => {

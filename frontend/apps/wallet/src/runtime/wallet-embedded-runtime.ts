@@ -67,12 +67,18 @@ const openDiscoveredWalletRuntime = async (
 export const openWalletRuntimeWithCanonicalVault = async (
   request: WalletCanonicalRuntimeOpeningRequest,
 ): Promise<WalletCanonicalRuntimeOpeningOutcome> => {
+  const discovery = await discoverWalletRuntimeRecoveryWithCanonicalVault(request);
+  if (discovery.candidates.length > 0) return { status: 'recovery-required', discovery };
+  return openDiscoveredWalletRuntime(request, discovery, '');
+};
+
+export const discoverWalletRuntimeRecoveryWithCanonicalVault = async (
+  request: WalletCanonicalRuntimeOpeningRequest,
+): Promise<WalletCanonicalRecoveryDiscoveryView> => {
   installPagehideFence();
   const canonical = await import('../../../../bridges/wallet/canonical/wallet-canonical-vault-runtime');
   discardCanonicalRecovery = canonical.discardCanonicalWalletRuntimeRecovery;
-  const discovery = await canonical.discoverCanonicalWalletRuntimeRecoveryView(request);
-  if (discovery.candidates.length > 0) return { status: 'recovery-required', discovery };
-  return openDiscoveredWalletRuntime(request, discovery, '');
+  return canonical.discoverCanonicalWalletRuntimeRecoveryView(request);
 };
 
 export const restoreWalletRuntimeFromCanonicalRecovery = (

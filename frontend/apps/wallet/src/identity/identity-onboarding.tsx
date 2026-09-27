@@ -30,6 +30,7 @@ import { resetWalletRecoveryRehearsal, type WalletRecoveryRehearsalState } from 
 import {
   discardWalletBrainVault,
   discardWalletRuntimeRecovery,
+  discoverWalletRuntimeRecoveryWithCanonicalVault,
   openPreparedWalletBrainVault,
   openWalletRuntimeWithCanonicalVault,
   prepareWalletBrainVaultWithCanonicalVault,
@@ -226,13 +227,29 @@ export function IdentityOnboarding({
     if (!brainVaultPrepared && (!seed || !derivedAddress)) {
       throw new Error('WALLET_VERIFIED_IDENTITY_REQUIRED');
     }
-    if (!brainVaultPrepared && !localPassword && !hasCanonicalWalletLocalPassword(derivedAddress)) {
+    const passwordRequired = !brainVaultPrepared
+      && !localPassword
+      && !hasCanonicalWalletLocalPassword(derivedAddress);
+    if (passwordRequired && recoveryDiscovery) {
       setPasswordEnrollment(true);
       return;
     }
     setOpeningRuntime(true);
     setOpeningError('');
     try {
+      if (passwordRequired) {
+        const request = createMnemonicWalletOpeningRequest(derivedAddress, seed);
+        const discovery = await discoverWalletRuntimeRecoveryWithCanonicalVault(request);
+        if (discovery.candidates.length > 0) {
+          recoveryTokenRef.current = discovery.token;
+          setRecoveryDiscovery(discovery);
+          setSelectedRecoveryCandidateId(discovery.candidates[0]?.id || '');
+          return;
+        }
+        discardWalletRuntimeRecovery(discovery.token);
+        setPasswordEnrollment(true);
+        return;
+      }
       let outcome;
       if (brainVaultPrepared) {
         outcome = await openPreparedWalletBrainVault(brainVaultPrepared, selectedRecoveryCandidateId);
