@@ -40,11 +40,41 @@ export {
   type ValidatedGeneratedInput,
 } from './generated-input-manifest';
 
+const COMMAND_OUTPUT_LIMIT = 4_000;
+const SENSITIVE_ENVIRONMENT_KEY = /credential|key|mnemonic|password|secret|seed|token/i;
+const COMMAND_CAPTURE_SCRIPT = String.raw`
+const [requestPath, evidencePath] = process.argv.slice(1);
+const command = await Bun.file(requestPath).json();
+const limit = 4_000;
+const collect = async (stream) => { let output = Buffer.alloc(0);
+  for await (const chunk of stream) output = Buffer.concat([output, chunk]).subarray(-limit);
+  return output.toString('utf8'); };
+const redact = (output) => Object.entries(process.env)
+  .filter(([key, value]) => /credential|key|mnemonic|password|secret|seed|token/i.test(key) && value)
+  .map(([, value]) => value).sort((left, right) => right.length - left.length)
+  .reduce((value, secret) => value.replaceAll(secret, '[REDACTED]'), output).slice(-limit);
+try { const child = Bun.spawn(command, { cwd: process.cwd(), env: process.env, stdout: 'pipe', stderr: 'pipe' });
+  const [exitCode, stdout, stderr] = await Promise.all([child.exited, collect(child.stdout), collect(child.stderr)]);
+  await Bun.write(evidencePath, JSON.stringify({ exitCode, stdout: redact(stdout), stderr: redact(stderr) }));
+  process.exit(exitCode === 0 ? 0 : 1);
+} catch (error) { await Bun.write(evidencePath,
+  JSON.stringify({ exitCode: -1, stdout: '', stderr: redact(String(error)) })); process.exit(1); }`;
+type CommandEvidence = Readonly<{ exitCode: number; stdout: string; stderr: string }>;
+
 const waitForCommandExit = (child: ChildProcess): Promise<number> =>
   new Promise((resolve, reject) => {
     child.once('error', reject);
     child.once('close', (exitCode) => resolve(exitCode ?? -1));
   });
+
+const redactCommandOutput = (output: string, environment: NodeJS.ProcessEnv): string => {
+  const sensitiveValues = Object.entries(environment)
+    .flatMap(([key, value]) => SENSITIVE_ENVIRONMENT_KEY.test(key) && value ? [value] : [])
+    .sort((left, right) => right.length - left.length);
+  return sensitiveValues
+    .reduce((redacted, value) => redacted.replaceAll(value, '[REDACTED]'), output)
+    .slice(-COMMAND_OUTPUT_LIMIT);
+};
 
 const walkSourceFiles = async (current: string): Promise<readonly string[]> => {
   const stats = await lstat(current);
@@ -130,18 +160,42 @@ const runGeneratedCommand = async (
   const commandOutput = outputPath === undefined ? payloadRoot : join(payloadRoot, outputPath);
   const [executable, ...args] = definition.producer.argv;
   if (executable === undefined) throw new Error(`GENERATED_INPUT_COMMAND_EMPTY:${definition.id}`);
-  const child = spawn(executable === 'bun' ? process.execPath : executable, args, {
-    cwd: repositoryRoot,
-    env: {
-      ...process.env,
-      ...definition.producer.environment,
-      [definition.producer.outputEnvironment]: commandOutput,
-    },
-    stdio: 'inherit',
-  });
-  const exitCode = await waitForCommandExit(child);
-  if (exitCode !== 0) {
-    throw new Error(`GENERATED_INPUT_COMMAND_FAILED:${definition.id}:${exitCode}`);
+  const environment = {
+    ...process.env,
+    ...definition.producer.environment,
+    [definition.producer.outputEnvironment]: commandOutput,
+  };
+  const outputRoot = await mkdtemp(join(dirname(payloadRoot), '.command-output-'));
+  const requestPath = join(outputRoot, 'request.json');
+  const evidencePath = join(outputRoot, 'evidence.json');
+  try {
+    await writeFile(requestPath, JSON.stringify([
+      executable === 'bun' ? process.execPath : executable,
+      ...args,
+    ]));
+    const child = spawn(process.execPath, ['-e', COMMAND_CAPTURE_SCRIPT, requestPath, evidencePath], {
+      cwd: repositoryRoot,
+      env: environment,
+      stdio: 'inherit',
+    });
+    const wrapperExitCode = await waitForCommandExit(child);
+    let evidence: CommandEvidence;
+    try {
+      evidence = JSON.parse(await readFile(evidencePath, 'utf8')) as CommandEvidence;
+    } catch (error: unknown) {
+      throw new Error(`GENERATED_INPUT_CAPTURE_FAILED:${definition.id}:${wrapperExitCode}:${String(error)}`);
+    }
+    if (evidence.exitCode !== 0) {
+      const stdout = redactCommandOutput(evidence.stdout, environment).trim();
+      const stderr = redactCommandOutput(evidence.stderr, environment).trim();
+      throw new Error([
+        `GENERATED_INPUT_COMMAND_FAILED:${definition.id}:${evidence.exitCode}`,
+        `stdout:${stdout || '<empty>'}`,
+        `stderr:${stderr || '<empty>'}`,
+      ].join('\n'));
+    }
+  } finally {
+    await rm(outputRoot, { recursive: true, force: true });
   }
 };
 

@@ -135,7 +135,7 @@ Run from repository root unless a different cwd is shown.
 | R04 | Restore React local-password enrollment, unlock, and lock | P0 | — | VERIFIED |
 | R05 | Resolve paired-daemon custody semantics | P1 | — | VERIFIED |
 | R06 | Finish Svelte retirement and harden the retirement gate | P1 | R04 | VERIFIED |
-| R07 | Characterize post-rebase generated-input failure diagnostics | P2 | — | READY |
+| R07 | Characterize post-rebase generated-input failure diagnostics | P2 | — | VERIFIED |
 | R08 | Re-certify one exact source and release | P0 | R01–R06; R07 disposition | WAIT |
 | R09 | Produce the publication-readiness handoff | P0 | R08 | WAIT |
 
@@ -550,6 +550,20 @@ Steps:
 **Verify:** `bun test tests/frontend/tooling/build/frontend-generated-inputs.test.ts`
 → all pass, including the named failure case.
 
+**Implementation evidence (2026-09-27, current `HEAD` plus working diff, Bun `1.4.0`):**
+
+- The named failing-producer regression first proved the post-rebase behavior returned only
+  `GENERATED_INPUT_COMMAND_FAILED:failing-command-fixture:23`; stdout/stderr evidence was absent
+  and the child secret reached inherited stdio.
+- The command runner now launches a silent capture wrapper with inherited stdio (the Bun 1.4.0
+  test runner returns `EBADF` for direct piped or numeric-descriptor child stdio). The wrapper
+  concurrently drains both producer pipes, retains at most 4,000 bytes per stream, redacts
+  sensitive environment values before writing temporary evidence, and preserves the producer ID
+  and exit code in the caller error.
+- `bun test tests/frontend/tooling/build/frontend-generated-inputs.test.ts` → 12 pass, 0 fail,
+  65 assertions in 2.76s, including exit `23`, concurrent draining of 128 KB per stream, both
+  redacted stream tails, and the 8,500-character total diagnostic bound.
+
 ## R08 — Re-certify one exact source and release
 
 **Prerequisite:** R01–R06 are DONE. R07 is DONE or has a documented no-change
@@ -608,7 +622,7 @@ history as part of this plan.
 
 ## Done criteria
 
-- [ ] R01–R07 have DONE or explicitly accepted no-change dispositions.
+- [x] R01–R07 have DONE or explicitly accepted no-change dispositions.
 - [ ] `ui` imports no retired frontend modules and its typecheck is part of the
       root gate.
 - [ ] iOS packages and launches the headless runtime contract.

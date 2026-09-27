@@ -291,6 +291,47 @@ describe('frontend generated input preparation', () => {
     expect(await readFile(join(frontendRoot, '.artifacts/public/wallet/runtime.js'), 'utf8')).toBe('runtime');
   });
 
+  test('reports bounded failing-producer stdout and stderr without exposing environment secrets', async () => {
+    const { repositoryRoot, frontendRoot } = await createWorkspace();
+    const secret = 'fixture-secret-must-not-leak';
+    const command: CommandGeneratedInputDefinition = {
+      id: 'failing-command-fixture',
+      owner: 'wallet',
+      sourcePaths: ['fixture'],
+      outputNamespace: 'failing-command-fixture',
+      producer: {
+        kind: 'command',
+        argv: ['bun', '-e', [
+          "const secret = process.env['FIXTURE_SECRET']",
+          "process.stdout.write('o'.repeat(128_000))",
+          "console.log(`STDOUT_TAIL:${secret}`)",
+          "process.stderr.write('e'.repeat(128_000))",
+          "console.error(`STDERR_TAIL:${secret}`)",
+          'process.exit(23)',
+        ].join(';')],
+        outputEnvironment: 'TEST_OUTPUT',
+        environment: { FIXTURE_SECRET: secret },
+        copies: [],
+        outputRoutes: [{ kind: 'exact', pathname: '/unused.txt' }],
+      },
+    };
+
+    let failure: unknown;
+    try {
+      await prepareGeneratedInputs(repositoryRoot, frontendRoot, ['wallet'], [command]);
+    } catch (error: unknown) {
+      failure = error;
+    }
+
+    expect(failure).toBeInstanceOf(Error);
+    const message = failure instanceof Error ? failure.message : '';
+    expect(message).toContain('GENERATED_INPUT_COMMAND_FAILED:failing-command-fixture:23');
+    expect(message).toContain('STDOUT_TAIL:[REDACTED]');
+    expect(message).toContain('STDERR_TAIL:[REDACTED]');
+    expect(message).not.toContain(secret);
+    expect(message.length).toBeLessThanOrEqual(8_500);
+  });
+
   test('builds the canonical Runtime and Account worker bundles for both browser consumers', async () => {
     const { frontendRoot } = await createWorkspace();
     const runtimeDefinition = PREPARED_GENERATED_INPUTS.find(({ id }) => id === 'wallet-runtime-bundle');
