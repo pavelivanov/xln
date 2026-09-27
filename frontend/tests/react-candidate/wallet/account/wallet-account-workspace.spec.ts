@@ -211,6 +211,7 @@ test(
     await expect(starterBatch).toHaveCount(0);
 
     await page.getByLabel('Entity', { exact: true }).selectOption(disputeHub.entityId);
+    await page.getByLabel('Account', { exact: true }).selectOption(fixture.entityId);
     await expect(page.getByLabel('Account', { exact: true })).toHaveValue(fixture.entityId);
     await page.getByTestId('configure-tab-dispute').click();
     await expect(page.getByTestId('configure-dispute-evidence')).toContainText('non-starter role');
