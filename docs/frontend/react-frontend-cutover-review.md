@@ -1,6 +1,6 @@
 # React frontend cutover review
 
-Status: **T17 DONE; T18 DONE**
+Status: **T17 DONE; T18 DONE; post-rebase R06 VERIFIED**
 
 ## Authority and boundary
 
@@ -40,6 +40,27 @@ payments/markets, Runtime session/query ownership, graph/timeline, workspace,
 diagnostics and route/inventory assertions now target their React app,
 `frontend/bridges`, `frontend/packages/browser`,
 `frontend/packages/runtime-client` or `frontend/packages/ui` owner.
+
+## Post-rebase retirement correction
+
+The T17 statement that every file below `frontend/src` had been removed was
+true for source `66a5832312462d3152565374f6357c4969fb9052`, but it no longer
+described the post-rebase tree. Three post-manifest upstream additions restored
+`WalletPasswordForm.svelte`, `WalletUnlock.svelte`, and the
+`entity-panel-types.ts` re-export after the accepted 262-path inventory had
+been produced.
+
+R04 moved the password enrollment, unlock, recovery, and authority-revocation
+behavior to the canonical React wallet; its focused boundary completed 48/48
+tests before removal. Source `c3893eecd` then removed the three unconsumed
+files and made `check:no-legacy` reject every file beneath `frontend/src` with
+an explicitly empty allowlist. The focused policy regression passes against an
+empty tree and rejects a synthetic `frontend/src/resurrected.ts` fixture.
+
+The corrected retirement inventory contains **265 paths** with SHA-256
+`198a6bb0acccb8992c018ede51f34ed4d353e35fac05b900b670101c2c980566`.
+This correction does not reuse the historical source or release receipts;
+R08 must bind the repaired tree to one new exact source and release.
 
 ## T18 local certification
 

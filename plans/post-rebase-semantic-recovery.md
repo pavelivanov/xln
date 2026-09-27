@@ -134,7 +134,7 @@ Run from repository root unless a different cwd is shown.
 | R03 | Restore RPC-only scenario and jurisdiction selection | P1 | — | VERIFIED |
 | R04 | Restore React local-password enrollment, unlock, and lock | P0 | — | VERIFIED |
 | R05 | Resolve paired-daemon custody semantics | P1 | — | VERIFIED |
-| R06 | Finish Svelte retirement and harden the retirement gate | P1 | R04 | READY |
+| R06 | Finish Svelte retirement and harden the retirement gate | P1 | R04 | VERIFIED |
 | R07 | Characterize post-rebase generated-input failure diagnostics | P2 | — | READY |
 | R08 | Re-certify one exact source and release | P0 | R01–R06; R07 disposition | WAIT |
 | R09 | Produce the publication-readiness handoff | P0 | R08 | WAIT |
@@ -509,6 +509,21 @@ Steps:
 - `bun run check:no-legacy && bun run check:unused-surface` → pass.
 - Focused retirement tests → pass and fail when a temporary fixture is placed
   beneath `frontend/src`.
+
+**Implementation evidence (2026-09-27, source `c3893eecd`, Bun `1.4.0`):**
+
+- The R04 password/recovery boundary completed 48/48 tests with 183 assertions
+  before the two residual Svelte components were deleted; the residual entity
+  type re-export had no consumer.
+- `frontend/src` contains zero files. The retirement inventory now names all
+  265 removed paths and the cutover review records why the prior 262-path
+  receipt no longer described the post-rebase tree.
+- `bun test tests/frontend/tooling/frontend-retirement-gate.test.ts` → 2 pass,
+  0 fail; the second case creates and rejects a synthetic file beneath
+  `frontend/src` while the retired-tree allowlist remains empty.
+- `bun run check:no-legacy` → `NO_LEGACY_OK files=3794 allowlist=8`;
+  `bun run check:unused-surface` → zero new or stale debt; formatting and
+  `git diff --check` pass.
 
 ## R07 — Characterize generated-input failure diagnostics
 
