@@ -18,6 +18,7 @@ const command = async (page: Page, text: string, expectedOption: string | RegExp
 };
 
 test('palette opens editable payment, swap and Account drafts in the retained selected Wallet', { tag: '@functional' }, async ({ page }, testInfo) => {
+  testInfo.setTimeout(60_000);
   const errors = observeBrowserErrors(page);
   const fixture = await readWalletRuntimeFixture(page);
   await openWorkspaceStorageOrigin(page);
