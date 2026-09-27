@@ -172,21 +172,21 @@ test(
     await architect.getByLabel('Architect scenario').selectOption('ahb');
     await architect.getByRole('button', { name: 'Run scenario', exact: true }).click();
     // The full browser scenario remains bounded by this test and the outer process budget.
-    await expect(architect.getByText('ahb: 126 recorded network steps', { exact: true })).toBeVisible({
+    await expect(architect.getByText('ahb: 128 recorded network steps', { exact: true })).toBeVisible({
       timeout: 60_000,
     });
     await menu.selectOption('graph3d');
     const graph = page.getByTestId('workspace-graph');
     const timeline = page.getByTestId('workspace-network-timeline');
-    await expect(timeline.locator('output')).toContainText('1/126');
+    await expect(timeline.locator('output')).toContainText('1/128');
     await timeline.getByLabel('Network frame', { exact: true }).press('End');
-    await expect(timeline.locator('output')).toContainText('126/126');
-    await expect(graph).toHaveAttribute('data-selected-step-index', '125');
+    await expect(timeline.locator('output')).toContainText('128/128');
+    await expect(graph).toHaveAttribute('data-selected-step-index', '127');
     await expect(graph).toHaveAttribute('data-node-count', '4');
     await screenshotEvidence(page, testInfo, 'artifact-recorded-graph');
     await menu.selectOption('architect');
     await architect.getByRole('button', { name: 'Solvency', exact: true }).click();
-    await expect(architect.getByTestId('solvency-panel')).toContainText('Historical h126');
+    await expect(architect.getByTestId('solvency-panel')).toContainText('Historical h128');
     await expect(architect.getByTestId('solvency-asset').first()).toContainText('9,950,000,000,000');
     await screenshotEvidence(page, testInfo, 'artifact-recorded-solvency');
     await architect.getByRole('button', { name: 'Scenarios', exact: true }).click();
