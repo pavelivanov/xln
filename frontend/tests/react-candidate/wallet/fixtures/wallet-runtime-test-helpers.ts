@@ -103,6 +103,24 @@ export const createWalletDisputeFixture = async (page: Page, slot: string) => {
   return { entityId, name, height };
 };
 
+export const readWalletBatchPreflightFixture = async (page: Page) => {
+  const response = await page.request.post(walletFixtureUrl('/batch-preflight-fixture'));
+  expect(response.ok()).toBe(true);
+  const result: unknown = await response.json();
+  if (!result || typeof result !== 'object' || Array.isArray(result)) throw new Error('BATCH_PREFLIGHT_FIXTURE_INFO_INVALID');
+  const record = result as Record<string, unknown>;
+  const entityId = String(record['entityId'] || '').toLowerCase();
+  const counterpartyEntityId = String(record['counterpartyEntityId'] || '').toLowerCase();
+  const name = String(record['name'] || '');
+  const height = Number(record['height']);
+  if (!/^0x[0-9a-f]{64}$/.test(entityId)
+    || !/^0x[0-9a-f]{64}$/.test(counterpartyEntityId)
+    || !name || !Number.isSafeInteger(height)) {
+    throw new Error('BATCH_PREFLIGHT_FIXTURE_INFO_INVALID');
+  }
+  return { entityId, counterpartyEntityId, name, height };
+};
+
 export const drainWalletJWatcher = async (page: Page): Promise<number> => {
   const response = await page.request.post(walletFixtureUrl('/drain-j-watcher'));
   expect(response.ok()).toBe(true);

@@ -1,6 +1,8 @@
 import { expect, test } from '@playwright/test';
 import { expectNoBrowserErrors, expectPageContained, observeBrowserErrors, screenshotEvidence } from '../browser-evidence';
 import {
+  fundWalletDebtReserve,
+  readWalletBatchPreflightFixture,
   readWalletAccountToolState,
   seedWalletBatchPreflightDebt,
   readWalletDebtLedgerState,
@@ -73,29 +75,35 @@ test('wallet funds collateral through reviewed batch broadcast and real chain fi
   expect(settlement).toContain('c2r');
   await expectPageContained(page);
   await screenshotEvidence(page, testInfo, 'wallet-collateral-boundary');
+  await batch.getByRole('button', { name: 'Review clear' }).click();
+  await batch.getByRole('region', { name: 'Confirm clear batch' })
+    .getByRole('button', { name: 'Clear exact batch' }).click();
+  await expect(batch.getByText('No queued operations.')).toBeVisible({ timeout: 30_000 });
   expectNoBrowserErrors(errors);
 });
 
 test('wallet preflight blocks a reviewed batch made unsafe by new committed debt', { tag: '@functional' }, async ({ page }, testInfo) => {
   test.setTimeout(120_000);
   const errors = observeBrowserErrors(page);
-  const fixture = await selectWalletFixtureRuntime(page);
-  const ledger = await readWalletDebtLedgerState(page, fixture.entityId);
+  await selectWalletFixtureRuntime(page);
+  const isolated = await readWalletBatchPreflightFixture(page);
+  await fundWalletDebtReserve(page, isolated.entityId, 100_000_000n);
+  const ledger = await readWalletDebtLedgerState(page, isolated.entityId);
   const debt = ledger.debts.reduce((total, entry) => total + BigInt(entry.remainingAmount), 0n);
   const queuedAmount = BigInt(ledger.reserve) - debt - 1_000_000n;
   expect(queuedAmount).toBeGreaterThan(25_000_000n);
 
   await page.goto('/app?payments=1&paymentTool=operations');
   await expect(page.getByRole('heading', { name: 'Account operations' })).toBeVisible({ timeout: 90_000 });
-  await page.getByLabel('Entity', { exact: true }).selectOption(fixture.entityId);
-  await page.getByRole('combobox', { name: 'Recipient', exact: true }).selectOption(fixture.counterpartyEntityId);
+  await page.getByLabel('Entity', { exact: true }).selectOption(isolated.entityId);
+  await page.getByRole('combobox', { name: 'Recipient', exact: true }).selectOption(isolated.counterpartyEntityId);
   await page.getByRole('textbox', { name: 'Amount', exact: true }).fill(String(queuedAmount / 1_000_000n));
   await page.getByRole('button', { name: 'Queue reserve transfer' }).click();
   const batch = page.getByRole('region', { name: 'Jurisdiction batch' });
   await expect(batch.getByRole('heading', { name: 'Draft · 1 operations' })).toBeVisible({ timeout: 30_000 });
   await expect(batch.getByRole('button', { name: 'Broadcast draft' })).toBeEnabled();
 
-  await seedWalletBatchPreflightDebt(page, fixture.entityId, fixture.counterpartyEntityId, 25_000_000n);
+  await seedWalletBatchPreflightDebt(page, isolated.entityId, isolated.counterpartyEntityId, 25_000_000n);
   await expect(batch.getByRole('alert').filter({ hasText: 'Batch will revert: Reserve → Reserve' }))
     .toBeVisible({ timeout: 30_000 });
   await expect(batch.getByRole('button', { name: 'Broadcast draft' })).toBeDisabled();

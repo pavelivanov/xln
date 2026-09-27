@@ -64,11 +64,10 @@ export async function restoreLocalWallet(page: Page, backup?: 'hub-discovery' | 
       .toHaveAttribute('aria-checked', 'true', { timeout: 30_000 });
   } else {
     await page.getByRole('button', { name: 'Check recovery and open wallet' }).click();
-    await enrollLocalPassword(page);
   }
   await expect(page.getByRole('heading', { name: 'Choose a backup' })).toBeVisible({ timeout: 90_000 });
   await page.getByRole('button', { name: 'Restore selected backup' }).click();
-  if (backup) await enrollLocalPassword(page);
+  await enrollLocalPassword(page);
   await expect(page.getByRole('heading', { name: 'Wallet opened' })).toBeVisible({ timeout: 90_000 });
   return fixture;
 }

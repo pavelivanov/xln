@@ -23,6 +23,8 @@ const fixtureSignerIndex = (slot: string): string => {
     'mobile-390x844-debt',
     'laptop-1366x900-debt',
     'wide-1920x1080-debt',
+    'batch-preflight-debtor',
+    'batch-preflight-creditor',
     'mobile-390x844-ops-settlement',
     'laptop-1366x900-ops-settlement',
     'wide-1920x1080-ops-settlement',

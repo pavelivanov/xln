@@ -48,6 +48,7 @@ if (dbRootPath !== databaseRoot) throw new Error(`WALLET_FIXTURE_STORAGE_SCOPE_M
 const crypto = await import('../../../../../core/account/crypto');
 const accountConfig = await import('../../../../../core/account/config/dispute-config');
 const codec = await import('../../../../../core/api/runtime-adapter/codec');
+const { encodeUint512 } = await import('../../../../../core/protocol/crypto/abi-money');
 const adapterServer = await import('../../../../../core/api/runtime-adapter/server');
 const { drainJWatcherBacklog } = await import('../../../../../core/jurisdiction/adapter/operations/backlog-drain');
 const auth = await import('../../../../../core/api/runtime-adapter/security/auth');
@@ -60,7 +61,7 @@ const assistantUpstream = createAssistantUpstreamFixture();
 const assistantProxy = createAssistantProxyFromEnv();
 const scenario = await import('../../../../../core/scenarios/harness/boot');
 const { createJAdapter } = await import('../../../../../core/jurisdiction/adapter/kernel/factory');
-const { applyDebtCreated } = await import('../../../../../core/entity/tx/j-events-observations/debt');
+const { processEventBatch } = await import('../../../../../core/jurisdiction/adapter/watcher');
 
 await rm(databaseRoot, { recursive: true, force: true });
 await mkdir(databaseRoot, { recursive: true });
@@ -102,6 +103,26 @@ const config = {
   shares: { [runtimeId]: 1n },
   jurisdiction,
 };
+const batchPreflightChainAdapter = await createJAdapter({ mode: 'browservm', chainId: 31_338 });
+const batchPreflightJurisdictionName = 'Wallet Batch Preflight Fixture';
+const batchPreflightJurisdictionReplica = scenario.createJReplica(
+  env,
+  batchPreflightJurisdictionName,
+  batchPreflightChainAdapter.addresses.depository,
+);
+scenario.bindScenarioJReplica(env, batchPreflightJurisdictionReplica, batchPreflightChainAdapter);
+batchPreflightChainAdapter.startWatching(env);
+const batchPreflightConfig = {
+  ...config,
+  jurisdiction: scenario.createJurisdictionConfig(
+    batchPreflightJurisdictionName,
+    batchPreflightChainAdapter.addresses.depository,
+    batchPreflightChainAdapter.addresses.entityProvider,
+    'browservm://batch-preflight',
+    batchPreflightChainAdapter.chainId,
+  ),
+};
+env.activeJurisdiction = jurisdictionName;
 const entityId = runtime.generateLazyEntityId([runtimeId], 1n);
 const peerConfig = {
   ...config,
@@ -237,6 +258,7 @@ await waitForWalletFixtureState('market-open-order', () => {
   return hub?.state.orderbookExt?.books.get('1/2')?.orders.size === 1;
 });
 const advertisedEntityIds = new Set([entityId, counterpartyEntityId]);
+const syntheticJEventCounter = { value: 0 };
 const p2p = runtime.startP2P(env, {
   relayUrls: [],
   wsUrl: null,
@@ -257,6 +279,44 @@ const publishFixtureProfiles = async (entityIds: readonly string[], reason: stri
   p2p.updateConfig({ advertiseEntityIds: [...advertisedEntityIds] });
   await p2p.announceProfilesForEntitiesNow([...entityIds], reason, false);
 };
+const createBatchPreflightFixture = async () => {
+  const module = await import('./wallet-hub-discovery-fixture');
+  const debtor = await module.createWalletHubDiscoveryFixture(
+    env, batchPreflightConfig, commit, runtimeSeed, 'batch-preflight-debtor',
+  );
+  const creditor = await module.createWalletHubDiscoveryFixture(
+    env, batchPreflightConfig, commit, runtimeSeed, 'batch-preflight-creditor',
+  );
+  await commit({
+    runtimeTxs: [],
+    entityInputs: [{
+      entityId: debtor.entityId,
+      signerId: debtor.signerId,
+      entityTxs: [{
+        type: 'openAccount',
+        data: {
+          targetEntityId: creditor.entityId,
+          tokenId: 1,
+          creditAmount: 0n,
+          disputeConfig: accountConfig.defaultAccountDisputeConfigForParties(
+            debtor.entityId,
+            false,
+            creditor.entityId,
+            true,
+          ),
+        },
+      }],
+    }],
+  });
+  await waitForWalletFixtureState('Batch preflight Account', () =>
+    Boolean(readAccount(debtor.entityId, creditor.entityId))
+    && Boolean(readAccount(creditor.entityId, debtor.entityId)));
+  return { ...debtor, counterpartyEntityId: creditor.entityId };
+};
+let batchPreflightFixturePromise: ReturnType<typeof createBatchPreflightFixture> | null = null;
+const getBatchPreflightFixture = () => (
+  batchPreflightFixturePromise ??= createBatchPreflightFixture()
+);
 const token = auth.deriveRuntimeAdapterCapabilityToken(
   authSeed,
   'full',
@@ -454,6 +514,14 @@ server = Bun.serve<FixtureSocketData>({
       await publishFixtureProfiles([entityId, created.entityId], `wallet-dispute:${slot}`);
       return Response.json(created, { headers: apiHeaders });
     }
+    if (url.pathname === '/batch-preflight-fixture' && request.method === 'POST') {
+      const batchPreflightFixture = await getBatchPreflightFixture();
+      await publishFixtureProfiles(
+        [batchPreflightFixture.entityId, batchPreflightFixture.counterpartyEntityId],
+        'wallet-batch-preflight',
+      );
+      return Response.json(batchPreflightFixture, { headers: apiHeaders });
+    }
     if (url.pathname === '/drain-j-watcher' && request.method === 'POST') {
       await drainJWatcherBacklog(env, currentEnv => runtime.processRuntime(currentEnv));
       return Response.json({ height: env.state.height }, { headers: apiHeaders });
@@ -504,23 +572,40 @@ server = Bun.serve<FixtureSocketData>({
         (highest, debt) => Math.max(highest, debt.currentDebtIndex),
         -1,
       ) + 1;
-      const event = {
-        type: 'DebtCreated' as const,
-        blockNumber: env.state.height + 1,
-        transactionHash: `0x${(env.state.height + 1).toString(16).padStart(64, '0')}`,
-        data: { debtor, creditor, tokenId: 1, amount: amount.toString(), debtIndex },
-      };
-      for (const replica of env.state.eReplicas.values()) applyDebtCreated(replica.state, event);
-      await commit({
-        runtimeTxs: [],
-        entityInputs: [{
-          entityId: debtor,
-          signerId: debtorReplica.signerId,
-          entityTxs: [{
-            type: 'chatMessage',
-            data: { message: 'batch-preflight-debt-fixture', timestamp: env.state.timestamp },
-          }],
+      const batchPreflightFixture = await getBatchPreflightFixture();
+      if (debtor !== batchPreflightFixture.entityId) {
+        return new Response('Batch preflight debt Entity invalid', { status: 400, headers: apiHeaders });
+      }
+      const relevantReplicas = [...env.state.eReplicas.values()].filter(candidate =>
+        candidate.state.config.jurisdiction?.name === batchPreflightJurisdictionName);
+      const blockNumber = Math.max(...relevantReplicas.map(candidate => candidate.state.lastFinalizedJHeight)) + 1;
+      const blockHash = `0x${blockNumber.toString(16).padStart(64, '0')}`;
+      const transactionHash = `0x${(blockNumber + 1_000_000).toString(16).padStart(64, '0')}`;
+      const input = processEventBatch(
+        [{
+          name: 'DebtCreated',
+          args: { debtor, creditor, tokenId: 1, amount: encodeUint512(amount), debtIndex },
+          blockNumber,
+          blockHash,
+          transactionHash,
+          logIndex: 0,
         }],
+        env,
+        blockNumber,
+        blockHash,
+        syntheticJEventCounter,
+        'wallet-batch-preflight',
+        batchPreflightChainAdapter.addresses.depository,
+        false,
+        'synthetic',
+        batchPreflightChainAdapter.chainId,
+      );
+      if (!input) throw new Error('BATCH_PREFLIGHT_DEBT_EVENT_NOT_ENQUEUED');
+      await waitForWalletFixtureState('Batch preflight debt committed', () => {
+        const current = [...env.state.eReplicas.values()]
+          .find(candidate => candidate.state.entityId === debtor);
+        return [...(current?.state.outDebtsByToken?.get(1)?.values() ?? [])]
+          .some(debt => debt.currentDebtIndex === debtIndex && debt.remainingAmount === amount);
       });
       return Response.json({ height: env.state.height, debtIndex }, { headers: apiHeaders });
     }
@@ -991,6 +1076,7 @@ const stop = async (): Promise<void> => {
   await server.stop(true);
   if (dropdownFixture) await (await dropdownFixture).close();
   if (crossJFixture) await (await crossJFixture).close();
+  await batchPreflightChainAdapter.close();
   await chainAdapter.close();
   await recoveryFixture.close();
   await healthFixture?.close();
