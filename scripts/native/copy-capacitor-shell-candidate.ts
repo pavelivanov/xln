@@ -67,15 +67,13 @@ const capacitorPackage = async (): Promise<Record<string, unknown>> => {
 const runCapacitorCopy = (workspaceDirectory: string, platform: 'ios' | 'android'): void => {
   const result = spawnSync(CAPACITOR_EXECUTABLE, ['copy', platform], {
     cwd: workspaceDirectory,
-    encoding: 'utf8',
     env: { ...process.env, NO_UPDATE_NOTIFIER: '1' },
     shell: false,
+    stdio: 'inherit',
   });
   if (result.error) throw result.error;
   if (result.status !== 0) {
-    throw new Error(
-      `CAPACITOR_SHELL_COPY_FAILED:${platform}:${result.status ?? 'unknown'}\n${result.stdout}${result.stderr}`,
-    );
+    throw new Error(`CAPACITOR_SHELL_COPY_FAILED:${platform}:${result.status ?? 'unknown'}`);
   }
 };
 
