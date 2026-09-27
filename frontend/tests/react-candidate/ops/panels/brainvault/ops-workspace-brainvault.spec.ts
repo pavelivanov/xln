@@ -8,7 +8,10 @@ import {
 } from '../../../browser-evidence';
 import { installImportedRuntime, readWalletRuntimeFixture } from '../../../wallet/fixtures/wallet-runtime-test-helpers';
 import { WALLET_RECOVERY_FIXTURE_MNEMONIC } from '../../../wallet/fixtures/wallet-fixture-identities';
-import { finishOpenedWalletSetup } from '../../../wallet/onboarding/wallet-onboarding-test-helpers';
+import {
+  enrollLocalPassword,
+  finishOpenedWalletSetup,
+} from '../../../wallet/onboarding/wallet-onboarding-test-helpers';
 import { BRAINVAULT_NODE_OWNER_NAME, BRAINVAULT_NODE_OWNER_PASSPHRASE } from './brainvault-node-owner-fixture';
 
 test(
@@ -47,6 +50,7 @@ test(
     await expect(brainvault.getByRole('heading', { name: 'Choose a backup' })).toBeVisible({ timeout: 90_000 });
     await screenshotEvidence(page, testInfo, 'ops-brainvault-backup-choice');
     await brainvault.getByRole('button', { name: 'Restore selected backup' }).click();
+    await enrollLocalPassword(page);
     await expect(brainvault.getByRole('heading', { name: 'Wallet opened' })).toBeVisible({ timeout: 90_000 });
     await expect(page.getByTestId('ops-owner-unlock')).toHaveAttribute('data-runtime-status', 'ready');
     await page.getByRole('button', { name: 'Open Wallet panel', exact: true }).click();
