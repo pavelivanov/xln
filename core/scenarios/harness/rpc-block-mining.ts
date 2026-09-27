@@ -29,6 +29,11 @@ export type ExactUnixAdvanceResult = {
   advancedSeconds: number;
 };
 
+export type NextBlockUnixPinResult = {
+  startUnix: number;
+  targetUnix: number;
+};
+
 const parseRpcBlockNumber = (value: unknown): bigint => {
   if (typeof value === 'bigint' && value >= 0n) return value;
   if (typeof value === 'number' && Number.isSafeInteger(value) && value >= 0) return BigInt(value);
@@ -64,6 +69,20 @@ export const readRpcUnixSeconds = async (provider: RpcBlockMiningProvider): Prom
     throw new Error('RPC_LATEST_BLOCK_TIMESTAMP_MISSING');
   }
   return parseRpcUnixSeconds(block.timestamp);
+};
+
+/** Pin the next jurisdiction block without ever requesting a chain-time reversal. */
+export const pinRpcNextBlockUnix = async (
+  provider: RpcBlockMiningProvider,
+  requestedUnixSeconds: number,
+): Promise<NextBlockUnixPinResult> => {
+  if (!Number.isSafeInteger(requestedUnixSeconds) || requestedUnixSeconds < 0) {
+    throw new Error(`RPC_UNIX_TARGET_INVALID:${requestedUnixSeconds}`);
+  }
+  const startUnix = await readRpcUnixSeconds(provider);
+  const targetUnix = Math.max(requestedUnixSeconds, startUnix + 1);
+  await provider.send('evm_setNextBlockTimestamp', [targetUnix]);
+  return { startUnix, targetUnix };
 };
 
 /**

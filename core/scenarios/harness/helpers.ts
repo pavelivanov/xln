@@ -181,8 +181,11 @@ export const pinScenarioJurisdictionUnix = async (
     jadapter.setBlockTimestamp(env.state.timestamp || 0);
     return;
   }
-  await requireScenarioRpcSend(jadapter, 'SCENARIO_PIN_JURISDICTION_UNIX')
-    .send('evm_setNextBlockTimestamp', [target]);
+  const { pinRpcNextBlockUnix } = await import('./rpc-block-mining');
+  await pinRpcNextBlockUnix(
+    requireScenarioRpcSend(jadapter, 'SCENARIO_PIN_JURISDICTION_UNIX'),
+    target,
+  );
 };
 
 /** Latest jurisdiction clock in absolute unix seconds. */

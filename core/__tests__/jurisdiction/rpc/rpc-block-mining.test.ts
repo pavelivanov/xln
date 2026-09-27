@@ -2,6 +2,7 @@ import { describe, expect, test } from 'bun:test';
 import {
   advanceRpcToUnixSeconds,
   mineRpcToBlockExact,
+  pinRpcNextBlockUnix,
   readRpcUnixSeconds,
   requireRpcBlockMiningProvider,
 } from '../../../scenarios/harness/rpc-block-mining';
@@ -34,6 +35,7 @@ const createProvider = (startBlock: bigint, unsupported = new Set<string>()): Fa
         provider.block += 1n;
         return null;
       }
+      if (method === 'evm_setNextBlockTimestamp') return null;
       if (unsupported.has(method)) throw new Error(`unsupported:${method}`);
       if (method !== 'anvil_mine' && method !== 'hardhat_mine') throw new Error(`unexpected:${method}`);
       const quantity = params[0];
@@ -108,6 +110,25 @@ describe('exact RPC batch mining', () => {
 });
 
 describe('RPC unix dispute-clock advance', () => {
+  test('pins a future next block and advances repeated scenario runs without reversing chain time', async () => {
+    const provider = createProvider(3n);
+    provider.unix = 4_102_445_800;
+
+    expect(await pinRpcNextBlockUnix(provider, 4_102_500_000)).toEqual({
+      startUnix: 4_102_445_800,
+      targetUnix: 4_102_500_000,
+    });
+    provider.unix = 4_102_500_010;
+    expect(await pinRpcNextBlockUnix(provider, 4_102_500_000)).toEqual({
+      startUnix: 4_102_500_010,
+      targetUnix: 4_102_500_011,
+    });
+    expect(provider.calls.filter(({ method }) => method === 'evm_setNextBlockTimestamp')).toEqual([
+      { method: 'evm_setNextBlockTimestamp', params: [4_102_500_000] },
+      { method: 'evm_setNextBlockTimestamp', params: [4_102_500_011] },
+    ]);
+  });
+
   test('reads latest block.timestamp as unix seconds', async () => {
     const provider = createProvider(1n);
     provider.unix = 1_700_000_042;
