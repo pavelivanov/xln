@@ -1,7 +1,9 @@
 import { openWorkspaceStorageOrigin } from '../../browser-evidence';
 import { expect, test } from '@playwright/test';
 import { expectNoBrowserErrors, expectPageContained, observeBrowserErrors, readRecordedTimelinePosition, screenshotEvidence } from '../../browser-evidence';
-import { installImportedRuntime, readWalletRuntimeFixture } from '../../wallet/fixtures/wallet-runtime-test-helpers';
+import { installImportedRuntime, readWalletRuntimeFixture, resetScenarioRpc } from '../../wallet/fixtures/wallet-runtime-test-helpers';
+
+test.beforeEach(async ({ page }) => resetScenarioRpc(page));
 
 test('recorded Gossip and Entity panels follow scenario selection without a live Runtime', { tag: '@functional' }, async ({ page }, testInfo) => {
   testInfo.setTimeout(120_000);

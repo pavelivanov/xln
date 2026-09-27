@@ -313,6 +313,16 @@ const startDeploymentRpc = async (): Promise<string> => {
   }
   throw new Error('WALLET_RUNTIME_FIXTURE_ANVIL_READY_TIMEOUT');
 };
+const resetDeploymentRpc = async (): Promise<void> => {
+  const response = await fetch(await startDeploymentRpc(), {
+    method: 'POST', headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'anvil_reset', params: [] }),
+  });
+  const payload = await response.json() as { error?: unknown };
+  if (!response.ok || payload.error !== undefined) {
+    throw new Error(`WALLET_RUNTIME_FIXTURE_ANVIL_RESET_FAILED:${JSON.stringify(payload.error)}`);
+  }
+};
 const stackManager = createStackManagerController({ parseBody: request => request.json(), headers: { 'content-type': 'application/json', 'access-control-allow-origin': '*' } });
 const brainVaultOwner = createBrainVaultOwnerController({
   path: `${databaseRoot}/brainvault-owner.json`,
@@ -824,6 +834,10 @@ server = Bun.serve<FixtureSocketData>({
     }
     if (url.pathname === '/stack-manager-fixture') {
       return Response.json({ rpcUrl: await startDeploymentRpc(), chainId: 31_338 }, { headers: apiHeaders });
+    }
+    if (url.pathname === '/scenario-rpc-reset' && request.method === 'POST') {
+      await resetDeploymentRpc();
+      return Response.json({ reset: true }, { headers: apiHeaders });
     }
     if (url.pathname === '/isolated-recovery-tower-fixture') {
       const label = String(url.searchParams.get('label') || '');

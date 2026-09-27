@@ -11,7 +11,10 @@ import {
 import {
   installImportedRuntime,
   readWalletRuntimeFixture,
+  resetScenarioRpc,
 } from '../wallet/fixtures/wallet-runtime-test-helpers';
+
+test.beforeEach(async ({ page }) => resetScenarioRpc(page));
 
 test('ops candidate renders without browser errors', { tag: '@functional' }, async ({ page }, testInfo) => {
   const errors = observeBrowserErrors(page);

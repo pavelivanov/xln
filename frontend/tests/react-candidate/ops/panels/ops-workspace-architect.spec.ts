@@ -1,9 +1,11 @@
 import { openWorkspaceStorageOrigin } from '../../browser-evidence';
 import { expect, test, type WebSocket } from '@playwright/test';
 import { expectNoBrowserErrors, expectPageContained, observeBrowserErrors, readRecordedTimelinePosition, screenshotEvidence } from '../../browser-evidence';
-import { createIsolatedRecoveryTowerFixture, installImportedRuntime, readStackManagerRpcFixture, readWalletRuntimeFixture } from '../../wallet/fixtures/wallet-runtime-test-helpers';
+import { createIsolatedRecoveryTowerFixture, installImportedRuntime, readStackManagerRpcFixture, readWalletRuntimeFixture, resetScenarioRpc } from '../../wallet/fixtures/wallet-runtime-test-helpers';
 import { WALLET_RECOVERY_FIXTURE_MNEMONIC } from '../../wallet/fixtures/wallet-fixture-identities';
 import { installOpsOwnerMetadata } from '../owner/ops-owner-test-helpers';
+
+test.beforeEach(async ({ page }) => resetScenarioRpc(page));
 
 test('Architect records into shared playback and returns to the unchanged connected Wallet', { tag: '@functional' }, async ({ page }, testInfo) => {
   testInfo.setTimeout(120_000);

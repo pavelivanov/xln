@@ -1,6 +1,8 @@
 import { expect, test } from '@playwright/test';
 import { expectNoBrowserErrors, expectPageContained, observeBrowserErrors, openWorkspaceStorageOrigin, readRecordedTimelinePosition, screenshotEvidence } from '../browser-evidence';
-import { readWalletRuntimeFixture } from '../wallet/fixtures/wallet-runtime-test-helpers';
+import { readWalletRuntimeFixture, resetScenarioRpc } from '../wallet/fixtures/wallet-runtime-test-helpers';
+
+test.beforeEach(async ({ page }) => resetScenarioRpc(page));
 
 test('public embed retains the canonical full layout through focus, reload, internal inspection, and reset', { tag: '@functional' }, async ({ page }, testInfo) => {
   const errors = observeBrowserErrors(page);

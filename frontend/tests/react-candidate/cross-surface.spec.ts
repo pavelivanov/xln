@@ -6,7 +6,9 @@ import {
   observeBrowserErrors,
   screenshotEvidence,
 } from './browser-evidence';
-import { readWalletRuntimeFixture } from './wallet/fixtures/wallet-runtime-test-helpers';
+import { readWalletRuntimeFixture, resetScenarioRpc } from './wallet/fixtures/wallet-runtime-test-helpers';
+
+test.beforeEach(async ({ page }) => resetScenarioRpc(page));
 
 test('hub-collapse executes and reconstructs the wallet preview', { tag: '@resilience' }, async ({ page }, testInfo) => {
   test.setTimeout(120_000);

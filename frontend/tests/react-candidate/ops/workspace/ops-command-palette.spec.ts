@@ -1,7 +1,9 @@
 import { expect, test, type Page, type WebSocket } from '@playwright/test';
 import { expectNoBrowserErrors, expectPageContained, observeBrowserErrors, openWorkspaceStorageOrigin, readRecordedTimelinePosition, screenshotEvidence } from '../../browser-evidence';
-import { installImportedRuntime, readWalletRuntimeFixture } from '../../wallet/fixtures/wallet-runtime-test-helpers';
+import { installImportedRuntime, readWalletRuntimeFixture, resetScenarioRpc } from '../../wallet/fixtures/wallet-runtime-test-helpers';
 import { installOpsOwnerMetadata, unlockOpsOwnerVisibly } from '../owner/ops-owner-test-helpers';
+
+test.beforeEach(async ({ page }) => resetScenarioRpc(page));
 
 const command = async (page: Page, text: string, expectedOption: string | RegExp): Promise<void> => {
   await page.getByRole('button', { name: 'Open command palette', exact: true }).click();

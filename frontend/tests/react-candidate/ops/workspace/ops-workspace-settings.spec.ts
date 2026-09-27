@@ -2,6 +2,9 @@ import { openWorkspaceStorageOrigin } from '../../browser-evidence';
 import { expect, test } from '@playwright/test';
 import { expectNoBrowserErrors, expectPageContained, observeBrowserErrors, screenshotEvidence } from '../../browser-evidence';
 import { screenshotGraphEvidence } from '../../graph-evidence';
+import { resetScenarioRpc } from '../../wallet/fixtures/wallet-runtime-test-helpers';
+
+test.beforeEach(async ({ page }) => resetScenarioRpc(page));
 
 test('operator Settings save exact local policies and retain them across panel reopen', { tag: '@functional' }, async ({ page }, testInfo) => {
   testInfo.setTimeout(90_000);

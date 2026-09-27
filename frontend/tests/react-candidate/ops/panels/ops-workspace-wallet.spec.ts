@@ -5,7 +5,10 @@ import {
   createWalletCrossJFixture, createWalletDisputeFixture, installImportedRuntime,
   readWalletAccountToolState,
   readWalletCrossJState,
-  readWalletRuntimeFixture } from '../../wallet/fixtures/wallet-runtime-test-helpers';
+  readWalletRuntimeFixture,
+  resetScenarioRpc } from '../../wallet/fixtures/wallet-runtime-test-helpers';
+
+test.beforeEach(async ({ page }) => resetScenarioRpc(page));
 
 const openTool = async (wallet: Locator, id: string): Promise<void> => {
   const mobile = wallet.getByTestId('account-workspace-mobile-toggle');

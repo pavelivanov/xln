@@ -2,7 +2,9 @@ import { openWorkspaceStorageOrigin } from '../../browser-evidence';
 import { expect, test } from '@playwright/test';
 import { expectNoBrowserErrors, expectPageContained, observeBrowserErrors, screenshotEvidence } from '../../browser-evidence';
 import { screenshotGraphEvidence } from '../../graph-evidence';
-import { installImportedRuntime, readWalletRuntimeFixture } from '../../wallet/fixtures/wallet-runtime-test-helpers';
+import { installImportedRuntime, readWalletRuntimeFixture, resetScenarioRpc } from '../../wallet/fixtures/wallet-runtime-test-helpers';
+
+test.beforeEach(async ({ page }) => resetScenarioRpc(page));
 
 test('Graph3D shares the real Runtime and retains a replay timeline across close and reopen', { tag: '@functional' }, async ({ page }, testInfo) => {
   testInfo.setTimeout(120_000);

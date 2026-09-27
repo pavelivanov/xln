@@ -37,6 +37,17 @@ const walletFixtureUrl = (path: string): string => {
   return `http://127.0.0.1:${port}${path}`;
 };
 
+export const resetScenarioRpc = async (page: Page): Promise<void> => {
+  await expect.poll(async () => {
+    try {
+      const response = await page.request.post(walletFixtureUrl('/scenario-rpc-reset'));
+      return response.ok() && (await response.json() as { reset?: unknown }).reset === true;
+    } catch {
+      return false;
+    }
+  }, { timeout: 90_000, message: 'isolated scenario RPC reset' }).toBe(true);
+};
+
 export const readStackManagerRpcFixture = async (page: Page) => {
   const response = await page.request.get(walletFixtureUrl('/stack-manager-fixture'));
   expect(response.ok()).toBe(true);

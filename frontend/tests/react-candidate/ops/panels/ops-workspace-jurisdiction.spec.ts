@@ -1,8 +1,10 @@
 import { expect, test } from '@playwright/test';
 import { expectNoBrowserErrors, expectPageContained, observeBrowserErrors, readRecordedTimelinePosition, screenshotEvidence } from '../../browser-evidence';
-import { readWalletRuntimeFixture } from '../../wallet/fixtures/wallet-runtime-test-helpers';
+import { readWalletRuntimeFixture, resetScenarioRpc } from '../../wallet/fixtures/wallet-runtime-test-helpers';
 import { WALLET_RECOVERY_FIXTURE_MNEMONIC } from '../../wallet/fixtures/wallet-fixture-identities';
 import { installOpsOwnerMetadata } from '../owner/ops-owner-test-helpers';
+
+test.beforeEach(async ({ page }) => resetScenarioRpc(page));
 
 test('Jurisdiction preserves exact recorded observations across frame and Entity selection', { tag: '@functional' }, async ({ page }, testInfo) => {
   testInfo.setTimeout(120_000);

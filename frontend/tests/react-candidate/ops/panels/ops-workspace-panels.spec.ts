@@ -2,11 +2,13 @@ import { openWorkspaceStorageOrigin } from '../../browser-evidence';
 import { expect, test, type WebSocket } from '@playwright/test';
 
 import { expectNoBrowserErrors, expectPageContained, observeBrowserErrors, screenshotEvidence } from '../../browser-evidence';
-import { createIsolatedRecoveryTowerFixture, installImportedRuntime, readWalletRuntimeFixture } from '../../wallet/fixtures/wallet-runtime-test-helpers';
+import { createIsolatedRecoveryTowerFixture, installImportedRuntime, readWalletRuntimeFixture, resetScenarioRpc } from '../../wallet/fixtures/wallet-runtime-test-helpers';
 import { WALLET_RECOVERY_FIXTURE_MNEMONIC } from '../../wallet/fixtures/wallet-fixture-identities';
 import { installOpsOwnerMetadata } from '../owner/ops-owner-test-helpers';
 
 const securityIncidentFixtureUrl = '/__app/ops/src/testing/ops-runtime-security-incident-fixture.ts';
+
+test.beforeEach(async ({ page }) => resetScenarioRpc(page));
 
 test('workspace panels preserve unavailable Runtime state without opening a connection', { tag: '@resilience' }, async ({ page }, testInfo) => {
   const errors = observeBrowserErrors(page);
