@@ -28,7 +28,10 @@ const openRemoteOwnerHubPanel = async (page: Page, testInfo: TestInfo, purpose: 
 };
 
 const readSecondaryRuntime = async (page: Page) => {
-  const response = await page.request.post(`http://127.0.0.1:${fixturePort()}/account-dropdown-fixture`);
+  const response = await page.request.post(
+    `http://127.0.0.1:${fixturePort()}/account-dropdown-fixture`,
+    { timeout: 60_000 },
+  );
   expect(response.ok()).toBe(true);
   const result: unknown = await response.json();
   if (!result || typeof result !== 'object' || Array.isArray(result)) throw new Error('SECONDARY_RUNTIME_FIXTURE_INVALID');

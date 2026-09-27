@@ -422,7 +422,7 @@ const socketRuntime = (socket: ServerWebSocket<FixtureSocketData>) => {
 server = Bun.serve<FixtureSocketData>({
   hostname: '127.0.0.1',
   port,
-  idleTimeout: 30,
+  idleTimeout: 60,
   async fetch(request, bunServer) {
     const url = new URL(request.url);
     if (url.pathname === '/health-fixture/start' && request.method === 'POST') {

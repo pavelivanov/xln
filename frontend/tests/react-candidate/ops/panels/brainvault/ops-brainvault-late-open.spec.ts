@@ -96,7 +96,10 @@ for (const action of ['close', 'destination change', 'different Runtime selectio
           await expect(panel).toHaveAttribute('data-destination', 'remote');
         } else {
           const port = Number(process.env['XLN_REACT_WALLET_FIXTURE_PORT'] || 19092);
-          const response = await page.request.post(`http://127.0.0.1:${port}/account-dropdown-fixture`);
+          const response = await page.request.post(
+            `http://127.0.0.1:${port}/account-dropdown-fixture`,
+            { timeout: 60_000 },
+          );
           expect(response.ok()).toBe(true);
           const other = (await response.json()) as { runtimeId: string; wsUrl: string; token: string };
           expect(other.runtimeId).not.toBe(fixture.runtimeId);

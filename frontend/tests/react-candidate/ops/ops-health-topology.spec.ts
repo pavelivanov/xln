@@ -16,6 +16,7 @@ test(
     const port = Number(process.env['XLN_REACT_WALLET_FIXTURE_PORT'] || 19092);
     const dropdownResponse = await page.request.post(
       `http://127.0.0.1:${port}/account-dropdown-fixture`,
+      { timeout: 60_000 },
     );
     expect(dropdownResponse.ok()).toBe(true);
     const dropdown = await dropdownResponse.json() as {

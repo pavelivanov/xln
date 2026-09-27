@@ -11,12 +11,12 @@ test('Account dropdown lists every committed relationship and focuses an Account
   const errors = observeBrowserErrors(page);
   const fixture = await selectWalletFixtureRuntime(page);
   await page.goto('/app?portfolio=1');
+  const initialEntityId = await page.getByLabel('Entity', { exact: true }).inputValue();
   await page.getByLabel('Entity', { exact: true }).selectOption(fixture.entityId);
   await expect(walletPortfolioAccount(page, fixture.counterpartyEntityId)).toHaveCount(1);
-  const initialEntityId = await page.getByLabel('Entity', { exact: true }).inputValue();
   await expect(page.getByRole('button', { name: 'Select Account', exact: true })).toHaveCount(0);
   const port = Number(process.env['XLN_REACT_WALLET_FIXTURE_PORT'] || 19092);
-  const response = await page.request.post(`http://127.0.0.1:${port}/account-dropdown-fixture`);
+  const response = await page.request.post(`http://127.0.0.1:${port}/account-dropdown-fixture`, { timeout: 60_000 });
   expect(response.ok()).toBe(true);
   const value: unknown = await response.json();
   if (!value || typeof value !== 'object' || !('runtimeId' in value) || typeof value.runtimeId !== 'string'

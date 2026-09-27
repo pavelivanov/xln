@@ -30,22 +30,34 @@ export async function createAccountDropdownFixture(fixturePort: number) {
     await runtime.waitForRuntimeInputCommitted({ env, submitted, afterHeight,
       readPersistedFrame: height => runtime.readPersistedStorageFrameRecord(env, height), timeoutMs: 20_000 });
   };
+  const drain = async () => {
+    if (await runtime.waitForRuntimeWorkDrained(env, 30_000)) return;
+    const blocked = [...env.state.eReplicas.values()].filter(replica =>
+      replica.mempool.length > 0 || replica.proposal || replica.lockedFrame,
+    ).map(replica => ({ entityId: replica.state.entityId, mempool: replica.mempool.length,
+      proposal: Boolean(replica.proposal), lockedFrame: Boolean(replica.lockedFrame) }));
+    throw new Error(`ACCOUNT_DROPDOWN_FIXTURE_DRAIN_TIMEOUT:height=${env.state.height}`
+      + `:reason=${runtime.getRuntimeWorkReason(env) || 'blocked'}:replicas=${JSON.stringify(blocked)}`);
+  };
   await commit({ runtimeTxs: participants.map(peer => runtime.importEntity({
     entityId: peer.entityId, signerId: peer.signerId, entitySeed: `${seed}:${peer.name}`,
     data: { isProposer: true, profileName: peer.name, config: {
       mode: 'proposer-based', jurisdiction, validators: [peer.signerId], threshold: 1n, shares: { [peer.signerId]: 1n },
     } },
   })), entityInputs: [] });
-  await commit({ runtimeTxs: [], entityInputs: [{ entityId: owner.entityId, signerId: owner.signerId,
-    entityTxs: participants.slice(1).map(peer => ({ type: 'openAccount', data: {
-      targetEntityId: peer.entityId,
-      disputeConfig: defaultAccountDisputeConfigForParties(owner.entityId, false, peer.entityId, false),
-    } })),
-  }] });
-  if (!await runtime.waitForRuntimeWorkDrained(env, 30_000)) {
-    throw new Error(`ACCOUNT_DROPDOWN_FIXTURE_DRAIN_TIMEOUT:height=${env.state.height}`);
+  const peers = participants.slice(1);
+  // Bound each consensus wave so the 26 peer ACKs never collapse into one
+  // multi-second Runtime frame that outlives the fixture request deadline.
+  for (let offset = 0; offset < peers.length; offset += 4) {
+    await commit({ runtimeTxs: [], entityInputs: [{ entityId: owner.entityId, signerId: owner.signerId,
+      entityTxs: peers.slice(offset, offset + 4).map(peer => ({ type: 'openAccount', data: {
+        targetEntityId: peer.entityId,
+        disputeConfig: defaultAccountDisputeConfigForParties(owner.entityId, false, peer.entityId, false),
+      } })),
+    }] });
+    await drain();
   }
-  const missingPeers = participants.slice(1).filter(peer => {
+  const missingPeers = peers.filter(peer => {
     const replica = [...env.state.eReplicas.values()].find(item => item.state.entityId === peer.entityId);
     return !replica?.state.accounts.has(owner.entityId);
   });
