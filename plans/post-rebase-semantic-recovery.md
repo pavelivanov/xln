@@ -518,9 +518,10 @@ Steps:
 - `frontend/src` contains zero files. The retirement inventory now names all
   265 removed paths and the cutover review records why the prior 262-path
   receipt no longer described the post-rebase tree.
-- `bun test tests/frontend/tooling/frontend-retirement-gate.test.ts` → 2 pass,
-  0 fail; the second case creates and rejects a synthetic file beneath
-  `frontend/src` while the retired-tree allowlist remains empty.
+- `bun test tests/frontend/tooling/frontend-retirement-gate.test.ts` → 3 pass,
+  0 fail; the composed production policy rejects both a synthetic file beneath
+  `frontend/src` and a repository missing its required scan roots while the
+  retired-tree allowlist remains empty.
 - `bun run check:no-legacy` → `NO_LEGACY_OK files=3794 allowlist=8`;
   `bun run check:unused-surface` → zero new or stale debt; formatting and
   `git diff --check` pass.

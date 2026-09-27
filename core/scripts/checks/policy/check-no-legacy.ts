@@ -11,7 +11,7 @@
  * The allowlist is exact: a file path plus the literal substring that is
  * permitted in it. Widening it is a design decision, not a formatting fix.
  */
-import { existsSync, readdirSync, readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import { join, relative, sep } from 'node:path';
 import { FRONTEND_HANDWRITTEN_SOURCE_ROOTS } from '../../../../frontend/config/source-roots';
 import { assertRetiredFrontendSourceIsEmpty } from './retired-frontend-source';
@@ -158,15 +158,13 @@ const ALLOWLIST: readonly Allowance[] = [
 ];
 
 const listFiles = (directory: string): string[] =>
-  existsSync(directory)
-    ? readdirSync(directory, {
-        withFileTypes: true,
-      }).flatMap(entry => {
-        const path = join(directory, entry.name);
-        if (entry.isDirectory()) return listFiles(path);
-        return entry.isFile() && SCAN_EXTENSIONS.some(ext => path.endsWith(ext)) ? [path] : [];
-      })
-    : [];
+  readdirSync(directory, {
+    withFileTypes: true,
+  }).flatMap(entry => {
+    const path = join(directory, entry.name);
+    if (entry.isDirectory()) return listFiles(path);
+    return entry.isFile() && SCAN_EXTENSIONS.some(ext => path.endsWith(ext)) ? [path] : [];
+  });
 
 const repoRelativePath = (repositoryRoot: string, path: string): string =>
   relative(repositoryRoot, path).split(sep).join('/');
@@ -195,7 +193,7 @@ const scanForbiddenVocabulary = (repositoryRoot: string): { scanned: number; vio
   return { scanned, violations };
 };
 
-const checkNoLegacy = (repositoryRoot = process.cwd()): { scanned: number; allowlist: number } => {
+export const checkSourcePolicy = (repositoryRoot = process.cwd()): { scanned: number; allowlist: number } => {
   assertRetiredFrontendSourceIsEmpty(repositoryRoot);
   const { scanned, violations } = scanForbiddenVocabulary(repositoryRoot);
   if (violations.length > 0)
@@ -208,6 +206,6 @@ const checkNoLegacy = (repositoryRoot = process.cwd()): { scanned: number; allow
 };
 
 if (import.meta.main) {
-  const result = checkNoLegacy();
+  const result = checkSourcePolicy();
   console.log(`NO_LEGACY_OK files=${result.scanned} allowlist=${result.allowlist}`);
 }
