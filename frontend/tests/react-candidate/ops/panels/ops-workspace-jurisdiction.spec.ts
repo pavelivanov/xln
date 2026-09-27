@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { expectNoBrowserErrors, expectPageContained, observeBrowserErrors, screenshotEvidence } from '../../browser-evidence';
+import { expectNoBrowserErrors, expectPageContained, observeBrowserErrors, readRecordedTimelinePosition, screenshotEvidence } from '../../browser-evidence';
 import { readWalletRuntimeFixture } from '../../wallet/fixtures/wallet-runtime-test-helpers';
 import { WALLET_RECOVERY_FIXTURE_MNEMONIC } from '../../wallet/fixtures/wallet-fixture-identities';
 import { installOpsOwnerMetadata } from '../owner/ops-owner-test-helpers';
@@ -12,9 +12,11 @@ test('Jurisdiction preserves exact recorded observations across frame and Entity
   await expect(timeline.locator('output')).toContainText('1/', { timeout: 90_000 });
   const frame = timeline.getByLabel('Network frame', { exact: true });
   await frame.press('End');
+  const finalPosition = await readRecordedTimelinePosition(timeline);
+  expect(finalPosition.index).toBe(finalPosition.total);
   await page.getByRole('button', { name: 'Open Jurisdiction panel', exact: true }).click();
   const panel = page.getByTestId('workspace-jurisdiction');
-  await expect(panel).toContainText('Historical · Runtime h126');
+  await expect(panel).toContainText(`Historical · Runtime h${finalPosition.height}`);
   const observer = panel.getByLabel('Jurisdiction observing Entity');
   await expect(observer.locator('option')).toHaveCount(4);
   await observer.selectOption({ index: 1 });

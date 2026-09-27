@@ -1,4 +1,4 @@
-import { expect, type Page, type TestInfo } from '@playwright/test';
+import { expect, type Locator, type Page, type TestInfo } from '@playwright/test';
 
 export type BrowserErrors = Readonly<{
   consoleErrors: string[];
@@ -34,6 +34,15 @@ export const expectOnlyHttpFailures = (errors: BrowserErrors, status: number): v
 
 export const expectPageContained = async (page: Page): Promise<void> => {
   await expect.poll(() => page.evaluate(() => document.body.scrollWidth <= window.innerWidth)).toBe(true);
+};
+
+export const readRecordedTimelinePosition = async (
+  timeline: Locator,
+): Promise<Readonly<{ height: number; index: number; total: number }>> => {
+  const value = await timeline.locator('output').innerText();
+  const match = /^h(\d+) · (\d+)\/(\d+)$/.exec(value);
+  if (!match) throw new Error(`RECORDED_TIMELINE_POSITION_INVALID:${value}`);
+  return { height: Number(match[1]), index: Number(match[2]), total: Number(match[3]) };
 };
 
 const captureScreenshot = async (page: Page, path: string): Promise<Buffer> => {

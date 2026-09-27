@@ -15,6 +15,7 @@ import {
   getJAdapterMode,
   registerEntities,
   resolveScenarioBoardSigner,
+  resolveScenarioJurisdictionAddress,
 } from '../harness/boot';
 import {
   commitRuntimeInput,
@@ -90,7 +91,7 @@ export const formCompanyActors = async (env: RuntimeReplica): Promise<CompanySce
     jurisdictionName,
     jadapter.addresses.depository,
     jadapter.addresses.entityProvider,
-    jadapter.mode === 'browservm' ? 'browservm://' : process.env['ANVIL_RPC'],
+    resolveScenarioJurisdictionAddress(jadapter.mode),
     Number(jadapter.chainId),
   );
   const singles = await registerEntities(env, jadapter, [

@@ -1,6 +1,6 @@
 import { openWorkspaceStorageOrigin } from '../../browser-evidence';
 import { expect, test } from '@playwright/test';
-import { expectNoBrowserErrors, expectPageContained, observeBrowserErrors, screenshotEvidence } from '../../browser-evidence';
+import { expectNoBrowserErrors, expectPageContained, observeBrowserErrors, readRecordedTimelinePosition, screenshotEvidence } from '../../browser-evidence';
 import { installImportedRuntime, readWalletRuntimeFixture } from '../../wallet/fixtures/wallet-runtime-test-helpers';
 
 test('recorded Gossip and Entity panels follow scenario selection without a live Runtime', { tag: '@functional' }, async ({ page }, testInfo) => {
@@ -11,10 +11,12 @@ test('recorded Gossip and Entity panels follow scenario selection without a live
   await expect(timeline.locator('output')).toContainText('1/', { timeout: 90_000 });
   const range = timeline.getByLabel('Network frame', { exact: true });
   await range.press('End');
+  const finalPosition = await readRecordedTimelinePosition(timeline);
+  expect(finalPosition.index).toBe(finalPosition.total);
   await page.getByRole('button', { name: 'Open Gossip panel', exact: true }).click();
   const gossip = page.getByTestId('runtime-gossip-panel');
   await expect(gossip).toContainText('4 profiles');
-  await expect(gossip).toContainText('Historical Runtime · h126');
+  await expect(gossip).toContainText(`Historical Runtime · h${finalPosition.height}`);
   await gossip.getByRole('button', { name: /^Open Entity / }).first().click();
   const entity = page.locator('.workspace-entity-pane[data-entity-id]');
   await expect(entity.getByTestId('entity-workspace-shell')).toHaveAttribute('data-read-status', 'ready');
@@ -42,7 +44,7 @@ test('recorded Gossip and Entity panels follow scenario selection without a live
   const solvency = page.getByTestId('solvency-panel');
   await expect(solvency.getByTestId('solvency-status')).toHaveText('?ASSET CONSERVATION NOT VERIFIED');
   await expect(solvency.getByTestId('solvency-asset').first()).toBeVisible();
-  await expect(solvency).toContainText('Historical h126');
+  await expect(solvency).toContainText(`Historical h${finalPosition.height}`);
   await screenshotEvidence(page, testInfo, 'ops-recorded-solvency');
   await page.getByRole('button', { name: 'Open Runtime Diagnostics panel', exact: true }).click();
   const diagnostics = page.getByTestId('runtime-diagnostics-panel');

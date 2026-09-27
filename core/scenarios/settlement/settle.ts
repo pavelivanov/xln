@@ -15,7 +15,7 @@ import { defaultAccountDisputeConfigForParties } from '../../account/config/disp
 import type { SettlementDiff, SettlementOp } from '../../types/account';
 import { compileOps } from '../../protocol/settlement/operations';
 import { snap, enableStrictScenario, advanceScenarioTime, ensureSignerKeysFromSeed, getProcess, syncChain, findReplica, setScenarioStorageEnabled, converge, processUntil, processJEvents } from '../harness/helpers';
-import { bindScenarioJReplica, ensureJAdapter, getScenarioJAdapter, isScenarioJAdapterMissingError, createJReplica, createJurisdictionConfig, registerEntities } from '../harness/boot';
+import { bindScenarioJReplica, ensureJAdapter, getScenarioJAdapter, isScenarioJAdapterMissingError, createJReplica, createJurisdictionConfig, registerEntities, resolveScenarioJurisdictionAddress } from '../harness/boot';
 import type { JAdapter } from '../../jurisdiction/adapter/types';
 import { formatRuntime } from '../../qa/runtime-ascii';
 import { createGossipLayer } from '../../network/p2p/gossip';
@@ -125,7 +125,13 @@ export async function runSettleScenario(existingEnv?: RuntimeReplica): Promise<R
   // Initialize gossip
   env.gossip = createGossipLayer();
 
-  const jurisdiction = createJurisdictionConfig(JURISDICTION, jadapter.addresses.depository, jadapter.addresses.entityProvider);
+  const jurisdiction = createJurisdictionConfig(
+    JURISDICTION,
+    jadapter.addresses.depository,
+    jadapter.addresses.entityProvider,
+    resolveScenarioJurisdictionAddress(jadapter.mode),
+    Number(jadapter.chainId),
+  );
 
   // Register entities: Alice(signer=2) and Hub(signer=3)
   const registered = await registerEntities(env, jadapter, [

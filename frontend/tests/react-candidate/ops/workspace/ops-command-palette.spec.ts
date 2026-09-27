@@ -1,5 +1,5 @@
 import { expect, test, type Page, type WebSocket } from '@playwright/test';
-import { expectNoBrowserErrors, expectPageContained, observeBrowserErrors, openWorkspaceStorageOrigin, screenshotEvidence } from '../../browser-evidence';
+import { expectNoBrowserErrors, expectPageContained, observeBrowserErrors, openWorkspaceStorageOrigin, readRecordedTimelinePosition, screenshotEvidence } from '../../browser-evidence';
 import { installImportedRuntime, readWalletRuntimeFixture } from '../../wallet/fixtures/wallet-runtime-test-helpers';
 import { installOpsOwnerMetadata, unlockOpsOwnerVisibly } from '../owner/ops-owner-test-helpers';
 
@@ -86,10 +86,15 @@ test('palette opens editable payment, swap and Account drafts in the retained se
 
 test('public palette searches the recorded frame, preserves focus navigation, and rejects live drafts', { tag: '@functional' }, async ({ page }, testInfo) => {
   testInfo.setTimeout(120_000);
+  await readWalletRuntimeFixture(page);
   const errors = observeBrowserErrors(page);
   await page.goto('/embed?scenario=ahb');
   const timeline = page.getByTestId('workspace-network-timeline');
-  await expect(timeline.locator('output')).toContainText('1/126', { timeout: 90_000 });
+  const frame = timeline.getByLabel('Network frame', { exact: true });
+  await expect(frame).toBeEnabled({ timeout: 90_000 });
+  const recordedFrames = Number(await frame.getAttribute('max')) + 1;
+  expect(recordedFrames).toBeGreaterThan(1);
+  await expect.poll(() => readRecordedTimelinePosition(timeline)).toEqual({ height: 1, index: 1, total: recordedFrames });
   const entityId = await page.getByLabel('Graph Entity', { exact: true }).locator('option').nth(1).getAttribute('value');
   if (!entityId) throw new Error('SCENARIO_ENTITY_REQUIRED');
   await page.locator('.ops-workspace-toolbar > strong').click();

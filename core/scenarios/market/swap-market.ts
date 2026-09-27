@@ -28,6 +28,7 @@ import {
   ensureJAdapter,
   getJAdapterMode,
   registerEntities,
+  resolveScenarioJurisdictionAddress,
 } from '../harness/boot';
 import { findReplica, converge, assert, assertRuntimeIdle, processUntil, enableStrictScenario, ensureSignerKeysFromSeed, requireRuntimeSeed } from '../harness/helpers';
 import { createGossipLayer } from '../../network/p2p/gossip';
@@ -221,6 +222,8 @@ export async function swapMarket(env: RuntimeReplica): Promise<void> {
     'Market',
     jadapter.addresses.depository,
     jadapter.addresses.entityProvider,
+    resolveScenarioJurisdictionAddress(jadapter.mode),
+    Number(jadapter.chainId),
   );
   const registered = await registerEntities(
     env,
@@ -888,6 +891,8 @@ export async function swapMarketStress(env: RuntimeReplica): Promise<void> {
     'StressTest',
     jadapter.addresses.depository,
     jadapter.addresses.entityProvider,
+    resolveScenarioJurisdictionAddress(jadapter.mode),
+    Number(jadapter.chainId),
   );
   const registered = await registerEntities(
     env,

@@ -141,6 +141,7 @@ export async function runRebalanceScenario(env: RuntimeReplica): Promise<Runtime
     jadapter.addresses.depository,
     jadapter.addresses.entityProvider,
     resolveScenarioJurisdictionAddress(jMode),
+    Number(jadapter.chainId),
   );
 
   // ══════════════════════════════════════════════════════════════

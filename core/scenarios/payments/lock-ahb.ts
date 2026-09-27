@@ -20,7 +20,7 @@ import { defaultAccountDisputeConfigForParties } from '../../account/config/disp
 import type { EntityInput } from '../../entity/types';
 import type { JAdapter } from '../../jurisdiction/adapter/types';
 import { getProcess, processWithOffline, usd, snap, assertRuntimeIdle, enableStrictScenario, ensureSignerKeysFromSeed, requireRuntimeSeed, findReplica, assert, assertBilateralSync, getOffdelta, processJEvents, converge, syncChain, commitRuntimeInput, setScenarioStorageEnabled } from '../harness/helpers';
-import { bindScenarioJReplica, ensureJAdapter, registerEntities, createJReplica, createJurisdictionConfig, getScenarioJAdapter, isScenarioJAdapterMissingError, resolveScenarioBoardSigner } from '../harness/boot';
+import { bindScenarioJReplica, ensureJAdapter, registerEntities, createJReplica, createJurisdictionConfig, getScenarioJAdapter, isScenarioJAdapterMissingError, resolveScenarioBoardSigner, resolveScenarioJurisdictionAddress } from '../harness/boot';
 import { formatRuntime } from '../../qa/runtime-ascii';
 import { isLeftEntity } from '../../account/utils';
 import { ethers } from 'ethers';
@@ -99,6 +99,8 @@ export async function lockAhb(env: RuntimeReplica): Promise<void> {
         env.activeJurisdiction || 'AHB Demo',
         jadapter.addresses.depository,
         jadapter.addresses.entityProvider,
+        resolveScenarioJurisdictionAddress(jadapter.mode),
+        Number(jadapter.chainId),
       );
     } catch (error) {
       if (!isScenarioJAdapterMissingError(error)) throw error;
@@ -115,6 +117,8 @@ export async function lockAhb(env: RuntimeReplica): Promise<void> {
         jReplicaName,
         jadapter.addresses.depository,
         jadapter.addresses.entityProvider,
+        resolveScenarioJurisdictionAddress(jadapter.mode),
+        Number(jadapter.chainId),
       );
     }
 

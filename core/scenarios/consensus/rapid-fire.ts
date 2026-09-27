@@ -26,6 +26,7 @@ import {
   createJReplica,
   createJurisdictionConfig,
   registerEntities,
+  resolveScenarioJurisdictionAddress,
 } from '../harness/boot';
 import { getOffdelta, converge, assert, enableStrictScenario, ensureSignerKeysFromSeed, requireRuntimeSeed } from '../harness/helpers';
 import { DEFAULT_TOKENS } from '../../jurisdiction/machine/config/default-tokens';
@@ -77,6 +78,8 @@ export async function rapidFire(env: RuntimeReplica): Promise<void> {
     'RapidFire',
     jadapter.addresses.depository,
     jadapter.addresses.entityProvider,
+    resolveScenarioJurisdictionAddress(jadapter.mode),
+    Number(jadapter.chainId),
   );
   bindScenarioJReplica(
     env,

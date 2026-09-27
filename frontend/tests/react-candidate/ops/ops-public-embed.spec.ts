@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
-import { expectNoBrowserErrors, expectPageContained, observeBrowserErrors, openWorkspaceStorageOrigin, screenshotEvidence } from '../browser-evidence';
+import { expectNoBrowserErrors, expectPageContained, observeBrowserErrors, openWorkspaceStorageOrigin, readRecordedTimelinePosition, screenshotEvidence } from '../browser-evidence';
+import { readWalletRuntimeFixture } from '../wallet/fixtures/wallet-runtime-test-helpers';
 
 test('public embed retains the canonical full layout through focus, reload, internal inspection, and reset', { tag: '@functional' }, async ({ page }, testInfo) => {
   const errors = observeBrowserErrors(page);
@@ -59,6 +60,7 @@ test('public embed retains the canonical full layout through focus, reload, inte
 
 test('public embed autoplay advances the real recording and pauses on explicit frame selection', { tag: '@functional' }, async ({ page }, testInfo) => {
   testInfo.setTimeout(120_000);
+  await readWalletRuntimeFixture(page);
   const errors = observeBrowserErrors(page);
   await page.goto('/embed?scenario=ahb&autoplay=1&speed=4');
   await expect(page).toHaveTitle('xln — ahb scenario');
@@ -72,7 +74,9 @@ test('public embed autoplay advances the real recording and pauses on explicit f
   await expect(frame).toBeFocused();
   await frame.press('Home');
   await expect(timeline.getByRole('button', { name: 'Play', exact: true })).toBeVisible();
-  await expect(timeline.locator('output')).toContainText('1/126');
+  const recordedFrames = Number(await frame.getAttribute('max')) + 1;
+  expect(recordedFrames).toBeGreaterThan(1);
+  await expect.poll(() => readRecordedTimelinePosition(timeline)).toEqual({ height: 1, index: 1, total: recordedFrames });
   await screenshotEvidence(page, testInfo, 'ops-embed-autoplay-paused');
   await expectPageContained(page);
   expectNoBrowserErrors(errors);

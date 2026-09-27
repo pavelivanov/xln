@@ -651,9 +651,9 @@ export function bindScenarioJReplica(env: RuntimeReplica, replica: JReplica, ada
 export function createJurisdictionConfig(
   name: string,
   depositoryAddress: string,
-  entityProviderAddress: string = '0x0000000000000000000000000000000000000000',
-  address: string = 'browservm://',
-  chainId: number = 31337,
+  entityProviderAddress: string,
+  address: string,
+  chainId: number,
   // Cross-j derives wall-clock dispute deadlines from the settlement chain's
   // signed account clock (`committedCrossJSourceResponseWindowMs`), and the real
   // jurisdiction loader requires the field. Omitting it here left scenario

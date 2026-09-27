@@ -27,6 +27,7 @@ import {
   createJReplica,
   bindScenarioJReplica,
   createJurisdictionConfig,
+  resolveScenarioJurisdictionAddress,
   createGridEntities,
   createNumberedEntity,
 } from '../harness/boot';
@@ -147,7 +148,13 @@ export async function grid(env: RuntimeReplica): Promise<void> {
     jadapter.startWatching(env);
   }
 
-  const jurisdiction = createJurisdictionConfig('Grid Demo', jadapter.addresses.depository);
+  const jurisdiction = createJurisdictionConfig(
+    'Grid Demo',
+    jadapter.addresses.depository,
+    jadapter.addresses.entityProvider,
+    resolveScenarioJurisdictionAddress(jadapter.mode),
+    Number(jadapter.chainId),
+  );
 
   await pushSnapshot(env, 'INIT', 'J-Machine initialized');
 

@@ -25,7 +25,7 @@ import { getLiveJAdapterEntries } from '../../runtime/j-submit/live-jadapters';
 import type { EntityInput } from '../../entity/types';
 import { ethers } from 'ethers';
 import { getBestAsk, getStaticSwapTokenDimensions, SWAP_LOT_SCALE } from '../../orderbook';
-import { bindScenarioJReplica, ensureJAdapter, getScenarioJAdapter, isScenarioJAdapterMissingError, createJReplica, createJurisdictionConfig } from '../harness/boot';
+import { bindScenarioJReplica, ensureJAdapter, getScenarioJAdapter, isScenarioJAdapterMissingError, createJReplica, createJurisdictionConfig, resolveScenarioJurisdictionAddress } from '../harness/boot';
 import type { JAdapter } from '../../jurisdiction/adapter/types';
 import { formatRuntime } from '../../qa/runtime-ascii';
 import {
@@ -286,7 +286,13 @@ export async function swap(env: RuntimeReplica): Promise<void> {
     );
     jadapter.startWatching(env);
   }
-  const jurisdiction = createJurisdictionConfig('Swap Demo', jadapter.addresses.depository, jadapter.addresses.entityProvider);
+  const jurisdiction = createJurisdictionConfig(
+    'Swap Demo',
+    jadapter.addresses.depository,
+    jadapter.addresses.entityProvider,
+    resolveScenarioJurisdictionAddress(jadapter.mode),
+    Number(jadapter.chainId),
+  );
   console.log('✅ JAdapter J-Machine created\n');
 
   // ============================================================================

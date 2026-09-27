@@ -10,6 +10,7 @@ import {
   createJurisdictionConfig,
   getScenarioJAdapter,
   registerEntities,
+  resolveScenarioJurisdictionAddress,
 } from '../harness/boot';
 import { withDeterministicHtlcTestSecret } from '../../protocol/htlc/test-secret-capability';
 import { quoteHtlcPaymentRoute } from '../../pathfinding/htlc-quote';
@@ -95,6 +96,8 @@ export async function createEconomy(
     config.jurisdictionName,
     jadapter.addresses.depository,
     jadapter.addresses.entityProvider,
+    resolveScenarioJurisdictionAddress(jadapter.mode),
+    Number(jadapter.chainId),
   );
   const registered = await registerEntities(
     env,
