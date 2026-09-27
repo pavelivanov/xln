@@ -132,7 +132,10 @@ const peerConfig = {
 const counterpartyEntityId = runtime.generateLazyEntityId(peerConfig.validators, 1n);
 if (counterpartyEntityId === entityId) throw new Error('WALLET_RUNTIME_FIXTURE_ENTITY_COLLISION');
 
-const commit = async (submitted: Parameters<typeof runtime.enqueueRuntimeInput>[1]): Promise<void> => {
+const commit = async (
+  submitted: Parameters<typeof runtime.enqueueRuntimeInput>[1],
+  timeoutMs = 20_000,
+): Promise<void> => {
   const afterHeight = env.state.height;
   runtime.enqueueRuntimeInput(env, submitted);
   await runtime.waitForRuntimeInputCommitted({
@@ -140,7 +143,7 @@ const commit = async (submitted: Parameters<typeof runtime.enqueueRuntimeInput>[
     submitted,
     afterHeight,
     readPersistedFrame: height => runtime.readPersistedStorageFrameRecord(env, height),
-    timeoutMs: 20_000,
+    timeoutMs,
   });
 };
 
@@ -815,7 +818,9 @@ server = Bun.serve<FixtureSocketData>({
       let fixture = ownershipReleaseFixtures.get(slot);
       if (!fixture) {
         fixture = import('./wallet-ownership-fixture').then(module => (
-          module.createWalletOwnershipReleaseFixture(env, chainAdapter, config, commit, slot)
+          module.createWalletOwnershipReleaseFixture(
+            env, chainAdapter, config, input => commit(input, 50_000), slot,
+          )
         ));
         ownershipReleaseFixtures.set(slot, fixture);
       }

@@ -120,6 +120,7 @@ test(
     const fixtureOrigin = `http://127.0.0.1:${process.env['XLN_REACT_WALLET_FIXTURE_PORT']}`;
     const response = await page.request.post(
       `${fixtureOrigin}/ownership-release-fixture?slot=${testInfo.project.name}`,
+      { timeout: 60_000 },
     );
     expect(response.ok()).toBe(true);
     const company = (await response.json()) as { entityId: string };

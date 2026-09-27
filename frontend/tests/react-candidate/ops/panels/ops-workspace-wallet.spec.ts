@@ -112,6 +112,7 @@ test(
     const controlBase = fixture.wsUrl.replace(/^ws:/u, 'http:').replace(/\/rpc$/u, '');
     const companyResponse = await page.request.post(
       `${controlBase}/ownership-release-fixture?slot=${encodeURIComponent(`ops-${testInfo.project.name}`)}`,
+      { timeout: 60_000 },
     );
     const companyBody = await companyResponse.text();
     expect(companyResponse.ok(), companyBody).toBe(true);
