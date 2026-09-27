@@ -275,6 +275,7 @@ export type WalletRuntimeFixtureInfo = Readonly<{
   walletSeed: string;
   wsUrl: string;
   token: string;
+  profile: Readonly<{ name: string; bio: string; website: string }>;
   recovery: Readonly<{
     backupFileContents: string;
     hubDiscovery: Readonly<{ backupFileContents: string; hubEntityId: string; towerUrl: string }>;
@@ -323,6 +324,14 @@ export const readWalletRuntimeFixture = async (page: Page): Promise<WalletRuntim
   const walletSeed = String(info['walletSeed'] || '').trim();
   const wsUrl = String(info['wsUrl'] || '').trim();
   const token = String(info['token'] || '').trim();
+  const profile = info['profile'];
+  if (!profile || typeof profile !== 'object' || Array.isArray(profile)) {
+    throw new Error('WALLET_RUNTIME_FIXTURE_PROFILE_INVALID');
+  }
+  const profileInfo = profile as Record<string, unknown>;
+  const profileName = String(profileInfo['name'] || '');
+  const profileBio = String(profileInfo['bio'] || '');
+  const profileWebsite = String(profileInfo['website'] || '');
   const recovery = info['recovery'];
   if (!recovery || typeof recovery !== 'object' || Array.isArray(recovery)) {
     throw new Error('WALLET_RECOVERY_FIXTURE_INFO_INVALID');
@@ -411,6 +420,7 @@ export const readWalletRuntimeFixture = async (page: Page): Promise<WalletRuntim
     walletSeed,
     wsUrl,
     token,
+    profile: { name: profileName, bio: profileBio, website: profileWebsite },
     recovery: {
       backupFileContents: recoveryBackupFileContents,
       hubDiscovery: { hubEntityId, backupFileContents: hubBackup, towerUrl: hubTowerUrl },

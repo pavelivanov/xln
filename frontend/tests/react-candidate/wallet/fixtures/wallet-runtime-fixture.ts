@@ -1042,6 +1042,9 @@ server = Bun.serve<FixtureSocketData>({
       });
     }
     if (url.pathname === '/info') {
+      const primary = [...env.state.eReplicas.values()]
+        .find((replica) => replica.state.entityId === entityId);
+      if (!primary) throw new Error('WALLET_FIXTURE_ENTITY_MISSING');
       return Response.json({
         runtimeId,
         entityId,
@@ -1051,6 +1054,11 @@ server = Bun.serve<FixtureSocketData>({
         walletSeed: runtimeSeed,
         wsUrl: `ws://127.0.0.1:${server.port}/rpc`,
         token,
+        profile: {
+          name: primary.state.profile.name,
+          bio: primary.state.profile.bio,
+          website: primary.state.profile.website,
+        },
         recovery: {
           backupFileContents: recoveryFixture.backupFileContents,
           entityId: recoveryFixture.entityId,

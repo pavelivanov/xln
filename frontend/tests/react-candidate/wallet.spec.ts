@@ -378,8 +378,12 @@ test('address route selects an imported Runtime and renders committed directory,
   await screenshotEvidence(page, testInfo, 'wallet-address-history-populated');
 
   await page.getByRole('button', { name: 'Overview' }).click();
-  await expect(page.getByText('Committed by the isolated candidate Runtime.')).toBeVisible();
-  await expect(page.getByText('https://xln.finance')).toBeVisible();
+  const overview = page.getByTestId('wallet-address-overview');
+  const profileFact = (label: string) => overview.locator('dl > div').filter({
+    has: page.getByText(label, { exact: true }),
+  }).locator('dd');
+  await expect(profileFact('Bio')).toHaveText(fixture.profile.bio || 'Not published');
+  await expect(profileFact('Website')).toHaveText(fixture.profile.website || 'Not published');
   await expectPageContained(page);
   await screenshotEvidence(page, testInfo, 'wallet-address-detail-populated');
 
