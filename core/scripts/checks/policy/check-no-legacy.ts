@@ -11,9 +11,10 @@
  * The allowlist is exact: a file path plus the literal substring that is
  * permitted in it. Widening it is a design decision, not a formatting fix.
  */
-import { readdirSync, readFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
+import { join, relative, sep } from 'node:path';
 import { FRONTEND_HANDWRITTEN_SOURCE_ROOTS } from '../../../../frontend/config/source-roots';
+import { assertRetiredFrontendSourceIsEmpty } from './retired-frontend-source';
 
 type Allowance = {
   /** Exact repo-relative path. */
@@ -57,6 +58,7 @@ const SCAN_EXTENSIONS = [
   '.yml',
   '.yaml',
 ] as const;
+
 const SKIP_PATH_FRAGMENTS = [
   '/generated/',
   '/node_modules/',
@@ -155,40 +157,57 @@ const ALLOWLIST: readonly Allowance[] = [
   },
 ];
 
-const listFiles = (directory: string): string[] => readdirSync(directory, {
-  withFileTypes: true,
-}).flatMap(entry => {
-  const path = join(directory, entry.name);
-  if (entry.isDirectory()) return listFiles(path);
-  return entry.isFile() && SCAN_EXTENSIONS.some(ext => path.endsWith(ext)) ? [path] : [];
-});
+const listFiles = (directory: string): string[] =>
+  existsSync(directory)
+    ? readdirSync(directory, {
+        withFileTypes: true,
+      }).flatMap(entry => {
+        const path = join(directory, entry.name);
+        if (entry.isDirectory()) return listFiles(path);
+        return entry.isFile() && SCAN_EXTENSIONS.some(ext => path.endsWith(ext)) ? [path] : [];
+      })
+    : [];
+
+const repoRelativePath = (repositoryRoot: string, path: string): string =>
+  relative(repositoryRoot, path).split(sep).join('/');
 
 const isAllowed = (file: string, line: string): boolean =>
   ALLOWLIST.some(entry => entry.file === file && line.includes(entry.match));
 
-const violations: string[] = [];
-let scanned = 0;
-
-for (const root of SCAN_ROOTS) {
-  for (const path of listFiles(root)) {
-    const rootedPath = `/${path.replace(/^\/+/, '')}`;
-    if (SKIP_PATH_FRAGMENTS.some(fragment => rootedPath.includes(fragment))) continue;
-    scanned += 1;
-    const lines = readFileSync(path, 'utf8').split('\n');
-    lines.forEach((line, index) => {
-      const pattern = FORBIDDEN.find(rule => rule.test(line));
-      if (!pattern || isAllowed(path, line)) return;
-      violations.push(`${path}:${index + 1}: ${line.trim()}`);
-    });
+const scanForbiddenVocabulary = (repositoryRoot: string): { scanned: number; violations: string[] } => {
+  const violations: string[] = [];
+  let scanned = 0;
+  for (const root of SCAN_ROOTS) {
+    for (const absolutePath of listFiles(join(repositoryRoot, root))) {
+      const path = repoRelativePath(repositoryRoot, absolutePath);
+      const rootedPath = `/${path.replace(/^\/+/, '')}`;
+      if (SKIP_PATH_FRAGMENTS.some(fragment => rootedPath.includes(fragment))) continue;
+      scanned += 1;
+      readFileSync(absolutePath, 'utf8')
+        .split('\n')
+        .forEach((line, index) => {
+          const pattern = FORBIDDEN.find(rule => rule.test(line));
+          if (!pattern || isAllowed(path, line)) return;
+          violations.push(`${path}:${index + 1}: ${line.trim()}`);
+        });
+    }
   }
-}
+  return { scanned, violations };
+};
 
-if (violations.length > 0) {
-  throw new Error(
-    'NO_LEGACY_VIOLATION: first-party source may not carry compatibility vocabulary.\n' +
-    'Delete the second code path, or add an exact allowlist entry with a reason.\n' +
-    violations.join('\n'),
-  );
-}
+const checkNoLegacy = (repositoryRoot = process.cwd()): { scanned: number; allowlist: number } => {
+  assertRetiredFrontendSourceIsEmpty(repositoryRoot);
+  const { scanned, violations } = scanForbiddenVocabulary(repositoryRoot);
+  if (violations.length > 0)
+    throw new Error(
+      'NO_LEGACY_VIOLATION: first-party source may not carry compatibility vocabulary.\n' +
+        'Delete the second code path, or add an exact allowlist entry with a reason.\n' +
+        violations.join('\n'),
+    );
+  return { scanned, allowlist: ALLOWLIST.length };
+};
 
-console.log(`NO_LEGACY_OK files=${scanned} allowlist=${ALLOWLIST.length}`);
+if (import.meta.main) {
+  const result = checkNoLegacy();
+  console.log(`NO_LEGACY_OK files=${result.scanned} allowlist=${result.allowlist}`);
+}

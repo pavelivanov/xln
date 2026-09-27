@@ -30,6 +30,7 @@ frontend/src/lib/components/Entity/assets/DebtPanel.svelte
 frontend/src/lib/components/Entity/assets/EntityAssetsTab.svelte
 frontend/src/lib/components/Entity/assets/debt-enforce-request.ts
 frontend/src/lib/components/Entity/core/embedded-runtime-context.ts
+frontend/src/lib/components/Entity/core/entity-panel-types.ts
 frontend/src/lib/components/Entity/core/runtime-frame-context.ts
 frontend/src/lib/components/Entity/onboarding/HubDiscoveryPanel.svelte
 frontend/src/lib/components/Entity/onboarding/OnboardingPanel.svelte
@@ -135,6 +136,8 @@ frontend/src/lib/components/Trading/OrderbookPanel.svelte
 frontend/src/lib/components/UI/Dropdown.svelte
 frontend/src/lib/components/Views/DocsView.svelte
 frontend/src/lib/components/Views/RuntimeCreation.svelte
+frontend/src/lib/components/Views/WalletPasswordForm.svelte
+frontend/src/lib/components/Views/WalletUnlock.svelte
 frontend/src/lib/components/Views/runtime-creation-model.ts
 frontend/src/lib/components/Views/runtime-creation.css
 frontend/src/lib/components/XlnMascot/XlnMascot.svelte
