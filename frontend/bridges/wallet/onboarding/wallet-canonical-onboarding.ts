@@ -22,7 +22,11 @@ import { buildOnboardingRuntimeViewProjection } from '../onboarding/onboarding-r
 import { createOnboardingHubJoinCommands } from '../onboarding/onboarding-hub-join';
 import { finishOnboardingSetup } from '../../../packages/browser/src/onboarding/onboarding-setup';
 import { hasAnyOnboardingCounterpartyAccount, resolveOnboardingTargets } from '../onboarding/onboarding-targets';
-import { readAnyOnboardingComplete, writeOnboardingCompleteForEntities } from '../../../packages/browser/src/onboarding/onboarding-state';
+import {
+  readAnyOnboardingComplete,
+  subscribeOnboardingCompletion,
+  writeOnboardingCompleteForEntities,
+} from '../../../packages/browser/src/onboarding/onboarding-state';
 import { readHubJoinPreference, readSavedCollateralPolicy } from '../../../packages/browser/src/onboarding/onboarding-preferences';
 import { saveCanonicalWalletRecoveryServices } from '../canonical/wallet-canonical-recovery-services';
 
@@ -154,6 +158,7 @@ export const subscribeCanonicalWalletOnboarding = (
   const releases = [
     activeRuntime.subscribe(publish), xlnEnvironment.subscribe(publish),
     runtimeView.subscribe(publish), subscribeWalletLocalLauncherOnboarding(publish),
+    subscribeOnboardingCompletion(publish),
   ];
   return () => releases.forEach(release => release());
 };

@@ -1,4 +1,5 @@
 const ONBOARDING_COMPLETE_PREFIX = 'xln-onboarding-complete:';
+const ONBOARDING_COMPLETE_EVENT = 'xln:onboarding-complete';
 
 const normalizeEntityId = (entityId: string): string =>
   String(entityId || '').trim().toLowerCase();
@@ -18,11 +19,14 @@ export const writeOnboardingComplete = (entityId: string, complete = true): void
   const normalized = normalizeEntityId(entityId);
   if (!normalized) return;
   const key = getOnboardingCompleteKey(normalized);
+  const before = localStorage.getItem(key) === 'true';
+  if (before === complete) return;
   if (complete) {
     localStorage.setItem(key, 'true');
   } else {
     localStorage.removeItem(key);
   }
+  if (typeof window !== 'undefined') window.dispatchEvent(new Event(ONBOARDING_COMPLETE_EVENT));
 };
 
 export const writeOnboardingCompleteForEntities = (entityIds: string[], complete = true): void => {
@@ -31,3 +35,9 @@ export const writeOnboardingCompleteForEntities = (entityIds: string[], complete
 
 export const readAnyOnboardingComplete = (entityIds: string[]): boolean =>
   entityIds.some((entityId) => readOnboardingComplete(entityId));
+
+export const subscribeOnboardingCompletion = (listener: () => void): (() => void) => {
+  if (typeof window === 'undefined') return () => {};
+  window.addEventListener(ONBOARDING_COMPLETE_EVENT, listener);
+  return () => window.removeEventListener(ONBOARDING_COMPLETE_EVENT, listener);
+};
