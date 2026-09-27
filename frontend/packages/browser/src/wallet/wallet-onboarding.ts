@@ -2,6 +2,8 @@ import type { HubJoinPreference, SavedCollateralPolicy } from '../onboarding/onb
 import type { OnboardingSetupDraft } from '../onboarding/onboarding-setup';
 import type { WalletRecoveryServicesMutation } from '../recovery/wallet-recovery-services';
 
+export type WalletCustodyOwner = 'browser' | 'daemon';
+
 export type WalletOnboardingJurisdiction = Readonly<{
   key: string;
   name: string;
@@ -18,6 +20,7 @@ export type WalletOnboardingReadyView = Readonly<{
   policy: SavedCollateralPolicy;
   autoJoinHubs: HubJoinPreference;
   jurisdictions: readonly WalletOnboardingJurisdiction[];
+  custodyOwner: WalletCustodyOwner;
   writable: boolean;
   blockedReason: string;
 }>;
@@ -35,7 +38,7 @@ export type WalletOnboardingRequest = Readonly<{
   draft: OnboardingSetupDraft;
   termsAccepted: boolean;
   selectedJurisdictions: Readonly<Record<string, boolean>>;
-  recovery: WalletRecoveryServicesMutation;
+  recovery: WalletRecoveryServicesMutation | null;
 }>;
 
 export type WalletOnboardingResult = Readonly<{

@@ -23,9 +23,12 @@ type IdentityEntryFormProps = Readonly<{
   onMode: (mode: WalletIdentityMode) => void;
   onReset: () => void;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
+  modeOptions?: readonly WalletIdentityMode[];
+  copy?: Readonly<{ eyebrow: string; title: string; description: string; submit: string }>;
 }>;
 
 export function IdentityEntryForm(props: IdentityEntryFormProps) {
+  const modeOptions = props.modeOptions ?? ['brainvault', 'mnemonic'];
   const tabRefs = useRef<Record<WalletIdentityMode, HTMLButtonElement | null>>({
     brainvault: null,
     mnemonic: null,
@@ -49,19 +52,19 @@ export function IdentityEntryForm(props: IdentityEntryFormProps) {
   return (
     <section className="identity-onboarding" aria-labelledby="identity-onboarding-title">
       <header>
-        <p className="wallet-shell-eyebrow">{props.rehearsalActive ? 'Recovery rehearsal' : 'Wallet identity'}</p>
-        <h1 id="identity-onboarding-title">{props.rehearsalActive ? 'Re-enter your seed' : 'Review identity inputs'}</h1>
-        <p>{props.rehearsalActive
+        <p className="wallet-shell-eyebrow">{props.copy?.eyebrow ?? (props.rehearsalActive ? 'Recovery rehearsal' : 'Wallet identity')}</p>
+        <h1 id="identity-onboarding-title">{props.copy?.title ?? (props.rehearsalActive ? 'Re-enter your seed' : 'Review identity inputs')}</h1>
+        <p>{props.copy?.description ?? (props.rehearsalActive
           ? 'The first phrase was cleared. Only its public wallet address remains.'
-          : 'Rehearse recovery inputs before wallet creation. No wallet is created or persisted here.'}</p>
+          : 'Rehearse recovery inputs before wallet creation. No wallet is created or persisted here.')}</p>
       </header>
 
       {props.rehearsalActive ? (
         <p className="identity-rehearsal-context">
           Enter the same seed phrase again. A different valid wallet is rejected without replacing the expected address.
         </p>
-      ) : <div className="identity-mode-tabs" role="tablist" aria-label="Wallet identity method">
-        {(['brainvault', 'mnemonic'] as const).map((mode) => (
+      ) : modeOptions.length > 1 ? <div className="identity-mode-tabs" role="tablist" aria-label="Wallet identity method">
+        {modeOptions.map((mode) => (
           <button
             aria-controls={`identity-panel-${mode}`}
             aria-selected={props.draft.mode === mode}
@@ -79,11 +82,11 @@ export function IdentityEntryForm(props: IdentityEntryFormProps) {
             <span>{mode === 'brainvault' ? 'Memorized recovery' : 'Physical backup'}</span>
           </button>
         ))}
-      </div>}
+      </div> : null}
 
       <form onSubmit={props.onSubmit} noValidate>
         {props.draft.mode === 'brainvault' ? (
-          <div id="identity-panel-brainvault" role="tabpanel" aria-labelledby="identity-mode-brainvault">
+          <div id="identity-panel-brainvault" role="tabpanel" aria-label={modeOptions.length === 1 ? 'Brain Vault' : undefined} aria-labelledby={modeOptions.length > 1 ? 'identity-mode-brainvault' : undefined}>
             <label>
               <span>Vault name <small>public, exact input</small></span>
               <input
@@ -167,7 +170,7 @@ export function IdentityEntryForm(props: IdentityEntryFormProps) {
 
         <div className={props.rehearsalActive ? 'identity-rehearsal-actions' : undefined}>
           <button className="identity-primary-action" disabled={props.deriving} type="submit">
-            {props.deriving ? 'Checking phrase…' : props.rehearsalActive ? 'Verify recovered wallet' : 'Review identity inputs'}
+            {props.deriving ? 'Deriving…' : props.copy?.submit ?? (props.rehearsalActive ? 'Verify recovered wallet' : 'Review identity inputs')}
           </button>
           {props.rehearsalActive ? (
             <button className="identity-secondary-action" onClick={props.onReset} type="button">

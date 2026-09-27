@@ -14,7 +14,7 @@ import {
   type WalletRuntimeSummary,
 } from './app-shell-model';
 import { IdentityOnboarding } from './identity/identity-onboarding';
-import { WalletExistingSetupGate } from './onboarding/wallet-onboarding';
+import { WalletExistingSetupGate, WalletPostCreationSetup } from './onboarding/wallet-onboarding';
 import { WalletDiagnostics } from './diagnostics/wallet-diagnostics';
 import { WalletFinancialHealth } from './financial-health/wallet-financial-health';
 import { WalletMarkets } from './markets/wallet-markets';
@@ -26,6 +26,10 @@ import { WalletAccountWorkspace } from './account/wallet-account-workspace';
 import { WalletSettings } from './settings/wallet-settings';
 import { WalletLocalPassword } from './security/wallet-local-password';
 import { readCanonicalWalletLocalPasswordGate } from '../../../bridges/wallet/canonical/wallet-canonical-local-password';
+import {
+  getWalletLocalLauncherOnboarding,
+  subscribeWalletLocalLauncherOnboarding,
+} from '../../../packages/browser/src/runtime/wallet-local-launcher';
 import { navigateWallet, useWalletRoute } from './navigation/wallet-navigation';
 import { walletPaymentTabHref } from './navigation/wallet-navigation-model';
 import { readWalletPreferences } from './settings/wallet-settings-model';
@@ -36,6 +40,10 @@ import {
   subscribeWalletEmbeddedRuntime,
 } from './runtime/wallet-embedded-runtime';
 import './styles/app-shell.css';
+
+const WalletDaemonOwnerSetup = lazy(() => import('./onboarding/wallet-daemon-owner').then(module => ({
+  default: module.WalletDaemonOwnerSetup,
+})));
 
 const readRuntimeConfig = () =>
   readRuntimeAdapterStorageSnapshot({ durable: localStorage, session: sessionStorage });
@@ -161,6 +169,11 @@ export function WalletAppShell() {
     displayPreferencesSource.getSnapshot,
     displayPreferencesSource.getSnapshot,
   );
+  const launcher = useSyncExternalStore(
+    subscribeWalletLocalLauncherOnboarding,
+    getWalletLocalLauncherOnboarding,
+    getWalletLocalLauncherOnboarding,
+  );
   const route = useWalletRoute();
   const view = route.view;
   const [authScheme, setAuthScheme] = useState<WalletAuthScheme>(() => (
@@ -246,7 +259,9 @@ export function WalletAppShell() {
         </header>
 
         <div className="wallet-shell-workspace">
-          {runtime.state === 'local-standby' || runtime.state === 'local-error' ? (
+          {launcher.stage === 'create' ? <Suspense fallback={<p>Loading node owner setup…</p>}><WalletDaemonOwnerSetup /></Suspense>
+          : launcher.stage === 'formation' ? <WalletPostCreationSetup runtimeId={launcher.runtimeId} runtimeState={runtime.state} />
+          : runtime.state === 'local-standby' || runtime.state === 'local-error' ? (
             <WalletRuntimeBoundary runtime={runtime} />
           ) : (
             <WalletExistingSetupGate runtimeId={view === 'identity' || view === 'scenario-preview' ? '' : embedded.runtimeId} runtimeState={runtime.state}>

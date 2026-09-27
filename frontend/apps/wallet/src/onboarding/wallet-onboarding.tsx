@@ -9,6 +9,7 @@ import { finishWalletOnboarding, loadWalletOnboarding } from './wallet-onboardin
 import { WalletRecoveryServices } from '../recovery/wallet-recovery-services';
 import { useWalletNavigation } from '../navigation/wallet-navigation';
 import { hasPersistedWalletVault } from '../../../../packages/browser/src/wallet/wallet-vault-storage';
+import { clearWalletLocalLauncherOnboarding } from '../../../../packages/browser/src/runtime/wallet-local-launcher';
 import '../styles/onboarding/wallet-onboarding.css';
 
 const errorMessage = (error: unknown): string => error instanceof Error ? error.message : String(error);
@@ -54,13 +55,14 @@ function WalletOnboardingForm({ view, runtimeState, onComplete }: Readonly<{
   }, []);
 
   const selectedCount = view.jurisdictions.filter(option => selectedJurisdictions[option.key] !== false).length;
-  const ready = view.writable && !busy && recovery !== null && termsAccepted
+  const daemonCustody = view.custodyOwner === 'daemon';
+  const ready = view.writable && !busy && (daemonCustody || recovery !== null) && termsAccepted
     && draft.displayName.trim().length >= 2 && draft.softLimitUsd > 0
     && draft.hardLimitUsd >= draft.softLimitUsd && draft.maxFeeUsd >= 0 && selectedCount > 0;
 
   const finish = async (event: FormEvent<HTMLFormElement>): Promise<void> => {
     event.preventDefault();
-    if (!ready || !recovery || operation.current) return;
+    if (!ready || operation.current) return;
     const controller = new AbortController();
     operation.current = controller;
     setBusy(true);
@@ -68,7 +70,7 @@ function WalletOnboardingForm({ view, runtimeState, onComplete }: Readonly<{
     try {
       const result = await finishWalletOnboarding({
         runtimeId: view.runtimeId, draft: { ...draft, entityId: view.entityId },
-        selectedJurisdictions, termsAccepted, recovery,
+        selectedJurisdictions, termsAccepted, recovery: daemonCustody ? null : recovery,
       }, controller.signal);
       if (!controller.signal.aborted) onComplete(result);
     } catch (failure: unknown) {
@@ -97,7 +99,7 @@ function WalletOnboardingForm({ view, runtimeState, onComplete }: Readonly<{
         </div>
         {notice ? <p className="wallet-settings-error" role="status">{notice}</p> : null}
       </section>
-      <details className="wallet-onboarding-advanced"><summary>Advanced setup <span>Hub joining, jurisdictions and recovery</span></summary>
+      <details className="wallet-onboarding-advanced"><summary>Advanced setup <span>{daemonCustody ? 'Hub joining and jurisdictions' : 'Hub joining, jurisdictions and recovery'}</span></summary>
         <label><span>Initial hub join</span><select value={draft.autoJoinHubs} onChange={event => setDraft(current => ({ ...current, autoJoinHubs: event.target.value as HubJoinPreference }))}>
           {JOIN_OPTIONS.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
         </select></label>
@@ -109,7 +111,10 @@ function WalletOnboardingForm({ view, runtimeState, onComplete }: Readonly<{
             </label>)}
           </div>}
         </section>
-        <WalletRecoveryServices runtimeState={runtimeState} onDraftChange={setRecovery} />
+        {daemonCustody ? <section className="wallet-onboarding-daemon-custody" data-testid="daemon-custody-notice">
+          <strong>Recovery is managed by this local node.</strong>
+          <span>The BrainVault mnemonic and signer never enter the browser.</span>
+        </section> : <WalletRecoveryServices runtimeState={runtimeState} onDraftChange={setRecovery} />}
       </details>
       <label className="wallet-onboarding-terms"><input type="checkbox" checked={termsAccepted} onChange={event => setTermsAccepted(event.target.checked)} /><span>I understand this is testnet software and I accept the associated risks.</span></label>
       <button className="identity-primary-action" type="submit" disabled={!ready}>{busy ? 'Starting…' : 'Start'}</button>
@@ -150,9 +155,10 @@ export function WalletPostCreationSetup({ runtimeId, runtimeState, pendingConten
     <a className="identity-primary-action wallet-onboarding-continue" href={walletBrowserHref('/app?portfolio=1')} onClick={event => {
       if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
       event.preventDefault();
+      if (view?.state === 'ready' && view.custodyOwner === 'daemon') clearWalletLocalLauncherOnboarding();
       navigateWallet('/app?portfolio=1');
     }}>Continue to assets</a>
-    <WalletRecoveryServices runtimeState={runtimeState} />
+    {view?.state === 'ready' && view.custodyOwner === 'daemon' ? null : <WalletRecoveryServices runtimeState={runtimeState} />}
   </>;
 }
 

@@ -188,14 +188,14 @@ test('onboarding creates every jurisdiction entity but only requires advertised 
 });
 
 test('React onboarding uses the canonical projection and RuntimeInput helpers', () => {
-  const source = readFileSync('frontend/bridges/wallet/canonical/wallet-canonical-onboarding.ts', 'utf8');
+  const source = readFileSync('frontend/bridges/wallet/onboarding/wallet-canonical-onboarding.ts', 'utf8');
   const setup = readFileSync('frontend/packages/browser/src/onboarding/onboarding-setup.ts', 'utf8');
   const joins = readFileSync('frontend/bridges/wallet/onboarding/onboarding-hub-join.ts', 'utf8');
   const parent = readFileSync('frontend/apps/wallet/src/onboarding/wallet-onboarding.tsx', 'utf8');
   const projection = readFileSync('frontend/bridges/wallet/onboarding/onboarding-runtime-projection.ts', 'utf8');
 
   expect(source).toContain('buildOnboardingRuntimeProjection({');
-  expect(source).toContain('return finishOnboardingSetup(draft, {');
+  expect(source).toContain('finishOnboardingSetup(draft, {');
   expect(source).toContain('createOnboardingHubJoinCommands({');
   expect(source).toContain('readProjection: () => requireCurrent().projection');
   expect(setup).toContain('submitRuntimeInput(buildOnboardingProfileRuntimeInput');

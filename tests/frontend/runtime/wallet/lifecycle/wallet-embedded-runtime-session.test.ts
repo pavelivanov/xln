@@ -221,7 +221,9 @@ describe('wallet embedded Runtime session', () => {
     expect(shared).toContain('activeTabLock.initializeActiveTabLock(handler)');
     expect(shared).toContain("await import('./browser-runtime-bootstrap')");
     expect(source).toContain('browserRuntimeSession as session');
-    expect(source).toContain('await session.replace(async () => {');
+    expect(source).toContain('const openCanonicalResource = (');
+    expect(source).toContain('? session.replace(boot)');
+    expect(source).toContain(': session.start(boot)');
     expect(source).not.toContain('await session.stop();');
     expect(source).not.toContain('new EmbeddedRuntimeAdapter');
   });

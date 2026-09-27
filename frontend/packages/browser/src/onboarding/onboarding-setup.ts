@@ -3,6 +3,7 @@ import { writeHubJoinPreference, writeSavedCollateralPolicy, type HubJoinPrefere
 import { writeOnboardingCompleteForEntities } from './onboarding-state';
 import { assertCommittedAutoJoinCount, buildOnboardingProfileRuntimeInput } from '../../../ui/src/onboarding/onboarding-runtime-input';
 import type { OnboardingTarget } from '../../../ui/src/onboarding/onboarding-hub-discovery';
+import type { WalletCustodyOwner } from '../wallet/wallet-onboarding';
 
 export type OnboardingSetupDraft = Readonly<{
   entityId: string;
@@ -17,6 +18,7 @@ export type OnboardingSetupDraft = Readonly<{
 }>;
 
 export type OnboardingSetupContext = Readonly<{
+  custodyOwner: WalletCustodyOwner;
   readTargets: () => OnboardingTarget[];
   isTargetJurisdictionEnabled: (target: OnboardingTarget) => boolean;
   hasAnyCounterpartyAccount: (entityId: string) => boolean;
@@ -84,7 +86,7 @@ export async function finishOnboardingSetup(draft: OnboardingSetupDraft, context
   // Recovery must be committed before opening hub accounts. Account opens create
   // usable bilateral state; with a configured tower, the runtime backup barrier
   // must already be installed before those committed frames can leave the device.
-  await context.saveRecoveryConfig();
+  if (context.custodyOwner === 'browser') await context.saveRecoveryConfig();
 
   const autoJoinCount = parseJoinCount(savedJoinPreference);
   const autoJoinTargets = autoJoinCount > 0

@@ -1,4 +1,5 @@
 import { XLN_PROTOCOL_VERSION } from '../../../protocol/version';
+import { BRAINVAULT_V1_SPEC_ID } from '../../../../brainvault/src/core/primitives/spec';
 import { readFileSync } from 'node:fs';
 import { expect, test } from 'bun:test';
 
@@ -104,7 +105,11 @@ import type { AccountReplica, AccountTx } from '../../../types/account';
 import type { CrossJurisdictionSwapRoute } from '../../../types/cross-jurisdiction';
 import type { EntityReplica } from '../../../entity/types';
 import type { RuntimeReplica, RuntimeInput } from '../../../runtime/types';
-import type { RuntimeAdapterBatchPreflight } from '../../../api/runtime-adapter/types';
+import type {
+  RuntimeAdapterBatchPreflight,
+  RuntimeAdapterBrainVaultProgress,
+  RuntimeAdapterBrainVaultResult,
+} from '../../../api/runtime-adapter/types';
 
 import type { BookState } from '../../../orderbook';
 
@@ -2036,6 +2041,81 @@ test('BrainVault mnemonic export is owner-lane only and redacts the secret', asy
   } finally {
     unregister();
   }
+});
+
+test('BrainVault cancellation is declined after the final shard commit boundary', async () => {
+  const messages: unknown[] = [];
+  const socket = { send: (message: unknown) => messages.push(message) };
+  const env = makeEnv();
+  await handleRuntimeAdapterMessage(socket, {
+    v: XLN_PROTOCOL_VERSION,
+    id: 'auth-admin-brainvault-cancel',
+    op: 'auth',
+    key: deriveRuntimeAdapterCapabilityToken('seed', 'full', Date.now() + 60_000),
+    challenge: adapterAuthChallenge,
+  }, env, { enqueueRuntimeInput: () => {} });
+  messages.length = 0;
+
+  let publishProgress: ((progress: RuntimeAdapterBrainVaultProgress) => void) | null = null;
+  let finishDerivation!: (result: RuntimeAdapterBrainVaultResult) => void;
+  const derivationResult = new Promise<RuntimeAdapterBrainVaultResult>(resolve => {
+    finishDerivation = resolve;
+  });
+  const dependencies = {
+    enqueueRuntimeInput: () => {},
+    deriveBrainVault: async (
+      _runtime: RuntimeReplica,
+      _input: unknown,
+      options: Readonly<{ onProgress: (progress: RuntimeAdapterBrainVaultProgress) => void }>,
+    ) => {
+      publishProgress = options.onProgress;
+      return derivationResult;
+    },
+  };
+  const derive = handleRuntimeAdapterMessage(socket, {
+    v: XLN_PROTOCOL_VERSION,
+    id: 'brainvault-late-derive',
+    op: 'brainvault-derive',
+    jobId: 'brainvault-late-job',
+    input: {
+      specId: BRAINVAULT_V1_SPEC_ID,
+      name: 'alice',
+      passphrase: 'secret123456',
+      shardInput: 1,
+      workers: 1,
+    },
+  }, env, dependencies);
+  expect(publishProgress).not.toBeNull();
+  publishProgress!({ completed: 1, total: 1, elapsedMs: 10, lastShardMs: 10, workers: 1 });
+
+  await handleRuntimeAdapterMessage(socket, {
+    v: XLN_PROTOCOL_VERSION,
+    id: 'brainvault-late-cancel',
+    op: 'brainvault-cancel',
+    jobId: 'brainvault-late-job',
+  }, env, dependencies);
+  const cancellation = messages
+    .map(message => decodeTestRuntimeAdapterMessage<{ inReplyTo?: string; payload?: { cancelled?: boolean } }>(message))
+    .find(message => message.inReplyTo === 'brainvault-late-cancel');
+  expect(cancellation?.payload?.cancelled).toBe(false);
+
+  finishDerivation({
+    specId: BRAINVAULT_V1_SPEC_ID,
+    backend: 'native-node',
+    shardCount: 1,
+    factor: 1,
+    workers: 1,
+    derivationTimeMs: 10,
+    ethereumAddress: `0x${'11'.repeat(20)}`,
+    entityId,
+    created: true,
+    height: 8,
+  });
+  await derive;
+  const completed = messages
+    .map(message => decodeTestRuntimeAdapterMessage<{ inReplyTo?: string; ok?: boolean }>(message))
+    .find(message => message.inReplyTo === 'brainvault-late-derive');
+  expect(completed?.ok).toBe(true);
 });
 
 test('runtime adapter ticks only go to authenticated clients', async () => {

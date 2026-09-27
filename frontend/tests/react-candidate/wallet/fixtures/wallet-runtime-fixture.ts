@@ -263,6 +263,10 @@ const token = auth.deriveRuntimeAdapterCapabilityToken(
   Date.now() + 60 * 60_000,
   { audience: runtimeId, keyId: 'wallet-address-e2e', tokenId: 'wallet-address-e2e' },
 );
+const localPairingTokens = new Set([
+  'react-wallet-create-pairing-token',
+  'react-wallet-pairing-token',
+]);
 const recoveryFixture = await createWalletRecoveryFixture(port);
 if (recoveryFixture.runtimeId === runtimeId) {
   throw new Error(`WALLET_RUNTIME_FIXTURE_RECOVERY_ID_COLLISION:${runtimeId}`);
@@ -383,6 +387,27 @@ server = Bun.serve<FixtureSocketData>({
     if (url.pathname === '/onboarding-hub-discovery-mode' && request.method === 'POST') {
       onboardingHubDiscoveryEnabled = url.searchParams.get('enabled') === '1';
       return Response.json({ enabled: onboardingHubDiscoveryEnabled }, { headers: apiHeaders });
+    }
+    if (url.pathname === '/api/local-pairing/consume' && request.method === 'POST') {
+      const body = await request.json() as Record<string, unknown>;
+      const pairingToken = String(body['pairingToken'] || '');
+      if (!localPairingTokens.delete(pairingToken)) {
+        return Response.json({ error: 'LOCAL_PAIRING_TOKEN_INVALID_OR_EXPIRED' }, { status: 401, headers: apiHeaders });
+      }
+      return Response.json({
+        ok: true,
+        manifest: {
+          v: 1,
+          issuedAt: Date.now(),
+          expiresAt: Date.now() + 60 * 60_000,
+          entries: [{
+            label: 'Paired local node',
+            access: 'admin',
+            wsUrl: `ws://127.0.0.1:${server.port}/rpc`,
+            token,
+          }],
+        },
+      }, { headers: apiHeaders });
     }
     if (url.pathname === '/recovery-rpc-mode' && request.method === 'POST') {
       const online = url.searchParams.get('online') === '1';
@@ -925,13 +950,15 @@ server = Bun.serve<FixtureSocketData>({
       activeRpcSockets.add(socket);
       adapterServer.attachRuntimeAdapterTicker(socketRuntime(socket), loopEnvironment.registerEnvChangeCallback);
     },
-    async message(socket: ServerWebSocket<FixtureSocketData>, raw: string | Buffer) {
+    message(socket: ServerWebSocket<FixtureSocketData>, raw: string | Buffer) {
       try {
         const decoded = (typeof raw === 'string'
           ? codec.decodeRuntimeAdapterBrowserMessage(raw)
           : codec.decodeRuntimeAdapterRequest(raw));
         if (!('id' in decoded)) throw new Error('RADAPTER_CLIENT_REQUEST_REQUIRED');
-        await handleRpc(socket, decoded, socketRuntime(socket));
+        void handleRpc(socket, decoded, socketRuntime(socket)).catch((error: unknown) => {
+          adapterServer.closeInvalidRuntimeAdapterMessage(socket, error);
+        });
       } catch (error: unknown) {
         adapterServer.closeInvalidRuntimeAdapterMessage(socket, error);
       }

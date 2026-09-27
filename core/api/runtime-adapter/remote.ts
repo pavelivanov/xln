@@ -110,6 +110,14 @@ const parseBrainVaultResult = (value: unknown): RuntimeAdapterBrainVaultResult =
   return result as RuntimeAdapterBrainVaultResult;
 };
 
+const parseBrainVaultCancellation = (value: unknown): boolean => {
+  const result = recordOrNull(value);
+  if (!result || typeof result['cancelled'] !== 'boolean') {
+    throw new RuntimeAdapterError('E_INTERNAL', 'BrainVault node returned an invalid cancellation result');
+  }
+  return result['cancelled'];
+};
+
 const parseBrainVaultRecovery = (value: unknown): RuntimeAdapterBrainVaultRecovery => {
   const result = recordOrNull(value);
   if (!result || typeof result['mnemonic24'] !== 'string' || !result['mnemonic24'].trim()) {
@@ -351,8 +359,11 @@ export class RemoteRuntimeAdapter implements RuntimeAdapter {
     if (options.signal?.aborted) throw new Error('BRAINVAULT_DERIVATION_ABORTED');
     const jobId = `brainvault-${++this.requestId}`;
     if (options.onProgress) this.brainVaultProgressCbs.set(jobId, options.onProgress);
+    let cancellation: Promise<boolean> | null = null;
     const cancel = (): void => {
-      void this.request({ op: 'brainvault-cancel', jobId }).catch(() => undefined);
+      cancellation ??= this.request<unknown>({ op: 'brainvault-cancel', jobId })
+        .then(parseBrainVaultCancellation)
+        .catch(() => false);
     };
     options.signal?.addEventListener('abort', cancel, { once: true });
     try {
@@ -360,7 +371,7 @@ export class RemoteRuntimeAdapter implements RuntimeAdapter {
         { op: 'brainvault-derive', jobId, input },
         BRAINVAULT_REQUEST_TIMEOUT_MS,
       );
-      if (options.signal?.aborted) throw new Error('BRAINVAULT_DERIVATION_ABORTED');
+      if (cancellation && await cancellation) throw new Error('BRAINVAULT_DERIVATION_ABORTED');
       return parseBrainVaultResult(result);
     } finally {
       options.signal?.removeEventListener('abort', cancel);

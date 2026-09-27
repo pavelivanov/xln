@@ -1,7 +1,12 @@
 import { expect, test } from '@playwright/test';
 import { WALLET_VAULT_STORAGE_KEY } from '../../../../packages/browser/src/wallet/wallet-vault-storage';
 import { expectNoBrowserErrors, expectPageContained, observeBrowserErrors, screenshotEvidence } from '../../browser-evidence';
-import { finishOpenedWalletSetup, restoreLocalWallet } from './wallet-onboarding-test-helpers';
+import { readWalletRuntimeFixture } from '../fixtures/wallet-runtime-test-helpers';
+import { finishOpenedWalletSetup, restoreLocalWallet, unlockLocalPassword } from './wallet-onboarding-test-helpers';
+import {
+  BRAINVAULT_NODE_OWNER_NAME,
+  BRAINVAULT_NODE_OWNER_PASSPHRASE,
+} from '../../ops/panels/brainvault/brainvault-node-owner-fixture';
 
 const readPersistedRuntimeIds = (page: import('@playwright/test').Page): Promise<string[]> =>
   page.evaluate(() => {
@@ -10,6 +15,61 @@ const readPersistedRuntimeIds = (page: import('@playwright/test').Page): Promise
     };
     return Object.keys(stored.runtimes || {}).sort();
   });
+
+test('paired daemon owner creation cancels cleanly and retries through formation', { tag: '@functional' }, async ({ page }, testInfo) => {
+  testInfo.setTimeout(180_000);
+  const errors = observeBrowserErrors(page);
+  await readWalletRuntimeFixture(page);
+  await page.goto('/app#xlnPair=react-wallet-create-pairing-token&xlnOnboarding=create');
+  await expect(page).not.toHaveURL(/xlnPair|xlnOnboarding|xlnEntity/);
+  await expect(page.locator('.wallet-shell-runtime-state')).toHaveText('Remote Runtime', { timeout: 90_000 });
+  await page.getByLabel(/^Vault name/).fill(BRAINVAULT_NODE_OWNER_NAME);
+  const passphrase = page.getByLabel(/^Secret passphrase/);
+  await passphrase.fill(BRAINVAULT_NODE_OWNER_PASSPHRASE);
+  await page.getByRole('button', { name: '2', exact: true }).click();
+  await page.getByRole('button', { name: 'Create owner on local node', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Deriving Brain Vault' })).toBeVisible();
+  await expect(page.getByText('Its mnemonic and signer never enter this browser.')).toBeVisible();
+  await page.getByRole('button', { name: 'Cancel derivation', exact: true }).click({ force: true });
+  await expect(page.getByRole('heading', { name: 'Create the node owner' })).toBeVisible({ timeout: 30_000 });
+  await expect(passphrase).toHaveValue('');
+
+  await passphrase.fill(BRAINVAULT_NODE_OWNER_PASSPHRASE);
+  await page.getByRole('button', { name: '1', exact: true }).click();
+  await page.getByRole('button', { name: 'Create owner on local node', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Configure account' })).toBeVisible({ timeout: 120_000 });
+  await expect(page.getByTestId('daemon-custody-notice')).toContainText('Recovery is managed by this local node.');
+  await expectPageContained(page);
+  await screenshotEvidence(page, testInfo, 'wallet-onboarding-daemon-create-retry');
+  expectNoBrowserErrors(errors);
+});
+
+test('paired daemon formation keeps recovery and signer custody on the local node', { tag: '@functional' }, async ({ page }, testInfo) => {
+  testInfo.setTimeout(150_000);
+  const errors = observeBrowserErrors(page);
+  const fixture = await readWalletRuntimeFixture(page);
+  await page.goto(`/app#xlnPair=react-wallet-pairing-token&xlnOnboarding=formation&xlnEntity=${fixture.entityId}`);
+  await expect(page).not.toHaveURL(/xlnPair|xlnOnboarding|xlnEntity/);
+  await expect(page.locator('.wallet-shell-runtime-state')).toHaveText('Remote Runtime', { timeout: 90_000 });
+  const form = page.getByRole('form', { name: 'Configure account' });
+  await expect(form).toBeVisible();
+  await page.getByLabel('Display name', { exact: true }).fill(`Daemon ${testInfo.project.name}`.slice(0, 32));
+  await form.locator('.wallet-onboarding-advanced > summary').click();
+  await page.getByLabel('Initial hub join').selectOption('manual');
+  await expect(page.getByTestId('daemon-custody-notice')).toContainText('Recovery is managed by this local node.');
+  await expect(page.getByTestId('daemon-custody-notice')).toContainText('mnemonic and signer never enter the browser');
+  await expect(form.getByRole('heading', { name: 'Recovery services' })).toHaveCount(0);
+  await expectPageContained(page);
+  await screenshotEvidence(page, testInfo, 'wallet-onboarding-daemon-custody');
+  await form.getByRole('button', { name: 'Start', exact: true }).click();
+  await expect(page.getByText(/Account configured for Daemon .* Joined 0 hub accounts\./)).toBeVisible({ timeout: 30_000 });
+  expect(await page.evaluate(() => localStorage.getItem('xln-vaults'))).toBeNull();
+  expect(await page.evaluate(entityId => localStorage.getItem(`xln-onboarding-complete:${entityId}`), fixture.entityId)).toBe('true');
+  await expect(page.getByRole('heading', { name: 'Recovery services' })).toHaveCount(0);
+  await expectPageContained(page);
+  await screenshotEvidence(page, testInfo, 'wallet-onboarding-daemon-complete');
+  expectNoBrowserErrors(errors);
+});
 
 test('post-creation setup validates preferences, exposes discovery failure and commits manual setup', { tag: '@functional' }, async ({ page }, testInfo) => {
   testInfo.setTimeout(150_000);
@@ -108,6 +168,7 @@ test('post-creation setup automatically joins a real Hub and reload keeps one Ru
   await expect(page.getByLabel('Entity', { exact: true })).toHaveValue(fixture.recovery.entityId);
   await expect(page.getByLabel('Accounts', { exact: true }).getByText('Browser Hub', { exact: true })).toBeVisible();
   await page.reload({ waitUntil: 'domcontentloaded' });
+  await unlockLocalPassword(page);
   await expect(page.locator('.wallet-shell-runtime-state')).toHaveText('Local Runtime', { timeout: 90_000 });
   await expect(page.getByRole('heading', { name: 'Configure account' })).toHaveCount(0);
   await page.getByLabel('Entity', { exact: true }).selectOption(fixture.recovery.entityId);
@@ -156,6 +217,7 @@ test('recovery settings validate, save and restore services for the already-open
     .toContain(manualUrl);
 
   await page.reload({ waitUntil: 'domcontentloaded' });
+  await unlockLocalPassword(page);
   await expect(page.locator('.wallet-shell-runtime-state')).toHaveText('Local Runtime', { timeout: 90_000 });
   await expect(page.getByRole('heading', { name: 'Recovery services' })).toBeVisible();
   await expect(page.getByRole('radio', { name: /^Backup only/ })).toHaveAttribute('aria-checked', 'true');

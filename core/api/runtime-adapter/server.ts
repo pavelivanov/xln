@@ -85,7 +85,11 @@ type AdapterClientState = {
   sendBucket: TokenBucket;
 };
 
-type ActiveBrainVaultJob = Readonly<{ jobId: string; abort: AbortController }>;
+type ActiveBrainVaultJob = {
+  readonly jobId: string;
+  readonly abort: AbortController;
+  cancellable: boolean;
+};
 
 type RuntimeAdapterResponseDiagnostic = {
   env?: RuntimeReplica | null;
@@ -926,17 +930,23 @@ const handleRuntimeAdapterBrainVaultDerive = async (
     throw new RuntimeAdapterError('E_COMMAND_PENDING', 'a BrainVault derivation is already running', true, 1_000);
   }
   const abort = new AbortController();
-  const job: ActiveBrainVaultJob = { jobId: msg.jobId, abort };
+  const job: ActiveBrainVaultJob = { jobId: msg.jobId, abort, cancellable: true };
   brainVaultJobs.set(ws, job);
   try {
     const result = await deps.deriveBrainVault(env, msg.input, {
       signal: abort.signal,
-      onProgress: progress => sendPush(ws, {
-        v: XLN_PROTOCOL_VERSION,
-        op: 'brainvault-progress',
-        jobId: msg.jobId,
-        progress,
-      }),
+      onProgress: progress => {
+        sendPush(ws, {
+          v: XLN_PROTOCOL_VERSION,
+          op: 'brainvault-progress',
+          jobId: msg.jobId,
+          progress,
+        });
+        // The final shard is the cancellation commit boundary. Native derivation
+        // removes its abort listener when this callback returns, before mnemonic
+        // persistence/install. A failed push still fails derivation atomically.
+        if (progress.total > 0 && progress.completed === progress.total) job.cancellable = false;
+      },
     });
     sendOk(ws, msg.id, result, diagnostic());
   } finally {
@@ -952,8 +962,11 @@ const handleRuntimeAdapterBrainVaultCancel = (
 ): void => {
   requireAuth(state, 'admin');
   const job = brainVaultJobs.get(ws);
-  const cancelled = job?.jobId === msg.jobId;
-  if (cancelled) job.abort.abort();
+  const cancelled = job?.jobId === msg.jobId && job.cancellable;
+  if (cancelled) {
+    job.cancellable = false;
+    job.abort.abort();
+  }
   sendOk(ws, msg.id, { cancelled }, diagnostic());
 };
 

@@ -133,7 +133,7 @@ Run from repository root unless a different cwd is shown.
 | R02 | Restore the canonical iOS headless-runtime package contract | P0 | R01 | VERIFIED |
 | R03 | Restore RPC-only scenario and jurisdiction selection | P1 | — | VERIFIED |
 | R04 | Restore React local-password enrollment, unlock, and lock | P0 | — | VERIFIED |
-| R05 | Resolve paired-daemon custody semantics | P1 | — | READY |
+| R05 | Resolve paired-daemon custody semantics | P1 | — | VERIFIED |
 | R06 | Finish Svelte retirement and harden the retirement gate | P1 | R04 | READY |
 | R07 | Characterize post-rebase generated-input failure diagnostics | P2 | — | READY |
 | R08 | Re-certify one exact source and release | P0 | R01–R06; R07 disposition | WAIT |
@@ -393,7 +393,7 @@ that paired-daemon onboarding is retired.
 
 **In scope:**
 
-- `frontend/bridges/wallet/canonical/wallet-canonical-onboarding.ts`
+- `frontend/bridges/wallet/onboarding/wallet-canonical-onboarding.ts`
 - `frontend/apps/wallet/src/onboarding/wallet-onboarding.tsx`
 - existing runtime-mode/onboarding projections and focused tests
 
@@ -417,6 +417,64 @@ Steps:
 - `bun test tests/frontend/onboarding` → all pass.
 - Run `wallet-onboarding.spec.ts` for the supported custody modes at all three
   viewports → correct recovery controls and zero unexpected errors.
+
+**Investigation evidence (2026-09-27, source `42e6765b4`, Bun `1.4.0`):**
+
+- The packaged launcher opens `/app` with `xlnPair=<one-time token>`, plus
+  `xlnOnboarding=create` when no daemon BrainVault owner exists or
+  `xlnOnboarding=formation&xlnEntity=<derived entity id>` after CLI derivation.
+- The retired Svelte path consumed that token into a remote admin Runtime session
+  (`mode`, `wsUrl`, `access`, tab-confined auth key) and retained the launcher
+  projection `{ stage, entityId }`. The React wallet entry reads none of
+  `xlnPair`, `xlnOnboarding`, or `xlnEntity`; the shared
+  `WalletRuntimeBootstrapCoordinator` has no production caller.
+- Even an already-populated remote session cannot enter React post-creation
+  setup: `WalletExistingSetupGate` requires `runtimeState === 'local-ready'`,
+  requires a persisted browser vault, and receives only the embedded Runtime id.
+  A paired daemon therefore cannot reach the custody-owner UI in current code.
+- `bun test tests/frontend/runtime/wallet/wallet-runtime-bootstrap.test.ts tests/frontend/onboarding`
+  → 219 pass, 0 fail, 883 assertions. This proves the isolated coordinator and
+  existing local onboarding baseline, not production launcher reachability.
+- Per step 3, R05 stopped before adding a custody projection. The owner selected
+  preservation and authorized the React launcher/bootstrap port as R05 scope.
+
+**Implementation evidence (2026-09-27, source `42e6765b4` plus working diff, Bun `1.4.0`):**
+
+- React now consumes the one-time `xlnPair` launcher token before rendering,
+  strips the token and onboarding fields from the URL, validates/imports one
+  remote admin Runtime, and retains only the in-memory `{ stage, entityId,
+  runtimeId }` launcher projection.
+- Formation projects the exact selected daemon-owned Entity from
+  `RuntimeAdapterViewFrame`. The daemon path requires connected admin command
+  authority, hides browser recovery controls, submits profile/hub commands via
+  the canonical Runtime adapter, and structurally skips
+  `saveCanonicalWalletRecoveryServices`. The create path runs BrainVault on the
+  daemon through the existing authenticated adapter; no result secret is
+  returned to React.
+- Review repair restored the upstream daemon-owned worker policy (`256`, then
+  clamped by the node), made cancellation retryable under React Strict Mode,
+  and narrowed custody copy to the exact mnemonic/signer browser boundary.
+  Final-shard progress now closes the daemon cancellation boundary: a late
+  browser abort preserves the committed owner result and advances to Formation
+  instead of returning to a stale create screen. Normal `/app` startup also
+  skips the pairing-only bootstrap import when no launcher hash field is present,
+  lazy-loads the daemon-owner UI, and does not block Scenario Preview's first
+  render on its runtime chunk.
+- `bun test tests/frontend/onboarding` → 219 pass, 0 fail, 886 assertions. The
+  exact focused command
+  `bun test tests/frontend/onboarding/runtime/wallet-daemon-custody.test.ts tests/frontend/runtime/wallet/wallet-runtime-bootstrap.test.ts tests/frontend/onboarding/brainvault/wallet-node-brainvault-validation.test.ts`
+  → 23 pass, 0 fail, 76 assertions, including browser=1 and daemon=0
+  recovery-write evidence, formation-before-refresh commit ordering, and
+  retained launcher state after a failed projection refresh.
+- `bun test core/__tests__/api/runtime-adapter/radapter-remote-reconnect.test.ts core/__tests__/api/runtime-adapter/radapter-part-2.test.ts`
+  → 45 pass, 0 fail, 385 assertions, including server rejection of cancellation
+  after final-shard commit and client preservation of the committed result.
+- `wallet-onboarding.spec.ts` → 15 pass, 0 fail across 390×844, 1366×900, and
+  1920×1080. Real daemon create/cancel/retry/formation, both custody modes, URL
+  token stripping, daemon recovery copy, zero daemon `xln-vaults` writes,
+  viewport containment, screenshots, and console/page-error assertions pass.
+- `cd frontend && bun scripts/check.ts --surface=wallet --level=local`,
+  `bun run check`, and `git diff --check` → exit 0. Frozen core is unchanged.
 
 ## R06 — Complete Svelte retirement
 
@@ -541,7 +599,7 @@ history as part of this plan.
 - [ ] No production/scenario/Ops selector chooses BrowserVM.
 - [ ] Local React wallets enroll, remain locked after reload, unlock explicitly,
       and revoke authority on lock.
-- [ ] Paired-daemon custody has tested semantics or an explicit owner retirement
+- [x] Paired-daemon custody has tested semantics or an explicit owner retirement
       decision.
 - [ ] No file remains beneath `frontend/src`; resurrection fails a release gate.
 - [ ] Full frontend/root/browser/native verification passes on one exact SHA and

@@ -11,6 +11,12 @@ export const enrollLocalPassword = async (page: Page): Promise<void> => {
   await page.getByRole('button', { name: 'Save and open' }).click();
 };
 
+export const unlockLocalPassword = async (page: Page): Promise<void> => {
+  await expect(page.getByRole('heading', { name: 'Unlock wallet', exact: true })).toBeVisible();
+  await page.getByLabel('Password', { exact: true }).fill(REACT_WALLET_LOCAL_PASSWORD);
+  await page.getByRole('button', { name: 'Unlock', exact: true }).click();
+};
+
 export const finishOpenedWalletSetup = async (page: Page): Promise<void> => {
   const form = page.getByRole('form', { name: 'Configure account' });
   await expect(form).toBeVisible();

@@ -201,7 +201,7 @@ export const WALLET_FLOW_AUDIT = [
     view: 'identity',
     sources: [
       'frontend/apps/wallet/src/onboarding/wallet-onboarding.tsx',
-      'frontend/bridges/wallet/canonical/wallet-canonical-onboarding.ts',
+      'frontend/bridges/wallet/onboarding/wallet-canonical-onboarding.ts',
       'frontend/packages/browser/src/onboarding/onboarding-setup.ts',
       'frontend/bridges/wallet/onboarding/onboarding-hub-join.ts',
     ],
@@ -523,7 +523,7 @@ export const WALLET_FLOW_DEFERRALS = [
   {
     id: 'wallet-creation-and-onboarding',
     destination: 'WP9',
-    evidenceSource: 'frontend/bridges/wallet/canonical/wallet-canonical-onboarding.ts',
+    evidenceSource: 'frontend/bridges/wallet/onboarding/wallet-canonical-onboarding.ts',
     evidenceMarker: 'createOnboardingHubJoinCommands',
     reason: 'W05–W07 verify automatic Hub joining, local/remote-owner Formation and remote Hub opening. R03 dual-destination Ops BrainVault and late-completion development cases pass; complete onboarding/reload acceptance on final release bytes remains V05a.',
   },

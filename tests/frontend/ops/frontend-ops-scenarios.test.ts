@@ -84,5 +84,6 @@ describe('React scenario Runtime ownership', () => {
     expect(app).toContain("import('./scenarios/ops-scenarios')");
     expect(opsMain).toContain("import('./scenarios/ops-scenarios-runtime')");
     expect(walletMain).toContain("import('./scenario-preview/wallet-scenario-preview-runtime')");
+    expect(walletMain).not.toContain("await import('./scenario-preview/wallet-scenario-preview-runtime')");
   });
 });

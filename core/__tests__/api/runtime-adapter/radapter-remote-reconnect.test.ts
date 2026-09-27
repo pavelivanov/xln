@@ -270,3 +270,105 @@ test('remote adapter refreshes authority and catches up durable payments across 
     (globalThis as unknown as { WebSocket: typeof WebSocket }).WebSocket = previousWebSocket;
   }
 });
+
+test('remote BrainVault returns the committed result when the node declines late cancellation', async () => {
+  const previousWebSocket = globalThis.WebSocket;
+  let deriveRequestId = '';
+
+  class LateCancellationWebSocket {
+    static readonly OPEN = 1;
+
+    binaryType = 'arraybuffer';
+    readyState = 0;
+    onopen: (() => void) | null = null;
+    onmessage: ((event: { data: unknown }) => void) | null = null;
+    onerror: (() => void) | null = null;
+    onclose: (() => void) | null = null;
+
+    constructor(_url: string) {
+      setTimeout(() => {
+        this.readyState = LateCancellationWebSocket.OPEN;
+        this.onopen?.();
+      }, 0);
+    }
+
+    send(raw: unknown): void {
+      const request = decodeTestRuntimeAdapterMessage<{
+        id: string;
+        op: string;
+        challenge?: string;
+      }>(raw);
+      if (request.op === 'auth') {
+        this.respond(request.id, {
+          authLevel: 'admin',
+          commandLaneKind: 'capability',
+          currentHeight: 10,
+          nextCommandSequence: 1,
+          commandReady: true,
+          commandReadyReason: null,
+          ...signRuntimeAdapterServerIdentity(identityEnv, request.challenge || ''),
+        });
+        return;
+      }
+      if (request.op === 'brainvault-derive') {
+        deriveRequestId = request.id;
+        return;
+      }
+      if (request.op === 'brainvault-cancel') {
+        this.respond(request.id, { cancelled: false });
+        this.respond(deriveRequestId, {
+          specId: BRAINVAULT_V1_SPEC_ID,
+          backend: 'native-node',
+          shardCount: 1,
+          factor: 1,
+          workers: 1,
+          derivationTimeMs: 10,
+          ethereumAddress: `0x${'11'.repeat(20)}`,
+          entityId: ENTITY_A,
+          created: true,
+          height: 11,
+        });
+      }
+    }
+
+    private respond(inReplyTo: string, payload: unknown): void {
+      setTimeout(() => this.onmessage?.({ data: encodeRuntimeAdapterMessage({
+        v: XLN_PROTOCOL_VERSION,
+        inReplyTo,
+        ok: true,
+        payload,
+      }) }), 0);
+    }
+
+    close(): void {
+      this.readyState = 3;
+      this.onclose?.();
+    }
+  }
+
+  (globalThis as unknown as { WebSocket: typeof WebSocket }).WebSocket =
+    LateCancellationWebSocket as unknown as typeof WebSocket;
+  try {
+    const adapter = new RemoteRuntimeAdapter();
+    await adapter.connect({
+      mode: 'remote',
+      wsUrl: 'ws://localhost/rpc',
+      authKey: 'token',
+      requestTimeoutMs: 1_000,
+    });
+    const controller = new AbortController();
+    const result = adapter.deriveBrainVault({
+      specId: BRAINVAULT_V1_SPEC_ID,
+      name: 'alice',
+      passphrase: 'secret123456',
+      shardInput: 1,
+      workers: 1,
+    }, { signal: controller.signal });
+    await waitFor(() => Boolean(deriveRequestId));
+    controller.abort();
+    await expect(result).resolves.toMatchObject({ entityId: ENTITY_A, created: true });
+    adapter.disconnect();
+  } finally {
+    (globalThis as unknown as { WebSocket: typeof WebSocket }).WebSocket = previousWebSocket;
+  }
+});

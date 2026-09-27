@@ -110,6 +110,7 @@ export const CAPABILITIES = [
       'frontend/packages/browser/src/recovery/wallet-recovery-rehearsal.ts',
       'frontend/packages/browser/src/recovery/wallet-recovery-selection-session.ts',
       'frontend/packages/browser/src/runtime/wallet-runtime-bootstrap.ts',
+      'frontend/packages/browser/src/runtime/wallet-local-launcher.ts',
       'frontend/packages/browser/src/runtime/wallet-runtime-consent.ts',
       'frontend/packages/browser/src/runtime/wallet-runtime-opening.ts',
       'frontend/packages/browser/src/runtime/wallet-runtime-preferences.ts',

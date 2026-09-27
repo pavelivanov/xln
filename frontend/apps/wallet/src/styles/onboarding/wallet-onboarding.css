@@ -17,6 +17,9 @@
 .wallet-onboarding-jurisdictions span { min-width: 0; }
 .wallet-onboarding-jurisdictions code { display: block; overflow-wrap: anywhere; color: #8f9699; font-size: 11px; margin-top: 5px; }
 .wallet-onboarding .wallet-recovery-services { margin: 24px 0 0; padding: 20px 0 0; border-bottom: 0; }
+.wallet-onboarding-daemon-custody { display: grid; gap: 5px; padding: 14px; border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--line)); border-radius: 8px; background: color-mix(in srgb, var(--accent) 7%, transparent); }
+.wallet-onboarding-daemon-custody strong { color: #f3f4ef; font-size: 13px; }
+.wallet-onboarding-daemon-custody span { color: #8f9699; font-size: 12px; line-height: 1.5; }
 .wallet-onboarding .identity-primary-action { width: fit-content; min-width: 140px; }
 .wallet-onboarding button:disabled, .wallet-onboarding fieldset:disabled { opacity: .65; }
 .wallet-onboarding .wallet-settings-error { overflow-wrap: anywhere; }
