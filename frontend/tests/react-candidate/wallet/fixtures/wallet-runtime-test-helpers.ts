@@ -103,6 +103,18 @@ export const createWalletDisputeFixture = async (page: Page, slot: string) => {
   return { entityId, name, height };
 };
 
+export const readWalletCollateralRequestEvents = async (page: Page, fromHeight: number) => {
+  const response = await page.request.get(walletFixtureUrl(`/collateral-request-events?fromHeight=${fromHeight}`));
+  expect(response.ok()).toBe(true);
+  const result: unknown = await response.json();
+  if (!result || typeof result !== 'object' || Array.isArray(result)) {
+    throw new Error('COLLATERAL_REQUEST_EVENTS_INVALID');
+  }
+  const events = (result as Record<string, unknown>)['events'];
+  if (!Array.isArray(events)) throw new Error('COLLATERAL_REQUEST_EVENTS_INVALID');
+  return events as Array<{ frameHeight: number; data: Record<string, unknown> }>;
+};
+
 export const readWalletBatchPreflightFixture = async (page: Page) => {
   const response = await page.request.post(walletFixtureUrl('/batch-preflight-fixture'));
   expect(response.ok()).toBe(true);

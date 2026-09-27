@@ -981,6 +981,25 @@ server = Bun.serve<FixtureSocketData>({
           disputeTimeout: String(chainAccount.disputeTimeout),
         }, settlement: account.state.settlementWorkspace ? runtime.safeStringify(account.state.settlementWorkspace) : null });
     }
+    if (url.pathname === '/collateral-request-events') {
+      const fromHeight = Number(url.searchParams.get('fromHeight'));
+      if (!Number.isSafeInteger(fromHeight) || fromHeight < 1) {
+        return new Response('COLLATERAL_REQUEST_EVENT_HEIGHT_INVALID', { status: 400, headers: apiHeaders });
+      }
+      const events: Array<{ frameHeight: number; data: Record<string, unknown> }> = [];
+      let materializedThrough = fromHeight - 1;
+      for (let height = fromHeight; height <= env.state.height; height += 1) {
+        const journal = await runtime.readPersistedRuntimeActivityJournal(env, height);
+        if (!journal) break;
+        materializedThrough = height;
+        for (const log of journal.logs) {
+          if (log.message === 'request_collateral_committed' && log.data) {
+            events.push({ frameHeight: height, data: log.data });
+          }
+        }
+      }
+      return Response.json({ events, materializedThrough, runtimeHeight: env.state.height }, { headers: apiHeaders });
+    }
     if (url.pathname === '/account-dropdown-fixture' && request.method === 'POST') {
       dropdownFixture ??= import('../account/wallet-account-dropdown-fixture').then(module => module.createAccountDropdownFixture(port));
       const fixture = await dropdownFixture;

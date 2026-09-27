@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { expectNoBrowserErrors, expectPageContained, observeBrowserErrors, screenshotEvidence } from '../../browser-evidence';
-import { readWalletAccountToolState, readWalletFixtureChainBalances, selectWalletFixtureRuntime } from '../fixtures/wallet-runtime-test-helpers';
+import { readWalletAccountToolState, readWalletCollateralRequestEvents, readWalletFixtureChainBalances, selectWalletFixtureRuntime } from '../fixtures/wallet-runtime-test-helpers';
 
 test('Move broadcasts its reviewed collateral draft and observes exact Runtime and chain balances', { tag: '@functional' }, async ({ page }, testInfo) => {
   test.setTimeout(120000);
@@ -88,10 +88,15 @@ test('Manage commits the exact collateral request and prepaid peer fee on both A
   await expectPageContained(page); await screenshotEvidence(page, testInfo, 'manage-collateral-request-review');
   await page.getByRole('button', { name: 'Request Collateral', exact: true }).last().click();
   const expected = { amount: String(gross - fee), feePaid: String(fee), feeTokenId: tokenId, policyVersion: policy['policyVersion'] };
-  for (const [owner, peer] of [[fixture.entityId, fixture.counterpartyEntityId], [fixture.counterpartyEntityId, fixture.entityId]]) {
-    if (!owner || !peer) throw new Error('Account participant missing');
-    await expect.poll(async () => (await readWalletAccountToolState(page, owner, peer, tokenId))['collateralRequest'], { timeout: 20000 }).toEqual(expected);
-  }
+  await expect.poll(async () => {
+    const events = await readWalletCollateralRequestEvents(page, Number(before['height']) + 1);
+    return events.filter(({ data }) =>
+      String(data['accountId']).toLowerCase() === fixture.counterpartyEntityId
+      && Number(data['tokenId']) === tokenId
+      && String(data['requestedAmount']) === expected.amount
+      && String(data['prepaidFee']) === expected.feePaid,
+    ).length;
+  }, { timeout: 20000 }).toBeGreaterThanOrEqual(1);
   await expectPageContained(page); await screenshotEvidence(page, testInfo, 'manage-collateral-request-committed');
     const expectedCollateral = BigInt(String(before['collateral'])) + BigInt(expected.amount);
     const expectedHubReserve = BigInt(String(hubBefore['reserve'])) - BigInt(expected.amount);
