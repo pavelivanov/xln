@@ -25,7 +25,11 @@ import { WalletAccountRail } from './account/wallet-account-rail';
 import { WalletAccountWorkspace } from './account/wallet-account-workspace';
 import { WalletSettings } from './settings/wallet-settings';
 import { WalletLocalPassword } from './security/wallet-local-password';
-import { readCanonicalWalletLocalPasswordGate } from '../../../bridges/wallet/canonical/wallet-canonical-local-password';
+import {
+  isWalletLocalPasswordBlockedView,
+  readCanonicalWalletLocalPasswordEntries,
+  readCanonicalWalletLocalPasswordGate,
+} from '../../../bridges/wallet/canonical/wallet-canonical-local-password';
 import {
   getWalletLocalLauncherOnboarding,
   subscribeWalletLocalLauncherOnboarding,
@@ -158,7 +162,7 @@ export function WalletAppShell() {
   useEffect(() => { document.documentElement.lang = locale; }, [locale]);
   const [workspaceSelection] = useState(() => new WalletWorkspaceSelection());
   const [, setEnvironmentRevision] = useState(0);
-  const [passwordRecovery, setPasswordRecovery] = useState(false);
+  const [passwordEntryMode, setPasswordEntryMode] = useState<'create' | 'restore' | null>(null);
   const embedded = useSyncExternalStore(
     subscribeWalletEmbeddedRuntime,
     getWalletEmbeddedRuntimeSnapshot,
@@ -186,6 +190,10 @@ export function WalletAppShell() {
     runtimeConfig.mode === 'remote' ? 'remote' : 'embedded',
     embedded,
   );
+  const localPasswordEntries = readCanonicalWalletLocalPasswordEntries(
+    runtimeConfig.mode === 'remote' ? 'remote' : 'embedded',
+    embedded,
+  ).filter(isWalletLocalPasswordBlockedView);
   const localPasswordBlocked = localPasswordGate !== null && localPasswordGate.state !== 'unlocked';
   const runtimeSelectionKey = [runtimeConfig.mode, runtimeConfig.wsUrl, runtimeConfig.access, runtimeConfig.sessionKey].join('\u0000');
 
@@ -209,18 +217,30 @@ export function WalletAppShell() {
   };
 
   if (localPasswordBlocked) {
-    if (!passwordRecovery) {
+    if (!passwordEntryMode) {
       return <WalletLocalPassword
+        entries={localPasswordEntries}
+        mode="chooser"
         onComplete={() => setEnvironmentRevision(revision => revision + 1)}
-        onRecover={() => setPasswordRecovery(true)}
-        view={localPasswordGate}
+        onCreate={() => setPasswordEntryMode('create')}
+        onRecover={() => setPasswordEntryMode('restore')}
       />;
     }
     return <main className="wallet-shell">
       <div className="wallet-shell-canvas">
         <div className="wallet-shell-workspace">
+          <button
+            className="identity-secondary-action wallet-local-password-onboarding-back"
+            onClick={() => setPasswordEntryMode(null)}
+            type="button"
+          >
+            Back to wallets
+          </button>
           <IdentityOnboarding
-            onRuntimeOpened={() => setPasswordRecovery(false)}
+            onRuntimeOpened={() => {
+              setPasswordEntryMode(null);
+              setEnvironmentRevision(revision => revision + 1);
+            }}
             runtimeId=""
             runtimeState="local-loading"
           />

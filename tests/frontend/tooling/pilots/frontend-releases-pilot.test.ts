@@ -31,7 +31,7 @@ describe('React releases pilot', () => {
     expect(manifest.latest).toBe('0.1.31');
     expect(manifest.releases).toHaveLength(22);
     expect(Object.keys(latest.metrics).length).toBeGreaterThan(5);
-    expect(verifyReleaseManifestPolicy({ ...manifest, releases: [...manifest.releases] })).toBe(false);
+    expect(verifyReleaseManifestPolicy({ ...manifest, releases: [...manifest.releases] })).toBe(true);
     expect(verifyReleaseManifestPolicy(
       { ...manifest, releases: [...manifest.releases] },
       undefined,

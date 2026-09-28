@@ -297,6 +297,7 @@ export function IdentityOnboarding({
 
   if (passwordEnrollment) {
     return <WalletLocalPassword
+      mode="direct"
       onEnroll={openVerifiedIdentity}
       onRecover={resetIdentity}
       view={{ state: 'new-password', runtimeId: derivedAddress, label: draft.name || 'Wallet' }}

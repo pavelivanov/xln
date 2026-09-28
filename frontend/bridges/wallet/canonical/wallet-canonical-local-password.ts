@@ -4,33 +4,44 @@ import {
   savePasswordVault,
   unlockPasswordVault,
 } from '../../../packages/browser/src/vault/passwordVault';
-import { deleteVaultDeviceKey, type ProtectedVaultSecrets } from '../../../packages/browser/src/vault/vault-protection';
+import {
+  deleteVaultDeviceKey,
+  unprotectVaultSecrets,
+  type ProtectedVaultSecrets,
+} from '../../../packages/browser/src/vault/vault-protection';
 import { WALLET_VAULT_STORAGE_KEY } from '../../../packages/browser/src/wallet/wallet-vault-storage';
 import { parseJsonUnknown } from '../../../packages/runtime-client/src/boundary';
-import { readStoreValue } from '../../../packages/runtime-client/src/observable-store';
 import {
   browserRuntimeSession,
   installPagehideFence,
   setPageUnloadFence,
 } from '../../runtime/browser/browser-runtime-session';
 import { vaultOperations } from '../../vault/vault-store';
-import { runtimesState } from '../../vault/vault-metadata-store';
 import { decodePersistedVaultState } from '../../vault/recovery/vault-persistence-decoder';
 
 export type WalletLocalPasswordRuntime = Readonly<{
   id: string;
   label: string;
+  createdAt: number;
   seed: string;
   protectedSecrets?: ProtectedVaultSecrets;
 }>;
 
 export type WalletLocalPasswordGateState = 'new-password' | 'locked-password' | 'recovery-required' | 'unlocked';
 
-export type WalletLocalPasswordGateView = Readonly<{
-  state: WalletLocalPasswordGateState;
-  runtimeId: string;
-  label: string;
-}>;
+export type WalletLocalPasswordGateView = {
+  [State in WalletLocalPasswordGateState]: Readonly<{
+    state: State;
+    runtimeId: string;
+    label: string;
+  }>;
+}[WalletLocalPasswordGateState];
+
+export type WalletLocalPasswordBlockedView = Exclude<WalletLocalPasswordGateView, { state: 'unlocked' }>;
+
+export const isWalletLocalPasswordBlockedView = (
+  view: WalletLocalPasswordGateView,
+): view is WalletLocalPasswordBlockedView => view.state !== 'unlocked';
 
 type WalletLocalPasswordProjection = Readonly<{
   mode: 'embedded' | 'remote' | null;
@@ -41,17 +52,22 @@ type WalletLocalPasswordProjection = Readonly<{
   session: Pick<WalletEmbeddedRuntimeSessionSnapshot, 'status' | 'runtimeId'>;
 }>;
 
-export const projectWalletLocalPasswordGate = (
-  input: WalletLocalPasswordProjection,
-): WalletLocalPasswordGateView | null => {
-  if (input.mode === 'remote' || !input.activeRuntimeId) return null;
-  const runtime = input.runtimes[input.activeRuntimeId];
-  if (!runtime) throw new Error(`WALLET_LOCAL_PASSWORD_RUNTIME_MISSING:${input.activeRuntimeId}`);
+type WalletLocalPasswordEntriesProjection = Readonly<
+  Omit<WalletLocalPasswordProjection, 'hasPasswordVault'> & {
+    hasPasswordVault: (runtimeId: string) => boolean;
+  }
+>;
+
+const projectWalletLocalPasswordRuntime = (
+  runtime: WalletLocalPasswordRuntime,
+  input: Pick<WalletLocalPasswordProjection, 'now' | 'session'>,
+  passwordVaultExists: boolean,
+): WalletLocalPasswordGateView => {
   const base = { runtimeId: runtime.id, label: runtime.label || 'Wallet' };
-  if (input.hasPasswordVault && input.session.status === 'ready' && input.session.runtimeId === runtime.id) {
+  if (passwordVaultExists && input.session.status === 'ready' && input.session.runtimeId === runtime.id) {
     return { ...base, state: 'unlocked' };
   }
-  if (input.hasPasswordVault) return { ...base, state: 'locked-password' };
+  if (passwordVaultExists) return { ...base, state: 'locked-password' };
   const unlockUntil = runtime.protectedSecrets?.unlockUntil;
   const deviceLeaseUsable = Boolean(
     runtime.protectedSecrets && (unlockUntil === null || unlockUntil === undefined || unlockUntil > input.now),
@@ -59,9 +75,26 @@ export const projectWalletLocalPasswordGate = (
   return { ...base, state: deviceLeaseUsable ? 'new-password' : 'recovery-required' };
 };
 
+export const projectWalletLocalPasswordGate = (
+  input: WalletLocalPasswordProjection,
+): WalletLocalPasswordGateView | null => {
+  if (input.mode === 'remote' || !input.activeRuntimeId) return null;
+  const runtime = input.runtimes[input.activeRuntimeId];
+  if (!runtime) throw new Error(`WALLET_LOCAL_PASSWORD_RUNTIME_MISSING:${input.activeRuntimeId}`);
+  return projectWalletLocalPasswordRuntime(runtime, input, input.hasPasswordVault);
+};
+
+export const projectWalletLocalPasswordEntries = (
+  input: WalletLocalPasswordEntriesProjection,
+): readonly WalletLocalPasswordGateView[] => {
+  if (input.mode === 'remote') return [];
+  return Object.values(input.runtimes)
+    .sort((left, right) => right.createdAt - left.createdAt)
+    .map(runtime => projectWalletLocalPasswordRuntime(runtime, input, input.hasPasswordVault(runtime.id)));
+};
+
 type WalletLocalPasswordDependencies = Readonly<{
-  restoreRuntimeForEnrollment: () => Promise<void>;
-  readRuntime: (runtimeId: string) => WalletLocalPasswordRuntime | null;
+  restoreRuntimeForEnrollment: (runtimeId: string) => Promise<WalletLocalPasswordRuntime | null>;
   savePasswordVault: (runtimeId: string, seed: string, password: string) => Promise<void>;
   deleteVaultDeviceKey: (runtimeId: string, protection: ProtectedVaultSecrets) => Promise<unknown>;
   unlockPasswordVault: (runtimeId: string, password: string) => Promise<string>;
@@ -75,13 +108,16 @@ export const createWalletLocalPasswordOperations = (dependencies: WalletLocalPas
     await dependencies.savePasswordVault(runtimeId, seed, password);
   },
   enrollSaved: async (runtimeId: string, password: string): Promise<void> => {
-    await dependencies.restoreRuntimeForEnrollment();
-    const runtime = dependencies.readRuntime(runtimeId);
+    // Device recovery may expose only this target's seed; it must not select or
+    // start any Runtime. Password persistence retires that bootstrap lease, and
+    // canonical unlock is the sole step allowed to move active authority.
+    const runtime = await dependencies.restoreRuntimeForEnrollment(runtimeId);
     if (!runtime?.seed) throw new Error(`WALLET_LOCAL_PASSWORD_RECOVERY_REQUIRED:${runtimeId}`);
     await dependencies.savePasswordVault(runtimeId, runtime.seed, password);
     if (runtime.protectedSecrets) {
       await dependencies.deleteVaultDeviceKey(runtimeId, runtime.protectedSecrets);
     }
+    await dependencies.unlockRuntime(runtimeId, runtime.seed);
   },
   unlock: async (runtimeId: string, password: string): Promise<void> => {
     const seed = await dependencies.unlockPasswordVault(runtimeId, password);
@@ -108,13 +144,19 @@ export const createWalletLocalPasswordOperations = (dependencies: WalletLocalPas
 
 const normalizeRuntimeId = (value: string): string => value.trim().toLowerCase();
 
+const readPersistedRuntime = (runtimeId: string): WalletLocalPasswordRuntime | null => {
+  const raw = localStorage.getItem(WALLET_VAULT_STORAGE_KEY);
+  if (!raw) return null;
+  const persisted = decodePersistedVaultState(parseJsonUnknown(raw, 'VAULT_STORAGE_JSON_INVALID'));
+  return persisted.runtimes[normalizeRuntimeId(runtimeId)] ?? null;
+};
+
 const productionOperations = createWalletLocalPasswordOperations({
-  restoreRuntimeForEnrollment: async () => {
-    await browserRuntimeSession.start();
-  },
-  readRuntime: runtimeId => {
-    const runtime = readStoreValue(runtimesState).runtimes[normalizeRuntimeId(runtimeId)];
-    return runtime ?? null;
+  restoreRuntimeForEnrollment: async runtimeId => {
+    const runtime = readPersistedRuntime(runtimeId);
+    if (!runtime?.protectedSecrets) return runtime;
+    const secrets = await unprotectVaultSecrets(runtime.id, runtime.protectedSecrets);
+    return secrets ? { ...runtime, seed: secrets.seed } : runtime;
   },
   savePasswordVault,
   deleteVaultDeviceKey,
@@ -145,6 +187,24 @@ export const readCanonicalWalletLocalPasswordGate = (
     activeRuntimeId: runtimeId,
     runtimes: persisted.runtimes,
     hasPasswordVault: runtimeId ? hasPasswordVault(runtimeId) : false,
+    session,
+  });
+};
+
+export const readCanonicalWalletLocalPasswordEntries = (
+  mode: 'embedded' | 'remote' | null,
+  session: WalletEmbeddedRuntimeSessionSnapshot,
+  now = Date.now(),
+): readonly WalletLocalPasswordGateView[] => {
+  const raw = localStorage.getItem(WALLET_VAULT_STORAGE_KEY);
+  if (!raw) return [];
+  const persisted = decodePersistedVaultState(parseJsonUnknown(raw, 'VAULT_STORAGE_JSON_INVALID'));
+  return projectWalletLocalPasswordEntries({
+    mode,
+    now,
+    activeRuntimeId: persisted.activeRuntimeId,
+    runtimes: persisted.runtimes,
+    hasPasswordVault,
     session,
   });
 };

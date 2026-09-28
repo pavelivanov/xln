@@ -161,7 +161,7 @@ Run from the repository root unless stated otherwise.
 | --- | --- | --- | --- | --- |
 | F01 | Establish failing characterization and drift baseline | P0 | — | DONE |
 | F02 | Restore the signed `0.1.31` release identity | P0 | F01 | DONE |
-| F03 | Restore create/select-before-unlock in React | P0 | F01 | TODO |
+| F03 | Restore create/select-before-unlock in React | P0 | F01 | DONE |
 | F04 | Re-certify the exact repaired source | P0 | F02, F03 | TODO |
 
 ### F01 — Establish failing characterization and drift baseline
@@ -237,35 +237,35 @@ catalog, snapshot, generated release document, or frozen-core file.
 
 ### F03 — Restore create/select-before-unlock in React
 
-- [ ] Extend the canonical local-password bridge with a read-only entry
+- [x] Extend the canonical local-password bridge with a read-only entry
       projection containing only `runtimeId`, display `label`, and gate `state`.
       Derive it from validated persisted vault metadata; order entries by the
       existing newest-first `createdAt` convention. Never return seed,
       `protectedSecrets`, password-vault bytes, signer data, or Runtime state.
-- [ ] Preserve `projectWalletLocalPasswordGate` as the single state-rule owner.
+- [x] Preserve `projectWalletLocalPasswordGate` as the single state-rule owner.
       Factor a small reusable per-runtime projection rather than duplicating its
       enrollment/locked/recovery decisions for the entry list.
-- [ ] Add an explicit welcome state to `WalletLocalPassword`. It must render
+- [x] Add an explicit welcome state to `WalletLocalPassword`. It must render
       “Create a wallet,” “Restore a wallet,” and one button per saved wallet.
       It must render no password field until a saved wallet is selected.
-- [ ] Keep saved-wallet selection transient in React. Clicking a row selects
+- [x] Keep saved-wallet selection transient in React. Clicking a row selects
       the entry for display only; it must not write `activeRuntimeId`, start a
       Runtime, restore a device key, or acquire command authority. The existing
       canonical unlock operation selects the Runtime only after password-vault
       decryption succeeds.
-- [ ] Route “Create a wallet” into `IdentityOnboarding` with no unlock target.
+- [x] Route “Create a wallet” into `IdentityOnboarding` with no unlock target.
       Preserve the existing recovery entry as a separate explicit action.
       Back navigation must return to the chooser and clear password,
       confirmation, busy, and error state.
-- [ ] After successful enrollment/unlock, refresh the app-shell environment and
+- [x] After successful enrollment/unlock, refresh the app-shell environment and
       proceed through the existing canonical Runtime lifecycle. Do not add a
       second boot or selection path.
-- [ ] Update the security CSS using the existing wallet identity tokens and
+- [x] Update the security CSS using the existing wallet identity tokens and
       responsive containment. Do not copy the retired Svelte inline styles.
-- [ ] Complete unit coverage for empty list, one wallet, multiple wallets,
+- [x] Complete unit coverage for empty list, one wallet, multiple wallets,
       active/non-active selection, wrong password, successful unlock, create,
       restore, back, and remote-runtime exclusion.
-- [ ] Complete the React browser specification for create-before-unlock,
+- [x] Complete the React browser specification for create-before-unlock,
       saved-wallet selection, no premature password field, no premature Runtime
       UI, wrong-password rejection, successful unlock, explicit lock, create,
       restore, and absence of secrets in local/session storage.
@@ -275,6 +275,26 @@ catalog, snapshot, generated release document, or frozen-core file.
 1. `bun test tests/frontend/security/wallet-local-password.test.ts` → all pass.
 2. `cd frontend && bun scripts/check.ts --surface=wallet --level=local` → exit 0.
 3. `rg -n "seed|protectedSecrets|ciphertext|deviceKey" frontend/apps/wallet/src/security/wallet-local-password.tsx` → no secret-bearing React contract.
+
+F03 evidence (2026-09-28): the canonical bridge now returns only secret-free
+`runtimeId`, display `label`, and per-wallet gate `state`, ordered newest-first
+from validated vault metadata. Post-review correction removed the targetless
+Runtime boot from saved-wallet enrollment: the bridge now decrypts only the
+chosen device lease, persists its password vault, retires its bootstrap key,
+then invokes the existing canonical unlock/select path. The two-wallet
+regression proves the prior active wallet remains unchanged through restore,
+password persistence, and key deletion. The post-review type correction makes
+gate views a true discriminated union and makes chooser versus direct-enrollment
+props mutually exclusive, so an `unlocked` view is no longer accepted by the
+password component. The focused unit boundary passed
+`11/11` tests and `33` assertions; the Wallet local gate passed all three steps with `674`
+unsafe-type files and `0` findings; the React secret-contract search returned
+no matches; and `git diff --check` passed. The laptop `1366×900` browser flow
+passed `1/1` in `12.5s` under the stand lock with chooser/create/restore/back,
+transient selection, wrong-password reset, canonical unlock, explicit lock,
+containment, screenshots, storage secrecy, and zero unexpected browser errors.
+The first sandboxed browser attempt could not bind `127.0.0.1:19080` (`EPERM`);
+the required loopback-enabled rerun passed. All three viewport runs remain F04.
 
 ### F04 — Re-certify the exact repaired source
 
