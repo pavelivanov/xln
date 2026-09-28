@@ -1,5 +1,12 @@
 # Recover post-rebase frontend and native semantics
 
+> **Reopened by the 2026-09-28 deep audit:** R04, R08, and R09 are not current
+> publication evidence. The React password boundary is present, but it does not
+> preserve upstream `1248f788e` create/select-before-unlock behavior, and the
+> tree has a mixed `0.1.31`/`0.1.32` release identity. Execute
+> [the audit findings plan](post-rebase-audit-findings.md) and recertify those
+> rows before relying on this document's previous handoff.
+
 > **Executor instructions:** Execute one task at a time in the order allowed by
 > the dependency table. Run every task's focused verification before advancing.
 > Do not make protocol, financial-state, contract, persistence-schema, or
@@ -132,12 +139,12 @@ Run from repository root unless a different cwd is shown.
 | R01 | Repair retained `ui` imports and make its typecheck a root gate | P0 | — | VERIFIED |
 | R02 | Restore the canonical iOS headless-runtime package contract | P0 | R01 | VERIFIED |
 | R03 | Restore RPC-only scenario and jurisdiction selection | P1 | — | VERIFIED |
-| R04 | Restore React local-password enrollment, unlock, and lock | P0 | — | VERIFIED |
+| R04 | Restore React local-password enrollment, unlock, lock, and pre-unlock choice | P0 | — | REOPENED — execute F03 |
 | R05 | Resolve paired-daemon custody semantics | P1 | — | VERIFIED |
 | R06 | Finish Svelte retirement and harden the retirement gate | P1 | R04 | VERIFIED |
 | R07 | Characterize post-rebase generated-input failure diagnostics | P2 | — | VERIFIED |
-| R08 | Re-certify one exact source and release | P0 | R01–R06; R07 disposition | VERIFIED |
-| R09 | Produce the publication-readiness handoff | P0 | R08 | VERIFIED |
+| R08 | Re-certify one exact source and release | P0 | R01–R07; audit findings F02–F03 | REOPENED — execute F04 |
+| R09 | Produce the publication-readiness handoff | P0 | R08 | REOPENED — execute F04 |
 
 Only one implementer owns a task. R01/R03/R04/R05/R07 may be prepared
 independently, but do not run heavy browser/native stands concurrently.
