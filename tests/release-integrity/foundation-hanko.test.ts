@@ -178,8 +178,7 @@ describe('Foundation release Hanko', () => {
 
   test('requires canonical Hanko for every catalog release', () => {
     expect(CURRENT_XLN_RELEASE_VERSION).toBe(readFileSync(resolve(ROOT, 'VERSION'), 'utf8').trim());
-    expect(verifyReleaseManifestPolicy(MANIFEST)).toBe(false);
-    expect(verifyReleaseManifestPolicy(MANIFEST, undefined, MANIFEST.latest)).toBe(true);
+    expect(verifyReleaseManifestPolicy(MANIFEST)).toBe(true);
     expect(verifyReleaseManifestEntry(MANIFEST_019)).toBe(true);
     expect(verifyReleaseManifestSnapshotBinding(MANIFEST_019, RELEASE_019)).toBe(true);
     expect(MANIFEST.releases.every((release) => release.attestation)).toBe(true);

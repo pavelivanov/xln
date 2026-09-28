@@ -19,7 +19,7 @@ test(
   async ({ page }, testInfo) => {
     testInfo.setTimeout(180_000);
     const errors = observeBrowserErrors(page);
-    await restoreLocalWallet(page);
+    const fixture = await restoreLocalWallet(page);
 
     const persistedAfterEnrollment = await page.evaluate(() =>
       JSON.stringify({
@@ -31,7 +31,19 @@ test(
     expect(persistedAfterEnrollment).not.toContain(REACT_WALLET_LOCAL_PASSWORD);
 
     await page.reload({ waitUntil: 'domcontentloaded' });
+    await expect(page.getByRole('button', { name: 'Create a wallet', exact: true })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Restore a wallet', exact: true })).toBeVisible();
+    const savedWallet = page.getByRole('button', {
+      name: `Mnemonic ${fixture.recovery.runtimeId.slice(0, 6)}`,
+      exact: false,
+    });
+    await expect(savedWallet).toBeVisible();
+    await expect(page.locator('input[type="password"]')).toHaveCount(0);
+    await expect(page.locator('.wallet-shell-runtime-state')).toHaveCount(0);
+    await expect(page.getByRole('heading', { name: 'Configure account' })).toHaveCount(0);
+    await savedWallet.click();
     await expect(page.getByRole('heading', { name: 'Unlock wallet', exact: true })).toBeVisible();
+    await expect(page.locator('input[type="password"]')).toHaveCount(1);
     await expect(page.locator('.wallet-shell-runtime-state')).toHaveCount(0);
     await expect(page.getByRole('heading', { name: 'Configure account' })).toHaveCount(0);
     await page.getByLabel('Password', { exact: true }).fill('wrong-local-password');
@@ -49,6 +61,9 @@ test(
     await expectPageContained(page);
     await screenshotEvidence(page, testInfo, 'wallet-local-password-unlocked');
     await lock.click();
+    await expect(page.getByRole('button', { name: 'Create a wallet', exact: true })).toBeVisible({ timeout: 30_000 });
+    await expect(page.locator('input[type="password"]')).toHaveCount(0);
+    await savedWallet.click();
     await expect(page.getByRole('heading', { name: 'Unlock wallet', exact: true })).toBeVisible({ timeout: 30_000 });
     await expect(page.getByRole('heading', { name: 'Payments' })).toHaveCount(0);
     await expectPageContained(page);

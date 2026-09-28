@@ -2,14 +2,21 @@ import { describe, expect, test } from 'bun:test';
 
 import {
   createWalletLocalPasswordOperations,
+  projectWalletLocalPasswordEntries,
   projectWalletLocalPasswordGate,
   type WalletLocalPasswordRuntime,
 } from '../../../frontend/bridges/wallet/canonical/wallet-canonical-local-password';
 
 const runtimeId = `0x${'12'.repeat(20)}`;
-const runtime = (unlockUntil: number | null = 10_000): WalletLocalPasswordRuntime => ({
-  id: runtimeId,
-  label: 'Local wallet',
+const runtime = (
+  unlockUntil: number | null = 10_000,
+  id = runtimeId,
+  label = 'Local wallet',
+  createdAt = 1,
+): WalletLocalPasswordRuntime => ({
+  id,
+  label,
+  createdAt,
   seed: '',
   protectedSecrets: {
     version: 1,
@@ -21,6 +28,43 @@ const runtime = (unlockUntil: number | null = 10_000): WalletLocalPasswordRuntim
 });
 
 describe('React wallet local-password boundary', () => {
+  test('projects secret-free saved wallet entries newest-first with per-wallet gate states', () => {
+    const olderRuntimeId = `0x${'34'.repeat(20)}`;
+    const runtimes = {
+      [olderRuntimeId]: runtime(999, olderRuntimeId, 'Older wallet', 100),
+      [runtimeId]: runtime(10_000, runtimeId, '', 200),
+    };
+    const base = {
+      mode: 'embedded' as const,
+      now: 1_000,
+      activeRuntimeId: olderRuntimeId,
+      runtimes,
+      session: { status: 'idle' as const, runtimeId: '' },
+    };
+
+    const entries = projectWalletLocalPasswordEntries({
+      ...base,
+      hasPasswordVault: candidateRuntimeId => candidateRuntimeId === runtimeId,
+    });
+    expect(entries).toEqual([
+      { runtimeId, label: 'Wallet', state: 'locked-password' },
+      { runtimeId: olderRuntimeId, label: 'Older wallet', state: 'recovery-required' },
+    ]);
+    expect(JSON.stringify(entries)).not.toContain('seed');
+    expect(JSON.stringify(entries)).not.toContain('protectedSecrets');
+    expect(JSON.stringify(entries)).not.toContain('ciphertext');
+
+    expect(
+      projectWalletLocalPasswordEntries({
+        ...base,
+        hasPasswordVault: () => false,
+      }),
+    ).toEqual([
+      { runtimeId, label: 'Wallet', state: 'new-password' },
+      { runtimeId: olderRuntimeId, label: 'Older wallet', state: 'recovery-required' },
+    ]);
+  });
+
   test('projects enrollment, locked, recovery, and unlocked local states', () => {
     const base = {
       mode: 'embedded' as const,

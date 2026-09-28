@@ -126,6 +126,7 @@ Run from the repository root unless stated otherwise.
 - `packages/npm/xlnfinance/package.json`
 - `native/extension/manifest.json`
 - `frontend/packages/ui/src/releases/release-signature.ts`
+- `tests/release-integrity/foundation-hanko.test.ts`
 - `frontend/bridges/wallet/canonical/wallet-canonical-local-password.ts`
 - `frontend/apps/wallet/src/app-shell.tsx`
 - `frontend/apps/wallet/src/security/wallet-local-password.tsx`
@@ -158,32 +159,32 @@ Run from the repository root unless stated otherwise.
 
 | ID | Task | Priority | Depends on | Status |
 | --- | --- | --- | --- | --- |
-| F01 | Establish failing characterization and drift baseline | P0 | — | TODO |
-| F02 | Restore the signed `0.1.31` release identity | P0 | F01 | TODO |
+| F01 | Establish failing characterization and drift baseline | P0 | — | DONE |
+| F02 | Restore the signed `0.1.31` release identity | P0 | F01 | DONE |
 | F03 | Restore create/select-before-unlock in React | P0 | F01 | TODO |
 | F04 | Re-certify the exact repaired source | P0 | F02, F03 | TODO |
 
 ### F01 — Establish failing characterization and drift baseline
 
-- [ ] Record `git rev-parse HEAD`, `git status --porcelain`, and
+- [x] Record `git rev-parse HEAD`, `git status --porcelain`, and
       `bun --version`. STOP if the worktree contains an overlapping user change
       or Bun is not `1.4.0`.
-- [ ] Confirm the remote boundary remains
+- [x] Confirm the remote boundary remains
       `origin/main=566c850b37f37b5d0c713a84070bfcb9a6bc6d22` with
       `git ls-remote origin refs/heads/main`. If it changed, STOP and repeat the
       upstream semantic audit before implementing this plan.
-- [ ] Confirm `docs/releases/manifest.json` has `latest: 0.1.31`, a signed
+- [x] Confirm `docs/releases/manifest.json` has `latest: 0.1.31`, a signed
       `0.1.31` entry, and no `0.1.32` entry. STOP if a real `0.1.32` release now
       exists.
-- [ ] Run only the canonical-version test:
+- [x] Run only the canonical-version test:
       `bun test tests/release-integrity/foundation-hanko.test.ts -t "keeps every distributable package on the canonical release version"`.
       Record the expected pre-fix failure (`0.1.31` versus `0.1.32`).
-- [ ] Add unit characterization to
+- [x] Add unit characterization to
       `tests/frontend/security/wallet-local-password.test.ts` for a secret-free,
       newest-first list of saved wallet entries. Cover two wallets, empty
       labels, per-wallet enrollment/locked/recovery states, and exclusion of
       seeds/protected-secret objects from the result.
-- [ ] Extend the React password browser specification with the upstream order:
+- [x] Extend the React password browser specification with the upstream order:
       after creating and locking a saved wallet, reload shows “Create a wallet”
       and its saved-wallet row, with zero password inputs. Clicking that row is
       the only action that reveals its password form.
@@ -199,25 +200,40 @@ Run from the repository root unless stated otherwise.
    before any password submission. An unrelated startup, console, or Runtime
    failure is a STOP condition.
 
+F01 evidence (2026-09-28): source `16de2e20408771599e81e6f3005a3dcc9c14b2bb`,
+clean starting worktree, Bun `1.4.0`, and remote `main` at the required
+`566c850b37f37b5d0c713a84070bfcb9a6bc6d22`. The release test failed only on
+root package `0.1.31` versus `VERSION` `0.1.32`; the wallet unit failed only on
+the absent `projectWalletLocalPasswordEntries` export; the locked laptop browser
+case failed first on the absent “Create a wallet” chooser before password entry.
+
 ### F02 — Restore the signed `0.1.31` release identity
 
-- [ ] Set `VERSION`, root `package.json`, `frontend/package.json`,
+- [x] Set `VERSION`, root `package.json`, `frontend/package.json`,
       `packages/npm/xlnfinance/package.json`, and
       `native/extension/manifest.json` to exactly `0.1.31`.
-- [ ] Set `CURRENT_XLN_RELEASE_VERSION` in
+- [x] Set `CURRENT_XLN_RELEASE_VERSION` in
       `frontend/packages/ui/src/releases/release-signature.ts` to `0.1.31`.
-- [ ] Do not create or edit release catalog rows, release snapshots, tags,
+- [x] Do not create or edit release catalog rows, release snapshots, tags,
       attestations, frozen-core hashes, or generated release documents.
-- [ ] Run the release regression command from the Commands table.
-- [ ] Run `bun run foundation-release:verify`; it must verify the existing
+- [x] Run the release regression command from the Commands table.
+- [x] Run `bun run foundation-release:verify`; it must verify the existing
       signed `0.1.31` evidence without changing tracked files.
-- [ ] Run
+- [x] Run
       `rg -n '0\.1\.32' VERSION package.json frontend/package.json packages/npm/xlnfinance/package.json native/extension/manifest.json frontend/packages/ui/src/releases/release-signature.ts`.
       Expected result: no matches.
 
 **Verify:** all release/native tests pass, Foundation verification succeeds,
 and `git status --short` shows only the six intended version files plus plan
 status changes.
+
+F02 evidence (2026-09-28): the regression set passed `26/26` tests and `217`
+assertions when invoked with rooted `./` test paths to avoid Bun 1.4.0's macOS
+test-filter descriptor leak. Foundation verification accepted signed release
+`0.1.31` with envelope hash
+`0xeb674f72c7f270ead0a7491834ff4e653ccece8b03bc28d4e63ebff7cd10f245`;
+the `0.1.32` search returned no matches, and verification changed no release
+catalog, snapshot, generated release document, or frozen-core file.
 
 ### F03 — Restore create/select-before-unlock in React
 
