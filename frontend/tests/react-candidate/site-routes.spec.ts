@@ -61,3 +61,28 @@ for (const route of siteRoutes) {
     else expectNoBrowserErrors(errors);
   });
 }
+
+test('/market-cap anchors every select indicator', { tag: '@functional' }, async ({ page }, testInfo) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  const errors = observeBrowserErrors(page);
+  const response = await page.goto('/market-cap', { waitUntil: 'networkidle' });
+  expect(response?.ok()).toBe(true);
+  const selectAnchors = page.locator('.market-select-anchor');
+  await expect(selectAnchors).toHaveCount(6);
+  expect(await selectAnchors.evaluateAll((anchors) => anchors.every((anchor) => {
+    const select = anchor.querySelector('select');
+    const indicator = getComputedStyle(anchor, '::after');
+    if (!select) return false;
+    const anchorBounds = anchor.getBoundingClientRect();
+    const selectBounds = select.getBoundingClientRect();
+    return getComputedStyle(select).appearance === 'none'
+      && indicator.right === '13px'
+      && indicator.pointerEvents === 'none'
+      && anchorBounds.width === selectBounds.width
+      && anchorBounds.height === selectBounds.height;
+  }))).toBe(true);
+  await expectPageContained(page);
+  await screenshotEvidence(page, testInfo, 'site-market-cap-select-anchors');
+  if (await page.getByRole('alert').isVisible()) expectOnlyHttpFailures(errors, marketFailure.status);
+  else expectNoBrowserErrors(errors);
+});

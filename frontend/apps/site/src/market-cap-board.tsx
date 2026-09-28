@@ -54,9 +54,11 @@ function SelectFilter({ label, value, options, onChange }: Readonly<{
   return (
     <label className="market-filter">
       <span>{label}</span>
-      <select aria-label={label} value={value} onChange={(event) => onChange(event.currentTarget.value)}>
-        {options.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
-      </select>
+      <div className="market-select-anchor">
+        <select aria-label={label} value={value} onChange={(event) => onChange(event.currentTarget.value)}>
+          {options.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+        </select>
+      </div>
     </label>
   );
 }
