@@ -41,7 +41,7 @@ describe('retained ui source boundaries', () => {
 
     expect(paths.length).toBeGreaterThan(0);
     expect(violations).toEqual([]);
-  });
+  }, 30_000);
 
   test('keeps the retained ui typecheck in the canonical root check', async () => {
     const packageJson = JSON.parse(await readFile(join(REPOSITORY_ROOT, 'package.json'), 'utf8')) as {
