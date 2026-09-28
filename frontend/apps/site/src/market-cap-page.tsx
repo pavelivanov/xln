@@ -17,6 +17,7 @@ import {
   type MarketCapRequest,
 } from '../../../packages/ui/src/content/market-cap-page-model';
 import { MarketCapBoard } from './market-cap-board';
+import { MarketCapEntityNumber } from './market-cap-entity-number';
 import { SiteFooter, SiteShell } from './site-shell';
 
 type MarketFeedState = Readonly<{
@@ -76,7 +77,7 @@ function MarketRankingNav({ ranking, onSelect }: Readonly<{ ranking: MarketCapRa
 function MarketLeaders({ data, controls }: Readonly<{ data: MarketCapPublicResponse; controls: MarketCapControls }>) {
   return (
     <section className="market-leaders" aria-label="Valuation leaders">
-      {data.entries.slice(0, 3).map((entry, index) => <article key={entry.entityId}><span className="market-leader-rank">{String(index + 1).padStart(2, '0')}</span><div className="market-entity-mark">{entry.entityNumber.slice(-2).padStart(2, '0')}</div><div className="market-leader-copy"><span>Entity #{entry.entityNumber}</span><strong>{entry.name}</strong><small className={entry.online ? 'is-online' : undefined}>{entry.online ? 'Online' : 'Offline'}{entry.isHub ? ' · Hub' : ''}</small></div><div className="market-leader-value"><strong>{formatMarketCapUsd(marketCapRankingValue(entry, controls.sort))}</strong><span className={`is-${entry.status}`}>{marketCapRankingLabel(entry, controls.sort)}</span></div></article>)}
+      {data.entries.slice(0, 3).map((entry, index) => <article key={entry.entityId}><span className="market-leader-rank">{String(index + 1).padStart(2, '0')}</span><div className="market-entity-mark">{entry.entityNumber.slice(-2).padStart(2, '0')}</div><div className="market-leader-copy"><MarketCapEntityNumber value={entry.entityNumber} prefix="Entity #" /><strong>{entry.name}</strong><small className={entry.online ? 'is-online' : undefined}>{entry.online ? 'Online' : 'Offline'}{entry.isHub ? ' · Hub' : ''}</small></div><div className="market-leader-value"><strong>{formatMarketCapUsd(marketCapRankingValue(entry, controls.sort))}</strong><span className={`is-${entry.status}`}>{marketCapRankingLabel(entry, controls.sort)}</span></div></article>)}
     </section>
   );
 }
