@@ -1,6 +1,6 @@
 # React frontend cutover review
 
-Status: **T17 DONE; T18 DONE; post-rebase R06 VERIFIED**
+Status: **T17 DONE; T18 DONE; post-rebase R08 VERIFIED**
 
 ## Authority and boundary
 
@@ -61,6 +61,51 @@ The corrected retirement inventory contains **265 paths** with SHA-256
 `198a6bb0acccb8992c018ede51f34ed4d353e35fac05b900b670101c2c980566`.
 This correction does not reuse the historical source or release receipts;
 R08 must bind the repaired tree to one new exact source and release.
+
+## Post-rebase R08 certification
+
+R08 certifies source `24204d68a8d9b7865f4564dc6f28109be5c3c466`
+with Bun **1.4.0**. The verified frontend release is
+`sha256-b9100e9824673a5564f49c39d0c6b3a2bd2610faf93f642249bda26cef40201a`
+(**652 files**) at
+`frontend/.artifacts/releases/sha256-b9100e9824673a5564f49c39d0c6b3a2bd2610faf93f642249bda26cef40201a`.
+Its `release-manifest.json` SHA-256 is
+`f03cb30e263bbd2360dc26b1cd0b7692bb58cefab5522686137dca9a51a106d6`.
+
+| Boundary | R08 result |
+| --- | --- |
+| Retained UI and source policy | PASS: `cd ui && bun run check`; no file remains beneath `frontend/src`, resurrection is rejected, and no production/scenario/Ops selector chooses BrowserVM |
+| Frontend aggregate | PASS: `cd frontend && bun scripts/check.ts --all --level=frontend`; **1,586/1,586** unit tests and all four builds passed, reproducing the exact 652-file release |
+| Root aggregate | PASS: `bun run check`; **3/3** root aggregates and **39/39** source gates passed, including frozen core unchanged |
+| Browser inventory and matrix | PASS: `bunx --no-install playwright test --config playwright.react.config.ts --list` found **453 tests in 45 files**; `bun run stand:run --reason r08-react-browser-matrix --timeout-ms 3600000 -- bun frontend/scripts/testing/test-react-candidate.ts --all` passed **453/453**: mobile **151/151 in 12.0 min**, laptop **151/151 in 13.4 min**, wide **151/151 in 26.0 min** |
+| Immutable artifact and preview | PASS: `cd frontend && bun scripts/testing/test-artifact-candidate.ts` passed **12/12 in 1.3 min**; `cd frontend && bun scripts/release/check-preview-consumer.ts --release .artifacts/releases/sha256-b9100e9824673a5564f49c39d0c6b3a2bd2610faf93f642249bda26cef40201a` verified all 652 hashes, four routes, corruption/missing-release rejection, and clean shutdown |
+| iOS production package | PASS: `bun scripts/native/build-platforms.ts ios --frontend-release frontend/.artifacts/releases/sha256-b9100e9824673a5564f49c39d0c6b3a2bd2610faf93f642249bda26cef40201a` built the iPhone 17 Pro simulator target with production network values; native artifact `sha256-99e5b6dae6fd16591d3598b8d3ac2e33dab6e7dd46add7b22ddfa0db169e5d61`, manifest SHA-256 `bd564d4edce3fd5396e298010338c1ca28d0839bf374aedb17ad1df9397ac076` |
+| iOS native sessions | PASS: stand-locked `bun scripts/native/session/run-session.ts ios-ui-swap` committed one economic swap (**1/1 in 126.039 s**) and `bun scripts/native/session/run-session.ts ios-ui-default` passed launch/background/activation lifecycle (**1/1 in 71.453 s**); both ended with `systemOk=true` and no health failures |
+| Final hygiene | PASS: `git diff --check`; no Runtime/Entity/Account, contract, persistence, or `frozen-core.json` change; no push, deployment, publication, or history rewrite |
+
+The browser matrix ran at source `8da6d9524`; the only subsequent changes before
+the certified source were two unit-test-only edits: artifact-history expected
+frame coverage and an explicit 30-second budget for the semantic UI source scan.
+The current Playwright inventory is unchanged, and the frontend aggregate on the
+certified source reproduced the exact release identity. Those edits therefore
+invalidate only their affected unit evidence, which was rerun at the certified
+source; production, browser, release, and native bytes are identical.
+
+The production-network iOS package contains `native-network.json` with
+`https://xln.finance` for both API and recovery. The local simulator session
+used an isolated localhost-derived copy and Xcode `build-for-testing`. An
+additional payment-session attempt reached wallet creation, funding, and the
+camera-unavailable path, then stopped on the known XCTest accessibility audit
+(`Dynamic Type font sizes are partially unsupported`) before payment commit;
+the required native economic smoke is the passing swap session above. Physical
+device execution and Apple signing remain owner/device gates. C03 production
+activation remains separate and requires explicit release authority.
+
+This R08 receipt supersedes the historical **444/444** browser and 493-file
+release claims for the current tree. As with the original receipt, this section
+is written after assembly because the public Docs catalog includes repository
+Markdown; embedding its own release hash into the release it names would be
+self-referential.
 
 ## T18 local certification
 

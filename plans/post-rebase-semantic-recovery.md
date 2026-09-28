@@ -136,7 +136,7 @@ Run from repository root unless a different cwd is shown.
 | R05 | Resolve paired-daemon custody semantics | P1 | — | VERIFIED |
 | R06 | Finish Svelte retirement and harden the retirement gate | P1 | R04 | VERIFIED |
 | R07 | Characterize post-rebase generated-input failure diagnostics | P2 | — | VERIFIED |
-| R08 | Re-certify one exact source and release | P0 | R01–R06; R07 disposition | WAIT |
+| R08 | Re-certify one exact source and release | P0 | R01–R06; R07 disposition | VERIFIED |
 | R09 | Produce the publication-readiness handoff | P0 | R08 | WAIT |
 
 Only one implementer owns a task. R01/R03/R04/R05/R07 may be prepared
@@ -605,6 +605,43 @@ Steps:
 All must pass on the same source. A cancelled sibling, historical receipt,
 staging-copy-only result, or green unit test is not a substitute.
 
+**Implementation evidence (2026-09-28, source
+`24204d68a8d9b7865f4564dc6f28109be5c3c466`, Bun `1.4.0`):**
+
+- `cd ui && bun run check`, `git diff --check`, the no-legacy/source-policy
+  gates, and the current Playwright inventory all passed. The inventory is
+  **453 tests in 45 files**.
+- `cd frontend && bun scripts/check.ts --all --level=frontend` passed
+  **1,586/1,586** unit tests and all Site, Docs, Wallet and Ops builds. It
+  assembled the exact **652-file** release
+  `sha256-b9100e9824673a5564f49c39d0c6b3a2bd2610faf93f642249bda26cef40201a`;
+  `release-manifest.json` SHA-256 is
+  `f03cb30e263bbd2360dc26b1cd0b7692bb58cefab5522686137dca9a51a106d6`.
+- `bun run check` passed **3/3** root aggregates and **39/39** source gates,
+  including frozen core unchanged, and reproduced that exact release identity.
+  The complete stand-locked browser matrix passed **453/453**: **151/151**
+  mobile in 12.0 min, **151/151** laptop in 13.4 min, and **151/151** wide in
+  26.0 min. Immutable artifact verification passed **12/12 in 1.3 min** and
+  explicit-release preview verified all hashes, four routes, failure rejection,
+  and clean shutdown.
+- The canonical production-network iOS build passed with native artifact
+  `sha256-99e5b6dae6fd16591d3598b8d3ac2e33dab6e7dd46add7b22ddfa0db169e5d61`
+  and native manifest SHA-256
+  `bd564d4edce3fd5396e298010338c1ca28d0839bf374aedb17ad1df9397ac076`.
+  Simulator `ios-ui-swap` committed one economic swap (**1/1 in 126.039 s**),
+  and `ios-ui-default` passed launch/background/activation lifecycle (**1/1 in
+  71.453 s**); both ended `systemOk=true` with no health failures. A separate
+  payment attempt stopped on the known Dynamic Type accessibility audit before
+  commit, so it is disclosed but not substituted for the passing economic
+  session. Physical-device execution and Apple signing remain deferred
+  owner/device gates.
+- The browser matrix predates two unit-test-only commits; the current inventory
+  and release identity are unchanged, and both affected unit boundaries were
+  rerun at the certified source. No push, deployment, publication, or history
+  rewrite was performed. The cutover review is a post-assembly receipt because
+  embedding it in the Docs catalog before naming the release would be
+  self-referential.
+
 ## R09 — Publication-readiness handoff
 
 Produce a six-field handoff only:
@@ -623,21 +660,21 @@ history as part of this plan.
 ## Done criteria
 
 - [x] R01–R07 have DONE or explicitly accepted no-change dispositions.
-- [ ] `ui` imports no retired frontend modules and its typecheck is part of the
+- [x] `ui` imports no retired frontend modules and its typecheck is part of the
       root gate.
-- [ ] iOS packages and launches the headless runtime contract.
-- [ ] No production/scenario/Ops selector chooses BrowserVM.
-- [ ] Local React wallets enroll, remain locked after reload, unlock explicitly,
+- [x] iOS packages and launches the headless runtime contract.
+- [x] No production/scenario/Ops selector chooses BrowserVM.
+- [x] Local React wallets enroll, remain locked after reload, unlock explicitly,
       and revoke authority on lock.
 - [x] Paired-daemon custody has tested semantics or an explicit owner retirement
       decision.
-- [ ] No file remains beneath `frontend/src`; resurrection fails a release gate.
-- [ ] Full frontend/root/browser/native verification passes on one exact SHA and
+- [x] No file remains beneath `frontend/src`; resurrection fails a release gate.
+- [x] Full frontend/root/browser/native verification passes on one exact SHA and
       release identity using Bun 1.4.0.
-- [ ] The cutover review records the new evidence and invalidates stale claims.
-- [ ] Git diff contains no out-of-scope Runtime/Entity/Account, contract,
+- [x] The cutover review records the new evidence and invalidates stale claims.
+- [x] Git diff contains no out-of-scope Runtime/Entity/Account, contract,
       persistence, or `frozen-core.json` change.
-- [ ] No push, force-push, deployment, or publication was performed.
+- [x] No push, force-push, deployment, or publication was performed.
 
 ## Global STOP conditions
 
