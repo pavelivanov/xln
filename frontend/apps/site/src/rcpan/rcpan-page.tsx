@@ -24,14 +24,33 @@ function RcpanHero({ onPayment, onDispute }: Readonly<{ onPayment: () => void; o
           <button className="button-secondary" type="button" onClick={onDispute}>Start a dispute <Arrow /></button>
         </div>
       </div>
-      <div className="proof-poster" aria-label="Co-signed bilateral account proof">
-        <div className="proof-stamp"><span>PROOF</span><strong>#42</strong></div>
-        <header><span>XLN / ACCOUNT STATE</span><b>CO-SIGNED</b></header>
-        <div className="proof-parties"><div><small>LEFT</small><strong>USER</strong></div><i>↔</i><div><small>RIGHT</small><strong>H1</strong></div></div>
-        <div className="proof-delta"><span>OFF-CHAIN DELTA</span><strong>+$1.00M</strong></div>
-        <div className="proof-formula">−C<sub>L</sub> ≤ Δ ≤ R + C<sub>R</sub></div>
-        <footer><span>SIGNATURE / USER <b>VALID</b></span><span>SIGNATURE / H1 <b>VALID</b></span></footer>
-      </div>
+      <figure className="proof-receipt" aria-labelledby="proof-receipt-title">
+        <figcaption className="receipt-header">
+          <span id="proof-receipt-title">XLN / CO-SIGNED ACCOUNT</span>
+          <b>ILLUSTRATIVE</b>
+        </figcaption>
+        <div className="receipt-parties" aria-label="You and Hub H1 hold the same account state">
+          <span><small>ACCOUNT HOLDER</small><strong>YOU</strong></span>
+          <span className="receipt-agreement" aria-hidden="true"><i /><b>✓</b><i /></span>
+          <span><small>COUNTERPARTY</small><strong>HUB H1</strong></span>
+        </div>
+        <div className="receipt-balance">
+          <span>H1 OWES YOU</span>
+          <strong>$1.00M</strong>
+          <small>LATEST CO-SIGNED BALANCE</small>
+        </div>
+        <div className="receipt-protection">
+          <div className="receipt-protection-bar" aria-hidden="true"><i /><i /></div>
+          <div className="receipt-protection-legend">
+            <span><b>$700K</b><small>ESCROWED COLLATERAL</small></span>
+            <span><b>$300K</b><small>CREDIT EXPOSURE</small></span>
+          </div>
+        </div>
+        <footer>
+          <div className="receipt-signatures"><span><i>✓</i> SIGNED BY YOU</span><span><i>✓</i> SIGNED BY H1</span></div>
+          <p>Executable if cooperation stops <span aria-hidden="true">→</span></p>
+        </footer>
+      </figure>
     </section>
   );
 }
