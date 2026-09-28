@@ -11,7 +11,17 @@ type LaunchLinkProps = Readonly<{
 }>;
 
 export function Arrow({ diagonal = false }: Readonly<{ diagonal?: boolean }>) {
-  return <span aria-hidden="true">{diagonal ? '↗' : '→'}</span>;
+  return (
+    <svg
+      aria-hidden="true"
+      className="site-arrow"
+      viewBox="0 0 20 20"
+    >
+      {diagonal
+        ? <path d="M5 15 15 5m-8 0h8v8" />
+        : <path d="M3 10h14m-5-5 5 5-5 5" />}
+    </svg>
+  );
 }
 
 export function LaunchLink({ className, children }: LaunchLinkProps) {
