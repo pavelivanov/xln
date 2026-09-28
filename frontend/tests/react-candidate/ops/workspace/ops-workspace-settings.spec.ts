@@ -1,5 +1,7 @@
 import { openWorkspaceStorageOrigin } from '../../browser-evidence';
 import { expect, test } from '@playwright/test';
+import { VIEW_SETTINGS_STORAGE_KEY } from '../../../../packages/runtime-client/src/panels/settings-panel-view';
+import { NETWORK_MACHINE_CONFIG_KEY, type NetworkMachineConfig } from '../../../../packages/runtime-client/src/scenario/network-machine';
 import { expectNoBrowserErrors, expectPageContained, observeBrowserErrors, screenshotEvidence } from '../../browser-evidence';
 import { screenshotGraphEvidence } from '../../graph-evidence';
 import { resetScenarioRpc } from '../../wallet/fixtures/wallet-runtime-test-helpers';
@@ -102,10 +104,41 @@ test('presentation config filters the real recording and applies caption and cam
   await settings.getByLabel('Timeline density', { exact: true }).selectOption('all-frames');
   await expect(settings.getByRole('status')).toContainText('Presentation config applied');
   await expect(timeline.getByLabel('Network frame', { exact: true })).toHaveAttribute('max', String(fullCount));
-  await page.reload();
+  expect(await page.evaluate(key => JSON.parse(localStorage.getItem(key) ?? 'null'), NETWORK_MACHINE_CONFIG_KEY)).toEqual(config);
+  await expectPageContained(page);
+  expectNoBrowserErrors(errors);
+});
+
+test('stored presentation config restores caption cues on cold boot', { tag: '@functional' }, async ({ page }, testInfo) => {
+  testInfo.setTimeout(120_000);
+  const errors = observeBrowserErrors(page);
+  const config: NetworkMachineConfig = {
+    version: 1,
+    id: 'settings-cold-boot',
+    title: 'Persisted operator presentation',
+    timelineMode: 'all-frames',
+    cues: [{
+      id: 'persisted-state',
+      at: { runtimeId: 'scenario:ahb', height: 1, timestamp: 1 },
+      title: 'Persisted payment state',
+      subtitle: 'Cold-boot presentation cue',
+    }],
+  };
+  await openWorkspaceStorageOrigin(page);
+  await page.evaluate(({ key, value }) => localStorage.setItem(key, JSON.stringify(value)), {
+    key: NETWORK_MACHINE_CONFIG_KEY,
+    value: config,
+  });
+  await page.goto('/__app/ops/entity-workspace?scenario=ahb');
+  const timeline = page.getByTestId('workspace-network-timeline');
   await expect(timeline.locator('output')).toContainText('1/', { timeout: 90_000 });
   await timeline.getByLabel('Network frame', { exact: true }).press('End');
-  await expect(timeline).toContainText('Final payment state');
+  await expect(timeline).toContainText('Persisted payment state');
+  await expect(timeline).toContainText('Cold-boot presentation cue');
+  await page.getByRole('button', { name: 'Open Settings panel', exact: true }).click();
+  const settings = page.getByTestId('workspace-settings');
+  await settings.getByRole('button', { name: 'Presentation', exact: true }).click();
+  await expect(settings.getByRole('textbox', { name: 'Presentation config', exact: true })).toHaveValue(/"id": "settings-cold-boot"/);
   await expectPageContained(page);
   expectNoBrowserErrors(errors);
 });
@@ -149,9 +182,28 @@ test('recorded Settings control the retained scene and camera without editing Ru
   await page.getByTestId('workspace-graph').getByRole('button', { name: 'Fit network' }).click();
   await expect(page.getByTestId('graph-render-stats')).toContainText('draw calls');
   await screenshotGraphEvidence(page, testInfo, 'ops-settings-graph-applied');
-  await page.reload();
+  expect(await page.evaluate(key => JSON.parse(localStorage.getItem(key) ?? 'null'), VIEW_SETTINGS_STORAGE_KEY)).toMatchObject({
+    gridOpacity: 0.2,
+    fov: 60,
+    showFpsOverlay: true,
+  });
+  await expectPageContained(page);
+  expectNoBrowserErrors(errors);
+});
+
+test('stored scene and camera settings restore on cold boot', { tag: '@functional' }, async ({ page }, testInfo) => {
+  testInfo.setTimeout(120_000);
+  const errors = observeBrowserErrors(page);
+  await openWorkspaceStorageOrigin(page);
+  await page.evaluate(({ key, value }) => localStorage.setItem(key, JSON.stringify(value)), {
+    key: VIEW_SETTINGS_STORAGE_KEY,
+    value: { gridOpacity: 0.2, fov: 60 },
+  });
+  await page.goto('/__app/ops/entity-workspace?scenario=ahb');
+  const timeline = page.getByTestId('workspace-network-timeline');
   await expect(timeline.locator('output')).toContainText('1/', { timeout: 90_000 });
   await page.getByRole('button', { name: 'Open Settings panel', exact: true }).click();
+  const settings = page.getByTestId('workspace-settings');
   await settings.getByRole('button', { name: 'Scene', exact: true }).click();
   await expect(settings.getByLabel('Grid opacity', { exact: true })).toHaveValue('0.2');
   await settings.getByRole('button', { name: 'Camera', exact: true }).click();

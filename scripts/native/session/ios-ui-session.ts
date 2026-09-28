@@ -1,5 +1,6 @@
 import { join, dirname, resolve } from 'node:path';
 import { cpSync, readdirSync, unlinkSync } from 'node:fs';
+import { discoverIosUiSimulator } from './ios-simulator-device';
 
 /** Run the installed SwiftUI screens against the same isolated live stand as the WebKit probes. */
 export async function runIosUiSession(
@@ -8,7 +9,12 @@ export async function runIosUiSession(
   mode: 'payment' | 'swap' | 'default' | 'order' | 'tower',
 ): Promise<number> {
   const products = resolve(process.env.XLN_IOS_UI_PRODUCTS ?? '/tmp/xln-ios-ui-derived/Build/Products');
-  const device = process.env.XLN_IOS_UI_DEVICE ?? '59209751-39EB-4274-AF6C-A88DE1099CAD';
+  const simulator = discoverIosUiSimulator();
+  const device = simulator.udid;
+  console.log(
+    'IOS_UI_DEVICE_SELECTED',
+    JSON.stringify({ name: simulator.name, source: simulator.source, state: simulator.state, udid: simulator.udid }),
+  );
   const language = process.env.XLN_UI_LANGUAGE ?? 'en';
   if (language !== 'en' && language !== 'ru') throw new Error(`IOS_UI_LANGUAGE_INVALID:${language}`);
   const network: unknown = await Bun.file(

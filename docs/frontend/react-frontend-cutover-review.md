@@ -12,11 +12,11 @@ Account, consensus, custody, contracts or persistence semantics.
 
 The accepted retirement inputs were:
 
-| Artifact | SHA-256 |
-| --- | --- |
-| `react-frontend-retirement-files.txt` | `313bc3c1ac671f5cf0f6004b1eb779f82e772afabca27a8e58fadc9f7ac20b9b` |
+| Artifact                                 | SHA-256                                                            |
+| ---------------------------------------- | ------------------------------------------------------------------ |
+| `react-frontend-retirement-files.txt`    | `313bc3c1ac671f5cf0f6004b1eb779f82e772afabca27a8e58fadc9f7ac20b9b` |
 | `react-frontend-retirement-guards.patch` | `6253a841e060956bbfef857582ac3c2dcde3ee9b182b6568932b53dc2a1e6977` |
-| `react-frontend-cutover-commands.patch` | `473cb8035b587216d14edc0738bb644040ecc73de6a1db4d5ad38b205932bb34` |
+| `react-frontend-cutover-commands.patch`  | `473cb8035b587216d14edc0738bb644040ecc73de6a1db4d5ad38b205932bb34` |
 
 ## T17 canonical cutover
 
@@ -64,64 +64,74 @@ R08 must bind the repaired tree to one new exact source and release.
 
 ## Post-rebase R08 certification
 
-R08 certifies source `24204d68a8d9b7865f4564dc6f28109be5c3c466`
-with Bun **1.4.0**. The verified frontend release is
-`sha256-b9100e9824673a5564f49c39d0c6b3a2bd2610faf93f642249bda26cef40201a`
+R08 certifies implementation source
+`1c28f85fc9c429f3c3de45cbdf8c2d63463830fd` with Bun **1.4.0**. The
+uncommitted candidate contains the five browser-test corrections plus the
+native-session simulator discovery follow-up described below.
+The verified frontend release is
+`sha256-c64f6f18fe10f2c048ca8761486aea2101285517191341dfe3f3286a9a9b295e`
 (**652 files**) at
-`frontend/.artifacts/releases/sha256-b9100e9824673a5564f49c39d0c6b3a2bd2610faf93f642249bda26cef40201a`.
+`frontend/.artifacts/releases/sha256-c64f6f18fe10f2c048ca8761486aea2101285517191341dfe3f3286a9a9b295e`.
 Its `release-manifest.json` SHA-256 is
-`f03cb30e263bbd2360dc26b1cd0b7692bb58cefab5522686137dca9a51a106d6`.
+`d94c0f92b1fa12c15cfb03172634c3d0624f308604af57c5e379f71b53141e5b`.
 
-| Boundary | R08 result |
-| --- | --- |
-| Retained UI and source policy | PASS: `cd ui && bun run check`; no file remains beneath `frontend/src`, resurrection is rejected, and no production/scenario/Ops selector chooses BrowserVM |
-| Frontend aggregate | PASS: `cd frontend && bun scripts/check.ts --all --level=frontend`; **1,586/1,586** unit tests and all four builds passed, reproducing the exact 652-file release |
-| Root aggregate | PASS: `bun run check`; **3/3** root aggregates and **39/39** source gates passed, including frozen core unchanged |
-| Browser inventory and matrix | PASS: `bunx --no-install playwright test --config playwright.react.config.ts --list` found **453 tests in 45 files**; `bun run stand:run --reason r08-react-browser-matrix --timeout-ms 3600000 -- bun frontend/scripts/testing/test-react-candidate.ts --all` passed **453/453**: mobile **151/151 in 12.0 min**, laptop **151/151 in 13.4 min**, wide **151/151 in 26.0 min** |
-| Immutable artifact and preview | PASS: `cd frontend && bun scripts/testing/test-artifact-candidate.ts` passed **12/12 in 1.3 min**; `cd frontend && bun scripts/release/check-preview-consumer.ts --release .artifacts/releases/sha256-b9100e9824673a5564f49c39d0c6b3a2bd2610faf93f642249bda26cef40201a` verified all 652 hashes, four routes, corruption/missing-release rejection, and clean shutdown |
-| iOS production package | PASS: `bun scripts/native/build-platforms.ts ios --frontend-release frontend/.artifacts/releases/sha256-b9100e9824673a5564f49c39d0c6b3a2bd2610faf93f642249bda26cef40201a` built the iPhone 17 Pro simulator target with production network values; native artifact `sha256-99e5b6dae6fd16591d3598b8d3ac2e33dab6e7dd46add7b22ddfa0db169e5d61`, manifest SHA-256 `bd564d4edce3fd5396e298010338c1ca28d0839bf374aedb17ad1df9397ac076` |
-| iOS native sessions | PASS: stand-locked `bun scripts/native/session/run-session.ts ios-ui-swap` committed one economic swap (**1/1 in 126.039 s**) and `bun scripts/native/session/run-session.ts ios-ui-default` passed launch/background/activation lifecycle (**1/1 in 71.453 s**); both ended with `systemOk=true` and no health failures |
-| Final hygiene | PASS: `git diff --check`; no Runtime/Entity/Account, contract, persistence, or `frozen-core.json` change; no push, deployment, publication, or history rewrite |
+| Boundary                       | R08 result                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Retained UI and source policy  | PASS: `cd ui && bun run check`; no file remains beneath `frontend/src`, resurrection is rejected, and no production/scenario/Ops selector chooses BrowserVM                                                                                                                                                                                                                                                                                                                                                                                                               |
+| Frontend aggregate             | PASS: `cd frontend && bun scripts/check.ts --all --level=frontend`; **1,590/1,590** unit tests, **11,979** assertions and all four builds passed, reproducing the exact 652-file release                                                                                                                                                                                                                                                                                                                                                                                  |
+| Root aggregate                 | PASS: `bun run check`; **3/3** root aggregates and **39/39** source gates passed, including frozen core unchanged                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| Browser inventory and matrix   | PASS: `bunx --no-install playwright test --config playwright.react.config.ts --list` found **459 tests in 45 files**, **153 per viewport**. Final-source bounded partitions cover **459/459**: mobile has a green 152-case run (**13.2 min**) plus current settings **9/9 in 52.4 s** and localization **1/1 in 10.0 s**; laptop has a green 152-case run (**19.5 min**) plus current settings **9/9 in 1.6 min** and localization **1/1 in 8.4 s**; wide has a green 63-case prefix, current localization **1/1 in 9.7 s**, and the exact remaining **89/89 in 8.1 min** |
+| Immutable artifact and preview | PASS: `bun scripts/testing/test-artifact-candidate.ts .artifacts/releases/sha256-c64f6f18fe10f2c048ca8761486aea2101285517191341dfe3f3286a9a9b295e` passed **12/12 in 1.4 min**; `bun scripts/release/check-preview-consumer.ts .artifacts/releases/sha256-c64f6f18fe10f2c048ca8761486aea2101285517191341dfe3f3286a9a9b295e` verified all 652 hashes, four routes, corruption/missing-release rejection, and clean shutdown                                                                                                                                                |
+| iOS production package         | PASS: `bun scripts/native/build-platforms.ts ios --frontend-release frontend/.artifacts/releases/sha256-c64f6f18fe10f2c048ca8761486aea2101285517191341dfe3f3286a9a9b295e` completed with production network values; native artifact `sha256-292499909b2f49ff7766b17461ec1cf51a3490fa28e538dafb1e20705a69386c`, manifest SHA-256 `d46676e0f4d4f99649c510ea20b4ecd661cd5b7b00d87810e41406977fe8118b` at `native/dist/releases/sha256-c64f6f18fe10f2c048ca8761486aea2101285517191341dfe3f3286a9a9b295e/build-s6NYwk/native-artifacts.json`                                   |
+| iOS native sessions            | PASS: stand-locked sessions on the available iPhone 17 Pro; `ios-ui-swap` committed one economic swap (**1/1 in 100.953 s**) and the explicit-device `ios-ui-default` passed launch/background/activation lifecycle (**1/1 in 48.009 s**); both ended with `systemOk=true` and no health failures. After removing the stale default UUID, a no-override `ios-ui-default` discovered the booted device and passed the same lifecycle (**1/1 in 39.605 s**, `systemOk=true`, zero health failures)                                                                          |
+| Final hygiene                  | PASS: `git diff --check`; no Runtime/Entity/Account, contract, persistence, or `frozen-core.json` change; no push, deployment, publication, or history rewrite                                                                                                                                                                                                                                                                                                                                                                                                            |
 
-The browser matrix ran at source `8da6d9524`; the only subsequent changes before
-the certified source were two unit-test-only edits: artifact-history expected
-frame coverage and an explicit 30-second budget for the semantic UI source scan.
-The current Playwright inventory is unchanged, and the frontend aggregate on the
-certified source reproduced the exact release identity. Those edits therefore
-invalidate only their affected unit evidence, which was rerun at the certified
-source; production, browser, release, and native bytes are identical.
+The browser runner's one-hour aggregate wrapper completed its then-current
+mobile and laptop projects before timing out after 62 wide cases, so
+certification continued sequentially by viewport.
+Three test-only corrections followed observed failures: a Runtime-refresh
+re-render swallowed a Formation click, saved workspace layout hydration raced a
+wide public-embed reload, and two settings tests exceeded their global timeout
+by performing two full hydrations. The affected files were rerun on every
+viewport after correction. Mobile and laptop retain their green full runs for
+the unchanged 143 cases and replace both changed files with the current `9 + 1`
+cases; wide combines its current 63-case prefix, corrected localization case,
+and exact 89-case remainder. This is complete **459/459** final-source coverage,
+not reuse of the prior 453-case receipt.
 
 The production-network iOS package contains `native-network.json` with
 `https://xln.finance` for both API and recovery. The local simulator session
-used an isolated localhost-derived copy and Xcode `build-for-testing`. An
-additional payment-session attempt reached wallet creation, funding, and the
-camera-unavailable path, then stopped on the known XCTest accessibility audit
-(`Dynamic Type font sizes are partially unsupported`) before payment commit;
-the required native economic smoke is the passing swap session above. Physical
-device execution and Apple signing remain owner/device gates. C03 production
-activation remains separate and requires explicit release authority.
+used an isolated localhost-derived copy and the existing Xcode test products.
+The first native invocation exposed a stale baked simulator UUID. The follow-up
+removed that hardcode: the harness now validates an explicit device when one is
+provided, otherwise deterministically discovers an available iPhone and prefers
+the current booted device. Its focused parser/selection suite passed **4/4**, the
+no-override stand-locked lifecycle passed **1/1 in 39.605 s**, and the subsequent
+root `bun run check` passed. Physical-device execution and Apple signing remain
+owner/device gates. C03 production activation remains separate and requires
+explicit release authority.
 
-This R08 receipt supersedes the historical **444/444** browser and 493-file
-release claims for the current tree. As with the original receipt, this section
-is written after assembly because the public Docs catalog includes repository
-Markdown; embedding its own release hash into the release it names would be
-self-referential.
+This R08 receipt supersedes both the prior **453/453** post-rebase receipt and
+the historical **444/444** browser and 493-file release claims for the current
+tree. As with the original receipt, this section is written after assembly
+because the public Docs catalog includes repository Markdown; embedding its own
+release hash into the release it names would be self-referential.
 
 ## T18 local certification
 
 Pinned Bun is **1.4.0**.
 
-| Boundary | Result |
-| --- | --- |
-| All React types | PASS for Site, Docs, Wallet and Ops |
-| Default `bun run build` | PASS; all four Vite builds and release assembly |
-| Default root development | PASS; `DEV_READY` in **17.317 s**, all four routes rendered, `/api/health` and `/rpc` returned 200, zero console/page errors, and clean owned-process shutdown |
-| Explicit verified-release preview | PASS; Wallet rendered from the exact release with zero console/page errors and the identity endpoint matched all files |
-| Retirement/policy checks | PASS: no-legacy, FinTS compiler policy, unused surface, failure taxonomy, swap cancellation, market codec, root-development and production-static wiring |
-| Complete browser registry | PASS: **444/444 unique cases** across mobile, laptop and wide; mobile **148/148 in 10.3 min**, laptop **148/148 in 12.8 min**, and the unchanged wide ledger completed from **142 passing cases plus a 9/9 Wallet partition in 32.5 s** |
-| Default frontend `bun run check` | Environment boundary: **1,529 pass / 15 fail / 11,610 assertions**; all 15 failures are Bun 1.4 nested-process `EBADF` cases already passing through direct/focused execution or hosted CI |
-| Root `bun run check` | Environment boundary: short gates pass, then `check:src` stops at `/bin/bash: cargo: command not found`; the parallel frontend sibling reaches the same 15 local `EBADF` cases |
-| `git diff --check` | PASS |
+| Boundary                          | Result                                                                                                                                                                                                                                  |
+| --------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| All React types                   | PASS for Site, Docs, Wallet and Ops                                                                                                                                                                                                     |
+| Default `bun run build`           | PASS; all four Vite builds and release assembly                                                                                                                                                                                         |
+| Default root development          | PASS; `DEV_READY` in **17.317 s**, all four routes rendered, `/api/health` and `/rpc` returned 200, zero console/page errors, and clean owned-process shutdown                                                                          |
+| Explicit verified-release preview | PASS; Wallet rendered from the exact release with zero console/page errors and the identity endpoint matched all files                                                                                                                  |
+| Retirement/policy checks          | PASS: no-legacy, FinTS compiler policy, unused surface, failure taxonomy, swap cancellation, market codec, root-development and production-static wiring                                                                                |
+| Complete browser registry         | PASS: **444/444 unique cases** across mobile, laptop and wide; mobile **148/148 in 10.3 min**, laptop **148/148 in 12.8 min**, and the unchanged wide ledger completed from **142 passing cases plus a 9/9 Wallet partition in 32.5 s** |
+| Default frontend `bun run check`  | Environment boundary: **1,529 pass / 15 fail / 11,610 assertions**; all 15 failures are Bun 1.4 nested-process `EBADF` cases already passing through direct/focused execution or hosted CI                                              |
+| Root `bun run check`              | Environment boundary: short gates pass, then `check:src` stops at `/bin/bash: cargo: command not found`; the parallel frontend sibling reaches the same 15 local `EBADF` cases                                                          |
+| `git diff --check`                | PASS                                                                                                                                                                                                                                    |
 
 The final complete browser registry and hosted source result are recorded below
 after their post-cutover rerun. This

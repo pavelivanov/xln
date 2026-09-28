@@ -105,16 +105,16 @@ Reconfirm each fact after the drift check:
 
 Run from the repository root unless stated otherwise.
 
-| Purpose | Command | Expected result |
-| --- | --- | --- |
-| Toolchain | `bun --version` | exactly `1.4.0` |
-| Release regression | `bun test tests/release-integrity/foundation-hanko.test.ts tests/release-integrity/release-manifest.test.ts native/__tests__/native-build-options.test.ts` | all pass |
-| Foundation catalog | `bun run foundation-release:verify` | verifies existing `0.1.31` Hanko/catalog; no writes |
-| Wallet units | `bun test tests/frontend/security/wallet-local-password.test.ts` | all pass, including new entry-list cases |
-| Wallet local gate | `cd frontend && bun scripts/check.ts --surface=wallet --level=local` | exit 0 |
-| Stand availability | `bun run stand:status` | reports available before each browser run |
-| Root integration | `bun run check` | exit 0 on a host permitting required loopback listeners |
-| Diff hygiene | `git diff --check && git status --short` | no whitespace errors; only planned files changed |
+| Purpose            | Command                                                                                                                                                    | Expected result                                         |
+| ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------- |
+| Toolchain          | `bun --version`                                                                                                                                            | exactly `1.4.0`                                         |
+| Release regression | `bun test tests/release-integrity/foundation-hanko.test.ts tests/release-integrity/release-manifest.test.ts native/__tests__/native-build-options.test.ts` | all pass                                                |
+| Foundation catalog | `bun run foundation-release:verify`                                                                                                                        | verifies existing `0.1.31` Hanko/catalog; no writes     |
+| Wallet units       | `bun test tests/frontend/security/wallet-local-password.test.ts`                                                                                           | all pass, including new entry-list cases                |
+| Wallet local gate  | `cd frontend && bun scripts/check.ts --surface=wallet --level=local`                                                                                       | exit 0                                                  |
+| Stand availability | `bun run stand:status`                                                                                                                                     | reports available before each browser run               |
+| Root integration   | `bun run check`                                                                                                                                            | exit 0 on a host permitting required loopback listeners |
+| Diff hygiene       | `git diff --check && git status --short`                                                                                                                   | no whitespace errors; only planned files changed        |
 
 ## Scope
 
@@ -157,12 +157,12 @@ Run from the repository root unless stated otherwise.
 
 ## Execution order and task list
 
-| ID | Task | Priority | Depends on | Status |
-| --- | --- | --- | --- | --- |
-| F01 | Establish failing characterization and drift baseline | P0 | — | DONE |
-| F02 | Restore the signed `0.1.31` release identity | P0 | F01 | DONE |
-| F03 | Restore create/select-before-unlock in React | P0 | F01 | DONE |
-| F04 | Re-certify the exact repaired source | P0 | F02, F03 | TODO |
+| ID  | Task                                                  | Priority | Depends on | Status |
+| --- | ----------------------------------------------------- | -------- | ---------- | ------ |
+| F01 | Establish failing characterization and drift baseline | P0       | —          | DONE   |
+| F02 | Restore the signed `0.1.31` release identity          | P0       | F01        | DONE   |
+| F03 | Restore create/select-before-unlock in React          | P0       | F01        | DONE   |
+| F04 | Re-certify the exact repaired source                  | P0       | F02, F03   | DONE   |
 
 ### F01 — Establish failing characterization and drift baseline
 
@@ -298,13 +298,13 @@ the required loopback-enabled rerun passed. All three viewport runs remain F04.
 
 ### F04 — Re-certify the exact repaired source
 
-- [ ] Record the candidate SHA and confirm `git status --porcelain` contains
+- [x] Record the candidate SHA and confirm `git status --porcelain` contains
       only planned changes. Any implementation change after this point restarts
       F04.
-- [ ] Run the complete focused unit set:
+- [x] Run the complete focused unit set:
       `bun test tests/release-integrity/foundation-hanko.test.ts tests/release-integrity/release-manifest.test.ts native/__tests__/native-build-options.test.ts tests/frontend/security/wallet-local-password.test.ts tests/frontend/onboarding/brainvault/frontend-wallet-brainvault-derivation.test.ts`.
-- [ ] Run the Wallet local gate and `git diff --check`.
-- [ ] Run `bun run stand:status`. Then run the React local-password spec under
+- [x] Run the Wallet local gate and `git diff --check`.
+- [x] Run `bun run stand:status`. Then run the React local-password spec under
       the stand lock once per project: `mobile-390x844`,
       `laptop-1366x900`, and `wide-1920x1080`. Use this command with the project
       substituted, sequentially:
@@ -314,18 +314,100 @@ the required loopback-enabled rerun passed. All three viewport runs remain F04.
       Each run must pass with containment screenshots and zero unexpected
       console/page errors. Poll the original process handle; do not start a
       second run while one is live.
-- [ ] Run `cd frontend && bun run check`. It must pass. Socket/listener denial is
+
+- [x] Run `cd frontend && bun run check`. It must pass. Socket/listener denial is
       an environment failure, not authorization to skip or weaken tests.
-- [ ] Run `bun run check` on a host permitting required loopback listeners. It
+- [x] Run `bun run check` on a host permitting required loopback listeners. It
       must exit 0 on the same source revision. Inspect `git status` afterward and
       reject unrelated generated changes.
-- [ ] Update this task table and the reopened R04/R08/R09 status in
+- [x] Update this task table and the reopened R04/R08/R09 status in
       `plans/post-rebase-semantic-recovery.md` only after recording exact command
       counts, source SHA, browser projects, and first red command (`none` only
       when all required gates passed).
-- [ ] Produce a new six-field publication handoff: current SHA, last green
+- [x] Produce a new six-field publication handoff: current SHA, last green
       command, first red command/error, exact release/artifact path, next single
       command, and remaining final gates. Do not push.
+
+F04 focused evidence (2026-09-28, candidate implementation source
+`1c28f85fc9c429f3c3de45cbdf8c2d63463830fd`, Bun `1.4.0`):
+
+- The implementation bytes at the candidate SHA remained unchanged through
+  certification. The rooted focused invocation passed `40/40` tests with `279`
+  assertions. The plan's non-rooted spelling first reached `39/40` before Bun
+  1.4.0 returned its
+  already-characterized macOS `posix_spawn` `EBADF`; the established rooted
+  spelling exercised the identical five files and passed.
+- The Wallet local gate passed unsafe types (`674` files, `0` findings), React
+  tooling, and React Wallet. `git diff --check` passed. The stand was free before
+  every browser run; `mobile-390x844`, `laptop-1366x900`, and `wide-1920x1080`
+  each passed `1/1` in `12.0s`, `12.4s`, and `12.3s`, including containment,
+  screenshot, storage-secrecy, and zero unexpected console/page-error checks.
+- `cd frontend && bun run check` passed `1,590/1,590` unit tests, all four
+  application builds, and assembled the `652`-payload-file release
+  `sha256-c64f6f18fe10f2c048ca8761486aea2101285517191341dfe3f3286a9a9b295e`.
+  Its `release-manifest.json` SHA-256 is
+  `d94c0f92b1fa12c15cfb03172634c3d0624f308604af57c5e379f71b53141e5b`.
+  A preliminary sandbox run failed only at seven required loopback listeners;
+  the required loopback-enabled rerun passed without a source change.
+- `bun run check` then passed the three root aggregates on the same source,
+  including `39/39` source gates and frozen core unchanged. No required gate
+  remains red after applying the two previously recorded Bun/sandbox execution
+  requirements. No push, tag, signing, deployment, publication, or history
+  rewrite occurred.
+- The final registered inventory is **459 tests in 45 files**, or **153 per
+  viewport**. Test-only corrections for a Runtime-refresh click race, saved
+  layout hydration, and cold-boot settings split the final evidence into
+  bounded partitions: mobile and laptop each have a green 152-case run plus
+  rerun green settings (`9/9`) and localization (`1/1`) files; wide has a green
+  63-case prefix, corrected localization (`1/1 in 9.7s`), and the exact
+  remaining `89/89 in 8.1m`. Together these cover **459/459 final-source cases**
+  with no untested registry row.
+- The immutable release browser gate passed `12/12 in 1.4m`. The explicit
+  preview consumer verified all `652` payload hashes, four routes, corruption
+  and missing-root rejection, and clean shutdown. The iOS production build
+  produced native artifact
+  `sha256-292499909b2f49ff7766b17461ec1cf51a3490fa28e538dafb1e20705a69386c`
+  with manifest SHA-256
+  `d46676e0f4d4f99649c510ea20b4ecd661cd5b7b00d87810e41406977fe8118b`.
+  On the available iPhone 17 Pro simulator, `ios-ui-swap` passed `1/1 in
+100.953s` and `ios-ui-default` passed `1/1 in 48.009s`; both ended with
+  `systemOk=true` and zero health failures.
+- The native-session follow-up removed the stale baked simulator UUID. Its
+  deterministic discovery/override suite passed `4/4`; with
+  `XLN_IOS_UI_DEVICE` unset, the stand-locked `ios-ui-default` session selected
+  the booted iPhone 17 Pro and passed `1/1 in 39.605s`, with `systemOk=true` and
+  zero health failures. The subsequent root `bun run check` passed.
+- Final-source `cd ui && bun run check`, the frontend aggregate
+  (`1,590/1,590`, `11,979` assertions, four builds), root `bun run check`, the
+  `459`-case inventory, and `git diff --check` all passed. The frontend and root
+  listener tests required the already-recorded loopback-enabled execution.
+  Aggregate generation changed `frontend/static/account-worker.js`; the exact
+  generated-only change was removed before final status inspection.
+
+Final F04 publication-readiness handoff:
+
+1. Current SHA: `1c28f85fc9c429f3c3de45cbdf8c2d63463830fd`; browser tests, native
+   simulator discovery, its focused unit test, and receipt updates remain
+   uncommitted by owner instruction.
+2. Last green command: `git diff --check && git status --short`, exit `0`, after
+   the documentation-only receipt updates.
+3. First red command/error: the plan's non-rooted focused `bun test` invocation
+   exited `1` at the Foundation CLI-negative case with Bun 1.4.0 `posix_spawn`
+   `EBADF`; its established rooted equivalent passed `40/40`. The later sandbox
+   listener denial and its passing loopback-enabled rerun are recorded above.
+   During the full R08 gates, the first native attempt also exposed the stale
+   default simulator UUID. The required sessions first passed through the
+   explicit device input; the follow-up then removed the hardcode and its
+   no-override lifecycle passed on the discovered booted device.
+4. Exact release/artifact paths:
+   `frontend/.artifacts/releases/sha256-c64f6f18fe10f2c048ca8761486aea2101285517191341dfe3f3286a9a9b295e`
+   and
+   `native/dist/releases/sha256-c64f6f18fe10f2c048ca8761486aea2101285517191341dfe3f3286a9a9b295e/build-s6NYwk/native-artifacts.json`.
+5. Next single command, read-only and consistent with the owner's no-remote
+   instruction: `git diff -- frontend/tests/react-candidate scripts/native/session plans docs/frontend/react-frontend-cutover-review.md && git status --short native/__tests__/ios/ios-simulator-device.test.ts`.
+6. Remaining final gates: owner review and any separately authorized commit or
+   remote update, physical-device execution, Apple signing, and explicit C03
+   deployment/publication authority.
 
 ## Test plan
 
@@ -345,21 +427,21 @@ the required loopback-enabled rerun passed. All three viewport runs remain F04.
 
 ## Done criteria
 
-- [ ] All six release-version owners read `0.1.31`.
-- [ ] Existing signed catalog/Hanko verification passes without catalog edits.
-- [ ] A locked React wallet initially shows create, restore, and saved wallets;
+- [x] All six release-version owners read `0.1.31`.
+- [x] Existing signed catalog/Hanko verification passes without catalog edits.
+- [x] A locked React wallet initially shows create, restore, and saved wallets;
       it shows no password field until one saved wallet is selected.
-- [ ] Selecting a saved wallet before unlock performs no persistent selection,
+- [x] Selecting a saved wallet before unlock performs no persistent selection,
       Runtime start, key restoration, or authority acquisition.
-- [ ] Create and restore are reachable without unlocking an existing wallet.
-- [ ] Wrong-password, unlock, explicit lock, and secret-non-persistence
+- [x] Create and restore are reachable without unlocking an existing wallet.
+- [x] Wrong-password, unlock, explicit lock, and secret-non-persistence
       assertions remain green.
-- [ ] Focused units, Wallet local check, all three browser projects, frontend
+- [x] Focused units, Wallet local check, all three browser projects, frontend
       aggregate, and root `bun run check` pass on one unchanged source revision.
-- [ ] `git diff --check` passes and no out-of-scope file is modified.
-- [ ] R04/R08/R09 are recertified with new evidence; stale 2026-09-28 evidence
+- [x] `git diff --check` passes and no out-of-scope file is modified.
+- [x] R04/R08/R09 are recertified with new evidence; stale 2026-09-28 evidence
       is not reused.
-- [ ] No push, force-push, tag, signing, deployment, or publication occurred.
+- [x] No push, force-push, tag, signing, deployment, or publication occurred.
 
 ## STOP conditions
 

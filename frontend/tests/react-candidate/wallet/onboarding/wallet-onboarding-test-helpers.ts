@@ -12,6 +12,13 @@ export const enrollLocalPassword = async (page: Page): Promise<void> => {
 };
 
 export const unlockLocalPassword = async (page: Page): Promise<void> => {
+  const chooser = page.getByRole('heading', { name: 'Choose how to continue', exact: true });
+  await expect(page.getByRole('heading', { name: /^(Choose how to continue|Unlock wallet)$/ })).toBeVisible();
+  if (await chooser.isVisible()) {
+    const savedWallets = page.locator('[aria-label="Saved wallets"] button');
+    await expect(savedWallets).toHaveCount(1);
+    await savedWallets.click();
+  }
   await expect(page.getByRole('heading', { name: 'Unlock wallet', exact: true })).toBeVisible();
   await page.getByLabel('Password', { exact: true }).fill(REACT_WALLET_LOCAL_PASSWORD);
   await page.getByRole('button', { name: 'Unlock', exact: true }).click();

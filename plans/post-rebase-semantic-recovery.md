@@ -1,11 +1,11 @@
 # Recover post-rebase frontend and native semantics
 
-> **Reopened by the 2026-09-28 deep audit:** R04, R08, and R09 are not current
-> publication evidence. The React password boundary is present, but it does not
-> preserve upstream `1248f788e` create/select-before-unlock behavior, and the
-> tree has a mixed `0.1.31`/`0.1.32` release identity. Execute
-> [the audit findings plan](post-rebase-audit-findings.md) and recertify those
-> rows before relying on this document's previous handoff.
+> **F04 recertification complete:** R04, R08, and R09 are current for
+> implementation source `1c28f85fc9c429f3c3de45cbdf8c2d63463830fd` and release
+> `sha256-c64f6f18fe10f2c048ca8761486aea2101285517191341dfe3f3286a9a9b295e`.
+> The complete registered browser, immutable artifact/preview, iOS build and
+> simulator-session gates passed. See
+> [the audit findings plan](post-rebase-audit-findings.md) for exact evidence.
 
 > **Executor instructions:** Execute one task at a time in the order allowed by
 > the dependency table. Run every task's focused verification before advancing.
@@ -121,30 +121,30 @@ drift check.
 
 Run from repository root unless a different cwd is shown.
 
-| Purpose | Command | Expected result |
-| --- | --- | --- |
-| Toolchain | `bun --version` | exactly `1.4.0` |
-| Retained UI types | `cd ui && bun run check` | exit 0, no diagnostics |
-| Retirement gates | `bun run check:no-legacy && bun run check:unused-surface` | both exit 0 |
-| Native focused tests | `bun test native/__tests__/native-build-options.test.ts native/__tests__/wallet-candidate-staging.test.ts native/__tests__/capacitor/capacitor-shell-candidate.test.ts` | all pass |
-| Scenario focused tests | `bun test tests/frontend/graph/timeline/network-machine-demo.test.ts tests/frontend/diagnostics/scenario-player-diagnostics.test.ts tests/frontend/qa/qa-scenario-player.test.ts` | all pass with RPC-only assertions |
-| Wallet security tests | `bun test tests/frontend/security/password-vault.test.ts tests/frontend/security/vault-protection.test.ts tests/frontend/recovery/vault-runtime-create-lock.test.ts tests/frontend/onboarding/wallet-identity-entry.test.ts tests/frontend/onboarding/runtime/wallet-runtime-opening.test.ts` | all pass |
-| Frontend aggregate | `cd frontend && bun scripts/check.ts --all --level=frontend` | exit 0 |
-| Root integration | `bun run check && git diff --check` | both exit 0 |
+| Purpose                | Command                                                                                                                                                                                                                                                                                       | Expected result                   |
+| ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------- |
+| Toolchain              | `bun --version`                                                                                                                                                                                                                                                                               | exactly `1.4.0`                   |
+| Retained UI types      | `cd ui && bun run check`                                                                                                                                                                                                                                                                      | exit 0, no diagnostics            |
+| Retirement gates       | `bun run check:no-legacy && bun run check:unused-surface`                                                                                                                                                                                                                                     | both exit 0                       |
+| Native focused tests   | `bun test native/__tests__/native-build-options.test.ts native/__tests__/wallet-candidate-staging.test.ts native/__tests__/capacitor/capacitor-shell-candidate.test.ts`                                                                                                                       | all pass                          |
+| Scenario focused tests | `bun test tests/frontend/graph/timeline/network-machine-demo.test.ts tests/frontend/diagnostics/scenario-player-diagnostics.test.ts tests/frontend/qa/qa-scenario-player.test.ts`                                                                                                             | all pass with RPC-only assertions |
+| Wallet security tests  | `bun test tests/frontend/security/password-vault.test.ts tests/frontend/security/vault-protection.test.ts tests/frontend/recovery/vault-runtime-create-lock.test.ts tests/frontend/onboarding/wallet-identity-entry.test.ts tests/frontend/onboarding/runtime/wallet-runtime-opening.test.ts` | all pass                          |
+| Frontend aggregate     | `cd frontend && bun scripts/check.ts --all --level=frontend`                                                                                                                                                                                                                                  | exit 0                            |
+| Root integration       | `bun run check && git diff --check`                                                                                                                                                                                                                                                           | both exit 0                       |
 
 ## Execution order
 
-| ID | Task | Priority | Depends on | Status |
-| --- | --- | --- | --- | --- |
-| R01 | Repair retained `ui` imports and make its typecheck a root gate | P0 | — | VERIFIED |
-| R02 | Restore the canonical iOS headless-runtime package contract | P0 | R01 | VERIFIED |
-| R03 | Restore RPC-only scenario and jurisdiction selection | P1 | — | VERIFIED |
-| R04 | Restore React local-password enrollment, unlock, lock, and pre-unlock choice | P0 | — | REOPENED — execute F03 |
-| R05 | Resolve paired-daemon custody semantics | P1 | — | VERIFIED |
-| R06 | Finish Svelte retirement and harden the retirement gate | P1 | R04 | VERIFIED |
-| R07 | Characterize post-rebase generated-input failure diagnostics | P2 | — | VERIFIED |
-| R08 | Re-certify one exact source and release | P0 | R01–R07; audit findings F02–F03 | REOPENED — execute F04 |
-| R09 | Produce the publication-readiness handoff | P0 | R08 | REOPENED — execute F04 |
+| ID  | Task                                                                         | Priority | Depends on                      | Status             |
+| --- | ---------------------------------------------------------------------------- | -------- | ------------------------------- | ------------------ |
+| R01 | Repair retained `ui` imports and make its typecheck a root gate              | P0       | —                               | VERIFIED           |
+| R02 | Restore the canonical iOS headless-runtime package contract                  | P0       | R01                             | VERIFIED           |
+| R03 | Restore RPC-only scenario and jurisdiction selection                         | P1       | —                               | VERIFIED           |
+| R04 | Restore React local-password enrollment, unlock, lock, and pre-unlock choice | P0       | —                               | VERIFIED — F03/F04 |
+| R05 | Resolve paired-daemon custody semantics                                      | P1       | —                               | VERIFIED           |
+| R06 | Finish Svelte retirement and harden the retirement gate                      | P1       | R04                             | VERIFIED           |
+| R07 | Characterize post-rebase generated-input failure diagnostics                 | P2       | —                               | VERIFIED           |
+| R08 | Re-certify one exact source and release                                      | P0       | R01–R07; audit findings F02–F03 | VERIFIED — F04     |
+| R09 | Produce the publication-readiness handoff                                    | P0       | R08                             | VERIFIED — F04     |
 
 Only one implementer owns a task. R01/R03/R04/R05/R07 may be prepared
 independently, but do not run heavy browser/native stands concurrently.
@@ -389,6 +389,13 @@ Steps:
   contain neither the recovery mnemonic nor the plaintext local password after
   enrollment or lock.
 
+**Audit-findings recertification (2026-09-28, source
+`1c28f85fc9c429f3c3de45cbdf8c2d63463830fd`):** F03 restored the secret-free,
+newest-first saved-wallet chooser plus create and restore before password entry.
+F04 passed the focused `40/40` tests (`279` assertions), Wallet local gate, and
+the password flow at all three registered viewports (`3/3`) with containment,
+storage-secrecy, screenshot, and zero unexpected browser-error assertions.
+
 **STOP if:** the BrainVault secret is unavailable through an existing bounded
 session at enrollment time. Report the token/material lifecycle; do not add a
 second secret store or weaken the reuse requirement.
@@ -450,7 +457,7 @@ Steps:
 - React now consumes the one-time `xlnPair` launcher token before rendering,
   strips the token and onboarding fields from the URL, validates/imports one
   remote admin Runtime, and retains only the in-memory `{ stage, entityId,
-  runtimeId }` launcher projection.
+runtimeId }` launcher projection.
 - Formation projects the exact selected daemon-owned Entity from
   `RuntimeAdapterViewFrame`. The daemon path requires connected admin command
   authority, hides browser recovery controls, submits profile/hub commands via
@@ -649,6 +656,26 @@ staging-copy-only result, or green unit test is not a substitute.
   embedding it in the Docs catalog before naming the release would be
   self-referential.
 
+**Audit-findings recertification (2026-09-28, implementation source
+`1c28f85fc9c429f3c3de45cbdf8c2d63463830fd`, Bun `1.4.0`):** F04 passed the
+focused `40/40` tests (`279` assertions), Wallet local gate, and all three
+password browser projects. The final inventory is **459 tests in 45 files**;
+bounded final-source partitions cover **459/459** across mobile, laptop, and
+wide. The frontend aggregate passed `1,590/1,590` unit tests (`11,979`
+assertions) plus four builds and assembled the `652`-payload-file release
+`sha256-c64f6f18fe10f2c048ca8761486aea2101285517191341dfe3f3286a9a9b295e`;
+its manifest SHA-256 is
+`d94c0f92b1fa12c15cfb03172634c3d0624f308604af57c5e379f71b53141e5b`.
+The root check passed all three aggregates, including `39/39` source gates and
+frozen core unchanged, on the same implementation bytes. Immutable artifact
+verification passed `12/12 in 1.4m`; preview verified all 652 hashes, four
+routes, corrupt/missing rejection, and clean shutdown. The iOS build produced
+artifact `sha256-292499909b2f49ff7766b17461ec1cf51a3490fa28e538dafb1e20705a69386c`
+and manifest SHA-256
+`d46676e0f4d4f99649c510ea20b4ecd661cd5b7b00d87810e41406977fe8118b`.
+Simulator swap and default lifecycle sessions passed `1/1 in 100.953s` and
+`1/1 in 48.009s`, each ending `systemOk=true` with zero health failures.
+
 ## R09 — Publication-readiness handoff
 
 Produce a six-field handoff only:
@@ -685,6 +712,37 @@ history as part of this plan.
 `fork/main` is an ancestor of the handoff source and local `main` is 29 commits
 ahead, so the prior remote update should be fixed forward with a normal
 fast-forward push. No force-push or history rewrite is required.
+
+**Final audit-findings F04 handoff (2026-09-28):**
+
+1. Current SHA: `1c28f85fc9c429f3c3de45cbdf8c2d63463830fd`; browser tests, native
+   simulator discovery, its focused unit test, and receipt updates remain
+   uncommitted by owner instruction.
+2. Last green command: `git diff --check && git status --short`, exit `0`, after
+   the documentation-only receipt updates.
+3. First red command/error: the non-rooted focused `bun test` invocation exited
+   `1` at the Foundation CLI-negative case with Bun 1.4.0 `posix_spawn` `EBADF`;
+   its established rooted equivalent passed `40/40`. The later sandbox listener
+   denial also passed through its loopback-enabled form without source changes.
+   The first native attempt then rejected the stale default simulator UUID.
+   Both required sessions first passed using the supported explicit device
+   input; the follow-up removed the hardcode, passed its `4/4` focused suite,
+   and passed the no-override lifecycle `1/1 in 39.605s` on the discovered
+   booted device with `systemOk=true` and zero health failures.
+4. Exact release/artifact paths:
+   `frontend/.artifacts/releases/sha256-c64f6f18fe10f2c048ca8761486aea2101285517191341dfe3f3286a9a9b295e`
+   and
+   `native/dist/releases/sha256-c64f6f18fe10f2c048ca8761486aea2101285517191341dfe3f3286a9a9b295e/build-s6NYwk/native-artifacts.json`.
+5. Next single command, read-only and consistent with the owner's no-remote
+   instruction: `git diff -- frontend/tests/react-candidate scripts/native/session plans docs/frontend/react-frontend-cutover-review.md && git status --short native/__tests__/ios/ios-simulator-device.test.ts`.
+6. Remaining final gates: owner review and any separately authorized commit or
+   remote update, physical-device execution, Apple signing, and explicit C03
+   deployment/publication authority.
+
+No remote action was performed. `fork/main` remains an ancestor of the
+candidate source and local `main` is 33 commits ahead; any later
+owner-authorized update remains a normal fast-forward rather than a history
+rewrite.
 
 ## Done criteria
 

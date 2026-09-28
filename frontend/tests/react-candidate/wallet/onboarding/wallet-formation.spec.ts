@@ -31,7 +31,10 @@ test('Formation creates a numbered Entity and reviews a weighted lazy board', { 
   await expect(page.getByRole('status')).toContainText('Entity created:');
   await expect(page.getByLabel('Entity', { exact: true }).locator('option').filter({ hasText: 'React Numbered' })).toHaveCount(1);
 
-  await page.getByRole('button', { name: 'Create Entity', exact: true }).click();
+  await expect(async () => {
+    await page.getByRole('button', { name: 'Create Entity', exact: true }).click();
+    await expect(panel).toBeVisible();
+  }).toPass({ intervals: [250, 500], timeout: 5_000 });
   await form.getByLabel('Entity name', { exact: true }).fill('Duplicate Board');
   await form.locator('.wallet-formation-advanced > summary').click();
   await form.getByRole('button', { name: /^Lazy/ }).click();

@@ -34,6 +34,7 @@ test('workspace locale updates controls, retained and new panels, and survives r
       .not.toBe(beforeExpandedSave);
   }
   await screenshotEvidence(page, testInfo, 'ops-locale-russian-restored');
+  await expect.poll(() => page.evaluate(() => localStorage.getItem('xln-workspace-layout'))).not.toBeNull();
   const saved = await page.evaluate(() => localStorage.getItem('xln-workspace-layout'));
   await page.goto('/__app/ops/entity-workspace');
   await expect(page.getByRole('button', { name: '\u041e\u0442\u043a\u0440\u044b\u0442\u044c \u043f\u0430\u043d\u0435\u043b\u044c «\u041d\u0430\u0441\u0442\u0440\u043e\u0439\u043a\u0438»', exact: true })).toBeEnabled();

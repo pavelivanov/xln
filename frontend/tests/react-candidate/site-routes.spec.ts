@@ -23,9 +23,11 @@ const marketFailure = process.env['PLAYWRIGHT_REACT_SURFACE'] === ''
 const siteRoutes: readonly SiteRouteEvidence[] = [
   { id: 'site-install', pathname: '/install', heading: /Own the\s+runtime\./i, ready: async page => expect(page.getByTestId('install-primary-command').first()).toBeVisible() },
   { id: 'site-rcpan', pathname: '/rcpan', heading: /A balance\s+you can take\s+to court\./i, ready: async page => expect(page.locator('.settlement-waterfall')).toContainText('Every token conserved during finalization') },
-  { id: 'site-releases', pathname: '/releases', heading: /Release ledger\s+rejected\./i, ready: async page => {
-    await expect(page.getByRole('alert')).toContainText('INVALID FOUNDATION HANKO: release manifest policy');
-    await expect(page.getByText('No unverified metric or release document is rendered.')).toBeVisible();
+  { id: 'site-releases', pathname: '/releases', heading: /^Releases$/i, ready: async page => {
+    await expect(page.getByText('22 signed codebase snapshots · latest 0.1.31')).toBeVisible();
+    await expect(page.locator('.verification.is-verified')).toHaveText('✓ Foundation code root verified');
+    await expect(page.getByRole('complementary', { name: 'Release versions' }).getByRole('button', { name: /^0\.1\.31 / })).toHaveClass(/is-active/);
+    await expect(page.getByRole('article')).toContainText('Foundation Hanko: VERIFIED 2/3');
   } },
   { id: 'site-reviews', pathname: '/reviews', heading: /AI reviews\s+of xln\./i, ready: async page => {
     const prompt = page.getByRole('button', { name: /Why Lightning failed but xln won't/i });
