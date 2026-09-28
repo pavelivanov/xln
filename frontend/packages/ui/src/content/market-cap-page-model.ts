@@ -129,6 +129,11 @@ export const marketCapStatusLabel = (value: EntityMarketCapStatus): string =>
 export const titleCaseMarketCapValue = (value: string): string =>
   value.split('-').map((part) => `${part[0]?.toUpperCase() ?? ''}${part.slice(1)}`).join(' ');
 
+export const splitMarketCapEntityNumber = (value: string): readonly [string, string] => {
+  const splitAt = Math.max(0, value.length - 8);
+  return [value.slice(0, splitAt), value.slice(splitAt)];
+};
+
 export const marketCapJurisdictionLabel = (value: string): string => {
   const [, chainId, address] = value.split(':');
   return `Chain ${chainId} · ${address?.slice(0, 6)}…${address?.slice(-4)}`;

@@ -11,6 +11,7 @@ import {
   formatMarketCapUsd,
   marketCapAgeLabel,
   marketCapRankingValue,
+  splitMarketCapEntityNumber,
   updateMarketCapControl,
   type MarketCapFetcher,
   type MarketCapRequest,
@@ -52,6 +53,14 @@ const PAYLOAD = {
 const REQUEST: MarketCapRequest = { ...DEFAULT_MARKET_CAP_CONTROLS, query: '' };
 
 describe('React market-cap pilot', () => {
+  test('preserves both ends of long Entity numbers for responsive middle truncation', () => {
+    expect(splitMarketCapEntityNumber('104138156645530458319818427970896373956730322960728')).toEqual([
+      '1041381566455304583198184279708963739567303',
+      '22960728',
+    ]);
+    expect(splitMarketCapEntityNumber('7')).toEqual(['', '7']);
+  });
+
   test('builds the canonical query and validates every interactive filter', () => {
     const hubs = controlsForMarketCapRanking('hubs');
     expect(hubs).toEqual({ ...DEFAULT_MARKET_CAP_CONTROLS, role: 'hub' });

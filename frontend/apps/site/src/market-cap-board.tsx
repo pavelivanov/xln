@@ -10,6 +10,7 @@ import {
   type MarketCapControlKey,
   type MarketCapControls,
 } from '../../../packages/ui/src/content/market-cap-page-model';
+import { MarketCapEntityNumber } from './market-cap-entity-number';
 
 type SelectOption = Readonly<{ value: string; label: string }>;
 
@@ -98,7 +99,7 @@ function MarketTable({ data }: Readonly<{ data: MarketCapPublicResponse }>) {
         <tbody>{data.entries.map((entry, index) => (
           <tr key={entry.entityId}>
             <td className="market-rank">{String(index + 1).padStart(2, '0')}</td>
-            <td><div className="market-entity"><i className={entry.online ? 'is-online' : undefined} /><div><strong>{entry.name}</strong><span>#{entry.entityNumber}{entry.isHub ? ' · Hub' : ''}{entry.entityKind ? ` · ${titleCaseMarketCapValue(entry.entityKind)}` : ''}</span>{entry.sectors.length ? <small>{entry.sectors.map(titleCaseMarketCapValue).join(' · ')}</small> : null}</div></div></td>
+            <td><div className="market-entity"><i className={entry.online ? 'is-online' : undefined} /><div><strong>{entry.name}</strong><MarketCapEntityNumber value={entry.entityNumber} suffix={`${entry.isHub ? ' · Hub' : ''}${entry.entityKind ? ` · ${titleCaseMarketCapValue(entry.entityKind)}` : ''}`} />{entry.sectors.length ? <small>{entry.sectors.map(titleCaseMarketCapValue).join(' · ')}</small> : null}</div></div></td>
             <td><div className="market-price"><strong>{formatMarketCapPrice(entry.control.priceTicks)}</strong><span>{entry.control.sourceHubEntityIds.length} source Hub</span></div></td>
             <td><div className="market-price"><strong>{formatMarketCapPrice(entry.dividend.priceTicks)}</strong><span>{entry.dividend.sourceHubEntityIds.length} source Hub</span></div></td>
             <td className="market-cap-value"><strong>{formatMarketCapUsd(entry.marketCapUsdTicks)}</strong><span>CONTROL + DIVIDEND</span></td>
