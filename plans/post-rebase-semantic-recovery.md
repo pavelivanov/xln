@@ -137,7 +137,7 @@ Run from repository root unless a different cwd is shown.
 | R06 | Finish Svelte retirement and harden the retirement gate | P1 | R04 | VERIFIED |
 | R07 | Characterize post-rebase generated-input failure diagnostics | P2 | — | VERIFIED |
 | R08 | Re-certify one exact source and release | P0 | R01–R06; R07 disposition | VERIFIED |
-| R09 | Produce the publication-readiness handoff | P0 | R08 | WAIT |
+| R09 | Produce the publication-readiness handoff | P0 | R08 | VERIFIED |
 
 Only one implementer owns a task. R01/R03/R04/R05/R07 may be prepared
 independently, but do not run heavy browser/native stands concurrently.
@@ -656,6 +656,28 @@ Produce a six-field handoff only:
 Also state whether the prior remote update should be fixed forward or otherwise
 handled by the owner. Do not push, force-push, tag, deploy, publish, or rewrite
 history as part of this plan.
+
+**Implementation evidence (2026-09-28, handoff source
+`501b8ed558303824c356ce7e0bdc6db65177242f`):**
+
+1. Current SHA: `501b8ed558303824c356ce7e0bdc6db65177242f` (the certified code
+   SHA remains `24204d68a8d9b7865f4564dc6f28109be5c3c466`; the subsequent
+   change is documentation-only).
+2. Last green command: native manifest/artifact identity assertions plus
+   `git diff --check`, exit 0.
+3. First red command/error: none.
+4. Exact release/artifact paths:
+   `frontend/.artifacts/releases/sha256-b9100e9824673a5564f49c39d0c6b3a2bd2610faf93f642249bda26cef40201a`
+   and
+   `native/dist/releases/sha256-b9100e9824673a5564f49c39d0c6b3a2bd2610faf93f642249bda26cef40201a/build-ZREAQJ/native-artifacts.json`.
+5. Next single command, only after owner authorization:
+   `git push fork main:main`.
+6. Remaining final gates: owner-authorized remote update, physical-device
+   execution, Apple signing, and explicit C03 deployment/publication authority.
+
+`fork/main` is an ancestor of the handoff source and local `main` is 29 commits
+ahead, so the prior remote update should be fixed forward with a normal
+fast-forward push. No force-push or history rewrite is required.
 
 ## Done criteria
 
